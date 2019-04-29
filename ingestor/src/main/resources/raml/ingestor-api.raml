@@ -1,0 +1,115 @@
+#%RAML 1.0
+title: prosEO Ingestor REST Services API
+version: 0.1
+protocols: [ HTTPS ] 
+baseUri: /ingestor
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  IngestorProduct: !include types/ingestor-product.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/products:
+  type: standard
+  get:
+    description: List of all products matching query parameters
+    queryParameters:
+      id?: string
+      descriptor?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: IngestorProduct[]
+            example: !include examples/ingestor-product-list.json
+  post:
+    description: Create a new product
+    body:
+      application/json:
+        type: IngestorProduct
+        example: !include examples/ingestor-product-full.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: IngestorProduct
+            example: !include examples/ingestor-product.json
+  /{id}:
+    get:
+      description: Get a product by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: IngestorProduct
+              example: !include examples/ingestor-product-full.json
+    put:
+      body:
+        application/json:
+          type: IngestorProduct
+          example: !include examples/ingestor-product-full.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: IngestorProduct
+              example: !include examples/ingestor-product.json
+    delete:
+      responses:
+        204:
+  /descriptor/{descriptor}:
+    get:
+      description: Get a product by descriptor
+      responses:
+        200:
+          body:
+            application/json:
+              type: IngestorProduct
+              example: !include examples/ingestor-product-full.json
+  

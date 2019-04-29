@@ -1,0 +1,4 @@
+  [
+    { "id" : "0ae234-887f26", "descriptor" : "S5P.TROPOMI.CO2://yyyy" },
+    { "id" : "25de66-08b2c9", "descriptor" : "S5P.TROPOMI.O3TCL://yyyy" }
+  ]

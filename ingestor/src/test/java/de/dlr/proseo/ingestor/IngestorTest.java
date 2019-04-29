@@ -1,20 +1,10 @@
 /*
- * Copyright 2012-2014 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * IngestorTest.java
+ * 
+ * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 
-package de.dlr.proseo.ingestor.actuator;
+package de.dlr.proseo.ingestor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,22 +28,24 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Basic integration tests for service demo application.
+ * Unit test cases for prosEO Ingestor
  *
- * @author Dave Syer
+ * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = SampleActuatorApplication.class)
+@SpringApplicationConfiguration(classes = Ingestor.class)
 @WebAppConfiguration
 @IntegrationTest("server.port=0")
 @DirtiesContext
-public class SampleActuatorApplicationTests {
+public class IngestorTest {
 
 	@Autowired
 	private SecurityProperties security;
@@ -92,26 +84,21 @@ public class SampleActuatorApplicationTests {
 	}
 
 	@Test
-	public void testHome() throws Exception {
-		@SuppressWarnings("rawtypes")
-		ResponseEntity<Map> entity = new TestRestTemplate("user", getPassword())
-				.getForEntity("http://localhost:" + this.port, Map.class);
-		assertEquals(HttpStatus.OK, entity.getStatusCode());
-		@SuppressWarnings("unchecked")
-		Map<String, Object> body = entity.getBody();
-		assertEquals("Hello Phil", body.get("message"));
-	}
-
-	@Test
 	public void testMetrics() throws Exception {
-		testHome(); // makes sure some requests have been made
+		// Makes sure a request has been made
+		@SuppressWarnings("rawtypes")
+		ResponseEntity<List> dummyEntity = new TestRestTemplate("user", getPassword())
+				.getForEntity("http://localhost:" + this.port + "/products", List.class);
+		assertEquals(HttpStatus.OK, dummyEntity.getStatusCode());
+
+		// Now check request metrics
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> entity = new TestRestTemplate("user", getPassword())
 				.getForEntity("http://localhost:" + this.port + "/metrics", Map.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		@SuppressWarnings("unchecked")
 		Map<String, Object> body = entity.getBody();
-		assertTrue("Wrong body: " + body, body.containsKey("counter.status.200.root"));
+		assertTrue("Wrong body: " + body, body.containsKey("counter.status.200.products"));
 	}
 
 	@Test
@@ -138,10 +125,10 @@ public class SampleActuatorApplicationTests {
 	public void testErrorPage() throws Exception {
 		ResponseEntity<String> entity = new TestRestTemplate("user", getPassword())
 				.getForEntity("http://localhost:" + this.port + "/foo", String.class);
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
+		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
 		String body = entity.getBody();
 		assertNotNull(body);
-		assertTrue("Wrong body: " + body, body.contains("\"error\":"));
+		assertTrue("Wrong body: " + body, body.contains("Not Found"));
 	}
 
 	@Test
@@ -152,7 +139,7 @@ public class SampleActuatorApplicationTests {
 		ResponseEntity<String> entity = new TestRestTemplate("user", getPassword())
 				.exchange("http://localhost:" + this.port + "/foo", HttpMethod.GET,
 						request, String.class);
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
+		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
 		String body = entity.getBody();
 		assertNotNull("Body was null", body);
 		assertTrue("Wrong body: " + body,

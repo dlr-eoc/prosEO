@@ -23,6 +23,9 @@
 
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
+		<raml-path>src/main/resources/raml/ingestor-api.raml</raml-path>
+		<raml-base-package>de.dlr.proseo.ingestor</raml-base-package>
+		<surefire.excludesFile>**/actuator/*.java</surefire.excludesFile>
 	</properties>
 
 	<dependencies>
@@ -61,6 +64,46 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- required for adding generated sources -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<!-- where to find the generated sources -->
+								<source>${raml-output-path}</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Generate Spring MVC from RAML files -->
+			<plugin>
+				<groupId>com.phoenixnap.oss</groupId>
+				<artifactId>springmvc-raml-plugin</artifactId>
+				<configuration>
+					<basePackage>de.dlr.proseo.ingestor.rest</basePackage>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-springmvc-endpoints</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>generate-springmvc-endpoints</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- Build Docker image -->
 			<plugin>
 				<groupId>com.spotify</groupId>

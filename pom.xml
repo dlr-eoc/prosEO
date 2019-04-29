@@ -7,13 +7,13 @@
 	<name>prosEO</name>
 	<description>prosEO – A Processing System for Earth Observation Data</description>
 	<packaging>pom</packaging>
-	
+
 	<url>https://github.com/dlr-eoc/prosEO/ingestor</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
-	
+
 	<parent>
 		<!-- Your own application should inherit from spring-boot-starter-parent -->
 		<groupId>org.springframework.boot</groupId>
@@ -25,18 +25,60 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<dockerfile-maven-version>1.4.10</dockerfile-maven-version>
+		<!-- Maven < 3.5.2 breaks injection of logger files when generating docker images for dockerfile-maven-plugin > 1.4.6 -->
+		<dockerfile-maven-version>1.4.6</dockerfile-maven-version>
+		<raml-plugin-version>2.0.5</raml-plugin-version>
+		<raml-output-path>target/generated-raml-mvc</raml-output-path>
 	</properties>
 
 	<modules>
 		<module>ingestor</module>
 	</modules>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.phoenixnap.oss</groupId>
+			<artifactId>springmvc-raml-plugin</artifactId>
+			<version>${raml-plugin-version}</version>
+			<type>maven-plugin</type>
+		</dependency>
 	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!-- Make sure correct Java version is used -->
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>${maven.compiler.source}</source>
+						<target>${maven.compiler.target}</target>
+					</configuration>
+				</plugin>
+				<!-- PhoenixNAP RAML Code Generator plugin used to generate sources from raml -->
+				<plugin>
+					<groupId>com.phoenixnap.oss</groupId>
+					<artifactId>springmvc-raml-plugin</artifactId>
+					<version>${raml-plugin-version}</version>
+					<configuration>
+						<!-- path to raml file -->
+						<ramlPath>${raml-path}</ramlPath>
+						<!-- output of generated code -->
+						<outputRelativePath>${raml-output-path}</outputRelativePath>
+						<addTimestampFolder>false</addTimestampFolder>
+						<!-- package for generated sources -->
+						<basePackage>${raml-base-package}</basePackage>
+						<baseUri>/</baseUri>
+						<seperateMethodsByContentType>false</seperateMethodsByContentType>
+						<useJackson1xCompatibility>false</useJackson1xCompatibility>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 </project>
