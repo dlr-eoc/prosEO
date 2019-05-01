@@ -33,6 +33,7 @@
 
 	<modules>
 		<module>ingestor</module>
+		<module>model</module>
 	</modules>
 
 	<dependencies>

@@ -43,22 +43,17 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-jdbc</artifactId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-remote-shell</artifactId>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-model</artifactId>
+			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-		</dependency>
-		<!-- <dependency> <groupId>org.crashub</groupId> <artifactId>crash.connectors.telnet</artifactId> <exclusions> <exclusion> <groupId>log4j</groupId> <artifactId>log4j</artifactId> </exclusion> <exclusion> <groupId>commons-logging</groupId> <artifactId>commons-logging</artifactId> 
-			</exclusion> </exclusions> </dependency> -->
 	</dependencies>
 
 	<build>
-		<finalName>ingestor</finalName>
+		<finalName>proseo-ingestor</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
