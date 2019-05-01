@@ -91,7 +91,7 @@
 				<executions>
 					<execution>
 						<id>generate-springmvc-endpoints</id>
-						<phase>compile</phase>
+						<phase>generate-sources</phase>
 						<goals>
 							<goal>generate-springmvc-endpoints</goal>
 						</goals>
