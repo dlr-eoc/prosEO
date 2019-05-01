@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
+import de.dlr.proseo.model.Product;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
@@ -42,15 +43,24 @@ public class ProductControllerImpl implements ProductController {
 		// TODO Auto-generated method stub
 		
 		// Dummy implementation
+		Product product123 = new Product();
+		product123.setPlUniqueId("123");
+		product123.setArchiveLocation("DEF");
+		product123.setCacheLocation("here");
+		Product productABC = new Product();
+		productABC.setPlUniqueId("456");
+		productABC.setArchiveLocation("ABC");
+		productABC.setCacheLocation("there");
+		
 		List<IngestorProduct> products = new ArrayList<>();
-		IngestorProduct product123 = new IngestorProduct("123", "DEF", "here");
-		IngestorProduct productABC = new IngestorProduct("456", "ABC", "there");
+		IngestorProduct ip123 = new IngestorProduct(product123.getPlUniqueId(), product123.getArchiveLocation(), product123.getCacheLocation());
+		IngestorProduct ipABC = new IngestorProduct(productABC.getPlUniqueId(), productABC.getArchiveLocation(), productABC.getCacheLocation());
 		if (null == id && null == descriptor) {
-			products.add(product123);
-			products.add(productABC);
+			products.add(ip123);
+			products.add(ipABC);
 		} else if (null != id) {
 			if ("123".equals(id)) {
-				products.add(product123);
+				products.add(ip123);
 			} else {
 				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID, id, 1001);
 				logger.error(message);
@@ -60,7 +70,7 @@ public class ProductControllerImpl implements ProductController {
 			}
 		} else {
 			if ("ABC".equals(descriptor)) {
-				products.add(productABC);
+				products.add(ipABC);
 			} else {
 				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_DESCRIPTOR, descriptor, 1001);
 				logger.error(message);
