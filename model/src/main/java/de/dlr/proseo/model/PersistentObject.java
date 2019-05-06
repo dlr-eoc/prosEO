@@ -19,7 +19,7 @@ import javax.persistence.MappedSuperclass;
  */
 @MappedSuperclass
 @Inheritance(strategy=InheritanceType.JOINED)
-public class PersistentObject {
+abstract public class PersistentObject {
 	/** Next object id for assignment */
 	private static long nextId = System.currentTimeMillis(); // Seeded by the current time
 
