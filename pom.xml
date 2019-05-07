@@ -34,7 +34,8 @@
 	<modules>
 		<module>ingestor</module>
 		<module>model</module>
-	</modules>
+    <module>planner</module>
+  </modules>
 	
 	<dependencyManagement>
 		<dependencies>
