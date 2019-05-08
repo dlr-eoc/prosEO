@@ -65,7 +65,7 @@
           <File_Name>src/test/resources/sample-product-out-1.txt</File_Name>
         </Output>
         <Output>
-          <File_Type>L2__O3___</File_Type>
+          <File_Type>L2__O3____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-2.txt</File_Name>
         </Output>
