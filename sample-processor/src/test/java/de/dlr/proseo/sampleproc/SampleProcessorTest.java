@@ -33,7 +33,7 @@ public class SampleProcessorTest {
 	};
 
 	/**
-	 * Make sure all input files exist
+	 * Make sure all input files exist, and all output files are removed
 	 * 
 	 * @throws java.lang.Exception if any of the input fails is missing
 	 */
@@ -44,6 +44,9 @@ public class SampleProcessorTest {
 		}
 		if (!Files.isReadable(FileSystems.getDefault().getPath(INPUT_FILE_NAME))) {
 			throw new FileNotFoundException(INPUT_FILE_NAME);
+		}
+		for (String outputFileName: OUTPUT_FILE_NAMES) {
+			Files.deleteIfExists(FileSystems.getDefault().getPath(outputFileName));
 		}
 	}
 

@@ -203,7 +203,7 @@ public class SampleProcessor {
 			
 			// Generate a product with random identifier and the file type specified in the JobOrder document
 			SampleProduct outputProduct = new SampleProduct();
-			outputProduct.setId(String.valueOf((long) Math.random()*(2^24 - 1)));
+			outputProduct.setId(String.valueOf(outputProduct.hashCode()));
 			outputProduct.setType(outputFileTypes.item(0).getTextContent());
 			outputProduct.setStartTime(inputProduct.getStartTime());
 			outputProduct.setStopTime(inputProduct.getStopTime());
