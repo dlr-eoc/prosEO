@@ -35,7 +35,8 @@
 		<module>ingestor</module>
 		<module>model</module>
     <module>planner</module>
-  </modules>
+    <module>sample-processor</module>
+	</modules>
 	
 	<dependencyManagement>
 		<dependencies>

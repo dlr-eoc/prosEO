@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>sample-processor</artifactId>
+	<name>prosEO Sample Processor</name>
+	<description>
+  		prosEO Sample Processor - dummy processor complying with ESA’s „Generic IPF Interface Specification“
+	</description>
+
+	<url>https://github.com/dlr-eoc/prosEO/ingestor</url>
+	<organization>
+		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
+		<url>http://www.dlr.de</url>
+	</organization>
+	
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+		<dependency>
+		    <groupId>ch.qos.logback</groupId>
+		    <artifactId>logback-classic</artifactId>
+		    <scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>proseo-sample-processor</finalName>
+		<plugins>
+			<!-- Build Docker image -->
+			<plugin>
+				<groupId>com.spotify</groupId>
+				<artifactId>dockerfile-maven-plugin</artifactId>
+				<version>${dockerfile-maven-version}</version>
+				<executions>
+					<execution>
+						<id>default</id>
+						<goals>
+							<goal>build</goal>
+						</goals>
+						<configuration>
+							<repository>${docker.repo.dev}/proseo-sample-processor</repository>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
