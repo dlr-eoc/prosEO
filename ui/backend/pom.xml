@@ -3,7 +3,7 @@
 
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
-		<artifactId>ui</artifactId>
+		<artifactId>proseo-ui</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 

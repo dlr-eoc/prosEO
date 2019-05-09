@@ -1,10 +1,10 @@
 /**
- * Ingestor.java
+ * CommandLineInterface.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 
-package de.dlr.proseo.ingestor;
+package de.dlr.proseo.ui.cli;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -13,7 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * prosEO Ingestor application
+ * prosEO Command Line Interface application
  * 
  * @author Dr. Thomas Bassler
  * 
@@ -22,10 +22,10 @@ import org.springframework.context.annotation.Configuration;
 @EnableAutoConfiguration
 @EnableConfigurationProperties
 @ComponentScan
-public class Ingestor {
+public class CommandLineInterface {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(Ingestor.class, args);
+		SpringApplication.run(CommandLineInterface.class, args);
 	}
 
 }

@@ -34,24 +34,13 @@
 	<modules>
 		<module>ingestor</module>
 		<module>model</module>
-    <module>planner</module>
-    <module>sample-processor</module>
-    <module>order-mgr</module>
-    <module>productclass-mgr</module>
-    <module>processor-mgr</module>
-    <module>ui</module>
+		<module>planner</module>
+		<module>sample-processor</module>
+		<module>order-mgr</module>
+		<module>productclass-mgr</module>
+		<module>processor-mgr</module>
+		<module>ui</module>
 	</modules>
-	
-	<dependencyManagement>
-		<dependencies>
-			<!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-entitymanager -->
-<!-- 			<dependency> -->
-<!-- 			    <groupId>org.hibernate</groupId> -->
-<!-- 			    <artifactId>hibernate-entitymanager</artifactId> -->
-<!-- 			    <version>5.4.2.Final</version> -->
-<!-- 			</dependency> -->
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
