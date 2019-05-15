@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:11
 WORKDIR /usr/share/sample-wrapper
 ENTRYPOINT ["/usr/bin/java", "-jar", "proseo-sample-wrapper.jar"]
 

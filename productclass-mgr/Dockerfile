@@ -1,4 +1,4 @@
-FROM java
+FROM openjdk:11
 MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
 ENTRYPOINT ["/usr/bin/java", "-jar", "/usr/share/proseo-productclass-mgr/proseo-productclass-mgr.jar"]
 
