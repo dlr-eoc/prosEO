@@ -5,8 +5,10 @@
  */
 package de.dlr.proseo.planner.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -14,8 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.rest.JobController;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1PodList;
 
 /**
  * Spring MVC controller for the prosEO Production Planner; TODO
@@ -27,6 +32,7 @@ import de.dlr.proseo.planner.rest.model.PlannerJob;
 public class JobControllerImpl implements JobController {
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
+	private static final String HTTP_HEADER_SUCCESS = "Success";
 	private static final String MSG_PREFIX = "199 proseo-planner ";
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
@@ -38,11 +44,25 @@ public class JobControllerImpl implements JobController {
 	public ResponseEntity<List<PlannerJob>> getPlannerJobsById(String id) {
 		// TODO Auto-generated method stub
 		
+		if (KubeConfig.isConnected()) {
+			V1PodList list = KubeConfig.getPodList();
+			List<PlannerJob> jobList = new ArrayList<PlannerJob>();
+			if (list != null) {
+				for (V1Pod item : list.getItems()) {
+					jobList.add(new PlannerJob(item.getMetadata().getUid(), item.getMetadata().getName()));
+				}
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+				return new ResponseEntity<>(jobList, responseHeaders, HttpStatus.FOUND);
+			}
+			
+		} 
 		String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		
 	}
 
 	/* (non-Javadoc)

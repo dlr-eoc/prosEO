@@ -53,6 +53,21 @@
 			<artifactId>proseo-model</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java</artifactId>
+    		<version>4.0.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java-proto</artifactId>
+    		<version>4.0.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java-api</artifactId>
+    		<version>4.0.0</version>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -102,8 +117,8 @@
 				</executions>
 			</plugin>
 
-			<!-- Build Docker image -->
-			<plugin>
+ 			<!-- Build Docker image -->
+ 			<plugin>
 				<groupId>com.spotify</groupId>
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<version>${dockerfile-maven-version}</version>
@@ -119,6 +134,44 @@
 					</execution>
 				</executions>
 			</plugin>
+ 
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											com.phoenixnap.oss
+										</groupId>
+										<artifactId>
+											springmvc-raml-plugin
+										</artifactId>
+										<versionRange>
+											[2.0.0,)
+										</versionRange>
+										<goals>
+											<goal>
+												generate-springmvc-endpoints
+											</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
