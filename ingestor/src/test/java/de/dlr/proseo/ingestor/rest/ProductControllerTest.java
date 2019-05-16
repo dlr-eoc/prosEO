@@ -14,9 +14,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.boot.test.TestRestTemplate;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +35,7 @@ import static org.junit.Assert.assertTrue;
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = Ingestor.class)
-@WebAppConfiguration
-@IntegrationTest("server.port=0")
+@SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 public class ProductControllerTest {
 
@@ -45,7 +44,7 @@ public class ProductControllerTest {
 	@Autowired
 	private SecurityProperties security;
 
-	@Value("${local.server.port}")
+	@LocalServerPort
 	private int port;
 
 	@Test
