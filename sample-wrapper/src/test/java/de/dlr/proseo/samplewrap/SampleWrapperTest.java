@@ -20,6 +20,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
@@ -29,7 +31,19 @@ import org.junit.Test;
  */
 public class SampleWrapperTest {
 	
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(SampleWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
+    public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_BLACK = "\u001B[30m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_WHITE = "\u001B[37m";
+    
 	/**
 	 * Used for setting required ENV VARS before TEST-RUN
 	 * @param newenv Map<String, String> env-var key&value
@@ -90,24 +104,8 @@ public class SampleWrapperTest {
 	 */
 	@Before
 	public void setUp1() throws Exception {
-	
-		Map<String,String> map1 = new HashMap<>();
-		map1.put("FS_TYPE", "POSIX");
-		map1.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
-		map1.put("S3_ENDPOINT", "test");
-		map1.put("S3_ACCESS_KEY", "test");
-		map1.put("S3_SECRET_ACCESS_KEY", "test");
-		map1.put("LOGFILE_TARGET", "test");
-		map1.put("STATE_CALLBACK_ENDPOINT", "test");
-		map1.put("SUCCESS_STATE", "test");
-		map1.put("CONTAINER_WORKDIR", "test");
-		try {
-			setEnv(map1);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+
 	}
-	
 
 	/**
 	 * Clean up: Remove generated output products
@@ -129,43 +127,89 @@ public class SampleWrapperTest {
 		
 		
 		/** working run using POSIX-JOF */
+		envmap.put("FS_TYPE", "POSIX");
+		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
+		envmap.put("S3_ENDPOINT", "test");
+		envmap.put("S3_ACCESS_KEY", "test");
+		envmap.put("S3_SECRET_ACCESS_KEY", "test");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
+		envmap.put("CONTAINER_WORKDIR", "target");
+		try {
+			setEnv(envmap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		logger.info(ANSI_YELLOW+"**TEST: working run using POSIX-JOF "+envmap+ANSI_RESET);
 		int rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 0", 0L, (long) rc);
 		
-		/** JOF-path is wrong */
 		
+		/** JOF-path is wrong */
+		envmap.clear();
+		envmap.put("FS_TYPE", "POSIX");
 		envmap.put("JOBORDER_FILE", "adadad");
+		envmap.put("S3_ENDPOINT", "test");
+		envmap.put("S3_ACCESS_KEY", "test");
+		envmap.put("S3_SECRET_ACCESS_KEY", "test");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
+		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info(ANSI_YELLOW+"**TEST: JOF-path is wrong "+envmap+ANSI_RESET);
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
+		
 		
 		/** FS_TYPE is wrong */
 		envmap.clear();
-		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
 		envmap.put("FS_TYPE", "sfsf");
+		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
+		envmap.put("S3_ENDPOINT", "test");
+		envmap.put("S3_ACCESS_KEY", "test");
+		envmap.put("S3_SECRET_ACCESS_KEY", "test");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
+		envmap.put("CONTAINER_WORKDIR", "target");
+
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is wrong "+envmap+ANSI_RESET);
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
+		
 		/** FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI */
 		envmap.clear();
-		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
 		envmap.put("FS_TYPE", "S3");
+		envmap.put("JOBORDER_FILE", JOB_ORDER_FILE_NAME);
+		envmap.put("S3_ENDPOINT", "test");
+		envmap.put("S3_ACCESS_KEY", "test");
+		envmap.put("S3_SECRET_ACCESS_KEY", "test");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
+		envmap.put("CONTAINER_WORKDIR", "target");
+		
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI "+envmap+ANSI_RESET);
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
+		
 		
 		/** working run using S3-JOF */
 		envmap.clear();
@@ -174,14 +218,19 @@ public class SampleWrapperTest {
 		envmap.put("S3_ENDPOINT", "http://localhost:9000");
 		envmap.put("S3_ACCESS_KEY", "short_access_key");
 		envmap.put("S3_SECRET_ACCESS_KEY", "short_secret_key");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
 		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info(ANSI_YELLOW+"**TEST: working run using S3-JOF "+envmap+ANSI_RESET);
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 0", 0L, (long) rc);
+		
 		
 		/** S3-JOF but using wrong s3-credentials*/
 		envmap.clear();
@@ -196,6 +245,7 @@ public class SampleWrapperTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-credentials "+envmap+ANSI_RESET);
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
