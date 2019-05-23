@@ -2,6 +2,7 @@
  * SampleWrapperTest.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2019 Hubert Asamer
  */
 package de.dlr.proseo.samplewrap;
 
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
  * 
  * @author Dr. Thomas Bassler
+ * @author Hubert Asamer
  *
  */
 public class SampleWrapperTest {
@@ -34,6 +36,7 @@ public class SampleWrapperTest {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
+	
     public static final String ANSI_RESET = "\u001B[0m";
 	public static final String ANSI_BLACK = "\u001B[30m";
 	public static final String ANSI_RED = "\u001B[31m";
@@ -239,6 +242,9 @@ public class SampleWrapperTest {
 		envmap.put("S3_ENDPOINT", "http://localhost:9000");
 		envmap.put("S3_ACCESS_KEY", "adad");
 		envmap.put("S3_SECRET_ACCESS_KEY", "weewe");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
 		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
