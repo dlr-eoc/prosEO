@@ -58,6 +58,31 @@
 		</dependency>
 	</dependencies>
 
+	<reporting>
+		<plugins>
+			<!-- Create Javadoc files for the main and test classes -->
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.1.0</version>
+				<reportSets>
+					<reportSet>
+						<id>javadocs</id>
+						<reports>
+							<report>aggregate</report>
+							<report>test-aggregate</report>
+						</reports>
+						<inherited>true</inherited>
+						<configuration>
+							<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+							<failOnError>false</failOnError>
+							<quiet>true</quiet>
+						</configuration>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting>
+
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -82,7 +107,6 @@
 						<addTimestampFolder>false</addTimestampFolder>
 						<!-- package for generated sources -->
 						<basePackage>${raml-base-package}</basePackage>
-						<baseUri>/</baseUri>
 						<seperateMethodsByContentType>false</seperateMethodsByContentType>
 						<useJackson1xCompatibility>false</useJackson1xCompatibility>
 					</configuration>
