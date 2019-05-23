@@ -138,7 +138,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
@@ -159,7 +158,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
@@ -180,7 +178,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 
 		try {
 			setEnv(envmap);
@@ -202,7 +199,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 		
 		try {
 			setEnv(envmap);
@@ -224,7 +220,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
@@ -245,7 +240,6 @@ public class SampleWrapperTest {
 		envmap.put("LOGFILE_TARGET", "test");
 		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
 		envmap.put("SUCCESS_STATE", "test");
-		envmap.put("CONTAINER_WORKDIR", "target");
 		try {
 			setEnv(envmap);
 		} catch (Exception e) {
@@ -255,6 +249,25 @@ public class SampleWrapperTest {
 		rc = (new SampleWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
+		
+		/** S3-JOF but using wrong s3-URI */
+		envmap.clear();
+		envmap.put("JOBORDER_FILE", "s3://joborers/JobOrer.609521551_KNMI.xml");
+		envmap.put("FS_TYPE", "S3");
+		envmap.put("S3_ENDPOINT", "http://localhost:9000");
+		envmap.put("S3_ACCESS_KEY", "short_access_key");
+		envmap.put("S3_SECRET_ACCESS_KEY", "short_secret_key");
+		envmap.put("LOGFILE_TARGET", "test");
+		envmap.put("STATE_CALLBACK_ENDPOINT", "test");
+		envmap.put("SUCCESS_STATE", "test");
+		try {
+			setEnv(envmap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-URI "+envmap+ANSI_RESET);
+		rc = (new SampleWrapper()).run(); 
+		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 	}
 	
