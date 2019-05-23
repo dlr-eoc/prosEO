@@ -65,7 +65,18 @@ public class SampleWrapper {
 	private static final String MSG_JOF_NOT_PARSEABLE = "JobOrder file {} not parseable ({})";
 	private static final String MSG_JOF_XPATH_NOT_FOUND = "JobOrder file Xpath {} not parseable ({})";
 	private static final String MSG_JOF_FSTYPE_NOT_FOUND = "JobOrder {} entry File_Name {} has Attribute FS_TYPE set to {}. Valid entries are: {}";
-	private static final String MSG_JOF_FSTYPE_ATTR_NOT_FOUND = "JobOrder {} entry File_Name {} has FS_TYPE set to {}. Valid entries are: {}";
+	private static final String MSG_JOF_FSTYPE_ATTR_NOT_FOUND = "JobOrder {} entry File_Name {} has no Attribute FS_TYPE and is set to {}. Valid entries are: {}";
+	
+	/** Nice colors*/
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_BLACK = "\u001B[30m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_WHITE = "\u001B[37m";
 	
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleWrapper.class);
@@ -149,6 +160,7 @@ public class SampleWrapper {
 		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty())) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY);return false;}
 		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty())) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY);return false;}
 		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE+": "+ENV_FS_TYPE+" does not allow "+ENV_JOBORDER_FILE);return false;};
+		if(ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE+": "+ENV_FS_TYPE+" does not allow "+ENV_JOBORDER_FILE);return false;};
 		if(ENV_LOGFILE_TARGET == null || ENV_LOGFILE_TARGET.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOGFILE_TARGET);return false;}
 		if(ENV_STATE_CALLBACK_ENDPOINT == null || ENV_STATE_CALLBACK_ENDPOINT.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STATE_CALLBACK_ENDPOINT);return false;}
 		if(ENV_SUCCESS_STATE == null || ENV_SUCCESS_STATE.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.SUCCESS_STATE);return false;}
@@ -175,8 +187,8 @@ public class SampleWrapper {
 		/** Set JOF-path if FS_TYPE env var (=container env var) has value `POSIX` */
 		if (ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
 			JOFContainerPath = ENV_JOBORDER_FILE;
-		}	
-		logger.info(MSG_STARTING_SAMPLE_WRAPPER, JOFContainerPath);
+		}
+		logger.info(ANSI_YELLOW+MSG_STARTING_SAMPLE_WRAPPER, JOFContainerPath+ANSI_RESET);
 
 		/** Fetch JOF if container env-var `FS_TYPE` has value `S3` */
 		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
@@ -303,7 +315,7 @@ public class SampleWrapper {
 		}
 		
 		/** STEP [6][7] request Inputs */
-		
+		// TODO: use global IPF(XML) methods
 		ArrayList<String[]> listOfInputs = getFileListFromJobOrderDoc(jobOrderDoc, Ipf_Proc.List_of_Inputs);
 		ArrayList<String[]> listOfOutputs = getFileListFromJobOrderDoc(jobOrderDoc, Ipf_Proc.List_of_Outputs);
 		if (null == listOfInputs || null==listOfOutputs) {
@@ -311,9 +323,17 @@ public class SampleWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 		
-		System.out.println(listOfInputs.get(0)[1]);
+		// DEMO:
+		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Inputs.toString()+ANSI_RESET);
+		for (String[] in : listOfInputs) {
+			System.out.println(in[0]+":"+in[1]);
+		}
+		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Outputs.toString()+ANSI_RESET);
+		for (String[] out : listOfOutputs) {
+			System.out.println(out[0]+":"+out[1]);
+		}
 		
-		logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
+		logger.info(ANSI_GREEN+MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK+ANSI_RESET);
 		return EXIT_CODE_OK;
 	}
 
