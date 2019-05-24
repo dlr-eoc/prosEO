@@ -22,7 +22,7 @@
         </encoder>
         <target>System.err</target>
     </appender>
-    
+    <logger name="software.amazon.awssdk" level="ERROR"/>
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="STDERR" />
