@@ -3,7 +3,7 @@
  */
 package de.dlr.proseo.planner.kubernetes;
 
-import de.dlr.proseo.planner.joborder.JobOrder;
+import de.dlr.proseo.model.joborder.JobOrder;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobBuilder;

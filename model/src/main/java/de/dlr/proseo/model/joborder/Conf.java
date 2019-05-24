@@ -1,16 +1,12 @@
-package de.dlr.proseo.planner.joborder;
+package de.dlr.proseo.model.joborder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import io.kubernetes.client.models.V1Pod;
 
 /**
  * @author melchinger

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.dlr.proseo.planner.joborder;
+package de.dlr.proseo.model.joborder;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

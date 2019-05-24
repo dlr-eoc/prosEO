@@ -6,3 +6,4 @@
 .factorypath
 bin/
 .vscode
+**/*~

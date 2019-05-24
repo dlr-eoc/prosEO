@@ -1,4 +1,4 @@
-package de.dlr.proseo.planner.joborder;
+package de.dlr.proseo.model.joborder;
 import java.util.ArrayList;
 import java.util.List;
 

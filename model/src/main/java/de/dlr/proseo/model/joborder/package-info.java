@@ -5,4 +5,4 @@
  * @author melchinger
  *
  */
-package de.dlr.proseo.planner.joborder;
+package de.dlr.proseo.model.joborder;

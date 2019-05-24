@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.dlr.proseo.planner.joborder;
+package de.dlr.proseo.model.joborder;
 
 import java.io.File;
 import java.io.IOException;
