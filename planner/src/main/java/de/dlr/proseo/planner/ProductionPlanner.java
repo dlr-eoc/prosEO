@@ -12,7 +12,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import de.dlr.proseo.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.joborder.JobOrder;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.kubernetes.KubeJob;
 
 import java.io.BufferedReader;
 import java.io.IOException;
