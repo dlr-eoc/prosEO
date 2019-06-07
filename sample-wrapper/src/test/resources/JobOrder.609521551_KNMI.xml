@@ -61,35 +61,35 @@
           <File_Type>CFG_CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/sw/IPF_S5P_L2_KNMI/config/20190423/CFG_CO____/S5P_OPER_CFG_CO_____00000000T000000_99999999T999999_20181022T113953.cfg</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file01.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>CFG_CO___F</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/sw/IPF_S5P_L2_KNMI/config/20190423/CFG_CO___F/S5P_OFFL_CFG_CO___F_00000000T000000_99999999T999999_20180510T000000.cfg</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file02.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>REF_SOLAR_</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/sw/IPF_S5P_L2_KNMI/config/20190423/REF_SOLAR_/S5P_OPER_REF_SOLAR__00000000T000000_99999999T999999_20180115T164926.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file03.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>REF_XS__CO</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/sw/IPF_S5P_L2_KNMI/config/20190423/REF_XS__CO/S5P_OPER_REF_XS__CO_00000000T000000_99999999T999999_20161110T141306.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file04.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>AUX_ISRF__</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/sw/IPF_S5P_L2_KNMI/config/20190423/AUX_ISRF__/S5P_OPER_AUX_ISRF___00000000T000000_99999999T999999_20180115T153214.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file05.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
@@ -97,7 +97,7 @@
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="365">
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171001T000000_20171002T000000_20170925T120000.nc</File_Name>
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171002T000000_20171003T000000_20170925T120000.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file06.txt</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171003T000000_20171004T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171004T000000_20171005T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171005T000000_20171006T000000_20170925T120000.nc</File_Name>
@@ -474,84 +474,84 @@
           <File_Type>L1B_IR_SIR</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3:///mnt/data1/storage_offl_l2/cache_offl_l2/L1B-IRRADIANCE-609521673/S5P_OFFL_L1B_IR_SIR_20171128T163259_20171128T181628_00657_02_001301_20171205T124313.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file07.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD1</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD1_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file08.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD2</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD2_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file09.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD3</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD3_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file10.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD4</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD4_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file11.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD5</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD5_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file12.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD6</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD6_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file13.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD7</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD7_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file14.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>L1B_RA_BD8</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/L1B-609521550/S5P_OFFL_L1B_RA_BD8_20180105T075307_20180105T093437_01191_01_010000_20180619T152803.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file15.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>AUX_MET_TP</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/ECMWF-FC12-609521672/ECMWF-FC12/S5P_OFFL_AUX_MET_TP_20180105T030000_20180105T120000_20180105T000000.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file16.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>AUX_MET_2D</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/ECMWF-FC12-609521672/ECMWF-FC12/S5P_OFFL_AUX_MET_2D_20180105T030000_20180105T120000_20180105T000000.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file17.txt</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>AUX_MET_QP</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/ECMWF-FC12-609521672/ECMWF-FC12/S5P_OFFL_AUX_MET_QP_20180105T030000_20180105T120000_20180105T000000.nc</File_Name>
+            <File_Name FS_TYPE="S3">s3://data/file18.txt</File_Name>
           </List_of_File_Names>
         </Input>
       </List_of_Inputs>
@@ -559,7 +559,9 @@
         <Output>
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
-          <File_Name FS_TYPE="S3">s3://mnt/data1/storage_offl_l2/cache_offl_l2/CO-609521566/S5P_OFFL_L2__CO_____20180105T075307_20180105T093437_01191_01_010301_20190425T154433.nc</File_Name>
+          <List_of_File_Names count="1">
+            <File_Name FS_TYPE="S3">s3://out/result01.txt</File_Name>
+          </List_of_File_Names>
         </Output>
       </List_of_Outputs>
     </Ipf_Proc>

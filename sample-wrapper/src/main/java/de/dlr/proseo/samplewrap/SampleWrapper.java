@@ -2,7 +2,7 @@
  * SampleWrapper.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
- * (C) 2019 Hubert Asamer
+ * (C) 2019 Hubert Asamer, DLR
  */
 package de.dlr.proseo.samplewrap;
 
@@ -11,25 +11,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
+import de.dlr.proseo.model.joborder.InputOutput;
+import de.dlr.proseo.model.joborder.IpfFileName;
+import de.dlr.proseo.model.joborder.JobOrder;
+import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.samplewrap.s3.AmazonS3URI;
 import de.dlr.proseo.samplewrap.s3.S3Ops;
 import software.amazon.awssdk.regions.Region;
@@ -61,11 +51,6 @@ public class SampleWrapper {
 	private static final String MSG_STARTING_SAMPLE_WRAPPER = "Starting sample-wrapper V00.00.01 with JobOrder file {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
-	private static final String MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER = "Error instantiating DocumentBuilder: {}";
-	private static final String MSG_JOF_NOT_PARSEABLE = "JobOrder file {} not parseable ({})";
-	private static final String MSG_JOF_XPATH_NOT_FOUND = "JobOrder file Xpath {} not parseable ({})";
-	private static final String MSG_JOF_FSTYPE_NOT_FOUND = "JobOrder {} entry File_Name {} has Attribute FS_TYPE set to {}. Valid entries are: {}";
-	private static final String MSG_JOF_FSTYPE_ATTR_NOT_FOUND = "JobOrder {} entry File_Name {} has no Attribute FS_TYPE and is set to {}. Valid entries are: {}";
 	
 	/** Nice colors*/
 	public static final String ANSI_RESET = "\u001B[0m";
@@ -80,11 +65,6 @@ public class SampleWrapper {
 	
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleWrapper.class);
-	
-	/** IPF XPATH-consts */
-	private static final String XPATH_LIST_OF_INPUTS = "/Ipf_Job_Order/List_of_Ipf_Procs/Ipf_Proc/List_of_Inputs/*/List_of_File_Names/File_Name";
-	//private static final String XPATH_LIST_OF_INPUTS = "/Ipf_Job_Order/List_of_Ipf_Procs/Ipf_Proc/List_of_Inputs/*/List_of_File_Names/File_Name[@FS_TYPE='S3']";
-	private static final String XPATH_LIST_OF_OUTPUTS = "/Ipf_Job_Order/List_of_Ipf_Procs/Ipf_Proc/List_of_Outputs/*/File_Name";
 	
 	/** IPF_Proc valid Tags Enums */
     enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
@@ -129,17 +109,6 @@ public class SampleWrapper {
     	}
 	};
 	
-	/** Check if XML Tag File_Name has Attribute FS_TYPE */
-	private Boolean checkXML_File_nameAttr(NamedNodeMap attr) {
-		if (attr.getLength() > 0) {
-			for (File_Name c : File_Name.values()) {
-				if (c.name().equals(attr.getNamedItem(File_Name.FS_TYPE.toString()).getNodeName())) {
-					return true;
-				} 
-			}
-		}
-		return false;
-	}
 	
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
@@ -167,11 +136,22 @@ public class SampleWrapper {
 		return true;
 	}
 	/**
-	 * check environment and provide JobOrderFile
+	 * provide valid container-context JobOrderFile
+	 * 
+	 * @param JobOrder remapped JobOrder object
+	 * @param path file path of newly created JOF
+	 * @return the JobOrder file valid in container context
+	 */
+	private Boolean provideContainerJOF(JobOrder jo, String path) {	
+		return jo.writeXML(path, false);
+	}
+	
+	/**
+	 * provide initial JobOrderFile
 	 * 
 	 * @return the JobOrder file
 	 */
-	private File provideJOF() {	
+	private File provideInitialJOF() {	
 		String JOFContainerPath = null;
 		// set JOF-path based on ENV
 		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
@@ -220,69 +200,69 @@ public class SampleWrapper {
 	 * @param jobOrderFile the XML file to parse
 	 * @return
 	 */
-	private Document parseJobOrderFile(File jobOrderFile) {
-		DocumentBuilder docBuilder = null;
-		try {
-			docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			logger.error(MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER, e.getMessage());
-			return null;
-		}
-		Document jobOrderDoc = null;
-		try {
-			jobOrderDoc = docBuilder.parse(jobOrderFile);
-		} catch (SAXException | IOException e) {
-			logger.error(MSG_JOF_NOT_PARSEABLE, jobOrderFile.getPath(), e.getMessage());
-			return null;
-		}
+	private JobOrder parseJobOrderFile(File jobOrderFile) {
+
+		JobOrder jobOrderDoc = null;
+		jobOrderDoc = new JobOrder();
+		jobOrderDoc.read(jobOrderFile.getAbsolutePath());
+		
+		//jobOrderDoc = docBuilder.parse(jobOrderFile);
 		return jobOrderDoc;
 	}
 	/**
-	 * Get List of Input/Output Products from JOF Doc
+	 * Fetch remote input-data to container-workdir(based on FS_TYPE) and return valid JobOrder object for container-runtime-context.
 	 * 
-	 * @param jobOrder the Documet file to parse
-	 * @param ipfProc enum weather to list Inputs or Outputs
-	 * @return
+	 * @param jo the JobOrder file to parse
+	 * @return JobOrder object valid for container-context
 	 */
-	private ArrayList<String[]> getFileListFromJobOrderDoc(Document jobOrder, Ipf_Proc ipfProc)
+	private JobOrder fetchInputData(JobOrder jo)
 	{
-		ArrayList<String[]> listOfFiles=new ArrayList<String[]>();
-		String[] fileTuple;
-		String expression = null;;
-		try {
-			XPath xpath = XPathFactory.newInstance().newXPath();
-			if (ipfProc == Ipf_Proc.List_of_Inputs) expression = XPATH_LIST_OF_INPUTS;
-			if (ipfProc == Ipf_Proc.List_of_Outputs) expression = XPATH_LIST_OF_OUTPUTS;
-			XPathExpression expr = xpath.compile(expression);
-			NodeList files = (NodeList) expr.evaluate(jobOrder, XPathConstants.NODESET);
-			for (int i=0; i<files.getLength();i++) {
-				// fileTuple [<FS_TYPE>,<FILE>]
-				fileTuple = new String[2];
-				// check if FS_TYPE Attr exists
-				Boolean fileNameAttrCheck = checkXML_File_nameAttr(files.item(i).getAttributes());
-				if (fileNameAttrCheck) {
-					// check if FS_TYPE of each file is known...
-					Boolean fileFsCheck = checkFS_TYPE(files.item(i).getAttributes().getNamedItem(File_Name.FS_TYPE.toString()).getTextContent());
-					if (fileFsCheck) {
-						fileTuple[0]=files.item(i).getAttributes().getNamedItem(File_Name.FS_TYPE.toString()).getTextContent();
-						fileTuple[1]=files.item(i).getTextContent();
-						listOfFiles.add(fileTuple);
-					} else {
-						logger.error(MSG_JOF_FSTYPE_NOT_FOUND, ipfProc, files.item(i).getTextContent(), files.item(i).getAttributes().getNamedItem(File_Name.FS_TYPE.toString()).getTextContent(), FS_TYPE.values());
-						return null;
+		S3Client s3 = s3Client();
+		if (null == s3) return null;
+		// loop all procs -> mainly only one is present
+		for(Proc item : jo.getListOfProcs()) {
+			// loop all Input
+			for (InputOutput io: item.getListOfInputs()) {
+				// loop List_of_File_Names
+				for (IpfFileName fn: io.getFileNames()) {
+					//fill original filename with current val of `File_Name` --> for later use...
+					fn.setOriginalFileName(fn.getFileName());
+					// for all S3-data we try to fetch to workdir...
+					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
+						// first set file_name to local work-dir path
+						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
+						// now fetch from S3
+						Boolean transaction = S3Ops.fetch(s3, fn.getOriginalFileName(), fn.getFileName());
+						logger.info("fetched "+fn.getOriginalFileName());
+						if (!transaction) return null;
 					}
-				} else {
-					logger.error(MSG_JOF_FSTYPE_ATTR_NOT_FOUND, ipfProc, files.item(i).getTextContent(),"null", File_Name.values());
-					return null;
 				}
 			}
-		} catch (XPathExpressionException e) {
-			logger.error(MSG_JOF_XPATH_NOT_FOUND, expression, e.getMessage());
-			return null;
+			// loop all Output
+			for (InputOutput io: item.getListOfOutputs()) {
+				// loop List_of_File_Names
+				for (IpfFileName fn: io.getFileNames()) {
+					//fill original filename with current val of `File_Name` --> for later use --> push results step
+					fn.setOriginalFileName(fn.getFileName());
+					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
+						// first set output file_name to local work-dir path
+						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
+						try {
+						  File f = new File(fn.getFileName());
+						  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
+						  else f.mkdirs();
+						} catch (SecurityException e) {
+							logger.error(e.getMessage());
+							return null;
+						}
+					}
+				}
+			}
 		}
-		return listOfFiles;
+		s3.close();
+		return jo;
 	}
-	
+
 	/**
 	 * Perform the dummy processing: check env, parse JobOrder file, read one input file, create one output file
 	 * 
@@ -302,36 +282,41 @@ public class SampleWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 		
-		File jobOrderFile = provideJOF();
+		File jobOrderFile = provideInitialJOF();
 		if (null == jobOrderFile) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
 		
-		Document jobOrderDoc = parseJobOrderFile(jobOrderFile);
+		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
 		
-		/** STEP [6][7] request Inputs */
-		// TODO: use global IPF(XML) methods
-		ArrayList<String[]> listOfInputs = getFileListFromJobOrderDoc(jobOrderDoc, Ipf_Proc.List_of_Inputs);
-		ArrayList<String[]> listOfOutputs = getFileListFromJobOrderDoc(jobOrderDoc, Ipf_Proc.List_of_Outputs);
-		if (null == listOfInputs || null==listOfOutputs) {
+		/** STEP [6][7][8] request Inputs & remap JOF*/
+		JobOrder joWork = null;
+		joWork = fetchInputData(jobOrderDoc);
+		if (null == joWork) {
+			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			return EXIT_CODE_FAILURE;
+		}
+		Boolean containerJOF = provideContainerJOF(joWork, "Container-JOF.xml");
+		if (!containerJOF) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
 		
+		
 		// DEMO:
-		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Inputs.toString()+ANSI_RESET);
-		for (String[] in : listOfInputs) {
-			System.out.println(in[0]+":"+in[1]);
-		}
-		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Outputs.toString()+ANSI_RESET);
-		for (String[] out : listOfOutputs) {
-			System.out.println(out[0]+":"+out[1]);
-		}
+//		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Inputs.toString()+ANSI_RESET);
+//		for (String[] in : listOfInputs) {
+//			System.out.println(in[0]+":"+in[1]);
+//		}
+//		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Outputs.toString()+ANSI_RESET);
+//		for (String[] out : listOfOutputs) {
+//			System.out.println(out[0]+":"+out[1]);
+//		}
 		
 		logger.info(ANSI_GREEN+MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK+ANSI_RESET);
 		return EXIT_CODE_OK;
