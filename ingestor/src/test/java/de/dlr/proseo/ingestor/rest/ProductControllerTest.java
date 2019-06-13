@@ -11,8 +11,9 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -23,8 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-
 import de.dlr.proseo.ingestor.Ingestor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,11 +46,16 @@ public class ProductControllerTest {
 	@LocalServerPort
 	private int port;
 
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
+
 	@Test
 	public void testProducts() throws Exception {
+		String testUrl = "http://localhost:" + this.port + "/proseo/ingestor/v0.1/products";
+		logger.info("Testing URL {}", testUrl);
+		
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<List> entity = new TestRestTemplate("user", getPassword())
-				.getForEntity("http://localhost:" + this.port + "/products", List.class);
+				.getForEntity(testUrl, List.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> body = entity.getBody();
@@ -61,9 +65,12 @@ public class ProductControllerTest {
 
 	@Test
 	public void testProductsError() throws Exception {
+		String testUrl = "http://localhost:" + this.port + "/proseo/ingestor/v0.1/products/?id=789";
+		logger.info("Testing URL {}", testUrl);
+		
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = new TestRestTemplate("user", getPassword())
-				.getForEntity("http://localhost:" + this.port + "/products/?id=789", List.class);
+		ResponseEntity<Map> entity = new TestRestTemplate("user", getPassword())
+				.getForEntity(testUrl, Map.class);
 		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
 		HttpHeaders headers = entity.getHeaders();
 		assertEquals("199", headers.get(HTTP_HEADER_WARNING).get(0).substring(0, 3)); // non-specific warning

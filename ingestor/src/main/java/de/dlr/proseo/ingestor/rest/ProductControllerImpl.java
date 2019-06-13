@@ -40,6 +40,7 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<List<IngestorProduct>> getIngestorProducts(String id, String descriptor) {
+		logger.trace(">>> Entering getIngestorProducts");
 		// TODO Auto-generated method stub
 		
 		// Dummy implementation
@@ -66,6 +67,7 @@ public class ProductControllerImpl implements ProductController {
 				logger.error(message);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
+				logger.trace("<<< Leaving getIngestorProducts with error 'Invalid ID'");
 				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 			}
 		} else {
@@ -76,10 +78,12 @@ public class ProductControllerImpl implements ProductController {
 				logger.error(message);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
+				logger.trace("<<< Leaving getIngestorProducts with error 'Invalid descriptor'");
 				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 			}
 		}
 		logger.debug("Returning " + products);
+		logger.trace("<<< Leaving getIngestorProducts with products " + products);
 		return new ResponseEntity<>(products, HttpStatus.OK);
 	}
 

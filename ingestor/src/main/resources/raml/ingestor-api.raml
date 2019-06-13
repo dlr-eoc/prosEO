@@ -2,7 +2,10 @@
 title: prosEO Ingestor REST Services API
 version: v0.1
 protocols: [ HTTPS ] 
-baseUri: https://proseo.eoc.dlr.de/{version}/ingestor
+baseUri: /proseo/ingestor/{version}
+baseUriParameters:
+  port:
+    description: The port the application is running on
 mediaType: application/json
 
 securitySchemes:
