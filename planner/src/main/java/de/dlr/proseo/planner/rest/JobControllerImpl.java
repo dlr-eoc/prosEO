@@ -1,12 +1,12 @@
 /**
  * JobControllerImpl.java
- * 
- * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.planner.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -14,8 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1PodList;
 
 /**
  * Spring MVC controller for the prosEO Production Planner; TODO
@@ -27,35 +31,50 @@ import de.dlr.proseo.planner.rest.model.PlannerJob;
 public class JobControllerImpl implements JobController {
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
+	private static final String HTTP_HEADER_SUCCESS = "Success";
 	private static final String MSG_PREFIX = "199 proseo-planner ";
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.planner.rest.JobController#getPlannerJobsById(java.lang.String)
-	 */
-	@Override
-	public ResponseEntity<List<PlannerJob>> getPlannerJobsById(String id) {
+    public ResponseEntity<PlannerJob> getPlannerJobByName(String name) {
 		// TODO Auto-generated method stub
-		
-		String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
+		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.planner.rest.JobController#createPlannerJob(de.dlr.proseo.ingestor.rest.model.PlannerJob)
-	 */
-	@Override
-	public ResponseEntity<PlannerJob> createPlannerJob(PlannerJob plannerJob) {
+    public ResponseEntity<PlannerJob> updateJob(String name) {
 		// TODO Auto-generated method stub
-		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	KubeJob aJob = KubeConfig.createJob(name);
+    	if (aJob != null) {
+    		PlannerJob aPlan = new PlannerJob();
+    		aPlan.setId(((Integer)aJob.getJobId()).toString());
+    		aPlan.setDescription(aJob.getJobName());
+    		HttpHeaders responseHeaders = new HttpHeaders();
+    		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+    		return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
+    	}
+    	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+    public ResponseEntity<PlannerJob> deleteJobByName(String name) {
+		// TODO Auto-generated method stub
+    	boolean result = KubeConfig.deleteJob(name);
+    	if (result) {
+    		String message = String.format(MSG_PREFIX + "job deleted (%s)", name);
+    		logger.error(message);
+    		HttpHeaders responseHeaders = new HttpHeaders();
+    		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+    		return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+    	}
+    	String message = String.format(MSG_PREFIX + "DELETE not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-
 }

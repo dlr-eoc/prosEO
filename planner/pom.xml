@@ -36,14 +36,20 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+<!-- 		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
+ -->		
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -52,6 +58,21 @@
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java</artifactId>
+    		<version>4.0.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java-proto</artifactId>
+    		<version>4.0.0</version>
+		</dependency>
+		<dependency>
+    		<groupId>io.kubernetes</groupId>
+    		<artifactId>client-java-api</artifactId>
+    		<version>4.0.0</version>
 		</dependency>
 	</dependencies>
 	
@@ -102,8 +123,8 @@
 				</executions>
 			</plugin>
 
-			<!-- Build Docker image -->
-			<plugin>
+ 			<!-- Build Docker image -->
+ 			<plugin>
 				<groupId>com.spotify</groupId>
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<version>${dockerfile-maven-version}</version>
@@ -119,6 +140,65 @@
 					</execution>
 				</executions>
 			</plugin>
+ 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>joborder-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <disableXmlReport>false</disableXmlReport>
+                            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                            <reportFormat>plain</reportFormat>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											com.phoenixnap.oss
+										</groupId>
+										<artifactId>
+											springmvc-raml-plugin
+										</artifactId>
+										<versionRange>
+											[2.0.0,)
+										</versionRange>
+										<goals>
+											<goal>
+												generate-springmvc-endpoints
+											</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>

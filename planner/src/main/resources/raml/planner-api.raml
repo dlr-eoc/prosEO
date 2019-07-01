@@ -1,27 +1,9 @@
 #%RAML 1.0
 title: prosEO Production Planner REST Services API
 version: v0.1
-protocols: [ HTTPS ] 
+protocols: [ HTTP, HTTPS ] 
 baseUri: /proseo/planner/{version}
 mediaType: application/json
-
-securitySchemes:
-  basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
-    type: Basic Authentication
-    describedBy:
-      headers:
-        Authorization:
-          description: Used to send the Base64-encoded "username:password"
-                       credentials
-          type: string
-      responses:
-        401:
-          description: |
-            Unauthorized. Either the provided username and password
-            combination is invalid, or the user is not allowed to access
-            the content provided by the requested URL.
 
 types:
   PlannerJob: !include types/planner-job.raml
@@ -67,16 +49,37 @@ resourceTypes:
           application/json:
             type: PlannerJob[]
             example: !include examples/planner-job-list.json
-  post:
+  put:
     description: Create a new job
     body:
       application/json:
         type: PlannerJob
-        example: !include examples/planner-job.json
-    responses:
-      201:
-        body:
-          application/json:
-            type: PlannerJob
-            example: !include examples/planner-job.json
-  
+        example: !include examples/planner-job.json         
+/job:
+  /{name}:
+    get:
+      description: Get production planner job
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJob
+              example: !include examples/planner-job.json
+    post:
+      description: Create production planner job
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJob
+              example: !include examples/planner-job.json
+    delete:
+      description: Delete production planner job
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJob
+              example: !include examples/planner-job.json
+
+

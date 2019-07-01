@@ -22,8 +22,8 @@
         </encoder>
         <target>System.err</target>
     </appender>
-    
-    <root level="DEBUG">
+    <logger name="software.amazon.awssdk" level="ERROR"/>
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="STDERR" />
     </root>

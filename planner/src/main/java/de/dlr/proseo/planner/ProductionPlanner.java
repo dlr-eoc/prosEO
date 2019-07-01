@@ -12,6 +12,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
+
 /*
  * prosEO Ingestor application
  * 
@@ -25,6 +27,9 @@ import org.springframework.context.annotation.Configuration;
 public class ProductionPlanner {
 
 	public static void main(String[] args) throws Exception {
+
+		KubeConfig.connect();
+		
 		SpringApplication.run(ProductionPlanner.class, args);
 	}
 

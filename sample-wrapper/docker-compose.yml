@@ -1,0 +1,43 @@
+# Creates a valid S3-Endpoint at localhost:9000
+# =============================================
+# use e.g. awscli or JAVA AWS JDK
+#
+# aws cli
+# =======
+# pip install awscli
+# pip install certifi  
+# [dev1@gate0 ~]$ aws configure
+# AWS Access Key ID [****************_key]: short_access_key
+# AWS Secret Access Key [****************_key]: short_secret_key
+# Default region name [None]:
+# Default output format [json]:
+# [dev1@gate0 ~]$ aws configure set default.s3.signature_version s3v4
+# [dev1@gate0 ~]$ aws --endpoint-url http://127.0.0.1:9000 s3 ls
+# 2019-05-17 16:13:15 joborders
+# [dev1@gate0 ~]$ aws --endpoint-url http://127.0.0.1:9000 s3 ls joborders/
+# 2019-05-17 16:13:15       7320 JobOrder.609521551_DLR.xml
+# 2019-05-17 16:13:15      70604 JobOrder.609521551_KNMI.xml
+#
+# java-sdk
+# ========
+# https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/examples-s3-objects.html
+version: '2.2'
+services:
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=short_access_key
+      - MINIO_SECRET_KEY=short_secret_key
+    volumes:
+      - minio:/data
+    ports:
+      - "9000:9000"
+    hostname: minio
+    networks:
+      - proseo
+volumes:
+  minio:
+networks:
+  proseo:
+    driver: bridge
