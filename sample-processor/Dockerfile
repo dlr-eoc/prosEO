@@ -1,6 +1,6 @@
 FROM openjdk:11
 WORKDIR /usr/share/sample-processor
-ENTRYPOINT ["/usr/bin/java", "-jar", "proseo-sample-processor.jar"]
+ENTRYPOINT ["java", "-jar", "proseo-sample-processor.jar"]
 
 #ADD target/lib /usr/share/sample-processor/lib
 ADD target/proseo-sample-processor-jar-with-dependencies.jar proseo-sample-processor.jar

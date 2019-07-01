@@ -1,6 +1,6 @@
 FROM openjdk:11
 WORKDIR /usr/share/sample-wrapper
-ENTRYPOINT ["/usr/bin/java", "-jar", "proseo-sample-wrapper.jar"]
+ENTRYPOINT ["java", "-jar", "proseo-sample-wrapper.jar"]
 
 #ADD target/lib /usr/share/sample-wrapper/lib
 ADD target/proseo-sample-wrapper-jar-with-dependencies.jar proseo-sample-wrapper.jar
