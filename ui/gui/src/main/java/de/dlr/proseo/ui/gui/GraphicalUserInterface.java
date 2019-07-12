@@ -7,10 +7,8 @@
 package de.dlr.proseo.ui.gui;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 
 /**
  * prosEO Graphical User Interface application
@@ -18,10 +16,11 @@ import org.springframework.context.annotation.Configuration;
  * @author Dr. Thomas Bassler
  * 
  */
-@Configuration
-@EnableAutoConfiguration
-@EnableConfigurationProperties
-@ComponentScan
+@SpringBootApplication
+//@Configuration
+//@EnableAutoConfiguration
+//@EnableConfigurationProperties
+//@ComponentScan
 public class GraphicalUserInterface {
 
 	public static void main(String[] args) throws Exception {
