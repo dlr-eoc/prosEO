@@ -2,7 +2,16 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
         hibernate.ddl-auto: update
+        properties:
+            javax:
+                persistence:
+                    schema-generation:
+                        create-source: metadata
+                        scripts:
+                            create-target: src/main/resources/proseo-schema.sql
+                            action: create
     datasource:
         url: jdbc:mysql://localhost:3306/proseo?serverTimezone=Europe/Berlin
         username: root
         password: sequel09Master
+                        

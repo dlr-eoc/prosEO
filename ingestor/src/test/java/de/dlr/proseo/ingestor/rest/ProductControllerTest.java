@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.ingestor.ProductRepository;
 import de.dlr.proseo.ingestor.Ingestor;
-import de.dlr.proseo.model.Product;
+import de.dlr.proseo.ingestor.Product;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -56,8 +58,8 @@ public class ProductControllerTest {
     @Autowired
     private TestEntityManager entityManager;
 
-//    @Autowired
-//    private BasicRepository<Product> products;
+    @Autowired
+    private ProductRepository products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
@@ -65,11 +67,18 @@ public class ProductControllerTest {
 	@Test
 	public void testJpa() {
 		logger.info("Preparing test products");
+		
 		Product product1 = new Product();
 		product1.setPlUniqueId("abcdef");
 		entityManager.persist(product1);
 		
-//		products.findAll().forEach(product -> { logger.info("Found product {}", product.getPlUniqueId()); });
+		logger.info("Retrieving all products");
+		
+		for (Product product: products.findAll()) {
+			logger.info("Found product {}", product.getPlUniqueId());
+		}
+		
+		logger.info("JPA test complete");
 	}
 
 	@Test

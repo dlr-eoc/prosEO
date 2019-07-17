@@ -3,7 +3,7 @@
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.model;
+package de.dlr.proseo.ingestor;
 
 import java.io.Serializable;
 import java.util.HashMap;
