@@ -9,15 +9,12 @@ package de.dlr.proseo.ingestor.rest;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,8 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.dao.BasicRepository;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -58,24 +53,24 @@ public class ProductControllerTest {
 	@LocalServerPort
 	private int port;
 
-//    @Autowired
-//    private TestEntityManager entityManager;
-//
+    @Autowired
+    private TestEntityManager entityManager;
+
 //    @Autowired
 //    private BasicRepository<Product> products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
-//	@Test
-//	public void testJpa() {
-//		logger.info("Preparing test products");
-//		Product product1 = new Product();
-//		product1.setPlUniqueId("abcdef");
-//		entityManager.persist(product1);
-//		
+	@Test
+	public void testJpa() {
+		logger.info("Preparing test products");
+		Product product1 = new Product();
+		product1.setPlUniqueId("abcdef");
+		entityManager.persist(product1);
+		
 //		products.findAll().forEach(product -> { logger.info("Found product {}", product.getPlUniqueId()); });
-//	}
+	}
 
 	@Test
 	public void testProducts() throws Exception {
