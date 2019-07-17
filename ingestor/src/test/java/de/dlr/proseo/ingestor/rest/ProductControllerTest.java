@@ -58,24 +58,24 @@ public class ProductControllerTest {
 	@LocalServerPort
 	private int port;
 
-    @Autowired
-    private TestEntityManager entityManager;
-
+//    @Autowired
+//    private TestEntityManager entityManager;
+//
 //    @Autowired
 //    private BasicRepository<Product> products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
-	@Test
-	public void testJpa() {
-		logger.info("Preparing test products");
-		Product product1 = new Product();
-		product1.setPlUniqueId("abcdef");
-		entityManager.persist(product1);
-		
+//	@Test
+//	public void testJpa() {
+//		logger.info("Preparing test products");
+//		Product product1 = new Product();
+//		product1.setPlUniqueId("abcdef");
+//		entityManager.persist(product1);
+//		
 //		products.findAll().forEach(product -> { logger.info("Found product {}", product.getPlUniqueId()); });
-	}
+//	}
 
 	@Test
 	public void testProducts() throws Exception {
