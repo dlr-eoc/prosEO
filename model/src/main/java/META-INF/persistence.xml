@@ -11,6 +11,12 @@
 		<class>de.dlr.proseo.model.Product</class>
 		
 		<properties>
+			<property name="hibernate.connection.datasource" value="java:/comp/env/jdbc/proseo" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5InnoDBDialect" />
+			<property name="hibernate.show_sql" value="false" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="javax.persistence.schema-generation.scripts.create-target" value="src/main/resources/proseo-schema.sql"/>
+			<property name="javax.persistence.schema-generation.scripts.action" value="create"/>
 		</properties>
 	</persistence-unit>
 </persistence>

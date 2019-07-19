@@ -30,7 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.model.Product;
+<<<<<<< HEAD
 import de.dlr.proseo.model.dao.ProductRepository;
+=======
+>>>>>>> stash
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -57,8 +60,8 @@ public class ProductControllerTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    @Autowired
-    private ProductRepository products;
+//    @Autowired
+//    private BasicRepository<Product> products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
@@ -66,18 +69,11 @@ public class ProductControllerTest {
 	@Test
 	public void testJpa() {
 		logger.info("Preparing test products");
-		
 		Product product1 = new Product();
 		product1.setPlUniqueId("abcdef");
 		entityManager.persist(product1);
 		
-		logger.info("Retrieving all products");
-		
-		for (Product product: products.findAll()) {
-			logger.info("Found product {}", product.getPlUniqueId());
-		}
-		
-		logger.info("JPA test complete");
+//		products.findAll().forEach(product -> { logger.info("Found product {}", product.getPlUniqueId()); });
 	}
 
 	@Test
