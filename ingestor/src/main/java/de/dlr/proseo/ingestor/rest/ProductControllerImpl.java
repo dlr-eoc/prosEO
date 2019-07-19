@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
-import de.dlr.proseo.ingestor.Product;
+import de.dlr.proseo.model.Product;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest

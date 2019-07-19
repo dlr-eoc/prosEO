@@ -9,6 +9,7 @@ package de.dlr.proseo.ingestor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * prosEO Ingestor application
@@ -18,6 +19,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  */
 @SpringBootApplication
 @EnableConfigurationProperties
+@ComponentScan(basePackages={"de.dlr.proseo"})
 public class Ingestor {
 
 	public static void main(String[] args) throws Exception {

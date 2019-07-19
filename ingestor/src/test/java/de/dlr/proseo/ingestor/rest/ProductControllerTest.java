@@ -21,7 +21,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +28,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.ingestor.ProductRepository;
 import de.dlr.proseo.ingestor.Ingestor;
-import de.dlr.proseo.ingestor.Product;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.dao.ProductRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
