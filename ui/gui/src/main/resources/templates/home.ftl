@@ -5,6 +5,6 @@
   <title>Welcome!</title>
 </head>
 <body>
-${message}
+<p>Test<p>
 </body>
 </html>
