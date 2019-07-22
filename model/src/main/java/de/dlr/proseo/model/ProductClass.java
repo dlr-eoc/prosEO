@@ -5,7 +5,11 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.Set;
+
+import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 /**
  * A class of products pertaining to a specific Mission, e. g. the L2_O3 products of Sentinel-5P. A ProductClass can describe
@@ -29,6 +33,14 @@ public class ProductClass extends PersistentObject {
 	/** A short description of the product type to display as informational text on the user interface */
 	private String description;
 	
+	/** Set of component product classes */
+	@OneToMany
+	private Set<ProductClass> componentClasses;
+	/** Product class for which this product class is a component */
+	@ManyToOne
+	private ProductClass enclosingClass;
+	
+	
 	/**
 	 * Gets the mission this product class belongs to
 	 * @return the mission
@@ -36,6 +48,7 @@ public class ProductClass extends PersistentObject {
 	public Mission getMission() {
 		return mission;
 	}
+	
 	/**
 	 * Sets the mission this product class belongs to
 	 * @param mission the mission to set
@@ -43,6 +56,7 @@ public class ProductClass extends PersistentObject {
 	public void setMission(Mission mission) {
 		this.mission = mission;
 	}
+	
 	/**
 	 * Gets the prosEO-internal product class type
 	 * @return the type
@@ -50,6 +64,7 @@ public class ProductClass extends PersistentObject {
 	public String getType() {
 		return type;
 	}
+	
 	/**
 	 * Sets the prosEO-internal product class type
 	 * @param type the type to set
@@ -57,6 +72,7 @@ public class ProductClass extends PersistentObject {
 	public void setType(String type) {
 		this.type = type;
 	}
+	
 	/**
 	 * Gets the product class type as defined by the mission
 	 * @return the missionType
@@ -64,6 +80,7 @@ public class ProductClass extends PersistentObject {
 	public String getMissionType() {
 		return missionType;
 	}
+	
 	/**
 	 * Sets the product class type as defined by the mission
 	 * @param missionType the missionType to set
@@ -71,6 +88,7 @@ public class ProductClass extends PersistentObject {
 	public void setMissionType(String missionType) {
 		this.missionType = missionType;
 	}
+	
 	/**
 	 * Gets the product class description
 	 * @return the description
@@ -78,12 +96,45 @@ public class ProductClass extends PersistentObject {
 	public String getDescription() {
 		return description;
 	}
+	
 	/**
 	 * Sets the product class description
 	 * @param description the description to set
 	 */
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	
+	/**
+	 * Gets the product classes of component products
+	 * @return the componentClasses
+	 */
+	public Set<ProductClass> getComponentClasses() {
+		return componentClasses;
+	}
+	
+	/**
+	 * Sets the product classes for component products
+	 * @param componentClasses the componentClasses to set
+	 */
+	public void setComponentClasses(Set<ProductClass> componentClasses) {
+		this.componentClasses = componentClasses;
+	}
+	
+	/**
+	 * Gets the product classes of an enclosing product
+	 * @return the enclosingClass
+	 */
+	public ProductClass getEnclosingClass() {
+		return enclosingClass;
+	}
+	
+	/**
+	 * Sets the product classes for an enclosing product
+	 * @param enclosingClass the enclosingClass to set
+	 */
+	public void setEnclosingClass(ProductClass enclosingClass) {
+		this.enclosingClass = enclosingClass;
 	}
 	
 	@Override

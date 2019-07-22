@@ -5,7 +5,13 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 
 /**
  * The abstraction of a spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.
@@ -23,6 +29,10 @@ public class Spacecraft extends PersistentObject {
 	private String code;
 	/** The spacecraft name (e. g. Sentinel-5 Precursor) */
 	private String name;
+	/** The orbits this spacecraft performs */
+	@OneToMany(cascade = CascadeType.ALL)
+	@OrderBy("orbitNumber")
+	private List<Orbit> orbits;
 	
 	/**
 	 * Gets the spacecraft code

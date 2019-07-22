@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -21,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.model.Product;
-<<<<<<< HEAD
 import de.dlr.proseo.model.dao.ProductRepository;
-=======
->>>>>>> stash
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -61,7 +60,7 @@ public class ProductControllerTest {
     private TestEntityManager entityManager;
 
 //    @Autowired
-//    private BasicRepository<Product> products;
+//    private ProductRepository products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
@@ -70,10 +69,9 @@ public class ProductControllerTest {
 	public void testJpa() {
 		logger.info("Preparing test products");
 		Product product1 = new Product();
-		product1.setPlUniqueId("abcdef");
 		entityManager.persist(product1);
 		
-//		products.findAll().forEach(product -> { logger.info("Found product {}", product.getPlUniqueId()); });
+//		products.findAll().forEach(product -> { logger.info("Found product {}", product.getId()); });
 	}
 
 	@Test
@@ -87,8 +85,8 @@ public class ProductControllerTest {
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> body = entity.getBody();
-		assertEquals("123", body.get(0).get("id"));
-		assertEquals("ABC", body.get(1).get("descriptor"));
+		assertEquals(123L, body.get(0).get("id"));
+		assertEquals("2019-07-22T13:57:38.654321", body.get(1).get("sensingStart"));
 	}
 
 	@Test

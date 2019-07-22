@@ -5,8 +5,13 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -30,8 +35,10 @@ public class ProductControllerImpl implements ProductController {
 	
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ingestor ";
-	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_DESCRIPTOR = MSG_PREFIX + "IngestorProduct with descriptor %s not found (%d)";
+	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START = MSG_PREFIX + "IngestorProduct with sensing start time %s not found (%d)";
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID = MSG_PREFIX + "IngestorProduct with id %s not found (%d)";
+	
+	private static final DateTimeFormatter ipfDtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
@@ -39,29 +46,31 @@ public class ProductControllerImpl implements ProductController {
 	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#getProducts(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public ResponseEntity<List<IngestorProduct>> getIngestorProducts(String id, String descriptor) {
+	public ResponseEntity<List<IngestorProduct>> getIngestorProducts(Long id, String sensingStart) {
 		logger.trace(">>> Entering getIngestorProducts");
 		// TODO Auto-generated method stub
 		
 		// Dummy implementation
 		Product product123 = new Product();
-		product123.setPlUniqueId("123");
-		product123.setArchiveLocation("DEF");
-		product123.setCacheLocation("here");
+		product123.setId(123L);
+		product123.setSensingStartTime(ipfDtf.parse("2019-07-22T12:27:38.654321", Instant::from));
+		product123.setSensingStopTime(ipfDtf.parse("2019-07-22T13:57:38.654321", Instant::from));
 		Product productABC = new Product();
-		productABC.setPlUniqueId("456");
-		productABC.setArchiveLocation("ABC");
-		productABC.setCacheLocation("there");
+		productABC.setId(456L);
+		productABC.setSensingStartTime(ipfDtf.parse("2019-07-22T13:57:38.654321", Instant::from));
+		productABC.setSensingStopTime(ipfDtf.parse("2019-07-22T15:27:38.654321", Instant::from));
 		
 		List<IngestorProduct> products = new ArrayList<>();
-		IngestorProduct ip123 = new IngestorProduct(product123.getPlUniqueId(), product123.getArchiveLocation(), product123.getCacheLocation());
-		IngestorProduct ipABC = new IngestorProduct(productABC.getPlUniqueId(), productABC.getArchiveLocation(), productABC.getCacheLocation());
-		if (null == id && null == descriptor) {
+		IngestorProduct ip123 = new IngestorProduct(product123.getId(), ipfDtf.format(product123.getSensingStartTime()), ipfDtf.format(product123.getSensingStopTime()));
+		IngestorProduct ipABC = new IngestorProduct(productABC.getId(), ipfDtf.format(productABC.getSensingStartTime()), ipfDtf.format(productABC.getSensingStopTime()));
+		if (null == id && null == sensingStart) {
 			products.add(ip123);
 			products.add(ipABC);
 		} else if (null != id) {
-			if ("123".equals(id)) {
+			if (123L == id) {
 				products.add(ip123);
+			} else if (456L == id) {
+				products.add(ipABC);
 			} else {
 				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID, id, 1001);
 				logger.error(message);
@@ -71,10 +80,12 @@ public class ProductControllerImpl implements ProductController {
 				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 			}
 		} else {
-			if ("ABC".equals(descriptor)) {
+			if ("2019-07-22T13:57:38.654321".equals(sensingStart)) {
 				products.add(ipABC);
+			} else if ("2019-07-22T12:27:38.654321".equals(sensingStart)) {
+				products.add(ip123);
 			} else {
-				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_DESCRIPTOR, descriptor, 1001);
+				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START, sensingStart, 1001);
 				logger.error(message);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -96,38 +107,20 @@ public class ProductControllerImpl implements ProductController {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#getProductById(java.lang.String)
-	 */
 	@Override
-	public ResponseEntity<IngestorProduct> getIngestorProductById(String id) {
+	public ResponseEntity<IngestorProduct> getIngestorProductById(Long id) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#updateProduct(java.lang.String, de.dlr.proseo.ingestor.rest.model.IngestorProduct)
-	 */
 	@Override
-	public ResponseEntity<IngestorProduct> updateIngestorProduct(String id, IngestorProduct product) {
+	public ResponseEntity<IngestorProduct> updateIngestorProduct(Long id, @Valid IngestorProduct ingestorProduct) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#deleteProductById(java.lang.String)
-	 */
 	@Override
-	public ResponseEntity<?> deleteProductById(String id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#getProductByDescriptor(java.lang.String)
-	 */
-	@Override
-	public ResponseEntity<IngestorProduct> getIngestorProductByDescriptor(String descriptor) {
+	public ResponseEntity<?> deleteProductById(Long id) {
 		// TODO Auto-generated method stub
 		return null;
 	}

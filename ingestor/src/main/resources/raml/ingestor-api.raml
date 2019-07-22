@@ -63,8 +63,10 @@ resourceTypes:
   get:
     description: List of all products matching query parameters
     queryParameters:
-      id?: string
-      descriptor?: string
+      id?:
+        type: integer
+        format: long
+      sensingStart?: string
     responses:
       200:
         body:
@@ -84,6 +86,10 @@ resourceTypes:
             type: IngestorProduct
             example: !include examples/ingestor-product.json
   /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
     get:
       description: Get a product by ID
       responses:
@@ -106,13 +112,3 @@ resourceTypes:
     delete:
       responses:
         204:
-  /descriptor/{descriptor}:
-    get:
-      description: Get a product by descriptor
-      responses:
-        200:
-          body:
-            application/json:
-              type: IngestorProduct
-              example: !include examples/ingestor-product-full.json
-  

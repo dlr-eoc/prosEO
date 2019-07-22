@@ -1,1 +1,1 @@
-{ "id" : "0ae234-887f26", "descriptor" : "S5P.TROPOMI.CO2://yyyy", "location" : "file://x.y.z/dir/file" }
+{ "id" : 123, "sensingStart" : "2019-07-22T12:27:38.654321", "sensingStop" : "2019-07-22T13:57:38.654321" }

@@ -7,7 +7,7 @@ package de.dlr.proseo.model;
 
 import java.util.Set;
 
-import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 
 /**

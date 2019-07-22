@@ -9,10 +9,13 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 /**
  * Representation of a data product
@@ -24,11 +27,23 @@ import javax.persistence.Entity;
 public class Product extends PersistentObject {
 	
 	/** Product class this products instantiates */
+	@ManyToOne
 	private ProductClass productClass;
 	/** Sensing start time */
 	private Instant sensingStartTime;
 	/** Sensing stop time */
 	private Instant sensingStopTime;
+	
+	/** Set of component products */
+	@OneToMany
+	private Set<Product> componentProducts;
+	/** Product for which this product is a component */
+	@ManyToOne
+	private Product enclosingProduct;
+	
+	/** Orbit relationship of this product, if any */
+	@ManyToOne
+	private Orbit orbit;
 	
 	/**
 	 * A collection of mission-specific parameters for this object
@@ -262,6 +277,78 @@ public class Product extends PersistentObject {
 		this.sensingStopTime = sensingStopTime;
 	}
 
+	/**
+	 * Gets the sub-products of this product
+	 * 
+	 * @return the componentProducts
+	 */
+	public Set<Product> getComponentProducts() {
+		return componentProducts;
+	}
+	
+	/**
+	 * Sets the sub-products of this product
+	 * 
+	 * @param componentProducts the componentProducts to set
+	 */
+	public void setComponentProducts(Set<Product> componentProducts) {
+		this.componentProducts = componentProducts;
+	}
+	
+	/**
+	 * Gets the enclosing product of this product
+	 * 
+	 * @return the enclosingProduct
+	 */
+	public Product getEnclosingProduct() {
+		return enclosingProduct;
+	}
+	
+	/**
+	 * Sets the enclosing product of this product
+	 * 
+	 * @param enclosingProduct the enclosingProduct to set
+	 */
+	public void setEnclosingProduct(Product enclosingProduct) {
+		this.enclosingProduct = enclosingProduct;
+	}
+	
+	/**
+	 * Gets the orbit for this product
+	 * 
+	 * @return the orbit (or null, if this product is not associated to an orbit)
+	 */
+	public Orbit getOrbit() {
+		return orbit;
+	}
+	
+	/**
+	 * Sets the orbit for this product
+	 * 
+	 * @param orbit the orbit to set (may be null)
+	 */
+	public void setOrbit(Orbit orbit) {
+		this.orbit = orbit;
+	}
+	
+	/**
+	 * Gets the product parameters
+	 * 
+	 * @return the parameters
+	 */
+	public Map<String, Parameter> getParameters() {
+		return parameters;
+	}
+	
+	/**
+	 * Sets the product parameters
+	 * 
+	 * @param parameters the parameters to set
+	 */
+	public void setParameters(Map<String, Parameter> parameters) {
+		this.parameters = parameters;
+	}
+	
 	/**
 	 * Get a named String parameter
 	 * @return the parameter value casted to String
