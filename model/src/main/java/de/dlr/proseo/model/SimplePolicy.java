@@ -5,11 +5,15 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import javax.persistence.OrderColumn;
 
 /**
  * A product retrieval policy consisting of a retrieval mode and a time interval with delta times as defined in Annex B of ESA's Generic IPF Interface Specifications  { REF _Ref11952109 \r \h }. 
@@ -22,18 +26,19 @@ import javax.persistence.Entity;
 @Entity
 public class SimplePolicy extends PersistentObject {
 
+	/* Message strings */
+	private static final String MSG_DELTA_TIMES_NEGATIVE = "Delta times must not be negative.";
+	private static final String MSG_ILLEGAL_LIST_OF_DELTA_TIMES = "List of delta times must contain exactly two entries for interval start and end.";
+
 	/** The policy type to use */
 	private PolicyType type;
 
-	/** The delta time to apply to the start of the selection period. Note that delta times always enlarge the selection period,
-	 * they cannot be negative (i. e. reduce the interval).
+	/** The delta time to apply to the start (index 0) and end (index 1) of the selection period. Note that delta times always
+	 * enlarge the selection period, they cannot be negative (i. e. reduce the interval).
 	 */
-	private DeltaTime deltaTimeT0;
-	
-	/** The delta time to apply to the end of the selection period. Note that delta times always enlarge the selection period,
-	 * they cannot be negative (i. e. reduce the interval).
-	 */
-	private DeltaTime deltaTimeT1;
+	@ElementCollection
+	@OrderColumn(name = "list_index")
+	private List<DeltaTime> deltaTimes;
 	
 	/**
 	 * Available policy types as defined in ESA's Generic IPF Interface Specifications.
@@ -55,6 +60,14 @@ public class SimplePolicy extends PersistentObject {
 		
 		/** The time unit applicable for this time period */
 		public TimeUnit unit;
+		
+		/**
+		 * No-argument constructor sets delta time to zero days
+		 */
+		public DeltaTime() {
+			this.duration = 0L;
+			this.unit = TimeUnit.DAYS;
+		}
 
 		@Override
 		public int hashCode() {
@@ -71,8 +84,19 @@ public class SimplePolicy extends PersistentObject {
 			return Objects.equals(duration, other.duration) && unit == other.unit;
 		}
 	}
+	
+	/**
+	 * No-argument sets default values for type (ValIntersect) and delta times (0/0)
+	 */
+	public SimplePolicy() {
+		this.type = PolicyType.ValIntersect;
+		this.deltaTimes = new ArrayList<>();
+		this.deltaTimes.add(new DeltaTime());
+		this.deltaTimes.add(new DeltaTime());
+	}
 
 	/**
+	 * Gets the policy type
 	 * @return the type
 	 */
 	public PolicyType getType() {
@@ -80,6 +104,7 @@ public class SimplePolicy extends PersistentObject {
 	}
 
 	/**
+	 * Sets the policy type
 	 * @param type the type to set
 	 */
 	public void setType(PolicyType type) {
@@ -87,38 +112,48 @@ public class SimplePolicy extends PersistentObject {
 	}
 
 	/**
-	 * @return the deltaTimeT0
+	 * Gets the delta times
+	 * @return the deltaTimes
+	 */
+	public List<DeltaTime> getDeltaTimes() {
+		return deltaTimes;
+	}
+
+	/**
+	 * Sets the delta times
+	 * @param deltaTimes the deltaTimes to set (a list of exactly two entries with non-negative duration values)
+	 */
+	public void setDeltaTimes(List<DeltaTime> deltaTimes) {
+		if (2 != deltaTimes.size()) {
+			throw new IllegalArgumentException(MSG_ILLEGAL_LIST_OF_DELTA_TIMES);
+		}
+		if (0 > deltaTimes.get(0).duration || 0 > deltaTimes.get(1).duration) {
+			throw new IllegalArgumentException(MSG_DELTA_TIMES_NEGATIVE);
+		}
+		this.deltaTimes = deltaTimes;
+	}
+
+	/**
+	 * Gets the delta time to apply to the beginning of the interval (T0)
+	 * @return the deltaTimes
 	 */
 	public DeltaTime getDeltaTimeT0() {
-		return deltaTimeT0;
+		return deltaTimes.get(0);
 	}
 
 	/**
-	 * @param deltaTimeT0 the deltaTimeT0 to set
-	 */
-	public void setDeltaTimeT0(DeltaTime deltaTimeT0) {
-		this.deltaTimeT0 = deltaTimeT0;
-	}
-
-	/**
-	 * @return the deltaTimeT1
+	 * Gets the delta time to apply to the end of the interval (T1)
+	 * @return the deltaTimes
 	 */
 	public DeltaTime getDeltaTimeT1() {
-		return deltaTimeT1;
-	}
-
-	/**
-	 * @param deltaTimeT1 the deltaTimeT1 to set
-	 */
-	public void setDeltaTimeT1(DeltaTime deltaTimeT1) {
-		this.deltaTimeT1 = deltaTimeT1;
+		return deltaTimes.get(1);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(deltaTimeT0, deltaTimeT1, type);
+		result = prime * result + Objects.hash(deltaTimes, type);
 		return result;
 	}
 
@@ -131,9 +166,7 @@ public class SimplePolicy extends PersistentObject {
 		if (!(obj instanceof SimplePolicy))
 			return false;
 		SimplePolicy other = (SimplePolicy) obj;
-		return Objects.equals(deltaTimeT0, other.deltaTimeT0) && Objects.equals(deltaTimeT1, other.deltaTimeT1)
-				&& type == other.type;
+		return Objects.equals(deltaTimes, other.deltaTimes) && type == other.type;
 	}
-	
-	
+
 }

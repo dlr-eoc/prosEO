@@ -8,6 +8,7 @@ package de.dlr.proseo.model;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
@@ -33,6 +34,7 @@ public class ProductFile extends PersistentObject {
 	private String productFileName;
 	
 	/** The auxiliary files for this data file */
+	@ElementCollection
 	private Set<String> auxFileNames;
 	
 	/** The path to the product files (POSIX file path, S3 bucket etc.) */
