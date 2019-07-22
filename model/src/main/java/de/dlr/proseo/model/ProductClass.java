@@ -26,8 +26,9 @@ public class ProductClass extends PersistentObject {
 	/** The mission this product class belongs to */
 	@ManyToOne
 	private Mission mission;
-	/** The product type, as it shall be known in the processing system (e. g. CLOUD); unique within a mission */
-	private String type;
+	/** The product type, as it shall be known in the processing system (product class identifier; e. g. CLOUD);
+	 * unique within a mission */
+	private String productType;
 	/** The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission */
 	private String missionType;
 	/** A short description of the product type to display as informational text on the user interface */
@@ -58,19 +59,19 @@ public class ProductClass extends PersistentObject {
 	}
 	
 	/**
-	 * Gets the prosEO-internal product class type
-	 * @return the type
+	 * Gets the prosEO-internal product type (product class identifier)
+	 * @return the product type
 	 */
-	public String getType() {
-		return type;
+	public String getProductType() {
+		return productType;
 	}
 	
 	/**
-	 * Sets the prosEO-internal product class type
-	 * @param type the type to set
+	 * Sets the prosEO-internal product type (product class identifier)
+	 * @param productType the product type to set
 	 */
-	public void setType(String type) {
-		this.type = type;
+	public void setProductType(String productType) {
+		this.productType = productType;
 	}
 	
 	/**
@@ -142,7 +143,7 @@ public class ProductClass extends PersistentObject {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((mission == null) ? 0 : mission.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((productType == null) ? 0 : productType.hashCode());
 		return result;
 	}
 	
@@ -160,10 +161,10 @@ public class ProductClass extends PersistentObject {
 				return false;
 		} else if (!mission.equals(other.mission))
 			return false;
-		if (type == null) {
-			if (other.type != null)
+		if (productType == null) {
+			if (other.productType != null)
 				return false;
-		} else if (!type.equals(other.type))
+		} else if (!productType.equals(other.productType))
 			return false;
 		return true;
 	}

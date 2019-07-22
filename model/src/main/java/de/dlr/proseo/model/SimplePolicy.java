@@ -31,7 +31,7 @@ public class SimplePolicy extends PersistentObject {
 	private static final String MSG_ILLEGAL_LIST_OF_DELTA_TIMES = "List of delta times must contain exactly two entries for interval start and end.";
 
 	/** The policy type to use */
-	private PolicyType type;
+	private PolicyType policyType;
 
 	/** The delta time to apply to the start (index 0) and end (index 1) of the selection period. Note that delta times always
 	 * enlarge the selection period, they cannot be negative (i. e. reduce the interval).
@@ -89,7 +89,7 @@ public class SimplePolicy extends PersistentObject {
 	 * No-argument sets default values for type (ValIntersect) and delta times (0/0)
 	 */
 	public SimplePolicy() {
-		this.type = PolicyType.ValIntersect;
+		this.policyType = PolicyType.ValIntersect;
 		this.deltaTimes = new ArrayList<>();
 		this.deltaTimes.add(new DeltaTime());
 		this.deltaTimes.add(new DeltaTime());
@@ -99,16 +99,16 @@ public class SimplePolicy extends PersistentObject {
 	 * Gets the policy type
 	 * @return the type
 	 */
-	public PolicyType getType() {
-		return type;
+	public PolicyType getPolicyType() {
+		return policyType;
 	}
 
 	/**
 	 * Sets the policy type
-	 * @param type the type to set
+	 * @param policyType the type to set
 	 */
-	public void setType(PolicyType type) {
-		this.type = type;
+	public void setPolicyType(PolicyType policyType) {
+		this.policyType = policyType;
 	}
 
 	/**
@@ -153,7 +153,7 @@ public class SimplePolicy extends PersistentObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(deltaTimes, type);
+		result = prime * result + Objects.hash(deltaTimes, policyType);
 		return result;
 	}
 
@@ -166,7 +166,7 @@ public class SimplePolicy extends PersistentObject {
 		if (!(obj instanceof SimplePolicy))
 			return false;
 		SimplePolicy other = (SimplePolicy) obj;
-		return Objects.equals(deltaTimes, other.deltaTimes) && type == other.type;
+		return Objects.equals(deltaTimes, other.deltaTimes) && policyType == other.policyType;
 	}
 
 }

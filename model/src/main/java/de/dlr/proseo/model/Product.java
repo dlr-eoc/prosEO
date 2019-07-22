@@ -63,44 +63,44 @@ public class Product extends PersistentObject {
 	@Embeddable
 	public class Parameter {
 		/** The type of the parameter */
-		private ParameterType type;
+		private ParameterType parameterType;
 		/** The parameter value */
-		private Serializable value;
+		private Serializable parameterValue;
 		
 		/**
 		 * Gets the type of the parameter
 		 * 
 		 * @return the parameter type
 		 */
-		public ParameterType getType() {
-			return type;
+		public ParameterType getParameterType() {
+			return parameterType;
 		}
 		
 		/**
 		 * Sets the type of the parameter
 		 * 
-		 * @param type the type to set
+		 * @param parameterType the type to set
 		 */
-		public void setType(ParameterType type) {
-			this.type = type;
+		public void seParametertType(ParameterType parameterType) {
+			this.parameterType = parameterType;
 		}
 		
 		/**
 		 * Gets the value of the parameter
 		 * 
-		 * @return the value
+		 * @return the parameter value
 		 */
-		public Serializable getValue() {
-			return value;
+		public Serializable getParameterValue() {
+			return parameterValue;
 		}
 		
 		/**
 		 * Sets the value of the parameter
 		 * 
-		 * @param value the value to set
+		 * @param parameterValue the value to set
 		 */
-		public void setValue(Serializable value) {
-			this.value = value;
+		public void setParameterValue(Serializable parameterValue) {
+			this.parameterValue = parameterValue;
 		}
 		
 		/**
@@ -109,10 +109,10 @@ public class Product extends PersistentObject {
 		 * @throws ClassCastException if the parameter is not of type ParameterType.STRING
 		 */
 		public String getStringValue() throws ClassCastException {
-			if (ParameterType.STRING.equals(type) && value instanceof String) {
-				return (String) value;
+			if (ParameterType.STRING.equals(parameterType) && parameterValue instanceof String) {
+				return (String) parameterValue;
 			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to String", type.toString()));
+				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to String", parameterType.toString()));
 			}
 		}
 		/**
@@ -120,8 +120,8 @@ public class Product extends PersistentObject {
 		 * @param newValue the value to set (the type is implicit)
 		 */
 		public void setStringValue(String newValue) {
-			type = ParameterType.STRING;
-			value = newValue;
+			parameterType = ParameterType.STRING;
+			parameterValue = newValue;
 		}
 
 		/**
@@ -130,10 +130,10 @@ public class Product extends PersistentObject {
 		 * @throws ClassCastException if the parameter is not of type ParameterType.INTEGER
 		 */
 		public Integer getIntegerValue() throws ClassCastException {
-			if (ParameterType.INTEGER.equals(type) && value instanceof Integer) {
-				return (Integer) value;
+			if (ParameterType.INTEGER.equals(parameterType) && parameterValue instanceof Integer) {
+				return (Integer) parameterValue;
 			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Integer", type.toString()));
+				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Integer", parameterType.toString()));
 			}
 		}
 		/**
@@ -141,8 +141,8 @@ public class Product extends PersistentObject {
 		 * @param newValue the value to set (the type is implicit)
 		 */
 		public void setIntegerValue(Integer newValue) {
-			type = ParameterType.INTEGER;
-			value = newValue;
+			parameterType = ParameterType.INTEGER;
+			parameterValue = newValue;
 		}
 
 		/**
@@ -151,10 +151,10 @@ public class Product extends PersistentObject {
 		 * @throws ClassCastException if the parameter is not of type ParameterType.BOOLEAN
 		 */
 		public Boolean getBooleanValue() throws ClassCastException {
-			if (ParameterType.BOOLEAN.equals(type) && value instanceof Boolean) {
-				return (Boolean) value;
+			if (ParameterType.BOOLEAN.equals(parameterType) && parameterValue instanceof Boolean) {
+				return (Boolean) parameterValue;
 			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Boolean", type.toString()));
+				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Boolean", parameterType.toString()));
 			}
 		}
 		/**
@@ -162,8 +162,8 @@ public class Product extends PersistentObject {
 		 * @param newValue the value to set (the type is implicit)
 		 */
 		public void setBooleanValue(Boolean newValue) {
-			type = ParameterType.BOOLEAN;
-			value = newValue;
+			parameterType = ParameterType.BOOLEAN;
+			parameterValue = newValue;
 		}
 
 		/**
@@ -172,10 +172,10 @@ public class Product extends PersistentObject {
 		 * @throws ClassCastException if the parameter is not of type ParameterType.DOUBLE
 		 */
 		public Double getDoubleValue() throws ClassCastException {
-			if (ParameterType.DOUBLE.equals(type) && value instanceof Double) {
-				return (Double) value;
+			if (ParameterType.DOUBLE.equals(parameterType) && parameterValue instanceof Double) {
+				return (Double) parameterValue;
 			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Double", type.toString()));
+				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Double", parameterType.toString()));
 			}
 		}
 		/**
@@ -183,8 +183,8 @@ public class Product extends PersistentObject {
 		 * @param newValue the value to set (the type is implicit)
 		 */
 		public void setDoubleValue(Double newValue) {
-			type = ParameterType.DOUBLE;
-			value = newValue;
+			parameterType = ParameterType.DOUBLE;
+			parameterValue = newValue;
 		}
 		
 		/**
@@ -199,9 +199,9 @@ public class Product extends PersistentObject {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((type == null) ? 0 : getEnclosingObject().hashCode());
-			result = prime * result + ((type == null) ? 0 : type.hashCode());
-			result = prime * result + ((value == null) ? 0 : value.hashCode());
+			result = prime * result + ((parameterType == null) ? 0 : getEnclosingObject().hashCode());
+			result = prime * result + ((parameterType == null) ? 0 : parameterType.hashCode());
+			result = prime * result + ((parameterValue == null) ? 0 : parameterValue.hashCode());
 			return result;
 		}
 
@@ -216,12 +216,12 @@ public class Product extends PersistentObject {
 			Parameter other = (Parameter) obj;
 			if (!getEnclosingObject().equals(other.getEnclosingObject()))
 				return false;
-			if (type != other.type)
+			if (parameterType != other.parameterType)
 				return false;
-			if (value == null) {
-				if (other.value != null)
+			if (parameterValue == null) {
+				if (other.parameterValue != null)
 					return false;
-			} else if (!value.equals(other.value))
+			} else if (!parameterValue.equals(other.parameterValue))
 				return false;
 			return true;
 		}		
