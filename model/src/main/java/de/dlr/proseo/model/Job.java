@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -46,12 +47,14 @@ public class Job extends PersistentObject {
 	 * The start time of the time interval, for which products shall be generated. 
 	 * If the job is orbit-related, this time is copied from the start time of the orbit.
 	 */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant startTime;
 	
 	/**
 	 * The end time of the time interval, for which products shall be generated.
-	 * If the job is orbit-related, this time is copied from the stopt time of the orbit.
+	 * If the job is orbit-related, this time is copied from the stop time of the orbit.
 	 */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
 	
 	/** 

@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 10.0.36-MariaDB)
 # Datenbank: proseo
-# Erstellt am: 2019-07-23 16:06:55 +0000
+# Erstellt am: 2019-07-23 19:59:40 +0000
 # ************************************************************
 
 
@@ -20,6 +20,51 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
+# Export von Tabelle configuration
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `configuration`;
+
+CREATE TABLE `configuration` (
+  `id` bigint(20) NOT NULL,
+  `version` int(11) NOT NULL,
+  `configuration_version` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle configuration_configuration_files
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `configuration_configuration_files`;
+
+CREATE TABLE `configuration_configuration_files` (
+  `configuration_id` bigint(20) NOT NULL,
+  `file_name` varchar(255) DEFAULT NULL,
+  `file_version` varchar(255) DEFAULT NULL,
+  KEY `FKg6qj2gjs3td0wwcioda96uik5` (`configuration_id`),
+  CONSTRAINT `FKg6qj2gjs3td0wwcioda96uik5` FOREIGN KEY (`configuration_id`) REFERENCES `configuration` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle configuration_dyn_proc_parameters
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `configuration_dyn_proc_parameters`;
+
+CREATE TABLE `configuration_dyn_proc_parameters` (
+  `configuration_id` bigint(20) NOT NULL,
+  `parameter_type` int(11) DEFAULT NULL,
+  `parameter_value` tinyblob,
+  `dyn_proc_parameters_key` varchar(255) NOT NULL,
+  PRIMARY KEY (`configuration_id`,`dyn_proc_parameters_key`),
+  CONSTRAINT `FKjpifxw2lvac6ipxqdimmy73k4` FOREIGN KEY (`configuration_id`) REFERENCES `configuration` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
 # Export von Tabelle configured_processor
 # ------------------------------------------------------------
 
@@ -29,7 +74,13 @@ CREATE TABLE `configured_processor` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
   `identifier` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `configuration_id` bigint(20) DEFAULT NULL,
+  `processor_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKdj5cx8yntdnuxvphpowp47of5` (`configuration_id`),
+  KEY `FKloteyhnalc56x161f4inujyt5` (`processor_id`),
+  CONSTRAINT `FKdj5cx8yntdnuxvphpowp47of5` FOREIGN KEY (`configuration_id`) REFERENCES `configuration` (`id`),
+  CONSTRAINT `FKloteyhnalc56x161f4inujyt5` FOREIGN KEY (`processor_id`) REFERENCES `processor` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -54,8 +105,8 @@ CREATE TABLE `job` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
   `job_state` int(11) DEFAULT NULL,
-  `start_time` datetime DEFAULT NULL,
-  `stop_time` datetime DEFAULT NULL,
+  `start_time` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `stop_time` timestamp(6) NOT NULL DEFAULT '0000-00-00 00:00:00.000000',
   `orbit_id` bigint(20) DEFAULT NULL,
   `processing_facility_id` bigint(20) DEFAULT NULL,
   `processing_order_id` bigint(20) DEFAULT NULL,
@@ -150,6 +201,20 @@ CREATE TABLE `mission` (
 
 
 
+# Export von Tabelle mission_processing_modes
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `mission_processing_modes`;
+
+CREATE TABLE `mission_processing_modes` (
+  `mission_id` bigint(20) NOT NULL,
+  `processing_modes` varchar(255) DEFAULT NULL,
+  KEY `FKqhg2duxhcpldh28nyh7nwnfcn` (`mission_id`),
+  CONSTRAINT `FKqhg2duxhcpldh28nyh7nwnfcn` FOREIGN KEY (`mission_id`) REFERENCES `mission` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
 # Export von Tabelle orbit
 # ------------------------------------------------------------
 
@@ -159,8 +224,8 @@ CREATE TABLE `orbit` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
   `orbit_number` int(11) DEFAULT NULL,
-  `start_time` datetime DEFAULT NULL,
-  `stop_time` datetime DEFAULT NULL,
+  `start_time` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `stop_time` timestamp(6) NOT NULL DEFAULT '0000-00-00 00:00:00.000000',
   `spacecraft_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKi2gpip0vqngjwnvmguox9wi3f` (`spacecraft_id`),
@@ -192,8 +257,10 @@ DROP TABLE IF EXISTS `processing_order`;
 CREATE TABLE `processing_order` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
-  `execution_time` datetime DEFAULT NULL,
+  `execution_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `identifier` varchar(255) DEFAULT NULL,
+  `start_time` timestamp(6) NOT NULL DEFAULT '0000-00-00 00:00:00.000000',
+  `stop_time` timestamp(6) NOT NULL DEFAULT '0000-00-00 00:00:00.000000',
   `mission_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKgj4135cm664vfl5jt6v613y0e` (`mission_id`),
@@ -298,6 +365,44 @@ CREATE TABLE `processing_order_requested_product_classes` (
 
 
 
+# Export von Tabelle processor
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `processor`;
+
+CREATE TABLE `processor` (
+  `id` bigint(20) NOT NULL,
+  `version` int(11) NOT NULL,
+  `is_test` bit(1) DEFAULT NULL,
+  `max_time` int(11) DEFAULT NULL,
+  `min_disk_space` int(11) DEFAULT NULL,
+  `processor_version` varchar(255) DEFAULT NULL,
+  `sensing_time_flag` bit(1) DEFAULT NULL,
+  `processor_class_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKo4ocncq22u0j2prxw2dbk0dka` (`processor_class_id`),
+  CONSTRAINT `FKo4ocncq22u0j2prxw2dbk0dka` FOREIGN KEY (`processor_class_id`) REFERENCES `processor_class` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle processor_class
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `processor_class`;
+
+CREATE TABLE `processor_class` (
+  `id` bigint(20) NOT NULL,
+  `version` int(11) NOT NULL,
+  `processor_name` varchar(255) DEFAULT NULL,
+  `mission_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKlxfogyfhmujn40qg0ooxfdwfv` (`mission_id`),
+  CONSTRAINT `FKlxfogyfhmujn40qg0ooxfdwfv` FOREIGN KEY (`mission_id`) REFERENCES `mission` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
 # Export von Tabelle product
 # ------------------------------------------------------------
 
@@ -306,8 +411,8 @@ DROP TABLE IF EXISTS `product`;
 CREATE TABLE `product` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
-  `sensing_start_time` datetime DEFAULT NULL,
-  `sensing_stop_time` datetime DEFAULT NULL,
+  `sensing_start_time` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `sensing_stop_time` timestamp(6) NOT NULL DEFAULT '0000-00-00 00:00:00.000000',
   `configured_processor_id` bigint(20) DEFAULT NULL,
   `enclosing_product_id` bigint(20) DEFAULT NULL,
   `job_step_id` bigint(20) DEFAULT NULL,
@@ -341,9 +446,12 @@ CREATE TABLE `product_class` (
   `product_type` varchar(255) DEFAULT NULL,
   `enclosing_class_id` bigint(20) DEFAULT NULL,
   `mission_id` bigint(20) DEFAULT NULL,
+  `processor_class_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKafnqr7afqkr7vn6difh4r9e3j` (`enclosing_class_id`),
   KEY `FKinocsatitcf1ofpp4wc7psua2` (`mission_id`),
+  KEY `FK4oc1a80q9jt8b0et2kl64j8av` (`processor_class_id`),
+  CONSTRAINT `FK4oc1a80q9jt8b0et2kl64j8av` FOREIGN KEY (`processor_class_id`) REFERENCES `processor_class` (`id`),
   CONSTRAINT `FKafnqr7afqkr7vn6difh4r9e3j` FOREIGN KEY (`enclosing_class_id`) REFERENCES `product_class` (`id`),
   CONSTRAINT `FKinocsatitcf1ofpp4wc7psua2` FOREIGN KEY (`mission_id`) REFERENCES `mission` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -495,6 +603,7 @@ CREATE TABLE `simple_selection_rule` (
   `id` bigint(20) NOT NULL,
   `version` int(11) NOT NULL,
   `is_mandatory` bit(1) DEFAULT NULL,
+  `mode` varchar(255) DEFAULT NULL,
   `source_product_class_id` bigint(20) DEFAULT NULL,
   `target_product_class_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -502,6 +611,22 @@ CREATE TABLE `simple_selection_rule` (
   KEY `FKje8biclfyorg1wm8uh1qf9d0` (`target_product_class_id`),
   CONSTRAINT `FK8n3bq0ecxeti1ylukwkt7cnm` FOREIGN KEY (`source_product_class_id`) REFERENCES `product_class` (`id`),
   CONSTRAINT `FKje8biclfyorg1wm8uh1qf9d0` FOREIGN KEY (`target_product_class_id`) REFERENCES `product_class` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle simple_selection_rule_applicable_configured_processors
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `simple_selection_rule_applicable_configured_processors`;
+
+CREATE TABLE `simple_selection_rule_applicable_configured_processors` (
+  `simple_selection_rule_id` bigint(20) NOT NULL,
+  `applicable_configured_processors_id` bigint(20) NOT NULL,
+  PRIMARY KEY (`simple_selection_rule_id`,`applicable_configured_processors_id`),
+  KEY `FK2fc10i4kvwdl75twbs0f1jnae` (`applicable_configured_processors_id`),
+  CONSTRAINT `FK2fc10i4kvwdl75twbs0f1jnae` FOREIGN KEY (`applicable_configured_processors_id`) REFERENCES `configured_processor` (`id`),
+  CONSTRAINT `FKb9av1i977yys0ql1habohq1o7` FOREIGN KEY (`simple_selection_rule_id`) REFERENCES `simple_selection_rule` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -552,6 +677,41 @@ CREATE TABLE `spacecraft` (
   PRIMARY KEY (`id`),
   KEY `FKsp2jjwkpaehybfu5pwedol1c` (`mission_id`),
   CONSTRAINT `FKsp2jjwkpaehybfu5pwedol1c` FOREIGN KEY (`mission_id`) REFERENCES `mission` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle task
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `task`;
+
+CREATE TABLE `task` (
+  `id` bigint(20) NOT NULL,
+  `version` int(11) NOT NULL,
+  `criticality_level` int(11) DEFAULT NULL,
+  `is_critical` bit(1) DEFAULT NULL,
+  `number_of_cpus` int(11) DEFAULT NULL,
+  `task_name` varchar(255) DEFAULT NULL,
+  `task_version` varchar(255) DEFAULT NULL,
+  `processor_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK6oktr0t8iad73hifdftqgwok9` (`processor_id`),
+  CONSTRAINT `FK6oktr0t8iad73hifdftqgwok9` FOREIGN KEY (`processor_id`) REFERENCES `processor` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Export von Tabelle task_breakpoint_file_names
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `task_breakpoint_file_names`;
+
+CREATE TABLE `task_breakpoint_file_names` (
+  `task_id` bigint(20) NOT NULL,
+  `breakpoint_file_names` varchar(255) DEFAULT NULL,
+  KEY `FKblitkg6msystnhjpjj5ya1tfh` (`task_id`),
+  CONSTRAINT `FKblitkg6msystnhjpjj5ya1tfh` FOREIGN KEY (`task_id`) REFERENCES `task` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

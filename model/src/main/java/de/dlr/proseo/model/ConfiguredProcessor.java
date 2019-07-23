@@ -7,9 +7,11 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 
 /**
- * An Earth Observation mission.
+ * A specific version of a Processor combined with a specific Configuration object (i. e. a specific set of configuration data for
+ * the given processor version). A ConfiguredProcessor is what must be specified for the generation of the products of a prosEO order.
  * 
  * @author Dr. Thomas Bassler
  *
@@ -17,17 +19,23 @@ import javax.persistence.Entity;
 @Entity
 public class ConfiguredProcessor extends PersistentObject {
 
-	/** User-defined identifier for this processor configuration */
+	/** 
+	 * User-defined identifier for this processor configuration (recommended to be derived from ProcessorClass::processorName and
+	 * the version information of the associated Processor and Configuration objects)
+	 */
 	private String identifier;
 	
 	/** The processor version */
-	// private Processor processor;
+	@ManyToOne
+	private Processor processor;
 	
 	/** The configuration file version */
-	// private Configuration configuration;
+	@ManyToOne
+	private Configuration configuration;
 
 	/**
 	 * Gets the identifier of the configured processor
+	 * 
 	 * @return the identifier
 	 */
 	public String getIdentifier() {
@@ -36,6 +44,7 @@ public class ConfiguredProcessor extends PersistentObject {
 
 	/**
 	 * Sets the identifier of the configured processor
+	 * 
 	 * @param identifier the identifier to set
 	 */
 	public void setIdentifier(String identifier) {

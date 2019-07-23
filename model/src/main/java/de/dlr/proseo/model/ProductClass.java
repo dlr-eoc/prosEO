@@ -26,24 +26,33 @@ public class ProductClass extends PersistentObject {
 	/** The mission this product class belongs to */
 	@ManyToOne
 	private Mission mission;
+	
 	/** The product type, as it shall be known in the processing system (product class identifier; e. g. CLOUD);
 	 * unique within a mission */
 	private String productType;
+	
 	/** The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission */
 	private String missionType;
+	
 	/** A short description of the product type to display as informational text on the user interface */
 	private String description;
 	
 	/** Set of component product classes */
 	@OneToMany(mappedBy = "enclosingClass")
 	private Set<ProductClass> componentClasses;
+	
 	/** Product class for which this product class is a component */
 	@ManyToOne
 	private ProductClass enclosingClass;
 	
+	/** Processor class capable of generating products of this class */
+	@ManyToOne
+	private ProcessorClass processorClass;
+	
 	
 	/**
 	 * Gets the mission this product class belongs to
+	 * 
 	 * @return the mission
 	 */
 	public Mission getMission() {
@@ -52,6 +61,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the mission this product class belongs to
+	 * 
 	 * @param mission the mission to set
 	 */
 	public void setMission(Mission mission) {
@@ -60,6 +70,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Gets the prosEO-internal product type (product class identifier)
+	 * 
 	 * @return the product type
 	 */
 	public String getProductType() {
@@ -68,6 +79,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the prosEO-internal product type (product class identifier)
+	 * 
 	 * @param productType the product type to set
 	 */
 	public void setProductType(String productType) {
@@ -76,6 +88,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Gets the product class type as defined by the mission
+	 * 
 	 * @return the missionType
 	 */
 	public String getMissionType() {
@@ -84,6 +97,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the product class type as defined by the mission
+	 * 
 	 * @param missionType the missionType to set
 	 */
 	public void setMissionType(String missionType) {
@@ -92,6 +106,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Gets the product class description
+	 * 
 	 * @return the description
 	 */
 	public String getDescription() {
@@ -100,6 +115,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the product class description
+	 * 
 	 * @param description the description to set
 	 */
 	public void setDescription(String description) {
@@ -108,6 +124,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Gets the product classes of component products
+	 * 
 	 * @return the componentClasses
 	 */
 	public Set<ProductClass> getComponentClasses() {
@@ -116,6 +133,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the product classes for component products
+	 * 
 	 * @param componentClasses the componentClasses to set
 	 */
 	public void setComponentClasses(Set<ProductClass> componentClasses) {
@@ -124,6 +142,7 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Gets the product classes of an enclosing product
+	 * 
 	 * @return the enclosingClass
 	 */
 	public ProductClass getEnclosingClass() {
@@ -132,12 +151,31 @@ public class ProductClass extends PersistentObject {
 	
 	/**
 	 * Sets the product classes for an enclosing product
+	 * 
 	 * @param enclosingClass the enclosingClass to set
 	 */
 	public void setEnclosingClass(ProductClass enclosingClass) {
 		this.enclosingClass = enclosingClass;
 	}
 	
+	/**
+	 * Gets the processor class capable of generating products of this class
+	 * 
+	 * @return the processorClass
+	 */
+	public ProcessorClass getProcessorClass() {
+		return processorClass;
+	}
+
+	/**
+	 * Gets the processor class capable of generating products of this class
+	 * 
+	 * @param processorClass the processorClass to set
+	 */
+	public void setProcessorClass(ProcessorClass processorClass) {
+		this.processorClass = processorClass;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

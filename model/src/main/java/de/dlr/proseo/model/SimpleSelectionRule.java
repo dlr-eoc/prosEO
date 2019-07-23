@@ -8,9 +8,11 @@ package de.dlr.proseo.model;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -26,10 +28,21 @@ import de.dlr.proseo.model.Product.Parameter;
 @Entity
 public class SimpleSelectionRule extends PersistentObject {
 	
-	/** Indicates whether the required source product is mandatory for the production of the target product */
+	/**
+	 * Processing mode, for which this selection rule is valid (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3);
+	 * this is restricted by the processing modes defined for the mission, but the (self evident and default) special value "ALWAYS"
+	 * is always valid.
+	 */
+	private String mode = "ALWAYS";
+	
+	/**
+	 * Indicates whether the required source product is mandatory for the production of the target product
+	 * (level 7 "Mandatory" from Generic IPF Interface Specifications, sec. 4.1.3)
+	 */
 	private Boolean isMandatory;
 	
-	/** Parameter values to filter the selected products (triple of parameter key, parameter type and parameter value); checked
+	/** 
+	 * Parameter values to filter the selected products (triple of parameter key, parameter type and parameter value); checked
 	 * against product parameter values by equality.
 	 */
 	@ElementCollection
@@ -43,11 +56,35 @@ public class SimpleSelectionRule extends PersistentObject {
 	@ManyToOne
 	private ProductClass sourceProductClass;
 	
+	/** The set of processor configurations, for which this rule is applicable */
+	@ManyToMany
+	private Set<ConfiguredProcessor> applicableConfiguredProcessors;
+	
 	/** The selection policies applied for selecting target products (the first applicable policy in the list holds) */
 	@OneToMany
 	private List<SimplePolicy> simplePolicies;
 
 	/**
+	 * Gets the applicable processing mode
+	 * 
+	 * @return the mode
+	 */
+	public String getMode() {
+		return mode;
+	}
+
+	/**
+	 * Sets the applicable processing mode
+	 * 
+	 * @param mode the mode to set
+	 */
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
+	/**
+	 * Check whether the selected product is mandatory
+	 * 
 	 * @return the isMandatory
 	 */
 	public Boolean getIsMandatory() {
@@ -55,6 +92,17 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Check whether the selected product is mandatory (convenience alias for getIsMandatory())
+	 * 
+	 * @return the isMandatory
+	 */
+	public Boolean isMandatory() {
+		return this.getIsMandatory();
+	}
+
+	/**
+	 * Indicate whether the selected product is mandatory
+	 * 
 	 * @param isMandatory the isMandatory to set
 	 */
 	public void setIsMandatory(Boolean isMandatory) {
@@ -62,6 +110,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Gets the additional filtering conditions
+	 * 
 	 * @return the filterConditions
 	 */
 	public Map<String, Parameter> getFilterConditions() {
@@ -69,6 +119,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Sets the additional filtering conditions
+	 * 
 	 * @param filterConditions the filterConditions to set
 	 */
 	public void setFilterConditions(Map<String, Parameter> filterConditions) {
@@ -76,6 +128,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Gets the target product class (the one for which input products are selected by this rule)
+	 * 
 	 * @return the targetProductClass
 	 */
 	public ProductClass getTargetProductClass() {
@@ -83,6 +137,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Sets the target product class (the one for which input products are selected by this rule)
+	 * 
 	 * @param targetProductClass the targetProductClass to set
 	 */
 	public void setTargetProductClass(ProductClass targetProductClass) {
@@ -90,6 +146,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Gets the source product classes (the input products selected by this rule)
+	 * 
 	 * @return the sourceProductClass
 	 */
 	public ProductClass getSourceProductClass() {
@@ -97,6 +155,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Sets the source product classes (the input products selected by this rule)
+	 * 
 	 * @param sourceProductClass the sourceProductClass to set
 	 */
 	public void setSourceProductClass(ProductClass sourceProductClass) {
@@ -104,6 +164,26 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Gets the applicable processor configurations
+	 * 
+	 * @return the applicableConfiguredProcessors
+	 */
+	public Set<ConfiguredProcessor> getApplicableConfiguredProcessors() {
+		return applicableConfiguredProcessors;
+	}
+
+	/**
+	 * Sets the applicable processor configurations
+	 * 
+	 * @param applicableConfiguredProcessors the applicableConfiguredProcessors to set
+	 */
+	public void setApplicableConfiguredProcessors(Set<ConfiguredProcessor> applicableConfiguredProcessors) {
+		this.applicableConfiguredProcessors = applicableConfiguredProcessors;
+	}
+
+	/**
+	 * Gets the simple selection policies
+	 * 
 	 * @return the simplePolicies
 	 */
 	public List<SimplePolicy> getSimplePolicies() {
@@ -111,6 +191,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 
 	/**
+	 * Sets the simple selection policies
+	 * 
 	 * @param simplePolicies the simplePolicies to set
 	 */
 	public void setSimplePolicies(List<SimplePolicy> simplePolicies) {

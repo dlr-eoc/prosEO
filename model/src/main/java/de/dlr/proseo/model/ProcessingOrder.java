@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -38,7 +39,22 @@ public class ProcessingOrder extends PersistentObject {
 	private String identifier;
 	
 	/** Expected execution time (optional, used for scheduling) */
+	@Column(columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
+	
+	/**
+	 * The start time of the time interval to process. If a range of orbit numbers is given, this time is set to the earliest
+	 * start time of the selected orbits.
+	 */
+	@Column(columnDefinition = "TIMESTAMP(6)")
+	private Instant startTime;
+	
+	/**
+	 * The end time of the time interval to process. If a range of orbit numbers is given, this time is set to the latest
+	 * stop time of the selected orbits.
+	 */
+	@Column(columnDefinition = "TIMESTAMP(6)")
+	private Instant stopTime;
 	
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
@@ -123,6 +139,42 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setExecutionTime(Instant executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	/**
+	 * Gets the (earliest) start time of the processing time interval
+	 * 
+	 * @return the startTime
+	 */
+	public Instant getStartTime() {
+		return startTime;
+	}
+
+	/**
+	 * Sets the (earliest) start time of the processing time interval
+	 * 
+	 * @param startTime the startTime to set
+	 */
+	public void setStartTime(Instant startTime) {
+		this.startTime = startTime;
+	}
+
+	/**
+	 * Gets the (latest) stop time of the processing time interval
+	 * 
+	 * @return the stopTime
+	 */
+	public Instant getStopTime() {
+		return stopTime;
+	}
+
+	/**
+	 * Sets the (latest) stop time of the processing time interval
+	 * 
+	 * @param stopTime the stopTime to set
+	 */
+	public void setStopTime(Instant stopTime) {
+		this.stopTime = stopTime;
 	}
 
 	/**

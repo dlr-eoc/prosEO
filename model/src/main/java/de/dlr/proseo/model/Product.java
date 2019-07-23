@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -31,14 +32,19 @@ public class Product extends PersistentObject {
 	/** Product class this products instantiates */
 	@ManyToOne
 	private ProductClass productClass;
+	
 	/** Sensing start time */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStartTime;
+	
 	/** Sensing stop time */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
 	/** Set of component products */
 	@OneToMany(mappedBy = "enclosingProduct")
 	private Set<Product> componentProducts;
+	
 	/** Product for which this product is a component */
 	@ManyToOne
 	private Product enclosingProduct;

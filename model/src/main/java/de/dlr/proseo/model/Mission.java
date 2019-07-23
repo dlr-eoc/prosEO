@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.util.Set;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 
@@ -25,6 +26,22 @@ public class Mission extends PersistentObject {
 	/** The mission name (e. g. Sentinel-5 Precursor) */
 	private String name;
 	
+	/** 
+	 * Processing mode tags as agreed for this mission (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3).
+     * <br>
+     * The tag names can be chosen according to the processing operational needs and configuration. Examples of name operationally 
+     * used in existing Processing Facilities are herewith provided:
+     * <ul>
+     * <li>NRT: near real time orders</li>
+     * <li>SYSTEMATIC: routine production orders</li>
+     * <li>REPROCESSING: Batch reprocessing (with new auxiliary files) of previously executed orders</li>
+     * <li>SUBS: “slice” orders, that is, orders dedicated to extract a sub- portion from a previously generate product</li>
+     * </ul>
+     * Example: For Sentinel-5P, the tags are "NRTI" (near real time), "OFFL" (systematic ["offline"]), "RPRO" (reprocessing)
+	 */
+	@ElementCollection
+	private Set<String> processingModes;
+	
 	/** The spacecrafts this mission owns */
 	@OneToMany(mappedBy = "mission")
 	private Set<Spacecraft> spacecrafts;
@@ -32,6 +49,10 @@ public class Mission extends PersistentObject {
 	/** The product classes this mission produces or uses */
 	@OneToMany(mappedBy = "mission")
 	private Set<ProductClass> productClasses;
+	
+	/** The processor classes this mission uses */
+	@OneToMany(mappedBy = "mission")
+	private Set<ProcessorClass> processorClasses;
 	
 	/** The processing orders issued for this mission */
 	@OneToMany(mappedBy = "mission")
@@ -74,6 +95,24 @@ public class Mission extends PersistentObject {
 	}
 
 	/**
+	 * Gets the processing mode tags defined for the mission
+	 * 
+	 * @return the processingModes
+	 */
+	public Set<String> getProcessingModes() {
+		return processingModes;
+	}
+
+	/**
+	 * Sets the processing mode tags defined for the mission
+	 * 
+	 * @param processingModes the processingModes to set
+	 */
+	public void setProcessingModes(Set<String> processingModes) {
+		this.processingModes = processingModes;
+	}
+
+	/**
 	 * Gets the set of spacecrafts
 	 * 
 	 * @return the spacecrafts
@@ -107,6 +146,24 @@ public class Mission extends PersistentObject {
 	 */
 	public void setProductClasses(Set<ProductClass> productClasses) {
 		this.productClasses = productClasses;
+	}
+
+	/**
+	 * Gets the processor classes defined for this mission
+	 * 
+	 * @return the processorClasses
+	 */
+	public Set<ProcessorClass> getProcessorClasses() {
+		return processorClasses;
+	}
+
+	/**
+	 * Sets the processor classes defined for this mission
+	 * 
+	 * @param processorClasses the processorClasses to set
+	 */
+	public void setProcessorClasses(Set<ProcessorClass> processorClasses) {
+		this.processorClasses = processorClasses;
 	}
 
 	/**

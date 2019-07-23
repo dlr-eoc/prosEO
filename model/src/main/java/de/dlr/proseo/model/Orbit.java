@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.time.Instant;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
@@ -28,9 +29,11 @@ public class Orbit extends PersistentObject {
 	private Integer orbitNumber;
 	
 	/** The start time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant startTime;
 	
 	/** The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
+	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
 	
 	/**
