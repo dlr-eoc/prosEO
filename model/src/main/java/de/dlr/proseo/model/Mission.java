@@ -21,15 +21,21 @@ public class Mission extends PersistentObject {
 
 	/** The mission code (e. g. S5P) */
 	private String code;
+	
 	/** The mission name (e. g. Sentinel-5 Precursor) */
 	private String name;
 	
 	/** The spacecrafts this mission owns */
-	@OneToMany
+	@OneToMany(mappedBy = "mission")
 	private Set<Spacecraft> spacecrafts;
+	
 	/** The product classes this mission produces or uses */
-	@OneToMany
+	@OneToMany(mappedBy = "mission")
 	private Set<ProductClass> productClasses;
+	
+	/** The processing orders issued for this mission */
+	@OneToMany(mappedBy = "mission")
+	private Set<ProcessingOrder> processingOrders;
 	
 	/**
 	 * Gets the mission code
@@ -42,6 +48,7 @@ public class Mission extends PersistentObject {
 	
 	/**
 	 * Sets the mission code
+	 * 
 	 * @param code the code to set
 	 */
 	public void setCode(String code) {
@@ -50,6 +57,7 @@ public class Mission extends PersistentObject {
 	
 	/**
 	 * Gets the mission name
+	 * 
 	 * @return the name
 	 */
 	public String getName() {
@@ -58,6 +66,7 @@ public class Mission extends PersistentObject {
 	
 	/**
 	 * Sets the mission name
+	 * 
 	 * @param name the name to set
 	 */
 	public void setName(String name) {
@@ -66,6 +75,7 @@ public class Mission extends PersistentObject {
 
 	/**
 	 * Gets the set of spacecrafts
+	 * 
 	 * @return the spacecrafts
 	 */
 	public Set<Spacecraft> getSpacecrafts() {
@@ -74,10 +84,47 @@ public class Mission extends PersistentObject {
 
 	/**
 	 * Sets the set of spacecrafts
+	 * 
 	 * @param spacecrafts the spacecrafts to set
 	 */
 	public void setSpacecrafts(Set<Spacecraft> spacecrafts) {
 		this.spacecrafts = spacecrafts;
+	}
+
+	/**
+	 * Gets the product classes defined for this mission
+	 * 
+	 * @return the productClasses
+	 */
+	public Set<ProductClass> getProductClasses() {
+		return productClasses;
+	}
+
+	/**
+	 * Sets the product classes defined for this mission
+	 * 
+	 * @param productClasses the productClasses to set
+	 */
+	public void setProductClasses(Set<ProductClass> productClasses) {
+		this.productClasses = productClasses;
+	}
+
+	/**
+	 * Gets the processing orders issued for this mission
+	 * 
+	 * @return the processingOrders
+	 */
+	public Set<ProcessingOrder> getProcessingOrders() {
+		return processingOrders;
+	}
+
+	/**
+	 * Sets the processing orders issued for this mission
+	 * 
+	 * @param processingOrders the processingOrders to set
+	 */
+	public void setProcessingOrders(Set<ProcessingOrder> processingOrders) {
+		this.processingOrders = processingOrders;
 	}
 
 	@Override

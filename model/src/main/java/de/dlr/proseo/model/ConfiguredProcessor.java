@@ -6,10 +6,7 @@
 package de.dlr.proseo.model;
 
 import java.util.Objects;
-import java.util.Set;
-
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
 
 /**
  * An Earth Observation mission.
@@ -20,7 +17,7 @@ import javax.persistence.OneToMany;
 @Entity
 public class ConfiguredProcessor extends PersistentObject {
 
-	/** Human-readable identifier for this processor configuration */
+	/** User-defined identifier for this processor configuration */
 	private String identifier;
 	
 	/** The processor version */

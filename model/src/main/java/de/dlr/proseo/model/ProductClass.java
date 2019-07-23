@@ -35,7 +35,7 @@ public class ProductClass extends PersistentObject {
 	private String description;
 	
 	/** Set of component product classes */
-	@OneToMany
+	@OneToMany(mappedBy = "enclosingClass")
 	private Set<ProductClass> componentClasses;
 	/** Product class for which this product class is a component */
 	@ManyToOne

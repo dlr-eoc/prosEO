@@ -25,12 +25,15 @@ public class Spacecraft extends PersistentObject {
 	/** The mission this spacecraft belongs to */
 	@ManyToOne
 	private Mission mission;
+	
 	/** The spacecraft code (e. g. S5P) */
 	private String code;
+	
 	/** The spacecraft name (e. g. Sentinel-5 Precursor) */
 	private String name;
+	
 	/** The orbits this spacecraft performs */
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "spacecraft", cascade = CascadeType.ALL)
 	@OrderBy("orbitNumber")
 	private List<Orbit> orbits;
 	

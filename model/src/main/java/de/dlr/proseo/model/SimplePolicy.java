@@ -33,7 +33,8 @@ public class SimplePolicy extends PersistentObject {
 	/** The policy type to use */
 	private PolicyType policyType;
 
-	/** The delta time to apply to the start (index 0) and end (index 1) of the selection period. Note that delta times always
+	/** 
+	 * The delta time to apply to the start (index 0) and end (index 1) of the selection period. Note that delta times always
 	 * enlarge the selection period, they cannot be negative (i. e. reduce the interval).
 	 */
 	@ElementCollection

@@ -23,10 +23,13 @@ public class Orbit extends PersistentObject {
 	/** The spacecraft this orbit belongs to */
 	@ManyToOne
 	private Spacecraft spacecraft;
+	
 	/** The orbit number (usually starting at 1 at launch); unique for a spacecraft and usually gapless */
 	private Integer orbitNumber;
+	
 	/** The start time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
 	private Instant startTime;
+	
 	/** The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
 	private Instant stopTime;
 	

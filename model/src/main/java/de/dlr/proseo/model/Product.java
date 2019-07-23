@@ -14,8 +14,10 @@ import java.util.Set;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 /**
  * Representation of a data product
@@ -35,7 +37,7 @@ public class Product extends PersistentObject {
 	private Instant sensingStopTime;
 	
 	/** Set of component products */
-	@OneToMany
+	@OneToMany(mappedBy = "enclosingProduct")
 	private Set<Product> componentProducts;
 	/** Product for which this product is a component */
 	@ManyToOne
@@ -44,6 +46,18 @@ public class Product extends PersistentObject {
 	/** Orbit relationship of this product, if any */
 	@ManyToOne
 	private Orbit orbit;
+	
+	/** Product queries satisfied by this product */
+	@ManyToMany
+	private Set<ProductQuery> satisfiedProductQueries;
+	
+	/** Job step that produced this product (if any) */
+	@OneToOne
+	private JobStep jobStep;
+	
+	/** Processor configuration used for processing this product */
+	@ManyToOne
+	private ConfiguredProcessor configuredProcessor;
 	
 	/**
 	 * A collection of mission-specific parameters for this object
