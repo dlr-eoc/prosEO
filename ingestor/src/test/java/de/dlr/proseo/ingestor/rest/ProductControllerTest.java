@@ -57,10 +57,7 @@ public class ProductControllerTest {
 	private int port;
 
     @Autowired
-    private TestEntityManager entityManager;
-
-//    @Autowired
-//    private ProductRepository products;
+    private ProductRepository products;
 	
 
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
@@ -69,9 +66,12 @@ public class ProductControllerTest {
 	public void testJpa() {
 		logger.info("Preparing test products");
 		Product product1 = new Product();
-		entityManager.persist(product1);
+		products.save(product1);
 		
-//		products.findAll().forEach(product -> { logger.info("Found product {}", product.getId()); });
+		logger.info("Looking for all products");
+		
+		products.findAll().forEach(product -> { logger.info("Found product {}", product.getId()); });
+		logger.info("JPA test complete");
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class ProductControllerTest {
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> body = entity.getBody();
-		assertEquals(123L, body.get(0).get("id"));
+		assertEquals(123, body.get(0).get("id"));
 		assertEquals("2019-07-22T13:57:38.654321", body.get(1).get("sensingStart"));
 	}
 
