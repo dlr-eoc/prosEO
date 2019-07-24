@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.Orbit;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
@@ -38,8 +39,6 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START = MSG_PREFIX + "IngestorProduct with sensing start time %s not found (%d)";
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID = MSG_PREFIX + "IngestorProduct with id %s not found (%d)";
 	
-	private static final DateTimeFormatter ipfDtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
-
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
 	/* (non-Javadoc)
@@ -53,16 +52,20 @@ public class ProductControllerImpl implements ProductController {
 		// Dummy implementation
 		Product product123 = new Product();
 		product123.setId(123L);
-		product123.setSensingStartTime(ipfDtf.parse("2019-07-22T12:27:38.654321", Instant::from));
-		product123.setSensingStopTime(ipfDtf.parse("2019-07-22T13:57:38.654321", Instant::from));
+		product123.setSensingStartTime(Orbit.orbitTimeFormatter.parse("2019-07-22T12:27:38.654321", Instant::from));
+		product123.setSensingStopTime(Orbit.orbitTimeFormatter.parse("2019-07-22T13:57:38.654321", Instant::from));
 		Product productABC = new Product();
 		productABC.setId(456L);
-		productABC.setSensingStartTime(ipfDtf.parse("2019-07-22T13:57:38.654321", Instant::from));
-		productABC.setSensingStopTime(ipfDtf.parse("2019-07-22T15:27:38.654321", Instant::from));
+		productABC.setSensingStartTime(Orbit.orbitTimeFormatter.parse("2019-07-22T13:57:38.654321", Instant::from));
+		productABC.setSensingStopTime(Orbit.orbitTimeFormatter.parse("2019-07-22T15:27:38.654321", Instant::from));
 		
 		List<IngestorProduct> products = new ArrayList<>();
-		IngestorProduct ip123 = new IngestorProduct(product123.getId(), ipfDtf.format(product123.getSensingStartTime()), ipfDtf.format(product123.getSensingStopTime()));
-		IngestorProduct ipABC = new IngestorProduct(productABC.getId(), ipfDtf.format(productABC.getSensingStartTime()), ipfDtf.format(productABC.getSensingStopTime()));
+		IngestorProduct ip123 = new IngestorProduct(product123.getId(),
+				Orbit.orbitTimeFormatter.format(product123.getSensingStartTime()),
+				Orbit.orbitTimeFormatter.format(product123.getSensingStopTime()));
+		IngestorProduct ipABC = new IngestorProduct(productABC.getId(),
+				Orbit.orbitTimeFormatter.format(productABC.getSensingStartTime()),
+				Orbit.orbitTimeFormatter.format(productABC.getSensingStopTime()));
 		if (null == id && null == sensingStart) {
 			products.add(ip123);
 			products.add(ipABC);

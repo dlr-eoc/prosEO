@@ -6,6 +6,8 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,12 +16,20 @@ import javax.persistence.ManyToOne;
 /**
  * The description of an orbit identified by its start and stop times (e. g. the "spacecraft midnight" events of the
  * Sentinel-5P satellite). There must be no time gap between subsequent orbits of the same spacecraft.
+ * <br>
+ * Orbit times (and all derived times in prosEO) are given in UTC-STS (leap seconds spread evenly over the last 1000
+ * seconds of the day) and to a microsecond precision. The public static variable orbitTimeFormatter gives a standard
+ * format for parsing and formatting orbit times. 
  * 
  * @author Dr. Thomas Bassler
  *
  */
 @Entity
 public class Orbit extends PersistentObject {
+	
+	/** Master time format for orbit times (ISO-formatted UTC-STS timestamps with microsecond fraction and without time zone) */
+	public static final DateTimeFormatter orbitTimeFormatter =
+			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** The spacecraft this orbit belongs to */
 	@ManyToOne
