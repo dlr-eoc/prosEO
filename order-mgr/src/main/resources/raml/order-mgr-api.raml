@@ -24,10 +24,10 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Order: !include types/order.raml
-  Parameter: !include types/parameter.raml
-  Mission: !include types/mission.raml
-  Orbit: !include types/orbit.raml
+  Order: !include model/types/order.raml
+  Parameter: !include model/types/parameter.raml
+  Mission: !include model/types/mission.raml
+  Orbit: !include model/types/orbit.raml
 
 resourceTypes:
   standard:
@@ -73,19 +73,19 @@ resourceTypes:
         body:
           application/json:
             type: Order[]
-            example: !include examples/order-list.json
+            example: !include model/examples/order-list.json
   post:
     description: Create a new order
     body:
       application/json:
         type: Order
-        example: !include examples/order.json
+        example: !include model/examples/order.json
     responses:
       201:
         body:
           application/json:
             type: Order
-            example: !include examples/order.json
+            example: !include model/examples/order.json
   /{id}:
     uriParameters:
       id:
@@ -98,19 +98,19 @@ resourceTypes:
           body:
             application/json:
               type: Order
-              example: !include examples/order.json
+              example: !include model/examples/order.json
     put:
       description: Update a processing order by ID
       body:
         application/json:
           type: Order
-          example: !include examples/order.json
+          example: !include model/examples/order.json
       responses:
         200:
           body:
             application/json:
               type: Order
-              example: !include examples/order.json
+              example: !include model/examples/order.json
     delete:
       description: Delete a processing order by ID
       responses:
@@ -124,19 +124,19 @@ resourceTypes:
         body:
           application/json:
             type: Mission[]
-            example: !include examples/mission-list.json
+            example: !include model/examples/mission-list.json
   post:
     description: Create a new mission
     body:
       application/json:
         type: Mission
-        example: !include examples/mission.json
+        example: !include model/examples/mission.json
     responses:
       201:
         body:
           application/json:
             type: Mission
-            example: !include examples/mission.json
+            example: !include model/examples/mission.json
   /{id}:
     uriParameters:
       id:
@@ -149,19 +149,19 @@ resourceTypes:
           body:
             application/json:
               type: Mission
-              example: !include examples/mission.json
+              example: !include model/examples/mission.json
     put:
       description: Update a mission by ID (including changes to the spacecraft list)
       body:
         application/json:
           type: Mission
-          example: !include examples/mission.json
+          example: !include model/examples/mission.json
       responses:
         200:
           body:
             application/json:
               type: Mission
-              example: !include examples/mission.json
+              example: !include model/examples/mission.json
     delete:
       description: Delete a mission by ID
       responses:
@@ -183,19 +183,19 @@ resourceTypes:
         body:
           application/json:
             type: Orbit[]
-            example: !include examples/orbit-list.json
+            example: !include model/examples/orbit-list.json
   post:
     description: Create new orbits
     body:
       application/json:
         type: Orbit[]
-        example: !include examples/orbit-list.json
+        example: !include model/examples/orbit-list.json
     responses:
       201:
         body:
           application/json:
             type: Orbit[]
-            example: !include examples/orbit-list.json
+            example: !include model/examples/orbit-list.json
   /{id}:
     uriParameters:
       id:
@@ -208,19 +208,19 @@ resourceTypes:
           body:
             application/json:
               type: Orbit
-              example: !include examples/orbit.json
+              example: !include model/examples/orbit.json
     put:
       description: Update an orbit by ID
       body:
         application/json:
           type: Orbit
-          example: !include examples/orbit.json
+          example: !include model/examples/orbit.json
       responses:
         200:
           body:
             application/json:
               type: Mission
-              example: !include examples/mission.json
+              example: !include model/examples/mission.json
     delete:
       description: Delete an orbit by ID
       responses:
