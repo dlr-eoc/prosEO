@@ -7,10 +7,10 @@
 package de.dlr.proseo.ordermgr;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * prosEO Order Manager application
@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Configuration;
  * @author Dr. Thomas Bassler
  * 
  */
-@Configuration
-@EnableAutoConfiguration
+@SpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan
+@ComponentScan(basePackages={"de.dlr.proseo"})
+@EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class OrderManager {
 
 	public static void main(String[] args) throws Exception {

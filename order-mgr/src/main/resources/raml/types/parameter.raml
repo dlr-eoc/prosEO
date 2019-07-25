@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+#  Parameter:
+    type: object
+    properties:
+      key: string
+      parameterType:
+        type: string
+        description: One of { STRING, INTEGER, BOOLEAN, DOUBLE }
+      parameterValue:
+        type: string
+        description: All parameter values are serialized to their string representations. For deserialization refer
+                     to the parameterType.

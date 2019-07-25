@@ -1,5 +1,5 @@
 /**
- * OrderControllerImpl.java
+ * OrbitControllerImpl.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -17,24 +17,32 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.ordermgr.rest.model.Order;
+import de.dlr.proseo.ordermgr.rest.model.Mission;
+import de.dlr.proseo.ordermgr.rest.model.Orbit;
 
 /**
- * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
+ * Spring MVC controller for the prosEO Order Manager; implements the services required to manage spacecraft orbits
  * 
  * @author Dr. Thomas Bassler
  *
  */
 @Component
-public class OrderControllerImpl implements OrderController {
+public class OrbitControllerImpl implements OrbitController {
 	
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-order-mgr ";
 
-	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
 
 	@Override
-	public ResponseEntity<Order> createOrder(Order order) {
+	public ResponseEntity<List<Orbit>> getOrbits(String missionCode, String spacecraftCode, Long orbitNumberFrom,
+			Long orbitNumberTo, Date starttimefrom, Date starttimeto) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {
 		// TODO Auto-generated method stub
 
 		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
@@ -45,14 +53,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<List<Order>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
-			Date starttimeto) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<Order> getOrderById(Long id) {
+	public ResponseEntity<Orbit> getOrbitById(Long id) {
 		// TODO Auto-generated method stub
 
 		String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
@@ -63,13 +64,13 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<Order> updateOrder(Long id, @Valid Order order) {
+	public ResponseEntity<Mission> updateOrbit(Long id, @Valid Orbit orbit) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ResponseEntity<?> deleteOrderById(Long id) {
+	public ResponseEntity<?> deleteOrbitById(Long id) {
 		// TODO Auto-generated method stub
 		return null;
 	}

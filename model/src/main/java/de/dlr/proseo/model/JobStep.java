@@ -40,6 +40,9 @@ public class JobStep extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> outputParameters;
 	
+	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
+	private String processingMode;
+	
 	/** Query objects for input products */
 	@OneToMany(mappedBy = "jobStep")
 	private Set<ProductQuery> inputProductQueries;
@@ -54,6 +57,8 @@ public class JobStep extends PersistentObject {
 	public enum JobStepState { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED }
 
 	/**
+	 * Gets the enclosing job
+	 * 
 	 * @return the job
 	 */
 	public Job getJob() {
@@ -61,6 +66,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Sets the enclosing job
+	 * 
 	 * @param job the job to set
 	 */
 	public void setJob(Job job) {
@@ -68,6 +75,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Gets the state of the job step
+	 * 
 	 * @return the jobStepState
 	 */
 	public JobStepState getJobStepState() {
@@ -75,6 +84,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Sets the state of the job step
+	 * 
 	 * @param jobStepState the jobStepState to set
 	 */
 	public void setJobStepState(JobStepState jobStepState) {
@@ -82,6 +93,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Gets the output parameters
+	 * 
 	 * @return the outputParameters
 	 */
 	public Map<String, Parameter> getOutputParameters() {
@@ -89,6 +102,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Sets the output parameters
+	 * 
 	 * @param outputParameters the outputParameters to set
 	 */
 	public void setOutputParameters(Map<String, Parameter> outputParameters) {
@@ -96,6 +111,26 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Gets the processing mode to run the processor in
+	 * 
+	 * @return the processingMode
+	 */
+	public String getProcessingMode() {
+		return processingMode;
+	}
+
+	/**
+	 * Sets the processing mode to run the processor in
+	 * 
+	 * @param processingMode the processingMode to set
+	 */
+	public void setProcessingMode(String processingMode) {
+		this.processingMode = processingMode;
+	}
+
+	/**
+	 * Gets the product queries for the input products
+	 * 
 	 * @return the inputProductQueries
 	 */
 	public Set<ProductQuery> getInputProductQueries() {
@@ -103,6 +138,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Sets the product queries for the input products
+	 * 
 	 * @param inputProductQueries the inputProductQueries to set
 	 */
 	public void setInputProductQueries(Set<ProductQuery> inputProductQueries) {
@@ -110,6 +147,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Gets the output product
+	 * 
 	 * @return the outputProduct
 	 */
 	public Product getOutputProduct() {
@@ -117,6 +156,8 @@ public class JobStep extends PersistentObject {
 	}
 
 	/**
+	 * Sets the output product
+	 * 
 	 * @param outputProduct the outputProduct to set
 	 */
 	public void setOutputProduct(Product outputProduct) {

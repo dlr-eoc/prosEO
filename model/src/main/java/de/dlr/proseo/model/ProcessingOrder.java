@@ -74,6 +74,9 @@ public class ProcessingOrder extends PersistentObject {
 	@ManyToMany
 	private Set<ProductClass> requestedProductClasses;
 	
+	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
+	private String processingMode;
+	
 	/** The processor configurations for processing the products */
 	@ManyToMany
 	private Set<ConfiguredProcessor> requestedConfiguredProcessors;
@@ -265,6 +268,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setRequestedProductClasses(Set<ProductClass> requestedProductClasses) {
 		this.requestedProductClasses = requestedProductClasses;
+	}
+
+	/**
+	 * Gets the processing mode for the processors
+	 * 
+	 * @return the processingMode
+	 */
+	public String getProcessingMode() {
+		return processingMode;
+	}
+
+	/**
+	 * Sets the processing mode for the processors
+	 * 
+	 * @param processingMode the processingMode to set
+	 */
+	public void setProcessingMode(String processingMode) {
+		this.processingMode = processingMode;
 	}
 
 	/**

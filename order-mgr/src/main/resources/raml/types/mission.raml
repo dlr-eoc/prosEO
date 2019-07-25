@@ -1,0 +1,32 @@
+#%RAML 1.0 DataType
+#  Mission:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      code:
+        type: string
+        description: The mission code (e. g. S5P)
+      name:
+        type: string
+        description: The mission name (e. g. Sentinel-5 Precursor)
+      processingModes:
+        type: string[]
+        description: Processing mode tags as agreed for this mission 
+      spacecrafts:
+        type: array
+        description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.
+        items:
+          type: object
+          properties:
+            code:
+              type: string
+              description: The short code for the spacecraft (e. g. TDX1)
+            name:
+              type: string
+              description: The spacecraft name (e. g. TanDEM-X)

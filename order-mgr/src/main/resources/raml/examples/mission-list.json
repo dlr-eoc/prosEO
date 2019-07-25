@@ -1,0 +1,32 @@
+[
+    {
+        "id": 9753721,
+        "version": 17,
+        "code": "S5P",
+        "name": "Sentinel-5 Precursor",
+        "processingModes": [ "NRTI", "OFFL", "RPRO" ],
+        "spacecrafts": [
+            {
+                "code": "S5P",
+                "name": "Sentinel-5 Precursor"
+            }
+        ]
+    },
+    {
+        "id": 9753722,
+        "version": 3,
+        "code": "TDM",
+        "name": "TanDEM-X",
+        "processingModes": [ "DEM", "SCI" ],
+        "spacecrafts": [
+            {
+                "code": "TDX1",
+                "name": "TanDEM-X"
+            },
+            {
+                "code": "TSX1",
+                "name": "TerraSAR-X"
+            }
+        ]
+    }    
+]

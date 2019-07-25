@@ -2,5 +2,72 @@
 #  Order:
     type: object
     properties:
-      id: string
-      description?: string
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      identifier:
+        type: string
+        description: User-defined order identifier
+      orderState:
+        type: string
+        description: State of the processing order; one of { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED }
+      executionTime?:
+        type: datetime
+        description: Expected execution time (optional, used for scheduling)
+      startTime?:
+        type: datetime
+        description: The start time of the time interval to process. If a range of orbit numbers is given, this time is set to 
+                     the earliest start time of the selected orbits.
+      stopTime?:
+        type: datetime
+        description: The end time of the time interval to process. If a range of orbit numbers is given, this time is set to 
+                     the latest stop time of the selected orbits.
+      filterConditions:
+        type: Parameter[]
+        description: A set of additional conditions to apply to selected products.
+      outputParameters:
+        type: Parameter[]
+        description: A set of parameters to set for the generated products.
+      configuredProcessors:
+        type: string[]
+        description: List of identifiers of the configured processors
+      orbits:
+        type: array
+        description: List of orbit ranges, identified by spacecraft code and orbit number from/to
+        items:
+          type: object
+          properties:
+            spacecraftCode: string
+            orbitNumberFrom: integer
+            orbitNumberTo: integer
+      requestedProductClasses:
+        type: string[]
+        description: List of internal product types
+      processingMode:
+        type: string
+        description: The processing mode to run the processor(s) in
+      promisedProducts:
+        type: array
+        description: List of products provided as input to the processing order
+        items:
+          type: object
+          properties:
+            productClass:
+              type: string
+              description: The internal product type of the product
+            sensingStartTime?:
+              type: datetime-only
+              description: Sensing start time
+            sensingStopTime?:
+              type: datetime-only
+              description: Sensing stop time
+            parameters:
+              type: Parameter[]
+              description: Collection of mission-specific parameters for the product
