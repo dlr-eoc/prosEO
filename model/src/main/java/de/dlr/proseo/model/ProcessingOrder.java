@@ -38,6 +38,9 @@ public class ProcessingOrder extends PersistentObject {
 	/** User-defined order identifier */
 	private String identifier;
 	
+	/** State of the processing order */
+	private OrderState orderState;
+	
 	/** Expected execution time (optional, used for scheduling) */
 	@Column(columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
@@ -86,6 +89,21 @@ public class ProcessingOrder extends PersistentObject {
 	/** The processing jobs belonging to this order */	
 	@OneToMany(mappedBy = "processingOrder")
 	private Set<Job> jobs;
+	
+	/**
+	 * Possible states for a processing order; recommended state transitions:
+	 * <ol>
+	 * <li>INITIAL -&gt; RELEASED: Customer approved order parameters and/or committed budget</li>
+	 * <li>RELEASED -&gt; PLANNED: Jobs for the processing order have been generated</li>
+	 * <li>PLANNED -&gt; RUNNING: The first jobs have started, further jobs can be started</li>
+	 * <li>RUNNING -&gt; PLANNED: Order execution halted, no further jobs will be started (started jobs will be completed,
+	 *     if they are not halted themselves)</li>
+	 * <li>RUNNING -&gt; COMPLETED: All jobs have been completed successfully</li>
+	 * <li>RUNNING -&gt; FAILED: All jobs have been completed, but at least one of them failed</li>
+	 * <li>COMPLETED/FAILED -&gt; CLOSED: Delivery has been acknowledged by customer and/or order fee has been paid</li>
+	 * </ol>
+	 */
+	public enum OrderState { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED };
 
 	/**
 	 * Gets the owning mission
@@ -121,6 +139,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setIdentifier(String identifier) {
 		this.identifier = identifier;
+	}
+
+	/**
+	 * Gets the state of the processing order
+	 * 
+	 * @return the orderState
+	 */
+	public OrderState getOrderState() {
+		return orderState;
+	}
+
+	/**
+	 * Sets the state of the processing order
+	 * 
+	 * @param orderState the orderState to set
+	 */
+	public void setOrderState(OrderState orderState) {
+		this.orderState = orderState;
 	}
 
 	/**
