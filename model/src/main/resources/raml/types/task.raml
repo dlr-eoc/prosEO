@@ -1,0 +1,37 @@
+#%RAML 1.0 DataType
+#  Task:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      processorName?:
+        type: string
+        description: User-defined unique processor class name of the owning processor
+                     (not required if embedded in processor object)
+      processorVersion?:
+        type: string
+        description: Version identification of the processor executable (Docker image)
+                     (not required if embedded in processor object)
+      taskName:
+        type: string
+        description: The task name (unique for the Processor)
+      taskVersion:
+        type: string
+        description: A version identifier for the task
+      isCritical:
+        type: boolean
+        description: Indicates whether a failure of the task results in a failure of the whole processor
+      criticalityLevel:
+        type: integer
+        description: Task priority, in case of failure all running tasks with a lower priority number will be aborted
+      numberOfCpus:
+        type: integer
+        description: The number of CPUs used by the task
+      breakpointFileNames:
+        type: string[]
+        description: Intermediate output files for testing/evaluation purposes

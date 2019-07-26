@@ -25,6 +25,10 @@ import de.dlr.proseo.model.Product.Parameter;
 @Entity
 public class Configuration extends PersistentObject {
 	
+	/** The processor class this configuration version belongs to */
+	@ManyToOne
+	private ProcessorClass processorClass;
+
 	/** The configured processors, for which this configuration is valid */
 	@OneToMany(mappedBy = "configuration")
 	private Set<ConfiguredProcessor> configuredProcessors;
@@ -45,6 +49,24 @@ public class Configuration extends PersistentObject {
 	/** The configuration files for this configuration */
 	@ElementCollection
 	private Set<ConfigurationFile> configurationFiles;
+
+	/**
+	 * Gets the associated processor class
+	 * 
+	 * @return the configuredProcessor
+	 */
+	public ProcessorClass getProcessorClass() {
+		return processorClass;
+	}
+
+	/**
+	 * Sets the associated processor class
+	 * 
+	 * @param processorClass the processorClass to set
+	 */
+	public void setProcessorClass(ProcessorClass processorClass) {
+		this.processorClass = processorClass;
+	}
 
 	/**
 	 * Gets the associated configured processors

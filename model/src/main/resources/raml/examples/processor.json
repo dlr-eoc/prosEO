@@ -1,0 +1,23 @@
+{
+    "id": 1198734,
+    "version": 5,
+    "processorName": "KNMI L2",
+    "processorVersion": "01.03.02",
+    "isTest": false,
+    "minDiskSpace": 1024,
+    "maxTime": 300,
+    "sensingTimeFlag": true,
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-03-30" ],
+    "tasks": [
+        {
+            "id": 234961,
+            "version": 1,
+            "taskName": "TROPNLL2",
+            "taskVersion": "01.03.02",
+            "isCritical": true,
+            "criticalityLevel": 100,
+            "numberOfCpus": 10,
+            "breakpointFileNames": []
+        }
+    ]
+}
