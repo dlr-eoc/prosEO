@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -41,89 +42,41 @@ public class ProductControllerImpl implements ProductController {
 	
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#getProducts(java.lang.String, java.lang.String)
-	 */
-	@Override
-	public ResponseEntity<List<IngestorProduct>> getIngestorProducts(Long id, String sensingStart) {
-		logger.trace(">>> Entering getIngestorProducts");
-		// TODO Auto-generated method stub
-		
-		// Dummy implementation
-		Product product123 = new Product();
-		product123.setId(123L);
-		product123.setSensingStartTime(Orbit.orbitTimeFormatter.parse("2019-07-22T12:27:38.654321", Instant::from));
-		product123.setSensingStopTime(Orbit.orbitTimeFormatter.parse("2019-07-22T13:57:38.654321", Instant::from));
-		Product productABC = new Product();
-		productABC.setId(456L);
-		productABC.setSensingStartTime(Orbit.orbitTimeFormatter.parse("2019-07-22T13:57:38.654321", Instant::from));
-		productABC.setSensingStopTime(Orbit.orbitTimeFormatter.parse("2019-07-22T15:27:38.654321", Instant::from));
-		
-		List<IngestorProduct> products = new ArrayList<>();
-		IngestorProduct ip123 = new IngestorProduct(product123.getId(),
-				Orbit.orbitTimeFormatter.format(product123.getSensingStartTime()),
-				Orbit.orbitTimeFormatter.format(product123.getSensingStopTime()));
-		IngestorProduct ipABC = new IngestorProduct(productABC.getId(),
-				Orbit.orbitTimeFormatter.format(productABC.getSensingStartTime()),
-				Orbit.orbitTimeFormatter.format(productABC.getSensingStopTime()));
-		if (null == id && null == sensingStart) {
-			products.add(ip123);
-			products.add(ipABC);
-		} else if (null != id) {
-			if (123L == id) {
-				products.add(ip123);
-			} else if (456L == id) {
-				products.add(ipABC);
-			} else {
-				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID, id, 1001);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				logger.trace("<<< Leaving getIngestorProducts with error 'Invalid ID'");
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-		} else {
-			if ("2019-07-22T13:57:38.654321".equals(sensingStart)) {
-				products.add(ipABC);
-			} else if ("2019-07-22T12:27:38.654321".equals(sensingStart)) {
-				products.add(ip123);
-			} else {
-				String message = String.format(MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START, sensingStart, 1001);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				logger.trace("<<< Leaving getIngestorProducts with error 'Invalid descriptor'");
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-		}
-		logger.debug("Returning " + products);
-		logger.trace("<<< Leaving getIngestorProducts with products " + products);
-		return new ResponseEntity<>(products, HttpStatus.OK);
-	}
-
-	/* (non-Javadoc)
-	 * @see de.dlr.proseo.ingestor.rest.IngestorProductController#createProduct(de.dlr.proseo.ingestor.rest.model.IngestorProduct)
-	 */
-	@Override
-	public ResponseEntity<IngestorProduct> createIngestorProduct(IngestorProduct product) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<IngestorProduct> getIngestorProductById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<IngestorProduct> updateIngestorProduct(Long id, @Valid IngestorProduct ingestorProduct) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@Override
 	public ResponseEntity<?> deleteProductById(Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<List<de.dlr.proseo.ingestor.rest.model.Product>> getProducts(String mission, String[] productClass,
+			Date startTimeFrom, Date startTimeTo) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> createProduct(
+			de.dlr.proseo.ingestor.rest.model.@Valid Product product) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getProductById(Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> updateProduct(Long id,
+			de.dlr.proseo.ingestor.rest.model.@Valid Product product) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<?> updateIngestorProduct(String processingFacility, @Valid List<IngestorProduct> ingestorProduct) {
 		// TODO Auto-generated method stub
 		return null;
 	}

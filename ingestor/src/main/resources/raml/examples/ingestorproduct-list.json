@@ -1,0 +1,69 @@
+[
+    {
+        "id": 0,
+        "version": 0,
+        "productClass": "L0",
+        "sensingStartTime": "2019-05-09T21:25:08.000000Z",
+        "sensingStopTime": "2019-05-09T21:45:08.000000Z",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 8138
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "01"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            }
+        ],
+        "filePath": "/data/proseo-pickup/incoming/S5P_OPER_L0__08138_01",
+        "productFileName": "S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW",
+        "auxFileNames": [
+            "S5P_OPER_L0__ODB_1__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_2__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_3__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_4__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_5__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_6__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_7__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_8__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW"
+        ]
+    },
+    {
+        "id": 0,
+        "version": 0,
+        "productClass": "O3",
+        "mode": "OFFL",
+        "sensingStartTime": "2019-05-09T22:07:07.000000Z",
+        "sensingStopTime": "2019-05-09T23:48:37.000000Z",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 8137
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "99"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            },
+            {
+                "key": "fileClass",
+                "parameterType": "STRING",
+                "parameterValue": "OFFL"
+            }
+        ],
+        "filePath": "/data/proseo-pickup/incoming/O3-614941691",
+        "productFileName": "S5P_OFFL_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc"
+    }
+]

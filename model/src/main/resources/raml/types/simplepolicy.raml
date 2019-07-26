@@ -22,8 +22,7 @@
             description: The duration of the time period in time units
           unit:
             type: string
-            # enum: "DAYS", "HOURS", "MINUTES", "SECONDS"
-            description: The time unit applicable for this time period
+            description: The time unit applicable for this time period (one of { "DAYS", "HOURS", "MINUTES", "SECONDS" })
       deltaTimeT1:
         type: object
         description: The delta time to apply to the end of the selection period. Delta times must not be negative (i. e. reduce the interval).
@@ -34,6 +33,5 @@
             description: The duration of the time period in time units
           unit:
             type: string
-            # enum: "DAYS", "HOURS", "MINUTES", "SECONDS"
-            description: The time unit applicable for this time period
+            description: The time unit applicable for this time period (one of { "DAYS", "HOURS", "MINUTES", "SECONDS" })
         

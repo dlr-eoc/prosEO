@@ -65,9 +65,9 @@ resourceTypes:
     queryParameters:
       mission?: string
       identifier?: string
-      productclasses?: string[]
-      starttimefrom: datetime-only
-      starttimeto: datetime-only
+      productClasses?: string[]
+      startTimeFrom?: datetime
+      startTimeTo?: datetime
     responses:
       200:
         body:
@@ -176,8 +176,8 @@ resourceTypes:
       spacecraftCode: string
       orbitNumberFrom?: integer
       orbitNumberTo?: integer
-      starttimefrom?: datetime-only
-      starttimeto?: datetime-only
+      starttimefrom?: datetime
+      starttimeto?: datetime
     responses:
       200:
         body:

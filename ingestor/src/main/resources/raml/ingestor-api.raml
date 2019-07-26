@@ -27,7 +27,21 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  IngestorProduct: !include types/ingestor-product.raml
+  Product: !include model/types/product.raml
+  Parameter: !include model/types/parameter.raml
+  IngestorProduct:
+    type: Product
+    description: Variant of the Product type with a reference to the data file location
+    properties:
+      filePath:
+        type: string
+        description: The POSIX path to the product files
+      productFileName:
+        type: string
+        description: File name of the main product file
+      auxFileNames?:
+        type: string[]
+        description: Names of auxiliary files being part of the product
 
 resourceTypes:
   standard:
@@ -61,30 +75,30 @@ resourceTypes:
 /products:
   type: standard
   get:
-    description: List of all products matching query parameters
+    description: List of all products by mission, product class, start time range
     queryParameters:
-      id?:
-        type: integer
-        format: long
-      sensingStart?: string
+      mission?: string
+      productClass?: string[]
+      startTimeFrom?: datetime
+      startTimeTo?: datetime
     responses:
       200:
         body:
           application/json:
-            type: IngestorProduct[]
-            example: !include examples/ingestor-product-list.json
+            type: Product[]
+            example: !include model/examples/product-list.json
   post:
     description: Create a new product
     body:
       application/json:
-        type: IngestorProduct
-        example: !include examples/ingestor-product-full.json
+        type: Product
+        example: !include model/examples/product.json
     responses:
       201:
         body:
           application/json:
-            type: IngestorProduct
-            example: !include examples/ingestor-product.json
+            type: Product
+            example: !include model/examples/product.json
   /{id}:
     uriParameters:
       id:
@@ -96,19 +110,31 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: IngestorProduct
-              example: !include examples/ingestor-product-full.json
+              type: Product
+              example: !include model/examples/product.json
     put:
       body:
         application/json:
-          type: IngestorProduct
-          example: !include examples/ingestor-product-full.json
+          type: Product
+          example: !include model/examples/product.json
       responses:
         200:
           body:
             application/json:
-              type: IngestorProduct
-              example: !include examples/ingestor-product.json
+              type: Product
+              example: !include model/examples/product.json
     delete:
       responses:
         204:
+  /ingest/{processingFacility}:
+    uriParameters:
+      processingFacility:
+        type: string
+        description: The name of the facility to ingest the products to
+    post:
+      description: Ingest all products into the storage manager of the given processing facility
+      body:
+        application/json:
+          type: IngestorProduct[]
+          example: !include examples/ingestorproduct-list.json
+    
