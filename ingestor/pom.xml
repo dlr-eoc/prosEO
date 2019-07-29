@@ -45,8 +45,8 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
@@ -82,7 +82,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- Generate Spring MVC from RAML files -->
 			<plugin>
 				<groupId>com.phoenixnap.oss</groupId>
@@ -107,6 +107,9 @@
 				<groupId>com.spotify</groupId>
 				<artifactId>dockerfile-maven-plugin</artifactId>
 				<version>${dockerfile-maven-version}</version>
+				<configuration>
+					<tag>${project.version}</tag>
+				</configuration>
 				<executions>
 					<execution>
 						<id>default</id>

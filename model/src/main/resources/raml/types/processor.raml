@@ -1,0 +1,35 @@
+#%RAML 1.0 DataType
+#  Processor:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      processorName:
+        type: string
+        description: The name of the processor class this processor (version) belongs to
+      processorVersion:
+        type: string
+        description: Version identification of the processor executable (Docker image)
+      isTest:
+        type: boolean
+        description: Indicates a test version of the processor
+      minDiskSpace:
+        type: integer
+        description: Minimum disk space in MB, worst case estimate plus safety margin
+      maxTime:
+        type: integer
+        description: Execution time limit in seconds
+      sensingTimeFlag:
+        type: boolean
+        description: Indicates whether the processor uses a sensing time interval as main processing parameter
+      configuredProcessors:
+        type: string[]
+        description: The names for the processor configurations this processor version is valid for
+      tasks:
+        type: Task[]
+        description: List of tasks for this processor

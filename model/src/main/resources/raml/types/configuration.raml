@@ -1,0 +1,31 @@
+#%RAML 1.0 DataType
+#  Configuration:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      processorName:
+        type: string
+        description: The processor class this configuration version belongs to
+      configurationVersion:
+        type: string
+        description: Version identification of the configuration environment
+      dynProcParameters:
+        type: Parameter[]
+        description: Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator
+      configurationFiles:
+        type: array
+        description: The configuration files for this configuration
+        items:
+          type: object
+          properties:
+            fileVersion: string
+            fileName: string
+      configuredProcessors:
+        type: string[]
+        description: The names for the processor configurations this processor version is valid for

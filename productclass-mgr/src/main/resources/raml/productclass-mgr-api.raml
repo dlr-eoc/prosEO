@@ -24,7 +24,11 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  ProductClass: !include types/productclass.raml
+  ProductClass: !include model/types/productclass.raml
+  SimplePolicy: !include model/types/simplepolicy.raml
+  SimpleSelectionRule: !include model/types/simpleselectionrule.raml
+  SelectionRule: SimpleSelectionRule[]
+  Parameter: !include model/types/parameter.raml
 
 resourceTypes:
   standard:
@@ -58,25 +62,94 @@ resourceTypes:
 /productclasses:
   type: standard
   get:
-    description: Get product classes by id
+    description: Get product classes by mission, product type or mission type
     queryParameters:
-      id?: string
+      mission?: string
+      productType?: string
+      missionType?: string
     responses:
       200:
         body:
           application/json:
             type: ProductClass[]
-            example: !include examples/productclass-list.json
+            example: !include model/examples/productclass-list.json
   post:
     description: Create a new product class
     body:
       application/json:
         type: ProductClass
-        example: !include examples/productclass.json
+        example: !include model/examples/productclass.json
     responses:
       201:
         body:
           application/json:
             type: ProductClass
-            example: !include examples/productclass.json
-  
+            example: !include model/examples/productclass.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a product class by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: ProductClass
+              example: !include model/examples/productclass.json
+    put:
+      description: Update a product class by ID
+      body:
+        application/json:
+          type: ProductClass
+          example: !include model/examples/productclass.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: ProductClass
+              example: !include model/examples/productclass.json
+    delete:
+      description: Delete a product class by ID
+      responses:
+        204:
+    /selectionrules/{targetclass}:
+      uriParameters:
+        targetclass:
+          type: string
+          description: Internal target class name (product type)
+      get:
+        description: Get the simple selection rule for the target class as formatted string
+        responses:
+          200:
+            body:
+              application/json:
+                type: array
+                example: !include examples/selectionrule.json
+                items: 
+                  type: object
+                  properties:
+                    selectionRule: string
+                    mode: string
+                    configuredProcessors: string[]
+      put:
+        description: Update the selection rule for the given target class
+        body:
+          application/json:
+            type: array
+            example: !include examples/selectionrule.json
+            items: 
+              type: object
+              properties:
+                selectionRule: string
+                mode: string
+                configuredProcessors: string[]
+      /{configuredProcessor}:
+        delete:
+          description: Delete the selection rule for the given target class and configured processor (the selection rule will
+                       be disconnected from the configured processor and deleted, if it is not connected to any other
+                       configured processor)
+          responses:
+            204:
+            

@@ -1,0 +1,64 @@
+[
+    {
+        "missionCode": "S5P",
+        "id": 12345,
+        "version": 3,
+        "productType": "NPP",
+        "missionType": "L2__NPP___",
+        "typeDescription": "Suomi-NPP VIIRS Clouds",
+        "componentClasses": [ "NPP_BD3", "NPP_BD6", "NPP_BD7" ],
+        "processorClass": "RAL L2",
+        "selectionRule": [
+            {
+                "id": 749253,
+                "version": 1,
+                "mode": "NRTI",
+                "isMandatory": false,
+                "filterConditions": [],
+                "targetProductClass": "NPP",
+                "sourceProductClass": "AUX_NPP",
+                "applicableConfiguredProcessors": [ "RAL L2 00.09.00 2018-02-25", "RAL L2 01.00.00 2018-04-26" ],
+                "simplePolicies": [
+                    {
+                        "id": 749254,
+                        "version": 1,
+                        "policyType": "ValIntersect",
+                        "deltaTimeT0": { "duration" : 0, "unit" : "HOURS" },
+                        "deltaTimeT1": { "duration" : 0, "unit" : "HOURS" }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "missionCode": "S5P",
+        "id": 12346,
+        "version": 4,
+        "productType": "NPP_BD3",
+        "missionType": "L2__NP_BD3",
+        "typeDescription": "Suomi-NPP VIIRS Clouds, band 3",
+        "enclosingClass": "NPP",
+        "processorClass": "RAL L2",
+        "selectionRule": [
+            {
+                "id": 749254,
+                "version": 1,
+                "mode": "NRTI",
+                "isMandatory": false,
+                "filterConditions": [],
+                "targetProductClass": "NPP_BD3",
+                "sourceProductClass": "L1B_RA_BD3",
+                "applicableConfiguredProcessors": [ "RAL L2 00.09.00 2018-02-25", "RAL L2 01.00.00 2018-04-26" ],
+                "simplePolicies": [
+                    {
+                        "id": 749255,
+                        "version": 1,
+                        "policyType": "LatestValCover",
+                        "deltaTimeT0": { "duration" : 0, "unit" : "HOURS" },
+                        "deltaTimeT1": { "duration" : 0, "unit" : "HOURS" }
+                    }
+                ]
+            }
+        ]
+    }
+]

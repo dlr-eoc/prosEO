@@ -7,6 +7,8 @@ package de.dlr.proseo.prodclmgr.rest;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.prodclmgr.rest.model.Object;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClass;
 
 /**
@@ -32,7 +35,24 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
 
 	@Override
-	public ResponseEntity<List<ProductClass>> getProductClassById(String id) {
+	public ResponseEntity<ProductClass> createProductClass(ProductClass productClass) {
+		// TODO Auto-generated method stub
+
+		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
+		logger.error(message);
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
+	@Override
+	public ResponseEntity<List<ProductClass>> getProductClass(String mission, String productType, String missionType) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<ProductClass> getProductClassById(Long id) {
 		// TODO Auto-generated method stub
 
 		String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
@@ -43,14 +63,33 @@ public class ProductClassControllerImpl implements ProductclassController {
 	}
 
 	@Override
-	public ResponseEntity<ProductClass> createProductClass(ProductClass productClass) {
+	public ResponseEntity<ProductClass> updateProductClass(Long id, @Valid ProductClass productClass) {
 		// TODO Auto-generated method stub
+		return null;
+	}
 
-		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	@Override
+	public ResponseEntity<?> deleteProductclassById(Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<List<Object>> getObjects(String targetclass, Long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<?> updateObject(String targetclass, Long id, @Valid List<Object> object) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<?> deleteTargetclass(String configuredProcessor, String targetclass, Long id) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -1,0 +1,16 @@
+[
+    {
+        "missionCode": "S5P",
+        "id": 1837725,
+        "version": 2,
+        "processorName": "KNMI L2",
+        "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
+    },
+    {
+        "missionCode": "S5P",
+        "id": 1837726,
+        "version": 7,
+        "processorName": "DLR L2",
+        "productClasses": [ "CLOUD", "O3", "HCHO", "SO2", "O3TCL" ]
+    }
+]

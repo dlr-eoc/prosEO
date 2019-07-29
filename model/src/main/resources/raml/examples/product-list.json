@@ -1,0 +1,60 @@
+[
+    {
+        "id": 689325,
+        "version": 11,
+        "productClass": "AAI",
+        "mode": "OFFL",
+        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
+        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 4711
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "99"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            },
+            {
+                "key": "fileClass",
+                "parameterType": "STRING",
+                "parameterValue": "RPRO"
+            }
+        ]
+    },
+    {
+        "id": 689326,
+        "version": 7,
+        "productClass": "O3",
+        "mode": "OFFL",
+        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
+        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 4711
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "99"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            },
+            {
+                "key": "fileClass",
+                "parameterType": "STRING",
+                "parameterValue": "RPRO"
+            }
+        ]
+    }
+]

@@ -1,0 +1,72 @@
+{
+    "missionCode": "S5P",
+    "id": 12345,
+    "version": 3,
+    "identifier": "RPRO Orbits 4567-5678",
+    "orderState": "INITIAL",
+    "startTime": "2018-05-17T00:00:00.000000Z",
+    "stopTime": "2019-07-31T12:00:00.000000Z",
+    "filterConditions": [
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "1"
+        },
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "13"
+        },
+        {
+            "key": "fileClass",
+            "parameterType": "STRING",
+            "parameterValue": "OFFL"
+        }
+    ],
+    "outputParameters": [
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "99"
+        },
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+            "parameterValue": "14"
+        },
+        {
+            "key": "fileClass",
+            "parameterType": "STRING",
+            "parameterValue": "RPRO"
+        }
+    ],
+    "configuredProcessors": [ "KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03" ],
+    "orbits": [
+        { "spacecraftCode": "S5P", "orbitNumberFrom": 4567, "orbitNumberTo": 5330 },
+        { "spacecraftCode": "S5P", "orbitNumberFrom": 5421, "orbitNumberTo": 5678 }
+    ],
+    "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
+    "processingMode": "OFFL",
+    "promisedProducts": [
+        {
+            "productClass": "L1B",
+            "parameters": [
+                {
+                    "key": "copernicusCollection",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "1"
+                },
+                {
+                    "key": "revision",
+                    "parameterType": "INTEGER",
+                    "parameterValue": "13"
+                },
+                {
+                    "key": "fileClass",
+                    "parameterType": "STRING",
+                    "parameterValue": "OFFL"
+                }
+            ]
+        }
+    ]
+}

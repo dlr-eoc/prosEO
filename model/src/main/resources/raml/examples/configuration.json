@@ -1,0 +1,25 @@
+{
+    "id": 9276488,
+    "version": 5,
+    "processorName": "KNMI L2",
+    "configurationVersion": "2019-03-30",
+    "dynProcParameters": [
+        {
+            "key": "logging.root",
+            "parameterType": "STRING",
+            "parameterValue": "notice"
+        },
+        {
+            "key": "logging.dumplog",
+            "parameterType": "STRING",
+            "parameterValue": "null"
+        }
+    ],
+    "configurationFiles": [
+        {
+            "fileVersion": "1.0",
+            "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
+        }
+    ],
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ]
+}

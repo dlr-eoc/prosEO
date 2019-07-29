@@ -24,7 +24,12 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Processor: !include types/processor.raml
+  Parameter: !include model/types/parameter.raml
+  Processor: !include model/types/processor.raml
+  ProcessorClass: !include model/types/processorclass.raml
+  Task: !include model/types/task.raml
+  Configuration: !include model/types/configuration.raml
+  ConfiguredProcessor: !include model/types/configuredprocessor.raml
 
 resourceTypes:
   standard:
@@ -55,28 +60,226 @@ resourceTypes:
           headers:
             Warning: !include types/error.raml
               
+/processorclasses:
+  type: standard
+  get:
+    description: Get processor classes by mission and name
+    queryParameters:
+      mission?: string
+      processorName?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: ProcessorClass[]
+            example: !include model/examples/processorclass-list.json
+  post:
+    description: Create a new processor class
+    body:
+      application/json:
+        type: ProcessorClass
+        example: !include model/examples/processorclass.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: ProcessorClass
+            example: !include model/examples/processorclass.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processor class by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: ProcessorClass
+              example: !include model/examples/processorclass.json
+    put:
+      description: Update a processor class by ID
+      body:
+        application/json:
+          type: ProcessorClass
+          example: !include model/examples/processorclass.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: ProcessorClass
+              example: !include model/examples/processorclass.json
+    delete:
+      description: Delete a processor class by ID
+      responses:
+        204:
+              
 /processors:
   type: standard
   get:
-    description: Get processors by id
+    description: Get processors by mission, name and version
     queryParameters:
-      id?: string
+      mission?: string
+      processorName?: string
+      processorVersion?: string
     responses:
       200:
         body:
           application/json:
             type: Processor[]
-            example: !include examples/processor-list.json
+            example: !include model/examples/processor-list.json
   post:
     description: Create a new processor
     body:
       application/json:
         type: Processor
-        example: !include examples/processor.json
+        example: !include model/examples/processor.json
     responses:
       201:
         body:
           application/json:
             type: Processor
-            example: !include examples/processor.json
-  
+            example: !include model/examples/processor.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processor by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: Processor
+              example: !include model/examples/processor.json
+    put:
+      description: Update a processor class by ID
+      body:
+        application/json:
+          type: Processor
+          example: !include model/examples/processor.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: Processor
+              example: !include model/examples/processor.json
+    delete:
+      description: Delete a processor class by ID
+      responses:
+        204:
+
+/configurations:
+  type: standard
+  get:
+    description: Get configurations by mission, processor name and configuration version
+    queryParameters:
+      mission?: string
+      processorName?: string
+      configurationVersion?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: Configuration[]
+            example: !include model/examples/configuration-list.json
+  post:
+    description: Create a new configuration
+    body:
+      application/json:
+        type: Configuration
+        example: !include model/examples/configuration.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: Configuration
+            example: !include model/examples/configuration.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a configuration by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: Configuration
+              example: !include model/examples/configuration.json
+    put:
+      description: Update a configuration by ID
+      body:
+        application/json:
+          type: Configuration
+          example: !include model/examples/configuration.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: Configuration
+              example: !include model/examples/configuration.json
+    delete:
+      description: Delete a configuration by ID
+      responses:
+        204:
+
+/configuredprocessors:
+  type: standard
+  get:
+    description: Get configured processors by mission, processor name, processor version and configuration version
+    queryParameters:
+      mission?: string
+      processorName?: string
+      processorVersion?: string
+      configurationVersion?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: ConfiguredProcessor[]
+            example: !include model/examples/configuredprocessor-list.json
+  post:
+    description: Create a new configured processor
+    body:
+      application/json:
+        type: ConfiguredProcessor
+        example: !include model/examples/configuredprocessor.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: ConfiguredProcessor
+            example: !include model/examples/configuredprocessor.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a configured processor by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: ConfiguredProcessor
+              example: !include model/examples/configuredprocessor.json
+    put:
+      description: Update a configured processor by ID
+      body:
+        application/json:
+          type: ConfiguredProcessor
+          example: !include model/examples/configuredprocessor.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: ConfiguredProcessor
+              example: !include model/examples/configuredprocessor.json
+    delete:
+      description: Delete a configured processor by ID
+      responses:
+        204:

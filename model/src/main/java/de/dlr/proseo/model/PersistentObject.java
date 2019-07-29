@@ -5,11 +5,12 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 
 /**
@@ -18,7 +19,6 @@ import javax.persistence.MappedSuperclass;
  * @author Thomas Bassler
  */
 @MappedSuperclass
-@Inheritance(strategy=InheritanceType.JOINED)
 abstract public class PersistentObject {
 	/** Next object id for assignment */
 	private static long nextId = System.currentTimeMillis(); // Seeded by the current time
@@ -26,11 +26,12 @@ abstract public class PersistentObject {
 	/**
 	 * The persistent id of this object (an "assigned identifier" according to JPA).
 	 */
+	@GeneratedValue
 	@Id
 	private long id;
 	
 	/**
-	 * The modification version of this object
+	 * A version identifier to track updates to the object (especially to detect concurrent update attempts).
 	 */
 	private int version;
 	
@@ -42,30 +43,13 @@ abstract public class PersistentObject {
 		return ++nextId;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(id);
-	}
-
 	/**
-	 * Test equality of persistent objects based on their unique ID.
-	 * 
-	 * @param obj the object to compare this object to
-	 * @return true, if obj is a persistent object and has the same ID, false otherwise
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 * No-argument constructor that assigns the object id and initializes the version number
 	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof PersistentObject))
-			return false;
-		PersistentObject other = (PersistentObject) obj;
-		return Objects.equals(id, other.id);
+	public PersistentObject() {
+		super();
+		id = getNextId();
+		version = 1;
 	}
 
 	/**
@@ -99,12 +83,30 @@ abstract public class PersistentObject {
 		this.version++;
 	}
 
-	/**
-	 * No-argument constructor that assigns the object id
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
 	 */
-	public PersistentObject() {
-		super();
-		id = getNextId();
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(id);
+	}
+
+	/**
+	 * Test equality of persistent objects based on their unique ID.
+	 * 
+	 * @param obj the object to compare this object to
+	 * @return true, if obj is a persistent object and has the same ID, false otherwise
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof PersistentObject))
+			return false;
+		PersistentObject other = (PersistentObject) obj;
+		return Objects.equals(id, other.id);
 	}
 
 }

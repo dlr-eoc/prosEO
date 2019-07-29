@@ -1,0 +1,33 @@
+#%RAML 1.0 DataType
+#  SimpleSelectionRule:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      mode:
+        type: string
+        description: Processing modes as defined for the enclosing mission, plus the default value "ALWAYS"
+      isMandatory:
+        type: boolean
+        description: Indicates whether the required source product is mandatory for the production of the target product
+      filterConditions:
+        type: Parameter[]
+        description: Parameter values to filter the selected products (triple of parameter key, parameter type and parameter value);
+                     checked against product parameter values by equality.
+      targetProductClass:
+        type: string
+        description: The product class which uses the selection rule
+      sourceProductClass:
+        type: string
+        description: The product class which is selected by this rule
+      applicableConfiguredProcessors:
+        type: string[]
+        description: A list of identifiers for processor configurations, for which this rule is applicable
+      simplePolicies:
+        type: SimplePolicy[]
+        description: The selection policies applied for selecting target products (the first applicable policy in the list holds)

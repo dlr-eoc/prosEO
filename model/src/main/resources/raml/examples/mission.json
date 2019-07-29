@@ -1,0 +1,13 @@
+{
+    "id": 9753721,
+    "version": 17,
+    "code": "S5P",
+    "name": "Sentinel-5 Precursor",
+    "processingModes": [ "NRTI", "OFFL", "RPRO" ],
+    "spacecrafts": [
+        {
+            "code": "S5P",
+            "name": "Sentinel-5 Precursor"
+        }
+    ]
+}
