@@ -24,11 +24,11 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  ProductClass: !include model/types/productclass.raml
-  SimplePolicy: !include model/types/simplepolicy.raml
-  SimpleSelectionRule: !include model/types/simpleselectionrule.raml
+  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   SelectionRule: SimpleSelectionRule[]
-  Parameter: !include model/types/parameter.raml
+  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
 
 resourceTypes:
   standard:
@@ -72,19 +72,19 @@ resourceTypes:
         body:
           application/json:
             type: ProductClass[]
-            example: !include model/examples/productclass-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
   post:
     description: Create a new product class
     body:
       application/json:
         type: ProductClass
-        example: !include model/examples/productclass.json
+        example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     responses:
       201:
         body:
           application/json:
             type: ProductClass
-            example: !include model/examples/productclass.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
   /{id}:
     uriParameters:
       id:
@@ -97,19 +97,19 @@ resourceTypes:
           body:
             application/json:
               type: ProductClass
-              example: !include model/examples/productclass.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     put:
       description: Update a product class by ID
       body:
         application/json:
           type: ProductClass
-          example: !include model/examples/productclass.json
+          example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
       responses:
         200:
           body:
             application/json:
               type: ProductClass
-              example: !include model/examples/productclass.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
       description: Delete a product class by ID
       responses:

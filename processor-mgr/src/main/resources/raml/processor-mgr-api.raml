@@ -24,12 +24,12 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Parameter: !include model/types/parameter.raml
-  Processor: !include model/types/processor.raml
-  ProcessorClass: !include model/types/processorclass.raml
-  Task: !include model/types/task.raml
-  Configuration: !include model/types/configuration.raml
-  ConfiguredProcessor: !include model/types/configuredprocessor.raml
+  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  Processor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  ProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  Task: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  Configuration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  ConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
 
 resourceTypes:
   standard:
@@ -72,19 +72,19 @@ resourceTypes:
         body:
           application/json:
             type: ProcessorClass[]
-            example: !include model/examples/processorclass-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
   post:
     description: Create a new processor class
     body:
       application/json:
         type: ProcessorClass
-        example: !include model/examples/processorclass.json
+        example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     responses:
       201:
         body:
           application/json:
             type: ProcessorClass
-            example: !include model/examples/processorclass.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
   /{id}:
     uriParameters:
       id:
@@ -97,19 +97,19 @@ resourceTypes:
           body:
             application/json:
               type: ProcessorClass
-              example: !include model/examples/processorclass.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     put:
       description: Update a processor class by ID
       body:
         application/json:
           type: ProcessorClass
-          example: !include model/examples/processorclass.json
+          example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
       responses:
         200:
           body:
             application/json:
               type: ProcessorClass
-              example: !include model/examples/processorclass.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
       description: Delete a processor class by ID
       responses:
@@ -128,19 +128,19 @@ resourceTypes:
         body:
           application/json:
             type: Processor[]
-            example: !include model/examples/processor-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
   post:
     description: Create a new processor
     body:
       application/json:
         type: Processor
-        example: !include model/examples/processor.json
+        example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     responses:
       201:
         body:
           application/json:
             type: Processor
-            example: !include model/examples/processor.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
   /{id}:
     uriParameters:
       id:
@@ -153,19 +153,19 @@ resourceTypes:
           body:
             application/json:
               type: Processor
-              example: !include model/examples/processor.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     put:
       description: Update a processor class by ID
       body:
         application/json:
           type: Processor
-          example: !include model/examples/processor.json
+          example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
       responses:
         200:
           body:
             application/json:
               type: Processor
-              example: !include model/examples/processor.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
       description: Delete a processor class by ID
       responses:
@@ -184,19 +184,19 @@ resourceTypes:
         body:
           application/json:
             type: Configuration[]
-            example: !include model/examples/configuration-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
   post:
     description: Create a new configuration
     body:
       application/json:
         type: Configuration
-        example: !include model/examples/configuration.json
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     responses:
       201:
         body:
           application/json:
             type: Configuration
-            example: !include model/examples/configuration.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
   /{id}:
     uriParameters:
       id:
@@ -209,19 +209,19 @@ resourceTypes:
           body:
             application/json:
               type: Configuration
-              example: !include model/examples/configuration.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     put:
       description: Update a configuration by ID
       body:
         application/json:
           type: Configuration
-          example: !include model/examples/configuration.json
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
       responses:
         200:
           body:
             application/json:
               type: Configuration
-              example: !include model/examples/configuration.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     delete:
       description: Delete a configuration by ID
       responses:
@@ -241,19 +241,19 @@ resourceTypes:
         body:
           application/json:
             type: ConfiguredProcessor[]
-            example: !include model/examples/configuredprocessor-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
   post:
     description: Create a new configured processor
     body:
       application/json:
         type: ConfiguredProcessor
-        example: !include model/examples/configuredprocessor.json
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     responses:
       201:
         body:
           application/json:
             type: ConfiguredProcessor
-            example: !include model/examples/configuredprocessor.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
   /{id}:
     uriParameters:
       id:
@@ -266,19 +266,19 @@ resourceTypes:
           body:
             application/json:
               type: ConfiguredProcessor
-              example: !include model/examples/configuredprocessor.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     put:
       description: Update a configured processor by ID
       body:
         application/json:
           type: ConfiguredProcessor
-          example: !include model/examples/configuredprocessor.json
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
       responses:
         200:
           body:
             application/json:
               type: ConfiguredProcessor
-              example: !include model/examples/configuredprocessor.json
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
       description: Delete a configured processor by ID
       responses:

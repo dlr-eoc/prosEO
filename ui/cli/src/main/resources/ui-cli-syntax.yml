@@ -12,6 +12,17 @@ description: |
   So the general syntax is:
   "proseo" command [subcommand...] [option...] [parameter...]
 
+globalOptions:
+    - help:
+        type: boolean
+        description: Show help information for the current command level (top level commands, when called from the shell command line)
+        shortForm: h
+options:
+    - version:
+        type: boolean
+        description: Show the prosEO CLI version and exit (only for call from shell command line)
+        shortForm: v
+
 commands:
     # Authentication:
     - login:
