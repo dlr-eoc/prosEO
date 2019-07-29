@@ -15,7 +15,9 @@ import javax.persistence.Entity;
  * @author Dr. Thomas Bassler
  *
  */
+
 @Entity
+
 public class Product extends PersistentObject {
 	
 	/** The unique ID used in the DIMS Product Library */

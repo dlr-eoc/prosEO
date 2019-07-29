@@ -5,6 +5,6 @@
   <title>Welcome!</title>
 </head>
 <body>
-<p>Test<p>
+<h1>HOMEPAGE<h1>
 </body>
 </html>

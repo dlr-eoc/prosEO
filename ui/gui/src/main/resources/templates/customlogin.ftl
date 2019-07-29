@@ -36,11 +36,15 @@
   <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
         <form name="f" action="/customlogin" method="post" class="form-signin">               
             <fieldset>
-			  <select>
-			  <option value="s5p">Sentinel S5P</option>
+           <div class="form-group">
+  <label for="sel1">Select list:</label>
+  <select class="form-control" id="sel1">
+    <option value="s5p">Sentinel S5P</option>
 			  <option value="terrax">Terra X </option>
 			  <option value="tandem">Tandem </option>
-				  </select>
+  </select>
+</div>
+
                 <legend>Please Login</legend>
                 <#if param.error??>
                 <div class="alert alert-error">    
