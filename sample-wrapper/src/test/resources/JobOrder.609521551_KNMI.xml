@@ -61,7 +61,7 @@
           <File_Type>CFG_CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://data/file01.txt</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B03.jp2</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>

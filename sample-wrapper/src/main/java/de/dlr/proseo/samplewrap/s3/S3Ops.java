@@ -41,17 +41,17 @@ public class S3Ops {
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
 			logger.error(e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e1) {
-			logger.error(e1.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
+			logger.error(s3Object+" --> "+e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e2) {
-			logger.error(e2.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e) {
+			logger.error(s3Object+" --> "+e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.S3Exception e3) {
-			logger.error(e3.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.S3Exception e) {
+			logger.error(e.getMessage());
 			return false;
-		}  catch (SecurityException e4) {
-			logger.error(e4.getMessage());
+		}  catch (SecurityException e) {
+			logger.error(e.getMessage());
 			return false;
 		}
 		
