@@ -41,6 +41,7 @@ services:
     command: master
     ports:
       - "19999:19999"
+      - "19998:19998"
     hostname: alluxio-master
     volumes:
       - ${PWD}/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
@@ -51,8 +52,11 @@ services:
   alluxio-worker:
     image: alluxio/alluxio:2.0.0
     command: worker
+    ports:
+      - "29999:29999"
+      - "30000:30000"
     shm_size: 2gb
-    hostname: alluxio-worker
+    hostname: 127.0.0.1
     volumes:
       - ${PWD}/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
     depends_on:
