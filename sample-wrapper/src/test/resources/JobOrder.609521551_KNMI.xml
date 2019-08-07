@@ -61,14 +61,14 @@
           <File_Type>CFG_CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B03.jp2</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B02.jp2</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
           <File_Type>CFG_CO___F</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://data/file02.txt</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B03.jp2</File_Name>
           </List_of_File_Names>
         </Input>
         <Input>
@@ -102,12 +102,12 @@
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171004T000000_20171005T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171005T000000_20171006T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171006T000000_20171007T000000_20170925T120000.nc</File_Name>
-            <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171007T000000_20171008T000000_20170925T120000.nc</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B04.jp2</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171008T000000_20171009T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171009T000000_20171010T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171010T000000_20171011T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171011T000000_20171012T000000_20170925T120000.nc</File_Name>
-            <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171012T000000_20171013T000000_20170925T120000.nc</File_Name>
+            <File_Name FS_TYPE="ALLUXIO">/tiles/33/J/YJ/2019/6/23/0/R10m/B08.jp2</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171013T000000_20171014T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171014T000000_20171015T000000_20170925T120000.nc</File_Name>
             <File_Name FS_TYPE="POSIX">/mnt/data1/storage_offl_l2/cache_offl_l2/CH4-609521675/CH4/S5P_OPER_AUX_CTMCH4_20171015T000000_20171016T000000_20170925T120000.nc</File_Name>
@@ -560,7 +560,7 @@
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="S3">s3://out/result01.txt</File_Name>
+            <File_Name FS_TYPE="S3">s3://outputs/result01.txt</File_Name>
           </List_of_File_Names>
         </Output>
       </List_of_Outputs>

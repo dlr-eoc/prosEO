@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,8 @@ public class S3Ops {
 		try {
 			File f = new File(ContainerPath);
 			if (Files.exists(Paths.get(ContainerPath), LinkOption.NOFOLLOW_LINKS)) f.delete();
-			else f.mkdirs();
+			File subdirs = new File(FilenameUtils.getPath(ContainerPath));
+			subdirs.mkdirs();
 			
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
 			s3.getObject(GetObjectRequest.builder()
@@ -38,6 +40,8 @@ public class S3Ops {
 					.key(s3uri.getKey())
 					.build(),
 					ResponseTransformer.toFile(Paths.get(ContainerPath)));
+			logger.info("Copied " + s3Object + " to " + "file://" + ContainerPath);
+			return true;
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
 			logger.error(e.getMessage());
 			return false;
@@ -54,8 +58,6 @@ public class S3Ops {
 			logger.error(e.getMessage());
 			return false;
 		}
-		
-		return true;
 	}
 
 }

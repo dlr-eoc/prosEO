@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +104,8 @@ public final class AlluxioOps {
 		if (dstFile.isDirectory()) {
 			outputFile = new File(PathUtils.concatPath(dstFile.getAbsolutePath(), srcPath.getName()));
 		} else {
+			File subdirs = new File(FilenameUtils.getPath(dstPath.getPath()));
+			subdirs.mkdirs();
 			outputFile = dstFile;
 		}
 		File tmpDst = new File(outputFile.getPath() + randomSuffix);

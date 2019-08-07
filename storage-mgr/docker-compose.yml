@@ -55,10 +55,12 @@ services:
     ports:
       - "29999:29999"
       - "30000:30000"
-    shm_size: 2gb
+    environment:
+      - ALLUXIO_RAM_FOLDER=/mnt/ramdisk
     hostname: 127.0.0.1
     volumes:
       - ${PWD}/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
+      - /mnt/ramdisk:/mnt/ramdisk
     depends_on:
       - minio
       - alluxio-master

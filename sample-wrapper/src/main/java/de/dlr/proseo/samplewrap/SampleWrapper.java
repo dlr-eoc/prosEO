@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,19 +233,18 @@ public class SampleWrapper {
 					// for all S3-data we try to fetch to workdir...
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
 						// first set file_name to local work-dir path
-						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
+						fn.setFileName(fn.getOriginalFileName().replace("s3://", "inputs"+File.separator));
 						// now fetch from S3
 						Boolean transaction = S3Ops.fetch(s3, fn.getOriginalFileName(), fn.getFileName());
-						if (transaction) logger.info("fetched "+fn.getOriginalFileName());
-						else return null;
+						if (!transaction) return null;
 					}
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
 						// now fetch from ALLUXIO
+						fn.setFileName("inputs"+fn.getOriginalFileName());
 						AlluxioURI srcPath = new AlluxioURI(fn.getOriginalFileName());
-						AlluxioURI dstPath = new AlluxioURI("C:\\Users\\asam_hu\\workspace\\prosEO\\sample-wrapper\\B02.jp2");
+						AlluxioURI dstPath = new AlluxioURI(fn.getFileName());
 						Boolean transaction = AlluxioOps.copyToLocal(srcPath, dstPath);
-						if (transaction) logger.info("fetched "+fn.getOriginalFileName());
-						else return null;
+						if (!transaction) return null;
 					}
 				}
 			}
@@ -260,7 +260,8 @@ public class SampleWrapper {
 						try {
 						  File f = new File(fn.getFileName());
 						  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
-						  else f.mkdirs();
+						  File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
+						  subdirs.mkdirs();
 						} catch (SecurityException e) {
 							logger.error(e.getMessage());
 							return null;
