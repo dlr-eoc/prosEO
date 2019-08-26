@@ -8,6 +8,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import de.dlr.proseo.planner.ProductionPlanner;
+
 public class KubeTest {
 
 	@BeforeClass
@@ -28,12 +30,13 @@ public class KubeTest {
 
 	@Test
 	public void test() {
-		KubeConfig.connect();
-		if (KubeConfig.isConnected()) {
-	    	KubeJob aJob = KubeConfig.createJob("hugo");
-	    	if (aJob != null) {
-	    		KubeConfig.deleteJob(aJob);
-	    	}
+		if (ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080") != null) {
+			if (ProductionPlanner.getKubeConfig("Lerchenhof").isConnected()) {
+				KubeJob aJob = ProductionPlanner.getKubeConfig("Lerchenhof").createJob("test");
+				if (aJob != null) {
+					ProductionPlanner.getKubeConfig("Lerchenhof").deleteJob(aJob);
+				}
+			}
 		}
 	}
 

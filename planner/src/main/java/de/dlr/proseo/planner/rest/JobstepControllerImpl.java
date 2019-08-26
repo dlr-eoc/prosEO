@@ -1,12 +1,7 @@
-/**
- * JobControllerImpl.java
- */
 package de.dlr.proseo.planner.rest;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -16,19 +11,13 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
-import de.dlr.proseo.planner.rest.JobController;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
+import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 
-/**
- * Spring MVC controller for the prosEO Production Planner; TODO
- *
- * @author NN
- *
- */
+
+
 @Component
-public class JobControllerImpl implements JobController {
+public class JobstepControllerImpl implements JobstepController {
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_HEADER_SUCCESS = "Success";
@@ -37,23 +26,20 @@ public class JobControllerImpl implements JobController {
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
     /**
-     * Get production planner jobs by id
+     * Get production planner jobsteps by id
      * 
      */
 	@Override
-    public ResponseEntity<List<PlannerJob>> getPlannerJobsByState(String state) {
-		// todo remove test start
-
-		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");
-	    	if (aJob != null) {
-	    		ProductionPlanner.getKubeConfig(null).deleteJob(aJob);
-	    	}
-		}
+    public ResponseEntity<List<PlannerJobstep>> getPlannerJobsteps() {
 		return null;
 	}
+
+    /**
+     * Get production planner jobstep
+     * 
+     */
 	@Override
-    public ResponseEntity<PlannerJob> getPlannerJobByName(String name) {
+    public ResponseEntity<PlannerJobstep> getPlannerJobstepByName(String name) {
 		// TODO Auto-generated method stub
 		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
 		logger.error(message);
@@ -61,26 +47,27 @@ public class JobControllerImpl implements JobController {
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+
+    /**
+     * Create production planner jobstep
+     * 
+     */
 	@Override
-    public ResponseEntity<PlannerJob> updateJobs(String name) {
+    public ResponseEntity<PlannerJobstep> updateJobsteps(String name) {
 		// TODO Auto-generated method stub
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name);
-    	if (aJob != null) {
-    		PlannerJob aPlan = new PlannerJob();
-    		aPlan.setId(((Integer)aJob.getJobId()).toString());
-    		aPlan.setDescription(aJob.getJobName());
-    		HttpHeaders responseHeaders = new HttpHeaders();
-    		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-    		return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
-    	}
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
     	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+
+    /**
+     * Delete production planner jobstep
+     * 
+     */
 	@Override
-    public ResponseEntity<PlannerJob> deleteJobByName(String name) {
+    public ResponseEntity<PlannerJobstep> deleteJobstepByName(String name) {
 		// TODO Auto-generated method stub
     	boolean result = ProductionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {
