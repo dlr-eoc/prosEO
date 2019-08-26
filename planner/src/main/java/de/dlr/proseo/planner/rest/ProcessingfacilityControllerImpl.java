@@ -6,11 +6,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
@@ -30,6 +32,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
+	@Autowired
+    private JobStepRepository jobSteps;
 
     /**
      * Get attached processing facilities
@@ -188,18 +192,16 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * Get jobstep/pod for test purpose
      * 
      */
-    public ResponseEntity<PlannerJobstep> getPlannerJobstep(String podname, String name) {
+	public ResponseEntity<PlannerPod> getPlannerPod(String podname, String name) {
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = ProductionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
-//			V1Job aJob = aKubeConfig.getV1Job(podname);
-//			if (aJob != null) {
-//				PlannerJobstep aPlan = new PlannerJobstep();
-//				aPlan.setId(((Integer)aJob.getJobId()).toString());
-//				aPlan.setName(aJob.getJobName());
-//				HttpHeaders responseHeaders = new HttpHeaders();
-//				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-//				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
-//			}
+			V1Job aJob = aKubeConfig.getV1Job(podname);
+			if (aJob != null) {
+				PodKube aPlan = new PodKube(aJob);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
+			}
 		}
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
     	logger.error(message);
@@ -214,7 +216,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
     public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname);
+    	KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname, jobSteps);
     	if (aJob != null) {
     		PlannerJobstep aPlan = new PlannerJobstep();
     		aPlan.setId(((Integer)aJob.getJobId()).toString());

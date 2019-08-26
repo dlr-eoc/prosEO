@@ -6,16 +6,22 @@ package de.dlr.proseo.planner.kubernetes;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -26,6 +32,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.joborder.JobOrder;
+import de.dlr.proseo.planner.ProductionPlanner;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobBuilder;
@@ -37,6 +44,8 @@ import io.kubernetes.client.models.V1JobSpecBuilder;
  *
  */
 
+@Transactional
+@Component
 public class KubeJob {
 	private int jobId;
 	private String jobName;
@@ -45,21 +54,6 @@ public class KubeJob {
 	private String command;
 	private String jobOrderFileName;
 	private JobOrder jobOrder;
-
-	@Autowired
-	private SecurityProperties security;
-
-	@LocalServerPort
-	private int port;
-
-    @Autowired
-    private JobStepRepository jobSteps;
-    @Autowired
-    private JobRepository testSteps;
-
-	private String getPassword() {
-		return this.security.getUser().getPassword();
-	}
 	
 	/**
 	 * @return the jobId
@@ -103,7 +97,9 @@ public class KubeJob {
 	public void setJobOrder(JobOrder jobOrder) {
 		this.jobOrder = jobOrder;
 	}
-
+	private KubeJob () {
+		
+	}
 	public KubeJob (int id, String name, String processor, String jobOrderFN, String cmd) {
 		jobId = id;
 		if (name != null) {
@@ -118,7 +114,7 @@ public class KubeJob {
 		
 	}
 
-	public KubeJob createJob(KubeConfig aKubeConfig) {	    
+	public KubeJob createJob(KubeConfig aKubeConfig, JobStepRepository jobSteps) {	    
 		if (aKubeConfig.isConnected()) {
 			V1JobSpec jobSpec = new V1JobSpecBuilder()
 				.withNewTemplate()
@@ -172,10 +168,12 @@ public class KubeJob {
 				.withSpec(jobSpec)
 				.build();
 			try {
-				/*
-				 * JobStep js = new JobStep();
-				 * js.setProcessingMode(job.getMetadata().getName()); jobSteps.save(js);
-				 */
+				
+				  JobStep js = new JobStep();
+				  js.setProcessingMode(job.getMetadata().getName()); 
+				  ApplicationContext ac = ProductionPlanner.getAc();
+				  jobSteps.save(js);
+				 
 				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			} catch (ApiException e1) {
 				// TODO Auto-generated catch block

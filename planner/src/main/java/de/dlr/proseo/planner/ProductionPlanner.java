@@ -6,10 +6,12 @@
 
 package de.dlr.proseo.planner;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -21,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 
 /*
@@ -33,8 +36,11 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @Transactional
-@EnableJpaRepositories("de.dlr.proseo.model")
+@EnableJpaRepositories("de.dlr.proseo.model.dao")
 public class ProductionPlanner {
+
+	static ApplicationContext ac;
+	
 	static Map<String, KubeConfig> kubeConfigs = new HashMap<>();
 
 	public static KubeConfig getKubeConfig(String name) {
@@ -52,7 +58,14 @@ public class ProductionPlanner {
 
 		ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080");
 		
-		SpringApplication.run(ProductionPlanner.class, args);
+		ac = SpringApplication.run(ProductionPlanner.class, args);
+	}
+
+	/**
+	 * @return the ac
+	 */
+	public static ApplicationContext getAc() {
+		return ac;
 	}
 
 	public static KubeConfig addKubeConfig(String name, String desc, String url) {
@@ -67,3 +80,4 @@ public class ProductionPlanner {
 	}
 
 }
+

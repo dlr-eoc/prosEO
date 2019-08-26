@@ -9,11 +9,13 @@ import java.util.List;
 import org.hibernate.mapping.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
@@ -36,6 +38,9 @@ public class JobControllerImpl implements JobController {
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
+	@Autowired
+    private JobStepRepository jobSteps;
+	
     /**
      * Get production planner jobs by id
      * 
@@ -45,7 +50,7 @@ public class JobControllerImpl implements JobController {
 		// todo remove test start
 
 		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");
+	    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test", jobSteps);
 	    	if (aJob != null) {
 	    		ProductionPlanner.getKubeConfig(null).deleteJob(aJob);
 	    	}
@@ -64,7 +69,7 @@ public class JobControllerImpl implements JobController {
 	@Override
     public ResponseEntity<PlannerJob> updateJobs(String name) {
 		// TODO Auto-generated method stub
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name);
+    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name, jobSteps);
     	if (aJob != null) {
     		PlannerJob aPlan = new PlannerJob();
     		aPlan.setId(((Integer)aJob.getJobId()).toString());

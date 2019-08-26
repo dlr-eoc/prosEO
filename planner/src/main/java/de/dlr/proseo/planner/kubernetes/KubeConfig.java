@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -142,17 +143,14 @@ public class KubeConfig {
 		return list;
 	}
 
-	public KubeJob createJob(String name) {
+	public KubeJob createJob(String name, JobStepRepository jobSteps) {
 		int aKey = kubeJobList.size() + 1;
 		KubeJob aJob = new KubeJob(aKey, name, "centos/perl-524-centos7", "/testdata/test1.pl", "perl");
-		aJob = aJob.createJob(this);
+		aJob = aJob.createJob(this, jobSteps);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobId(), aJob);
 		}
 		return aJob;
-	}
-	public KubeJob createJob() {
-		return createJob(null);
 	}
 
 	public boolean deleteJob(KubeJob aJob) {
@@ -181,15 +179,10 @@ public class KubeConfig {
 		}
 		return true;
 	}
-	public KubeJob getJob(String name) {
+	public V1Job getV1Job(String name) {
 		V1Job aV1Job = null;
-		KubeJob aJob = null;
 		try {
 			aV1Job = batchApiV1.readNamespacedJob(name, getNamespace(), null, true, true);
-			if (aV1Job != null) {
-				// todo
-				// aJob = new KubeJob(0, name, name, name, name);
-			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
@@ -200,7 +193,7 @@ public class KubeConfig {
 				return null;
 			}
 		}
-		return aJob;
+		return aV1Job;
 	}
 	public String getId() {
 		return id;
