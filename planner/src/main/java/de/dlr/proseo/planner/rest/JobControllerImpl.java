@@ -37,9 +37,6 @@ public class JobControllerImpl implements JobController {
 	private static final String MSG_PREFIX = "199 proseo-planner ";
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
-
-	@Autowired
-    private JobStepRepository jobSteps;
 	
     /**
      * Get production planner jobs by id
@@ -50,7 +47,7 @@ public class JobControllerImpl implements JobController {
 		// todo remove test start
 
 		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test", jobSteps);
+	    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");
 	    	if (aJob != null) {
 	    		ProductionPlanner.getKubeConfig(null).deleteJob(aJob);
 	    	}
@@ -69,7 +66,7 @@ public class JobControllerImpl implements JobController {
 	@Override
     public ResponseEntity<PlannerJob> updateJobs(String name) {
 		// TODO Auto-generated method stub
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name, jobSteps);
+    	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name);
     	if (aJob != null) {
     		PlannerJob aPlan = new PlannerJob();
     		aPlan.setId(((Integer)aJob.getJobId()).toString());

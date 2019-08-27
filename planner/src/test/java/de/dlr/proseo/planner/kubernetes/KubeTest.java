@@ -53,7 +53,7 @@ public class KubeTest {
 		  jobSteps.save(js);
 		if (ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080") != null) {
 			if (ProductionPlanner.getKubeConfig("Lerchenhof").isConnected()) {
-				KubeJob aJob = ProductionPlanner.getKubeConfig("Lerchenhof").createJob("test", jobSteps);
+				KubeJob aJob = ProductionPlanner.getKubeConfig("Lerchenhof").createJob("test");
 				if (aJob != null) {
 					ProductionPlanner.getKubeConfig("Lerchenhof").deleteJob(aJob);
 				}

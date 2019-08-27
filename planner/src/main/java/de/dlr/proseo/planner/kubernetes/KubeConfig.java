@@ -143,10 +143,10 @@ public class KubeConfig {
 		return list;
 	}
 
-	public KubeJob createJob(String name, JobStepRepository jobSteps) {
+	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
 		KubeJob aJob = new KubeJob(aKey, name, "centos/perl-524-centos7", "/testdata/test1.pl", "perl");
-		aJob = aJob.createJob(this, jobSteps);
+		aJob = aJob.createJob(this);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobId(), aJob);
 		}

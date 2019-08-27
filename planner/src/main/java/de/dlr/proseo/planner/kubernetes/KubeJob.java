@@ -114,7 +114,7 @@ public class KubeJob {
 		
 	}
 
-	public KubeJob createJob(KubeConfig aKubeConfig, JobStepRepository jobSteps) {	    
+	public KubeJob createJob(KubeConfig aKubeConfig) {	    
 		if (aKubeConfig.isConnected()) {
 			V1JobSpec jobSpec = new V1JobSpecBuilder()
 				.withNewTemplate()
@@ -171,8 +171,8 @@ public class KubeJob {
 				
 				  JobStep js = new JobStep();
 				  js.setProcessingMode(job.getMetadata().getName()); 
-				  ApplicationContext ac = ProductionPlanner.getAc();
-				  jobSteps.save(js);
+				  ProductionPlanner p = ProductionPlanner.getPlanner();
+				  ProductionPlanner.getJobSteps().save(js);
 				 
 				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			} catch (ApiException e1) {

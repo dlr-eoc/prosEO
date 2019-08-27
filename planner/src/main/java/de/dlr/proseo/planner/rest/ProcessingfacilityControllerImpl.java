@@ -32,9 +32,6 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
-	@Autowired
-    private JobStepRepository jobSteps;
-
     /**
      * Get attached processing facilities
      * 
@@ -216,7 +213,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
     public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname, jobSteps);
+    	KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname);
     	if (aJob != null) {
     		PlannerJobstep aPlan = new PlannerJobstep();
     		aPlan.setId(((Integer)aJob.getJobId()).toString());
