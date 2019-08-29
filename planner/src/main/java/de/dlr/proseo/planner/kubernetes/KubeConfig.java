@@ -4,27 +4,23 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.google.common.io.ByteStreams;
+import de.dlr.proseo.model.dao.JobStepRepository;
+import de.dlr.proseo.planner.rest.model.PlannerPod;
+import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
-import io.kubernetes.client.Attach;
 import io.kubernetes.client.Configuration;
 import io.kubernetes.client.apis.BatchV1Api;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1JobBuilder;
 import io.kubernetes.client.models.V1JobList;
-import io.kubernetes.client.models.V1JobSpec;
-import io.kubernetes.client.models.V1JobSpecBuilder;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodBuilder;
 import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1Volume;
-import io.kubernetes.client.models.V1VolumeBuilder;
 import io.kubernetes.client.util.Config;
 
 /**
@@ -33,47 +29,74 @@ import io.kubernetes.client.util.Config;
  */
 public class KubeConfig {
 
-	private static HashMap<Integer, KubeJob> kubeJobList = null;
+	private HashMap<Integer, KubeJob> kubeJobList = null;
 	
-	private static ApiClient client;
-	private static CoreV1Api apiV1;
-	private static BatchV1Api batchApiV1;
+	private ApiClient client;
+	private CoreV1Api apiV1;
+	private BatchV1Api batchApiV1;
+	private String id;
+	private String description;
+	private String url;
+	
+	// no need to create own namespace, because only one "user" (prosEO) 
+	private String namespace = "default";
+	
+
+	public KubeConfig (String anId, String aDescription, String aUrl) {
+		id = anId;
+		description = aDescription;
+		url = aUrl;
+	}
 	/**
 	 * @return the client
 	 */
-	public static ApiClient getClient() {
+	public ApiClient getClient() {
 		return client;
 	}
 
 	/**
 	 * @return the apiV1
 	 */
-	public static CoreV1Api getApiV1() {
+	public CoreV1Api getApiV1() {
 		return apiV1;
 	}
 
 	/**
 	 * @return the batchApiV1
 	 */
-	public static BatchV1Api getBatchApiV1() {
+	public BatchV1Api getBatchApiV1() {
 		return batchApiV1;
+	}
+
+	/**
+	 * @return the namespace
+	 */
+	public String getNamespace() {
+		return namespace;
+	}
+	/**
+	 * @return the namespace
+	 */
+	public void setNamespace(String aNamespace) {
+		namespace = aNamespace;
 	}
 
 
 	
-	public static boolean connect() {
+	public boolean connect() {
 		if (isConnected()) {
 			return true;
 		} else {
 			kubeJobList = new HashMap<Integer, KubeJob>();
 
-			client = Config.fromUrl("http://192.168.20.159:8080", false); 
+			client = Config.fromUrl(url, false); 
 			// Config.defaultClient();
 			Configuration.setDefaultApiClient(client);
-
+			client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
+			client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
+			client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
-
 			if (apiV1 == null || batchApiV1 == null) {
 				apiV1 = null;
 				batchApiV1 = null;
@@ -90,7 +113,7 @@ public class KubeConfig {
 		}
 	}
 	
-	public static boolean isConnected() {
+	public boolean isConnected() {
 	    if (apiV1 == null) {
 	    	return false;
 	    } else {
@@ -98,13 +121,10 @@ public class KubeConfig {
 	    }		
 	}
 
-	public static V1PodList getPodList() {
+	public V1PodList getPodList() {
 		V1PodList list = null;
 		try {
 			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
-			for (V1Pod item : list.getItems()) {
-				System.out.println(item.getMetadata().getName());
-			}
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -112,13 +132,10 @@ public class KubeConfig {
 		return list;
 	}
 
-	public static V1JobList getJobList() {
+	public V1JobList getJobList() {
 		V1JobList list = null;
 		try {
 			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
-			for (V1Job item : list.getItems()) {
-				System.out.println(item.getMetadata().getName());
-			}
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -126,33 +143,30 @@ public class KubeConfig {
 		return list;
 	}
 
-	public static KubeJob createJob(String name) {
+	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
 		KubeJob aJob = new KubeJob(aKey, name, "centos/perl-524-centos7", "/testdata/test1.pl", "perl");
-		aJob = aJob.createJob();
+		aJob = aJob.createJob(this);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobId(), aJob);
 		}
 		return aJob;
 	}
-	public static KubeJob createJob() {
-		return createJob(null);
-	}
 
-	public static boolean deleteJob(KubeJob aJob) {
+	public boolean deleteJob(KubeJob aJob) {
 		if (aJob != null) {
-			return (KubeConfig.deleteJob(aJob.getJobName()));
+			return (deleteJob(aJob.getJobName()));
 		} else {
 			return false;
 		}
 	}
-	
-	public static boolean deleteJob(String name) {
+
+	public boolean deleteJob(String name) {
 		V1DeleteOptions opt = new V1DeleteOptions();
 		opt.setApiVersion("batchV1");
 		opt.setPropagationPolicy("Foreground");
 		try {
-			batchApiV1.deleteNamespacedJob(name, "default", opt, null, null, 0, null, "Foreground");
+			batchApiV1.deleteNamespacedJob(name, getNamespace(), opt, null, null, 0, null, "Foreground");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
@@ -164,5 +178,52 @@ public class KubeConfig {
 			}
 		}
 		return true;
+	}
+	public V1Job getV1Job(String name) {
+		V1Job aV1Job = null;
+		try {
+			aV1Job = batchApiV1.readNamespacedJob(name, getNamespace(), null, true, true);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
+				// nothing to do 
+				// cause there is a bug in Kubernetes API
+			} else {
+				e. printStackTrace();
+				return null;
+			}
+		}
+		return aV1Job;
+	}
+	public String getId() {
+		return id;
+	}
+	public String getUrl() {
+		return url;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public boolean deletePodNamed(String name) {
+		if (this.isConnected()) {
+			return this.deleteJob(name);
+		}
+		return false;
+	}
+	public boolean deletePodsStatus(String status) {
+		if (this.isConnected()) {		 
+			V1JobList list = this.getJobList();
+			List<PlannerPod> jobList = new ArrayList<PlannerPod>();
+			if (list != null) {
+				for (V1Job item : list.getItems()) {
+					PodKube pk = new PodKube(item);
+					if (pk != null && pk.hasStatus(status)) {
+						this.deleteJob(pk.getName());
+					}
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 }
