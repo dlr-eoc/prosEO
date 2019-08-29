@@ -7,6 +7,7 @@
 package de.dlr.proseo.planner;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,12 +19,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
 import de.dlr.proseo.model.dao.JobRepository;
@@ -45,7 +48,7 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @Transactional
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
-public class ProductionPlanner {
+public class ProductionPlanner implements CommandLineRunner {
 
 
 	@Autowired
@@ -65,7 +68,6 @@ public class ProductionPlanner {
 	@Autowired
     private ProductRepository products;
 
-	static ApplicationContext ac;
 	static ProductionPlanner thePlanner = null;
 	
 	static Map<String, KubeConfig> kubeConfigs = new HashMap<>();
@@ -134,19 +136,8 @@ public class ProductionPlanner {
 	}
 	
 	public static void main(String[] args) throws Exception {
-
-		ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080");
 		SpringApplication spa = new SpringApplication(ProductionPlanner.class);
-		ac = spa.run(args);
-		
-		Object o = spa.getMainApplicationClass();
-	}
-
-	/**
-	 * @return the ac
-	 */
-	public static ApplicationContext getAc() {
-		return ac;
+		spa.run(args);
 	}
 
 	public static KubeConfig addKubeConfig(String name, String desc, String url) {
@@ -160,10 +151,50 @@ public class ProductionPlanner {
 		return null;
 	}
 	
+	public static KubeConfig addKubeConfig(String name) {
+		if (getKubeConfig(name) == null) {
+			ProcessingFacility pfFound = null;
+			for (ProcessingFacility pf : ProductionPlanner.getFacilitys().findAll()) {
+				if (pf.getName().equalsIgnoreCase(name)) {
+					pfFound = pf;
+					break;
+				}
+			}
+			if (pfFound != null) {
+				// todo use URL if defined in DB
+				KubeConfig kubeConfig = new KubeConfig(pfFound.getName(), pfFound.getDescription(), pfFound.getDescription());
+				if (kubeConfig != null && kubeConfig.connect()) {
+					kubeConfigs.put(name.toLowerCase(), kubeConfig);
+					return kubeConfig;
+				}
+			}
+		}
+		return null;
+	}
+	
 	public ProductionPlanner() {
 		thePlanner = this;
 	}	
 	
+	@Override
+	public void run(String... arg0) throws Exception {
+		
+		List<String> pfs = new ArrayList<String>();
+		
+        for (int i = 0; i < arg0.length; i++) {
+        	if (arg0[i].equalsIgnoreCase("-processingfacility") && (i + 1) < arg0.length) {
+        		pfs.add(arg0[i+1]);
+        	}
+        } 
+        if (pfs.isEmpty()) {
+        	ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080");
+        } else {
+        	for (String pf : pfs) {
+        		ProductionPlanner.addKubeConfig(pf.toLowerCase());
+        	}
+        }
+	}
+
 	/**
 	 * @return the jobSteps
 	 */
