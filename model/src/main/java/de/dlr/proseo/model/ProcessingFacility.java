@@ -25,6 +25,9 @@ public class ProcessingFacility extends PersistentObject {
 	
 	/** A short description of the processing facility */
 	private String description;
+	
+	/** The URL to access this processing facility (Kubernetes instance) */
+	private String url;
 
 	/**
 	 * Gets the name of the processing facility

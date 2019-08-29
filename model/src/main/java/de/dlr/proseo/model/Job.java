@@ -71,6 +71,11 @@ public class Job extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> outputParameters;
 	
+	/**
+	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
+	 */
+	private Integer priority;
+	
 	/** The processing facility this job runs on */
 	@ManyToOne
 	private ProcessingFacility processingFacility;
@@ -208,6 +213,24 @@ public class Job extends PersistentObject {
 	 */
 	public void setOutputParameters(Map<String, Parameter> outputParameters) {
 		this.outputParameters = outputParameters;
+	}
+
+	/**
+	 * Gets the processing priority
+	 * 
+	 * @return the priority
+	 */
+	public Integer getPriority() {
+		return priority;
+	}
+
+	/**
+	 * Sets the processing priority
+	 * 
+	 * @param priority the priority to set
+	 */
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 
 	/**
