@@ -33,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.dao.ProductRepository;
+import de.dlr.proseo.model.service.RepositoryService;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -56,22 +58,12 @@ public class ProductControllerTest {
 	@LocalServerPort
 	private int port;
 
-    @Autowired
-    private ProductRepository products;
-	
-
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
 	@Test
 	public void testJpa() {
-		logger.info("Preparing test products");
-		Product product1 = new Product();
-		products.save(product1);
-		
-		logger.info("Looking for all products");
-		
-		products.findAll().forEach(product -> { logger.info("Found product {}", product.getId()); });
-		logger.info("JPA test complete");
+		JustAPlainJavaClass japjc = new JustAPlainJavaClass();
+		japjc.testJpa();
 	}
 
 //	@Test
