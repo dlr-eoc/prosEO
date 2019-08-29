@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,8 @@ public class S3Ops {
 		try {
 			File f = new File(ContainerPath);
 			if (Files.exists(Paths.get(ContainerPath), LinkOption.NOFOLLOW_LINKS)) f.delete();
-			else f.mkdirs();
+			File subdirs = new File(FilenameUtils.getPath(ContainerPath));
+			subdirs.mkdirs();
 			
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
 			s3.getObject(GetObjectRequest.builder()
@@ -38,24 +40,24 @@ public class S3Ops {
 					.key(s3uri.getKey())
 					.build(),
 					ResponseTransformer.toFile(Paths.get(ContainerPath)));
+			logger.info("Copied " + s3Object + " to " + "file://" + ContainerPath);
+			return true;
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
 			logger.error(e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e1) {
-			logger.error(e1.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
+			logger.error(s3Object+" --> "+e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e2) {
-			logger.error(e2.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e) {
+			logger.error(s3Object+" --> "+e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.S3Exception e3) {
-			logger.error(e3.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.S3Exception e) {
+			logger.error(e.getMessage());
 			return false;
-		}  catch (SecurityException e4) {
-			logger.error(e4.getMessage());
+		}  catch (SecurityException e) {
+			logger.error(e.getMessage());
 			return false;
 		}
-		
-		return true;
 	}
 
 }

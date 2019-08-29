@@ -63,3 +63,6 @@ or intermediate-products needed for further processing in fast accessible in-mem
   * creation of single-purpose API's
   * no abstracted view of Storage possible
   * when backing mainly on S3, all requirements are fulfilled
+
+## some refs
+- https://software.intel.com/en-us/articles/speed-big-data-analytics-on-the-cloud-with-an-in-memory-data-accelerator
