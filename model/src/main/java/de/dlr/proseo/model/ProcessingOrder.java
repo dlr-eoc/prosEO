@@ -17,7 +17,6 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of

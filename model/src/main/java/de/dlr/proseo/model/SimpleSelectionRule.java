@@ -16,8 +16,6 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-import de.dlr.proseo.model.Product.Parameter;
-
 /**
  * A rule defining the required input ProductTypes for a certain output ProductType using an ordered list of SelectionPolicys.
  * When selecting applicable Products for a JobStep the matching SelectionPolicy defines, whether a Product satisfies a ProductQuery.

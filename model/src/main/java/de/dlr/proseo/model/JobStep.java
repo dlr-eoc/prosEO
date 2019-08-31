@@ -13,7 +13,6 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product

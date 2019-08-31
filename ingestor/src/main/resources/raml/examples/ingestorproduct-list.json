@@ -3,8 +3,8 @@
         "id": 0,
         "version": 0,
         "productClass": "L0",
-        "sensingStartTime": "2019-05-09T21:25:08.000000Z",
-        "sensingStopTime": "2019-05-09T21:45:08.000000Z",
+        "sensingStartTime": "2019-05-09T21:25:08.000000",
+        "sensingStopTime": "2019-05-09T21:45:08.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 8138
@@ -40,8 +40,8 @@
         "version": 0,
         "productClass": "O3",
         "mode": "OFFL",
-        "sensingStartTime": "2019-05-09T22:07:07.000000Z",
-        "sensingStopTime": "2019-05-09T23:48:37.000000Z",
+        "sensingStartTime": "2019-05-09T22:07:07.000000",
+        "sensingStopTime": "2019-05-09T23:48:37.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 8137
