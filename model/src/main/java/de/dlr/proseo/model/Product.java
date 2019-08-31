@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.model;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,12 +12,13 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+
+import org.hibernate.annotations.Type;
 
 /**
  * Representation of a data product
@@ -82,177 +82,6 @@ public class Product extends PersistentObject {
 	 *  Enumeration of valid parameter types for mission-specific parameters
 	 */
 	public enum ParameterType { STRING, BOOLEAN, INTEGER, DOUBLE };
-	
-	/**
-	 * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
-	 * (of the enum ParameterType) and a value with a class that corresponds to the type.
-	 */
-	@Embeddable
-	public class Parameter {
-		/** The type of the parameter */
-		private ParameterType parameterType;
-		/** The parameter value */
-		private Serializable parameterValue;
-		
-		/**
-		 * Gets the type of the parameter
-		 * 
-		 * @return the parameter type
-		 */
-		public ParameterType getParameterType() {
-			return parameterType;
-		}
-		
-		/**
-		 * Sets the type of the parameter
-		 * 
-		 * @param parameterType the type to set
-		 */
-		public void seParametertType(ParameterType parameterType) {
-			this.parameterType = parameterType;
-		}
-		
-		/**
-		 * Gets the value of the parameter
-		 * 
-		 * @return the parameter value
-		 */
-		public Serializable getParameterValue() {
-			return parameterValue;
-		}
-		
-		/**
-		 * Sets the value of the parameter
-		 * 
-		 * @param parameterValue the value to set
-		 */
-		public void setParameterValue(Serializable parameterValue) {
-			this.parameterValue = parameterValue;
-		}
-		
-		/**
-		 * Gets the parameter value as String, if it has the appropriate type
-		 * @return the parameter value
-		 * @throws ClassCastException if the parameter is not of type ParameterType.STRING
-		 */
-		public String getStringValue() throws ClassCastException {
-			if (ParameterType.STRING.equals(parameterType) && parameterValue instanceof String) {
-				return (String) parameterValue;
-			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to String", parameterType.toString()));
-			}
-		}
-		/**
-		 * Sets the value of the parameter to the given string and the type to ParameterType.STRING
-		 * @param newValue the value to set (the type is implicit)
-		 */
-		public void setStringValue(String newValue) {
-			parameterType = ParameterType.STRING;
-			parameterValue = newValue;
-		}
-
-		/**
-		 * Gets the parameter value as Integer, if it has the appropriate type
-		 * @return the parameter value
-		 * @throws ClassCastException if the parameter is not of type ParameterType.INTEGER
-		 */
-		public Integer getIntegerValue() throws ClassCastException {
-			if (ParameterType.INTEGER.equals(parameterType) && parameterValue instanceof Integer) {
-				return (Integer) parameterValue;
-			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Integer", parameterType.toString()));
-			}
-		}
-		/**
-		 * Sets the value of the parameter to the given integer and the type to ParameterType.INTEGER
-		 * @param newValue the value to set (the type is implicit)
-		 */
-		public void setIntegerValue(Integer newValue) {
-			parameterType = ParameterType.INTEGER;
-			parameterValue = newValue;
-		}
-
-		/**
-		 * Gets the parameter value as Boolean, if it has the appropriate type
-		 * @return the parameter value
-		 * @throws ClassCastException if the parameter is not of type ParameterType.BOOLEAN
-		 */
-		public Boolean getBooleanValue() throws ClassCastException {
-			if (ParameterType.BOOLEAN.equals(parameterType) && parameterValue instanceof Boolean) {
-				return (Boolean) parameterValue;
-			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Boolean", parameterType.toString()));
-			}
-		}
-		/**
-		 * Sets the value of the parameter to the given boolean and the type to ParameterType.BOOLEAN
-		 * @param newValue the value to set (the type is implicit)
-		 */
-		public void setBooleanValue(Boolean newValue) {
-			parameterType = ParameterType.BOOLEAN;
-			parameterValue = newValue;
-		}
-
-		/**
-		 * Gets the parameter value as Double, if it has the appropriate type
-		 * @return the parameter value
-		 * @throws ClassCastException if the parameter is not of type ParameterType.DOUBLE
-		 */
-		public Double getDoubleValue() throws ClassCastException {
-			if (ParameterType.DOUBLE.equals(parameterType) && parameterValue instanceof Double) {
-				return (Double) parameterValue;
-			} else {
-				throw new ClassCastException(String.format("Parameter of type %s cannot be converted to Double", parameterType.toString()));
-			}
-		}
-		/**
-		 * Sets the value of the parameter to the given double and the type to ParameterType.DOUBLE
-		 * @param newValue the value to set (the type is implicit)
-		 */
-		public void setDoubleValue(Double newValue) {
-			parameterType = ParameterType.DOUBLE;
-			parameterValue = newValue;
-		}
-		
-		/**
-		 * Gets the enclosing product
-		 * @return the enclosing product
-		 */
-		public Product getEnclosingObject() {
-			return Product.this;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((parameterType == null) ? 0 : getEnclosingObject().hashCode());
-			result = prime * result + ((parameterType == null) ? 0 : parameterType.hashCode());
-			result = prime * result + ((parameterValue == null) ? 0 : parameterValue.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (!(obj instanceof Parameter))
-				return false;
-			Parameter other = (Parameter) obj;
-			if (!getEnclosingObject().equals(other.getEnclosingObject()))
-				return false;
-			if (parameterType != other.parameterType)
-				return false;
-			if (parameterValue == null) {
-				if (other.parameterValue != null)
-					return false;
-			} else if (!parameterValue.equals(other.parameterValue))
-				return false;
-			return true;
-		}		
-	}
 	
 	/**
 	 * Gets the product class
@@ -374,6 +203,70 @@ public class Product extends PersistentObject {
 		this.orbit = orbit;
 	}
 	
+	/**
+	 * Gets the set of product files (at most one per existing processing facility)
+	 * 
+	 * @return the productFile
+	 */
+	public Set<ProductFile> getProductFile() {
+		return productFile;
+	}
+	/**
+	 * Sets the set of product files (at most one per existing processing facility)
+	 * 
+	 * @param productFile the productFile to set
+	 */
+	public void setProductFile(Set<ProductFile> productFile) {
+		this.productFile = productFile;
+	}
+	/**
+	 * Gets the set of satisfied product queries
+	 * 
+	 * @return the satisfiedProductQueries
+	 */
+	public Set<ProductQuery> getSatisfiedProductQueries() {
+		return satisfiedProductQueries;
+	}
+	/**
+	 * Sets the set of satisfied product queries
+	 * 
+	 * @param satisfiedProductQueries the satisfiedProductQueries to set
+	 */
+	public void setSatisfiedProductQueries(Set<ProductQuery> satisfiedProductQueries) {
+		this.satisfiedProductQueries = satisfiedProductQueries;
+	}
+	/**
+	 * Gets the job step that created this product
+	 * 
+	 * @return the jobStep
+	 */
+	public JobStep getJobStep() {
+		return jobStep;
+	}
+	/**
+	 * Sets the job step that created this product
+	 * 
+	 * @param jobStep the jobStep to set
+	 */
+	public void setJobStep(JobStep jobStep) {
+		this.jobStep = jobStep;
+	}
+	/**
+	 * Gets the configured processor that generated this product
+	 * 
+	 * @return the configuredProcessor
+	 */
+	public ConfiguredProcessor getConfiguredProcessor() {
+		return configuredProcessor;
+	}
+	/**
+	 * Sets the configured processor that generated this product
+	 * 
+	 * @param configuredProcessor the configuredProcessor to set
+	 */
+	public void setConfiguredProcessor(ConfiguredProcessor configuredProcessor) {
+		this.configuredProcessor = configuredProcessor;
+	}
 	/**
 	 * Gets the product parameters
 	 * 

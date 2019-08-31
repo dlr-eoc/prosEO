@@ -28,6 +28,7 @@ securitySchemes:
 
 types:
   Product: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  ProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
   Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   IngestorProduct:
     type: Product
@@ -58,6 +59,13 @@ resourceTypes:
           headers:
             Warning: !include types/error.raml
     put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    patch?:
       responses:          
         404:
           description: |
@@ -112,7 +120,8 @@ resourceTypes:
             application/json:
               type: Product
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
-    put:
+    patch:
+      description: Update a product by ID
       body:
         application/json:
           type: Product
@@ -124,6 +133,7 @@ resourceTypes:
               type: Product
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     delete:
+      description: Delete a product by ID
       responses:
         204:
   /ingest/{processingFacility}:

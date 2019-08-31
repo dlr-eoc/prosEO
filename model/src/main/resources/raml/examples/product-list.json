@@ -4,8 +4,8 @@
         "version": 11,
         "productClass": "AAI",
         "mode": "OFFL",
-        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
-        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "sensingStartTime": "2018-06-13T09:23:45.396521",
+        "sensingStopTime": "2018-06-13T10:53:45.396521",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711
@@ -33,8 +33,8 @@
         "version": 7,
         "productClass": "O3",
         "mode": "OFFL",
-        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
-        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "sensingStartTime": "2018-06-13T09:23:45.396521",
+        "sensingStopTime": "2018-06-13T10:53:45.396521",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711

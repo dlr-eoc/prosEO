@@ -13,8 +13,6 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-import de.dlr.proseo.model.Product.Parameter;
-
 /**
  * A specific processor configuration, tied to a specific ConfiguredProcessor object. It mainly consists of a set of configuration
  * files and template information for creating Job Order files for the associated processor.

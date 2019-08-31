@@ -1,0 +1,26 @@
+#%RAML 1.0 DataType
+#  ProductFile:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      processingFacilityName:
+        type: string
+        description: The name of the processing facility, in which this data file is stored
+      productFileName:
+        type: string
+        description: The name of the data file
+      auxFileNames:
+        type: string[]
+        description: The auxiliary files for this data file
+      filePath:
+        type: string
+        description: The path to the product files (POSIX file path, S3 bucket etc.)
+      storageType:
+        type: string
+        description: The string representation of the type of the storage location (e. g. "S3", "POSIX")
