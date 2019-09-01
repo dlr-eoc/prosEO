@@ -77,7 +77,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			pfFound = RepositoryService.getFacilityRepository().findByName(name);
 			if (pfFound != null) {
 				// todo use URL if defined in DB
-				KubeConfig kubeConfig = new KubeConfig(pfFound.getName(), pfFound.getDescription(), pfFound.getDescription());
+				KubeConfig kubeConfig = new KubeConfig(pfFound.getName(), pfFound.getDescription(), pfFound.getUrl());
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(name.toLowerCase(), kubeConfig);
 					return kubeConfig;
