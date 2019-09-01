@@ -16,7 +16,6 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A collection of job steps required to fulfil an order for a specific period of time (e. g. one orbit).
