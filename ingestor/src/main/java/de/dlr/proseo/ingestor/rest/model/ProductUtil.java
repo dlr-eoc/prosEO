@@ -5,6 +5,9 @@
  */
 package de.dlr.proseo.ingestor.rest.model;
 
+import java.time.DateTimeException;
+import java.time.Instant;
+
 /**
  * Utility methods for products, e. g. for conversion between prosEO model and REST model
  * 
@@ -25,8 +28,8 @@ public class ProductUtil {
 		Product restProduct = new Product();
 		
 		restProduct.setId(modelProduct.getId());
-		restProduct.setVersion(1L + modelProduct.getVersion());
-		//restProduct.setMission(productToModify.getProductClass().getMission().getCode());
+		restProduct.setVersion(Long.valueOf(modelProduct.getVersion()));
+		restProduct.setMissionCode(modelProduct.getProductClass().getMission().getCode());
 		restProduct.setProductClass(modelProduct.getProductClass().getProductType());
 		restProduct.setMode(modelProduct.getMode());
 		restProduct.setSensingStartTime(de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()));
@@ -68,8 +71,53 @@ public class ProductUtil {
 		return restProduct;
 	}
 	
-	public static de.dlr.proseo.model.Product toModelProduct(Product restProduct) {
-		// TODO
-		throw new UnsupportedOperationException();
+	/**
+	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no product references)
+	 * 
+	 * @param restProduct the REST product
+	 * @return a (roughly) equivalent model product
+	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
+	 */
+	public static de.dlr.proseo.model.Product toModelProduct(Product restProduct) throws IllegalArgumentException {
+		de.dlr.proseo.model.Product modelProduct = new de.dlr.proseo.model.Product();
+		
+		modelProduct.setId(restProduct.getId());
+		while (modelProduct.getVersion() < restProduct.getVersion()) {
+			modelProduct.incrementVersion();
+		}
+		modelProduct.setMode(restProduct.getMode());
+		try {
+			modelProduct.setSensingStartTime(
+					Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStartTime())));
+		} catch (DateTimeException e) {
+			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restProduct.getSensingStartTime()));
+		}
+		try {
+			modelProduct.setSensingStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStopTime())));
+		} catch (DateTimeException e) {
+			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restProduct.getSensingStartTime()));
+		}
+		for (Parameter restParameter: restProduct.getParameters()) {
+			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
+			try {
+				modelParameter.seParametertType(de.dlr.proseo.model.Product.ParameterType.valueOf(restParameter.getParameterType()));
+			} catch (Exception e) {
+				throw new IllegalArgumentException(String.format("Invalid parameter type '%s'", restParameter.getParameterType()));
+			}
+			try {
+				switch (modelParameter.getParameterType()) {
+				case INTEGER: 	modelParameter.setIntegerValue(Integer.parseInt(restParameter.getParameterValue())); break;
+				case STRING:	modelParameter.setStringValue(restParameter.getParameterValue()); break;
+				case BOOLEAN:	modelParameter.setBooleanValue(Boolean.parseBoolean(restParameter.getParameterValue())); break;
+				case DOUBLE:	modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue())); break;
+				}
+			} catch (Exception e) {
+				throw new IllegalArgumentException(String.format("Invalid parameter value '%s' for type '%s'",
+						restParameter.getParameterValue(), restParameter.getParameterType()));
+			}
+			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);
+		}
+		
+		return modelProduct;
 	}
 }

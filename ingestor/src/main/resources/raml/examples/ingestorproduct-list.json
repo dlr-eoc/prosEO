@@ -2,6 +2,7 @@
     {
         "id": 0,
         "version": 0,
+        "missionCode": "S5P",
         "productClass": "L0",
         "sensingStartTime": "2019-05-09T21:25:08.000000",
         "sensingStopTime": "2019-05-09T21:45:08.000000",
@@ -38,6 +39,7 @@
     {
         "id": 0,
         "version": 0,
+        "missionCode": "S5P",
         "productClass": "O3",
         "mode": "OFFL",
         "sensingStartTime": "2019-05-09T22:07:07.000000",
