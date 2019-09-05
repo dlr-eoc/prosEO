@@ -43,7 +43,6 @@ import de.dlr.proseo.model.Product.ParameterType;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
-import junit.framework.Assert;
 
 /**
  * Test class for the REST API of ProductControllerImpl
