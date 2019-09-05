@@ -79,11 +79,6 @@ public class Product extends PersistentObject {
 	private Map<String, Parameter> parameters = new HashMap<>();
 	
 	/**
-	 *  Enumeration of valid parameter types for mission-specific parameters
-	 */
-	public enum ParameterType { STRING, BOOLEAN, INTEGER, DOUBLE };
-	
-	/**
 	 * Gets the product class
 	 * 
 	 * @return the productClass
