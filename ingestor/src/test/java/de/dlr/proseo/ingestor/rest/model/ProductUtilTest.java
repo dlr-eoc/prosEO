@@ -61,6 +61,7 @@ public class ProductUtilTest {
 		ProductClass testProductClass = new ProductClass();
 		testProductClass.setMission(testMission);
 		testProductClass.setProductType(testData[3]);
+		testProduct.setProductClass(testProductClass);
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
 		testProduct.setMode(testData[4]);
@@ -131,9 +132,9 @@ public class ProductUtilTest {
 			assertTrue("Unexpected parameter key in parameter " + i + ": ",
 					modelProduct.getParameters().containsKey(restKey));
 			assertEquals("Unexpected parameter type in parameter " + i + ": ", 
-					modelProduct.getParameters().get(restKey).getParameterType(), restParameter.getParameterType());
+					modelProduct.getParameters().get(restKey).getParameterType().toString(), restParameter.getParameterType());
 			assertEquals("Unexpected parameter value in parameter " + i + ": ", 
-					modelProduct.getParameters().get(restKey).getParameterValue(), restParameter.getParameterValue());
+					modelProduct.getParameters().get(restKey).getParameterValue().toString(), restParameter.getParameterValue());
 		}
 		logger.info("Test copy model to REST OK");
 		

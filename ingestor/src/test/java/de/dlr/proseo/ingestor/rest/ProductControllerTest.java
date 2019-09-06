@@ -88,7 +88,8 @@ public class ProductControllerTest {
 	 * @return the password to use for login
 	 */
 	private String getPassword() {
-		return this.security.getUser().getPassword();
+		//return this.security.getUser().getPassword();
+		return "sieb37.Schlaefer";
 	}
 
 	/**
@@ -196,12 +197,14 @@ public class ProductControllerTest {
 		new TestRestTemplate("user", getPassword()).delete(testUrl);
 		
 		// Test that the product is gone
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> entity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> entity = new TestRestTemplate("thomas", getPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
 		// Clean up database
 		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Delete Product By ID");
 	}
 
 	/**
@@ -220,7 +223,7 @@ public class ProductControllerTest {
 		logger.info("Testing URL {} / GET, no params", testUrl);
 		
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<List> entity = new TestRestTemplate("thomas", getPassword())
 				.getForEntity(testUrl, List.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		
@@ -256,6 +259,8 @@ public class ProductControllerTest {
 		
 		// Clean up database
 		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Get Products");
 	}
 
 	/**
@@ -273,7 +278,7 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> postEntity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> postEntity = new TestRestTemplate("thomas", getPassword())
 				.postForEntity(testUrl, restProduct, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restProduct = postEntity.getBody();
@@ -282,7 +287,7 @@ public class ProductControllerTest {
 		
 		// Test that the product exists
 		testUrl += "/" + restProduct.getId();
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		
@@ -293,6 +298,8 @@ public class ProductControllerTest {
 		ArrayList<Product> testProducts = new ArrayList<>();
 		testProducts.add(productToCreate);
 		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Create Product");
 	}
 
 	/**
@@ -311,13 +318,15 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToFind.getId();
 		logger.info("Testing URL {} / GET", testUrl);
 
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong product ID: ", productToFind.getId(), getEntity.getBody().getId().longValue());
 		
 		// Clean up database
 		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Get Product By ID");
 	}
 
 	/**
@@ -345,13 +354,15 @@ public class ProductControllerTest {
 		assertNotNull("Modified product not set", restProduct);
 		
 		// Test that the product attribute was changed as expected
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
 		
 		// Clean up database
 		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Modify Product");
 	}
 
 	/**

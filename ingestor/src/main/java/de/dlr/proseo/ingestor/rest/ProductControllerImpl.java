@@ -42,6 +42,7 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START = MSG_PREFIX + "IngestorProduct with sensing start time %s not found (%d)";
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_ID = MSG_PREFIX + "IngestorProduct with id %s not found (%d)";
 	
+	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 	
 	/**
