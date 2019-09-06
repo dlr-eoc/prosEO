@@ -39,7 +39,7 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.Product.ParameterType;
+import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;

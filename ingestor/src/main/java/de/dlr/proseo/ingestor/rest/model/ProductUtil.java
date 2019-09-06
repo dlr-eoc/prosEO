@@ -29,11 +29,21 @@ public class ProductUtil {
 		
 		restProduct.setId(modelProduct.getId());
 		restProduct.setVersion(Long.valueOf(modelProduct.getVersion()));
-		restProduct.setMissionCode(modelProduct.getProductClass().getMission().getCode());
-		restProduct.setProductClass(modelProduct.getProductClass().getProductType());
+		if (null != modelProduct.getProductClass()) {
+			if (null != modelProduct.getProductClass().getMission()) {
+				restProduct.setMissionCode(modelProduct.getProductClass().getMission().getCode());
+			}
+			restProduct.setProductClass(modelProduct.getProductClass().getProductType());
+		}
 		restProduct.setMode(modelProduct.getMode());
-		restProduct.setSensingStartTime(de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()));
-		restProduct.setSensingStopTime(de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()));
+		if (null != modelProduct.getSensingStartTime()) {
+			restProduct.setSensingStartTime(
+					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()));
+		}
+		if (null != modelProduct.getSensingStopTime()) {
+			restProduct.setSensingStopTime(
+					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()));
+		}
 		for (de.dlr.proseo.model.Product componentProduct: modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
 		}
@@ -100,7 +110,7 @@ public class ProductUtil {
 		for (Parameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
-				modelParameter.seParametertType(de.dlr.proseo.model.Product.ParameterType.valueOf(restParameter.getParameterType()));
+				modelParameter.seParametertType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));
 			} catch (Exception e) {
 				throw new IllegalArgumentException(String.format("Invalid parameter type '%s'", restParameter.getParameterType()));
 			}
