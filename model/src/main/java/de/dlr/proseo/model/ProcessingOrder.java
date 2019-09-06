@@ -6,6 +6,9 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,36 +64,36 @@ public class ProcessingOrder extends PersistentObject {
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/** A set of parameters to set for the generated products.
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> outputParameters;
+	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
 	/** Set of requested product classes */
 	@ManyToMany
-	private Set<ProductClass> requestedProductClasses;
+	private Set<ProductClass> requestedProductClasses = new HashSet<>();
 	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
 	
 	/** The processor configurations for processing the products */
 	@ManyToMany
-	private Set<ConfiguredProcessor> requestedConfiguredProcessors;
+	private Set<ConfiguredProcessor> requestedConfiguredProcessors = new HashSet<>();
 	
 	/** The orbits, for which products are to be generated */
 	@ManyToMany
-	private List<Orbit> requestedOrbits;
+	private List<Orbit> requestedOrbits = new ArrayList<>();
 	
 	/** The products, which will provided as input */
 	@ManyToMany
-	private Set<Product> promisedProducts;
+	private Set<Product> promisedProducts = new HashSet<>();
 	
 	/** The processing jobs belonging to this order */	
 	@OneToMany(mappedBy = "processingOrder")
-	private Set<Job> jobs;
+	private Set<Job> jobs = new HashSet<>();
 	
 	/**
 	 * Possible states for a processing order; recommended state transitions:

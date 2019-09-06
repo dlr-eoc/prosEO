@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Entity;
@@ -39,7 +40,7 @@ public class ProductClass extends PersistentObject {
 	
 	/** Set of component product classes */
 	@OneToMany(mappedBy = "enclosingClass")
-	private Set<ProductClass> componentClasses;
+	private Set<ProductClass> componentClasses = new HashSet<>();
 	
 	/** Product class for which this product class is a component */
 	@ManyToOne

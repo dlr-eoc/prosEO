@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -35,7 +36,7 @@ public class Spacecraft extends PersistentObject {
 	/** The orbits this spacecraft performs */
 	@OneToMany(mappedBy = "spacecraft", cascade = CascadeType.ALL)
 	@OrderBy("orbitNumber")
-	private List<Orbit> orbits;
+	private List<Orbit> orbits = new ArrayList<>();
 	
 	/**
 	 * Gets the spacecraft code

@@ -17,10 +17,14 @@ import javax.persistence.Embeddable;
  */
 @Embeddable
 public class Parameter {
-	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
+	
+	/* Error messages */
 	private static final String MSG_INVALID_PARAMETER_VALUE_FOR_TYPE = "Invalid parameter value %s for type %s";
+	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
+	
 	/** The type of the parameter */
 	private ParameterType parameterType;
+	
 	/** The parameter value */
 	private Serializable parameterValue;
 	

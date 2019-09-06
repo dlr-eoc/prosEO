@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,7 +31,7 @@ public class Configuration extends PersistentObject {
 
 	/** The configured processors, for which this configuration is valid */
 	@OneToMany(mappedBy = "configuration")
-	private Set<ConfiguredProcessor> configuredProcessors;
+	private Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 	
 	/**
 	 * Version identification of the configuration environment (level 1 "Version" from Generic IPF Interface Specifications,
@@ -42,11 +44,11 @@ public class Configuration extends PersistentObject {
 	 * ("List_of_Dyn_ProcParam" from Generic IPF Interface Specifications, sec. 4.1.3).
 	 */
 	@ElementCollection
-	private Map<String, Parameter> dynProcParameters;
+	private Map<String, Parameter> dynProcParameters = new HashMap<>();
 	
 	/** The configuration files for this configuration */
 	@ElementCollection
-	private Set<ConfigurationFile> configurationFiles;
+	private Set<ConfigurationFile> configurationFiles = new HashSet<>();
 
 	/**
 	 * Gets the associated processor class

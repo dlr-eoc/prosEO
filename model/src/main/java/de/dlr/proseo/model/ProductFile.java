@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public class ProductFile extends PersistentObject {
 	
 	/** The auxiliary files for this data file */
 	@ElementCollection
-	private Set<String> auxFileNames;
+	private Set<String> auxFileNames = new HashSet<>();
 	
 	/** The path to the product files (POSIX file path, S3 bucket etc.) */
 	private String filePath;
