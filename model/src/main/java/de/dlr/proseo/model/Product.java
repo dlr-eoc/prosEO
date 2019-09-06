@@ -7,6 +7,7 @@ package de.dlr.proseo.model;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,7 +47,7 @@ public class Product extends PersistentObject {
 	
 	/** Set of component products */
 	@OneToMany(mappedBy = "enclosingProduct")
-	private Set<Product> componentProducts;
+	private Set<Product> componentProducts = new HashSet<>();
 	
 	/** Product for which this product is a component */
 	@ManyToOne
@@ -58,11 +59,11 @@ public class Product extends PersistentObject {
 	
 	/** Product files for this product */
 	@OneToMany(mappedBy = "product")
-	private Set<ProductFile> productFile;
+	private Set<ProductFile> productFile = new HashSet<>();
 	
 	/** Product queries satisfied by this product */
 	@ManyToMany
-	private Set<ProductQuery> satisfiedProductQueries;
+	private Set<ProductQuery> satisfiedProductQueries = new HashSet<>();
 	
 	/** Job step that produced this product (if any) */
 	@OneToOne

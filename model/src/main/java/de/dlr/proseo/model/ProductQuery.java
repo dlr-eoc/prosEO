@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -54,7 +56,7 @@ public class ProductQuery extends PersistentObject {
 	 * Additional filter conditions to apply to the selected products.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
 	private Boolean isSatisfied;
@@ -63,7 +65,7 @@ public class ProductQuery extends PersistentObject {
 	 * Products satisfying this query condition
 	 */
 	@ManyToMany(mappedBy = "satisfiedProductQueries")
-	private Set<Product> satisfyingProducts;
+	private Set<Product> satisfyingProducts = new HashSet<>();
 
 	/**
 	 * Gets the job step issuing the query

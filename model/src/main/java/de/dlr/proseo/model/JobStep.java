@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,14 +39,14 @@ public class JobStep extends PersistentObject {
 	
 	/** Additional parameter to set in the output products */
 	@ElementCollection
-	private Map<String, Parameter> outputParameters;
+	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
 	
 	/** Query objects for input products */
 	@OneToMany(mappedBy = "jobStep")
-	private Set<ProductQuery> inputProductQueries;
+	private Set<ProductQuery> inputProductQueries = new HashSet<>();
 	
 	/** The output product of this job step */
 	@OneToOne(mappedBy = "jobStep")

@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -31,7 +33,7 @@ public class Processor extends PersistentObject {
 	
 	/** The processor configurations this processor version is valid for */
 	@OneToMany(mappedBy = "processor")
-	private Set<ConfiguredProcessor> configuredProcessors;
+	private Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 	
 	/** 
 	 * Version identification of the processor executable (Docker image; 
@@ -61,7 +63,7 @@ public class Processor extends PersistentObject {
 	
 	/** List of tasks for this processor */
 	@OneToMany(mappedBy = "processor")
-	private List<Task> tasks;
+	private List<Task> tasks = new ArrayList<>();
 
 	/**
 	 * Gets the processor class
