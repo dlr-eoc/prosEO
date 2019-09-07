@@ -23,7 +23,7 @@ import de.dlr.proseo.planner.ProductionPlanner;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 //@DirtiesContext
-@Transactional
+//@Transactional
 @AutoConfigureTestEntityManager
 public class KubeTest {
 
@@ -48,15 +48,14 @@ public class KubeTest {
 
 	@Test
 	public void test() {
-		  JobStep js = new JobStep();
-		  js.setProcessingMode("nix"); 
-		  jobSteps.save(js);
-		if (ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080") != null) {
-			if (ProductionPlanner.getKubeConfig("Lerchenhof").isConnected()) {
-				KubeJob aJob = ProductionPlanner.getKubeConfig("Lerchenhof").createJob("test");
-				if (aJob != null) {
-					ProductionPlanner.getKubeConfig("Lerchenhof").deleteJob(aJob);
-				}
+		JobStep js = new JobStep();
+		js.setProcessingMode("nix"); 
+		jobSteps.save(js);
+		ProductionPlanner.updateKubeConfigs();
+		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
+			KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");
+			if (aJob != null) {
+				ProductionPlanner.getKubeConfig(null).deleteJob(aJob);
 			}
 		}
 	}

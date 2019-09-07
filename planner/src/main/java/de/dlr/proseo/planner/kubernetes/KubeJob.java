@@ -33,7 +33,6 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.joborder.JobOrder;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
@@ -42,11 +41,13 @@ import io.kubernetes.client.models.V1JobSpec;
 import io.kubernetes.client.models.V1JobSpecBuilder;
 
 /**
+ * A KubeJob describes the complete information to run a Kubernetes job.
+ * 
  * @author melchinger
  *
  */
 
-@Transactional
+//@Transactional
 @Component
 public class KubeJob {
 	private int jobId;
@@ -173,7 +174,6 @@ public class KubeJob {
 				
 				  JobStep js = new JobStep();
 				  js.setProcessingMode(job.getMetadata().getName()); 
-				  ProductionPlanner p = ProductionPlanner.getPlanner();
 				  RepositoryService.getJobStepRepository().save(js);
 				 
 				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);

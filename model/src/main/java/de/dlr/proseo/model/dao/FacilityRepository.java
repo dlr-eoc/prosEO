@@ -18,6 +18,10 @@ import de.dlr.proseo.model.ProcessingFacility;
 @Repository
 public interface FacilityRepository extends CrudRepository<ProcessingFacility, Long> {
 
-	  @Query("select pf from ProcessingFacility pf where UPPER(pf.name) = UPPER(?1)")
-	  ProcessingFacility findByName(String name);
+	/**
+	 * @param name
+	 * @return
+	 */
+	@Query("select pf from ProcessingFacility pf where UPPER(pf.name) = UPPER(?1)")
+	ProcessingFacility findByName(String name);
 }

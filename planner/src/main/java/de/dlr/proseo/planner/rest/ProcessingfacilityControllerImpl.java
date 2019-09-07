@@ -40,6 +40,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
     public ResponseEntity<List<PlannerProcessingFacility>> getPlannerProcessingFacilities() {
+		ProductionPlanner.updateKubeConfigs();
 		if (ProductionPlanner.getKubeConfigs() != null) {
 			List<PlannerProcessingFacility> l = new ArrayList<PlannerProcessingFacility>();
 			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: ProductionPlanner.getKubeConfigs()) {
