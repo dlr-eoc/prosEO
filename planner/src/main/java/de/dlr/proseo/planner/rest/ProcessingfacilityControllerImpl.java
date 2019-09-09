@@ -4,6 +4,8 @@ package de.dlr.proseo.planner.rest;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
     public ResponseEntity<List<PlannerProcessingFacility>> getPlannerProcessingFacilities() {
+		ProductionPlanner.updateKubeConfigs();
 		if (ProductionPlanner.getKubeConfigs() != null) {
 			List<PlannerProcessingFacility> l = new ArrayList<PlannerProcessingFacility>();
 			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: ProductionPlanner.getKubeConfigs()) {

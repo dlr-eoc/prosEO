@@ -27,10 +27,4 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class ProductionPlannerConfiguration {
-	String xx = "hallo";
-	
-	@Autowired
-    private JobStepRepository jobSteps;
-    
-	
 }

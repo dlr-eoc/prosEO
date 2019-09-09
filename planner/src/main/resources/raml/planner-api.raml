@@ -82,6 +82,10 @@ resourceTypes:
   type: standard
   get:
     description: Get production planner jobsteps
+    queryParameters:
+      status?:
+        type: string
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
     responses:
       200:
         body:
@@ -117,7 +121,7 @@ resourceTypes:
 /processingfacilities:
   type: standard
   get:
-    description: Get attached processing facilities
+    description: Update and get running and connected processing facilities
     responses:
       200:
         body:
@@ -145,7 +149,7 @@ resourceTypes:
         post:
           description: Create jobstep/pod for test purpose
           responses:
-            200:
+            201:
               body:
                 application/json:
                   type: PlannerJobstep

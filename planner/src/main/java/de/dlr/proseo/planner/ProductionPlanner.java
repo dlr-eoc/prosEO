@@ -6,32 +6,24 @@
 
 package de.dlr.proseo.planner;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
-import de.dlr.proseo.model.dao.FacilityRepository;
-import de.dlr.proseo.model.dao.JobRepository;
-import de.dlr.proseo.model.dao.JobStepRepository;
-import de.dlr.proseo.model.dao.ProcessorClassRepository;
-import de.dlr.proseo.model.dao.ProcessorRepository;
-import de.dlr.proseo.model.dao.ProductClassRepository;
-import de.dlr.proseo.model.dao.ProductRepository;
+import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 
 /*
@@ -43,85 +35,44 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 @SpringBootApplication
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
-@Transactional
+//@Transactional
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
-public class ProductionPlanner {
-
-
-	@Autowired
-    private JobStepRepository jobSteps;
-	@Autowired
-    private ConfiguredProcessorRepository configuredProcessors;
-	@Autowired
-    private FacilityRepository facilitys;
-	@Autowired
-    private JobRepository jobs;
-	@Autowired
-    private ProcessorClassRepository processorClasses;
-	@Autowired
-    private ProcessorRepository processors;
-	@Autowired
-    private ProductClassRepository productClasses;
-	@Autowired
-    private ProductRepository products;
-
-	static ApplicationContext ac;
-	static ProductionPlanner thePlanner = null;
+public class ProductionPlanner implements CommandLineRunner {
 	
-	static Map<String, KubeConfig> kubeConfigs = new HashMap<>();
+	private static final String MSG_PREFIX = "199 proseo-planner: ";
+	private static final String MSG_PLANNER_PROCESSING_FACILITY_CONNECTED = MSG_PREFIX + "ProcessingFacility '%s' connected to '%s'";
+	private static final String MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED = MSG_PREFIX + "ProcessingFacility '%s' disconnected";
+	private static final String MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED = MSG_PREFIX + "ProcessingFacility '%s' could not be connected to '%s'";
+	
+	private static Logger logger = LoggerFactory.getLogger(ProductionPlanner.class);
+
+	public static final String jobNamePrefix = "proseo";
+	public static final String jobContainerPrefix = "proseocont";
+
+	/**
+	 * Current running ProductionPlanner
+	 */
+	private static ProductionPlanner thePlanner = null;
 	
 	/**
-	 * @return the jobSteps
+	 * Current running KubeConfigs
 	 */
-	public static JobStepRepository getJobSteps() {
-		return getPlanner().getJobStepsPrim();
-	}
-	/**
-	 * @return the configuredProcessors
-	 */
-	public static ConfiguredProcessorRepository getConfiguredProcessors() {
-		return getPlanner().getConfiguredProcessorsPrim();
-	}
-	/**
-	 * @return the facilitys
-	 */
-	public static FacilityRepository getFacilitys() {
-		return getPlanner().getFacilitysPrim();
-	}
-	/**
-	 * @return the jobs
-	 */
-	public static JobRepository getJobs() {
-		return getPlanner().getJobsPrim();
-	}
-	/**
-	 * @return the processorClasses
-	 */
-	public static ProcessorClassRepository getProcessorClasses() {
-		return getPlanner().getProcessorClassesPrim();
-	}
-	/**
-	 * @return the processors
-	 */
-	public static ProcessorRepository getProcessors() {
-		return getPlanner().getProcessorsPrim();
-	}
-	/**
-	 * @return the productClasses
-	 */
-	public static ProductClassRepository getProductClasses() {
-		return getPlanner().getProductClassesPrim();
-	}
-	/**
-	 * @return the products
-	 */
-	public static ProductRepository getProducts() {
-		return getPlanner().getProductsPrim();
-	}
+	private static Map<String, KubeConfig> kubeConfigs = new HashMap<>();
 	
+	/**
+	 * Ghe current running ProductionPlanner
+	 * 
+	 * @return the current running ProductionPlanner
+	 */
 	public static ProductionPlanner getPlanner() {
 		return thePlanner;		
 	}
+	/**
+	 * Look for connected KubeConfig of name. 
+	 * 
+	 * @param name of KubeConfig to find
+	 * @return KubeConfig found or null
+	 */
 	public static KubeConfig getKubeConfig(String name) {
 		if (name == null && kubeConfigs.size() == 1) {
 			return (KubeConfig) kubeConfigs.values().toArray()[0];
@@ -129,89 +80,88 @@ public class ProductionPlanner {
 		return kubeConfigs.get(name.toLowerCase());
 	}
 
+	/**
+	 * @return the collection of KubeConfigs which are connected.
+	 */
 	public static Collection<KubeConfig> getKubeConfigs() {
 		return (Collection<KubeConfig>) kubeConfigs.values();
 	}
 	
+	/**
+	 * Initialize and run application 
+	 * 
+	 * @param args command line arguments
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception {
-
-		ProductionPlanner.addKubeConfig("Lerchenhof", "Testumgebung auf dem Lerchenhof", "http://192.168.20.159:8080");
 		SpringApplication spa = new SpringApplication(ProductionPlanner.class);
-		ac = spa.run(args);
-		
-		Object o = spa.getMainApplicationClass();
+		spa.run(args);
 	}
 
 	/**
-	 * @return the ac
+	 * Walk through ProcessingFacility list of DB and try to connect each.
+	 * Disconnect and remove KubeConfigs not defined in this list.
 	 */
-	public static ApplicationContext getAc() {
-		return ac;
-	}
+	public static void updateKubeConfigs() {
+		boolean found = false;
+		KubeConfig kubeConfig = null;
+		for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
+			kubeConfig = getKubeConfig(pf.getName());
+			if (kubeConfig != null) {
+				if (kubeConfig.connect()) {
+					found = true;
+				} else {
+					// error
+					kubeConfigs.remove(pf.getName().toLowerCase());
 
-	public static KubeConfig addKubeConfig(String name, String desc, String url) {
-		if (getKubeConfig(name) == null) {
-			KubeConfig kubeConfig = new KubeConfig(name, desc, url);
-			if (kubeConfig != null && kubeConfig.connect()) {
-				kubeConfigs.put(name.toLowerCase(), kubeConfig);
-				return kubeConfig;
+					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED, pf.getName());
+					logger.error(message);
+				}
+			}
+			if (kubeConfig == null) {
+				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getUrl());
+				if (kubeConfig != null && kubeConfig.connect()) {
+					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+					found = true;
+					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_CONNECTED, pf.getName(), pf.getUrl());
+					logger.info(message);
+				} else {
+					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED, pf.getName(), pf.getUrl());
+					logger.error(message);
+				}
 			}
 		}
-		return null;
+		for (KubeConfig kf : getKubeConfigs()) {
+			if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
+				kubeConfigs.remove(kf.getId().toLowerCase());
+				String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED, kf.getId(), kf.getUrl());
+				logger.info(message);
+			}
+		}
 	}
-	
+		
+	/**
+	 * Set static variable "thePlanner".
+	 */
 	public ProductionPlanner() {
 		thePlanner = this;
 	}	
 	
-	/**
-	 * @return the jobSteps
+	/* (non-Javadoc)
+	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
 	 */
-	private JobStepRepository getJobStepsPrim() {
-		return jobSteps;
-	}
-	/**
-	 * @return the configuredProcessors
-	 */
-	private ConfiguredProcessorRepository getConfiguredProcessorsPrim() {
-		return configuredProcessors;
-	}
-	/**
-	 * @return the facilitys
-	 */
-	private FacilityRepository getFacilitysPrim() {
-		return facilitys;
-	}
-	/**
-	 * @return the jobs
-	 */
-	private JobRepository getJobsPrim() {
-		return jobs;
-	}
-	/**
-	 * @return the processorClasses
-	 */
-	private ProcessorClassRepository getProcessorClassesPrim() {
-		return processorClasses;
-	}
-	/**
-	 * @return the processors
-	 */
-	private ProcessorRepository getProcessorsPrim() {
-		return processors;
-	}
-	/**
-	 * @return the productClasses
-	 */
-	private ProductClassRepository getProductClassesPrim() {
-		return productClasses;
-	}
-	/**
-	 * @return the products
-	 */
-	private ProductRepository getProductsPrim() {
-		return products;
+	@Override
+	public void run(String... arg0) throws Exception {
+		//		
+		//		List<String> pfs = new ArrayList<String>();
+		//		
+		//        for (int i = 0; i < arg0.length; i++) {
+		//        	if (arg0[i].equalsIgnoreCase("-processingfacility") && (i + 1) < arg0.length) {
+		//        		pfs.add(arg0[i+1]);
+		//        	}
+		//        } 
+
+		ProductionPlanner.updateKubeConfigs();
 	}
 
 }
-

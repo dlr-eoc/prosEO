@@ -28,6 +28,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
@@ -40,11 +41,13 @@ import io.kubernetes.client.models.V1JobSpec;
 import io.kubernetes.client.models.V1JobSpecBuilder;
 
 /**
+ * A KubeJob describes the complete information to run a Kubernetes job.
+ * 
  * @author melchinger
  *
  */
 
-@Transactional
+//@Transactional
 @Component
 public class KubeJob {
 	private int jobId;
@@ -171,8 +174,7 @@ public class KubeJob {
 				
 				  JobStep js = new JobStep();
 				  js.setProcessingMode(job.getMetadata().getName()); 
-				  ProductionPlanner p = ProductionPlanner.getPlanner();
-				  ProductionPlanner.getJobSteps().save(js);
+				  RepositoryService.getJobStepRepository().save(js);
 				 
 				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			} catch (ApiException e1) {

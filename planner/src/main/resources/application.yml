@@ -1,11 +1,15 @@
 spring:
-    application:
-        name: prosEO
     jpa:
-        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=Europe/Berlin
-        username: root
+        url: jdbc:postgresql://localhost:5432/proseo
+        username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
+logging:
+    level:
+        root: INFO
+        de:
+            dlr:
+                proseo: TRACE
