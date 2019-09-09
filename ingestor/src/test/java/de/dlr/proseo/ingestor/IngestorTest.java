@@ -40,9 +40,14 @@ import static org.junit.Assert.assertTrue;
 @DirtiesContext
 public class IngestorTest {
 
+	/** Test configuration */
 	@Autowired
-	private SecurityProperties security;
-
+	IngestorTestConfiguration config;
+	
+	/** The security environment for this test */
+	@Autowired
+	IngestorSecurityConfig ingestorSecurityConfig;
+	
 	@LocalServerPort
 	private int port;
 
@@ -78,7 +83,7 @@ public class IngestorTest {
 
 	@Test
 	public void testInfo() throws Exception {
-		ResponseEntity<String> entity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/actuator/info", String.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Wrong body: " + entity.getBody(),
@@ -96,7 +101,7 @@ public class IngestorTest {
 
 	@Test
 	public void testErrorPage() throws Exception {
-		ResponseEntity<String> entity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity("http://localhost:" + this.port + "/foo", String.class);
 		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
 		String body = entity.getBody();
@@ -109,7 +114,7 @@ public class IngestorTest {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.TEXT_HTML));
 		HttpEntity<?> request = new HttpEntity<Void>(headers);
-		ResponseEntity<String> entity = new TestRestTemplate("user", getPassword())
+		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.exchange("http://localhost:" + this.port + "/foo", HttpMethod.GET,
 						request, String.class);
 		assertEquals(HttpStatus.NOT_FOUND, entity.getStatusCode());
@@ -117,10 +122,6 @@ public class IngestorTest {
 		assertNotNull("Body was null", body);
 		assertTrue("Wrong body: " + body,
 				body.contains("This application has no explicit mapping for /error"));
-	}
-
-	private String getPassword() {
-		return this.security.getUser().getPassword();
 	}
 
 }

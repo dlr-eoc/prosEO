@@ -27,14 +27,18 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEnti
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorSecurityConfig;
+import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -67,9 +71,17 @@ public class ProductControllerTest {
 		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
 	};
 
+	/** Test configuration */
+	@Autowired
+	IngestorTestConfiguration config;
+	
 	/** The security environment for this test */
 	@Autowired
-	private SecurityProperties security;
+	IngestorSecurityConfig ingestorSecurityConfig;
+	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
 
 	/** The (random) port on which the Ingestor was started */
 	@LocalServerPort
@@ -83,15 +95,6 @@ public class ProductControllerTest {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
-	/**
-	 * Get the generated test password
-	 * @return the password to use for login
-	 */
-	private String getPassword() {
-		//return this.security.getUser().getPassword();
-		return "sieb37.Schlaefer";
-	}
-
 	/**
 	 * Prepare the test environment
 	 * 
@@ -194,10 +197,10 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToDelete.getId();
 		logger.info("Testing URL {} / DELETE", testUrl);
 		
-		new TestRestTemplate("user", getPassword()).delete(testUrl);
+		new TestRestTemplate(config.getUserName(), config.getUserPassword()).delete(testUrl);
 		
 		// Test that the product is gone
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> entity = new TestRestTemplate("thomas", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
@@ -220,11 +223,17 @@ public class ProductControllerTest {
 		
 		// Get products using different selection criteria (also combined)
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
-		logger.info("Testing URL {} / GET, no params", testUrl);
+		logger.info("Testing URL {} / GET, no params, with user {} and password {}", testUrl, config.getUserName(), config.getUserPassword());
 		
+//		@SuppressWarnings("rawtypes")
+//		ResponseEntity<List> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+//				.getForEntity(testUrl, List.class);
+		
+		// Just as an example of how to use RestTemplate (does the same as commented code above)
+		RestTemplate restTemplate = rtb.basicAuthentication(config.getUserName(), config.getUserPassword()).build();
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = new TestRestTemplate("thomas", getPassword())
-				.getForEntity(testUrl, List.class);
+		ResponseEntity<List> entity = restTemplate.getForEntity(testUrl, List.class);
+		
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		
 		// Test that the correct products provided above are in the results
@@ -278,7 +287,7 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> postEntity = new TestRestTemplate("thomas", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.postForEntity(testUrl, restProduct, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restProduct = postEntity.getBody();
@@ -287,7 +296,7 @@ public class ProductControllerTest {
 		
 		// Test that the product exists
 		testUrl += "/" + restProduct.getId();
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		
@@ -318,7 +327,7 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToFind.getId();
 		logger.info("Testing URL {} / GET", testUrl);
 
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong product ID: ", productToFind.getId(), getEntity.getBody().getId().longValue());
@@ -349,12 +358,12 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToModify.getId();
 		logger.info("Testing URL {} / PATCH", testUrl);
 
-		restProduct = new TestRestTemplate("user", getPassword())
+		restProduct = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.patchForObject(testUrl, restProduct, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertNotNull("Modified product not set", restProduct);
 		
 		// Test that the product attribute was changed as expected
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate("thomas", getPassword())
+		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
