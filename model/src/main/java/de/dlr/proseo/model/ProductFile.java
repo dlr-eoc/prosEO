@@ -11,7 +11,9 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * The data file and pertinent auxiliary files for a product at a given processing facility. Each product has at most one
@@ -21,6 +23,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility"))
 public class ProductFile extends PersistentObject {
 
 	/** The product this data file belongs to */

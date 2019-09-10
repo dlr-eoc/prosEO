@@ -11,7 +11,11 @@ import java.time.format.DateTimeFormatter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.NaturalId;
 
 /**
  * The description of an orbit identified by its start and stop times (e. g. the "spacecraft midnight" events of the
@@ -25,6 +29,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "spacecraft_id, orbit_number"), @Index(unique = false, columnList = "start_time") })
 public class Orbit extends PersistentObject {
 	
 	/** Master time format for orbit times (ISO-formatted UTC-STS timestamps with microsecond fraction and without time zone) */

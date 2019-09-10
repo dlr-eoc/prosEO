@@ -10,7 +10,11 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.NaturalId;
 
 /**
  * An Earth Observation mission.
@@ -19,6 +23,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "code"))
 public class Mission extends PersistentObject {
 
 	/** The mission code (e. g. S5P) */

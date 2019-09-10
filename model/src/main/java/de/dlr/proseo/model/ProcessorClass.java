@@ -9,8 +9,10 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A type of processor capable of generating products of a specific set of ProductClasses. There can be only one ProcessorClass
@@ -20,6 +22,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "mission_id, processor_name"))
 public class ProcessorClass extends PersistentObject {
 	
 	/** The mission this processor class belongs to */

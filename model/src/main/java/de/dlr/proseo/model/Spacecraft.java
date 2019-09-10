@@ -10,9 +10,11 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
+import javax.persistence.Table;
 
 /**
  * The abstraction of a spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.
@@ -21,6 +23,7 @@ import javax.persistence.OrderBy;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "mission_id, code"))
 public class Spacecraft extends PersistentObject {
 
 	/** The mission this spacecraft belongs to */
@@ -34,7 +37,7 @@ public class Spacecraft extends PersistentObject {
 	private String name;
 	
 	/** The orbits this spacecraft performs */
-	@OneToMany(mappedBy = "spacecraft", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "spacecraft", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("orbitNumber")
 	private List<Orbit> orbits = new ArrayList<>();
 	

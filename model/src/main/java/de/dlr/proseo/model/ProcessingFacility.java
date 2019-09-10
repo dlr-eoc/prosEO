@@ -7,6 +7,8 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 /**
  * A processing facility for running prosEO jobs and storing prosEO product files,  e. g. at a cloud service provider.
@@ -15,6 +17,7 @@ import javax.persistence.Entity;
  *
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "name"), @Index(unique = false, columnList = "url") })
 public class ProcessingFacility extends PersistentObject {
 
 	/** The facility name (unique key) */

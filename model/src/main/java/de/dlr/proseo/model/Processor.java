@@ -13,8 +13,10 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A specific version of a ProcessorClass. Each permissible combination of a specific Processor with a specific Configuration is
@@ -25,6 +27,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "processor_class_id, processor_version"))
 public class Processor extends PersistentObject {
 
 	/** The processor class this processor (version) belongs to */

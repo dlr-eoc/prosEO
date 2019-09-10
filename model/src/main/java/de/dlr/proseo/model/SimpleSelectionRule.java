@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -61,7 +62,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	private Set<ConfiguredProcessor> applicableConfiguredProcessors = new HashSet<>();
 	
 	/** The selection policies applied for selecting target products (the first applicable policy in the list holds) */
-	@OneToMany
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<SimplePolicy> simplePolicies = new ArrayList<>();
 
 	/**

@@ -7,7 +7,11 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.NaturalId;
 
 /**
  * A specific version of a Processor combined with a specific Configuration object (i. e. a specific set of configuration data for
@@ -17,6 +21,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "identifier"))
 public class ConfiguredProcessor extends PersistentObject {
 
 	/** 

@@ -14,10 +14,12 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 
@@ -28,6 +30,9 @@ import org.hibernate.annotations.Type;
  *
  */
 @Entity
+@Table(indexes = { 
+		@Index(unique = false, columnList = "sensing_start_time"), 
+		@Index(unique = false, columnList = "sensing_stop_time") })
 public class Product extends PersistentObject {
 	
 	/** Product class this products instantiates */
