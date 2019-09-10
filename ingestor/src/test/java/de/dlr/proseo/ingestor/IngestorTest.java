@@ -92,8 +92,8 @@ public class IngestorTest {
 
 	@Test
 	public void testHealth() throws Exception {
-		ResponseEntity<String> entity = new TestRestTemplate().getForEntity(
-				"http://localhost:" + this.port + "/actuator/health", String.class);
+		ResponseEntity<String> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity("http://localhost:" + this.port + "/actuator/health", String.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		assertTrue("Wrong body: " + entity.getBody(),
 				entity.getBody().contains("\"status\":\"UP\""));

@@ -87,11 +87,6 @@ public class ProductControllerTest {
 	@LocalServerPort
 	private int port;
 	
-	/** The DAO for the ProductClass class */
-	ProductClassRepository productClasses = RepositoryService.getProductClassRepository();
-	/** The DAO for the Product class */
-	ProductRepository products = RepositoryService.getProductRepository();
-
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
@@ -141,7 +136,7 @@ public class ProductControllerTest {
 		Product testProduct = new Product();
 		
 		testProduct.setProductClass(
-				productClasses.findByMissionCodeAndProductType(testData[2], testData[3]));
+				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
 		testProduct.setMode(testData[4]);
@@ -149,7 +144,7 @@ public class ProductControllerTest {
 		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[7])));
-		testProduct = products.save(testProduct);
+		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {}", testProduct.getId());
 		return testProduct;
@@ -176,7 +171,7 @@ public class ProductControllerTest {
 	 */
 	private void deleteTestProducts(List<Product> testProducts) {
 		for (Product testProduct: testProducts) {
-			products.delete(testProduct);
+			RepositoryService.getProductRepository().delete(testProduct);
 		}
 	}
 
@@ -372,23 +367,6 @@ public class ProductControllerTest {
 		deleteTestProducts(testProducts);
 
 		logger.info("Test OK: Modify Product");
-	}
-
-	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#updateIngestorProduct(java.lang.String, java.util.List)}.
-	 * 
-	 * Test: Ingest all given products into the storage manager of the given processing facility
-	 * Precondition: A (mockup) storage manager is set up, and a directory with products exists
-	 */
-	@Test
-	public final void testUpdateIngestorProduct() {
-		fail("Not yet implemented"); // TODO
-		
-		// Ingest the products
-		
-		// Test that the products are available in the database
-		
-		// Test that the Storage Manager was informed
 	}
 
 }

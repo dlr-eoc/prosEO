@@ -14,27 +14,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.Product;
 import de.dlr.proseo.ingestor.rest.model.ProductFile;
 
 /**
- * @author thomas
- *
+ * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
+ * products from pickup points into the prosEO database, and to query the database about such products
+ * 
+ * @author Dr. Thomas Bassler
  */
+@Component
 public class IngestControllerImpl implements IngestController {
 
 	/* Message ID constants */
-	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2011;
-	private static final int MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND = 2012;
-	private static final int MSG_ID_COMPONENT_PRODUCT_NOT_FOUND = 2013;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_PRODUCT_NOT_FOUND = "No product found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "Enclosing product with ID %d not found (%d)";
-	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "Component product with ID %d not found (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ingestor ";
 	
@@ -82,7 +80,7 @@ public class IngestControllerImpl implements IngestController {
      * 
      */
 	@Override
-	public ResponseEntity<ProductFile> createProductFile(Long productId, String processingFacility,
+	public ResponseEntity<ProductFile> ingestProductFile(Long productId, String processingFacility,
 	        @javax.validation.Valid
 	        ProductFile productFile) {
 		// TODO Auto-generated method stub
