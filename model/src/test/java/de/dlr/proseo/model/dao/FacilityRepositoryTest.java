@@ -79,7 +79,7 @@ public class FacilityRepositoryTest {
 	public final void test() {
 		ProcessingFacility fac = new ProcessingFacility();
 		fac.setName(TEST_NAME);
-		fac.setUrl("https://" + TEST_HOSTNAME + ":8080/");
+		fac.setUrl("https:////" + TEST_HOSTNAME + ":8080/");
 		RepositoryService.getFacilityRepository().save(fac);
 		
 		// Test findByName
@@ -87,12 +87,6 @@ public class FacilityRepositoryTest {
 		assertNotNull("Find by name failed for ProcessingFacility", fac);
 		
 		logger.info("OK: Test for findByName completed");
-		
-		// Test findByHostname
-		List<ProcessingFacility> facList = RepositoryService.getFacilityRepository().findByHostname(TEST_HOSTNAME);
-		assertFalse("Find by hostname failed for ProcessingFacility", facList.isEmpty());
-
-		logger.info("OK: Test for findByHostname completed");
 		
 	}
 

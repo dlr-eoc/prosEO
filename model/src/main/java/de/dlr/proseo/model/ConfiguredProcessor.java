@@ -11,8 +11,6 @@ import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NaturalId;
-
 /**
  * A specific version of a Processor combined with a specific Configuration object (i. e. a specific set of configuration data for
  * the given processor version). A ConfiguredProcessor is what must be specified for the generation of the products of a prosEO order.

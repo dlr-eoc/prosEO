@@ -79,11 +79,14 @@ public class ProcessorRepositoryTest {
 	public final void test() {
 		ProcessorClass procClass = new ProcessorClass();
 		procClass.setProcessorName(TEST_NAME);
+		procClass = RepositoryService.getProcessorClassRepository().save(procClass);
+		
 		Processor proc = new Processor();
 		proc.setProcessorClass(procClass);
 		proc.setProcessorVersion(TEST_VERSION);
+		proc = RepositoryService.getProcessorRepository().save(proc);
+
 		procClass.getProcessors().add(proc);
-		RepositoryService.getProcessorRepository().save(proc);
 		RepositoryService.getProcessorClassRepository().save(procClass);
 		
 		// Test findByProcessorNameAndProcessorVersion

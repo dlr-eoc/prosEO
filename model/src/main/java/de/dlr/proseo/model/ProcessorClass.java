@@ -5,9 +5,11 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
@@ -30,15 +32,16 @@ public class ProcessorClass extends PersistentObject {
 	private Mission mission;
 	
 	/** User-defined unique processor class name (Processor_Name from Generic IPF Interface Specifications, sec. 4.1.3) */
+	@Column(name = "processor_name")
 	private String processorName;
 	
 	/** The product classes a processor of this class can generate */
 	@OneToMany(mappedBy = "processorClass")
-	private Set<ProductClass> productClasses;
+	private Set<ProductClass> productClasses = new HashSet<>();
 	
 	/** The processor versions for this class */
 	@OneToMany(mappedBy = "processorClass")
-	private Set<Processor> processors;
+	private Set<Processor> processors = new HashSet<>();
 
 	/**
 	 * Gets the mission this processor class belongs to

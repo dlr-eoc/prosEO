@@ -23,7 +23,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility"))
+@Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility_id"))
 public class ProductFile extends PersistentObject {
 
 	/** The product this data file belongs to */

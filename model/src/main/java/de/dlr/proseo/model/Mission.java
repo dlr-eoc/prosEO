@@ -14,8 +14,6 @@ import javax.persistence.Index;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NaturalId;
-
 /**
  * An Earth Observation mission.
  * 

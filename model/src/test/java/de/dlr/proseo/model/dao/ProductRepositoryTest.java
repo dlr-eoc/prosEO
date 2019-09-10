@@ -88,27 +88,34 @@ public class ProductRepositoryTest {
 	public final void test() {
 		Mission mission = new Mission();
 		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
 		
 		Spacecraft spacecraft = new Spacecraft();
 		spacecraft.setMission(mission);
 		spacecraft.setCode(TEST_SC_CODE);
+		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		mission.getSpacecrafts().add(spacecraft);
 		
 		Orbit orbit = new Orbit();
 		orbit.setSpacecraft(spacecraft);
 		orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
 		orbit.setStartTime(TEST_START_TIME);
+		orbit = RepositoryService.getOrbitRepository().save(orbit);
 		spacecraft.getOrbits().add(orbit);
 
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
 		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
+		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		mission.getProductClasses().add(prodClass);
 		
 		Product product = new Product();
 		product.setProductClass(prodClass);
 		product.setOrbit(orbit);
 		product.setSensingStartTime(TEST_START_TIME);
 		product.setSensingStopTime(TEST_START_TIME.plusSeconds(900));
+		product = RepositoryService.getProductRepository().save(product);
 		
 		RepositoryService.getProductClassRepository().save(prodClass);
 		RepositoryService.getOrbitRepository().save(orbit);

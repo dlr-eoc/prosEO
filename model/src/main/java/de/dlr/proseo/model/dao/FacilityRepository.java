@@ -28,12 +28,4 @@ public interface FacilityRepository extends CrudRepository<ProcessingFacility, L
 	 */
 	public ProcessingFacility findByName(String facilityName);
 
-	/**
-	 * Get all processing facilities on a given host (string comparison only; no DNS resolution either forward or backward will be attempted)
-	 * 
-	 * @param hostname the host part of the URL for the processing facilities
-	 * @return a list of processing facilities available on the given host
-	 */
-	@Query("select pf from ProcessingFacility pf where pf.url like 'http://?1%' or pf.url like 'https://?1%'")
-	public List<ProcessingFacility> findByHostname(String hostname);
 }

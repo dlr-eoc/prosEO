@@ -15,8 +15,6 @@ import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NaturalId;
-
 /**
  * The description of an orbit identified by its start and stop times (e. g. the "spacecraft midnight" events of the
  * Sentinel-5P satellite). There must be no time gap between subsequent orbits of the same spacecraft.
@@ -41,10 +39,11 @@ public class Orbit extends PersistentObject {
 	private Spacecraft spacecraft;
 	
 	/** The orbit number (usually starting at 1 at launch); unique for a spacecraft and usually gapless */
+	@Column(name = "orbit_number")
 	private Integer orbitNumber;
 	
 	/** The start time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "start_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant startTime;
 	
 	/** The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */

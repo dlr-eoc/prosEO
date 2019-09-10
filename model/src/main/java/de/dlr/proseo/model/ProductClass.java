@@ -9,9 +9,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Index;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -37,9 +37,11 @@ public class ProductClass extends PersistentObject {
 	
 	/** The product type, as it shall be known in the processing system (product class identifier; e. g. CLOUD);
 	 * unique within a mission */
+	@Column(name = "product_type")
 	private String productType;
 	
 	/** The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission */
+	@Column(name = "mission_type")
 	private String missionType;
 	
 	/** A short description of the product type to display as informational text on the user interface */
@@ -47,11 +49,11 @@ public class ProductClass extends PersistentObject {
 	
 	/** The selection rules describing the required input files to generate this product class */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "targetProductClass")
-	private Set<SimpleSelectionRule> requiredSelectionRules;
+	private Set<SimpleSelectionRule> requiredSelectionRules = new HashSet<>();
 	
 	/** The selection rules, for which this class provides the requested input files */
 	@OneToMany(mappedBy = "sourceProductClass")
-	private Set<SimpleSelectionRule> supportedSelectionRules;
+	private Set<SimpleSelectionRule> supportedSelectionRules = new HashSet<>();
 	
 	/** Set of component product classes */
 	@OneToMany(mappedBy = "enclosingClass")

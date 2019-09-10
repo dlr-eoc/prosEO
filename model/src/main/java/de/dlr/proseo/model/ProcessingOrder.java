@@ -47,7 +47,7 @@ public class ProcessingOrder extends PersistentObject {
 	private OrderState orderState;
 	
 	/** Expected execution time (optional, used for scheduling) */
-	@Column(columnDefinition = "TIMESTAMP")
+	@Column(name = "execution_time", columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
 	
 	/**

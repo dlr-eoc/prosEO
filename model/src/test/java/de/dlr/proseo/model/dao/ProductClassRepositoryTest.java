@@ -81,11 +81,15 @@ public class ProductClassRepositoryTest {
 	public final void test() {
 		Mission mission = new Mission();
 		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
 		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
-		RepositoryService.getProductClassRepository().save(prodClass);
+		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		
+		mission.getProductClasses().add(prodClass);
 		RepositoryService.getMissionRepository().save(mission);
 		
 		

@@ -45,7 +45,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 public class OrbitRepositoryTest {
 
 	private static final String TEST_SC_CODE = "XYZ";
-	private static final int TEST_ORBIT_NUMBER = 4711;
+	private static final int TEST_ORBIT_NUMBER = 4712;
 	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 	
 	/** A logger for this class */
@@ -83,12 +83,15 @@ public class OrbitRepositoryTest {
 	public final void test() {
 		Spacecraft spacecraft = new Spacecraft();
 		spacecraft.setCode(TEST_SC_CODE);
+		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		
 		Orbit orbit = new Orbit();
 		orbit.setSpacecraft(spacecraft);
 		orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
 		orbit.setStartTime(TEST_START_TIME);
+		orbit = RepositoryService.getOrbitRepository().save(orbit);
+		
 		spacecraft.getOrbits().add(orbit);
-		RepositoryService.getOrbitRepository().save(orbit);
 		RepositoryService.getSpacecraftRepository().save(spacecraft);
 		
 		// Test findBySpacecraftCodeAndOrbitNumber

@@ -21,8 +21,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Type;
-
 /**
  * Representation of a data product
  * 
@@ -43,11 +41,11 @@ public class Product extends PersistentObject {
 	private String mode;
 	
 	/** Sensing start time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_start_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStartTime;
 	
 	/** Sensing stop time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
 	/** Set of component products */
