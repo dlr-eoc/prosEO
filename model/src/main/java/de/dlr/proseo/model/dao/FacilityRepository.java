@@ -3,8 +3,6 @@
  */
 package de.dlr.proseo.model.dao;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -26,6 +24,7 @@ public interface FacilityRepository extends CrudRepository<ProcessingFacility, L
 	 * @param facilityName the name of the processing facility
 	 * @return the unique processing facility identified by the name
 	 */
+	@Query("select pf from ProcessingFacility pf where UPPER(pf.name) = UPPER(?1)")
 	public ProcessingFacility findByName(String facilityName);
 
 }
