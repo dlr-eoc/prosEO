@@ -45,12 +45,18 @@ import de.dlr.proseo.model.ProcessingFacility;
 @Component
 public class ProductControllerImpl implements ProductController {
 	
-	private static final String MSG_PRODUCT_NOT_FOUND = "No product found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "Enclosing product with ID %d not found (%d)";
-	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "Component product with ID %d not found (%d)";
+	/* Message ID constants */
 	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2001;
 	private static final int MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND = 2002;
 	private static final int MSG_ID_COMPONENT_PRODUCT_NOT_FOUND = 2003;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2004;
+	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	
+	/* Message string constants */
+	private static final String MSG_PRODUCT_NOT_FOUND = "No product found for ID %d (%d)";
+	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "Enclosing product with ID %d not found (%d)";
+	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "Component product with ID %d not found (%d)";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "Product deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ingestor ";
 	private static final String MSG_INGESTOR_PRODUCT_NOT_FOUND_BY_SENSING_START = MSG_PREFIX + "IngestorProduct with sensing start time %s not found (%d)";
@@ -59,15 +65,42 @@ public class ProductControllerImpl implements ProductController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 	
+	/**
+	 * Delete a product by ID
+	 * 
+	 * @param the ID of the product to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the product did not
+	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
 	@Override
 	public ResponseEntity<?> deleteProductById(Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductById({})", id);
 		
-		String message = String.format(MSG_PREFIX + "DELETE not implemented (%d)", 9000);
-		logger.error(message);
+		// Test whether the product id is valid
+		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
+		if (modelProduct.isEmpty()) {
+			String message = String.format(MSG_PREFIX + MSG_PRODUCT_NOT_FOUND, id, MSG_ID_PRODUCT_NOT_FOUND);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
+		
+		// Delete the product
+		RepositoryService.getProductRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelProduct = RepositoryService.getProductRepository().findById(id);
+		if (!modelProduct.isEmpty()) {
+			String message = String.format(MSG_PREFIX + MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
+		
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
 	}
 
 	/**
@@ -97,8 +130,12 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(result, HttpStatus.OK);
 		}
 		
+		// Find using search parameters
+		
+		
+		
 		// TODO Auto-generated method stub
-		String message = String.format(MSG_PREFIX + "GET with search parameters not implemented (%d)", 9000);
+		String message = String.format(MSG_PREFIX + "GET with search parameters not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -176,17 +213,6 @@ public class ProductControllerImpl implements ProductController {
 		}
 		
 		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct.get()), HttpStatus.OK);
-	}
-
-	@Override
-	public ResponseEntity<?> updateIngestorProduct(String processingFacility, @Valid List<IngestorProduct> ingestorProduct) {
-		// TODO Auto-generated method stub
-		
-		String message = String.format(MSG_PREFIX + "PUT for Ingestor Product not implemented (%d)", 9000);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
 	}
 
 	/**
