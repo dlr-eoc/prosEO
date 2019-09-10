@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.ElementCollection;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A specific version of a ProcessorClass. Each permissible combination of a specific Processor with a specific Configuration is
@@ -25,6 +27,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "processor_class_id, processor_version"))
 public class Processor extends PersistentObject {
 
 	/** The processor class this processor (version) belongs to */
@@ -39,6 +42,7 @@ public class Processor extends PersistentObject {
 	 * Version identification of the processor executable (Docker image; 
 	 * level 1 "Version" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
+	@Column(name = "processor_version")
 	private String processorVersion;
 	
 	/** Indicates a test version of the processor ("Test" from Generic IPF Interface Specifications, sec. 4.1.3) */

@@ -14,12 +14,12 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-
-import org.hibernate.annotations.Type;
+import javax.persistence.Table;
 
 /**
  * Representation of a data product
@@ -28,6 +28,9 @@ import org.hibernate.annotations.Type;
  *
  */
 @Entity
+@Table(indexes = { 
+		@Index(unique = false, columnList = "sensing_start_time"), 
+		@Index(unique = false, columnList = "sensing_stop_time") })
 public class Product extends PersistentObject {
 	
 	/** Product class this products instantiates */
@@ -38,11 +41,11 @@ public class Product extends PersistentObject {
 	private String mode;
 	
 	/** Sensing start time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_start_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStartTime;
 	
 	/** Sensing stop time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
 	/** Set of component products */

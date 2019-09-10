@@ -17,4 +17,11 @@ import de.dlr.proseo.model.Mission;
 @Repository
 public interface MissionRepository extends CrudRepository<Mission, Long> {
 
+	/**
+	 * Get the mission with the given code
+	 * 
+	 * @param missionCode the mission code
+	 * @return the unique mission identified by the code
+	 */
+	public Mission findByCode(String missionCode);
 }

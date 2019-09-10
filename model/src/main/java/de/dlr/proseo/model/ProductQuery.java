@@ -14,8 +14,10 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * A ProductQuery models the need of a JobStep to use a Product of a certain ProductClass for a specific time period.
@@ -26,6 +28,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "job_step_id, requested_product_class_id"))
 public class ProductQuery extends PersistentObject {
 
 	/** Job step issuing this query */

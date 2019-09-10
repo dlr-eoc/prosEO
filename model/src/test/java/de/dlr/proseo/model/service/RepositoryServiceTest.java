@@ -29,8 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureTestEntityManager
 public class RepositoryServiceTest {
 
+	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(RepositoryServiceTest.class);
 	
+	/**
+	 * Tests calling the RepositoryService from a conventionally created plain Java object
+	 */
 	@Test
 	public void testJpa() {
 		logger.info("Starting JPA test");

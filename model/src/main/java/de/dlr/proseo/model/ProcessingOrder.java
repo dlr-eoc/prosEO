@@ -17,9 +17,11 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of
@@ -31,6 +33,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "identifier"), @Index(unique = false, columnList = "execution_time") })
 public class ProcessingOrder extends PersistentObject {
 
 	/** Mission, to which this order belongs */
@@ -44,7 +47,7 @@ public class ProcessingOrder extends PersistentObject {
 	private OrderState orderState;
 	
 	/** Expected execution time (optional, used for scheduling) */
-	@Column(columnDefinition = "TIMESTAMP")
+	@Column(name = "execution_time", columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
 	
 	/**
