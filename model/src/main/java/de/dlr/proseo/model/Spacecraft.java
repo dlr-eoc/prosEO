@@ -23,7 +23,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "mission_id, code"))
+@Table(indexes = @Index(unique = true, columnList = "code"))
 public class Spacecraft extends PersistentObject {
 
 	/** The mission this spacecraft belongs to */
@@ -41,6 +41,24 @@ public class Spacecraft extends PersistentObject {
 	@OrderBy("orbitNumber")
 	private List<Orbit> orbits = new ArrayList<>();
 	
+	/**
+	 * Gets the mission of this spacecraft
+	 * 
+	 * @return the mission
+	 */
+	public Mission getMission() {
+		return mission;
+	}
+
+	/**
+	 * Sets the mission of this spacecraft
+	 * 
+	 * @param mission the mission to set
+	 */
+	public void setMission(Mission mission) {
+		this.mission = mission;
+	}
+
 	/**
 	 * Gets the spacecraft code
 	 * 
@@ -72,6 +90,22 @@ public class Spacecraft extends PersistentObject {
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * Get the orbits of the spacecraft
+	 * @return the orbits
+	 */
+	public List<Orbit> getOrbits() {
+		return orbits;
+	}
+
+	/**
+	 * Set the orbits of the spacecraft
+	 * @param orbits the orbits to set
+	 */
+	public void setOrbits(List<Orbit> orbits) {
+		this.orbits = orbits;
 	}
 
 	@Override

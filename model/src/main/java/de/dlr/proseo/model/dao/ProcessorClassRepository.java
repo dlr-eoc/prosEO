@@ -19,12 +19,10 @@ import de.dlr.proseo.model.ProcessorClass;
 public interface ProcessorClassRepository extends CrudRepository<ProcessorClass, Long> {
 
 	/**
-	 * Get the processor class with the given mission and name
+	 * Get the processor class with the given name
 	 * 
-	 * @param missionCode the mission code
 	 * @param processorName the processor name
-	 * @return the unique processor class identified by the mission code and processor name
+	 * @return the unique processor class identified by the processor name
 	 */
-	@Query("select pc from ProcessorClass pc where pc.mission.code = ?1 and pc.processorName = ?2")
-	public ProcessorClass findByMissionCodeAndProcessorName(String missionCode, String processorName);
+	public ProcessorClass findByProcessorName(String processorName);
 }

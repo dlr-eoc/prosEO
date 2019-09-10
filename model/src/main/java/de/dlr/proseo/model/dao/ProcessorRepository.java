@@ -21,11 +21,10 @@ public interface ProcessorRepository extends CrudRepository<Processor, Long> {
 	/**
 	 * Get the processor with the given mission, class name and version
 	 * 
-	 * @param missionCode the mission code
 	 * @param processorName the processor class name
 	 * @param processorVersion the processor version
 	 * @return the unique processor identified by the search criteria
 	 */
-	@Query("select p from Processor p where p.processorClass.mission.code = ?1 and pc.processorClass.processorName = ?2 and pc.processorVersion")
-	public Processor findByMissionCodeAndProcessorNameAndProcessorVersion(String missionCode, String processorName, String processorVersion);
+	@Query("select p from Processor p where p.processorClass.processorName = ?1 and p.processorVersion = ?2")
+	public Processor findByProcessorNameAndProcessorVersion(String processorName, String processorVersion);
 }

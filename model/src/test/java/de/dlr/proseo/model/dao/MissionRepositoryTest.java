@@ -22,7 +22,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -37,6 +39,8 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class MissionRepositoryTest {
 
+	private static final String TEST_CODE = "ABC";
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionRepositoryTest.class);
 	
@@ -70,10 +74,15 @@ public class MissionRepositoryTest {
 
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		RepositoryService.getMissionRepository().save(mission);
 		
 		// Test findByCode
-		// TODO
-		logger.warn("Test for findByCode not implemented");
+		mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		assertNotNull("Find by code failed for Mission", mission);
+		
+		logger.info("OK: Test for findByCode completed");
 		
 	}
 

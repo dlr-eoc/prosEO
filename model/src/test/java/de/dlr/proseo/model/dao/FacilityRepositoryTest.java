@@ -7,6 +7,8 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,7 +24,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -37,6 +42,8 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class FacilityRepositoryTest {
 
+	private static final String TEST_HOSTNAME = "localhost";
+	private static final String TEST_NAME = "Test Facility";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(FacilityRepositoryTest.class);
 	
@@ -70,14 +77,22 @@ public class FacilityRepositoryTest {
 
 	@Test
 	public final void test() {
+		ProcessingFacility fac = new ProcessingFacility();
+		fac.setName(TEST_NAME);
+		fac.setUrl("https://" + TEST_HOSTNAME + ":8080/");
+		RepositoryService.getFacilityRepository().save(fac);
 		
 		// Test findByName
-		// TODO
-		logger.warn("Test for findByName not implemented");
+		fac = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
+		assertNotNull("Find by name failed for ProcessingFacility", fac);
+		
+		logger.info("OK: Test for findByName completed");
 		
 		// Test findByHostname
-		// TODO
-		logger.warn("Test for findByHostname not implemented");
+		List<ProcessingFacility> facList = RepositoryService.getFacilityRepository().findByHostname(TEST_HOSTNAME);
+		assertFalse("Find by hostname failed for ProcessingFacility", facList.isEmpty());
+
+		logger.info("OK: Test for findByHostname completed");
 		
 	}
 

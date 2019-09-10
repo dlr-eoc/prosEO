@@ -7,6 +7,9 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,7 +25,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -36,6 +42,9 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @Transactional
 @AutoConfigureTestEntityManager
 public class OrderRepositoryTest {
+
+	private static final String TEST_IDENTIFIER = "Order 4711";
+	private static final Instant TEST_EXECUTION_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderRepositoryTest.class);
@@ -70,14 +79,23 @@ public class OrderRepositoryTest {
 
 	@Test
 	public final void test() {
+		ProcessingOrder order = new ProcessingOrder();
+		order.setIdentifier(TEST_IDENTIFIER);
+		order.setExecutionTime(TEST_EXECUTION_TIME);
+		RepositoryService.getOrderRepository().save(order);
 		
 		// Test findByIdentifier
-		// TODO
-		logger.warn("Test for findByIdentifier not implemented");
+		order = RepositoryService.getOrderRepository().findByIdentifier(TEST_IDENTIFIER);
+		assertNotNull("Find by identifier failed for ProcessingOrder", order);
+		
+		logger.info("OK: Test for findByIdentifier completed");
 		
 		// Test findByExecutionTimeBetween
-		// TODO
-		logger.warn("Test for findByExecutionTimeBetween not implemented");
+		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByExecutionTimeBetween(
+				TEST_EXECUTION_TIME, TEST_EXECUTION_TIME.plusSeconds(600));
+		assertFalse("Find by execution time between failed for ProcessingOrder", orders.isEmpty());
+		
+		logger.info("OK: Test for findByExecutionTimeBetween completed");
 		
 	}
 

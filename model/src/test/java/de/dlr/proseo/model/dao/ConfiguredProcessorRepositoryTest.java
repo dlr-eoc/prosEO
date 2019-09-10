@@ -7,6 +7,8 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
+import java.util.Optional;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -22,7 +24,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -37,6 +41,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ConfiguredProcessorRepositoryTest {
 
+	private static final String TEST_IDENTIFIER = "myConfProc";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ConfiguredProcessorRepositoryTest.class);
 	
@@ -70,10 +75,15 @@ public class ConfiguredProcessorRepositoryTest {
 
 	@Test
 	public final void test() {
+		ConfiguredProcessor confProc = new ConfiguredProcessor();
+		confProc.setIdentifier(TEST_IDENTIFIER);
+		RepositoryService.getConfiguredProcessorRepository().save(confProc);
 		
 		// Test findByIdentifier
-		// TODO
-		logger.warn("Test for findByIdentifier not implemented");
+		confProc = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(TEST_IDENTIFIER);
+		assertNotNull("Find by identifier failed for ConfiguredProcessor", confProc);
+		
+		logger.info("OK: Test for findByIdentifier completed");
 		
 	}
 

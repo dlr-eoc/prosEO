@@ -79,7 +79,9 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
 	/**
 	 * Get all products of a given mission and class with their sensing start time before the end of a time interval
-	 * and the sensing stop time after the beginning of that interval (including border values)
+	 * and the sensing stop time after the beginning of that interval (including border values);
+	 * this results in a check for intersection with the time interval, if latestSensingStartTime > earliestSensingStopTime,
+	 * and a check for coverage of the time interval, if latestSensingStartTime < earliestSensingStopTime
 	 * 
 	 * @param missionCode the mission code
 	 * @param productType the prosEO product type
@@ -94,7 +96,9 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
 	/**
 	 * Get all products of a given mission and class with their sensing start time before the end of a time interval
-	 * and the sensing stop time after the beginning of that interval (including border values)
+	 * and the sensing stop time after the beginning of that interval (including border values);
+	 * this results in a check for intersection with the time interval, if latestSensingStartTime > earliestSensingStopTime,
+	 * and a check for coverage of the time interval, if latestSensingStartTime < earliestSensingStopTime
 	 * 
 	 * @param missionCode the mission code
 	 * @param missionType the mission-defined product type

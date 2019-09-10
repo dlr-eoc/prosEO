@@ -22,7 +22,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "mission_id, processor_name"))
+@Table(indexes = @Index(unique = true, columnList = "processor_name"))
 public class ProcessorClass extends PersistentObject {
 	
 	/** The mission this processor class belongs to */
@@ -35,6 +35,10 @@ public class ProcessorClass extends PersistentObject {
 	/** The product classes a processor of this class can generate */
 	@OneToMany(mappedBy = "processorClass")
 	private Set<ProductClass> productClasses;
+	
+	/** The processor versions for this class */
+	@OneToMany(mappedBy = "processorClass")
+	private Set<Processor> processors;
 
 	/**
 	 * Gets the mission this processor class belongs to
@@ -88,6 +92,24 @@ public class ProcessorClass extends PersistentObject {
 	 */
 	public void setProductClasses(Set<ProductClass> productClasses) {
 		this.productClasses = productClasses;
+	}
+
+	/**
+	 * Gets the processor versions for this class
+	 * 
+	 * @return the processors
+	 */
+	public Set<Processor> getProcessors() {
+		return processors;
+	}
+
+	/**
+	 * Sets the processor versions for this class
+	 * 
+	 * @param processors the processors to set
+	 */
+	public void setProcessors(Set<Processor> processors) {
+		this.processors = processors;
 	}
 
 	@Override

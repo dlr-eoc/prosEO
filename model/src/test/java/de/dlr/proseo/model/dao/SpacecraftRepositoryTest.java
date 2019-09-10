@@ -1,11 +1,14 @@
 /**
- * ProcessorClassRepositoryTest.java
+ * SpacecraftRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
+
+import java.time.Instant;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -22,13 +25,15 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
- * Unit test cases for ProcessorClassRepository
+ * Unit test cases for OrbitRepository
  *
  * @author Dr. Thomas Bassler
  */
@@ -37,12 +42,12 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class ProcessorClassRepositoryTest {
+public class SpacecraftRepositoryTest {
 
-	private static final String TEST_NAME = "KNMI L2";
+	private static final String TEST_SC_CODE = "XYZ";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorClassRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(SpacecraftRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -74,15 +79,15 @@ public class ProcessorClassRepositoryTest {
 
 	@Test
 	public final void test() {
-		ProcessorClass procClass = new ProcessorClass();
-		procClass.setProcessorName(TEST_NAME);
-		RepositoryService.getProcessorClassRepository().save(procClass);
+		Spacecraft spacecraft = new Spacecraft();
+		spacecraft.setCode(TEST_SC_CODE);
+		RepositoryService.getSpacecraftRepository().save(spacecraft);
 		
-		// Test findByProcessorName
-		procClass = RepositoryService.getProcessorClassRepository().findByProcessorName(TEST_NAME);
-		assertNotNull("Find by processor name failed for ProcessorClass", procClass);
+		// Test findByCode
+		spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+		assertNotNull("Find by spacecraft code failed for Spacecraft", spacecraft);
 		
-		logger.info("OK: Test for findByProcessorName completed");
+		logger.info("OK: Test for findByCode completed");
 		
 	}
 

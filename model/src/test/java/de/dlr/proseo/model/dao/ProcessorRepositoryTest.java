@@ -22,7 +22,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -37,6 +40,10 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProcessorRepositoryTest {
 
+	private static final String TEST_VERSION = "02.00.01";
+
+	private static final String TEST_NAME = "KNMI L2";
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorRepositoryTest.class);
 	
@@ -70,10 +77,20 @@ public class ProcessorRepositoryTest {
 
 	@Test
 	public final void test() {
+		ProcessorClass procClass = new ProcessorClass();
+		procClass.setProcessorName(TEST_NAME);
+		Processor proc = new Processor();
+		proc.setProcessorClass(procClass);
+		proc.setProcessorVersion(TEST_VERSION);
+		procClass.getProcessors().add(proc);
+		RepositoryService.getProcessorRepository().save(proc);
+		RepositoryService.getProcessorClassRepository().save(procClass);
 		
-		// Test findByMissionCodeAndProcessorNameAndProcessorVersion
-		// TODO
-		logger.warn("Test for findByMissionCodeAndProcessorNameAndProcessorVersion not implemented");
+		// Test findByProcessorNameAndProcessorVersion
+		proc = RepositoryService.getProcessorRepository().findByProcessorNameAndProcessorVersion(TEST_NAME, TEST_VERSION);
+		assertNotNull("Find by processor name and version failed for Processor", proc);
+		
+		logger.info("OK: Test for findByProcessorNameAndProcessorVersion completed");
 		
 	}
 

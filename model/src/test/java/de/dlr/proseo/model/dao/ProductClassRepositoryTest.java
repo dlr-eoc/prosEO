@@ -1,11 +1,13 @@
 /**
- * ProcessorRepositoryTest.java
+ * ProductClassRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -22,7 +24,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
@@ -35,10 +40,14 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class ProcessorRepositoryTest {
+public class ProductClassRepositoryTest {
 
+	private static final String TEST_CODE = "ABC";
+	private static final String TEST_PRODUCT_TYPE = "FRESCO";
+	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductClassRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -70,26 +79,45 @@ public class ProcessorRepositoryTest {
 
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		ProductClass prodClass = new ProductClass();
+		prodClass.setMission(mission);
+		prodClass.setMissionType(TEST_MISSION_TYPE);
+		prodClass.setProductType(TEST_PRODUCT_TYPE);
+		RepositoryService.getProductClassRepository().save(prodClass);
+		RepositoryService.getMissionRepository().save(mission);
+		
 		
 		// Test findByMissionCode
-		// TODO
-		logger.warn("Test for findByMissionCode not implemented");
+		List<ProductClass> prodClasses = RepositoryService.getProductClassRepository().findByMissionCode(TEST_CODE);
+		assertFalse("Find by mission code failed for ProductClass", prodClasses.isEmpty());
+		
+		logger.info("OK: Test for findByMissionCode completed");
 		
 		// Test findByProductType
-		// TODO
-		logger.warn("Test for findByProductType not implemented");
+		prodClasses = RepositoryService.getProductClassRepository().findByProductType(TEST_PRODUCT_TYPE);
+		assertFalse("Find by product type failed for ProductClass", prodClasses.isEmpty());
+		
+		logger.info("OK: Test for findByProductType completed");
 		
 		// Test findByMissionType
-		// TODO
-		logger.warn("Test for findByMissionType not implemented");
+		prodClasses = RepositoryService.getProductClassRepository().findByMissionType(TEST_MISSION_TYPE);
+		assertFalse("Find by mission type failed for ProductClass", prodClasses.isEmpty());
+		
+		logger.info("OK: Test for findByMissionType completed");
 		
 		// Test findByMissionCodeAndProductType
-		// TODO
-		logger.warn("Test for findByMissionCodeAndProductType not implemented");
+		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		assertNotNull("Find by mission code and product type failed for ProcessingOrder", prodClass);
+		
+		logger.info("OK: Test for findByMissionCodeAndProductType completed");
 		
 		// Test findByMissionCodeAndMissionType
-		// TODO
-		logger.warn("Test for findByMissionCodeAndMissionType not implemented");
+		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndMissionType(TEST_CODE, TEST_MISSION_TYPE);
+		assertNotNull("Find by mission code and mission type failed for ProcessingOrder", prodClass);
+		
+		logger.info("OK: Test for findByMissionCodeAndMissionType completed");
 		
 	}
 
