@@ -9,15 +9,19 @@
       version:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      productId:
+        type: integer
+        format: long
+        description: Id value of the product this product file belongs to
       processingFacilityName:
         type: string
-        description: The name of the processing facility, in which this data file is stored
+        description: The name of the processing facility, in which this product file is stored
       productFileName:
         type: string
-        description: The name of the data file
+        description: The name of the product data file
       auxFileNames:
         type: string[]
-        description: The auxiliary files for this data file
+        description: The auxiliary files for this product file
       filePath:
         type: string
         description: The path to the product files (POSIX file path, S3 bucket etc.)
