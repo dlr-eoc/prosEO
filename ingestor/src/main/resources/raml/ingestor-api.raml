@@ -82,6 +82,7 @@ resourceTypes:
               
 /products:
   type: standard
+  description: Methods to manage product metadata in the database
   get:
     description: List of all products by mission, product class, start time range
     queryParameters:
@@ -138,6 +139,8 @@ resourceTypes:
         204:
         
 /ingest:
+  type: standard
+  description: Methods to manage product files in the processing facility and in the database
   /{processingFacility}:
     uriParameters:
       processingFacility:
