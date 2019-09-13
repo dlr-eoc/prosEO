@@ -69,17 +69,6 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createProductClass(de.dlr.proseo.prodclmgr.rest.model.ProductClass)}.
-	 */
-	@Test
-	public final void testCreateProductClass() {
-		// TODO
-		logger.warn("Test not implemented for createProductClass");
-
-		logger.info("Test OK: Insert a single product class");
-	}
-
-	/**
 	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getProductClass(java.lang.String, java.lang.String, java.lang.String)}.
 	 */
 	@Test
@@ -88,6 +77,17 @@ public class ProductClassControllerTest {
 		logger.warn("Test not implemented for getProductClass");
 
 		logger.info("Test OK: Read all product classes");
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createProductClass(de.dlr.proseo.prodclmgr.rest.model.ProductClass)}.
+	 */
+	@Test
+	public final void testCreateProductClass() {
+		// TODO
+		logger.warn("Test not implemented for createProductClass");
+
+		logger.info("Test OK: Insert a single product class");
 	}
 
 	/**
@@ -102,12 +102,12 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#updateProductClass(java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.ProductClass)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifyProductClass(java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.ProductClass)}.
 	 */
 	@Test
-	public final void testUpdateProductClass() {
+	public final void testModifyProductClass() {
 		// TODO
-		logger.warn("Test not implemented for updateProductClass");
+		logger.warn("Test not implemented for modifyProductClass");
 
 		logger.info("Test OK: Update a single product class");
 	}
@@ -124,27 +124,80 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getObjects(java.lang.String, java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleStrings(java.lang.Long, java.lang.String)}.
 	 */
 	@Test
-	public final void testGetObjects() {
-		fail("Not yet implemented"); // TODO
+	public final void testGetSelectionRuleStrings() {
+		// TODO
+		logger.warn("Test not implemented for getSelectionRuleStrings");
+
+		logger.info("Test OK: Get selection rule strings");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#updateObject(java.lang.String, java.lang.Long, java.util.List)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#createSelectionRuleString(java.lang.Long, java.util.List)}.
 	 */
 	@Test
-	public final void testUpdateObject() {
-		fail("Not yet implemented"); // TODO
+	public final void testCreateSelectionRuleString() {
+		// TODO
+		logger.warn("Test not implemented for createSelectionRuleString");
+
+		logger.info("Test OK: Create selection rule from string");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteTargetclass(java.lang.String, java.lang.String, java.lang.Long)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getSelectionRuleString(java.lang.Long, java.lang.Long)}.
 	 */
 	@Test
-	public final void testDeleteTargetclass() {
-		fail("Not yet implemented"); // TODO
+	public final void testGetSelectionRuleString() {
+		// TODO
+		logger.warn("Test not implemented for getSelectionRuleString");
+
+		logger.info("Test OK: Get selection rule by ID");
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#modifySelectionRuleString(java.lang.Long, java.lang.Long, de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString)}.
+	 */
+	@Test
+	public final void testModifySelectionRuleString() {
+		// TODO
+		logger.warn("Test not implemented for modifySelectionRuleString");
+
+		logger.info("Test OK: Update selection rule by ID");
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#deleteSelectionrule(java.lang.Long, java.lang.Long)}.
+	 */
+	@Test
+	public final void testDeleteSelectionrule() {
+		// TODO
+		logger.warn("Test not implemented for deleteSelectionrule");
+
+		logger.info("Test OK: Delete selection rule by ID");
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#addProcessorToRule(java.lang.String, java.lang.Long, java.lang.Long)}.
+	 */
+	@Test
+	public final void testAddProcessorToRule() {
+		// TODO
+		logger.warn("Test not implemented for addProcessorToRule");
+
+		logger.info("Test OK: Add configured processor to selection rule");
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#removeProcessorFromRule(java.lang.String, java.lang.Long, java.lang.Long)}.
+	 */
+	@Test
+	public final void testRemoveProcessorFromRule() {
+		// TODO
+		logger.warn("Test not implemented for removeProcessorFromRule");
+
+		logger.info("Test OK: Remove configured processor from selection rule");
 	}
 
 }
