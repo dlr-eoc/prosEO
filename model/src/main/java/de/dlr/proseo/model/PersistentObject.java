@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.model;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.persistence.GeneratedValue;

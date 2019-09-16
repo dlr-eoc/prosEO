@@ -5,12 +5,15 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * The data file and pertinent auxiliary files for a product at a given processing facility. Each product has at most one
@@ -20,6 +23,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility_id"))
 public class ProductFile extends PersistentObject {
 
 	/** The product this data file belongs to */
@@ -35,7 +39,7 @@ public class ProductFile extends PersistentObject {
 	
 	/** The auxiliary files for this data file */
 	@ElementCollection
-	private Set<String> auxFileNames;
+	private Set<String> auxFileNames = new HashSet<>();
 	
 	/** The path to the product files (POSIX file path, S3 bucket etc.) */
 	private String filePath;

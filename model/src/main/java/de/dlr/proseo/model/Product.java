@@ -7,18 +7,19 @@ package de.dlr.proseo.model;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-
-import org.hibernate.annotations.Type;
+import javax.persistence.Table;
 
 /**
  * Representation of a data product
@@ -27,6 +28,9 @@ import org.hibernate.annotations.Type;
  *
  */
 @Entity
+@Table(indexes = { 
+		@Index(unique = false, columnList = "sensing_start_time"), 
+		@Index(unique = false, columnList = "sensing_stop_time") })
 public class Product extends PersistentObject {
 	
 	/** Product class this products instantiates */
@@ -37,16 +41,16 @@ public class Product extends PersistentObject {
 	private String mode;
 	
 	/** Sensing start time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_start_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStartTime;
 	
 	/** Sensing stop time */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
 	/** Set of component products */
 	@OneToMany(mappedBy = "enclosingProduct")
-	private Set<Product> componentProducts;
+	private Set<Product> componentProducts = new HashSet<>();
 	
 	/** Product for which this product is a component */
 	@ManyToOne
@@ -58,11 +62,11 @@ public class Product extends PersistentObject {
 	
 	/** Product files for this product */
 	@OneToMany(mappedBy = "product")
-	private Set<ProductFile> productFile;
+	private Set<ProductFile> productFile = new HashSet<>();
 	
 	/** Product queries satisfied by this product */
 	@ManyToMany
-	private Set<ProductQuery> satisfiedProductQueries;
+	private Set<ProductQuery> satisfiedProductQueries = new HashSet<>();
 	
 	/** Job step that produced this product (if any) */
 	@OneToOne
@@ -77,11 +81,6 @@ public class Product extends PersistentObject {
 	 */
 	@ElementCollection
 	private Map<String, Parameter> parameters = new HashMap<>();
-	
-	/**
-	 *  Enumeration of valid parameter types for mission-specific parameters
-	 */
-	public enum ParameterType { STRING, BOOLEAN, INTEGER, DOUBLE };
 	
 	/**
 	 * Gets the product class

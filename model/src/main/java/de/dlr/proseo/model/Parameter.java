@@ -9,8 +9,6 @@ import java.io.Serializable;
 
 import javax.persistence.Embeddable;
 
-import de.dlr.proseo.model.Product.ParameterType;
-
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
  * (of the enum ParameterType) and a value with a class that corresponds to the type.
@@ -19,12 +17,21 @@ import de.dlr.proseo.model.Product.ParameterType;
  */
 @Embeddable
 public class Parameter {
-	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
+	
+	/* Error messages */
 	private static final String MSG_INVALID_PARAMETER_VALUE_FOR_TYPE = "Invalid parameter value %s for type %s";
+	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
+	
 	/** The type of the parameter */
 	private ParameterType parameterType;
+	
 	/** The parameter value */
 	private Serializable parameterValue;
+	
+	/**
+	 *  Enumeration of valid parameter types for mission-specific parameters
+	 */
+	public enum ParameterType { STRING, BOOLEAN, INTEGER, DOUBLE };
 	
 	/**
 	 * Initializer with type and value (values of type Short and Float are converted to Integer and Double, respectively)

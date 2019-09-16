@@ -5,8 +5,8 @@
         "missionCode": "S5P",
         "spacecraftCode": "S5P",
         "orbitNumber": 4711,
-        "startTime": "2018-06-13T09:23:45.396521Z",
-        "stopTime": "2018-06-13T10:53:45.396521Z"
+        "startTime": "2018-06-13T09:23:45.396521",
+        "stopTime": "2018-06-13T10:53:45.396521"
     },
     {
         "id": 4362554,
@@ -14,7 +14,7 @@
         "missionCode": "S5P",
         "spacecraftCode": "S5P",
         "orbitNumber": 4712,
-        "startTime": "2018-06-13T10:53:45.396521Z",
-        "stopTime": "2018-06-13T12:23:45.396521Z"
+        "startTime": "2018-06-13T10:53:45.396521",
+        "stopTime": "2018-06-13T12:23:45.396521"
     }
 ]

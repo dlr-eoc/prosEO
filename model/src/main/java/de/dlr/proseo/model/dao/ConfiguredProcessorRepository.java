@@ -17,4 +17,11 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 @Repository
 public interface ConfiguredProcessorRepository extends CrudRepository<ConfiguredProcessor, Long> {
 
+	/**
+	 * Get the configured processor associated with the given identifier
+	 * 
+	 * @param identifier the identifier of the configured processor
+	 * @return the unique configured processor identified by the given identifier 
+	 */
+	public ConfiguredProcessor findByIdentifier(String identifier);
 }

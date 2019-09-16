@@ -6,6 +6,8 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -13,7 +15,6 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -61,14 +62,14 @@ public class Job extends PersistentObject {
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/**
 	 * A set of parameters to set for the generated products.
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> outputParameters;
+	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
 	/**
 	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
@@ -81,7 +82,7 @@ public class Job extends PersistentObject {
 	
 	/** The job steps for this job */
 	@OneToMany(mappedBy = "job")
-	private Set<JobStep> jobSteps;
+	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**
 	 * Enumeration describing possible job states.

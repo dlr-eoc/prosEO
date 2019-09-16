@@ -2,6 +2,7 @@
     {
         "id": 689325,
         "version": 11,
+        "missionCode": "S5P",
         "productClass": "AAI",
         "mode": "OFFL",
         "sensingStartTime": "2018-06-13T09:23:45.396521",
@@ -31,6 +32,7 @@
     {
         "id": 689326,
         "version": 7,
+        "missionCode": "S5P",
         "productClass": "O3",
         "mode": "OFFL",
         "sensingStartTime": "2018-06-13T09:23:45.396521",

@@ -19,6 +19,7 @@ import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
+import de.dlr.proseo.model.dao.SpacecraftRepository;
 
 /**
  * This class autowires all available repositories and makes them accessible throughout prosEO by static methods.
@@ -74,6 +75,10 @@ public class RepositoryService {
 	/** The repository for the Product class */
 	@Autowired
     private ProductRepository productRepository;
+
+	/** The repository for the Spacecraft class */
+	@Autowired
+    private SpacecraftRepository spacecraftRepository;
 
 	/**
 	 * Singleton constructor
@@ -180,5 +185,14 @@ public class RepositoryService {
 	 */
 	public static ProductRepository getProductRepository() {
 		return theRepositoryService.productRepository;
+	}
+
+	/**
+	 * Gets the repository for the Spacecraft class
+	 * 
+	 * @return the spacecraftRepository
+	 */
+	public static SpacecraftRepository getSpacecraftRepository() {
+		return theRepositoryService.spacecraftRepository;
 	}
 }

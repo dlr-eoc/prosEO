@@ -5,12 +5,16 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A type of processor capable of generating products of a specific set of ProductClasses. There can be only one ProcessorClass
@@ -20,6 +24,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "processor_name"))
 public class ProcessorClass extends PersistentObject {
 	
 	/** The mission this processor class belongs to */
@@ -27,11 +32,16 @@ public class ProcessorClass extends PersistentObject {
 	private Mission mission;
 	
 	/** User-defined unique processor class name (Processor_Name from Generic IPF Interface Specifications, sec. 4.1.3) */
+	@Column(name = "processor_name")
 	private String processorName;
 	
 	/** The product classes a processor of this class can generate */
 	@OneToMany(mappedBy = "processorClass")
-	private Set<ProductClass> productClasses;
+	private Set<ProductClass> productClasses = new HashSet<>();
+	
+	/** The processor versions for this class */
+	@OneToMany(mappedBy = "processorClass")
+	private Set<Processor> processors = new HashSet<>();
 
 	/**
 	 * Gets the mission this processor class belongs to
@@ -85,6 +95,24 @@ public class ProcessorClass extends PersistentObject {
 	 */
 	public void setProductClasses(Set<ProductClass> productClasses) {
 		this.productClasses = productClasses;
+	}
+
+	/**
+	 * Gets the processor versions for this class
+	 * 
+	 * @return the processors
+	 */
+	public Set<Processor> getProcessors() {
+		return processors;
+	}
+
+	/**
+	 * Sets the processor versions for this class
+	 * 
+	 * @param processors the processors to set
+	 */
+	public void setProcessors(Set<Processor> processors) {
+		this.processors = processors;
 	}
 
 	@Override

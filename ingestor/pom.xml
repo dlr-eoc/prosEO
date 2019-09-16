@@ -94,6 +94,7 @@
 				<configuration>
 					<basePackage>de.dlr.proseo.ingestor.rest</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+					<overrideNamingLogicWith>DISPLAY_NAME</overrideNamingLogicWith>
 				</configuration>
 				<executions>
 					<execution>

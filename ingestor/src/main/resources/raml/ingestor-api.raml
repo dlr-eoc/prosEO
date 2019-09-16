@@ -136,15 +136,68 @@ resourceTypes:
       description: Delete a product by ID
       responses:
         204:
-  /ingest/{processingFacility}:
+        
+/ingest:
+  /{processingFacility}:
     uriParameters:
       processingFacility:
         type: string
         description: The name of the facility to ingest the products to
     post:
       description: Ingest all given products into the storage manager of the given processing facility
+      displayName: ingestProducts
       body:
         application/json:
           type: IngestorProduct[]
           example: !include examples/ingestorproduct-list.json
-    
+      responses:
+        201:
+          body:
+            application/json:
+              type: Product[]
+              example: !include ../../../../../model/src/main/resources/raml/examples/product-list.json
+    /{productId}:
+      uriParameters:
+        productId:
+          type: integer
+          format: long
+          description: The ID of the product to ingest product files for
+      get:
+        description: Get the product file for a product at a given processing facility
+        responses:
+          200:
+            body:
+              application/json:
+                type: ProductFile
+                example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+      post:
+        description: Create a new product file for a product at a given processing facility
+        displayName: ingestProductFile
+        body:
+          application/json:
+            type: ProductFile
+            example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+        responses:
+          201:
+            body:
+              application/json:
+                type: ProductFile
+                example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+      patch:
+        description: Update a product file for a product at a given processing facility
+        body:
+          application/json:
+            type: ProductFile
+            example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+        responses:
+          200:
+            body:
+              application/json:
+                type: ProductFile
+                example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+      delete:
+        description: Delete a product file for a product from a given processing facility
+        displayName: deleteProductFile
+        responses:
+          204:
+        

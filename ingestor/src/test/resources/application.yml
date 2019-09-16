@@ -13,3 +13,13 @@ logging:
         de:
             dlr:
                 proseo: TRACE
+        org:
+            springframework:
+                boot:
+                    test:
+                        web:
+                            client: DEBUG
+proseo:
+    user:
+        name: thomas
+        password: sieb37.Schlaefer

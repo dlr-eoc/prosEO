@@ -5,11 +5,14 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * An Earth Observation mission.
@@ -18,6 +21,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "code"))
 public class Mission extends PersistentObject {
 
 	/** The mission code (e. g. S5P) */
@@ -40,23 +44,23 @@ public class Mission extends PersistentObject {
      * Example: For Sentinel-5P, the tags are "NRTI" (near real time), "OFFL" (systematic ["offline"]), "RPRO" (reprocessing)
 	 */
 	@ElementCollection
-	private Set<String> processingModes;
+	private Set<String> processingModes = new HashSet<>();
 	
 	/** The spacecrafts this mission owns */
 	@OneToMany(mappedBy = "mission")
-	private Set<Spacecraft> spacecrafts;
+	private Set<Spacecraft> spacecrafts = new HashSet<>();
 	
 	/** The product classes this mission produces or uses */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProductClass> productClasses;
+	private Set<ProductClass> productClasses = new HashSet<>();
 	
 	/** The processor classes this mission uses */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProcessorClass> processorClasses;
+	private Set<ProcessorClass> processorClasses = new HashSet<>();
 	
 	/** The processing orders issued for this mission */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProcessingOrder> processingOrders;
+	private Set<ProcessingOrder> processingOrders = new HashSet<>();
 	
 	/**
 	 * Gets the mission code
