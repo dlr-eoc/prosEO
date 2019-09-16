@@ -6,10 +6,7 @@
 package de.dlr.proseo.model;
 
 import java.util.Objects;
-import java.util.Set;
-
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
 
 /**
  * A processing facility for running prosEO jobs and storing prosEO product files,  e. g. at a cloud service provider.
@@ -25,6 +22,9 @@ public class ProcessingFacility extends PersistentObject {
 	
 	/** A short description of the processing facility */
 	private String description;
+	
+	/** The URL to access this processing facility (Kubernetes instance) */
+	private String url;
 
 	/**
 	 * Gets the name of the processing facility
@@ -56,6 +56,24 @@ public class ProcessingFacility extends PersistentObject {
 	 */
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	/**
+	 * Gets the URL of the processing facility (Kubernetes instance)
+	 * 
+	 * @return the url
+	 */
+	public String getUrl() {
+		return url;
+	}
+
+	/**
+	 * Sets the URL of the processing facility (Kubernetes instance)
+	 * 
+	 * @param url the url to set
+	 */
+	public void setUrl(String url) {
+		this.url = url;
 	}
 
 	@Override

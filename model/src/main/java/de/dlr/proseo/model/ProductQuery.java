@@ -14,7 +14,6 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A ProductQuery models the need of a JobStep to use a Product of a certain ProductClass for a specific time period.
