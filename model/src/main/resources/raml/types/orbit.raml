@@ -24,11 +24,11 @@
         type: integer
         description: The orbit number (usually starting at 1 at launch); unique for a spacecraft and usually gapless
       startTime:
-        type: datetime
+        type: string
         description: The start time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
       stopTime:
-        type: datetime
+        type: string
         description: The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS); 
             usually the stop time of one orbit is the start time of the subsequent orbit 
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
