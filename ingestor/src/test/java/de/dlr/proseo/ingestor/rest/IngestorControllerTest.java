@@ -40,9 +40,11 @@ import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
@@ -62,6 +64,11 @@ public class IngestorControllerTest {
 	
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
+	
+	/* Test mission and product class data */
+	private static final String TEST_CODE = "ABC";
+	private static final String TEST_PRODUCT_TYPE = "FRESCO";
+	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
 	
 	/* Test products */
 	private static String[][] testProductData = {
@@ -185,6 +192,18 @@ public class IngestorControllerTest {
 	public final void testIngestProducts() {
 		
 		// Make sure processing facility and product class exist
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
+		ProductClass prodClass = new ProductClass();
+		prodClass.setMission(mission);
+		prodClass.setMissionType(TEST_MISSION_TYPE);
+		prodClass.setProductType(TEST_PRODUCT_TYPE);
+		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		
+		mission.getProductClasses().add(prodClass);
+		RepositoryService.getMissionRepository().save(mission);
 		
 		// Create a directory with product data files
 		
