@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -33,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
@@ -65,10 +67,12 @@ public class IngestorControllerTest {
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
 	
-	/* Test mission and product class data */
+	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
 	private static final String TEST_PRODUCT_TYPE = "FRESCO";
 	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_HOSTNAME = "localhost";
+	private static final String TEST_NAME = "Test Facility";
 	
 	/* Test products */
 	private static String[][] testProductData = {
@@ -94,7 +98,7 @@ public class IngestorControllerTest {
 	@LocalServerPort
 	private int port;
 	
-	/** A logger for this class */
+    /** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestorControllerTest.class);
 	
 	/**
@@ -209,9 +213,9 @@ public class IngestorControllerTest {
 		
 		// Create an IngestorProduct describing the product directory
 		
-		// Create mock storage manager (logging calls)
+		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
 		
-		// Create mock production planner (logging calls)
+		// Check mock production planner is up (logging calls)
 		
 		// Perform REST API call
 		

@@ -21,13 +21,21 @@ import org.springframework.context.annotation.Import;
 @ConfigurationProperties(prefix="proseo")
 public class IngestorTestConfiguration {
 	
+	/** A user name for test */
 	@Value("${proseo.user.name}")
 	private String userName;
 	
+	/** A password for test */
 	@Value("${proseo.user.password}")
 	private String userPassword;
 	
+	/** The URL of the prosEO Storage Manager mockup (from the database in the real world) */
+	@Value("${proseo.productionPlanner.url}")
+	private String storageManagerUrl;
+
 	/**
+	 * Gets the test API user name
+	 * 
 	 * @return the userName
 	 */
 	public String getUserName() {
@@ -35,6 +43,8 @@ public class IngestorTestConfiguration {
 	}
 	
 	/**
+	 * Gets the test API password
+	 * 
 	 * @return the userPassword
 	 */
 	public String getUserPassword() {
@@ -42,9 +52,11 @@ public class IngestorTestConfiguration {
 	}
 	
 	/**
-	 * @param userPassword the userPassword to set
+	 * Gets the URL of the Storage Manager mockup
+	 * 
+	 * @return the storageManagerUrl
 	 */
-	public void setUserPassword(String userPassword) {
-		this.userPassword = userPassword;
+	public String getStorageManagerUrl() {
+		return storageManagerUrl;
 	}
 }
