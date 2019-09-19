@@ -44,7 +44,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 public class OrderRepositoryTest {
 
 	private static final String TEST_IDENTIFIER = "Order 4711";
-	private static final Instant TEST_EXECUTION_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final Instant TEST_EXECUTION_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.000000")); // Timestamp without fraction of seconds!
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderRepositoryTest.class);
