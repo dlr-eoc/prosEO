@@ -20,12 +20,14 @@
                 "numberOfCpus": 10,
                 "breakpointFileNames": []
             }
-        ]
+        ],
+        "dockerImage": "knmi-l2:01.03.02",
+        "dockerRunParameters": "-v /my/source/directory:/container/target/directory"
     },
     {
         "id": 11987345,
         "version": 57,
-        "processorName": "DLR L2",
+        "processorName": "DLR L2 (upas)",
         "processorVersion": "01.01.07",
         "isTest": false,
         "minDiskSpace": 2048,
@@ -43,6 +45,8 @@
                 "numberOfCpus": 10,
                 "breakpointFileNames": []
             }
-        ]
+        ],
+        "dockerImage": "upas:01.01.07",
+        "dockerRunParameters": "-v /my/path/to/support_data:/container/path/to/support_data"
     }
 ]
