@@ -17,8 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
-import de.dlr.proseo.ingestor.rest.model.Product;
 import de.dlr.proseo.ingestor.rest.model.ProductFile;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 
 /**
  * Spring MVC controller for the prosEO Ingestor; implements the services required to ingest
@@ -48,7 +48,7 @@ public class IngestControllerImpl implements IngestController {
      * @return a Json list of the products updated and/or created including their product files and HTTP status "CREATED"
      */
 	@Override
-	public ResponseEntity<List<Product>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProduct) {
+	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProduct) {
 		// TODO Auto-generated method stub
 		
 		String message = String.format(MSG_PREFIX + "PUT for Ingestor Product not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);

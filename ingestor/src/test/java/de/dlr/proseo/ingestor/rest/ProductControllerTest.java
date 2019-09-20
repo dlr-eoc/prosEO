@@ -22,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -40,12 +39,11 @@ import de.dlr.proseo.ingestor.Ingestor;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.dao.ProductClassRepository;
-import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -55,7 +53,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+//@DirtiesContext
 //@Transactional
 @AutoConfigureTestEntityManager
 public class ProductControllerTest {
@@ -195,8 +193,8 @@ public class ProductControllerTest {
 		new TestRestTemplate(config.getUserName(), config.getUserPassword()).delete(testUrl);
 		
 		// Test that the product is gone
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
+		ResponseEntity<RestProduct> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
 		// Clean up database
@@ -268,7 +266,7 @@ public class ProductControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#createProduct(de.dlr.proseo.ingestor.rest.model.Product)}.
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#createProduct(RestProduct)}.
 	 * 
 	 * Test: Create a new product
 	 * Precondition: A (mockup) Production Planner exists, which can be informed of the new product
@@ -277,13 +275,13 @@ public class ProductControllerTest {
 	public final void testCreateProduct() {
 		// Create a product in the database
 		Product productToCreate = createProduct(testProductData[0]);
-		de.dlr.proseo.ingestor.rest.model.Product restProduct = ProductUtil.toRestProduct(productToCreate);
+		RestProduct restProduct = ProductUtil.toRestProduct(productToCreate);
 
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restProduct, de.dlr.proseo.ingestor.rest.model.Product.class);
+		ResponseEntity<RestProduct> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restProduct, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restProduct = postEntity.getBody();
 		assertNotEquals("Id should not be 0 (zero): ", 0L, restProduct.getId().longValue());
@@ -291,8 +289,8 @@ public class ProductControllerTest {
 		
 		// Test that the product exists
 		testUrl += "/" + restProduct.getId();
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		
 		// Test that the Production Planner was informed
@@ -322,8 +320,8 @@ public class ProductControllerTest {
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToFind.getId();
 		logger.info("Testing URL {} / GET", testUrl);
 
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong product ID: ", productToFind.getId(), getEntity.getBody().getId().longValue());
 		
@@ -334,7 +332,7 @@ public class ProductControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#modifyProduct(java.lang.Long, de.dlr.proseo.ingestor.rest.model.Product)}.
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#modifyProduct(java.lang.Long, RestProduct)}.
 	 * 
 	 * Test: Update a product by ID
 	 * Precondition: At least one product with a known ID is in the database 
@@ -348,18 +346,18 @@ public class ProductControllerTest {
 		// Update a product attribute
 		productToModify.setMode("OFFL");
 
-		de.dlr.proseo.ingestor.rest.model.Product restProduct = ProductUtil.toRestProduct(productToModify);
+		RestProduct restProduct = ProductUtil.toRestProduct(productToModify);
 		
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToModify.getId();
 		logger.info("Testing URL {} / PATCH", testUrl);
 
 		restProduct = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.patchForObject(testUrl, restProduct, de.dlr.proseo.ingestor.rest.model.Product.class);
+				.patchForObject(testUrl, restProduct, RestProduct.class);
 		assertNotNull("Modified product not set", restProduct);
 		
 		// Test that the product attribute was changed as expected
-		ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, de.dlr.proseo.ingestor.rest.model.Product.class);
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
 		

@@ -106,7 +106,7 @@ public class ProductUtilTest {
 	public final void test() {
 		// Create an empty product
 		Product modelProduct = new Product();
-		de.dlr.proseo.ingestor.rest.model.Product restProduct = ProductUtil.toRestProduct(modelProduct);
+		RestProduct restProduct = ProductUtil.toRestProduct(modelProduct);
 		assertEquals("Unexpected version number for new product: ", 1L, restProduct.getVersion().longValue());
 		assertNull("Unexpected mode for new product: ", restProduct.getMode());
 		logger.info("Test copy empty product OK");

@@ -8,6 +8,8 @@ package de.dlr.proseo.ingestor.rest.model;
 import java.time.DateTimeException;
 import java.time.Instant;
 
+import de.dlr.proseo.model.Product;
+
 /**
  * Utility methods for products, e. g. for conversion between prosEO model and REST model
  * 
@@ -21,11 +23,11 @@ public class ProductUtil {
 	 * @param modelProduct the prosEO model product
 	 * @return an equivalent REST product or null, if no model product was given
 	 */
-	public static Product toRestProduct(de.dlr.proseo.model.Product modelProduct) {
+	public static RestProduct toRestProduct(Product modelProduct) {
 		if (null == modelProduct)
 			return null;
 		
-		Product restProduct = new Product();
+		RestProduct restProduct = new RestProduct();
 		
 		restProduct.setId(modelProduct.getId());
 		restProduct.setVersion(Long.valueOf(modelProduct.getVersion()));
@@ -44,7 +46,7 @@ public class ProductUtil {
 			restProduct.setSensingStopTime(
 					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()));
 		}
-		for (de.dlr.proseo.model.Product componentProduct: modelProduct.getComponentProducts()) {
+		for (Product componentProduct: modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
 		}
 		if (null != modelProduct.getEnclosingProduct()) {
@@ -71,7 +73,7 @@ public class ProductUtil {
 			restProduct.getProductFile().add(restFile);
 		}
 		for (String productParameterKey: modelProduct.getParameters().keySet()) {
-			de.dlr.proseo.ingestor.rest.model.Parameter restParameter = new de.dlr.proseo.ingestor.rest.model.Parameter(
+			Parameter restParameter = new Parameter(
 					productParameterKey,
 					modelProduct.getParameters().get(productParameterKey).getParameterType().toString(),
 					modelProduct.getParameters().get(productParameterKey).getParameterValue().toString());
@@ -88,8 +90,8 @@ public class ProductUtil {
 	 * @return a (roughly) equivalent model product
 	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
 	 */
-	public static de.dlr.proseo.model.Product toModelProduct(Product restProduct) throws IllegalArgumentException {
-		de.dlr.proseo.model.Product modelProduct = new de.dlr.proseo.model.Product();
+	public static Product toModelProduct(RestProduct restProduct) throws IllegalArgumentException {
+		Product modelProduct = new Product();
 		
 		modelProduct.setId(restProduct.getId());
 		while (modelProduct.getVersion() < restProduct.getVersion()) {
@@ -110,7 +112,7 @@ public class ProductUtil {
 		for (Parameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
-				modelParameter.seParametertType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));
+				modelParameter.setParameterType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));
 			} catch (Exception e) {
 				throw new IllegalArgumentException(String.format("Invalid parameter type '%s'", restParameter.getParameterType()));
 			}

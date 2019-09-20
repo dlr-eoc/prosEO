@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -100,17 +101,17 @@ public class ProductControllerImpl implements ProductController {
 	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<de.dlr.proseo.ingestor.rest.model.Product>> getProducts(String mission, String[] productClass,
+	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
 			Date startTimeFrom, Date startTimeTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
-		List<de.dlr.proseo.ingestor.rest.model.Product> result = new ArrayList<>();
+		List<RestProduct> result = new ArrayList<>();
 		
 		// Simple case: no search criteria set
 		if (null == mission && (null == productClass || 0 == productClass.length) && null == startTimeFrom && null == startTimeTo) {
 			for (Product product: RepositoryService.getProductRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found product with ID {}", product.getId());
-				de.dlr.proseo.ingestor.rest.model.Product resultProduct = ProductUtil.toRestProduct(product);
+				RestProduct resultProduct = ProductUtil.toRestProduct(product);
 				if (logger.isDebugEnabled()) logger.debug("Created result product with ID {}", resultProduct.getId());
 				result.add(resultProduct);
 			}
@@ -137,8 +138,8 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   contained objects) and HTTP status "CREATED"
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> createProduct(
-			de.dlr.proseo.ingestor.rest.model.@Valid Product product) {
+	public ResponseEntity<RestProduct> createProduct(
+			de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", product.getProductClass());
 		
 		Product modelProduct = ProductUtil.toModelProduct(product);
@@ -187,7 +188,7 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getProductById(Long id) {
+	public ResponseEntity<RestProduct> getProductById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 		
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
@@ -214,8 +215,8 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> modifyProduct(Long id,
-			de.dlr.proseo.ingestor.rest.model.Product product) {
+	public ResponseEntity<RestProduct> modifyProduct(Long id,
+			RestProduct product) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
 		Optional<Product> optModelProduct = RepositoryService.getProductRepository().findById(id);
