@@ -94,7 +94,7 @@ public class Parameter {
 	 * 
 	 * @param parameterType the type to set
 	 */
-	public void seParametertType(ParameterType parameterType) {
+	public void setParameterType(ParameterType parameterType) {
 		this.parameterType = parameterType;
 	}
 	
