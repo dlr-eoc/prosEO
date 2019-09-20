@@ -1,0 +1,16 @@
+#%RAML 1.0 DataType
+#  PromisedProduct:
+    type: object
+    properties:
+      productClass:
+        type: string
+        description: The internal product type of the product
+      sensingStartTime?:
+        type: datetime-only
+        description: Sensing start time
+      sensingStopTime?:
+        type: datetime-only
+        description: Sensing stop time
+      parameters:
+        type: Parameter[]
+        description: Collection of mission-specific parameters for the product
