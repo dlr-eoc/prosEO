@@ -1,0 +1,208 @@
+#%RAML 1.0
+title: prosEO Model Test API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/model/{version}
+baseUriParameters:
+  port:
+    description: The port the application is running on
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  Configuration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  ConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  Mission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  Orbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  OrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  Order: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  ProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+  Processor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  ProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  Product: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  ProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
+  PromisedProduct: !include ../../../../../model/src/main/resources/raml/types/promisedproduct.raml
+  SelectionRule: SimpleSelectionRule[]
+  SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
+  Spacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
+  Task: !include ../../../../../model/src/main/resources/raml/types/task.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        404:
+    put?:
+      responses:          
+        404:
+
+/configurations:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Configuration[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
+  put:
+    body:
+      application/json:
+        type: Configuration
+        example:  !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+
+/configuredprocessors:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: ConfiguredProcessor[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
+  put:
+    body:
+      application/json:
+        type: ConfiguredProcessor
+        example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+
+/missions:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Mission[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
+  put:
+    body:
+      application/json:
+        type: Mission
+        example:  !include ../../../../../model/src/main/resources/raml/examples/mission.json
+
+/orbits:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Orbit[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+  put:
+    body:
+      application/json:
+        type: Orbit
+        example:  !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+
+/orders:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Order[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  put:
+    body:
+      application/json:
+        type: Order
+        example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
+
+/processingfacilities:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: ProcessingFacility[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
+  put:
+    body:
+      application/json:
+        type: ProcessingFacility
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+
+/processors:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Processor[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
+  put:
+    body:
+      application/json:
+        type: Processor
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processor.json
+
+/processorclasses:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: ProcessorClass[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
+  put:
+    body:
+      application/json:
+        type: ProcessorClass
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+
+/products:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Product[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/product-list.json
+  put:
+    body:
+      application/json:
+        type: Product
+        example:  !include ../../../../../model/src/main/resources/raml/examples/product.json
+
+/productfiles:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: ProductFile[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/productfile-list.json
+  put:
+    body:
+      application/json:
+        type: ProductFile
+        example:  !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+

@@ -21,5 +21,6 @@
             "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
         }
     ],
-    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ]
+    "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+    "dockerRunParameters": "-v /my/source/directory:/container/target/directory"
 }

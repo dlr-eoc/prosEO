@@ -19,5 +19,7 @@
             "numberOfCpus": 10,
             "breakpointFileNames": []
         }
-    ]
+    ],
+    "dockerImage": "knmi-l2:01.03.02",
+    "dockerRunParameters": "-v /my/source/directory:/container/target/directory"
 }
