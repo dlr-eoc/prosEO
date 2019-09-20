@@ -17,7 +17,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = { @Index(unique = true, columnList = "name"), @Index(unique = false, columnList = "url") })
+@Table(indexes = { @Index(unique = true, columnList = "name") })
 public class ProcessingFacility extends PersistentObject {
 
 	/** The facility name (unique key) */

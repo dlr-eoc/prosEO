@@ -79,7 +79,7 @@ public class FacilityRepositoryTest {
 	public final void test() {
 		ProcessingFacility fac = new ProcessingFacility();
 		fac.setName(TEST_NAME);
-		fac.setUrl("https:////" + TEST_HOSTNAME + ":8080/");
+		fac.setProcessingEngineUrl("https:////" + TEST_HOSTNAME + ":8080/");
 		RepositoryService.getFacilityRepository().save(fac);
 		
 		// Test findByName
