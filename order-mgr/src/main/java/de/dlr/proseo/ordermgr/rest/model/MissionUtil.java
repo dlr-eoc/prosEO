@@ -2,6 +2,7 @@ package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -37,12 +38,15 @@ public class MissionUtil {
 			}
 		}
 		
-		/*if (null != modelMission.getSpacecrafts()) {
-			for(Spacecraft modelSpacecraft : modelMission.getSpacecrafts()) {
-				restMission.getSpacecrafts().addAll((Collection<? extends Object>) modelSpacecraft);
-			System.out.println("Spacecraft values: "+ modelSpacecraft);			
+		if (null != modelMission.getSpacecrafts()) {
+			List <de.dlr.proseo.ordermgr.rest.model.Spacecraft> restSpacecrafts = new ArrayList<de.dlr.proseo.ordermgr.rest.model.Spacecraft>();
+			
+			for(Spacecraft modelSpacecraft : modelMission.getSpacecrafts()) {			
+				de.dlr.proseo.ordermgr.rest.model.Spacecraft restFinal = new de.dlr.proseo.ordermgr.rest.model.Spacecraft (modelSpacecraft.getCode(),modelSpacecraft.getName());			
+				restSpacecrafts.add(restFinal);						
 			}
-		}*/
+			restMission.setSpacecrafts(restSpacecrafts);
+		}
 		
 		return restMission;
 	}
