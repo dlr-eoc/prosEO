@@ -28,7 +28,9 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "job_step_id, requested_product_class_id"))
+@Table(indexes = { 
+		@Index(unique = true, columnList = "job_step_id, requested_product_class_id"), 
+		@Index(columnList = "requested_product_class_id") } )
 public class ProductQuery extends PersistentObject {
 
 	/** Job step issuing this query */

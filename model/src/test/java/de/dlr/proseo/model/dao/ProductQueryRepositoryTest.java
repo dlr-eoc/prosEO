@@ -1,11 +1,13 @@
 /**
- * FacilityRepositoryTest.java
+ * ProductQueryRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -22,7 +24,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -36,12 +41,14 @@ import de.dlr.proseo.model.service.RepositoryService;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class FacilityRepositoryTest {
+public class ProductQueryRepositoryTest {
 
-	private static final String TEST_HOSTNAME = "localhost";
-	private static final String TEST_NAME = "Test Facility";
+	private static final String TEST_CODE = "ABC";
+	private static final String TEST_PRODUCT_TYPE = "FRESCO";
+	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(FacilityRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductQueryRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -73,16 +80,29 @@ public class FacilityRepositoryTest {
 
 	@Test
 	public final void test() {
-		ProcessingFacility fac = new ProcessingFacility();
-		fac.setName(TEST_NAME);
-		fac.setProcessingEngineUrl("https:////" + TEST_HOSTNAME + ":8080/");
-		RepositoryService.getFacilityRepository().save(fac);
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
 		
-		// Test findByName
-		fac = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
-		assertNotNull("Find by name failed for ProcessingFacility", fac);
+		ProductClass prodClass = new ProductClass();
+		prodClass.setMission(mission);
+		prodClass.setMissionType(TEST_MISSION_TYPE);
+		prodClass.setProductType(TEST_PRODUCT_TYPE);
+		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 		
-		logger.info("OK: Test for findByName completed");
+		mission.getProductClasses().add(prodClass);
+		RepositoryService.getMissionRepository().save(mission);
+
+		ProductQuery query = new ProductQuery();
+		query.setIsSatisfied(false);
+		query.setRequestedProductClass(prodClass);
+		query = RepositoryService.getProductQueryRepository().save(query);
+		
+		// Test findUnsatisfiedByProductClass
+		List<ProductQuery> queryList = RepositoryService.getProductQueryRepository().findUnsatisfiedByProductClass(prodClass.getId());
+		assertFalse("Find unsatisfied by product class id failed for ProductQuery", queryList.isEmpty());
+		
+		logger.info("OK: Test for findUnsatisfiedByProductClass completed");
 		
 	}
 
