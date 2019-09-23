@@ -6,6 +6,8 @@
 package de.dlr.proseo.ingestor.rest;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +56,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_INVALID_PRODUCT_TYPE = 2055;
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 2056;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
 	/* Message string constants */
 	private static final String MSG_INVALID_PROCESSING_FACILITY = "Invalid processing facility %s for ingestion (%d)";
@@ -62,6 +65,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final String MSG_ERROR_NOTIFYING_PLANNER = "Error notifying prosEO Production Planner of new product %d of type %s (%d)";
 	private static final String MSG_INVALID_PRODUCT_TYPE = "Invalid product type %s for ingestor product (%d)";
 	private static final String MSG_ORBIT_NOT_FOUND = "Orbit %d for spacecraft %s not found (%d)";
+	private static final String MSG_EXCEPTION_THROWN = "Exception thrown: %s (%d)";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ingestor ";
@@ -77,10 +81,6 @@ public class IngestControllerImpl implements IngestController {
 	@Autowired
 	IngestorConfiguration ingestorConfig;
 	
-	/** Current security context */
-	@Autowired
-	SecurityContext securityContext;
-	
     /**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
      * is 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated
@@ -95,6 +95,15 @@ public class IngestControllerImpl implements IngestController {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProducts({}, IngestorProduct[{}])", processingFacility, ingestorProducts.size());
 		
 		// Check whether the given processing facility is valid
+		try {
+			processingFacility = URLDecoder.decode(processingFacility, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			String message = String.format(MSG_PREFIX + MSG_EXCEPTION_THROWN, e.getMessage(), MSG_ID_EXCEPTION_THROWN);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
 		if (null == facility) {
 			String message = String.format(MSG_PREFIX + MSG_INVALID_PROCESSING_FACILITY, processingFacility, MSG_ID_INVALID_FACILITY);
@@ -161,24 +170,25 @@ public class IngestControllerImpl implements IngestController {
 				logger.error(message);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(responseHeaders, responseEntity.getStatusCode());
 			}
 			
 			// Check whether there are open product queries for this product type
-			List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository().findByProductClass(ingestorProduct.getProductClass());
+			List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+					.findUnsatisfiedByProductClass(newProduct.getProductClass().getId());
 			if (!productQueries.isEmpty()) {
 				// If so, inform the production planner of the new product
 				String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + "/product/" + String.valueOf(newProduct.getId());
 				restTemplate = rtb.basicAuthentication(
 						ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
-				ResponseEntity<?> responseObject = restTemplate.patchForObject(productionPlannerUrl, null, ResponseEntity.class);
-				if (!HttpStatus.OK.equals(responseEntity.getStatusCode())) {
+				ResponseEntity<?> response = restTemplate.patchForObject(productionPlannerUrl, null, ResponseEntity.class);
+				if (!HttpStatus.OK.equals(response.getStatusCode())) {
 					String message = String.format(MSG_PREFIX + MSG_ERROR_NOTIFYING_PLANNER, 
 							newProduct.getId(), newProduct.getProductClass().getProductType(), MSG_ID_ERROR_NOTIFYING_PLANNER);
 					logger.error(message);
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(HTTP_HEADER_WARNING, message);
-					return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(responseHeaders, response.getStatusCode());
 				}
 			}
 			

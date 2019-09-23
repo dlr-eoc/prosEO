@@ -54,6 +54,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.dao.ProductClassRepository;
@@ -68,15 +69,10 @@ import de.dlr.proseo.model.service.RepositoryService;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-@Transactional
+//@Transactional
 @AutoConfigureTestEntityManager
 public class IngestorControllerTest {
 	
-	private static final String TEST_STOP_TIME = "2018-07-21T00:08:28.000000";
-
-	private static final String TEST_START_TIME = "2018-07-21T00:03:28.000000";
-
-	private static final String TEST_MODE_OFFL = "OFFL";
 
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
@@ -85,11 +81,16 @@ public class IngestorControllerTest {
 	private static final String TEST_CODE = "ABC";
 	private static final String TEST_PRODUCT_TYPE = "FRESCO";
 	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
-	private static final String TEST_HOSTNAME = "localhost";
 	private static final String TEST_NAME = "Test Facility";
 	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
 	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	private static final String TEST_SC_CODE = "XYZ";
+	private static final int TEST_ORBIT_NUMBER = 4712;
+	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final String TEST_STOP_TIME_TEXT = "2018-07-21T00:08:28.000000";
+	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000000";
+	private static final String TEST_MODE_OFFL = "OFFL";
 	
 	
 	/* Test products */
@@ -218,24 +219,58 @@ public class IngestorControllerTest {
 	public final void testIngestProducts() {
 		
 		// Make sure processing facility and product class exist
-		Mission mission = new Mission();
-		mission.setCode(TEST_CODE);
-		mission = RepositoryService.getMissionRepository().save(mission);
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 		
-		ProductClass prodClass = new ProductClass();
-		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
-		prodClass.setProductType(TEST_PRODUCT_TYPE);
-		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			mission.getProductClasses().add(prodClass);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
 		
-		mission.getProductClasses().add(prodClass);
-		RepositoryService.getMissionRepository().save(mission);
+		Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+		if (null == spacecraft) {
+			spacecraft = new Spacecraft();
+			spacecraft.setCode(TEST_SC_CODE);
+			spacecraft.setMission(mission);
+			spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+			logger.info("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
+			mission.getSpacecrafts().add(spacecraft);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
 		
-		ProcessingFacility facility = new ProcessingFacility();
-		facility.setName(TEST_NAME);
+		Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(TEST_SC_CODE, TEST_ORBIT_NUMBER);
+		if (null == orbit) {
+			orbit = new Orbit();
+			orbit.setSpacecraft(spacecraft);
+			orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
+			orbit.setStartTime(TEST_START_TIME);
+			orbit = RepositoryService.getOrbitRepository().save(orbit);
+			spacecraft.getOrbits().add(orbit);
+			spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		}
+		
+		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
+		if (null == facility) {
+			facility = new ProcessingFacility();
+			facility.setName(TEST_NAME);
+		}
+		// Make sure the following attributes are as expected	
 		facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
 		facility.setStorageManagerUrl(config.getStorageManagerUrl());
-		RepositoryService.getFacilityRepository().save(facility);
+		facility = RepositoryService.getFacilityRepository().save(facility);
 		
 		// Create a directory with product data files
 		// Static: src/test/resources/IDA_test
@@ -246,13 +281,13 @@ public class IngestorControllerTest {
 		ingestorProduct.setVersion(1L);
 		ingestorProduct.setMissionCode(TEST_CODE);
 		ingestorProduct.setMode(TEST_MODE_OFFL);
-		de.dlr.proseo.ingestor.rest.model.Orbit orbit = new de.dlr.proseo.ingestor.rest.model.Orbit();
-		orbit.setSpacecraftCode(TEST_CODE);
-		orbit.setOrbitNumber(3982L);
-		ingestorProduct.setOrbit(orbit);
+		de.dlr.proseo.ingestor.rest.model.Orbit restOrbit = new de.dlr.proseo.ingestor.rest.model.Orbit();
+		restOrbit.setSpacecraftCode(TEST_SC_CODE);
+		restOrbit.setOrbitNumber(Long.valueOf(TEST_ORBIT_NUMBER));
+		ingestorProduct.setOrbit(restOrbit);
 		ingestorProduct.setProductClass(TEST_PRODUCT_TYPE);
-		ingestorProduct.setSensingStartTime(TEST_START_TIME);
-		ingestorProduct.setSensingStopTime(TEST_STOP_TIME);
+		ingestorProduct.setSensingStartTime(TEST_START_TIME_TEXT);
+		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
 		File productFile = new File(TEST_PRODUCT_PATH_2);
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
