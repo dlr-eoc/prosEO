@@ -7,9 +7,13 @@ package de.dlr.proseo.ingestor.rest;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,15 +43,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
+import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -64,6 +72,12 @@ import de.dlr.proseo.model.service.RepositoryService;
 @AutoConfigureTestEntityManager
 public class IngestorControllerTest {
 	
+	private static final String TEST_STOP_TIME = "2018-07-21T00:08:28.000000";
+
+	private static final String TEST_START_TIME = "2018-07-21T00:03:28.000000";
+
+	private static final String TEST_MODE_OFFL = "OFFL";
+
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
 	
@@ -73,6 +87,10 @@ public class IngestorControllerTest {
 	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
 	private static final String TEST_HOSTNAME = "localhost";
 	private static final String TEST_NAME = "Test Facility";
+	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
+	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	
 	
 	/* Test products */
 	private static String[][] testProductData = {
@@ -82,6 +100,10 @@ public class IngestorControllerTest {
 		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
 	};
 
+	/** Ingestor configuration */
+	@Autowired
+	IngestorConfiguration ingestorConfig;
+	
 	/** Test configuration */
 	@Autowired
 	IngestorTestConfiguration config;
@@ -209,22 +231,98 @@ public class IngestorControllerTest {
 		mission.getProductClasses().add(prodClass);
 		RepositoryService.getMissionRepository().save(mission);
 		
+		ProcessingFacility facility = new ProcessingFacility();
+		facility.setName(TEST_NAME);
+		facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
+		facility.setStorageManagerUrl(config.getStorageManagerUrl());
+		RepositoryService.getFacilityRepository().save(facility);
+		
 		// Create a directory with product data files
+		// Static: src/test/resources/IDA_test
 		
 		// Create an IngestorProduct describing the product directory
+		IngestorProduct ingestorProduct = new IngestorProduct();
+		ingestorProduct.setId(0L);
+		ingestorProduct.setVersion(1L);
+		ingestorProduct.setMissionCode(TEST_CODE);
+		ingestorProduct.setMode(TEST_MODE_OFFL);
+		de.dlr.proseo.ingestor.rest.model.Orbit orbit = new de.dlr.proseo.ingestor.rest.model.Orbit();
+		orbit.setSpacecraftCode(TEST_CODE);
+		orbit.setOrbitNumber(3982L);
+		ingestorProduct.setOrbit(orbit);
+		ingestorProduct.setProductClass(TEST_PRODUCT_TYPE);
+		ingestorProduct.setSensingStartTime(TEST_START_TIME);
+		ingestorProduct.setSensingStopTime(TEST_STOP_TIME);
+		File productFile = new File(TEST_PRODUCT_PATH_2);
+		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
+		ingestorProduct.setFilePath(productFile.getParent());
+		ingestorProduct.setProductFileName(productFile.getName());
+		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+				"copernicusCollection", "STRING", "01"));
+		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+				"revision", "STRING", "99"));
+		List<IngestorProduct> ingestorProducts = new ArrayList<>();
+		ingestorProducts.add(ingestorProduct);
 		
 		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
+		String testUrl = config.getStorageManagerUrl() + "/store?productId=4711";
+		Map<String, String> mockRequest = new HashMap<>();
+		mockRequest.put("productId", "4711");
+		
+		logger.info("Testing availability of mock storage manager at {}", testUrl);
+		
+		ResponseEntity<Object> mockEntity = new TestRestTemplate().postForEntity(testUrl, mockRequest, Object.class);
+		assertEquals("Mock storage manager not available:", HttpStatus.CREATED, mockEntity.getStatusCode());
 		
 		// Check mock production planner is up (logging calls)
+		testUrl = ingestorConfig.getProductionPlannerUrl() + "/product/4711";
+		logger.info("Testing availability of mock production planner at {}", testUrl);
+		
+		Object mockObject = new TestRestTemplate().patchForObject(testUrl, mockRequest, Object.class);
+		assertNotNull("Mock production planner not available", mockObject);
+		logger.info("Got result object " + mockObject);
+		if (mockObject instanceof ResponseEntity) {
+			@SuppressWarnings("unchecked")
+			Map<String, String> mockResult = ((ResponseEntity<Map<String, String>>) mockObject).getBody();
+			assertEquals("Mock production planner returns unexpected status:", "OK", mockResult.get("status"));
+		}
 		
 		// Perform REST API call
-		
-		// Check logged calls for storage manager and production planner
-		
-		// TODO
-		logger.warn("Test not implemented for ingestProducts");
+		try {
+			testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + URLEncoder.encode(TEST_NAME, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		logger.info("Testing URL {} / POST", testUrl);
 
-		logger.info("Test OK: Insert a single product");
+		@SuppressWarnings("rawtypes")
+		ResponseEntity<List> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, ingestorProducts, List.class);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
+		
+		@SuppressWarnings("unchecked")
+		List<RestProduct> responseProducts = postEntity.getBody();
+		assertEquals("Unexpected number of response products: ", 1, responseProducts.size());
+		
+		// Check result attributes
+		RestProduct responseProduct = responseProducts.get(0);
+		assertNotEquals("Unexpected database ID: ", 0L, responseProduct.getId().longValue());
+		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(), responseProduct.getProductClass());
+		assertEquals("Unexpected processing mode: ", ingestorProduct.getMode(), responseProduct.getMode());
+		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(), responseProduct.getSensingStartTime());
+		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(), responseProduct.getSensingStopTime());
+		assertEquals("Unexpected orbit number: ", ingestorProduct.getOrbit().getOrbitNumber(), responseProduct.getOrbit().getOrbitNumber());
+		assertEquals("Unexpected number of product files: ", 1, responseProduct.getProductFile().size());
+		de.dlr.proseo.ingestor.rest.model.ProductFile restProductFile = responseProduct.getProductFile().get(0);
+		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(), restProductFile.getProductFileName());
+		assertEquals("Unexpected number of aux files: ", 0, restProductFile.getAuxFileNames().size());
+		assertTrue("Unexpected file path", restProductFile.getFilePath().matches(File.separator + TEST_CODE + File.separator + responseProduct.getId()));
+		
+		// Check triggering of production planner
+		// TODO
+
+		logger.info("Test OK: Insert a list of products");
 	}
 
 	/**
@@ -281,7 +379,7 @@ public class IngestorControllerTest {
 		// TODO
 		logger.warn("Test not implemented for ingestProductFile");
 
-		logger.info("Test OK: Insert a single product");
+		logger.info("Test OK: Insert files for an existing product");
 	}
 
 	/**

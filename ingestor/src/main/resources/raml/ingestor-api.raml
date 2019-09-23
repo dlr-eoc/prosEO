@@ -34,6 +34,9 @@ types:
     type: RestProduct
     description: Variant of the RestProduct type with a reference to the data file location
     properties:
+      mountPoint:
+        type: string
+        description: The POSIX mount point of the storage system to ingest from
       filePath:
         type: string
         description: The POSIX path to the product files
