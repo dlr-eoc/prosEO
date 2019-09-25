@@ -369,7 +369,6 @@ public class IngestorControllerTest {
 		Map<String, Object> responseProductFile = responseProductFiles.get(0);
 		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(), responseProductFile.get("productFileName"));
 		assertEquals("Unexpected number of aux files: ", 0, ((List<String>) responseProductFile.get("auxFileNames")).size());
-		assertTrue("Unexpected file path", ((String) responseProductFile.get("filePath")).matches(File.separator + TEST_CODE + File.separator + responseProduct.get("id")));
 		
 		// Check triggering of production planner
 		// TODO
