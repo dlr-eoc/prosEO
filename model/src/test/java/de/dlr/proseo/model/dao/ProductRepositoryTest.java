@@ -46,12 +46,12 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProductRepositoryTest {
 
-	private static final String TEST_CODE = "ABC";
-	private static final String TEST_SC_CODE = "XYZ";
-	private static final int TEST_ORBIT_NUMBER = 4711;
+	private static final String TEST_CODE = "$ABC$";
+	private static final String TEST_SC_CODE = "$XYZ$";
+	private static final int TEST_ORBIT_NUMBER = 47111174;
 	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
-	private static final String TEST_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
+	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductRepositoryTest.class);

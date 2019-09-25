@@ -25,12 +25,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for OrbitRepository
@@ -44,8 +42,8 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class OrbitRepositoryTest {
 
-	private static final String TEST_SC_CODE = "XYZ";
-	private static final int TEST_ORBIT_NUMBER = 4712;
+	private static final String TEST_SC_CODE = "$XYZ$";
+	private static final int TEST_ORBIT_NUMBER = 47122174;
 	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 	
 	/** A logger for this class */
