@@ -38,8 +38,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 @AutoConfigureTestEntityManager
 public class FacilityRepositoryTest {
 
-	private static final String TEST_HOSTNAME = "localhost";
-	private static final String TEST_NAME = "Test Facility";
+	private static final String TEST_HOSTNAME = "$localhost$";
+	private static final String TEST_NAME = "$Test Facility$";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(FacilityRepositoryTest.class);
 	

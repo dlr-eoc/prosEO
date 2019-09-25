@@ -18,6 +18,7 @@ import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
+import de.dlr.proseo.model.dao.ProductFileRepository;
 import de.dlr.proseo.model.dao.ProductQueryRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.dao.SpacecraftRepository;
@@ -72,6 +73,10 @@ public class RepositoryService {
 	/** The repository for the ProductClass class */
 	@Autowired
     private ProductClassRepository productClassRepository;
+	
+	/** The repository for the ProductFile class */
+	@Autowired
+    private ProductFileRepository productFileRepository;
 	
 	/** The repository for the ProductQuery class */
 	@Autowired
@@ -181,6 +186,15 @@ public class RepositoryService {
 	 */
 	public static ProductClassRepository getProductClassRepository() {
 		return theRepositoryService.productClassRepository;
+	}
+
+	/**
+	 * Gets the repository for the ProductFile class
+	 * 
+	 * @return the productFileRepository
+	 */
+	public static ProductFileRepository getProductFileRepository() {
+		return theRepositoryService.productFileRepository;
 	}
 
 	/**

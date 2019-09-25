@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import de.dlr.proseo.model.ProductQuery;
 
 /**
- * Data Access Object for the ProcessingFacility class
+ * Data Access Object for the ProductQuery class
  * 
  * @author Dr. Thomas Bassler
  *

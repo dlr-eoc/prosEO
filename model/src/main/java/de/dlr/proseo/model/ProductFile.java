@@ -11,6 +11,8 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -45,12 +47,13 @@ public class ProductFile extends PersistentObject {
 	private String filePath;
 	
 	/** Type of the storage location */
+	@Enumerated(EnumType.STRING)
 	private StorageType storageType;
 	
 	/**
 	 * The available storage types 
 	 */
-	public enum StorageType { S3, POSIX }
+	public enum StorageType { S3, POSIX, ALLUXIO, OTHER }
 
 	/**
 	 * Gets the associated product

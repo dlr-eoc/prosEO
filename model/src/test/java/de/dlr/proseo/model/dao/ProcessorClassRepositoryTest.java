@@ -39,7 +39,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProcessorClassRepositoryTest {
 
-	private static final String TEST_NAME = "KNMI L2";
+	private static final String TEST_NAME = "$KNMI L2$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorClassRepositoryTest.class);
