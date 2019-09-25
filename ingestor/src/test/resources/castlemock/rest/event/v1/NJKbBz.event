@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restEvent>
+    <endDate>2019-09-25T18:17:57.273Z</endDate>
+    <id>NJKbBz</id>
+    <resourceName>Store product</resourceName>
+    <startDate>2019-09-25T18:17:57.272Z</startDate>
+    <applicationId>VYrwNF</applicationId>
+    <methodId>m1UidH</methodId>
+    <projectId>DB3vth</projectId>
+    <request>
+        <body>{"productId":"4711"}</body>
+        <contentType>application/json;charset=UTF-8</contentType>
+        <httpHeaders>
+            <httpHeader>
+                <name>accept</name>
+                <value>application/json, application/*+json</value>
+            </httpHeader>
+            <httpHeader>
+                <name>content-type</name>
+                <value>application/json;charset=UTF-8</value>
+            </httpHeader>
+            <httpHeader>
+                <name>content-length</name>
+                <value>20</value>
+            </httpHeader>
+            <httpHeader>
+                <name>host</name>
+                <value>localhost:8090</value>
+            </httpHeader>
+            <httpHeader>
+                <name>connection</name>
+                <value>Keep-Alive</value>
+            </httpHeader>
+            <httpHeader>
+                <name>user-agent</name>
+                <value>Apache-HttpClient/4.5.9 (Java/11.0.3)</value>
+            </httpHeader>
+            <httpHeader>
+                <name>accept-encoding</name>
+                <value>gzip,deflate</value>
+            </httpHeader>
+        </httpHeaders>
+        <httpMethod>POST</httpMethod>
+        <httpParameters>
+            <httpParameter>
+                <name>productId</name>
+                <value>4711</value>
+            </httpParameter>
+        </httpParameters>
+        <uri>/storage-mgr/store</uri>
+    </request>
+    <resourceId>NUAqCO</resourceId>
+    <response>
+        <body>{&#13;
+	"productId": 4711,&#13;
+	"storageType": "S3",&#13;
+	"filePaths": [&#13;
+		"/ABC/4711/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc"&#13;
+	]&#13;
+}</body>
+        <contentEncodings/>
+        <httpHeaders/>
+        <httpStatusCode>201</httpStatusCode>
+        <mockResponseName>Product stored</mockResponseName>
+    </response>
+</restEvent>

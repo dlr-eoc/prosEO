@@ -93,9 +93,11 @@ public class ProductUtil {
 	public static Product toModelProduct(RestProduct restProduct) throws IllegalArgumentException {
 		Product modelProduct = new Product();
 		
-		modelProduct.setId(restProduct.getId());
-		while (modelProduct.getVersion() < restProduct.getVersion()) {
-			modelProduct.incrementVersion();
+		if (null != restProduct.getId() && 0 != restProduct.getId()) {
+			modelProduct.setId(restProduct.getId());
+			while (modelProduct.getVersion() < restProduct.getVersion()) {
+				modelProduct.incrementVersion();
+			} 
 		}
 		modelProduct.setMode(restProduct.getMode());
 		try {

@@ -35,6 +35,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -55,6 +56,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_ERROR_NOTIFYING_PLANNER = 2054;
 	private static final int MSG_ID_INVALID_PRODUCT_TYPE = 2055;
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 2056;
+	private static final int MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS = 2057;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
@@ -65,6 +67,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final String MSG_ERROR_NOTIFYING_PLANNER = "Error notifying prosEO Production Planner of new product %d of type %s (%d)";
 	private static final String MSG_INVALID_PRODUCT_TYPE = "Invalid product type %s for ingestor product (%d)";
 	private static final String MSG_ORBIT_NOT_FOUND = "Orbit %d for spacecraft %s not found (%d)";
+	private static final String MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS = "Unexpected number of file paths (%d, expected: %d) received from Storage Manager at %s (%d)";
 	private static final String MSG_EXCEPTION_THROWN = "Exception thrown: %s (%d)";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -142,6 +145,7 @@ public class IngestControllerImpl implements IngestController {
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
 				return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
 			}
+			newProduct.setOrbit(orbit);
 			
 			newProduct = RepositoryService.getProductRepository().save(newProduct);
 			logger.info(String.format(MSG_NEW_PRODUCT_ADDED, newProduct.getId(), newProduct.getProductClass().getProductType(),
@@ -159,7 +163,7 @@ public class IngestControllerImpl implements IngestController {
 			postData.put("exactFilePaths", filePaths);
 			
 			// Store the product in the storage manager for the given processing facility
-			String storageManagerUrl = facility.getStorageManagerUrl();
+			String storageManagerUrl = facility.getStorageManagerUrl() + "/store";
 			RestTemplate restTemplate = rtb.basicAuthentication(
 					ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
 			@SuppressWarnings("rawtypes")
@@ -172,6 +176,40 @@ public class IngestControllerImpl implements IngestController {
 				responseHeaders.set(HTTP_HEADER_WARNING, message);
 				return new ResponseEntity<>(responseHeaders, responseEntity.getStatusCode());
 			}
+			
+			// Extract the product file paths from the response
+			@SuppressWarnings("unchecked")
+			Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
+			@SuppressWarnings("unchecked")
+			List<String> responseFilePaths = (List<String>) responseBody.get("filePaths");
+			if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
+				String message = String.format(MSG_PREFIX + MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, 
+						responseFilePaths.size(), filePaths.size(), processingFacility, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS);
+				logger.error(message);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_WARNING, message);
+				return new ResponseEntity<>(responseHeaders, responseEntity.getStatusCode());
+			}
+			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
+			newProductFile.setProcessingFacility(facility);
+			newProductFile.setFilePath((new File(responseFilePaths.get(0))).getParent());
+			newProductFile.setProductFileName(ingestorProduct.getProductFileName());
+			for (String auxFile: ingestorProduct.getAuxFileNames()) {
+				newProductFile.getAuxFileNames().add(auxFile);
+			}
+			if (responseFilePaths.get(0).startsWith("s3")) {
+				newProductFile.setStorageType(StorageType.S3);
+			} else if (responseFilePaths.get(0).startsWith("file")) {
+				newProductFile.setStorageType(StorageType.POSIX);
+			} else if (responseFilePaths.get(0).startsWith("alluxio")) {
+				newProductFile.setStorageType(StorageType.ALLUXIO);
+			} else {
+				newProductFile.setStorageType(StorageType.OTHER);
+			}
+			newProductFile.setProduct(newProduct);
+			newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+			newProduct.getProductFile().add(newProductFile);
+			newProduct = RepositoryService.getProductRepository().save(newProduct);
 			
 			// Check whether there are open product queries for this product type
 			List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
