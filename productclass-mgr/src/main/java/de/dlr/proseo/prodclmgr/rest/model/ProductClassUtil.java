@@ -59,12 +59,18 @@ public class ProductClassUtil {
 			restSimpleSelectionRule.setVersion(Long.valueOf(simpleSelectionRule.getVersion()));
 			restSimpleSelectionRule.setMode(simpleSelectionRule.getMode());
 			restSimpleSelectionRule.setIsMandatory(simpleSelectionRule.getIsMandatory());
-			restSimpleSelectionRule.setSourceProductClass(modelProductClass.getProductType());
-			if (null != simpleSelectionRule.getTargetProductClass()) {
-				restSimpleSelectionRule.setTargetProductClass(simpleSelectionRule.getTargetProductClass().getProductType());
+			restSimpleSelectionRule.setTargetProductClass(modelProductClass.getProductType());
+			if (null != simpleSelectionRule.getSourceProductClass()) {
+				restSimpleSelectionRule.setSourceProductClass(simpleSelectionRule.getSourceProductClass().getProductType());
 			}
 			for (ConfiguredProcessor configuredProcessor: simpleSelectionRule.getApplicableConfiguredProcessors()) {
 				restSimpleSelectionRule.getApplicableConfiguredProcessors().add(configuredProcessor.getIdentifier());
+			}
+			for (String filterConditionKey: simpleSelectionRule.getFilterConditions().keySet()) {
+				restSimpleSelectionRule.getFilterConditions().add(
+						new Parameter(filterConditionKey,
+								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterType().toString(),
+								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterValue().toString()));
 			}
 			for (de.dlr.proseo.model.SimplePolicy simplePolicy: simpleSelectionRule.getSimplePolicies()) {
 				SimplePolicy restSimplePolicy = new SimplePolicy();

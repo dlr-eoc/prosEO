@@ -116,7 +116,7 @@ public class ProductClassUtilTest {
 		simpleSelectionRule.setMode(TEST_MODE);
 		simpleSelectionRule.setIsMandatory(true);
 		simpleSelectionRule.getApplicableConfiguredProcessors().add(configuredProcessor);
-		simpleSelectionRule.getFilterConditions().put(TEST_PARAMETER_KEY, new Parameter(ParameterType.STRING, TEST_PARAMETER_VALUE));
+		simpleSelectionRule.getFilterConditions().put(TEST_PARAMETER_KEY, (new Parameter()).init(ParameterType.STRING, TEST_PARAMETER_VALUE));
 		
 		SimplePolicy simplePolicy = new SimplePolicy();
 		simplePolicy.setPolicyType(PolicyType.LatestValCover);
@@ -156,7 +156,7 @@ public class ProductClassUtilTest {
 		assertNotNull("Applicable processors missing", restSelectionRule.getApplicableConfiguredProcessors());
 		assertEquals("Unexpected number of applicable processors:", 
 				simpleSelectionRule.getApplicableConfiguredProcessors().size(), restSelectionRule.getApplicableConfiguredProcessors().size());
-		assertEquals("Unexpected applicable configured processor:", TEST_PROCESSOR_NAME, restSelectionRule.getApplicableConfiguredProcessors().get(0));
+		assertEquals("Unexpected applicable configured processor:", TEST_CONFIGURED_PROCESSOR, restSelectionRule.getApplicableConfiguredProcessors().get(0));
 		
 		assertNotNull("Filter conditions missing", restSelectionRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", simpleSelectionRule.getFilterConditions().size(), restSelectionRule.getFilterConditions().size());
@@ -170,10 +170,10 @@ public class ProductClassUtilTest {
 		assertEquals("Unexpected number of simple policies:", simpleSelectionRule.getSimplePolicies().size(), restSelectionRule.getSimplePolicies().size());
 		de.dlr.proseo.prodclmgr.rest.model.SimplePolicy restPolicy = restSelectionRule.getSimplePolicies().get(0);
 		assertEquals("Unexpected policy type:", simplePolicy.getPolicyType().toString(), restPolicy.getPolicyType());
-		assertEquals("Unexpected delta time T0 duration:", simplePolicy.getDeltaTimeT0().duration, restPolicy.getDeltaTimeT0().duration);
-		assertEquals("Unexpected delta time T0 unit:", simplePolicy.getDeltaTimeT0().unit, restPolicy.getDeltaTimeT0().unit);
-		assertEquals("Unexpected delta time T1 duration:", simplePolicy.getDeltaTimeT1().duration, restPolicy.getDeltaTimeT1().duration);
-		assertEquals("Unexpected delta time T1 unit:", simplePolicy.getDeltaTimeT1().unit, restPolicy.getDeltaTimeT1().unit);
+		assertEquals("Unexpected delta time T0 duration:", simplePolicy.getDeltaTimeT0().duration, restPolicy.getDeltaTimeT0().duration.longValue());
+		assertEquals("Unexpected delta time T0 unit:", simplePolicy.getDeltaTimeT0().unit.toString(), restPolicy.getDeltaTimeT0().unit);
+		assertEquals("Unexpected delta time T1 duration:", simplePolicy.getDeltaTimeT1().duration, restPolicy.getDeltaTimeT1().duration.longValue());
+		assertEquals("Unexpected delta time T1 unit:", simplePolicy.getDeltaTimeT1().unit.toString(), restPolicy.getDeltaTimeT1().unit);
 		
 		logger.info("Test copy model to REST OK");
 	}
