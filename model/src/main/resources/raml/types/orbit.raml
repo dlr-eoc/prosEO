@@ -7,11 +7,11 @@
         Orbit times (and all derived times in prosEO) are given in UTC-STS (leap seconds spread evenly over the last 1000 seconds
         of the day) and to a microsecond precision. Therefore, all timestamps use the "Z" (UTC) time zone code.
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       missionCode?:

@@ -1,8 +1,8 @@
 [
     {
-        "missionCode": "S5P",
         "id": 12345,
         "version": 3,
+        "missionCode": "S5P",
         "productType": "NPP",
         "missionType": "L2__NPP___",
         "typeDescription": "Suomi-NPP VIIRS Clouds",
@@ -31,9 +31,9 @@
         ]
     },
     {
-        "missionCode": "S5P",
         "id": 12346,
         "version": 4,
+        "missionCode": "S5P",
         "productType": "NPP_BD3",
         "missionType": "L2__NP_BD3",
         "typeDescription": "Suomi-NPP VIIRS Clouds, band 3",
