@@ -26,8 +26,9 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 
 /**
- * @author thomas
- *
+ * Test class for ProductUtil
+ * 
+ * @author Dr. Thomas Bassler
  */
 public class ProductUtilTest {
 

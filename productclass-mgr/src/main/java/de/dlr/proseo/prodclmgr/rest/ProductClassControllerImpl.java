@@ -16,7 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.prodclmgr.rest.model.ProductClass;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 import de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule;
 
@@ -31,9 +32,11 @@ import de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule;
 public class ProductClassControllerImpl implements ProductclassController {
 	
 	/* Message ID constants */
+	private static final int MSG_ID_PRODUCT_CLASS_MISSING = 2100;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
+	private static final String MSG_PRODUCT_CLASS_MISSING = "Product class not set (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-productclass-mgr ";
 
@@ -50,10 +53,10 @@ public class ProductClassControllerImpl implements ProductclassController {
      *         NOT_FOUND, if no such product classes exist
      */
 	@Override
-	public ResponseEntity<List<ProductClass>> getProductClass(String mission, String productType, String missionType) {
+	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String productType, String missionType) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "GET for ProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "GET for RestProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -67,14 +70,27 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @return a Json object describing the product class created (including ID and version) and HTTP status CREATED
      */
 	@Override
-	public ResponseEntity<ProductClass> createProductClass(ProductClass productClass) {
+	public ResponseEntity<RestProductClass> createRestProductClass(RestProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createRestProductClass({})", (null == productClass ? "MISSING" : productClass.getProductType()));
+		
+		if (null == productClass) {
+			String message = String.format(MSG_PREFIX + MSG_PRODUCT_CLASS_MISSING, MSG_ID_PRODUCT_CLASS_MISSING);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		}
+		
+		ProductClass modelProductClass = new ProductClass();
+		
+		
 		// TODO Auto-generated method stub
 
-		String message = String.format(MSG_PREFIX + "POST for ProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "POST for RestProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
 	}
 
     /**
@@ -84,14 +100,14 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @return a Json object describing the product class and HTTP status OK
      */
 	@Override
-	public ResponseEntity<ProductClass> getProductClassById(Long id) {
+	public ResponseEntity<RestProductClass> getRestProductClassById(Long id) {
 		// TODO Auto-generated method stub
 
-		String message = String.format(MSG_PREFIX + "GET for ProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "GET for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
 	}
 
     /**
@@ -103,10 +119,10 @@ public class ProductClassControllerImpl implements ProductclassController {
      * 		   or HTTP status NOT_FOUND, if the requested product class does not exist
     */
 	@Override
-	public ResponseEntity<ProductClass> modifyProductClass(Long id, ProductClass productClass) {
+	public ResponseEntity<RestProductClass> modifyRestProductClass(Long id, RestProductClass productClass) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "PATCH for ProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "PATCH for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -123,7 +139,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<?> deleteProductclassById(Long id) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "DELETE for ProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "DELETE for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -141,7 +157,7 @@ public class ProductClassControllerImpl implements ProductclassController {
     public ResponseEntity<List<SelectionRuleString>> getSelectionRuleStrings(Long id, String sourceClass) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "GET for SelectionRuleString with ProductClass id and source product type not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "GET for SelectionRuleString with RestProductClass id and source product type not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -159,7 +175,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<SimpleSelectionRule> createSelectionRuleString(Long id, @Valid List<SelectionRuleString> selectionRuleString) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "POST for SelectionRuleString with ProductClass id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "POST for SelectionRuleString with RestProductClass id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -178,7 +194,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<SelectionRuleString> getSelectionRuleString(Long ruleid, Long id) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "GET for SelectionRuleString with ProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "GET for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -199,7 +215,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 			SelectionRuleString selectionRuleString) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "PATCH for SelectionRuleString with ProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "PATCH for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -217,7 +233,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<?> deleteSelectionrule(Long ruleid, Long id) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "DELETE for SelectionRuleString with ProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "DELETE for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -236,7 +252,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<?> addProcessorToRule(String configuredProcessor, Long ruleid, Long id) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "PUT for SelectionRuleString with ProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "PUT for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -255,7 +271,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<?> removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "DELETE for SelectionRuleString with ProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
+		String message = String.format(MSG_PREFIX + "DELETE for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);

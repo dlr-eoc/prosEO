@@ -36,6 +36,7 @@ import de.dlr.proseo.model.Parameter;
 public class ProductControllerImpl implements ProductController {
 	
 	/* Message ID constants */
+	private static final int MSG_ID_PRODUCT_MISSING = 2000;
 	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2001;
 	private static final int MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND = 2002;
 	private static final int MSG_ID_COMPONENT_PRODUCT_NOT_FOUND = 2003;
@@ -43,6 +44,7 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
+	private static final String MSG_PRODUCT_MISSING = "Product not set (%d)";
 	private static final String MSG_PRODUCT_NOT_FOUND = "No product found for ID %d (%d)";
 	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "Enclosing product with ID %d not found (%d)";
 	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "Component product with ID %d not found (%d)";
@@ -140,8 +142,16 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<RestProduct> createProduct(
 			de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", product.getProductClass());
+		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
 		
+		if (null == product) {
+			String message = String.format(MSG_PREFIX + MSG_PRODUCT_MISSING, MSG_ID_PRODUCT_MISSING);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+		}
+
 		Product modelProduct = ProductUtil.toModelProduct(product);
 		
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(

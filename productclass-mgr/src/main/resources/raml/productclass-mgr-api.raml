@@ -24,7 +24,7 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
   SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
   SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   SelectionRule: SimpleSelectionRule[]
@@ -80,19 +80,19 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProductClass[]
+            type: RestProductClass[]
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
   post:
     description: Create a new product class
     body:
       application/json:
-        type: ProductClass
+        type: RestProductClass
         example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     responses:
       201:
         body:
           application/json:
-            type: ProductClass
+            type: RestProductClass
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
   /{id}:
     uriParameters:
@@ -105,19 +105,19 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     patch:
       description: Update a product class by ID
       body:
         application/json:
-          type: ProductClass
+          type: RestProductClass
           example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
       responses:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
       description: Delete a product class by ID

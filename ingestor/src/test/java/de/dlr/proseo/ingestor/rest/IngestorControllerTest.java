@@ -231,8 +231,6 @@ public class IngestorControllerTest {
 	public final void testIngestProducts() {
 		
 		// Make sure processing facility and product class exist
-		TransactionStatus ts = txManager.getTransaction(new DefaultTransactionDefinition());
-		
 		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
 		if (null == mission) {
 			mission = new Mission();
@@ -285,9 +283,6 @@ public class IngestorControllerTest {
 		facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
 		facility.setStorageManagerUrl(config.getStorageManagerUrl());
 		facility = RepositoryService.getFacilityRepository().save(facility);
-		
-		// Commit transaction to make objects visible for Ingestor
-		txManager.commit(ts);
 		
 		// Create a directory with product data files
 		// Static: src/test/resources/IDA_test

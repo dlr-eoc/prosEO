@@ -8,6 +8,9 @@ package de.dlr.proseo.ingestor.rest.model;
 import java.time.DateTimeException;
 import java.time.Instant;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dlr.proseo.model.Product;
 
 /**
@@ -17,6 +20,9 @@ import de.dlr.proseo.model.Product;
  */
 public class ProductUtil {
 
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
+	
 	/**
 	 * Convert a prosEO model product into a REST product
 	 * 
@@ -24,6 +30,8 @@ public class ProductUtil {
 	 * @return an equivalent REST product or null, if no model product was given
 	 */
 	public static RestProduct toRestProduct(Product modelProduct) {
+		if (logger.isTraceEnabled()) logger.trace(">>> toRestProduct({})", (null == modelProduct ? "MISSING" : modelProduct.getId()));
+
 		if (null == modelProduct)
 			return null;
 		
@@ -87,10 +95,15 @@ public class ProductUtil {
 	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no product references)
 	 * 
 	 * @param restProduct the REST product
-	 * @return a (roughly) equivalent model product
+	 * @return a (roughly) equivalent model product or null, if no REST product was given
 	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
 	 */
 	public static Product toModelProduct(RestProduct restProduct) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelProduct({})", (null == restProduct ? "MISSING" : restProduct.getProductClass()));
+
+		if (null == restProduct)
+			return null;
+		
 		Product modelProduct = new Product();
 		
 		if (null != restProduct.getId() && 0 != restProduct.getId()) {
