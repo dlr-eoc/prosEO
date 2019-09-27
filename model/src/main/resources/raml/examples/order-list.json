@@ -1,8 +1,8 @@
 [
     {
-        "missionCode": "S5P",
         "id": 12345,
         "version": 3,
+        "missionCode": "S5P",
         "identifier": "RPRO Orbits 4567-5678",
         "orderState": "INITIAL",
         "startTime": "2018-05-17T00:00:00.000000Z",
@@ -72,9 +72,9 @@
         ]
     },
     {
-        "missionCode": "S5P",
         "id": 12346,
         "version": 3,
+        "missionCode": "S5P",
         "identifier": "RPRO Orbit 4711",
         "orderState": "RELEASED",
         "startTime": "2018-06-13T09:23:45.396521Z",
