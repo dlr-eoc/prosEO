@@ -78,7 +78,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 			logger.error(message);
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
 		}
 		
 		ProductClass modelProductClass = new ProductClass();

@@ -51,7 +51,7 @@ public class ProductClassControllerTest {
 	
 
 	/* The base URI of the Ingestor */
-	private static String PRODUCT_CLASS_BASE_URI = "/proseo/productclass-mgr/v0.1";
+	private static String PRODUCT_CLASS_BASE_URI = "/proseo/productclass-mgr/v0.1/productclasses";
 
 	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
