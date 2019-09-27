@@ -18,7 +18,7 @@
       missionType:
         type: string
         description: The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission
-      typeDescription:
+      typeDescription?:
         type: string
         description: A short description of the product type to display as informational text on the user interface
       componentClasses?:
@@ -30,6 +30,6 @@
       processorClass?:
         type: string
         description: User-defined unique processor class name for the processor class that can generate products of this class
-      selectionRule:
+      selectionRule?:
         type: SelectionRule
         description: The (set of) selection rules applicable for this product class
