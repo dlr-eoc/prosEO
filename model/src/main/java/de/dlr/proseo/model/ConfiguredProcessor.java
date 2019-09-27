@@ -54,6 +54,42 @@ public class ConfiguredProcessor extends PersistentObject {
 		this.identifier = identifier;
 	}
 
+	/**
+	 * Gets the associated versioned processor
+	 * 
+	 * @return the processor
+	 */
+	public Processor getProcessor() {
+		return processor;
+	}
+
+	/**
+	 * Sets the associated versioned processor
+	 * 
+	 * @param processor the processor to set
+	 */
+	public void setProcessor(Processor processor) {
+		this.processor = processor;
+	}
+
+	/**
+	 * Gets the associated processor configuration
+	 * 
+	 * @return the configuration
+	 */
+	public Configuration getConfiguration() {
+		return configuration;
+	}
+
+	/**
+	 * Sets the associated processor configuration
+	 * 
+	 * @param configuration the configuration to set
+	 */
+	public void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
