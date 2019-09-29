@@ -28,7 +28,8 @@ ansible playbook to configure a public k8s-gateway
 ### k8s-access from your localhost
 - install kubectl
 - copy kubectl-config file to .kube/config
-- change property `server` to https://proseo-k8s-gate.de/otc-proseo01
+- in file .kube/config **change** property `server` to https://proseo-k8s-gate.de/otc-proseo01
+- in file .kube/config **remove** property `certificate-authority-data`
 - run "kubectl config use-context internal"
 - test it with: kubectl cluster-info
 
