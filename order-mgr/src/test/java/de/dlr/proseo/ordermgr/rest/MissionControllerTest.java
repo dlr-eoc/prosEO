@@ -50,28 +50,28 @@ public class MissionControllerTest {
 	/* Test missions */
 	private static String[][] testMissionData = {
 		// id, version, mission code, name
-		{ "0", "1", "ABCe", "ABCD Testing"},
-		{ "0", "1", "DEFg", "DefrostMission"},
-		{ "0", "1", "XY1Z", "XYZ Testing" }
+		{ "0", "0", "ABCe", "ABCD Testing"},
+		{ "1", "1", "DEFg", "DefrostMission"},
+		{ "2", "2", "XY1Z", "XYZ Testing" }
 	};
 	
 	private de.dlr.proseo.model.Mission createMission(String[] testData) {
 		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
-		
 		logger.info("... creating mission ");
 		testMission.setCode(testData[2]);
 		testMission.setName(testData[3]);
 		
 		testMission = RepositoryService.getMissionRepository().save(testMission);
-		
 		logger.info("Created test mission {}", testMission.getId());
 		return testMission;
 	}
 	
 	private List<de.dlr.proseo.model.Mission> createTestMissions() {
 		logger.info("Creating test missions");
-		List<de.dlr.proseo.model.Mission> testMissions = new ArrayList<>();
+		List<de.dlr.proseo.model.Mission> testMissions = new ArrayList<>();		
 		for (int i = 0; i < testMissionData.length; ++i) {
+			logger.info("Creating test missions 1:"+ testMissionData[i][2]);
+
 			testMissions.add(createMission(testMissionData[i]));
 		}
 		return testMissions;
@@ -109,7 +109,7 @@ public class MissionControllerTest {
 		// Clean up database
 		ArrayList<de.dlr.proseo.model.Mission> testMission = new ArrayList<>();
 		testMission.add(missionToCreate);
-		deleteTestMissions(testMission);
+		//deleteTestMissions(testMission);
 
 		logger.info("Test OK: Create mission");		
 	}	
@@ -117,7 +117,8 @@ public class MissionControllerTest {
 	public final void testGetMissions() {
 		// Make sure test missions exist
 		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
-		
+		logger.info("Coming here");
+
 		// Get missions using different selection criteria (also combined)
 		String testUrl = "http://localhost:" + this.port + MISSION_BASE_URI + "/missions";
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", testUrl, config.getUserName(), config.getUserPassword());
@@ -156,12 +157,12 @@ public class MissionControllerTest {
 		// TODO Tests with different selection criteria
 		
 		// Clean up database
-		deleteTestMissions(testMissions);
+		//deleteTestMissions(testMissions);
 
 		logger.info("Test OK: Get Missions");
 	}
 	
-	public final void testGetMissionById() {
+		public final void testGetMissionById() {
 		// Make sure test missions exist
 		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
 		de.dlr.proseo.model.Mission missionToFind = testMissions.get(0);
