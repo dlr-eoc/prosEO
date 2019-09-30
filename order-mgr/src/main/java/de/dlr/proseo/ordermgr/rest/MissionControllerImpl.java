@@ -31,19 +31,15 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class MissionControllerImpl implements MissionController {
 
 	/* Message ID constants */
-	private static final int MSG_ID_MISSION_NOT_FOUND = 2001;
-	private static final int MSG_ID_ENCLOSING_MISSION_NOT_FOUND = 2002;
-	private static final int MSG_ID_COMPONENT_MISSION_NOT_FOUND = 2003;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2004;
+	private static final int MSG_ID_MISSION_NOT_FOUND = 1001;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_MISSION_NOT_FOUND = "No mission found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_MISSION_NOT_FOUND = "Enclosing mission with ID %d not found (%d)";
-	private static final String MSG_COMPONENT_MISSION_NOT_FOUND = "Component mission with ID %d not found (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Mission deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ordermanager ";
+	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerImpl.class);
@@ -95,10 +91,7 @@ public class MissionControllerImpl implements MissionController {
 
 	@Override
 	public ResponseEntity<Mission> updateMission(Long id, @Valid Mission mission) {
-		// TODO Auto-generated method stub
-		return null;
-	
-		/*if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
 		
 		Optional<de.dlr.proseo.model.Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);
 		
@@ -130,7 +123,7 @@ public class MissionControllerImpl implements MissionController {
 			modelMission = RepositoryService.getMissionRepository().save(modelMission);
 		}
 		
-		return new ResponseEntity<>(MissionUtil.toRestMission(modelMission), HttpStatus.OK);*/
+		return new ResponseEntity<>(MissionUtil.toRestMission(modelMission), HttpStatus.OK);
 	
 	}
 

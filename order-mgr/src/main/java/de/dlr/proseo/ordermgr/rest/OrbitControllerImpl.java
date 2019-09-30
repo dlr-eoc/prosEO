@@ -33,19 +33,14 @@ import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 public class OrbitControllerImpl implements OrbitController {
 		
 	/* Message ID constants */
-	private static final int MSG_ID_ORBIT_NOT_FOUND = 2001;
-	private static final int MSG_ID_ENCLOSING_ORBIT_NOT_FOUND = 2002;
-	private static final int MSG_ID_COMPONENT_ORBIT_NOT_FOUND = 2003;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2004;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_ORBIT_NOT_FOUND = 1005;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
 	
 	/* Message string constants */
 	private static final String MSG_ORBIT_NOT_FOUND = "No orbit found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_ORBIT_NOT_FOUND = "Enclosing orbit with ID %d not found (%d)";
-	private static final String MSG_COMPONENT_ORBIT_NOT_FOUND = "Component orbit with ID %d not found (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Orbit deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ordermanager ";
+	private static final String MSG_PREFIX = "199 proseo-ordermgr-orbitcontroller ";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
