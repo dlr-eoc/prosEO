@@ -67,3 +67,12 @@ cd /opt/alluxio
 ./bin/alluxio runTests
 ```
 
+### Rollback & Delete
+
+```sh
+kubectl delete -f alluxio-worker.yaml
+kubectl delete -f alluxio-master.yaml
+kubectl delete -f alluxio-journal-volume.yaml
+kubectl delete -f alluxio-configMap.yaml
+```
+
