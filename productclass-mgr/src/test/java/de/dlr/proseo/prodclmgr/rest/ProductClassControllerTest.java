@@ -129,6 +129,7 @@ public class ProductClassControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
