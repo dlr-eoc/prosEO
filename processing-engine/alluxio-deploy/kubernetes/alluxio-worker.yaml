@@ -36,7 +36,7 @@ spec:
               cpu: "1.5"
               memory: "1G"
           command: ["/entrypoint.sh"]
-          args: ["worker-only", "--no-format"]
+          args: ["worker-only"]
           env:
           - name: ALLUXIO_WORKER_HOSTNAME
             valueFrom:
