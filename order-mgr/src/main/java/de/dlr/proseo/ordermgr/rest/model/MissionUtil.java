@@ -50,6 +50,14 @@ public class MissionUtil {
 		
 		return restMission;
 	}
+	
+	/**
+	 * Convert a REST mission into a prosEO model mission (scalar and embedded attributes only, no mission references)
+	 * 
+	 * @param restMission the REST mission
+	 * @return a (roughly) equivalent model mission
+	 * @throws IllegalArgumentException if the REST mission violates syntax rules for date, enum or numeric values
+	 */
 
 	public static de.dlr.proseo.model.Mission toModelMission(Mission restMission) throws IllegalArgumentException{
 		// TODO Auto-generated method stub
