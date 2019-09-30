@@ -43,7 +43,7 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_COMPONENT_MISSION_NOT_FOUND = "Component mission with ID %d not found (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Mission deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ingestor ";
+	private static final String MSG_PREFIX = "199 proseo-ordermanager ";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerImpl.class);

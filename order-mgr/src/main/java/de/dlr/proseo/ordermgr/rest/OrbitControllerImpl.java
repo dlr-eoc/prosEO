@@ -40,12 +40,12 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_ORBIT_NOT_FOUND = "No mission found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_ORBIT_NOT_FOUND = "Enclosing mission with ID %d not found (%d)";
+	private static final String MSG_ORBIT_NOT_FOUND = "No orbit found for ID %d (%d)";
+	private static final String MSG_ENCLOSING_ORBIT_NOT_FOUND = "Enclosing orbit with ID %d not found (%d)";
 	private static final String MSG_COMPONENT_ORBIT_NOT_FOUND = "Component orbit with ID %d not found (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Orbit deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ingestor ";
+	private static final String MSG_PREFIX = "199 proseo-ordermanager ";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
