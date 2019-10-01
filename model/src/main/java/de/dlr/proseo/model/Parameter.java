@@ -7,7 +7,10 @@ package de.dlr.proseo.model;
 
 import java.io.Serializable;
 
+import javax.persistence.Basic;
 import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
@@ -23,6 +26,8 @@ public class Parameter {
 	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
 	
 	/** The type of the parameter */
+	@Enumerated(EnumType.STRING)
+	@Basic(optional = false)
 	private ParameterType parameterType;
 	
 	/** The parameter value */

@@ -16,9 +16,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import javax.persistence.Basic;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.OrderColumn;
 
 import org.slf4j.Logger;
@@ -48,6 +51,8 @@ public class SimplePolicy extends PersistentObject {
 	}
 	
 	/** The policy type to use */
+	@Enumerated(EnumType.STRING)
+	@Basic(optional = false)
 	private PolicyType policyType;
 
 	/** 

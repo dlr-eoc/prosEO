@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -61,7 +62,7 @@ public class Product extends PersistentObject {
 	private Orbit orbit;
 	
 	/** Product files for this product */
-	@OneToMany(mappedBy = "product")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "product")
 	private Set<ProductFile> productFile = new HashSet<>();
 	
 	/** Product queries satisfied by this product */

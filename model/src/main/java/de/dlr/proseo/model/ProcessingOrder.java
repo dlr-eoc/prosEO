@@ -17,6 +17,8 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -44,6 +46,7 @@ public class ProcessingOrder extends PersistentObject {
 	private String identifier;
 	
 	/** State of the processing order */
+	@Enumerated(EnumType.STRING)
 	private OrderState orderState;
 	
 	/** Expected execution time (optional, used for scheduling) */
@@ -65,12 +68,12 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant stopTime;
 	
 	/** A set of additional conditions to apply to selected products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
+	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
 	@ElementCollection
 	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/** A set of parameters to set for the generated products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
+	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
 	private Map<String, Parameter> outputParameters = new HashMap<>();

@@ -12,6 +12,8 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -35,6 +37,7 @@ public class JobStep extends PersistentObject {
 	 * job steps in status WAITING_INPUT and READY can be returned to INITIAL status. All other status transitions are automatic
 	 * depending on processing progress.
 	 */
+	@Enumerated(EnumType.STRING)
 	private JobStepState jobStepState;
 	
 	/** Additional parameter to set in the output products */
