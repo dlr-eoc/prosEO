@@ -335,7 +335,7 @@ public class ProductClassControllerTest {
 		// Check result
 		assertNotNull("Product class missing", restProductClass);
 		assertNotNull("List of selection rules missing", restProductClass.getSelectionRule());
-		assertEquals("Unexpected number of selection rules:", ruleStrings.size(), restProductClass.getSelectionRule());
+		assertEquals("Unexpected number of selection rules:", ruleStrings.size(), restProductClass.getSelectionRule().size());
 		
 		de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
 		assertEquals("Unexpected mode:", TEST_MODE, responseRule.getMode());
@@ -364,9 +364,9 @@ public class ProductClassControllerTest {
 				assertEquals("Unexpected LatestValIntersect delta time 1 unit:", TimeUnit.MINUTES.toString(), responsePolicy.getDeltaTimeT1().getUnit());
 			} else if ("LatestValidity".equals(responsePolicy.getPolicyType())) {
 				assertEquals("Unexpected LatestValidity delta time 0 duration:", 0, responsePolicy.getDeltaTimeT0().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.HOURS.toString(), responsePolicy.getDeltaTimeT0().getUnit());
+				assertEquals("Unexpected LatestValidity delta time 0 unit:", TimeUnit.DAYS.toString(), responsePolicy.getDeltaTimeT0().getUnit());
 				assertEquals("Unexpected LatestValidity delta time 1 duration:", 0, responsePolicy.getDeltaTimeT1().getDuration().longValue());
-				assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.HOURS.toString(), responsePolicy.getDeltaTimeT1().getUnit());
+				assertEquals("Unexpected LatestValidity delta time 1 unit:", TimeUnit.DAYS.toString(), responsePolicy.getDeltaTimeT1().getUnit());
 			} else {
 				fail("Unexpected policy type: " + responsePolicy.getPolicyType());
 			}
