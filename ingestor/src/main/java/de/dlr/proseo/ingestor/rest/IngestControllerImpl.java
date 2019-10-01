@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,21 +58,23 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_INVALID_PRODUCT_TYPE = 2055;
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 2056;
 	private static final int MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS = 2057;
+	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
 	/* Message string constants */
-	private static final String MSG_INVALID_PROCESSING_FACILITY = "Invalid processing facility %s for ingestion (%d)";
-	private static final String MSG_ERROR_STORING_PRODUCT = "Error storing product of class %s at processing facility %s (%d)";
-	private static final String MSG_NEW_PRODUCT_ADDED = "New product with ID %d and product type %s added to database (%d)";
-	private static final String MSG_ERROR_NOTIFYING_PLANNER = "Error notifying prosEO Production Planner of new product %d of type %s (%d)";
-	private static final String MSG_INVALID_PRODUCT_TYPE = "Invalid product type %s for ingestor product (%d)";
-	private static final String MSG_ORBIT_NOT_FOUND = "Orbit %d for spacecraft %s not found (%d)";
-	private static final String MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS = "Unexpected number of file paths (%d, expected: %d) received from Storage Manager at %s (%d)";
-	private static final String MSG_EXCEPTION_THROWN = "Exception thrown: %s (%d)";
+	private static final String MSG_INVALID_PROCESSING_FACILITY = "(E%d) Invalid processing facility %s for ingestion";
+	private static final String MSG_ERROR_STORING_PRODUCT = "(E%d) Error storing product of class %s at processing facility %s";
+	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
+	private static final String MSG_ERROR_NOTIFYING_PLANNER = "(E%d) Error notifying prosEO Production Planner of new product %d of type %s";
+	private static final String MSG_INVALID_PRODUCT_TYPE = "(E%d) Invalid product type %s for ingestor product";
+	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) Orbit %d for spacecraft %s not found";
+	private static final String MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS = "(E%d) Unexpected number of file paths (%d, expected: %d) received from Storage Manager at %s";
+	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
+	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested in processing facility %s";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ingestor ";
+	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestControllerImpl.class);
@@ -83,6 +86,45 @@ public class IngestControllerImpl implements IngestController {
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
+	
+	/**
+	 * Log an informational message with the prosEO message prefix
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 */
+	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		logger.info(String.format(messageFormat, messageParamList.toArray()));
+	}
+	
+	/**
+	 * Log an error and return the corresponding HTTP message header
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return an HttpHeaders object with a formatted error message
+	 */
+	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		logger.error(message);
+		
+		// Create an HTTP "Warning" header
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		return responseHeaders;
+	}
 	
     /**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
@@ -101,19 +143,15 @@ public class IngestControllerImpl implements IngestController {
 		try {
 			processingFacility = URLDecoder.decode(processingFacility, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			String message = String.format(MSG_PREFIX + MSG_EXCEPTION_THROWN, e.getMessage(), MSG_ID_EXCEPTION_THROWN);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
 		if (null == facility) {
-			String message = String.format(MSG_PREFIX + MSG_INVALID_PROCESSING_FACILITY, processingFacility, MSG_ID_INVALID_FACILITY);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility), 
+					HttpStatus.BAD_REQUEST);
 		}
 		
 		List<RestProduct> result = new ArrayList<>();
@@ -126,11 +164,9 @@ public class IngestControllerImpl implements IngestController {
 			ProductClass productClass = RepositoryService.getProductClassRepository()
 					.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
 			if (null == productClass) {
-				String message = String.format(MSG_PREFIX + MSG_INVALID_PRODUCT_TYPE, ingestorProduct.getProductClass(), MSG_ID_INVALID_PRODUCT_TYPE);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(
+						errorHeaders(MSG_INVALID_PRODUCT_TYPE, MSG_ID_INVALID_PRODUCT_TYPE, ingestorProduct.getProductClass()), 
+						HttpStatus.BAD_REQUEST);
 			}
 			newProduct.setProductClass(productClass);
 			
@@ -138,18 +174,14 @@ public class IngestControllerImpl implements IngestController {
 					ingestorProduct.getOrbit().getSpacecraftCode(), 
 					ingestorProduct.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
-				String message = String.format(MSG_PREFIX + MSG_ORBIT_NOT_FOUND, 
-						ingestorProduct.getOrbit().getOrbitNumber().intValue(), ingestorProduct.getOrbit().getSpacecraftCode(), MSG_ID_ORBIT_NOT_FOUND);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(
+						errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, ingestorProduct.getOrbit().getOrbitNumber(), ingestorProduct.getOrbit().getSpacecraftCode()), 
+						HttpStatus.BAD_REQUEST);
 			}
 			newProduct.setOrbit(orbit);
 			
 			newProduct = RepositoryService.getProductRepository().save(newProduct);
-			logger.info(String.format(MSG_NEW_PRODUCT_ADDED, newProduct.getId(), newProduct.getProductClass().getProductType(),
-					MSG_ID_NEW_PRODUCT_ADDED));
+			logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newProduct.getId(), newProduct.getProductClass().getProductType());
 			
 			// Build post data for storage manager
 			Map<String, Object> postData = new HashMap<>();
@@ -169,12 +201,9 @@ public class IngestControllerImpl implements IngestController {
 			@SuppressWarnings("rawtypes")
 			ResponseEntity<Map> responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
 			if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
-				String message = String.format(MSG_PREFIX + MSG_ERROR_STORING_PRODUCT, 
-						ingestorProduct.getProductClass(), processingFacility, MSG_ID_ERROR_STORING_PRODUCT);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, responseEntity.getStatusCode());
+				return new ResponseEntity<>(
+						errorHeaders(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT, ingestorProduct.getProductClass(), processingFacility), 
+						responseEntity.getStatusCode());
 			}
 			
 			// Extract the product file paths from the response
@@ -183,12 +212,9 @@ public class IngestControllerImpl implements IngestController {
 			@SuppressWarnings("unchecked")
 			List<String> responseFilePaths = (List<String>) responseBody.get("filePaths");
 			if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
-				String message = String.format(MSG_PREFIX + MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, 
-						responseFilePaths.size(), filePaths.size(), processingFacility, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, responseEntity.getStatusCode());
+				return new ResponseEntity<>(
+						errorHeaders(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS, responseFilePaths.size(), filePaths.size(), processingFacility), 
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
 			newProductFile.setProcessingFacility(facility);
@@ -221,12 +247,9 @@ public class IngestControllerImpl implements IngestController {
 						ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
 				ResponseEntity<?> response = restTemplate.patchForObject(productionPlannerUrl, null, ResponseEntity.class);
 				if (!HttpStatus.OK.equals(response.getStatusCode())) {
-					String message = String.format(MSG_PREFIX + MSG_ERROR_NOTIFYING_PLANNER, 
-							newProduct.getId(), newProduct.getProductClass().getProductType(), MSG_ID_ERROR_NOTIFYING_PLANNER);
-					logger.error(message);
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(HTTP_HEADER_WARNING, message);
-					return new ResponseEntity<>(responseHeaders, response.getStatusCode());
+					return new ResponseEntity<>(
+							errorHeaders(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER, newProduct.getId(), newProduct.getProductClass().getProductType()), 
+							response.getStatusCode());
 				}
 			}
 			
@@ -235,6 +258,8 @@ public class IngestControllerImpl implements IngestController {
 			result.add(restProduct);
 		}
 		
+		logInfo(MSG_PRODUCTS_INGESTED, MSG_ID_PRODUCTS_INGESTED, result.size(), processingFacility);
+
 		return new ResponseEntity<>(result, HttpStatus.CREATED);
 	}
 
@@ -248,11 +273,9 @@ public class IngestControllerImpl implements IngestController {
 	public ResponseEntity<ProductFile> getProductFile(Long productId, String processingFacility) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "GET for product file by processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(
+				errorHeaders("GET for product file by processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), 
+				HttpStatus.NOT_IMPLEMENTED);
 	}
 
     /**
@@ -265,11 +288,9 @@ public class IngestControllerImpl implements IngestController {
 	        ProductFile productFile) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "POST for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(
+				errorHeaders("POST for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), 
+				HttpStatus.NOT_IMPLEMENTED);
 	}
 
     /**
@@ -280,11 +301,9 @@ public class IngestControllerImpl implements IngestController {
 	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "DELETE for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(
+				errorHeaders("DELETE for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), 
+				HttpStatus.NOT_IMPLEMENTED);
 	}
 
     /**
@@ -295,11 +314,9 @@ public class IngestControllerImpl implements IngestController {
 	public ResponseEntity<ProductFile> modifyProductFile(Long productId, String processingFacility, ProductFile productFile) {
 		// TODO Auto-generated method stub
 		
-		String message = String.format(MSG_PREFIX + "PATCH for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(
+				errorHeaders("PATCH for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), 
+				HttpStatus.NOT_IMPLEMENTED);
 	}
 
 }

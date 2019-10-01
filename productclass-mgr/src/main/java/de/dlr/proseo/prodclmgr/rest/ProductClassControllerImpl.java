@@ -80,7 +80,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static final String MSG_INVALID_TIME_UNIT = "(E%d) Invalid time unit %s in selection rule, one of {DAYS, HOURS, MINUTES, SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS} expected";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-productclass-mgr ";
+	private static final String HTTP_MSG_PREFIX = "199 proseo-productclass-mgr ";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
@@ -98,7 +98,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		logger.info(String.format(MSG_PREFIX + messageFormat, messageParamList.toArray()));
+		logger.info(String.format(messageFormat, messageParamList.toArray()));
 	}
 	
 	/**
@@ -115,14 +115,15 @@ public class ProductClassControllerImpl implements ProductclassController {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		String message = String.format(MSG_PREFIX + messageFormat, messageParamList.toArray());
+		String message = String.format(messageFormat, messageParamList.toArray());
 		logger.error(message);
 		
 		// Create an HTTP "Warning" header
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
 		return responseHeaders;
 	}
+	
     /**
      * Get product classes by mission, product type or mission type
      * 
