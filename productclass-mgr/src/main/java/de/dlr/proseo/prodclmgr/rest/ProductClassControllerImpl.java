@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.prodclmgr.rest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -13,7 +15,7 @@ import javax.validation.Valid;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -82,7 +84,23 @@ public class ProductClassControllerImpl implements ProductclassController {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
-
+	
+	/**
+	 * Log an informational message with the prosEO message prefix
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 */
+	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		logger.info(String.format(MSG_PREFIX + messageFormat, messageParamList.toArray()));
+	}
+	
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
@@ -92,8 +110,15 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
-		String message = String.format(MSG_PREFIX + messageFormat, messageId, messageParameters);
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		String message = String.format(MSG_PREFIX + messageFormat, messageParamList.toArray());
 		logger.error(message);
+		
+		// Create an HTTP "Warning" header
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return responseHeaders;
@@ -133,22 +158,22 @@ public class ProductClassControllerImpl implements ProductclassController {
 		// Create product class object
 		ProductClass modelProductClass = ProductClassUtil.toModelProductClass(productClass);
 		Mission mission = RepositoryService.getMissionRepository().findByCode(productClass.getMissionCode());
-		if (null == modelProductClass.getMission()) {
+		if (null == mission) {
 			return new ResponseEntity<>(
-					errorHeaders(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, productClass.getMissionCode()), HttpStatus.BAD_REQUEST);
+					errorHeaders(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, productClass.getMissionCode().toString()), HttpStatus.BAD_REQUEST);
 		}
 		modelProductClass.setMission(mission);
 		
 		// Try to save the product class, make sure product class does not yet exist
 		try {
 			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
-		} catch (DuplicateKeyException e) {
+		} catch (DataIntegrityViolationException e) {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS, productClass.getProductType(), productClass.getMissionCode()), HttpStatus.BAD_REQUEST);
 		} catch (DataAccessException e) {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
-							productClass.getProductType(), productClass.getMissionCode(), e.getMessage()), 
+							productClass.getProductType(), productClass.getMissionCode(), e.getClass().toString() + ": " + e.getMessage()), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -253,9 +278,9 @@ public class ProductClassControllerImpl implements ProductclassController {
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		logger.info(String.format(MSG_PREFIX + MSG_PRODUCT_CLASS_CREATED, MSG_ID_PRODUCT_CLASS_CREATED, modelProductClass.getProductType(), mission.getCode()));
+		logInfo(MSG_PRODUCT_CLASS_CREATED, MSG_ID_PRODUCT_CLASS_CREATED, modelProductClass.getProductType(), mission.getCode());
 		
-		return new ResponseEntity<>(ProductClassUtil.toRestProductClass(null), HttpStatus.CREATED);
+		return new ResponseEntity<>(ProductClassUtil.toRestProductClass(modelProductClass), HttpStatus.CREATED);
 	}
 
     /**

@@ -170,9 +170,16 @@ public class ProductClassControllerTest {
 		newSelectionRule.getSimplePolicies().add(newSimplePolicy);
 		restProductClass.getSelectionRule().add(newSelectionRule);
 		
+		// Make sure the new class does not yet exist
+		ProductClass deleteProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_NEW_PRODUCT_TYPE);
+		if (null != deleteProductClass) {
+			RepositoryService.getProductClassRepository().delete(deleteProductClass);
+		}
+		
 		// Call the REST API
 		String testUrl = "http://localhost:" + port + PRODUCT_CLASS_BASE_URI + "/";
 		logger.info("Testing URL {} / POST", testUrl);
+		logger.debug("Post data: " + restProductClass);
 
 		ResponseEntity<RestProductClass> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.postForEntity(testUrl, restProductClass, RestProductClass.class);
