@@ -154,6 +154,20 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @return the filteredSourceProductType
 	 */
 	public String getFilteredSourceProductType() {
+		if (null == filteredSourceProductType) {
+			StringBuilder fsptBuilder = new StringBuilder(sourceProductClass.getProductType());
+			boolean first = true;
+			for (String filterConditionKey: filterConditions.keySet()) {
+				if (first) {
+					first = false;
+					fsptBuilder.append('/');
+				} else {
+					fsptBuilder.append(',');
+				}
+				fsptBuilder.append(filterConditionKey).append(':').append(filterConditions.get(filterConditionKey).toString());
+			}
+			filteredSourceProductType = fsptBuilder.toString();
+		}
 		return filteredSourceProductType;
 	}
 
@@ -392,18 +406,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	 */
 	public String toString() {
 		StringBuilder simpleRuleString = new StringBuilder("FOR ");
-		simpleRuleString.append(sourceProductClass.getProductType());
-		if (0 < filterConditions.size()) {
-			simpleRuleString.append('/');
-			boolean first = true;
-			for (String filterKey: filterConditions.keySet()) {
-				if (first)
-					first = false;
-				else
-					simpleRuleString.append(',');
-				simpleRuleString.append(filterKey).append(':').append(filterConditions.get(filterKey).getStringValue());
-			}
-		}
+		simpleRuleString.append(this.getFilteredSourceProductType());
 		simpleRuleString.append(" SELECT ");
 		boolean first = true;
 		for (SimplePolicy simplePolicy: simplePolicies) {
