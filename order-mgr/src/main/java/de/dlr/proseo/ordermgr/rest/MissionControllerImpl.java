@@ -40,6 +40,8 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Mission deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
+	private static final String MSG_MISSIONS_NOT_FOUND = "No missions found";
+
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerImpl.class);
@@ -49,6 +51,16 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
 		
 		List<de.dlr.proseo.ordermgr.rest.model.Mission> result = new ArrayList<>();
+		String message = String.format(HTTP_HEADER_WARNING +": " +  MSG_MISSIONS_NOT_FOUND +" "+  MSG_ID_MISSION_NOT_FOUND);
+		
+		Iterable<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findAll();
+
+		if(modelMission.spliterator().getExactSizeIfKnown() == 0) {
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			logger.info(message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);			
+		}
 		
 		// Simple case: no search criteria set
 		for (de.dlr.proseo.model.Mission  mission: RepositoryService.getMissionRepository().findAll()) {
@@ -56,19 +68,21 @@ public class MissionControllerImpl implements MissionController {
 			Mission resultMission = MissionUtil.toRestMission(mission);
 			if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
 			result.add(resultMission);
-		}
+		}		
+		
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<Mission> createMission(@Valid Mission mission) {
-		// TODO Auto-generated method stub
-
-		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getClass());
+		
+		de.dlr.proseo.model.Mission modelMission = MissionUtil.toModelMission(mission);
+		
+		modelMission = RepositoryService.getMissionRepository().save(modelMission);
+		
+		return new ResponseEntity<>(MissionUtil.toRestMission(modelMission), HttpStatus.CREATED);
+	
 		
 	}
 
@@ -90,7 +104,7 @@ public class MissionControllerImpl implements MissionController {
 	}
 
 	@Override
-	public ResponseEntity<Mission> updateMission(Long id, @Valid Mission mission) {
+	public ResponseEntity<Mission> modifyMission(Long id, @Valid Mission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
 		
 		Optional<de.dlr.proseo.model.Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);

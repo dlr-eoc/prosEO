@@ -60,8 +60,8 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		builder.jdbcAuthentication()
 			.dataSource(dataSource);
 		
-	    builder.jdbcAuthentication()
-            .dataSource(dataSource).withUser("user").password("$2y$12$gzCtZLIY3QOoWny7Gyxa1Okjhw5mMS56fd6CNWxeVqCnE83er0QH2").roles("USER");
+//	    builder.jdbcAuthentication()
+//            .dataSource(dataSource).withUser("user").password(passwordEncoder().encode("password")).roles("USER");
 		
 	}
 

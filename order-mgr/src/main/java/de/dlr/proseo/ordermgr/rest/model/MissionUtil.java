@@ -32,6 +32,10 @@ public class MissionUtil {
 			restMission.setCode(modelMission.getCode());
 		}
 		
+		if (null != modelMission.getName()) {
+			restMission.setName(modelMission.getName());
+		}
+		
 		if (null != modelMission.getProcessingModes()) {
 			for (String processingModes : modelMission.getProcessingModes()) {
 				restMission.getProcessingModes().add(processingModes);
