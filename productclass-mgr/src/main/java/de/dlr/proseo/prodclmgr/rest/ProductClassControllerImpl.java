@@ -5,9 +5,13 @@
  */
 package de.dlr.proseo.prodclmgr.rest;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
@@ -31,6 +35,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
@@ -61,11 +66,20 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static final int MSG_ID_PRODUCT_CLASS_EXISTS = 2112;
 	private static final int MSG_ID_PRODUCT_CLASS_SAVE_FAILED = 2113;
 	private static final int MSG_ID_PRODUCT_CLASS_CREATED = 2114;
+	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND = 2115;
+	private static final int MSG_ID_PROCESSING_MODE_MISSING = 2116;
+	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
+	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
+	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
+	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with id %d not found";
+	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
+	private static final String MSG_RULE_STRING_MISSING = "(E%d) Selection rule missing in selection rule string %s";
+	private static final String MSG_INVALID_RULE_STRING = "(E%d) Syntax error in selection rule %s: %s";
 	private static final String MSG_PRODUCT_CLASS_EXISTS = "(E%d) Product class %s already exists for mission %s";
 	private static final String MSG_PRODUCT_CLASS_SAVE_FAILED = "(E%d) Save failed for product class %s in mission %s (cause: %s)";
 	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s not defined for mission %s";
@@ -79,6 +93,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static final String MSG_INVALID_POLICY_TYPE = "(E%d) Invalid policy type %s in selection rule, see Generic IPF Interface Specifications for valid values";
 	private static final String MSG_INVALID_TIME_UNIT = "(E%d) Invalid time unit %s in selection rule, one of {DAYS, HOURS, MINUTES, SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS} expected";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
+	private static final String MSG_SELECTION_RULES_CREATED = "(I%d) %d selection rules added to product class of type %s in mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-productclass-mgr ";
 
@@ -183,7 +198,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			modelProductClass.setEnclosingClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), productClass.getEnclosingClass()));
 			if (null == modelProductClass.getEnclosingClass()) {
 				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS, productClass.getEnclosingClass(), mission.getCode()), HttpStatus.BAD_REQUEST);
+						errorHeaders(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS, productClass.getEnclosingClass(), mission.getCode()),
+						HttpStatus.BAD_REQUEST);
 			}
 		}
 		
@@ -191,7 +207,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			ProductClass modelComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), componentClass);
 			if (null == modelProductClass.getEnclosingClass()) {
 				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS, componentClass, mission.getCode()), HttpStatus.BAD_REQUEST);
+						errorHeaders(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS, componentClass, mission.getCode()),
+						HttpStatus.BAD_REQUEST);
 			}
 			modelProductClass.getComponentClasses().add(modelComponentClass);
 		}
@@ -200,7 +217,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			modelProductClass.setProcessorClass(RepositoryService.getProcessorClassRepository().findByProcessorName(productClass.getProcessorClass()));
 			if (null == modelProductClass.getEnclosingClass()) {
 				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS, productClass.getProcessorClass()), HttpStatus.BAD_REQUEST);
+						errorHeaders(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS, productClass.getProcessorClass()),
+						HttpStatus.BAD_REQUEST);
 			}
 		}
 		
@@ -210,20 +228,23 @@ public class ProductClassControllerImpl implements ProductclassController {
 				modelRule.setMode(rule.getMode());
 			} else {
 				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, rule.getMode(), mission.getCode()), HttpStatus.BAD_REQUEST);
+						errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, rule.getMode(), mission.getCode()),
+						HttpStatus.BAD_REQUEST);
 			}
 			modelRule.setIsMandatory(rule.getIsMandatory());
 			modelRule.setTargetProductClass(modelProductClass);
 			modelRule.setSourceProductClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), rule.getSourceProductClass()));
 			if (null == modelRule.getSourceProductClass()) {
 				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_SOURCE_CLASS, MSG_ID_INVALID_SOURCE_CLASS, rule.getSourceProductClass(), mission.getCode()), HttpStatus.BAD_REQUEST);
+						errorHeaders(MSG_INVALID_SOURCE_CLASS, MSG_ID_INVALID_SOURCE_CLASS, rule.getSourceProductClass(), mission.getCode()),
+						HttpStatus.BAD_REQUEST);
 			}
 
 			for (de.dlr.proseo.prodclmgr.rest.model.Parameter filterCondition: rule.getFilterConditions()) {
 				if (null == filterCondition.getKey()) {
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_PARAMETER_KEY, MSG_ID_INVALID_PARAMETER_KEY, filterCondition.toString()), HttpStatus.BAD_REQUEST);
+							errorHeaders(MSG_INVALID_PARAMETER_KEY, MSG_ID_INVALID_PARAMETER_KEY, filterCondition.toString()),
+							HttpStatus.BAD_REQUEST);
 				}
 				try {
 					Parameter modelParameter = new Parameter().init(ParameterType.valueOf(filterCondition.getParameterType()), filterCondition.getParameterValue());
@@ -348,19 +369,80 @@ public class ProductClassControllerImpl implements ProductclassController {
 	}
 
     /**
-     * Create a selection rule
+     * Create a selection rule using Rule Language
      * 
      * @param id the database ID of the product class
      * @param selectionRuleString a Json representation of a selection rule in Rule Language
      * @return a Json object representing the simple selection rule created and HTTP status CREATED
      */
 	@Override
-	public ResponseEntity<de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule> createSelectionRuleString(Long id, @Valid List<SelectionRuleString> selectionRuleString) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<RestProductClass> createSelectionRuleString(Long id, @Valid List<SelectionRuleString> selectionRuleStrings) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createSelectionRuleString(SelectionRuleString[{}])", (null == selectionRuleStrings ? "MISSING" : selectionRuleStrings.size()));
+
+		// Retrieve product class
+		Optional<ProductClass> optProductClass = RepositoryService.getProductClassRepository().findById(id);
+		if (optProductClass.isEmpty()) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id),
+					HttpStatus.BAD_REQUEST);
+		}
+		ProductClass productClass = optProductClass.get();
 		
-		return new ResponseEntity<>(
-				errorHeaders("POST for SelectionRuleString with RestProductClass id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), 
-				HttpStatus.NOT_IMPLEMENTED);
+		// Process all selection rules
+		for (SelectionRuleString restRuleString: selectionRuleStrings) {
+			// Check the selection rule parameters
+			String processingMode = restRuleString.getMode();
+			if (null == processingMode || "".equals(processingMode)) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_PROCESSING_MODE_MISSING, MSG_ID_PROCESSING_MODE_MISSING, restRuleString.toString()),
+						HttpStatus.BAD_REQUEST);
+			}
+			if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, processingMode),
+						HttpStatus.BAD_REQUEST);
+			}
+			
+			Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
+			for (String configuredProcessorIdentifier: restRuleString.getConfiguredProcessors()) {
+				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessorIdentifier);
+				if (null == configuredProcessor) {
+					return new ResponseEntity<>(
+							errorHeaders(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessorIdentifier),
+							HttpStatus.BAD_REQUEST);
+				}
+				configuredProcessors.add(configuredProcessor);
+			}
+			
+			// Parse the selection rule string
+			SelectionRule selectionRule = null;
+			try {
+				selectionRule = SelectionRule.parseSelectionRule(productClass, restRuleString.getSelectionRule());
+			} catch (IllegalArgumentException e) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_RULE_STRING_MISSING, MSG_ID_RULE_STRING_MISSING, restRuleString),
+						HttpStatus.BAD_REQUEST);
+			} catch (ParseException e) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_INVALID_RULE_STRING, MSG_ID_INVALID_RULE_STRING, restRuleString.getSelectionRule(), e.getMessage()),
+						HttpStatus.BAD_REQUEST);
+			}
+			
+			// Complete the simple selection rules and add them to the product class
+			for (SimpleSelectionRule simpleSelectionRule: selectionRule.getSimpleRules()) {
+				simpleSelectionRule.setMode(processingMode);
+				simpleSelectionRule.getApplicableConfiguredProcessors().addAll(configuredProcessors);
+				productClass.getRequiredSelectionRules().add(simpleSelectionRule);
+			}
+		}
+		
+		// Save the new selection rules in the product class
+		productClass = RepositoryService.getProductClassRepository().save(productClass);
+
+		// Return the modified product class
+		logInfo(MSG_SELECTION_RULES_CREATED, MSG_ID_SELECTION_RULES_CREATED, selectionRuleStrings.size(), productClass.getProductType(), productClass.getMission().getCode());
+		
+		return new ResponseEntity<>(ProductClassUtil.toRestProductClass(productClass), HttpStatus.CREATED);
 	}
 
     /**
@@ -381,7 +463,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	}
 
     /**
-     * Update a selection rule
+     * Update a selection rule using Rule Language
      * 
      * @param ruleid the database ID of the simple selection rule to update
      * @param id the database ID of the product class

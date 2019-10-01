@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.util.SelectionRule.SelectionItem;
 
 /**
@@ -153,7 +154,7 @@ public class SelectionRuleTest {
 //	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#parseSelectionRule(ProductClass, java.lang.String)}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#parseSelectionRule(ProductClass, java.lang.String)}.
 	 */
 	@Test
 	public final void testParseSelectionRule() {
@@ -250,7 +251,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#merge(SelectionRule)}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#merge(SelectionRule)}.
 	 */
 	@Test
 	public final void testMerge() {
@@ -426,7 +427,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#selectUniqueItem(String, Collection, Instant, Instant)}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#selectUniqueItem(String, Collection, Instant, Instant)}.
 	 */
 	@Test
 	public final void testSelectUniqueItem() {
@@ -605,7 +606,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#selectItems(Collection)}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#selectItems(Collection)}.
 	 */
 	@Test
 	public final void testSelectItems() {
@@ -785,7 +786,28 @@ public class SelectionRuleTest {
 	}
 	
 	/**
-	 * Test method for {@link util.SelectionRule#hasPolicyFor()}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#getSimpleRules()}.
+	 */
+	@Test
+	public final void testGetSimpleRules() {
+		System.out.println("\n*** Starting test for getSimpleRules() ***");
+		
+		try {
+			SelectionRule rule = SelectionRule.parseSelectionRule(targetProductClass, rules[0]);
+			List<SimpleSelectionRule> simpleRules = rule.getSimpleRules();
+			assertNotNull("List of simple selection rules missing", simpleRules);
+			assertEquals("Unexpected number of simple selection rules:", 1, simpleRules.size());
+			SimpleSelectionRule simpleRule = simpleRules.get(0);
+			assertEquals("Unexpected source product class:", TEST_PRODUCT_TYPE, simpleRule.getSourceProductClass().getProductType());
+			assertEquals("Unexpected number of simple policies:", 1, simpleRule.getSimplePolicies().size());
+		} catch (IllegalArgumentException | ParseException e) {
+			fail(String.format("No exception expected for legal rule, error message is '%s'", e.getMessage()));
+		}
+		
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#hasPolicyFor()}.
 	 */
 	@Test
 	public final void testHasPolicyFor() {
@@ -806,7 +828,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#asPlQueryCondition()}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#asPlQueryCondition()}.
 	 */
 	@Test
 	public final void testAsPlQueryCondition() {
@@ -913,7 +935,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link util.SelectionRule#toString()}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#toString()}.
 	 */
 	@Test
 	public final void testToString() {

@@ -132,23 +132,20 @@ resourceTypes:
           200:
             body:
               application/json:
-                type: array
+                type: SelectionRuleString[]
                 example: !include examples/selectionrule.json
-                items: 
-                  type: SelectionRuleString
       post:
-        description: Create a selection rule
+        description: Create a selection rule using Rule Language
         body:
           application/json:
-            type: array
+            type: SelectionRuleString[]
             example: !include examples/selectionrule.json
-            items: 
-              type: SelectionRuleString
         responses:
           201:
             body:
               application/json:
-                type: SimpleSelectionRule
+                type: RestProductClass
+                description: The product class with the added, converted selection rules
       /{ruleid}:
         uriParameters:
           ruleid:
@@ -163,7 +160,7 @@ resourceTypes:
                  application/json:
                    type: SelectionRuleString
         patch:
-          description: Update a selection rule
+          description: Update a selection rule using Rule Language
           body:
             application/json:
               type: SelectionRuleString
