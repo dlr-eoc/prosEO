@@ -103,7 +103,7 @@ resourceTypes:
             application/json:
               type: Order
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
-    put:
+    patch:
       description: Update a processing order by ID
       body:
         application/json:
@@ -154,7 +154,7 @@ resourceTypes:
             application/json:
               type: Mission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
-    put:
+    patch:
       description: Update a mission by ID (including changes to the spacecraft list)
       body:
         application/json:
@@ -213,7 +213,7 @@ resourceTypes:
             application/json:
               type: Orbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
-    put:
+    patch:
       description: Update an orbit by ID
       body:
         application/json:

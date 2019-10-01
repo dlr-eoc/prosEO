@@ -103,7 +103,7 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	@Override
-	public ResponseEntity<Mission> updateOrbit(Long id, @Valid Orbit orbit) {
+	public ResponseEntity<Mission> modifyOrbit(Long id, @Valid Orbit orbit) {
 		// TODO Auto-generated method stub
 		return null;
 	}
