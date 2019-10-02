@@ -7,6 +7,8 @@ package de.dlr.proseo.ordermgr.rest.model;
 
 import static org.junit.Assert.*;
 
+import java.util.Iterator;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -15,6 +17,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.ordermgr.rest.model.Mission;
+import de.dlr.proseo.ordermgr.rest.model.Spacecraft;
+
 import de.dlr.proseo.ordermgr.rest.MissionControllerTest;
 
 /**
@@ -101,6 +105,7 @@ public class MissionUtilTest {
 		assertEquals("Unexpected ID: ", modelmission.getId(), restMission.getId().longValue());
 		assertEquals("Unexpected mission code: ", modelmission.getCode(),restMission.getCode());
 		assertEquals("Unexpected mission name: ", modelmission.getName(),restMission.getName());
+		assertEquals("Unexpected Spacecrafts length: ", modelmission.getSpacecrafts().size(),restMission.getSpacecrafts().size());
 
 		logger.info("Test copy model to REST OK");
 		
@@ -109,6 +114,8 @@ public class MissionUtilTest {
 		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
 		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
 		assertEquals("Name not preserved: ", modelmission.getName(), copiedModelMission.getName());
+		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),restMission.getSpacecrafts().size());
+
 		logger.info("Test copy REST to model OK");
 	}
 

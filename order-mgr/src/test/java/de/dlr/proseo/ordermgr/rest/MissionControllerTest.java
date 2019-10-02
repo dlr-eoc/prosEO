@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.RestTemplate;
 
+import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.ProcessingOrder.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
@@ -62,15 +65,16 @@ public class MissionControllerTest {
 	/* Test missions */
 	private static String[][] testMissionData = {
 		// id, version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name
-		{ "0", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandom-X"},
-		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandom-X"},
-		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Tandom-X" }
+		{ "0", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandem-X"},
+		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X"},
+		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X" }
 	};
 	
 	private de.dlr.proseo.model.Mission createMission(String[] testData) {
 		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
 		de.dlr.proseo.model.Spacecraft testSpacecraft = new de.dlr.proseo.model.Spacecraft();
-		
+		//de.dlr.proseo.model.ProcessingOrder testProcessingOrder = new de.dlr.proseo.model.ProcessingOrder();
+
 		logger.info("... creating mission ");
 		//Adding mission parameters
 		testMission.setCode(testData[2]);
