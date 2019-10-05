@@ -26,6 +26,10 @@
         type: string
         description: Sensing stop time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      generationTime:
+        type: string
+        description: Product generation time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
       componentProductIds?:
         type: array
         description: Id values of the component products
