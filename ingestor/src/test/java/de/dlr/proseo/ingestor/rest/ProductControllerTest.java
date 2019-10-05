@@ -63,10 +63,10 @@ public class ProductControllerTest {
 	
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, revision (parameter)
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "01" },
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
+		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** Test configuration */
@@ -140,8 +140,9 @@ public class ProductControllerTest {
 		testProduct.setMode(testData[4]);
 		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
 		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[7])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {}", testProduct.getId());
@@ -250,6 +251,8 @@ public class ProductControllerTest {
 							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStartTime"))));
 					assertEquals("Wrong stop time for test product " + i,
 							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStopTime"))));
+					assertEquals("Wrong generation time for test product " + i,
+							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("generationTime"))));
 				}
 			}
 		}

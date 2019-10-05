@@ -54,6 +54,10 @@ public class ProductUtil {
 			restProduct.setSensingStopTime(
 					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()));
 		}
+		if (null != modelProduct.getGenerationTime()) {
+			restProduct.setGenerationTime(
+					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getGenerationTime()));
+		}
 		for (Product componentProduct: modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
 		}
@@ -123,6 +127,11 @@ public class ProductUtil {
 			modelProduct.setSensingStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStopTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restProduct.getSensingStartTime()));
+		}
+		try {
+			modelProduct.setGenerationTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getGenerationTime())));
+		} catch (DateTimeException e) {
+			throw new IllegalArgumentException(String.format("Invalid product generation time '%s'", restProduct.getGenerationTime()));
 		}
 		for (Parameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();

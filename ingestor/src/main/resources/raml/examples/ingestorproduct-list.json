@@ -6,6 +6,7 @@
         "productClass": "L0",
         "sensingStartTime": "2019-05-09T21:25:08.000000",
         "sensingStopTime": "2019-05-09T21:45:08.000000",
+        "generationTime": "2019-10-05T10:12:39.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 8138
@@ -45,6 +46,7 @@
         "mode": "OFFL",
         "sensingStartTime": "2019-05-09T22:07:07.000000",
         "sensingStopTime": "2019-05-09T23:48:37.000000",
+        "generationTime": "2019-10-05T10:13:22.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 8137
