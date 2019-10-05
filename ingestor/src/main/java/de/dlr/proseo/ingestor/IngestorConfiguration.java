@@ -26,11 +26,11 @@ public class IngestorConfiguration {
 	private String productionPlannerUrl;
 	
 	/** The user name to use for prosEO Production Planner logins */
-	@Value("${proseo.storageManager.user}")
+	@Value("${proseo.productionPlanner.user}")
 	private String productionPlannerUser;
 
 	/** The password to use for prosEO Production Planner logins */
-	@Value("${proseo.storageManager.password}")
+	@Value("${proseo.productionPlanner.password}")
 	private String productionPlannerPassword;
 
 	/** The user name to use for prosEO Storage Manager logins */

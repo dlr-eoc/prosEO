@@ -3,25 +3,40 @@ version: v0.1
 description: |
   This document describes the syntax of the prosEO Command Line Interface. It is inteded to be fed into the syntax parser of the
   command line program and to be returned as online help for the user.
-  All commands are preceded by the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
+  Commands can be invoked on the shell command line following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
   Commands may have subcommands, which precede all options and parameters.
   Commands may have options (--option, a short form -o may be given as alias) and parameters (passed as values without the parameter name).
   Modal options can be combined into one option, i. e. "-a -b -c" is the same as "-abc".
   Options with values are either of the form "-ovalue" or "--option=value"; in the case of multiple values "--option=value,value,value"
   Parameters are positional, except (implicitly) for attribute parameters of the form "<attribute name>=<attribute value>".
   So the general syntax is:
-  "proseo" command [subcommand...] [option...] [parameter...]
+  ["proseo"] command [subcommand...] [option...] [parameter...]
 
 globalOptions:
     - help:
         type: boolean
         description: Show help information for the current command level (top level commands, when called from the shell command line)
         shortForm: h
+
 options:
     - version:
         type: boolean
         description: Show the prosEO CLI version and exit (only for call from shell command line)
         shortForm: v
+    - user:
+        type: string
+        description: The user name for login to prosEO. If a command is given upon program invocation, but no username,
+                     login is attempted using the default user name and password stored in the application configuration file.
+        shortForm: u
+    - password:
+        type: string
+        description: The password for login to prosEO (only valid if a user name for login is given. If a user name is given,
+                     but no password, an interactive password prompt will occur.
+        shortForm: p
+    - mission:
+        type: string
+        description: The mission to login to (only valid if a user name for login is given)
+        shortForm: m
 
 commands:
     # Authentication:
@@ -41,7 +56,7 @@ commands:
                 type: string
                 description: The code of the mission to log in to
     - logout:
-        description: Log out of prosEO. No commands will be accepted after logout.
+        description: Log out of prosEO. No commands except "mission show" and "login" will be accepted after logout.
     
     # Order manager commands:
     - mission:
