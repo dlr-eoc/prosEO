@@ -3,7 +3,7 @@
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.ui.cli;
+package de.dlr.proseo.ui.cli.parser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
-import de.dlr.proseo.ingestor.rest.IngestControllerImpl;
+import de.dlr.proseo.ui.cli.CLIConfiguration;
 
 /**
  * Parser for the prosEO Command Line Interface

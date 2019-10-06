@@ -13,782 +13,782 @@ description: |
   ["proseo"] command [subcommand...] [option...] [parameter...]
 
 globalOptions:
-    - help:
-        type: boolean
-        description: Show help information for the current command level (top level commands, when called from the shell command line)
-        shortForm: h
+    - name: help
+      type: boolean
+      description: Show help information for the current command level (top level commands, when called from the shell command line)
+      shortForm: h
 
 options:
-    - version:
-        type: boolean
-        description: Show the prosEO CLI version and exit (only for call from shell command line)
-        shortForm: v
-    - user:
-        type: string
-        description: The user name for login to prosEO. If a command is given upon program invocation, but no username,
-                     login is attempted using the default user name and password stored in the application configuration file.
-        shortForm: u
-    - password:
-        type: string
-        description: The password for login to prosEO (only valid if a user name for login is given. If a user name is given,
-                     but no password, an interactive password prompt will occur.
-        shortForm: p
-    - mission:
-        type: string
-        description: The mission to login to (only valid if a user name for login is given)
-        shortForm: m
+    - name: version
+      type: boolean
+      description: Show the prosEO CLI version and exit (only for call from shell command line)
+      shortForm: v
+    - name: user
+      type: string
+      description: The user name for login to prosEO. If a command is given upon program invocation, but no username,
+                   login is attempted using the default user name and password stored in the application configuration file.
+      shortForm: u
+    - name: password
+      type: string
+      description: The password for login to prosEO (only valid if a user name for login is given. If a user name is given,
+                   but no password, an interactive password prompt will occur.
+      shortForm: p
+    - name: mission
+      type: string
+      description: The mission to login to (only valid if a user name for login is given)
+      shortForm: m
 
 commands:
     # Authentication:
-    - login:
-        description: Log in to a mission in prosEO. A login is required prior to executing any other command except "mission show".
-        options:
-            - user:
-                type: string
-                description: User name
-                shortForm: u
-            - password:
-                type: string
-                description: The user's password
-                shortForm: p
-        parameters:
-            - missionCode:
-                type: string
-                description: The code of the mission to log in to
-    - logout:
-        description: Log out of prosEO. No commands except "mission show" and "login" will be accepted after logout.
+    - name: login
+      description: Log in to a mission in prosEO. A login is required prior to executing any other command except "mission show".
+      options:
+        - name: user
+          type: string
+          description: User name
+          shortForm: u
+        - name: password
+          type: string
+          description: The user's password
+          shortForm: p
+      parameters:
+        - name: missionCode
+          type: string
+          description: The code of the mission to log in to
+    - name: logout
+      description: Log out of prosEO. No commands except "mission show" and "login" will be accepted after logout.
     
     # Order manager commands:
-    - mission:
-        description: Commands related to configuring an earth observation mission
-        subcommands:
-            - show:
-                description: List all configured missions or only the given one
-                parameters:
-                  - missionCode:
-                        type: string
-                        optional: true
-                        description: The code of the mission to list
-            - update:
-                description: Update the mission attributes; if the input is not from a file,
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the updated mission definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                  - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A mission attribute to update in the form "<attribute name>=<attribute value>",
-                                     overrides values given in the mission definition file
-            - spacecraft:
-                description: Commands to manage the spacecrafts for a mission
-                subcommands:
-                    - add:
-                        description: Add a spacecraft to the mission list of spacecrafts; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the updated mission definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A spacecraft attribute to set in the form "<attribute name>=<attribute value>"
-                    - remove:
-                        description: Remove a spacecraft from the mission list of spacecrafts
-                        parameters:
-                            - spacecraftCode:
-                                type: string
-                                description: The code of the spacecraft to remove
-    - orbit:
-        description: Commands for managing orbits for a given spacecraft
-        subcommands:
-            - show:
-                description: Lists orbits, optionally restricted to a given orbit range
-                options:
-                    - from:
-                        type: integer
-                        description: Lower bound of orbit range
-                    - to:
-                        type: integer
-                        description: Upper bound of orbit range
-                parameters:
-                    - spacecraftCode:
-                        type: string
-                        description: The code of the spacecraft the orbits belong to
-            - create:
-                description: Add a set of orbits for the given spacecraft (may redefine previously existing orbits)
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the orbit definitions from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - spacecraftCode:
-                        type: string
-                        description: The code of the spacecraft the orbits belong to
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
-                                     overrides values given in the orbit definition file
-            - update:
-                description: Update a set of orbits for the given spacecraft (essentially a synonym for "create")
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the orbit definitions from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - spacecraftCode:
-                        type: string
-                        description: The code of the spacecraft the orbits belong to
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
-                                     overrides values given in the orbit definition file
-            - delete:
-                description: Deletes orbits in a given orbit range
-                options:
-                    - from:
-                        type: integer
-                        description: Lower bound of orbit range
-                    - to:
-                        type: integer
-                        description: Upper bound of orbit range
-                parameters:
-                    - spacecraftCode:
-                        type: string
-                        description: The code of the spacecraft the orbits belong to
-    - order:
-        description: Commands for managing processing orders
-        subcommands:
-            - show:
-                description: Lists orders, optionally restricted to a given time range or a specific processing order
-                options:
-                    - from:
-                        type: datetime
-                        description: Lower bound of order start time
-                    - to:
-                        type: datetime
-                        description: Upper bound of order start time
-                parameters:
-                    - orderId:
-                        type: string
-                        optional: true
-                        description: The order identifier
-            - create:
-                description: Create a new processing order; if the input is not from a file,
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the order definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - orderId:
-                        type: string
-                        optional: true
-                        description: The order identifier for user reference (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: An order attribute to update in the form "<attribute name>=<attribute value>",
-                                     overrides values given in the order definition file
-            - update:
-                description: Update a processing order
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the order definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - orderId:
-                        type: string
-                        optional: true
-                        description: The order identifier for user reference (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: An order attribute to update in the form "<attribute name>=<attribute value>",
-                                     overrides values given in the order definition file
-            - delete:
-                description: Delete the named processing order
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
-            - release:
-                description: Release the given processing order
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
-            - plan:
-                description: Plan the jobs for the given processing order
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
-            - suspend:
-                description: Suspend starting of further jobs for the given processing order
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
-            - resume:
-                description: Resume starting of jobs for the given processing order
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
-            - close:
-                description: Close the given processing order (if it is completed or failed)
-                parameters:
-                    - orderId:
-                        type: string
-                        description: The order identifier
+    - name: mission
+      description: Commands related to configuring an earth observation mission
+      subcommands:
+        - name: show
+          description: List all configured missions or only the given one
+          parameters:
+            - name: missionCode
+              type: string
+              optional: true
+              description: The code of the mission to list
+        - name: update
+          description: Update the mission attributes; if the input is not from a file,
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the updated mission definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A mission attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the mission definition file
+        - name: spacecraft
+          description: Commands to manage the spacecrafts for a mission
+          subcommands:
+            - name: add
+              description: Add a spacecraft to the mission list of spacecrafts; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the updated mission definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A spacecraft attribute to set in the form "<attribute name>=<attribute value>"
+            - name: remove
+              description: Remove a spacecraft from the mission list of spacecrafts
+              parameters:
+                - name: spacecraftCode
+                  type: string
+                  description: The code of the spacecraft to remove
+    - name: orbit
+      description: Commands for managing orbits for a given spacecraft
+      subcommands:
+        - name: show
+          description: Lists orbits, optionally restricted to a given orbit range
+          options:
+            - name: from
+              type: integer
+              description: Lower bound of orbit range
+            - name: to
+              type: integer
+              description: Upper bound of orbit range
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+        - name: create
+          description: Add a set of orbits for the given spacecraft (may redefine previously existing orbits)
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the orbit definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the orbit definition file
+        - name: update
+          description: Update a set of orbits for the given spacecraft (essentially a synonym for "create")
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the orbit definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the orbit definition file
+        - name: delete
+          description: Deletes orbits in a given orbit range
+          options:
+            - name: from
+              type: integer
+              description: Lower bound of orbit range
+            - name: to
+              type: integer
+              description: Upper bound of orbit range
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
+    - name: order
+      description: Commands for managing processing orders
+      subcommands:
+        - name: show
+          description: Lists orders, optionally restricted to a given time range or a specific processing order
+          options:
+            - name: from
+              type: datetime
+              description: Lower bound of order start time
+            - name: to
+              type: datetime
+              description: Upper bound of order start time
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier
+        - name: create
+          description: Create a new processing order; if the input is not from a file,
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: update
+          description: Update a processing order
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the order definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: orderId
+              type: string
+              optional: true
+              description: The order identifier for user reference (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: An order attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the order definition file
+        - name: delete
+          description: Delete the named processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: release
+          description: Release the given processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: plan
+          description: Plan the jobs for the given processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: suspend
+          description: Suspend starting of further jobs for the given processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: resume
+          description: Resume starting of jobs for the given processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: close
+          description: Close the given processing order (if it is completed or failed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
 
     # Commands for the Processor Manager
-    processor:
-        description: Commands for managing processor classes, processors, configurations and configured processors
-        subcommands:
-            - class:
-                description: Commands for managing processor classes
-                subcommands:
-                    - show:
-                        description: Show all processor classes for the current mission or a named one
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The name of the processor classes to show
-                    - create:
-                        description: Create a new processor class for the current mission; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the processor class definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The name of the processor class to create (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
-                    - update:
-                        description: Update a processor class for the current mission; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the processor class definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The name of the processor classes to update (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
-                    - delete:
-                        description: Remove the named processor class from the current mission
-                        parameters:
-                            - className:
-                                type: string
-                                description: The name of the processor classes to update (mandatory if not read from file)
-            - show:
-                description: Show all processor versions for the current mission or only the selected ones
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the processor to show
-                    - processorVersion:
-                        type: string
-                        optional: true
-                        description: The version of the processor to show
-            - create:
-                description: Create a new processor version for the current mission; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the processor version definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the processor to create (mandatory if not read from file)
-                    - processorVersion:
-                        type: string
-                        optional: true
-                        description: The version of the processor to create (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A processor attribute to set in the form "<attribute name>=<attribute value>"
-            - udpate:
-                description: Update a processor version for the current mission; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the processor version definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the processor to update (mandatory if not read from file)
-                    - processorVersion:
-                        type: string
-                        optional: true
-                        description: The version of the processor to update (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A processor attribute to set in the form "<attribute name>=<attribute value>"
-            - delete:
-                description: Delete a processor version from the current mission
-                parameters:
-                    - className:
-                        type: string
-                        description: The class name of the processor to delete
-                    - processorVersion:
-                        type: string
-                        description: The version of the processor to delete
-            - configuration:
-                description: Commands to manage configured processors
-                subcommands:
-                    - show:
-                        description: Show all configured processor for the current mission or only the ones identified
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The class name of the processor
-                            - configuredProcessorIdentifier:
-                                type: string
-                                optional: true
-                                description: The identifier of the configured processor
-                    - create:
-                        description: Create a new configured processor by combining a processor version and a configuration; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the configured processor definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The class name of the processor (mandatory if not read from file)
-                            - processorVersion:
-                                type: string
-                                optional: true
-                                description: The version of the processor (mandatory if not read from file)
-                            - configurationVersion:
-                                type: string
-                                optional: true
-                                description: The version of the configuration (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
-                    - update:
-                        description: Update a configured processor; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the configured processor definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - className:
-                                type: string
-                                optional: true
-                                description: The class name of the processor (mandatory if not read from file)
-                            - processorVersion:
-                                type: string
-                                optional: true
-                                description: The version of the processor (mandatory if not read from file)
-                            - configurationVersion:
-                                type: string
-                                optional: true
-                                description: The version of the configuration (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
-                    - delete:
-                        description: Delete a configured processor
-                        parameters:
-                            - className:
-                                type: string
-                                description: The class name of the processor
-                            - processorVersion:
-                                type: string
-                                description: The version of the processor
-                            - configurationVersion:
-                                type: string
-                                description: The version of the configuration
-    - configuration:
-        description: Commands for managing configurations
-        subcommands:
-            - show:
-                description: Show all configurations for the current mission and processor class or a named one
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the processor classes for the configurations
-                    - configurationVersion:
-                        type: string
-                        optional: true
-                        description: The configuration versions to show
-            - create:
-                description: Create a new configuration for the current mission and processor class; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the configuration definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the processor class (mandatory if not read from file)
-                    - configurationVersion:
-                        type: string
-                        optional: true
-                        description: The version of the configuration to create (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
-            - update:
-                description: Update a configuration for the current mission and processor class; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the configuration definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the processor class (mandatory if not read from file)
-                    - configurationVersion:
-                        type: string
-                        optional: true
-                        description: The version of the configuration to update (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
-            - delete:
-                description: Remove a configuration from the current mission and processor class
-                parameters:
-                    - className:
-                        type: string
-                        description: The name of the processor classes to update (mandatory if not read from file)
-                    - configurationVersion:
-                        type: string
-                        description: The version of the configuration to update (mandatory if not read from file)
+    - name: processor
+      description: Commands for managing processor classes, processors, configurations and configured processors
+      subcommands:
+        - name: class
+          description: Commands for managing processor classes
+          subcommands:
+            - name: show
+              description: Show all processor classes for the current mission or a named one
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The name of the processor classes to show
+            - name: create
+              description: Create a new processor class for the current mission; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the processor class definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The name of the processor class to create (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a processor class for the current mission; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the processor class definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The name of the processor classes to update (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A processor class attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Remove the named processor class from the current mission
+              parameters:
+                - name: className
+                  type: string
+                  description: The name of the processor classes to update (mandatory if not read from file)
+        - name: show
+          description: Show all processor versions for the current mission or only the selected ones
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the processor to show
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to show
+        - name: create
+          description: Create a new processor version for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processor version definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the processor to create (mandatory if not read from file)
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A processor attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a processor version for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processor version definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the processor to update (mandatory if not read from file)
+            - name: processorVersion
+              type: string
+              optional: true
+              description: The version of the processor to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A processor attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete a processor version from the current mission
+          parameters:
+            - name: className
+              type: string
+              description: The class name of the processor to delete
+            - name: processorVersion
+              type: string
+              description: The version of the processor to delete
+        - name: configuration
+          description: Commands to manage configured processors
+          subcommands:
+            - name: show
+              description: Show all configured processor for the current mission or only the ones identified
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The class name of the processor
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor
+            - name: create
+              description: Create a new configured processor by combining a processor version and a configuration; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the configured processor definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The class name of the processor (mandatory if not read from file)
+                - name: processorVersion
+                  type: string
+                  optional: true
+                  description: The version of the processor (mandatory if not read from file)
+                - name: configurationVersion
+                  type: string
+                  optional: true
+                  description: The version of the configuration (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a configured processor; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the configured processor definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: className
+                  type: string
+                  optional: true
+                  description: The class name of the processor (mandatory if not read from file)
+                - name: processorVersion
+                  type: string
+                  optional: true
+                  description: The version of the processor (mandatory if not read from file)
+                - name: configurationVersion
+                  type: string
+                  optional: true
+                  description: The version of the configuration (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A configured processor attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Delete a configured processor
+              parameters:
+                - name: className
+                  type: string
+                  description: The class name of the processor
+                - name: processorVersion
+                  type: string
+                  description: The version of the processor
+                - name: configurationVersion
+                  type: string
+                  description: The version of the configuration
+    - name: configuration
+      description: Commands for managing configurations
+      subcommands:
+        - name: show
+          description: Show all configurations for the current mission and processor class or a named one
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the processor classes for the configurations
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The configuration versions to show
+        - name: create
+          description: Create a new configuration for the current mission and processor class; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the configuration definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the processor class (mandatory if not read from file)
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The version of the configuration to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a configuration for the current mission and processor class; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the configuration definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the processor class (mandatory if not read from file)
+            - name: configurationVersion
+              type: string
+              optional: true
+              description: The version of the configuration to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Remove a configuration from the current mission and processor class
+          parameters:
+            - name: className
+              type: string
+              description: The name of the processor classes to update (mandatory if not read from file)
+            - name: configurationVersion
+              type: string
+              description: The version of the configuration to update (mandatory if not read from file)
                  
     # Commands for the Product Class Manager
-    - productClass:
-        description: Commands for managing product classes
-        subcommands:
-            - show:
-                description: Show all product classes for the current mission or only the selected ones
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the product class to show
-            - create:
-                description: Create a new product class for the current mission; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the product class definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the product class name to create (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A product class attribute to set in the form "<attribute name>=<attribute value>"
-            - update:
-                description: Update a product class for the current mission; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the product class definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The name of the product class name to update (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A product class attribute to set in the form "<attribute name>=<attribute value>"
-            - delete:
-                description: Delete the named product class from the current mission
-                parameters:
-                    - className:
-                        type: string
-                        description: The name of the product class to delete
-            - rule:
-                description: Commands for managing selection rules
-                subcommands:
-                    - show:
-                        description: Show all selection rules for the current mission and target product class
-                        parameters:
-                            - targetClassName:
-                                type: string
-                                optional: true
-                                description: The product class name of the selection rules
-                    - create:
-                        description: Create a new selection rule for the given target product class; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the selection rule definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - targetClassName:
-                                type: string
-                                optional: true
-                                description: The target product class name (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
-                    - update:
-                        description: Update a selection rule for the given target product class; 
-                                     the user will be prompted for mandatory attributes not given on the command line
-                        options:
-                            - file:
-                                type: string
-                                description: Path to file to read the selection rule definition from
-                                shortForm: f
-                            - format:
-                                type: string
-                                description: The file format (one of { JSON, XML }; default value JSON)
-                        parameters:
-                            - targetClassName:
-                                type: string
-                                optional: true
-                                description: The target product class name (mandatory if not read from file)
-                            - attribute:
-                                type: string
-                                optional: true
-                                repeatable: true
-                                description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
-                    - delete:
-                        description: Delete the selection rule for the given target class and configured processor (the selection 
-                                     rule will be disconnected from the configured processor and deleted, if it is not connected
-                                     to any other configured processor)
-                        parameters:
-                            - targetClassName:
-                                type: string
-                                optional: true
-                                description: The product class name of the selection rule
-                            - configuredProcessorIdentifier:
-                                type: string
-                                optional: true
-                                description: The identifier of the configured processor the selection rule is valid for
+    - name: productClass
+      description: Commands for managing product classes
+      subcommands:
+        - name: show
+          description: Show all product classes for the current mission or only the selected ones
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the product class to show
+        - name: create
+          description: Create a new product class for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product class definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the product class name to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product class attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product class for the current mission; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product class definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The name of the product class name to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product class attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the named product class from the current mission
+          parameters:
+            - name: className
+              type: string
+              description: The name of the product class to delete
+        - name: rule
+          description: Commands for managing selection rules
+          subcommands:
+            - name: show
+              description: Show all selection rules for the current mission and target product class
+              parameters:
+                - name: targetClassName
+                  type: string
+                  optional: true
+                  description: The product class name of the selection rules
+            - name: create
+              description: Create a new selection rule for the given target product class; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the selection rule definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: targetClassName
+                  type: string
+                  optional: true
+                  description: The target product class name (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
+            - name: update
+              description: Update a selection rule for the given target product class; 
+                           the user will be prompted for mandatory attributes not given on the command line
+              options:
+                - name: file
+                  type: string
+                  description: Path to file to read the selection rule definition from
+                  shortForm: f
+                - name: format
+                  type: string
+                  description: The file format (one of { JSON, XML }; default value JSON)
+              parameters:
+                - name: targetClassName
+                  type: string
+                  optional: true
+                  description: The target product class name (mandatory if not read from file)
+                - name: attribute
+                  type: string
+                  optional: true
+                  repeatable: true
+                  description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
+            - name: delete
+              description: Delete the selection rule for the given target class and configured processor (the selection 
+                           rule will be disconnected from the configured processor and deleted, if it is not connected
+                           to any other configured processor)
+              parameters:
+                - name: targetClassName
+                  type: string
+                  optional: true
+                  description: The product class name of the selection rule
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor the selection rule is valid for
                     
     # Commands for the Product Ingestor
-    - product:
-        description: Commands for managing products
-        subcommands:
-            - show:
-                description: Show products for a mission and product class, optionally restricted to a given time range
-                options:
-                    - from:
-                        type: datetime
-                        description: Lower bound of order start time
-                    - to:
-                        type: datetime
-                        description: Upper bound of order start time
-                parameters:
-                    - className:
-                        type: string
-                        description: The name of the product class to show
-            - create:
-                description: Create a new product for the current mission and product class; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the product definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the product to create (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A product attribute to set in the form "<attribute name>=<attribute value>"
-            - update:
-                description: Update a product for the current mission and product class; 
-                             the user will be prompted for mandatory attributes not given on the command line
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the product definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the product to update (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A product attribute to set in the form "<attribute name>=<attribute value>"
-            - delete:
-                description: Delete all products matching the given selection criteriy
-                options:
-                    - file:
-                        type: string
-                        description: Path to file to read the product definition from
-                        shortForm: f
-                    - format:
-                        type: string
-                        description: The file format (one of { JSON, XML }; default value JSON)
-                parameters:
-                    - className:
-                        type: string
-                        optional: true
-                        description: The class name of the product to delete (mandatory if not read from file)
-                    - attribute:
-                        type: string
-                        optional: true
-                        repeatable: true
-                        description: A product attribute to filter by in the form "<attribute name>=<attribute value>"
-    - ingest:
-        description: Ingest all products into the storage manager of the given processing facility
-        options:
-            - file:
-                type: string
-                description: Path to file to read the ingested products from
-                shortForm: f
-            - format:
-                type: string
-                description: The file format (one of { JSON, XML }; default value JSON)
-        parameters:
-            - processingFacility:
-                type: string
-                description: The name of the facility to ingest the products to
-            - attribute:
-                type: string
-                optional: true
-                repeatable: true
-                description: An attribute of an ingested product to set in the form "<attribute name>=<attribute value>"
+    - name: product
+      description: Commands for managing products
+      subcommands:
+        - name: show
+          description: Show products for a mission and product class, optionally restricted to a given time range
+          options:
+            - name: from
+              type: datetime
+              description: Lower bound of order start time
+            - name: to
+              type: datetime
+              description: Upper bound of order start time
+          parameters:
+            - name: className
+              type: string
+              description: The name of the product class to show
+        - name: create
+          description: Create a new product for the current mission and product class; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the product to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a product for the current mission and product class; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the product to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete all products matching the given selection criteriy
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the product definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML }; default value JSON)
+          parameters:
+            - name: className
+              type: string
+              optional: true
+              description: The class name of the product to delete (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A product attribute to filter by in the form "<attribute name>=<attribute value>"
+    - name: ingest
+      description: Ingest all products into the storage manager of the given processing facility
+      options:
+        - name: file
+          type: string
+          description: Path to file to read the ingested products from
+          shortForm: f
+        - name: format
+          type: string
+          description: The file format (one of { JSON, XML }; default value JSON)
+      parameters:
+        - name: processingFacility
+          type: string
+          description: The name of the facility to ingest the products to
+        - name: attribute
+          type: string
+          optional: true
+          repeatable: true
+          description: An attribute of an ingested product to set in the form "<attribute name>=<attribute value>"
