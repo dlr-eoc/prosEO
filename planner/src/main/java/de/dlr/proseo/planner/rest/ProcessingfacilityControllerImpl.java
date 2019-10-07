@@ -46,7 +46,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: ProductionPlanner.getKubeConfigs()) {
 				l.add(new PlannerProcessingFacility(kc.getId(),
 						kc.getDescription(),
-						kc.getUrl()));
+						kc.getProcessingEngineUrl()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
@@ -70,7 +70,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		if (aKubeConfig != null) {
 			PlannerProcessingFacility pf = new PlannerProcessingFacility(aKubeConfig.getId(),
 					aKubeConfig.getDescription(),
-					aKubeConfig.getUrl());
+					aKubeConfig.getProcessingEngineUrl());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.FOUND);

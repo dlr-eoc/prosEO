@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -12,8 +14,10 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * A ProductQuery models the need of a JobStep to use a Product of a certain ProductClass for a specific time period.
@@ -24,6 +28,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "job_step_id, requested_product_class_id"))
 public class ProductQuery extends PersistentObject {
 
 	/** Job step issuing this query */
@@ -54,7 +59,7 @@ public class ProductQuery extends PersistentObject {
 	 * Additional filter conditions to apply to the selected products.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
 	private Boolean isSatisfied;
@@ -63,7 +68,7 @@ public class ProductQuery extends PersistentObject {
 	 * Products satisfying this query condition
 	 */
 	@ManyToMany(mappedBy = "satisfiedProductQueries")
-	private Set<Product> satisfyingProducts;
+	private Set<Product> satisfyingProducts = new HashSet<>();
 
 	/**
 	 * Gets the job step issuing the query

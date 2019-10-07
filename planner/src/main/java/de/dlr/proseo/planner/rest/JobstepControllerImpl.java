@@ -24,6 +24,7 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.Status;
+import dispatcher.JobDispatcher;
 
 
 
@@ -76,6 +77,11 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override
     public ResponseEntity<PlannerJobstep> getPlannerJobstepByName(String name) {
 		Long id = null;
+		JobStep jst = new JobStep();
+		jst.setProcessingMode("nix"); 
+		RepositoryService.getJobStepRepository().save(jst);
+		JobDispatcher jd = new JobDispatcher();
+		jd.createJobOrder(jst);
 		if (name.matches("[0-9]+")) {
 			id = Long.valueOf(name);
 		} else if (name.startsWith(ProductionPlanner.jobNamePrefix)) {

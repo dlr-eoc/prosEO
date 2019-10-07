@@ -39,7 +39,7 @@ public class SimplePolicy extends PersistentObject {
 	 */
 	@ElementCollection
 	@OrderColumn(name = "list_index")
-	private List<DeltaTime> deltaTimes;
+	private List<DeltaTime> deltaTimes = new ArrayList<>();
 	
 	/**
 	 * Available policy types as defined in ESA's Generic IPF Interface Specifications.
@@ -91,7 +91,6 @@ public class SimplePolicy extends PersistentObject {
 	 */
 	public SimplePolicy() {
 		this.policyType = PolicyType.ValIntersect;
-		this.deltaTimes = new ArrayList<>();
 		this.deltaTimes.add(new DeltaTime());
 		this.deltaTimes.add(new DeltaTime());
 	}

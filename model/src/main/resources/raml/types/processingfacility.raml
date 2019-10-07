@@ -1,0 +1,16 @@
+#%RAML 1.0 DataType
+#  ProcessingFacility:
+    type: object
+    properties:
+      name:
+        type: string
+        description: The facility name (unique key)
+      description?:
+        type: string
+        description: A short description of the processing facility
+      processingEngineUrl:
+        type: string
+        description: The URL to access this facility's processing engine (Kubernetes instance)
+      storageManagerUrl:
+        type: string
+        description: The URL to access this facility's storage manager

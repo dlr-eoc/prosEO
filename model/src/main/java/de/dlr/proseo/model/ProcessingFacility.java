@@ -7,6 +7,8 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 import javax.persistence.Entity;
+import javax.persistence.Index;
+import javax.persistence.Table;
 
 /**
  * A processing facility for running prosEO jobs and storing prosEO product files,  e. g. at a cloud service provider.
@@ -15,6 +17,7 @@ import javax.persistence.Entity;
  *
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "name") })
 public class ProcessingFacility extends PersistentObject {
 
 	/** The facility name (unique key) */
@@ -23,8 +26,11 @@ public class ProcessingFacility extends PersistentObject {
 	/** A short description of the processing facility */
 	private String description;
 	
-	/** The URL to access this processing facility (Kubernetes instance) */
-	private String url;
+	/** The URL to access this facility's processing engine (Kubernetes instance) */
+	private String processingEngineUrl;
+	
+	/** The URL to access this facility's storage manager */
+	private String storageManagerUrl;
 
 	/**
 	 * Gets the name of the processing facility
@@ -59,21 +65,39 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
-	 * Gets the URL of the processing facility (Kubernetes instance)
+	 * Gets the URL of the facility's processing engine (Kubernetes instance)
 	 * 
-	 * @return the url
+	 * @return the URL of the processing engine
 	 */
-	public String getUrl() {
-		return url;
+	public String getProcessingEngineUrl() {
+		return processingEngineUrl;
 	}
 
 	/**
-	 * Sets the URL of the processing facility (Kubernetes instance)
+	 * Sets the URL of the facility's processing engine (Kubernetes instance)
 	 * 
-	 * @param url the url to set
+	 * @param processingEngineUrl the URL of the processing engine to set
 	 */
-	public void setUrl(String url) {
-		this.url = url;
+	public void setProcessingEngineUrl(String processingEngineUrl) {
+		this.processingEngineUrl = processingEngineUrl;
+	}
+
+	/**
+	 * Gets the URL of the facility's storage manager
+	 * 
+	 * @return the URL of the storage manager
+	 */
+	public String getStorageManagerUrl() {
+		return storageManagerUrl;
+	}
+
+	/**
+	 * Sets the URL of the facility's storage manager
+	 * 
+	 * @param storageManagerUrl the URL of the storage manager to set
+	 */
+	public void setStorageManagerUrl(String storageManagerUrl) {
+		this.storageManagerUrl = storageManagerUrl;
 	}
 
 	@Override

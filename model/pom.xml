@@ -21,8 +21,8 @@
 
 	<properties>
 		<main.basedir>${basedir}/../..</main.basedir>
-		<raml-path>src/main/resources/raml/ingestor-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.ingestor</raml-base-package>
+		<raml-path>src/test/resources/raml/model-test.raml</raml-path>
+		<raml-base-package>de.dlr.proseo.model</raml-base-package>
 	</properties>
 
 	<dependencies>
@@ -46,9 +46,33 @@
             <artifactId>mysql-connector-java</artifactId>
             <scope>test</scope>
         </dependency>
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+    </dependency>
 	</dependencies>
 
 	<build>
 		<finalName>proseo-model</finalName>
+		<plugins>
+            <!-- Test Spring MVC generation from RAML files -->
+            <plugin>
+                <groupId>com.phoenixnap.oss</groupId>
+                <artifactId>springmvc-raml-plugin</artifactId>
+                <configuration>
+                    <basePackage>de.dlr.proseo.model.rest</basePackage>
+                    <rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-springmvc-endpoints</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-springmvc-endpoints</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+		</plugins>
 	</build>
 </project>

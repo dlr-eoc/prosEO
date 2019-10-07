@@ -5,11 +5,14 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -56,11 +59,11 @@ public class SimpleSelectionRule extends PersistentObject {
 	
 	/** The set of processor configurations, for which this rule is applicable */
 	@ManyToMany
-	private Set<ConfiguredProcessor> applicableConfiguredProcessors;
+	private Set<ConfiguredProcessor> applicableConfiguredProcessors = new HashSet<>();
 	
 	/** The selection policies applied for selecting target products (the first applicable policy in the list holds) */
-	@OneToMany
-	private List<SimplePolicy> simplePolicies;
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<SimplePolicy> simplePolicies = new ArrayList<>();
 
 	/**
 	 * Gets the applicable processing mode

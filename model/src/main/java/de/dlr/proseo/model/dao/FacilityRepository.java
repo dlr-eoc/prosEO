@@ -17,11 +17,14 @@ import de.dlr.proseo.model.ProcessingFacility;
  */
 @Repository
 public interface FacilityRepository extends CrudRepository<ProcessingFacility, Long> {
-
+	
 	/**
-	 * @param name
-	 * @return
+	 * Get the processing facility with the given name
+	 * 
+	 * @param facilityName the name of the processing facility
+	 * @return the unique processing facility identified by the name
 	 */
 	@Query("select pf from ProcessingFacility pf where UPPER(pf.name) = UPPER(?1)")
-	ProcessingFacility findByName(String name);
+	public ProcessingFacility findByName(String facilityName);
+
 }
