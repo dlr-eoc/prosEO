@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +13,8 @@ import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -35,6 +38,7 @@ public class JobStep extends PersistentObject {
 	 * job steps in status WAITING_INPUT and READY can be returned to INITIAL status. All other status transitions are automatic
 	 * depending on processing progress.
 	 */
+	@Enumerated(EnumType.STRING)
 	private JobStepState jobStepState;
 	
 	/** Additional parameter to set in the output products */
@@ -51,6 +55,20 @@ public class JobStep extends PersistentObject {
 	/** The output product of this job step */
 	@OneToOne(mappedBy = "jobStep")
 	private Product outputProduct;
+	
+	/** The start time of the processing job */
+	private Instant processingStartTime;
+	
+	/** The completion time of the processing job */
+	private Instant processingCompletionTime;
+	
+	/** The standard output of the processing job */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
+	private String processingStdOut;
+	
+	/** The standard error output of the processing job */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
+	private String processingStdErr;
 	
 	/**
 	 * The possible processing states for a job step
@@ -163,6 +181,78 @@ public class JobStep extends PersistentObject {
 	 */
 	public void setOutputProduct(Product outputProduct) {
 		this.outputProduct = outputProduct;
+	}
+
+	/**
+	 * Gets the start time of the processing job
+	 * 
+	 * @return the processing start time
+	 */
+	public Instant getProcessingStartTime() {
+		return processingStartTime;
+	}
+
+	/**
+	 * Sets the start time of the processing job
+	 * 
+	 * @param processingStartTime the processing start time to set
+	 */
+	public void setProcessingStartTime(Instant processingStartTime) {
+		this.processingStartTime = processingStartTime;
+	}
+
+	/**
+	 * Gets the completion time of the processing job
+	 * 
+	 * @return the processing completion time
+	 */
+	public Instant getProcessingCompletionTime() {
+		return processingCompletionTime;
+	}
+
+	/**
+	 * Sets the completion time of the processing job
+	 * 
+	 * @param processingCompletionTime the processing completion time to set
+	 */
+	public void setProcessingCompletionTime(Instant processingCompletionTime) {
+		this.processingCompletionTime = processingCompletionTime;
+	}
+
+	/**
+	 * Gets the standard output of the processing job
+	 * 
+	 * @return the processing standard output
+	 */
+	public String getProcessingStdOut() {
+		return processingStdOut;
+	}
+
+	/**
+	 * Sets the standard output of the processing job
+	 * 
+	 * @param processingStdOut the processing standard output to set
+	 */
+	public void setProcessingStdOut(String processingStdOut) {
+		this.processingStdOut = processingStdOut;
+	}
+
+	/**
+	 * Gets the standard error output of the processing job
+	 * 
+	 * @return the processing standard error output
+	 */
+	public String getProcessingStdErr() {
+		return processingStdErr;
+	}
+
+	/**
+	 * Sets the standard error output of the processing job
+	 * 
+	 * @param processingStdErr the processing standard error output to set
+	 */
+	public void setProcessingStdErr(String processingStdErr) {
+		this.processingStdErr = processingStdErr;
 	}
 
 }

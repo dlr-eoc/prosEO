@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -48,6 +49,10 @@ public class Product extends PersistentObject {
 	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
+	/** Product generation time */
+	@Column(name = "generation_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant generationTime;
+	
 	/** Set of component products */
 	@OneToMany(mappedBy = "enclosingProduct")
 	private Set<Product> componentProducts = new HashSet<>();
@@ -61,7 +66,7 @@ public class Product extends PersistentObject {
 	private Orbit orbit;
 	
 	/** Product files for this product */
-	@OneToMany(mappedBy = "product")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "product")
 	private Set<ProductFile> productFile = new HashSet<>();
 	
 	/** Product queries satisfied by this product */
@@ -130,6 +135,7 @@ public class Product extends PersistentObject {
 	public void setSensingStartTime(Instant sensingStartTime) {
 		this.sensingStartTime = sensingStartTime;
 	}
+	
 	/**
 	 * Gets the sensing stop time
 	 * 
@@ -148,6 +154,24 @@ public class Product extends PersistentObject {
 		this.sensingStopTime = sensingStopTime;
 	}
 
+	/**
+	 * Gets the product generation time
+	 * 
+	 * @return the generationTime
+	 */
+	public Instant getGenerationTime() {
+		return generationTime;
+	}
+	
+	/**
+	 * Sets the product generation time
+	 * 
+	 * @param generationTime the generationTime to set
+	 */
+	public void setGenerationTime(Instant generationTime) {
+		this.generationTime = generationTime;
+	}
+	
 	/**
 	 * Gets the sub-products of this product
 	 * 
