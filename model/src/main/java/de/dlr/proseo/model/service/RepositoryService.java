@@ -8,8 +8,6 @@ package de.dlr.proseo.model.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
 import de.dlr.proseo.model.dao.JobRepository;
@@ -17,7 +15,6 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
-import de.dlr.proseo.model.dao.ParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
@@ -92,18 +89,6 @@ public class RepositoryService {
 	/** The repository for the Spacecraft class */
 	@Autowired
     private SpacecraftRepository spacecraftRepository;
-
-	/** The repository for the ProductQuery class */
-	@Autowired
-    private ProductQueryRepository productQueryRepository;
-
-	/** The repository for the ProductFile class */
-	@Autowired
-    private ProductFileRepository productFileRepository;
-
-	/** The repository for the Parameter class */
-	@Autowired
-    private ParameterRepository parameterRepository;
 
 	/**
 	 * Singleton constructor
@@ -239,30 +224,4 @@ public class RepositoryService {
 		return theRepositoryService.spacecraftRepository;
 	}
 	
-	/**
-	 * Gets the repository for the ProductQuery class
-	 * 
-	 * @return the productQueryRepository
-	 */
-	public static ProductQueryRepository getProductQueryRepository() {
-		return theRepositoryService.productQueryRepository;
-	}
-	
-	/**
-	 * Gets the repository for the ProductFile class
-	 * 
-	 * @return the productFileRepository
-	 */
-	public static ProductFileRepository getProductFileRepository() {
-		return theRepositoryService.productFileRepository;
-	}
-	
-	/**
-	 * Gets the repository for the Parameter class
-	 * 
-	 * @return the parameterRepository
-	 */
-	public static ParameterRepository getParameterRepository() {
-		return theRepositoryService.parameterRepository;
-	}
 }
