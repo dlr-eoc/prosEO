@@ -60,7 +60,7 @@ public class JobDispatcher {
 			throw new RuntimeException("Element not found");
 		}
 		
-		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository().findByJobStep(jobStep);
+		Set<ProductQuery> productQueries = jobStep.getInputProductQueries();
 		
 		jobOrder = new JobOrder();
 		String processorName;
