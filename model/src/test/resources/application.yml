@@ -7,3 +7,9 @@ spring:
         username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
+logging:
+    level:
+        root: INFO
+        de:
+            dlr:
+                proseo: TRACE

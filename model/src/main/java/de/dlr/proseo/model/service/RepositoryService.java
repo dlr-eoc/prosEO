@@ -223,4 +223,8 @@ public class RepositoryService {
 	public static SpacecraftRepository getSpacecraftRepository() {
 		return theRepositoryService.spacecraftRepository;
 	}
+<<<<<<< HEAD
+=======
+	
+>>>>>>> refs/remotes/origin/planner-ernst
 }

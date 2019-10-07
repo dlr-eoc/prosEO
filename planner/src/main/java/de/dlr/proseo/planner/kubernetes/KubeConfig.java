@@ -263,6 +263,13 @@ public class KubeConfig {
 	}
 	
 	/**
+	 * @return url
+	 */
+	public String getProcessingEngineUrl() {
+		return url;
+	}
+	
+	/**
 	 * @return description
 	 */
 	public String getDescription() {
