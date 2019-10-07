@@ -18,15 +18,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.rest.model.Mission;
+import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.ordermgr.rest.model.Orbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage spacecraft orbits
  * 
- * @author Dr. Thomas Bassler
+ * @author Ranjitha Vignesh
  *
  */
 @Component
@@ -67,25 +72,28 @@ public class OrbitControllerImpl implements OrbitController {
 
 	@Override
 	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {
-		// TODO Auto-generated method stub
+		
+		List<de.dlr.proseo.model.Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit>();
+		List<Orbit> restOrbits = new ArrayList<Orbit>();
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());		
+		//creates orbits in DB
+		for(int i=0;i<orbit.size();i++) {
+			de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(orbit.get(i));
+			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);	
+			modelOrbits.add(modelOrbit);
+		}
+		//fetch created orbits from DB
+		for (int i=0; i<modelOrbits.size();i++) {
 
-		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			Orbit restOrbit = OrbitUtil.toRestOrbit(modelOrbits.get(i));
+			restOrbits.add(restOrbit);			
+		}		
+		return new ResponseEntity<>(restOrbits, HttpStatus.CREATED);	
 	}
 
 	@Override
 	public ResponseEntity<Orbit> getOrbitById(Long id) {
-		// TODO Auto-generated method stub
-
-		/*String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);*/
-		
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbitById({})", id);
 		
 		Optional<de.dlr.proseo.model.Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
@@ -103,17 +111,60 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	@Override
-	public ResponseEntity<Mission> modifyOrbit(Long id, @Valid Orbit orbit) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<Orbit> modifyOrbit(Long id, @Valid Orbit orbit) {
+		
 		return null;
+
+/*		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
+		
+		Optional<de.dlr.proseo.model.Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
+		
+		if (optModelOrbit.isEmpty()) {
+			String message = String.format(MSG_PREFIX + MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
+		de.dlr.proseo.model.Orbit modelOrbit = optModelOrbit.get();
+		
+		// Update modified attributes
+		boolean orbitChanged = false;
+		de.dlr.proseo.model.Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
+		
+		if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
+			orbitChanged = true;
+			modelOrbit.setOrbitNumber(changedOrbit.getOrbitNumber());
+		}
+		
+		if (!modelOrbit.getStartTime().equals(changedOrbit.getStartTime())) {
+			orbitChanged = true;
+			modelOrbit.setStartTime(changedOrbit.getStartTime());
+		}
+		
+		if (!modelOrbit.getStopTime().equals(changedOrbit.getStopTime())) {
+			orbitChanged = true;
+			modelOrbit.setStopTime(changedOrbit.getStopTime());
+		}
+		
+		if (!modelOrbit.getSpacecraft().equals(changedOrbit.getSpacecraft())) {
+			orbitChanged = true;
+			modelOrbit.setSpacecraft(changedOrbit.getSpacecraft());
+		}
+		
+		// Save mission only if anything was actually changed
+		if (orbitChanged)	{
+			modelOrbit.incrementVersion();
+			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+		}
+		
+		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit), HttpStatus.OK);
+*/	
+	
 	}
 
 	@Override
 	public ResponseEntity<?> deleteOrbitById(Long id) {
-		// TODO Auto-generated method stub
-		//return null;
-		
-
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrbitById({})", id);
 		
 		// Test whether the orbit id is valid
@@ -124,8 +175,7 @@ public class OrbitControllerImpl implements OrbitController {
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_WARNING, message);
 			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}
-		
+		}		
 		// Delete the orbit
 		RepositoryService.getOrbitRepository().deleteById(id);
 
