@@ -22,25 +22,28 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorSecurityConfig;
+import de.dlr.proseo.ingestor.IngestorTestConfiguration;
+import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.Product.ParameterType;
-import de.dlr.proseo.model.dao.ProductClassRepository;
-import de.dlr.proseo.model.dao.ProductRepository;
+import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -50,44 +53,41 @@ import de.dlr.proseo.model.service.RepositoryService;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+//@DirtiesContext
 //@Transactional
 @AutoConfigureTestEntityManager
 public class ProductControllerTest {
 	
+	/* The base URI of the Ingestor */
+	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
+	
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, revision (parameter)
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "01" },
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
+		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
-	private static List<Product> testProducts = new ArrayList<>();
 
+	/** Test configuration */
+	@Autowired
+	IngestorTestConfiguration config;
+	
 	/** The security environment for this test */
 	@Autowired
-	private SecurityProperties security;
+	IngestorSecurityConfig ingestorSecurityConfig;
+	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
 
 	/** The (random) port on which the Ingestor was started */
 	@LocalServerPort
 	private int port;
 	
-	/** The DAO for the ProductClass class */
-	ProductClassRepository productClasses = RepositoryService.getProductClassRepository();
-	/** The DAO for the Product class */
-	ProductRepository products = RepositoryService.getProductRepository();
-
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerTest.class);
 	
-	/**
-	 * Get the generated test password
-	 * @return the password to use for login
-	 */
-	private String getPassword() {
-		return this.security.getUser().getPassword();
-	}
-
 	/**
 	 * Prepare the test environment
 	 * 
@@ -125,32 +125,52 @@ public class ProductControllerTest {
 	}
 	
 	/**
-	 * Create test products in the database
+	 * Create a product from a data array
+	 * 
+	 * @param testData an array of Strings representing the product to create
+	 * @return a Product with its attributes set to the input data
 	 */
-	private void createTestProducts() {
+	private Product createProduct(String[] testData) {
+		Product testProduct = new Product();
+		
+		testProduct.setProductClass(
+				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
+
+		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
+		testProduct.setMode(testData[4]);
+		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
+		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.getParameters().put(
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+		testProduct = RepositoryService.getProductRepository().save(testProduct);
+		
+		logger.info("Created test product {}", testProduct.getId());
+		return testProduct;
+	}
+	
+	/**
+	 * Create test products in the database
+	 * 
+	 * @return a list of test product generated
+	 */
+	private List<Product> createTestProducts() {
 		logger.info("Creating test products");
+		List<Product> testProducts = new ArrayList<>();
 		for (int i = 0; i < testProductData.length; ++i) {
-			Product testProduct = new Product();
-			testProduct.setProductClass(
-					productClasses.findByMissionCodeAndProductType(testProductData[i][2], testProductData[i][3]));
-			logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
-			testProduct.setMode(testProductData[i][4]);
-			testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testProductData[i][5])));
-			testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testProductData[i][6])));
-			testProduct.getParameters().put(
-					"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testProductData[i][7])));
-			testProduct = products.save(testProduct);
-			logger.info("Created test product {}", testProduct.getId());
-			testProducts.add(testProduct);
+			testProducts.add(createProduct(testProductData[i]));
 		}
+		return testProducts;
 	}
 	
 	/**
 	 * Remove all (remaining) test products
+	 * 
+	 * @param testProducts a list of test products to delete 
 	 */
-	private void deleteTestProducts() {
+	private void deleteTestProducts(List<Product> testProducts) {
 		for (Product testProduct: testProducts) {
-			products.delete(testProduct);
+			RepositoryService.getProductRepository().delete(testProduct);
 		}
 	}
 
@@ -162,11 +182,26 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testDeleteProductById() {
-		fail("Not yet implemented"); // TODO
+		// Make sure test products exist
+		List<Product> testProducts = createTestProducts();
+		Product productToDelete = testProducts.get(0);
+		testProducts.remove(0);
 		
 		// Delete the first test product
+		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToDelete.getId();
+		logger.info("Testing URL {} / DELETE", testUrl);
+		
+		new TestRestTemplate(config.getUserName(), config.getUserPassword()).delete(testUrl);
 		
 		// Test that the product is gone
+		ResponseEntity<RestProduct> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
+		
+		// Clean up database
+		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Delete Product By ID");
 	}
 
 	/**
@@ -178,15 +213,21 @@ public class ProductControllerTest {
 	@Test
 	public final void testGetProducts() {
 		// Make sure test products exist
-		createTestProducts();
+		List<Product> testProducts = createTestProducts();
 		
 		// Get products using different selection criteria (also combined)
-		String testUrl = "http://localhost:" + this.port + "/proseo/ingestor/v0.1/products";
-		logger.info("Testing URL {}", testUrl);
+		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
+		logger.info("Testing URL {} / GET, no params, with user {} and password {}", testUrl, config.getUserName(), config.getUserPassword());
 		
+//		@SuppressWarnings("rawtypes")
+//		ResponseEntity<List> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+//				.getForEntity(testUrl, List.class);
+		
+		// Just as an example of how to use RestTemplate (does the same as commented code above)
+		RestTemplate restTemplate = rtb.basicAuthentication(config.getUserName(), config.getUserPassword()).build();
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = new TestRestTemplate("user", getPassword())
-				.getForEntity(testUrl, List.class);
+		ResponseEntity<List> entity = restTemplate.getForEntity(testUrl, List.class);
+		
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		
 		// Test that the correct products provided above are in the results
@@ -210,6 +251,8 @@ public class ProductControllerTest {
 							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStartTime"))));
 					assertEquals("Wrong stop time for test product " + i,
 							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStopTime"))));
+					assertEquals("Wrong generation time for test product " + i,
+							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("generationTime"))));
 				}
 			}
 		}
@@ -220,24 +263,48 @@ public class ProductControllerTest {
 		// TODO Tests with different selection criteria
 		
 		// Clean up database
-		deleteTestProducts();
+		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Get Products");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#createProduct(de.dlr.proseo.ingestor.rest.model.Product)}.
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#createProduct(RestProduct)}.
 	 * 
 	 * Test: Create a new product
 	 * Precondition: A (mockup) Production Planner exists, which can be informed of the new product
 	 */
 	@Test
 	public final void testCreateProduct() {
-		fail("Not yet implemented"); // TODO
-		
 		// Create a product in the database
+		Product productToCreate = createProduct(testProductData[0]);
+		RestProduct restProduct = ProductUtil.toRestProduct(productToCreate);
+
+		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
+		logger.info("Testing URL {} / POST", testUrl);
+		
+		ResponseEntity<RestProduct> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restProduct, RestProduct.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
+		restProduct = postEntity.getBody();
+		assertNotEquals("Id should not be 0 (zero): ", 0L, restProduct.getId().longValue());
+		assertEquals("Wrong sensing start time: ", testProductData[0][5], restProduct.getSensingStartTime());
 		
 		// Test that the product exists
+		testUrl += "/" + restProduct.getId();
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		
 		// Test that the Production Planner was informed
+		// TODO Using mock production planner
+		
+		// Clean up database
+		ArrayList<Product> testProducts = new ArrayList<>();
+		testProducts.add(productToCreate);
+		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Create Product");
 	}
 
 	/**
@@ -248,45 +315,59 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testGetProductById() {
-		fail("Not yet implemented"); // TODO
-		
-		// Make sure a product exists
-		
+		// Make sure test products exist
+		List<Product> testProducts = createTestProducts();
+		Product productToFind = testProducts.get(0);
+
 		// Test that a product can be read
+		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToFind.getId();
+		logger.info("Testing URL {} / GET", testUrl);
+
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
+		assertEquals("Wrong product ID: ", productToFind.getId(), getEntity.getBody().getId().longValue());
+		
+		// Clean up database
+		deleteTestProducts(testProducts);
+
+		logger.info("Test OK: Get Product By ID");
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#modifyProduct(java.lang.Long, de.dlr.proseo.ingestor.rest.model.Product)}.
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#modifyProduct(java.lang.Long, RestProduct)}.
 	 * 
 	 * Test: Update a product by ID
 	 * Precondition: At least one product with a known ID is in the database 
 	 */
 	@Test
 	public final void testModifyProduct() {
-		fail("Not yet implemented"); // TODO
-		
-		// Make sure a product exists
+		// Make sure test products exist
+		List<Product> testProducts = createTestProducts();
+		Product productToModify = testProducts.get(0);
 		
 		// Update a product attribute
+		productToModify.setMode("OFFL");
+
+		RestProduct restProduct = ProductUtil.toRestProduct(productToModify);
+		
+		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToModify.getId();
+		logger.info("Testing URL {} / PATCH", testUrl);
+
+		restProduct = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.patchForObject(testUrl, restProduct, RestProduct.class);
+		assertNotNull("Modified product not set", restProduct);
 		
 		// Test that the product attribute was changed as expected
-	}
+		ResponseEntity<RestProduct> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProduct.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
+		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
+		
+		// Clean up database
+		deleteTestProducts(testProducts);
 
-	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductControllerImpl#updateIngestorProduct(java.lang.String, java.util.List)}.
-	 * 
-	 * Test: Ingest all given products into the storage manager of the given processing facility
-	 * Precondition: A (mockup) storage manager is set up, and a directory with products exists
-	 */
-	@Test
-	public final void testUpdateIngestorProduct() {
-		fail("Not yet implemented"); // TODO
-		
-		// Ingest the products
-		
-		// Test that the products are available in the database
-		
-		// Test that the Storage Manager was informed
+		logger.info("Test OK: Modify Product");
 	}
 
 }

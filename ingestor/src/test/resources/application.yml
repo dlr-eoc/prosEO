@@ -13,3 +13,26 @@ logging:
         de:
             dlr:
                 proseo: TRACE
+        org:
+            springframework:
+                boot:
+                    test:
+                        web:
+                            client: DEBUG
+proseo:
+    productionPlanner:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
+        user: none
+        password: none
+    storageManager:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        user: none
+        password: none
+    user:
+        name: thomas
+        password: sieb37.Schlaefer
+    testinput:
+        directory: src/test/resources/IDA_test
+        files:
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc

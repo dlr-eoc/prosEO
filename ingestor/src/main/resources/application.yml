@@ -13,3 +13,11 @@ logging:
         de:
             dlr:
                 proseo: TRACE
+proseo:
+    productionPlanner:
+        url: https://localhost:8091/proseo/planner/v0.1
+        user: none
+        password: none
+    storageManager:
+        user: none
+        password: none

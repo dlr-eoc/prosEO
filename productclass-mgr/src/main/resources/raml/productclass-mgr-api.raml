@@ -24,11 +24,20 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
   SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
   SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   SelectionRule: SimpleSelectionRule[]
   Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  SelectionRuleString:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+      selectionRule: string
+      mode: string
+      configuredProcessors: string[]
 
 resourceTypes:
   standard:
@@ -71,19 +80,19 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProductClass[]
+            type: RestProductClass[]
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
   post:
     description: Create a new product class
     body:
       application/json:
-        type: ProductClass
+        type: RestProductClass
         example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     responses:
       201:
         body:
           application/json:
-            type: ProductClass
+            type: RestProductClass
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
   /{id}:
     uriParameters:
@@ -96,60 +105,87 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
-    put:
+    patch:
       description: Update a product class by ID
       body:
         application/json:
-          type: ProductClass
+          type: RestProductClass
           example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
       responses:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
       description: Delete a product class by ID
       responses:
         204:
-    /selectionrules/{targetclass}:
-      uriParameters:
-        targetclass:
-          type: string
-          description: Internal target class name (product type)
+    /selectionrules:
       get:
-        description: Get the simple selection rule for the target class as formatted string
+        description: Get the simple selection rules as formatted string, optionally selected by source class
+        queryParameters:
+          sourceClass?: string
         responses:
           200:
             body:
               application/json:
-                type: array
+                type: SelectionRuleString[]
                 example: !include examples/selectionrule.json
-                items: 
-                  type: object
-                  properties:
-                    selectionRule: string
-                    mode: string
-                    configuredProcessors: string[]
-      put:
-        description: Update the selection rule for the given target class
+      post:
+        description: Create a selection rule using Rule Language
         body:
           application/json:
-            type: array
+            type: SelectionRuleString[]
             example: !include examples/selectionrule.json
-            items: 
-              type: object
-              properties:
-                selectionRule: string
-                mode: string
-                configuredProcessors: string[]
-      /{configuredProcessor}:
+        responses:
+          201:
+            body:
+              application/json:
+                type: RestProductClass
+                description: The product class with the added, converted selection rules
+      /{ruleid}:
+        uriParameters:
+          ruleid:
+            type: integer
+            format: long
+            description: Database id of the selection rule
+        get:
+          description: Get a selection rule by ID
+          responses:
+            200:
+              body:
+                 application/json:
+                   type: SelectionRuleString
+        patch:
+          description: Update a selection rule using Rule Language
+          body:
+            application/json:
+              type: SelectionRuleString
+          responses:
+            200:
+              body:
+                application/json:
+                  type: SelectionRuleString
         delete:
-          description: Delete the selection rule for the given target class and configured processor (the selection rule will
-                       be disconnected from the configured processor and deleted, if it is not connected to any other
-                       configured processor)
+          description: Delete a selection rule
           responses:
             204:
-            
+        /{configuredProcessor}:
+          uriParameters:
+            configuredProcessor:
+              type: string
+              description: The configured processor, for which the selection rule is valid
+          put:
+            description: Add the configured processor to the selection rule
+            displayName: addProcessorToRule
+            responses:
+              204:
+          delete:
+            description: Remove the configured processor from the selection rule
+                         (the selection rule will be disconnected from the configured processor)
+            displayName: removeProcessorFromRule
+            responses:
+              204:

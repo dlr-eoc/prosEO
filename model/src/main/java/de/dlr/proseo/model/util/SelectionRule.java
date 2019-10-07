@@ -236,6 +236,17 @@ public class SelectionRule {
 	}
 	
 	/**
+	 * Gets all simple selection rules contained in the selection rule
+	 * 
+	 * @return a list of simple selection rules
+	 */
+	public List<SimpleSelectionRule> getSimpleRules() {
+		List<SimpleSelectionRule> newSimpleRules = new ArrayList<>();
+		newSimpleRules.addAll(simpleRules.values());
+		return newSimpleRules;
+	}
+	
+	/**
 	 * Syntactical analysis of a simple rule: FOR product_type SELECT policy [ OPTIONAL | MANDATORY ]
 	 * (see {@link SelectionRule grammar definition})
 	 * @param targetProductClass the product class, which requires source products defined by this rule

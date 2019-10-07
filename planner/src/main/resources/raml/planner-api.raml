@@ -7,6 +7,9 @@ mediaType: application/json
 
 types:
   PlannerJob: !include types/planner-job.raml
+  PlannerJobstep: !include types/planner-jobstep.raml
+  PlannerProcessingFacility: !include types/planner-processingfacility.raml
+  PlannerPod: !include types/planner-pod.raml
 
 resourceTypes:
   standard:
@@ -36,26 +39,19 @@ resourceTypes:
             The requested resource to delete was not found 
           headers:
             Warning: !include types/error.raml
-              
+
 /jobs:
   type: standard
   get:
-    description: Get production planner jobs by id
+    description: Get production planner jobs by state
     queryParameters:
-      id?: string
+      state?: string
     responses:
       200:
         body:
           application/json:
             type: PlannerJob[]
             example: !include examples/planner-job-list.json
-  put:
-    description: Create a new job
-    body:
-      application/json:
-        type: PlannerJob
-        example: !include examples/planner-job.json         
-/job:
   /{name}:
     get:
       description: Get production planner job
@@ -82,4 +78,117 @@ resourceTypes:
               type: PlannerJob
               example: !include examples/planner-job.json
 
+/jobsteps:
+  type: standard
+  get:
+    description: Get production planner jobsteps
+    queryParameters:
+      status?:
+        type: string
+        enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+    responses:
+      200:
+        body:
+          application/json:
+            type: PlannerJobstep[]
+            example: !include examples/planner-jobstep-list.json
+  /{name}:
+    get:
+      description: Get production planner jobstep
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJobstep
+              example: !include examples/planner-jobstep.json
+    post:
+      description: Create production planner jobstep
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJobstep
+              example: !include examples/planner-jobstep.json
+    delete:
+      description: Delete production planner jobstep
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerJobstep
+              example: !include examples/planner-jobstep.json
 
+/processingfacilities:
+  type: standard
+  get:
+    description: Update and get running and connected processing facilities
+    responses:
+      200:
+        body:
+          application/json:
+            type: PlannerProcessingFacility[]
+            example: !include examples/planner-processingfacility-list.json
+  /{name}:
+    get:
+      description: Get production planner processingfacilitiy by name 
+      responses:
+        200:
+          body:
+            application/json:
+              type: PlannerProcessingFacility
+              example: !include examples/planner-processingfacility.json
+    /pod:
+      /{podname}:
+        get:
+          description: Get jobstep/pod for test purpose
+          responses:
+            200:
+              body:
+                application/json:
+                  type: PlannerPod
+        post:
+          description: Create jobstep/pod for test purpose
+          responses:
+            201:
+              body:
+                application/json:
+                  type: PlannerJobstep
+    /pods:
+      get: 
+        description: Get pods on processing facility
+        responses:
+          200:
+            body:
+              application/json:
+                type: PlannerPod[]
+      /{status}:
+        get: 
+          description: Get pods on processing facility
+          responses:
+            200:
+              body:
+                application/json:
+                  type: PlannerPod[]
+        delete:
+          description: Delete pods on processing facility
+          responses:
+            200:
+    /finish:
+      /{podname}:
+        patch:
+          description: Pod of name has finished with state
+          queryParameters:
+            status: string
+          responses:
+            200:
+              body:
+                application/json:
+                  type: PlannerPod
+/product:
+  /{productid}:
+    patch:
+      description: Product created and available, sent by prosEO Ingestor
+      responses:
+        200:
+        
+                

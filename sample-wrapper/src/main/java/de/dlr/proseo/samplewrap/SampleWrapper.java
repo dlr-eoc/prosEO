@@ -13,19 +13,23 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
+
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import alluxio.AlluxioURI;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
+import de.dlr.proseo.samplewrap.alluxio.AlluxioOps;
 import de.dlr.proseo.samplewrap.s3.AmazonS3URI;
 import de.dlr.proseo.samplewrap.s3.S3Ops;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /**
  * prosEO Sample Processor Wrapper - an example of a wrapper for processors conforming to ESA's
@@ -73,7 +77,7 @@ public class SampleWrapper {
 	enum File_Name {FS_TYPE}
 		
 	/** File_Name Attribute FS_TYPE valid entries */
-	enum FS_TYPE {S3,POSIX}
+	enum FS_TYPE {S3,POSIX, ALLUXIO}
 	
 	/** ENV-VAR valid entries */
 	enum ENV_VARS {FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE}
@@ -108,7 +112,6 @@ public class SampleWrapper {
     		return null;
     	}
 	};
-	
 	
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
@@ -230,10 +233,17 @@ public class SampleWrapper {
 					// for all S3-data we try to fetch to workdir...
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
 						// first set file_name to local work-dir path
-						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
+						fn.setFileName(fn.getOriginalFileName().replace("s3://", "inputs"+File.separator));
 						// now fetch from S3
 						Boolean transaction = S3Ops.fetch(s3, fn.getOriginalFileName(), fn.getFileName());
-						logger.info("fetched "+fn.getOriginalFileName());
+						if (!transaction) return null;
+					}
+					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
+						// now fetch from ALLUXIO
+						fn.setFileName("inputs"+fn.getOriginalFileName());
+						AlluxioURI srcPath = new AlluxioURI(fn.getOriginalFileName());
+						AlluxioURI dstPath = new AlluxioURI(fn.getFileName());
+						Boolean transaction = AlluxioOps.copyToLocal(srcPath, dstPath);
 						if (!transaction) return null;
 					}
 				}
@@ -250,7 +260,8 @@ public class SampleWrapper {
 						try {
 						  File f = new File(fn.getFileName());
 						  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
-						  else f.mkdirs();
+						  File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
+						  subdirs.mkdirs();
 						} catch (SecurityException e) {
 							logger.error(e.getMessage());
 							return null;
