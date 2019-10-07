@@ -1,7 +1,9 @@
 /**
+ * JobDispatcher.java
  * 
+ * © 2019 Prophos Informatik GmbH
  */
-package dispatcher;
+package de.dlr.proseo.planner.dispatcher;
 
 import java.util.List;
 import java.util.Set;
@@ -60,7 +62,7 @@ public class JobDispatcher {
 			throw new RuntimeException("Element not found");
 		}
 		
-		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository().findByJobStep(jobStep);
+		Set<ProductQuery> productQueries = jobStep.getInputProductQueries();
 		
 		jobOrder = new JobOrder();
 		String processorName;

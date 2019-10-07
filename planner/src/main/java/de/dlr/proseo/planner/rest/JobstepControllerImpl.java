@@ -20,11 +20,11 @@ import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.Status;
-import dispatcher.JobDispatcher;
 
 
 
