@@ -156,11 +156,7 @@ public class KubeConfig {
 		V1JobList list = null;
 		try {
 			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
-			if (list != null) {
-				for (V1Job item : list.getItems()) {
-					item.getMetadata().
-				}
-			}
+			
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
