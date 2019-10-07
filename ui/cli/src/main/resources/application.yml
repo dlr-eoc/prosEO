@@ -1,0 +1,15 @@
+proseo:
+    user: NONE
+    password: NONE
+    ingestor:
+        url: https://localhost:8080/proseo/ingestor/v0.1
+    productionPlanner:
+        url: https://localhost:8081/proseo/planner/v0.1
+    orderManager:
+        url: https://localhost:8082/proseo/order-mgr/v0.1
+    processorManager:
+        url: https://localhost:8083/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: https://localhost:8084/proseo/processor-mgr/v0.1
+    cli:
+        syntaxfile: ui-cli-syntax.yml

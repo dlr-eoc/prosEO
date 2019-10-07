@@ -25,9 +25,13 @@ securitySchemes:
 
 types:
   Order: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  OrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  PromisedProduct: !include ../../../../../model/src/main/resources/raml/types/promisedproduct.raml
   Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   Mission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  Spacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
   Orbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+
 
 resourceTypes:
   standard:
@@ -99,7 +103,7 @@ resourceTypes:
             application/json:
               type: Order
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
-    put:
+    patch:
       description: Update a processing order by ID
       body:
         application/json:
@@ -150,7 +154,7 @@ resourceTypes:
             application/json:
               type: Mission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
-    put:
+    patch:
       description: Update a mission by ID (including changes to the spacecraft list)
       body:
         application/json:
@@ -209,7 +213,7 @@ resourceTypes:
             application/json:
               type: Orbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
-    put:
+    patch:
       description: Update an orbit by ID
       body:
         application/json:

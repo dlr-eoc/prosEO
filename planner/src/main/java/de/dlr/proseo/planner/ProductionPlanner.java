@@ -70,12 +70,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	/**
 	 * Look for connected KubeConfig of name. 
 	 * 
-	 * @param name of KubeConfig to find
+	 * @param name of KubeConfig to find (may be null)
 	 * @return KubeConfig found or null
 	 */
 	public static KubeConfig getKubeConfig(String name) {
-		if (name == null && kubeConfigs.size() == 1) {
-			return (KubeConfig) kubeConfigs.values().toArray()[0];
+		if (name == null) {
+			if (0 < kubeConfigs.size()) {
+				return (KubeConfig) kubeConfigs.values().toArray()[0];
+			} else {
+				return null;
+			}
 		}
 		return kubeConfigs.get(name.toLowerCase());
 	}

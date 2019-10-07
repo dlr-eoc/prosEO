@@ -125,6 +125,7 @@
 						<basePackage>${raml-base-package}</basePackage>
 						<seperateMethodsByContentType>false</seperateMethodsByContentType>
 						<useJackson1xCompatibility>false</useJackson1xCompatibility>
+                        <overrideNamingLogicWith>DISPLAY_NAME</overrideNamingLogicWith>
 					</configuration>
 				</plugin>
 			</plugins>

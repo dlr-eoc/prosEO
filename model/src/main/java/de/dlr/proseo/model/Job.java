@@ -78,7 +78,7 @@ public class Job extends PersistentObject {
 	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
 	 */
 	private Integer priority;
-		
+	
 	/** The processing facility this job runs on */
 	@ManyToOne
 	private ProcessingFacility processingFacility;

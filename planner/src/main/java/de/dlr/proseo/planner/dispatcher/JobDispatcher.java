@@ -1,7 +1,9 @@
 /**
+ * JobDispatcher.java
  * 
+ * © 2019 Prophos Informatik GmbH
  */
-package dispatcher;
+package de.dlr.proseo.planner.dispatcher;
 
 import java.util.List;
 import java.util.Set;

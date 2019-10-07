@@ -1,0 +1,30 @@
+{
+	"kind": "Config",
+	"apiVersion": "v1",
+	"preferences": {},
+	"clusters": [{
+			"name": "internalCluster",
+			"cluster": {
+				"server": "https://XXXXXX:5443",
+				"certificate-authority-data": "XXXXXXXXX"
+			}
+		}
+	],
+	"users": [{
+			"name": "user",
+			"user": {
+				"client-certificate-data": "XXXXXXXXXX",
+				"client-key-data": "XXXXXXXXXXXXXX"
+			}
+		}
+	],
+	"contexts": [{
+			"name": "internal",
+			"context": {
+				"cluster": "internalCluster",
+				"user": "user"
+			}
+		}
+	],
+	"current-context": "internal"
+}

@@ -6,13 +6,17 @@
  */
 package de.dlr.proseo.samplewrap;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -50,6 +54,10 @@ public class SampleWrapper {
 	/** Exit code explanation for failure */
 	private static final String EXIT_TEXT_FAILURE = "FAILURE";
 	
+	/** Set path finals for container-context */
+	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
+	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+UUID.randomUUID()+".xml";
+	
 	/** Error messages */
 	private static final String MSG_LEAVING_SAMPLE_WRAPPER = "Leaving sample-wrapper with exit code {} ({})";
 	private static final String MSG_STARTING_SAMPLE_WRAPPER = "Starting sample-wrapper V00.00.01 with JobOrder file {}";
@@ -80,7 +88,7 @@ public class SampleWrapper {
 	enum FS_TYPE {S3,POSIX, ALLUXIO}
 	
 	/** ENV-VAR valid entries */
-	enum ENV_VARS {FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE}
+	enum ENV_VARS {FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE,PROCESSOR_SHELL_COMMAND}
 	
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
 	private String ENV_FS_TYPE = System.getenv(ENV_VARS.FS_TYPE.toString());
@@ -91,6 +99,7 @@ public class SampleWrapper {
 	private String ENV_LOGFILE_TARGET = System.getenv(ENV_VARS.LOGFILE_TARGET.toString());
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
 	private String ENV_SUCCESS_STATE = System.getenv(ENV_VARS.SUCCESS_STATE.toString());
+	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	
 	
 	/** Base S3-Client */
@@ -138,17 +147,6 @@ public class SampleWrapper {
 		if(ENV_SUCCESS_STATE == null || ENV_SUCCESS_STATE.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.SUCCESS_STATE);return false;}
 		return true;
 	}
-	/**
-	 * provide valid container-context JobOrderFile
-	 * 
-	 * @param JobOrder remapped JobOrder object
-	 * @param path file path of newly created JOF
-	 * @return the JobOrder file valid in container context
-	 */
-	private Boolean provideContainerJOF(JobOrder jo, String path) {	
-		return jo.writeXML(path, false);
-	}
-	
 	/**
 	 * provide initial JobOrderFile
 	 * 
@@ -267,6 +265,18 @@ public class SampleWrapper {
 							return null;
 						}
 					}
+					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
+						fn.setFileName("outputs"+fn.getOriginalFileName());
+						try {
+							  File f = new File(fn.getFileName());
+							  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
+							  File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
+							  subdirs.mkdirs();
+							} catch (SecurityException e) {
+								logger.error(e.getMessage());
+								return null;
+							}
+					}
 				}
 			}
 		}
@@ -275,7 +285,56 @@ public class SampleWrapper {
 	}
 
 	/**
-	 * Perform the dummy processing: check env, parse JobOrder file, read one input file, create one output file
+	 * provide valid container-context JobOrderFile
+	 * 
+	 * @param JobOrder remapped JobOrder object
+	 * @param path file path of newly created JOF
+	 * @return the JobOrder file valid in container context
+	 */
+	private Boolean provideContainerJOF(JobOrder jo, String path) {	
+		return jo.writeXML(path, false);
+	}
+	
+	/**
+	 * Executes the processor
+	 * 
+	 * @param shellCommand command for executing the processor
+	 * @param jofPath path of re-mapped JobOrder file valid in container context
+	 * @return Exit Code
+	 */
+	private Boolean runProcessor(String shellCommand, String jofPath) {	
+		logger.info("Starting Processing using command {} and local JobOrderFile: {}",shellCommand, jofPath);
+		Boolean check = false;
+		
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.redirectErrorStream(true); 
+		
+		String fullCommand = shellCommand+" "+jofPath;
+		String[] execCommand = fullCommand.split(" ");
+		
+		processBuilder.command(execCommand);
+		try {
+			Process process = processBuilder.start();
+			BufferedReader reader =
+					new BufferedReader(new InputStreamReader(process.getInputStream()));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				logger.info("... "+line);
+			}
+			int exitCode = process.waitFor();
+			logger.info("Exited Processing with return code {}", exitCode);
+			if (exitCode == 0) check = true;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return check;
+	}
+	
+	/**
+	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
 	 * 
 	 * @param args (not used due env-var based invocation)
 	 * @return the program exit code (OK or FAILURE)
@@ -312,22 +371,25 @@ public class SampleWrapper {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		Boolean containerJOF = provideContainerJOF(joWork, "Container-JOF.xml");
+		
+		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
 		
-		
-		// DEMO:
-//		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Inputs.toString()+ANSI_RESET);
-//		for (String[] in : listOfInputs) {
-//			System.out.println(in[0]+":"+in[1]);
-//		}
-//		logger.info(ANSI_YELLOW+Ipf_Proc.List_of_Outputs.toString()+ANSI_RESET);
-//		for (String[] out : listOfOutputs) {
-//			System.out.println(out[0]+":"+out[1]);
-//		}
+		/** STEP [CALC] Execute Processor */
+		Boolean procRun = runProcessor(
+				ENV_PROCESSOR_SHELL_COMMAND,
+				CONTAINER_JOF_PATH
+	     );
+		if (!procRun) {
+			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			return EXIT_CODE_FAILURE;
+		}
+
+		/** STEP [9] Push Processing Results to prosEO Storage, if any */
+		 // TODO
 		
 		logger.info(ANSI_GREEN+MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK+ANSI_RESET);
 		return EXIT_CODE_OK;

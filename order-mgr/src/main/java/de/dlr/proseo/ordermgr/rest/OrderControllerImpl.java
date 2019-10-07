@@ -63,7 +63,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<Order> updateOrder(Long id, @Valid Order order) {
+	public ResponseEntity<Order> modifyOrder(Long id, @Valid Order order) {
 		// TODO Auto-generated method stub
 		return null;
 	}
