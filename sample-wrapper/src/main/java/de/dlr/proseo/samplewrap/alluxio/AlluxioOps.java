@@ -1,8 +1,11 @@
 package de.dlr.proseo.samplewrap.alluxio;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +22,7 @@ import com.google.common.io.Closer;
 import alluxio.AlluxioURI;
 import alluxio.Constants;
 import alluxio.client.file.FileInStream;
+import alluxio.client.file.FileOutStream;
 import alluxio.client.file.FileSystem;
 import alluxio.client.file.URIStatus;
 import alluxio.exception.AlluxioException;
@@ -30,6 +34,9 @@ public final class AlluxioOps {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(AlluxioOps.class);
 	private final static FileSystem fs = FileSystem.Factory.get();
+	
+	private static final int COPY_FROM_LOCAL_BUFFER_SIZE_DEFAULT = 8 * Constants.MB;
+	private static int mCopyFromLocalBufferSize = COPY_FROM_LOCAL_BUFFER_SIZE_DEFAULT;
 	private static final int COPY_TO_LOCAL_BUFFER_SIZE_DEFAULT = 64 * Constants.MB;
 	private static int mCopyToLocalBufferSize = COPY_TO_LOCAL_BUFFER_SIZE_DEFAULT;
 	
@@ -138,6 +145,51 @@ public final class AlluxioOps {
 			return false;
 		} finally {
 			tmpDst.delete();
+		}
+	}
+	/**
+	   * Upload file from local FS to Alluxio
+	   *
+	   * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
+	   * @param dstPath the {@link AlluxioURI} of the destination
+	   * @throws InterruptedException when failed to send messages to the pool
+	   * @return true/false
+	   */
+	private static Boolean copyFromLocalFile(AlluxioURI srcPath, AlluxioURI dstPath)
+			throws AlluxioException, IOException {
+		File src = new File(srcPath.getPath());
+		if (src.isDirectory()) {
+			throw new IOException("Source " + src.getAbsolutePath() + " is not a file.");
+		}
+		// If the dstPath is a directory, then it should be updated to be the path of the file where
+		// src will be copied to.
+		if (fs.exists(dstPath) && fs.getStatus(dstPath).isFolder()) {
+			dstPath = dstPath.join(src.getName());
+		}
+
+		FileOutStream os = null;
+		try (Closer closer = Closer.create()) {
+			os = closer.register(fs.createFile(dstPath));
+			FileInputStream in = closer.register(new FileInputStream(src));
+			FileChannel channel = closer.register(in.getChannel());
+			ByteBuffer buf = ByteBuffer.allocate(mCopyFromLocalBufferSize);
+			while (channel.read(buf) != -1) {
+				buf.flip();
+				os.write(buf.array(), 0, buf.limit());
+			}
+			return true;
+		} catch (IOException e) {
+			// Close the out stream and delete the file, so we don't have an incomplete file lying
+			// around.
+			if (os != null) {
+				os.cancel();
+				if (fs.exists(dstPath)) {
+					fs.delete(dstPath);
+				}
+			}
+			return false;
+		} catch (AlluxioException e1) {
+			return false;
 		}
 	}
 	

@@ -103,23 +103,28 @@ public class SampleWrapper {
 	
 	
 	/** Base S3-Client */
-    private S3Client s3Client() {
-    	try {
-		AwsBasicCredentials creds = AwsBasicCredentials.create( ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
-		Region region = Region.EU_CENTRAL_1;
-		S3Client s3 = S3Client.builder()
-				.region(region)
-				.endpointOverride(URI.create(ENV_S3_ENDPOINT))
-				.credentialsProvider(StaticCredentialsProvider.create(creds))
-				.build();
-		return s3;
-    	} catch(software.amazon.awssdk.core.exception.SdkClientException e) {
-    		logger.error(e.getMessage());
-    		return null;
-    	} catch (java.lang.NullPointerException e1) {
-    		logger.error(e1.getMessage());
-    		return null;
-    	}
+	private S3Client s3Client() {
+		try {
+			//check if S3 env vars are set
+			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
+			if(ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY); return null;}
+			if(ENV_S3_ENDPOINT==null||ENV_S3_ENDPOINT.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT); return null;}
+			
+			AwsBasicCredentials creds = AwsBasicCredentials.create( ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
+			Region region = Region.EU_CENTRAL_1;
+			S3Client s3 = S3Client.builder()
+					.region(region)
+					.endpointOverride(URI.create(ENV_S3_ENDPOINT))
+					.credentialsProvider(StaticCredentialsProvider.create(creds))
+					.build();
+			return s3;
+		} catch(software.amazon.awssdk.core.exception.SdkClientException e) {
+			logger.error(e.getMessage());
+			return null;
+		} catch (java.lang.NullPointerException e1) {
+			logger.error(e1.getMessage());
+			return null;
+		}
 	};
 	
 	/** Check if FS_TYPE value is valid */
@@ -133,18 +138,60 @@ public class SampleWrapper {
 	}
 	
 	private Boolean checkEnv() {
-		//check all required env-vars
-		if(!checkFS_TYPE(ENV_FS_TYPE)) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);return false;}
-		if(ENV_FS_TYPE == null || ENV_FS_TYPE.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);return false;}
-		if(ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);return false;}
-		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ENDPOINT == null || ENV_S3_ENDPOINT.isEmpty())) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT);return false;}
-		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty())) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY);return false;}
-		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty())) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY);return false;}
-		if(ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE+": "+ENV_FS_TYPE+" does not allow "+ENV_JOBORDER_FILE);return false;};
-		if(ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE+": "+ENV_FS_TYPE+" does not allow "+ENV_JOBORDER_FILE);return false;};
-		if(ENV_LOGFILE_TARGET == null || ENV_LOGFILE_TARGET.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOGFILE_TARGET);return false;}
-		if(ENV_STATE_CALLBACK_ENDPOINT == null || ENV_STATE_CALLBACK_ENDPOINT.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STATE_CALLBACK_ENDPOINT);return false;}
-		if(ENV_SUCCESS_STATE == null || ENV_SUCCESS_STATE.isEmpty()) { logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.SUCCESS_STATE);return false;}
+		// check all required env-vars
+		if (!checkFS_TYPE(ENV_FS_TYPE)) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);
+			return false;
+		}
+		if (ENV_FS_TYPE == null || ENV_FS_TYPE.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);
+			return false;
+		}
+		if (ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);
+			return false;
+		}
+		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ENDPOINT == null || ENV_S3_ENDPOINT.isEmpty())) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT);
+			return false;
+		}
+		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty())) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY);
+			return false;
+		}
+		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString())
+				&& (ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty())) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY);
+			return false;
+		}
+		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR,
+					ENV_VARS.FS_TYPE + ": " + ENV_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
+			return false;
+		}
+		;
+		if (ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR,
+					ENV_VARS.FS_TYPE + ": " + ENV_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
+			return false;
+		}
+		;
+		if (ENV_LOGFILE_TARGET == null || ENV_LOGFILE_TARGET.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOGFILE_TARGET);
+			return false;
+		}
+		if (ENV_STATE_CALLBACK_ENDPOINT == null || ENV_STATE_CALLBACK_ENDPOINT.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STATE_CALLBACK_ENDPOINT);
+			return false;
+		}
+		if (ENV_SUCCESS_STATE == null || ENV_SUCCESS_STATE.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.SUCCESS_STATE);
+			return false;
+		}
+		if (ENV_PROCESSOR_SHELL_COMMAND == null || ENV_PROCESSOR_SHELL_COMMAND.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSOR_SHELL_COMMAND);
+			return false;
+		}
 		return true;
 	}
 	/**
@@ -285,11 +332,11 @@ public class SampleWrapper {
 	}
 
 	/**
-	 * provide valid container-context JobOrderFile
+	 * creates valid container-context JobOrderFile under given path
 	 * 
 	 * @param JobOrder remapped JobOrder object
 	 * @param path file path of newly created JOF
-	 * @return the JobOrder file valid in container context
+	 * @return True/False
 	 */
 	private Boolean provideContainerJOF(JobOrder jo, String path) {	
 		return jo.writeXML(path, false);
@@ -300,7 +347,7 @@ public class SampleWrapper {
 	 * 
 	 * @param shellCommand command for executing the processor
 	 * @param jofPath path of re-mapped JobOrder file valid in container context
-	 * @return Exit Code
+	 * @return True/False
 	 */
 	private Boolean runProcessor(String shellCommand, String jofPath) {	
 		logger.info("Starting Processing using command {} and local JobOrderFile: {}",shellCommand, jofPath);
@@ -326,12 +373,35 @@ public class SampleWrapper {
 			if (exitCode == 0) check = true;
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		return check;
 	}
+	
+	/**
+	 * Pushes processing results to prosEO storage
+	 * 
+	 * @param jobOrder initial JobOrder-Object
+	 * @return True/False
+	 */
+	private Boolean pushResults(JobOrder jo) {
+		Boolean check = false;
+		
+		for(Proc item : jo.getListOfProcs()) {
+			// loop all Input
+			for (InputOutput io: item.getListOfOutputs()) {
+				for (IpfFileName fn: io.getFileNames()) {
+					logger.info(fn.getFileName()+"-->"+fn.getFSType()+" - "+fn.getOriginalFileName());
+				}
+				}
+			}
+		
+		return check;
+	}
+	
+	
 	
 	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
@@ -364,7 +434,7 @@ public class SampleWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 		
-		/** STEP [6][7][8] request Inputs & remap JOF*/
+		/** STEP [6][7][8] fetch Inputs & create re-mapped JOF for container context*/
 		JobOrder joWork = null;
 		joWork = fetchInputData(jobOrderDoc);
 		if (null == joWork) {
@@ -389,7 +459,11 @@ public class SampleWrapper {
 		}
 
 		/** STEP [9] Push Processing Results to prosEO Storage, if any */
-		 // TODO
+		Boolean upload = pushResults(joWork);
+		if (!upload) {
+			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			return EXIT_CODE_FAILURE;
+		}
 		
 		logger.info(ANSI_GREEN+MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK+ANSI_RESET);
 		return EXIT_CODE_OK;
