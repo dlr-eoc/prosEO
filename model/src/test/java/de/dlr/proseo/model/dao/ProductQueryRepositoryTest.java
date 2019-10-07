@@ -1,5 +1,5 @@
 /**
- * ProductClassRepositoryTest.java
+ * ProductQueryRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -25,13 +25,14 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
- * Unit test cases for ProcessorRepository
+ * Unit test cases for FacilityRepository
  *
  * @author Dr. Thomas Bassler
  */
@@ -40,14 +41,14 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class ProductClassRepositoryTest {
+public class ProductQueryRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
 	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
 	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
-	
+
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductClassRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductQueryRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -91,37 +92,17 @@ public class ProductClassRepositoryTest {
 		
 		mission.getProductClasses().add(prodClass);
 		RepositoryService.getMissionRepository().save(mission);
+
+		ProductQuery query = new ProductQuery();
+		query.setIsSatisfied(false);
+		query.setRequestedProductClass(prodClass);
+		query = RepositoryService.getProductQueryRepository().save(query);
 		
+		// Test findUnsatisfiedByProductClass
+		List<ProductQuery> queryList = RepositoryService.getProductQueryRepository().findUnsatisfiedByProductClass(prodClass.getId());
+		assertFalse("Find unsatisfied by product class id failed for ProductQuery", queryList.isEmpty());
 		
-		// Test findByMissionCode
-		List<ProductClass> prodClasses = RepositoryService.getProductClassRepository().findByMissionCode(TEST_CODE);
-		assertFalse("Find by mission code failed for ProductClass", prodClasses.isEmpty());
-		
-		logger.info("OK: Test for findByMissionCode completed");
-		
-		// Test findByProductType
-		prodClasses = RepositoryService.getProductClassRepository().findByProductType(TEST_PRODUCT_TYPE);
-		assertFalse("Find by product type failed for ProductClass", prodClasses.isEmpty());
-		
-		logger.info("OK: Test for findByProductType completed");
-		
-		// Test findByMissionType
-		prodClasses = RepositoryService.getProductClassRepository().findByMissionType(TEST_MISSION_TYPE);
-		assertFalse("Find by mission type failed for ProductClass", prodClasses.isEmpty());
-		
-		logger.info("OK: Test for findByMissionType completed");
-		
-		// Test findByMissionCodeAndProductType
-		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		assertNotNull("Find by mission code and product type failed for ProcessingOrder", prodClass);
-		
-		logger.info("OK: Test for findByMissionCodeAndProductType completed");
-		
-		// Test findByMissionCodeAndMissionType
-		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndMissionType(TEST_CODE, TEST_MISSION_TYPE);
-		assertNotNull("Find by mission code and mission type failed for ProcessingOrder", prodClass);
-		
-		logger.info("OK: Test for findByMissionCodeAndMissionType completed");
+		logger.info("OK: Test for findUnsatisfiedByProductClass completed");
 		
 	}
 

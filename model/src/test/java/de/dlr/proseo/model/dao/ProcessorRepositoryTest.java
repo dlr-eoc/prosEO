@@ -40,9 +40,9 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProcessorRepositoryTest {
 
-	private static final String TEST_VERSION = "02.00.01";
+	private static final String TEST_VERSION = "$02.00.01$";
 
-	private static final String TEST_NAME = "KNMI L2";
+	private static final String TEST_NAME = "$KNMI L2$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorRepositoryTest.class);

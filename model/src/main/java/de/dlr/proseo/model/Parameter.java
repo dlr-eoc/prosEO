@@ -39,8 +39,9 @@ public class Parameter {
 	 * @param parameterType the type of the new parameter
 	 * @param parameterValue the value of the new parameter
 	 * @return the initialized parameter for chaining
+	 * @throws IllegalArgumentException if parameter type and class of parameter value do not match
 	 */
-	public Parameter init(ParameterType parameterType, Serializable parameterValue) {
+	public Parameter init(ParameterType parameterType, Serializable parameterValue) throws IllegalArgumentException {
 		this.parameterType = parameterType;
 		switch(parameterType) {
 		case STRING:

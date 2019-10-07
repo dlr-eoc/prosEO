@@ -44,7 +44,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class SpacecraftRepositoryTest {
 
-	private static final String TEST_SC_CODE = "XYZ";
+	private static final String TEST_SC_CODE = "$XYZ$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SpacecraftRepositoryTest.class);
