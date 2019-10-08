@@ -5,11 +5,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -27,8 +29,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
@@ -66,9 +67,16 @@ public class MissionControllerTest {
 	private static String[][] testMissionData = {
 		// id, version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name
 		{ "0", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandem-X"},
-		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X"},
-		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X" }
+		{ "11", "0", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X"},
+		{ "12", "0", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X" }
 	};
+	
+	/**
+	 * Create a mission from a data array
+	 * 
+	 * @param testData an array of Strings representing the mission to create
+	 * @return a mission with its attributes set to the input data
+	 */
 	
 	private de.dlr.proseo.model.Mission createMission(String[] testData) {
 		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
@@ -92,6 +100,12 @@ public class MissionControllerTest {
 		return testMission;
 	}
 	
+	/**
+	 * Create test missions in the database
+	 * 
+	 * @return a list of missions generated
+	 */
+	
 	private List<de.dlr.proseo.model.Mission> createTestMissions() {
 		logger.info("Creating test missions");
 		List<de.dlr.proseo.model.Mission> testMissions = new ArrayList<>();		
@@ -105,12 +119,26 @@ public class MissionControllerTest {
 		return testMissions;
 	}
 	
+	/**
+	 * Remove all (remaining) test missions
+	 * 
+	 * @param testMissions a list of test missions to delete 
+	 */
 	private void deleteTestMissions(List<de.dlr.proseo.model.Mission> testMissions) {
-		for (de.dlr.proseo.model.Mission testMission: testMissions) {
+		for (de.dlr.proseo.model.Mission testMission: testMissions) {				
+			Set<de.dlr.proseo.model.Spacecraft> spacecrafts = testMission.getSpacecrafts();	
+			logger.info("testing spacecrafts size: "+ spacecrafts.hashCode());
+//			RepositoryService.getSpacecraftRepository().deleteAll(spacecrafts);
 			RepositoryService.getSpacecraftRepository().deleteAll();
 			RepositoryService.getMissionRepository().delete(testMission);
 		}
 	}
+	
+	/**
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl.createMission(Mission)}.
+	 * 
+	 * Test: Create a new mission
+	 */
 	@Test
 	public final void testCreateMission() {
 		// Create a mission in the database
@@ -132,10 +160,7 @@ public class MissionControllerTest {
 		ResponseEntity<Mission> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, Mission.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		
-		// Test that the Production Planner was informed
-		// TODO Using mock production planner
-		
+	
 		// Clean up database
 		ArrayList<de.dlr.proseo.model.Mission> testMission = new ArrayList<>();
 		testMission.add(missionToCreate);
@@ -144,6 +169,12 @@ public class MissionControllerTest {
 		logger.info("Test OK: Create mission");		
 	}	
 
+	/**
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl.getMissions()}.
+	 * 
+	 * Test: List of all missions
+	 * 
+	 */
 	@Test
 	public final void testGetMissions() {
 		// Make sure test missions exist
@@ -162,7 +193,7 @@ public class MissionControllerTest {
 		// Test that the correct missions provided above are in the results
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> body = entity.getBody();
-		assertEquals(entity.getBody().size(), testMissions.size());
+		assertEquals(testMissions.size(), entity.getBody().size());
 		logger.info("Found {} missions", body.size());
 		
 		boolean[] missionFound = new boolean[testMissions.size()];
@@ -192,7 +223,12 @@ public class MissionControllerTest {
 		logger.info("Test OK: Get Missions");
 	}
 
-	/*
+	/**
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl.getMissionById(Long)}.
+	 * 
+	 * Test: Get a mission by ID
+	 * Precondition: At least one mission with a known ID is in the database
+	 */
 	@Test
 	public final void testGetMissionById() {
 		// Make sure test missions exist
@@ -214,6 +250,12 @@ public class MissionControllerTest {
 		logger.info("Test OK: Get Mission By ID");
 	}
 	
+	/**
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.MissionControllerImpl.deleteMissionById(Long)}.
+	 * 
+	 * Test: Delete a mission by ID
+	 * Precondition: A mission in the database
+	 */
 	@Test
 	public final void testDeleteMissionById() {
 		// Make sure test missions exist
@@ -237,7 +279,13 @@ public class MissionControllerTest {
 
 		logger.info("Test OK: Delete Mission By ID");
 	}
-
+	
+	/**
+	 * Test method for {@linkde.dlr.proseo.ordermgr.rest.MissionControllerImpl.modifyMission(Long, Mission)}.
+	 * 
+	 * Test: Update a mission by ID
+	 * Precondition: At least one mission with a known ID is in the database 
+	 */
 	@Test
 	public final void testModifyMission() {
 		// Make sure test missions exist
@@ -268,5 +316,5 @@ public class MissionControllerTest {
 
 		logger.info("Test OK: Modify mission");
 	}
-*/
+
 }
