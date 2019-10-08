@@ -16,13 +16,15 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import alluxio.AlluxioURI;
+import alluxio.exception.AlluxioException;
+import alluxio.grpc.ReadPType;
+import alluxio.grpc.WritePType;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
@@ -44,7 +46,7 @@ import software.amazon.awssdk.services.s3.S3Client;
  *
  */
 public class SampleWrapper {
-	
+
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
 	/** Exit code for failure */
@@ -53,43 +55,36 @@ public class SampleWrapper {
 	private static final String EXIT_TEXT_OK = "OK";
 	/** Exit code explanation for failure */
 	private static final String EXIT_TEXT_FAILURE = "FAILURE";
-	
-	/** Set path finals for container-context */
+
+	/** Set path finals for container-context & Alluxio FS-Client*/
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+UUID.randomUUID()+".xml";
-	
+	private static final String WRAPPER_TIMESTAMP = String.valueOf(System.currentTimeMillis()/1000);
+	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+WRAPPER_TIMESTAMP+".xml";
+	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
+	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
+
 	/** Error messages */
 	private static final String MSG_LEAVING_SAMPLE_WRAPPER = "Leaving sample-wrapper with exit code {} ({})";
 	private static final String MSG_STARTING_SAMPLE_WRAPPER = "Starting sample-wrapper V00.00.01 with JobOrder file {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
-	
-	/** Nice colors*/
-	public static final String ANSI_RESET = "\u001B[0m";
-	public static final String ANSI_BLACK = "\u001B[30m";
-	public static final String ANSI_RED = "\u001B[31m";
-	public static final String ANSI_GREEN = "\u001B[32m";
-	public static final String ANSI_YELLOW = "\u001B[33m";
-	public static final String ANSI_BLUE = "\u001B[34m";
-	public static final String ANSI_PURPLE = "\u001B[35m";
-	public static final String ANSI_CYAN = "\u001B[36m";
-	public static final String ANSI_WHITE = "\u001B[37m";
-	
+
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(SampleWrapper.class);
-	
+
 	/** IPF_Proc valid Tags Enums */
-    enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
-		
-    /** File_Name valid Attributes Enums */
+	enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
+
+	/** File_Name valid Attributes Enums */
 	enum File_Name {FS_TYPE}
-		
+
 	/** File_Name Attribute FS_TYPE valid entries */
 	enum FS_TYPE {S3,POSIX, ALLUXIO}
-	
+
 	/** ENV-VAR valid entries */
 	enum ENV_VARS {FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE,PROCESSOR_SHELL_COMMAND}
-	
+
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
 	private String ENV_FS_TYPE = System.getenv(ENV_VARS.FS_TYPE.toString());
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
@@ -100,8 +95,8 @@ public class SampleWrapper {
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
 	private String ENV_SUCCESS_STATE = System.getenv(ENV_VARS.SUCCESS_STATE.toString());
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
-	
-	
+
+
 	/** Base S3-Client */
 	private S3Client s3Client() {
 		try {
@@ -109,7 +104,7 @@ public class SampleWrapper {
 			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
 			if(ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY); return null;}
 			if(ENV_S3_ENDPOINT==null||ENV_S3_ENDPOINT.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT); return null;}
-			
+
 			AwsBasicCredentials creds = AwsBasicCredentials.create( ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
 			Region region = Region.EU_CENTRAL_1;
 			S3Client s3 = S3Client.builder()
@@ -126,18 +121,20 @@ public class SampleWrapper {
 			return null;
 		}
 	};
-	
+
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
 		for (FS_TYPE c : FS_TYPE.values()) {
-	        if (c.name().equals(fs_type)) {
-	            return true;
-	        } 
-	    }
+			if (c.name().equals(fs_type)) {
+				return true;
+			} 
+		}
 		return false;
 	}
-	
+
 	private Boolean checkEnv() {
+		logger.info(MSG_STARTING_SAMPLE_WRAPPER, ENV_JOBORDER_FILE);
+		logger.info("Checking ENV_VARS {}", java.util.Arrays.toString(ENV_VARS.values()));
 		// check all required env-vars
 		if (!checkFS_TYPE(ENV_FS_TYPE)) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);
@@ -192,6 +189,8 @@ public class SampleWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSOR_SHELL_COMMAND);
 			return false;
 		}
+		logger.info("ENV_VARS looking good...");
+		logger.info("PREFIX (seconds since epoch) used for JobOrderFile-Naming & Results is {}", WRAPPER_TIMESTAMP);
 		return true;
 	}
 	/**
@@ -199,7 +198,7 @@ public class SampleWrapper {
 	 * 
 	 * @return the JobOrder file
 	 */
-	private File provideInitialJOF() {	
+	private File provideInitialJOF() {
 		String JOFContainerPath = null;
 		// set JOF-path based on ENV
 		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
@@ -216,14 +215,14 @@ public class SampleWrapper {
 		if (ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
 			JOFContainerPath = ENV_JOBORDER_FILE;
 		}
-		logger.info(ANSI_YELLOW+MSG_STARTING_SAMPLE_WRAPPER, JOFContainerPath+ANSI_RESET);
+		
 
 		/** Fetch JOF if container env-var `FS_TYPE` has value `S3` */
 		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
-				S3Client s3 = s3Client();
-				if (null == s3) return null;
-				Boolean transaction = S3Ops.fetch(s3, ENV_JOBORDER_FILE, JOFContainerPath);
-				if (!transaction) return null;
+			S3Client s3 = s3Client();
+			if (null == s3) return null;
+			Boolean transaction = S3Ops.fetch(s3, ENV_JOBORDER_FILE, JOFContainerPath);
+			if (!transaction) return null;
 		}
 
 		/** Check if prepared JOF is readable */
@@ -241,7 +240,7 @@ public class SampleWrapper {
 		}
 		return new File(JOFContainerPath);
 	}
-	
+
 	/**
 	 * Parse the given JobOrder XML file
 	 * 
@@ -253,7 +252,7 @@ public class SampleWrapper {
 		JobOrder jobOrderDoc = null;
 		jobOrderDoc = new JobOrder();
 		jobOrderDoc.read(jobOrderFile.getAbsolutePath());
-		
+
 		//jobOrderDoc = docBuilder.parse(jobOrderFile);
 		return jobOrderDoc;
 	}
@@ -265,6 +264,9 @@ public class SampleWrapper {
 	 */
 	private JobOrder fetchInputData(JobOrder jo)
 	{
+		logger.info("Fetch Inputs & provide a valid JobOrderFile for the container-context...");
+		int numberOfInputs = 0;
+		int numberOfOutputs = 0;
 		S3Client s3 = s3Client();
 		if (null == s3) return null;
 		// loop all procs -> mainly only one is present
@@ -273,6 +275,7 @@ public class SampleWrapper {
 			for (InputOutput io: item.getListOfInputs()) {
 				// loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
+					numberOfInputs++;
 					//fill original filename with current val of `File_Name` --> for later use...
 					fn.setOriginalFileName(fn.getFileName());
 					// for all S3-data we try to fetch to workdir...
@@ -288,7 +291,7 @@ public class SampleWrapper {
 						fn.setFileName("inputs"+fn.getOriginalFileName());
 						AlluxioURI srcPath = new AlluxioURI(fn.getOriginalFileName());
 						AlluxioURI dstPath = new AlluxioURI(fn.getFileName());
-						Boolean transaction = AlluxioOps.copyToLocal(srcPath, dstPath);
+						Boolean transaction = AlluxioOps.copyToLocal(srcPath, dstPath, ALLUXIO_READ_TYPE);
 						if (!transaction) return null;
 					}
 				}
@@ -297,16 +300,17 @@ public class SampleWrapper {
 			for (InputOutput io: item.getListOfOutputs()) {
 				// loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
+					numberOfOutputs++;
 					//fill original filename with current val of `File_Name` --> for later use --> push results step
 					fn.setOriginalFileName(fn.getFileName());
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
 						// first set output file_name to local work-dir path
 						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
 						try {
-						  File f = new File(fn.getFileName());
-						  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
-						  File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
-						  subdirs.mkdirs();
+							File f = new File(fn.getFileName());
+							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
+							File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
+							subdirs.mkdirs();
 						} catch (SecurityException e) {
 							logger.error(e.getMessage());
 							return null;
@@ -315,19 +319,20 @@ public class SampleWrapper {
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
 						fn.setFileName("outputs"+fn.getOriginalFileName());
 						try {
-							  File f = new File(fn.getFileName());
-							  if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
-							  File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
-							  subdirs.mkdirs();
-							} catch (SecurityException e) {
-								logger.error(e.getMessage());
-								return null;
-							}
+							File f = new File(fn.getFileName());
+							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
+							File subdirs = new File(FilenameUtils.getPath(fn.getFileName()));
+							subdirs.mkdirs();
+						} catch (SecurityException e) {
+							logger.error(e.getMessage());
+							return null;
+						}
 					}
 				}
 			}
 		}
 		s3.close();
+		logger.info("Fetched {} Input-Files and prepared dirs for {} Outputs -- Ready for processing using Container-JOF {}", numberOfInputs,numberOfOutputs,CONTAINER_JOF_PATH);
 		return jo;
 	}
 
@@ -341,7 +346,7 @@ public class SampleWrapper {
 	private Boolean provideContainerJOF(JobOrder jo, String path) {	
 		return jo.writeXML(path, false);
 	}
-	
+
 	/**
 	 * Executes the processor
 	 * 
@@ -349,16 +354,16 @@ public class SampleWrapper {
 	 * @param jofPath path of re-mapped JobOrder file valid in container context
 	 * @return True/False
 	 */
-	private Boolean runProcessor(String shellCommand, String jofPath) {	
+	private Boolean runProcessor(String shellCommand, String jofPath) {
 		logger.info("Starting Processing using command {} and local JobOrderFile: {}",shellCommand, jofPath);
 		Boolean check = false;
-		
+
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.redirectErrorStream(true); 
-		
+
 		String fullCommand = shellCommand+" "+jofPath;
 		String[] execCommand = fullCommand.split(" ");
-		
+
 		processBuilder.command(execCommand);
 		try {
 			Process process = processBuilder.start();
@@ -369,7 +374,7 @@ public class SampleWrapper {
 				logger.info("... "+line);
 			}
 			int exitCode = process.waitFor();
-			logger.info("Exited Processing with return code {}", exitCode);
+			logger.info("Processing finished with return code {}", exitCode);
 			if (exitCode == 0) check = true;
 
 		} catch (IOException e) {
@@ -379,7 +384,7 @@ public class SampleWrapper {
 		}
 		return check;
 	}
-	
+
 	/**
 	 * Pushes processing results to prosEO storage
 	 * 
@@ -387,22 +392,46 @@ public class SampleWrapper {
 	 * @return True/False
 	 */
 	private Boolean pushResults(JobOrder jo) {
+		logger.info("Uploading results to prosEO storage...");
 		Boolean check = false;
-		
+
+		int numberOfOutputs = 0;
 		for(Proc item : jo.getListOfProcs()) {
 			// loop all Input
 			for (InputOutput io: item.getListOfOutputs()) {
 				for (IpfFileName fn: io.getFileNames()) {
-					logger.info(fn.getFileName()+"-->"+fn.getFSType()+" - "+fn.getOriginalFileName());
-				}
+					numberOfOutputs++;
+					//logger.info(fn.getFileName()+"-->"+io.getProductID()+" - "+fn.getOriginalFileName());
+					// Push files to ALLUXIO
+					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
+						try {
+							AlluxioURI srcPath = new AlluxioURI(fn.getFileName());
+							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+WRAPPER_TIMESTAMP+File.separator+fn.getOriginalFileName());
+							Boolean transaction = AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE);
+							check = transaction;
+						} catch(AlluxioException | IOException e) {
+							logger.error(e.getMessage());
+							
+						}
+					}
+					//TODO S3|POSIX
 				}
 			}
+		}
+		if (check) logger.info("Uploaded {} results to prosEO storage...",numberOfOutputs);
+		/*
+		 * // DIR-TEST AlluxioURI srcPath = new AlluxioURI("inputs/"); AlluxioURI
+		 * dstPath = new AlluxioURI("/dirUploadTest"); try { Boolean transaction =
+		 * AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE); check =
+		 * transaction; } catch (AlluxioException | IOException e) { // TODO
+		 * Auto-generated catch block check = false; logger.error(e.getMessage()); }
+		 */
 		
 		return check;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
 	 * 
@@ -415,25 +444,25 @@ public class SampleWrapper {
 		/** ==================== */
 
 		/** STEP [4][5] Provide the JobOrder file from the invocation arguments */
-		
+
 		Boolean check = checkEnv();
 		if (!check) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		File jobOrderFile = provideInitialJOF();
 		if (null == jobOrderFile) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		/** STEP [6][7][8] fetch Inputs & create re-mapped JOF for container context*/
 		JobOrder joWork = null;
 		joWork = fetchInputData(jobOrderDoc);
@@ -441,18 +470,18 @@ public class SampleWrapper {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
+
 		/** STEP [CALC] Execute Processor */
 		Boolean procRun = runProcessor(
 				ENV_PROCESSOR_SHELL_COMMAND,
 				CONTAINER_JOF_PATH
-	     );
+				);
 		if (!procRun) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
@@ -464,8 +493,8 @@ public class SampleWrapper {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
-		
-		logger.info(ANSI_GREEN+MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK+ANSI_RESET);
+
+		logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}
 
