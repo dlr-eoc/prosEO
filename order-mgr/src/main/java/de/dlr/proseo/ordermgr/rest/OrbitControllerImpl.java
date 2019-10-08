@@ -89,11 +89,11 @@ public class OrbitControllerImpl implements OrbitController {
 	 */
 	@Override
 	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.toString());		
 		
 		List<de.dlr.proseo.model.Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit>();
 		List<Orbit> restOrbits = new ArrayList<Orbit>();
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());		
 		//creates orbits in DB
 		for(int i=0;i<orbit.size();i++) {
 			de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(orbit.get(i));

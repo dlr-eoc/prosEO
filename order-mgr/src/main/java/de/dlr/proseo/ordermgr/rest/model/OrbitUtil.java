@@ -4,7 +4,8 @@ import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import de.dlr.proseo.model.Spacecraft;
+
+import de.dlr.proseo.model.service.RepositoryService;
 
 public class OrbitUtil {
 	/**
@@ -28,9 +29,10 @@ public class OrbitUtil {
 		
 		if (null != modelOrbit.getSpacecraft()) {
 			restOrbit.setSpacecraftCode(modelOrbit.getSpacecraft().getCode());
-			restOrbit.setMissionCode(modelOrbit.getSpacecraft().getMission().getCode());
 		}
 		
+		restOrbit.setMissionCode(modelOrbit.getSpacecraft().getMission().getCode());
+
 		if (null != modelOrbit.getStartTime()) {
 			restOrbit.setStartTime(
 					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelOrbit.getStartTime()));
@@ -52,7 +54,6 @@ public class OrbitUtil {
 	 */
 	public static de.dlr.proseo.model.Orbit toModelOrbit(Orbit restOrbit) throws IllegalArgumentException {
 		de.dlr.proseo.model.Orbit modelOrbit = new de.dlr.proseo.model.Orbit();
-		de.dlr.proseo.model.Spacecraft modelSpacecraft = new de.dlr.proseo.model.Spacecraft();
 		
 		modelOrbit.setId(restOrbit.getId());
 		while (modelOrbit.getVersion() < restOrbit.getVersion()) {
@@ -70,11 +71,10 @@ public class OrbitUtil {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrbit.getStartTime()));
 		}
-		
-		//details of Spacecraft to be added
-		modelSpacecraft.setCode(restOrbit.getSpacecraftCode());
-		modelOrbit.setSpacecraft(modelSpacecraft);		
-		
+				
+		de.dlr.proseo.model.Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(restOrbit.getSpacecraftCode());
+		modelOrbit.setSpacecraft(spacecraft);
+			
 		return modelOrbit;
 	}
 
