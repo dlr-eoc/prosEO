@@ -177,6 +177,7 @@ public class KubeJob {
 				  RepositoryService.getJobStepRepository().save(js);
 				 
 				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+				
 			} catch (ApiException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
