@@ -2,11 +2,11 @@
 #  Product:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       missionCode:
@@ -25,6 +25,10 @@
       sensingStopTime:
         type: string
         description: Sensing stop time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      generationTime:
+        type: string
+        description: Product generation time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
       componentProductIds?:
         type: array

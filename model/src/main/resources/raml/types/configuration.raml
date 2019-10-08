@@ -2,11 +2,11 @@
 #  Configuration:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       processorName:
@@ -29,3 +29,6 @@
       configuredProcessors:
         type: string[]
         description: The names for the processor configurations this processor version is valid for
+      dockerRunParameters?:
+        type: string
+        description: Specific parameter for "docker run" valid for this configuration

@@ -7,8 +7,6 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -24,11 +22,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for FacilityRepository
@@ -42,8 +38,8 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class FacilityRepositoryTest {
 
-	private static final String TEST_HOSTNAME = "localhost";
-	private static final String TEST_NAME = "Test Facility";
+	private static final String TEST_HOSTNAME = "$localhost$";
+	private static final String TEST_NAME = "$Test Facility$";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(FacilityRepositoryTest.class);
 	
@@ -79,7 +75,7 @@ public class FacilityRepositoryTest {
 	public final void test() {
 		ProcessingFacility fac = new ProcessingFacility();
 		fac.setName(TEST_NAME);
-		fac.setUrl("https:////" + TEST_HOSTNAME + ":8080/");
+		fac.setProcessingEngineUrl("https:////" + TEST_HOSTNAME + ":8080/");
 		RepositoryService.getFacilityRepository().save(fac);
 		
 		// Test findByName

@@ -42,9 +42,9 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProductClassRepositoryTest {
 
-	private static final String TEST_CODE = "ABC";
-	private static final String TEST_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_CODE = "$ABC$";
+	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
+	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassRepositoryTest.class);

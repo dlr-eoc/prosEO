@@ -2,16 +2,16 @@
 #  Order:
     type: object
     properties:
-      missionCode:
-        type: string
-        description: The mission code (e. g. S5P)
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
       identifier:
         type: string
         description: User-defined order identifier
@@ -39,14 +39,8 @@
         type: string[]
         description: List of identifiers of the configured processors
       orbits:
-        type: array
+        type: OrbitQuery[]
         description: List of orbit ranges, identified by spacecraft code and orbit number from/to
-        items:
-          type: object
-          properties:
-            spacecraftCode: string
-            orbitNumberFrom: integer
-            orbitNumberTo: integer
       requestedProductClasses:
         type: string[]
         description: List of internal product types
@@ -54,20 +48,5 @@
         type: string
         description: The processing mode to run the processor(s) in
       promisedProducts:
-        type: array
+        type: PromisedProduct[]
         description: List of products provided as input to the processing order
-        items:
-          type: object
-          properties:
-            productClass:
-              type: string
-              description: The internal product type of the product
-            sensingStartTime?:
-              type: datetime-only
-              description: Sensing start time
-            sensingStopTime?:
-              type: datetime-only
-              description: Sensing stop time
-            parameters:
-              type: Parameter[]
-              description: Collection of mission-specific parameters for the product

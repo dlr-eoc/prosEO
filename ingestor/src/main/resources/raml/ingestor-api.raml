@@ -27,13 +27,16 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Product: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   ProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
   Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   IngestorProduct:
-    type: Product
-    description: Variant of the Product type with a reference to the data file location
+    type: RestProduct
+    description: Variant of the RestProduct type with a reference to the data file location
     properties:
+      mountPoint:
+        type: string
+        description: The POSIX mount point of the storage system to ingest from
       filePath:
         type: string
         description: The POSIX path to the product files
@@ -82,8 +85,10 @@ resourceTypes:
               
 /products:
   type: standard
+  description: Methods to manage product metadata in the database
   get:
     description: List of all products by mission, product class, start time range
+    displayName: getProducts
     queryParameters:
       mission?: string
       productClass?: string[]
@@ -93,19 +98,20 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Product[]
+            type: RestProduct[]
             example: !include ../../../../../model/src/main/resources/raml/examples/product-list.json
   post:
     description: Create a new product
+    displayName: createProduct
     body:
       application/json:
-        type: Product
+        type: RestProduct
         example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     responses:
       201:
         body:
           application/json:
-            type: Product
+            type: RestProduct
             example: !include ../../../../../model/src/main/resources/raml/examples/product.json
   /{id}:
     uriParameters:
@@ -114,23 +120,25 @@ resourceTypes:
         format: long
     get:
       description: Get a product by ID
+      displayName: getProductById
       responses:
         200:
           body:
             application/json:
-              type: Product
+              type: RestProduct
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     patch:
       description: Update a product by ID
+      displayName: modifyProduct
       body:
         application/json:
-          type: Product
+          type: RestProduct
           example: !include ../../../../../model/src/main/resources/raml/examples/product.json
       responses:
         200:
           body:
             application/json:
-              type: Product
+              type: RestProduct
               example: !include ../../../../../model/src/main/resources/raml/examples/product.json
     delete:
       description: Delete a product by ID
@@ -138,6 +146,8 @@ resourceTypes:
         204:
         
 /ingest:
+  type: standard
+  description: Methods to manage product files in the processing facility and in the database
   /{processingFacility}:
     uriParameters:
       processingFacility:
@@ -154,7 +164,7 @@ resourceTypes:
         201:
           body:
             application/json:
-              type: Product[]
+              type: RestProduct[]
               example: !include ../../../../../model/src/main/resources/raml/examples/product-list.json
     /{productId}:
       uriParameters:

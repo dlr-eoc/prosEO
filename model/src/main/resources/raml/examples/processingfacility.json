@@ -1,0 +1,6 @@
+{
+    "name": "Test",
+    "description": "Processing Facility 1",
+    "processingEngineUrl": "https://www.prosEO-ProcFac1.de/kubernetes",
+    "storageManagerUrl": "https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0"
+}

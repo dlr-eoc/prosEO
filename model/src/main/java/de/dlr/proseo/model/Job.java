@@ -15,6 +15,8 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -37,6 +39,7 @@ public class Job extends PersistentObject {
 	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status INITIAL (i. e. except 
 	 * those in status RUNNING, COMPLETED and FAILED).
 	 */
+	@Enumerated(EnumType.STRING)
 	private JobState jobState;
 	
 	/** The orbit this job relates to (if any) */

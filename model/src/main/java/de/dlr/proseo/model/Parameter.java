@@ -7,7 +7,10 @@ package de.dlr.proseo.model;
 
 import java.io.Serializable;
 
+import javax.persistence.Basic;
 import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
@@ -23,6 +26,8 @@ public class Parameter {
 	private static final String MSG_PARAMETER_CANNOT_BE_CONVERTED = "Parameter of type %s cannot be converted to %s";
 	
 	/** The type of the parameter */
+	@Enumerated(EnumType.STRING)
+	@Basic(optional = false)
 	private ParameterType parameterType;
 	
 	/** The parameter value */
@@ -39,8 +44,9 @@ public class Parameter {
 	 * @param parameterType the type of the new parameter
 	 * @param parameterValue the value of the new parameter
 	 * @return the initialized parameter for chaining
+	 * @throws IllegalArgumentException if parameter type and class of parameter value do not match
 	 */
-	public Parameter init(ParameterType parameterType, Serializable parameterValue) {
+	public Parameter init(ParameterType parameterType, Serializable parameterValue) throws IllegalArgumentException {
 		this.parameterType = parameterType;
 		switch(parameterType) {
 		case STRING:
@@ -94,7 +100,7 @@ public class Parameter {
 	 * 
 	 * @param parameterType the type to set
 	 */
-	public void seParametertType(ParameterType parameterType) {
+	public void setParameterType(ParameterType parameterType) {
 		this.parameterType = parameterType;
 	}
 	

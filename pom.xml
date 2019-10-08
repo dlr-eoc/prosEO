@@ -65,6 +65,10 @@
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>
 				</exclusion>
+	             <exclusion>
+	                 <groupId>xerces</groupId>
+	                 <artifactId>xmlParserAPIs</artifactId>
+	             </exclusion>
 			</exclusions>
 			<type>maven-plugin</type>
 		</dependency>
@@ -121,6 +125,7 @@
 						<basePackage>${raml-base-package}</basePackage>
 						<seperateMethodsByContentType>false</seperateMethodsByContentType>
 						<useJackson1xCompatibility>false</useJackson1xCompatibility>
+                        <overrideNamingLogicWith>DISPLAY_NAME</overrideNamingLogicWith>
 					</configuration>
 				</plugin>
 			</plugins>

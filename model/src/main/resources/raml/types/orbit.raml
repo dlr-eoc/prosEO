@@ -7,11 +7,11 @@
         Orbit times (and all derived times in prosEO) are given in UTC-STS (leap seconds spread evenly over the last 1000 seconds
         of the day) and to a microsecond precision. Therefore, all timestamps use the "Z" (UTC) time zone code.
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       missionCode?:
@@ -24,11 +24,11 @@
         type: integer
         description: The orbit number (usually starting at 1 at launch); unique for a spacecraft and usually gapless
       startTime:
-        type: datetime
+        type: string
         description: The start time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
       stopTime:
-        type: datetime
+        type: string
         description: The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS); 
             usually the stop time of one orbit is the start time of the subsequent orbit 
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$

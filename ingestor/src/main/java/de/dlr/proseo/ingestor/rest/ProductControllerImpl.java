@@ -6,6 +6,7 @@
 package de.dlr.proseo.ingestor.rest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -35,22 +37,75 @@ import de.dlr.proseo.model.Parameter;
 public class ProductControllerImpl implements ProductController {
 	
 	/* Message ID constants */
+	private static final int MSG_ID_PRODUCT_MISSING = 2000;
 	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2001;
 	private static final int MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND = 2002;
 	private static final int MSG_ID_COMPONENT_PRODUCT_NOT_FOUND = 2003;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2004;
+	private static final int MSG_ID_PRODUCT_DELETED = 2005;
+	private static final int MSG_ID_PRODUCT_LIST_RETRIEVED = 2006;
+	private static final int MSG_ID_PRODUCT_CREATED = 2007;
+	private static final int MSG_ID_PRODUCT_RETRIEVED = 2008;
+	private static final int MSG_ID_PRODUCT_MODIFIED = 2009;
+	private static final int MSG_ID_PRODUCT_NOT_MODIFIED = 2010;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_PRODUCT_NOT_FOUND = "No product found for ID %d (%d)";
-	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "Enclosing product with ID %d not found (%d)";
-	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "Component product with ID %d not found (%d)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "Product deletion unsuccessful for ID %d (%d)";
+	private static final String MSG_PRODUCT_MISSING = "(E%d) Product not set";
+	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found for ID %d";
+	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "(E%d) Enclosing product with ID %d not found";
+	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "(E%d) Component product with ID %d not found";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product deletion unsuccessful for ID %d";
+	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
+	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
+	private static final String MSG_PRODUCT_CREATED = "(I%d) Product of type %s created for mission %s";
+	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with id %d retrieved";
+	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
+	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ingestor ";
+	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	
+	/**
+	 * Log an informational message with the prosEO message prefix
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 */
+	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		logger.info(String.format(messageFormat, messageParamList.toArray()));
+	}
+	
+	/**
+	 * Log an error and return the corresponding HTTP message header
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return an HttpHeaders object with a formatted error message
+	 */
+	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		logger.error(message);
+		
+		// Create an HTTP "Warning" header
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		return responseHeaders;
+	}
 	
 	/**
 	 * Delete a product by ID
@@ -66,11 +121,8 @@ public class ProductControllerImpl implements ProductController {
 		// Test whether the product id is valid
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
 		if (modelProduct.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_PRODUCT_NOT_FOUND, id, MSG_ID_PRODUCT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND), HttpStatus.NOT_FOUND);
 		}
 		
 		// Delete the product
@@ -79,12 +131,11 @@ public class ProductControllerImpl implements ProductController {
 		// Test whether the deletion was successful
 		modelProduct = RepositoryService.getProductRepository().findById(id);
 		if (!modelProduct.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id), HttpStatus.NOT_MODIFIED);
 		}
+		
+		logInfo(MSG_PRODUCT_DELETED, MSG_ID_PRODUCT_DELETED, id);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
@@ -100,20 +151,24 @@ public class ProductControllerImpl implements ProductController {
 	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<de.dlr.proseo.ingestor.rest.model.Product>> getProducts(String mission, String[] productClass,
+	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
 			Date startTimeFrom, Date startTimeTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
-		List<de.dlr.proseo.ingestor.rest.model.Product> result = new ArrayList<>();
+		List<RestProduct> result = new ArrayList<>();
 		
 		// Simple case: no search criteria set
 		if (null == mission && (null == productClass || 0 == productClass.length) && null == startTimeFrom && null == startTimeTo) {
 			for (Product product: RepositoryService.getProductRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found product with ID {}", product.getId());
-				de.dlr.proseo.ingestor.rest.model.Product resultProduct = ProductUtil.toRestProduct(product);
+				RestProduct resultProduct = ProductUtil.toRestProduct(product);
 				if (logger.isDebugEnabled()) logger.debug("Created result product with ID {}", resultProduct.getId());
+
 				result.add(resultProduct);
 			}
+			
+			logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), "null", "null", "null", "null");
+			
 			return new ResponseEntity<>(result, HttpStatus.OK);
 		}
 		
@@ -122,11 +177,8 @@ public class ProductControllerImpl implements ProductController {
 		
 		
 		// TODO Auto-generated method stub
-		String message = String.format(MSG_PREFIX + "GET with search parameters not implemented (%d)", MSG_ID_NOT_IMPLEMENTED);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(
+				errorHeaders("GET with search parameters not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 	}
 
 	/**
@@ -137,10 +189,15 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   contained objects) and HTTP status "CREATED"
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> createProduct(
-			de.dlr.proseo.ingestor.rest.model.@Valid Product product) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", product.getProductClass());
+	public ResponseEntity<RestProduct> createProduct(
+			de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
 		
+		if (null == product) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_MISSING, MSG_ID_PRODUCT_MISSING), HttpStatus.BAD_REQUEST);
+		}
+
 		Product modelProduct = ProductUtil.toModelProduct(product);
 		
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
@@ -150,12 +207,9 @@ public class ProductControllerImpl implements ProductController {
 		for (Long componentProductId: product.getComponentProductIds()) {
 			Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
 			if (componentProduct.isEmpty()) {
-				String message = String.format(MSG_PREFIX + MSG_COMPONENT_PRODUCT_NOT_FOUND,
-						componentProductId, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(
+						errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId), 
+						HttpStatus.NOT_FOUND);
 			} else {
 				modelProduct.getComponentProducts().add(componentProduct.get());
 			}
@@ -164,17 +218,16 @@ public class ProductControllerImpl implements ProductController {
 		if (null != product.getEnclosingProductId()) {
 			Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
 			if (enclosingProduct.isEmpty()) {
-				String message = String.format(MSG_PREFIX + MSG_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId(),
-						MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(
+						errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
+						HttpStatus.NOT_FOUND);
 			} else {
 				modelProduct.setEnclosingProduct(enclosingProduct.get());
 			} 
 		}
 		modelProduct = RepositoryService.getProductRepository().save(modelProduct);
+		
+		logInfo(MSG_PRODUCT_CREATED, MSG_ID_PRODUCT_CREATED, product.getProductClass(), product.getMissionCode());
 		
 		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), HttpStatus.CREATED);
 	}
@@ -187,18 +240,18 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> getProductById(Long id) {
+	public ResponseEntity<RestProduct> getProductById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 		
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
 		
 		if (modelProduct.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_PRODUCT_NOT_FOUND, id, MSG_ID_PRODUCT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id), 
+					HttpStatus.NOT_FOUND);
 		}
+		
+		logInfo(MSG_PRODUCT_RETRIEVED, MSG_ID_PRODUCT_RETRIEVED, id);
 		
 		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct.get()), HttpStatus.OK);
 	}
@@ -214,18 +267,16 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<de.dlr.proseo.ingestor.rest.model.Product> modifyProduct(Long id,
-			de.dlr.proseo.ingestor.rest.model.Product product) {
+	public ResponseEntity<RestProduct> modifyProduct(Long id,
+			RestProduct product) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
 		Optional<Product> optModelProduct = RepositoryService.getProductRepository().findById(id);
 		
 		if (optModelProduct.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_PRODUCT_NOT_FOUND, id, MSG_ID_PRODUCT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id), 
+					HttpStatus.NOT_FOUND);
 		}
 		Product modelProduct = optModelProduct.get();
 		
@@ -270,12 +321,9 @@ public class ProductControllerImpl implements ProductController {
 					|| modelProduct.getEnclosingProduct().getId() != product.getEnclosingProductId().longValue() /* changed */) {
 				Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
 				if (enclosingProduct.isEmpty()) {
-					String message = String.format(MSG_PREFIX + MSG_ENCLOSING_PRODUCT_NOT_FOUND,
-							product.getEnclosingProductId(), MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND);
-					logger.error(message);
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(HTTP_HEADER_WARNING, message);
-					return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+					return new ResponseEntity<>(
+							errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
+							HttpStatus.NOT_FOUND);
 				} else {
 					productChanged = true;
 					if (null != modelProduct.getEnclosingProduct()) {
@@ -303,12 +351,9 @@ public class ProductControllerImpl implements ProductController {
 			// Fall through, so there is a new component product
 			Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
 			if (componentProduct.isEmpty()) {
-				String message = String.format(MSG_PREFIX + MSG_COMPONENT_PRODUCT_NOT_FOUND, componentProductId,
-						MSG_ID_COMPONENT_PRODUCT_NOT_FOUND);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(
+						errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId), 
+						HttpStatus.NOT_FOUND);
 			} else {
 				productChanged = true;
 				// Set enclosing product for new component product
@@ -352,12 +397,18 @@ public class ProductControllerImpl implements ProductController {
 		}
 		
 		// Save product only if anything was actually changed
+		HttpStatus httpStatus = null;
 		if (productChanged)	{
 			modelProduct.incrementVersion();
 			modelProduct = RepositoryService.getProductRepository().save(modelProduct);
+			httpStatus = HttpStatus.OK;
+			logInfo(MSG_PRODUCT_MODIFIED, MSG_ID_PRODUCT_MODIFIED, id);
+		} else {
+			httpStatus = HttpStatus.NOT_MODIFIED;
+			logInfo(MSG_PRODUCT_NOT_MODIFIED, MSG_ID_PRODUCT_NOT_MODIFIED, id);
 		}
 		
-		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), HttpStatus.OK);
+		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), httpStatus);
 	}
 
 }

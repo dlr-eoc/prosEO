@@ -2,11 +2,11 @@
 #  Mission:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       code:
@@ -19,14 +19,5 @@
         type: string[]
         description: Processing mode tags as agreed for this mission 
       spacecrafts:
-        type: array
+        type: Spacecraft[]
         description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.
-        items:
-          type: object
-          properties:
-            code:
-              type: string
-              description: The short code for the spacecraft (e. g. TDX1)
-            name:
-              type: string
-              description: The spacecraft name (e. g. TanDEM-X)

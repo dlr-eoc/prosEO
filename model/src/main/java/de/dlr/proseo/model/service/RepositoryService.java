@@ -18,6 +18,8 @@ import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
+import de.dlr.proseo.model.dao.ProductFileRepository;
+import de.dlr.proseo.model.dao.ProductQueryRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.dao.SpacecraftRepository;
 
@@ -52,7 +54,7 @@ public class RepositoryService {
 	@Autowired
     private MissionRepository missionRepository;
 	
-	/** The repository for the Orbirt class */
+	/** The repository for the Orbit class */
 	@Autowired
     private OrbitRepository orbitRepository;
 	
@@ -71,6 +73,14 @@ public class RepositoryService {
 	/** The repository for the ProductClass class */
 	@Autowired
     private ProductClassRepository productClassRepository;
+	
+	/** The repository for the ProductFile class */
+	@Autowired
+    private ProductFileRepository productFileRepository;
+	
+	/** The repository for the ProductQuery class */
+	@Autowired
+    private ProductQueryRepository productQueryRepository;
 	
 	/** The repository for the Product class */
 	@Autowired
@@ -179,6 +189,24 @@ public class RepositoryService {
 	}
 
 	/**
+	 * Gets the repository for the ProductFile class
+	 * 
+	 * @return the productFileRepository
+	 */
+	public static ProductFileRepository getProductFileRepository() {
+		return theRepositoryService.productFileRepository;
+	}
+
+	/**
+	 * Gets the repository for the ProductQuery class
+	 * 
+	 * @return the productQueryRepository
+	 */
+	public static ProductQueryRepository getProductQueryRepository() {
+		return theRepositoryService.productQueryRepository;
+	}
+
+	/**
 	 * Gets the repository for the Product class
 	 * 
 	 * @return the productRepository
@@ -195,4 +223,5 @@ public class RepositoryService {
 	public static SpacecraftRepository getSpacecraftRepository() {
 		return theRepositoryService.spacecraftRepository;
 	}
+
 }
