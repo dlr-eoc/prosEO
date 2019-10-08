@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -51,6 +52,8 @@ public class KubeTest {
 		JobStep js = new JobStep();
 		js.setProcessingMode("nix"); 
 		jobSteps.save(js);
+		JobDispatcher jd = new JobDispatcher();
+		jd.createJobOrder(js);
 		ProductionPlanner.updateKubeConfigs();
 		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
 			KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");

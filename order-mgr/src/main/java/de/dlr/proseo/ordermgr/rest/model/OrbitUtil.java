@@ -52,7 +52,7 @@ public class OrbitUtil {
 	 */
 	public static de.dlr.proseo.model.Orbit toModelOrbit(Orbit restOrbit) throws IllegalArgumentException {
 		de.dlr.proseo.model.Orbit modelOrbit = new de.dlr.proseo.model.Orbit();
-		Spacecraft modelSpacecraft = new Spacecraft();
+		de.dlr.proseo.model.Spacecraft modelSpacecraft = new de.dlr.proseo.model.Spacecraft();
 		
 		modelOrbit.setId(restOrbit.getId());
 		while (modelOrbit.getVersion() < restOrbit.getVersion()) {
@@ -73,8 +73,7 @@ public class OrbitUtil {
 		
 		//details of Spacecraft to be added
 		modelSpacecraft.setCode(restOrbit.getSpacecraftCode());
-		modelOrbit.setSpacecraft(modelSpacecraft);
-		
+		modelOrbit.setSpacecraft(modelSpacecraft);		
 		
 		return modelOrbit;
 	}

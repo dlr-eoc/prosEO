@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Product;
 
 /**
@@ -110,5 +111,13 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 			+ " and p.sensingStartTime <= ?3 and p.sensingStopTime >= ?4")
 	public List<Product> findByMissionCodeAndMissionTypeAndSensingStartTimeLessAndSensingStopTimeGreater(
 			String missionCode, String missionType, Instant latestSensingStartTime, Instant earliestSensingStop);
+
+	/**
+	 * Get the product which is produced by a job step
+	 * 
+	 * @param jobStep the job step 
+	 * @return the product produced by job step
+	 */
+	public Product findByJobStep(JobStep jobStep);
 
 }

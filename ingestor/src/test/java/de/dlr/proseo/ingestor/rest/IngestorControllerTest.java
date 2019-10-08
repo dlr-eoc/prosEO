@@ -7,11 +7,18 @@ package de.dlr.proseo.ingestor.rest;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -35,19 +42,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
+import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.dao.ProductClassRepository;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -60,10 +75,12 @@ import de.dlr.proseo.model.service.RepositoryService;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-@Transactional
-@AutoConfigureTestEntityManager
+// Not transactional to make sure newly created objects are visible for the Ingestor
+//@Transactional
+//@AutoConfigureTestEntityManager
 public class IngestorControllerTest {
 	
+
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
 	
@@ -71,28 +88,46 @@ public class IngestorControllerTest {
 	private static final String TEST_CODE = "ABC";
 	private static final String TEST_PRODUCT_TYPE = "FRESCO";
 	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
-	private static final String TEST_HOSTNAME = "localhost";
 	private static final String TEST_NAME = "Test Facility";
+	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
+	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+	private static final String TEST_SC_CODE = "XYZ";
+	private static final int TEST_ORBIT_NUMBER = 4712;
+	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final String TEST_STOP_TIME_TEXT = "2018-07-21T00:08:28.000000";
+	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000000";
+	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000000";
+	private static final String TEST_MODE_OFFL = "OFFL";
+	
 	
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, revision (parameter)
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "01" },
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
+		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
+	/** Ingestor configuration */
+	@Autowired
+	private IngestorConfiguration ingestorConfig;
+	
 	/** Test configuration */
 	@Autowired
-	IngestorTestConfiguration config;
+	private IngestorTestConfiguration config;
 	
 	/** The security environment for this test */
 	@Autowired
-	IngestorSecurityConfig ingestorSecurityConfig;
+	private IngestorSecurityConfig ingestorSecurityConfig;
+	
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
 	
 	/** REST template builder */
 	@Autowired
-	RestTemplateBuilder rtb;
+	private RestTemplateBuilder rtb;
 
 	/** The (random) port on which the Ingestor was started */
 	@LocalServerPort
@@ -153,8 +188,9 @@ public class IngestorControllerTest {
 		testProduct.setMode(testData[4]);
 		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
 		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[7])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {}", testProduct.getId());
@@ -192,39 +228,151 @@ public class IngestorControllerTest {
 	 * Test: Ingest a single product
 	 * Precondition: Processing facility exists, product class exists, mock storage manager exists, mock production planner exists
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void testIngestProducts() {
 		
 		// Make sure processing facility and product class exist
-		Mission mission = new Mission();
-		mission.setCode(TEST_CODE);
-		mission = RepositoryService.getMissionRepository().save(mission);
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 		
-		ProductClass prodClass = new ProductClass();
-		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
-		prodClass.setProductType(TEST_PRODUCT_TYPE);
-		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			//mission.getProductClasses().add(prodClass);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
 		
-		mission.getProductClasses().add(prodClass);
-		RepositoryService.getMissionRepository().save(mission);
+		Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+		if (null == spacecraft) {
+			spacecraft = new Spacecraft();
+			spacecraft.setCode(TEST_SC_CODE);
+			spacecraft.setMission(mission);
+			spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+			logger.info("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
+			//mission.getSpacecrafts().add(spacecraft);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
+		
+		Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(TEST_SC_CODE, TEST_ORBIT_NUMBER);
+		if (null == orbit) {
+			orbit = new Orbit();
+			orbit.setSpacecraft(spacecraft);
+			orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
+			orbit.setStartTime(TEST_START_TIME);
+			orbit = RepositoryService.getOrbitRepository().save(orbit);
+			//spacecraft.getOrbits().add(orbit);
+			//spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		}
+		
+		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
+		if (null == facility) {
+			facility = new ProcessingFacility();
+			facility.setName(TEST_NAME);
+		}
+		// Make sure the following attributes are as expected	
+		facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
+		facility.setStorageManagerUrl(config.getStorageManagerUrl());
+		facility = RepositoryService.getFacilityRepository().save(facility);
 		
 		// Create a directory with product data files
+		// Static: src/test/resources/IDA_test
 		
 		// Create an IngestorProduct describing the product directory
+		IngestorProduct ingestorProduct = new IngestorProduct();
+		ingestorProduct.setId(0L);
+		ingestorProduct.setVersion(1L);
+		ingestorProduct.setMissionCode(TEST_CODE);
+		ingestorProduct.setMode(TEST_MODE_OFFL);
+		de.dlr.proseo.ingestor.rest.model.Orbit restOrbit = new de.dlr.proseo.ingestor.rest.model.Orbit();
+		restOrbit.setSpacecraftCode(TEST_SC_CODE);
+		restOrbit.setOrbitNumber(Long.valueOf(TEST_ORBIT_NUMBER));
+		ingestorProduct.setOrbit(restOrbit);
+		ingestorProduct.setProductClass(TEST_PRODUCT_TYPE);
+		ingestorProduct.setSensingStartTime(TEST_START_TIME_TEXT);
+		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
+		ingestorProduct.setGenerationTime(TEST_GEN_TIME_TEXT);
+		File productFile = new File(TEST_PRODUCT_PATH_2);
+		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
+		ingestorProduct.setFilePath(productFile.getParent());
+		ingestorProduct.setProductFileName(productFile.getName());
+		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+				"copernicusCollection", "STRING", "01"));
+		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+				"revision", "STRING", "99"));
+		List<IngestorProduct> ingestorProducts = new ArrayList<>();
+		ingestorProducts.add(ingestorProduct);
 		
 		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
+		String testUrl = config.getStorageManagerUrl() + "/store?productId=4711";
+		Map<String, String> mockRequest = new HashMap<>();
+		mockRequest.put("productId", "4711");
+		
+		logger.info("Testing availability of mock storage manager at {}", testUrl);
+		
+		ResponseEntity<Object> mockEntity = new TestRestTemplate().postForEntity(testUrl, mockRequest, Object.class);
+		assertEquals("Mock storage manager not available:", HttpStatus.CREATED, mockEntity.getStatusCode());
 		
 		// Check mock production planner is up (logging calls)
+		testUrl = ingestorConfig.getProductionPlannerUrl() + "/product/4711";
+		logger.info("Testing availability of mock production planner at {}", testUrl);
+		
+		Object mockObject = new TestRestTemplate().patchForObject(testUrl, mockRequest, Object.class);
+		assertNotNull("Mock production planner not available", mockObject);
+		logger.info("Got result object " + mockObject);
+		if (mockObject instanceof ResponseEntity) {
+			Map<String, String> mockResult = ((ResponseEntity<Map<String, String>>) mockObject).getBody();
+			assertEquals("Mock production planner returns unexpected status:", "OK", mockResult.get("status"));
+		}
 		
 		// Perform REST API call
-		
-		// Check logged calls for storage manager and production planner
-		
-		// TODO
-		logger.warn("Test not implemented for ingestProducts");
+		try {
+			testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + URLEncoder.encode(TEST_NAME, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		logger.info("Testing URL {} / POST", testUrl);
 
-		logger.info("Test OK: Insert a single product");
+		@SuppressWarnings("rawtypes")
+		ResponseEntity<List> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, ingestorProducts, List.class);
+		assertEquals("Unexpected HTTP status code: ", HttpStatus.CREATED, postEntity.getStatusCode());
+		assertEquals("Unexpected number of response products: ", 1, postEntity.getBody().size());
+		
+		// Check result attributes
+		Map<String, Object> responseProduct = (Map<String, Object>) postEntity.getBody().get(0);
+		assertNotEquals("Unexpected database ID: ", 0L, responseProduct.get("id"));
+		assertEquals("Unexpected product class: ", ingestorProduct.getProductClass(), responseProduct.get("productClass"));
+		assertEquals("Unexpected processing mode: ", ingestorProduct.getMode(), responseProduct.get("mode"));
+		assertEquals("Unexpected sensing start time: ", ingestorProduct.getSensingStartTime(), responseProduct.get("sensingStartTime"));
+		assertEquals("Unexpected sensing stop time: ", ingestorProduct.getSensingStopTime(), responseProduct.get("sensingStopTime"));
+		assertEquals("Unexpected generation time: ", ingestorProduct.getGenerationTime(), responseProduct.get("generationTime"));
+		Map<String, Object> responseOrbit = (Map<String, Object>) responseProduct.get("orbit");
+		assertNotNull("Orbit missing", responseOrbit);
+		assertEquals("Unexpected orbit number: ", ingestorProduct.getOrbit().getOrbitNumber().intValue(), responseOrbit.get("orbitNumber"));
+		List<Map<String, Object>> responseProductFiles = (List<Map<String, Object>>) responseProduct.get("productFile");
+		assertNotNull("Product files missing", responseProductFiles);
+		assertEquals("Unexpected number of product files: ", 1, responseProductFiles.size());
+		Map<String, Object> responseProductFile = responseProductFiles.get(0);
+		assertEquals("Unexpected product file name: ", ingestorProduct.getProductFileName(), responseProductFile.get("productFileName"));
+		assertEquals("Unexpected number of aux files: ", 0, ((List<String>) responseProductFile.get("auxFileNames")).size());
+		
+		// Check triggering of production planner
+		// TODO
+
+		logger.info("Test OK: Insert a list of products");
 	}
 
 	/**
@@ -281,7 +429,7 @@ public class IngestorControllerTest {
 		// TODO
 		logger.warn("Test not implemented for ingestProductFile");
 
-		logger.info("Test OK: Insert a single product");
+		logger.info("Test OK: Insert files for an existing product");
 	}
 
 	/**

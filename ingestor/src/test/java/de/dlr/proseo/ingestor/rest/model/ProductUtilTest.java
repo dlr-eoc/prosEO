@@ -26,17 +26,18 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 
 /**
- * @author thomas
- *
+ * Test class for ProductUtil
+ * 
+ * @author Dr. Thomas Bassler
  */
 public class ProductUtilTest {
 
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, revision (parameter)
-		{ "7", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "01" },
-		{ "8", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "01" },
-		{ "9", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "02" }
+		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "7", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "8", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "9", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** A logger for this class */
@@ -67,8 +68,9 @@ public class ProductUtilTest {
 		testProduct.setMode(testData[4]);
 		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
 		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[7])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
 		
 		logger.info("Created test product {}", testProduct.getId());
 		return testProduct;
@@ -106,7 +108,7 @@ public class ProductUtilTest {
 	public final void test() {
 		// Create an empty product
 		Product modelProduct = new Product();
-		de.dlr.proseo.ingestor.rest.model.Product restProduct = ProductUtil.toRestProduct(modelProduct);
+		RestProduct restProduct = ProductUtil.toRestProduct(modelProduct);
 		assertEquals("Unexpected version number for new product: ", 1L, restProduct.getVersion().longValue());
 		assertNull("Unexpected mode for new product: ", restProduct.getMode());
 		logger.info("Test copy empty product OK");
@@ -125,6 +127,8 @@ public class ProductUtilTest {
 				restProduct.getSensingStartTime());
 		assertEquals("Unexpected sensing stop: ", Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()),
 				restProduct.getSensingStopTime());
+		assertEquals("Unexpected product generation: ", Orbit.orbitTimeFormatter.format(modelProduct.getGenerationTime()),
+				restProduct.getGenerationTime());
 		assertEquals("Unexpected number of parameters", modelProduct.getParameters().size(), restProduct.getParameters().size());
 		for (int i = 0; i < modelProduct.getParameters().size(); ++i) {
 			de.dlr.proseo.ingestor.rest.model.Parameter restParameter = restProduct.getParameters().get(i);
@@ -145,6 +149,7 @@ public class ProductUtilTest {
 		assertEquals("Mode not preserved: ", modelProduct.getMode(), copiedModelProduct.getMode());
 		assertEquals("Start time not preserved: ", modelProduct.getSensingStartTime(), copiedModelProduct.getSensingStartTime());
 		assertEquals("Stop time not preserved: ", modelProduct.getSensingStopTime(), copiedModelProduct.getSensingStopTime());
+		assertEquals("Generation time not preserved: ", modelProduct.getGenerationTime(), copiedModelProduct.getGenerationTime());
 		assertEquals("Number of parameters not preserved: ", modelProduct.getParameters().size(), copiedModelProduct.getParameters().size());
 		for (String modelKey: modelProduct.getParameters().keySet()) {
 			assertTrue("Parameter " + modelKey + " not preserved: ", copiedModelProduct.getParameters().containsKey(modelKey));

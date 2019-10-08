@@ -24,7 +24,7 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
   SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
   SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   SelectionRule: SimpleSelectionRule[]
@@ -32,7 +32,7 @@ types:
   SelectionRuleString:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
       selectionRule: string
@@ -80,19 +80,19 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProductClass[]
+            type: RestProductClass[]
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
   post:
     description: Create a new product class
     body:
       application/json:
-        type: ProductClass
+        type: RestProductClass
         example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     responses:
       201:
         body:
           application/json:
-            type: ProductClass
+            type: RestProductClass
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
   /{id}:
     uriParameters:
@@ -105,19 +105,19 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     patch:
       description: Update a product class by ID
       body:
         application/json:
-          type: ProductClass
+          type: RestProductClass
           example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
       responses:
         200:
           body:
             application/json:
-              type: ProductClass
+              type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
       description: Delete a product class by ID
@@ -132,23 +132,20 @@ resourceTypes:
           200:
             body:
               application/json:
-                type: array
+                type: SelectionRuleString[]
                 example: !include examples/selectionrule.json
-                items: 
-                  type: SelectionRuleString
       post:
-        description: Create a selection rule
+        description: Create a selection rule using Rule Language
         body:
           application/json:
-            type: array
+            type: SelectionRuleString[]
             example: !include examples/selectionrule.json
-            items: 
-              type: SelectionRuleString
         responses:
           201:
             body:
               application/json:
-                type: SimpleSelectionRule
+                type: RestProductClass
+                description: The product class with the added, converted selection rules
       /{ruleid}:
         uriParameters:
           ruleid:
@@ -163,7 +160,7 @@ resourceTypes:
                  application/json:
                    type: SelectionRuleString
         patch:
-          description: Update a selection rule
+          description: Update a selection rule using Rule Language
           body:
             application/json:
               type: SelectionRuleString

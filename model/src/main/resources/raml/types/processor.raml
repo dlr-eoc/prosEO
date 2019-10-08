@@ -2,11 +2,11 @@
 #  Processor:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       processorName:
@@ -33,3 +33,9 @@
       tasks:
         type: Task[]
         description: List of tasks for this processor
+      dockerImage:
+        type: string
+        description: The name of the docker image (without registry address)
+      dockerRunParameters?:
+        type: string
+        description: Parameters to add to the "docker run" command

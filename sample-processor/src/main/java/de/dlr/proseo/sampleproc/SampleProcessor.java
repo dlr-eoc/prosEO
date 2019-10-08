@@ -33,6 +33,7 @@ import org.xml.sax.SAXException;
  * "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003, V.1.8)
  * 
  * @author Dr. Thomas Bassler
+ * @author Hubert Asamer
  *
  */
 public class SampleProcessor {
@@ -142,17 +143,18 @@ public class SampleProcessor {
 		
 		SampleProduct inputProduct = new SampleProduct();
 		try {
+			// test if readable...
 			String[] fields = input.readLine().split("\\|");
-			logger.debug("... input product read with {} fields", fields.length);
-			if (5 != fields.length) {
-				logger.error(MSG_INVALID_FILE_CONTENT, inputFileName);
-				return null;
-			}
-			inputProduct.setId(fields[0]);
-			inputProduct.setType(fields[1]);
-			inputProduct.setStartTime(Instant.parse(fields[2]));
-			inputProduct.setStopTime(Instant.parse(fields[3]));
-			inputProduct.setRevision(Integer.parseInt(fields[4]));
+			logger.debug("... input product test-read with file {} having {} fields", inputFileName, fields.length);
+			/*
+			 * if (5 != fields.length) { logger.error(MSG_INVALID_FILE_CONTENT,
+			 * inputFileName); return null; }
+			 */
+			inputProduct.setId(inputFileName);
+			inputProduct.setType("dummy");
+			inputProduct.setStartTime(Instant.parse("2019-05-08T15:24:00Z"));
+			inputProduct.setStopTime(Instant.parse("2019-05-08T15:24:00Z"));
+			inputProduct.setRevision(0);
 		} catch (IOException e1) {
 			logger.error(MSG_FILE_NOT_READABLE, inputFileName);
 			return null;
@@ -203,7 +205,7 @@ public class SampleProcessor {
 			
 			// Generate a product with random identifier and the file type specified in the JobOrder document
 			SampleProduct outputProduct = new SampleProduct();
-			outputProduct.setId(String.valueOf(outputProduct.hashCode()));
+			outputProduct.setId("L2_DERIVED_FROM_"+inputProduct.getId().replace("/", "_"));
 			outputProduct.setType(outputFileTypes.item(0).getTextContent());
 			outputProduct.setStartTime(inputProduct.getStartTime());
 			outputProduct.setStopTime(inputProduct.getStopTime());

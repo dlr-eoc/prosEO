@@ -8,6 +8,7 @@ package de.dlr.proseo.model;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.ElementCollection;
@@ -49,6 +50,9 @@ public class Configuration extends PersistentObject {
 	/** The configuration files for this configuration */
 	@ElementCollection
 	private Set<ConfigurationFile> configurationFiles = new HashSet<>();
+
+	/** Specific parameter for "docker run" valid for this configuration */
+	private String dockerRunParameters;
 
 	/**
 	 * Gets the associated processor class
@@ -138,6 +142,45 @@ public class Configuration extends PersistentObject {
 	 */
 	public void setConfigurationFiles(Set<ConfigurationFile> configurationFiles) {
 		this.configurationFiles = configurationFiles;
+	}
+
+	/**
+	 * Gets the configuration-specific "docker run" parameters
+	 * 
+	 * @return the dockerRunParameters
+	 */
+	public String getDockerRunParameters() {
+		return dockerRunParameters;
+	}
+
+	/**
+	 * Sets the configuraiton-specific "docker run" parameters
+	 * 
+	 * @param dockerRunParameters the dockerRunParameters to set
+	 */
+	public void setDockerRunParameters(String dockerRunParameters) {
+		this.dockerRunParameters = dockerRunParameters;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(configurationVersion, processorClass);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof Configuration))
+			return false;
+		Configuration other = (Configuration) obj;
+		return Objects.equals(configurationVersion, other.configurationVersion)
+				&& Objects.equals(processorClass, other.processorClass);
 	}
 
 }

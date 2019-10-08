@@ -50,6 +50,17 @@ public class OrbitControllerImpl implements OrbitController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
 
+	/**
+	 * List of all orbits filtered by mission, spacecraft, start time range , orbit number range
+	 * 
+	 * @param missionCode the mission 
+	 * @param spacecraftCode the spacecraft
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @param orbitNumberFrom included orbits beginning
+	 * @param orbitNumberTo included orbits end
+	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
+	 */
 	@Override
 	public ResponseEntity<List<Orbit>> getOrbits(String missionCode, String spacecraftCode, Long orbitNumberFrom,
 			Long orbitNumberTo, Date starttimefrom, Date starttimeto) {
@@ -69,7 +80,13 @@ public class OrbitControllerImpl implements OrbitController {
 		
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
-
+	
+	/**
+	 * Create an orbit from the given Json object 
+	 * @param orbit the Json object to create the orbit from
+	 * @return a response containing a Json object corresponding to the orbit after persistence (with ID and version for all 
+	 * 		   contained objects) and HTTP status "CREATED"
+	 */
 	@Override
 	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {
 		
@@ -92,6 +109,13 @@ public class OrbitControllerImpl implements OrbitController {
 		return new ResponseEntity<>(restOrbits, HttpStatus.CREATED);	
 	}
 
+	/**
+	 * Find the orbit with the given ID
+	 * 
+	 * @param id the ID to look for
+	 * @return a Json object corresponding to the found orbit and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no orbit with the given ID exists
+	 */
 	@Override
 	public ResponseEntity<Orbit> getOrbitById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbitById({})", id);
@@ -110,6 +134,14 @@ public class OrbitControllerImpl implements OrbitController {
 	
 	}
 
+	/**
+	 * Update the orbit with the given ID with the attribute values of the given Json object. 
+	 * @param id the ID of the orbit to update
+	 * @param orbit a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing a Json object corresponding to the obit after modification (with ID and version for all 
+	 * 		   contained objects) and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no orbit with the given ID exists
+	 */
 	@Override
 	public ResponseEntity<Orbit> modifyOrbit(Long id, @Valid Orbit orbit) {
 		
@@ -163,6 +195,13 @@ public class OrbitControllerImpl implements OrbitController {
 	
 	}
 
+	/**
+	 * Delete an orbit by ID
+	 * 
+	 * @param the ID of the orbit to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the orbit did not
+	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
 	@Override
 	public ResponseEntity<?> deleteOrbitById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrbitById({})", id);

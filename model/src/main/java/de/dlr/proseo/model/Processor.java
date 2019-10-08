@@ -69,6 +69,12 @@ public class Processor extends PersistentObject {
 	@OneToMany(mappedBy = "processor")
 	private List<Task> tasks = new ArrayList<>();
 
+	/** The name of the docker image (without registry address, to be configured externally!) */
+	private String dockerImage;
+	
+	/** Parameters to add to the "docker run" command */
+	private String dockerRunParameters;
+	
 	/**
 	 * Gets the processor class
 	 * 
@@ -85,6 +91,24 @@ public class Processor extends PersistentObject {
 	 */
 	public void setProcessorClass(ProcessorClass processorClass) {
 		this.processorClass = processorClass;
+	}
+
+	/**
+	 * Gets the associated processor configurations
+	 * 
+	 * @return the processor configurations for this processor
+	 */
+	public Set<ConfiguredProcessor> getConfiguredProcessors() {
+		return configuredProcessors;
+	}
+
+	/**
+	 * Sets the associated processor configurations
+	 * 
+	 * @param configuredProcessors the processor configurations to set
+	 */
+	public void setConfiguredProcessors(Set<ConfiguredProcessor> configuredProcessors) {
+		this.configuredProcessors = configuredProcessors;
 	}
 
 	/**
@@ -211,6 +235,42 @@ public class Processor extends PersistentObject {
 	 */
 	public void setTasks(List<Task> tasks) {
 		this.tasks = tasks;
+	}
+
+	/**
+	 * Gets the docker image name and tag
+	 * 
+	 * @return the docker image name and tag
+	 */
+	public String getDockerImage() {
+		return dockerImage;
+	}
+
+	/**
+	 * Sets the docker image name and tag
+	 * 
+	 * @param dockerImage the docker image name and tag to set
+	 */
+	public void setDockerImage(String dockerImage) {
+		this.dockerImage = dockerImage;
+	}
+
+	/**
+	 * Gets the run parameters for the docker image
+	 * 
+	 * @return the "docker run" parameters
+	 */
+	public String getDockerRunParameters() {
+		return dockerRunParameters;
+	}
+
+	/**
+	 * Sets the run parameters for the docker image
+	 * 
+	 * @param dockerRunParameters the "docker run" parameters to set
+	 */
+	public void setDockerRunParameters(String dockerRunParameters) {
+		this.dockerRunParameters = dockerRunParameters;
 	}
 
 	@Override

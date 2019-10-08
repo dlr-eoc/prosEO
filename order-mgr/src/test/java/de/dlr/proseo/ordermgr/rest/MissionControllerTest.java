@@ -1,17 +1,19 @@
 package de.dlr.proseo.ordermgr.rest;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+import javax.persistence.EntityManagerFactory;
+
+import org.hibernate.Hibernate;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -27,6 +29,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.Spacecraft;
@@ -48,6 +52,9 @@ public class MissionControllerTest {
 
 	@LocalServerPort
 	private int port;
+	
+	@Autowired
+	EntityManagerFactory emf;
 	
 	/** Test configuration */
 	@Autowired
@@ -79,7 +86,12 @@ public class MissionControllerTest {
 	 */
 	
 	private de.dlr.proseo.model.Mission createMission(String[] testData) {
-		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
+		de.dlr.proseo.model.Mission testMission = RepositoryService.getMissionRepository().findByCode(testData[2]);
+		if (null != testMission) {
+			return testMission;
+		}
+		
+		testMission = new de.dlr.proseo.model.Mission();
 		de.dlr.proseo.model.Spacecraft testSpacecraft = new de.dlr.proseo.model.Spacecraft();
 		//de.dlr.proseo.model.ProcessingOrder testProcessingOrder = new de.dlr.proseo.model.ProcessingOrder();
 
@@ -91,10 +103,12 @@ public class MissionControllerTest {
 		
 		//adding Spacecraft parameters
 		testSpacecraft.setMission(testMission);
-		testSpacecraft.incrementVersion();
 		testSpacecraft.setCode(testData[5]);
 		testSpacecraft.setName(testData[6]);
 		testSpacecraft = RepositoryService.getSpacecraftRepository().save(testSpacecraft);
+
+		testMission.getSpacecrafts().add(testSpacecraft);
+		testMission = RepositoryService.getMissionRepository().save(testMission);
 		
 		logger.info("Created test mission {}", testMission.getId());
 		return testMission;
@@ -125,12 +139,11 @@ public class MissionControllerTest {
 	 * @param testMissions a list of test missions to delete 
 	 */
 	private void deleteTestMissions(List<de.dlr.proseo.model.Mission> testMissions) {
-		for (de.dlr.proseo.model.Mission testMission: testMissions) {				
-			Set<de.dlr.proseo.model.Spacecraft> spacecrafts = testMission.getSpacecrafts();	
-			logger.info("testing spacecrafts size: "+ spacecrafts.hashCode());
-//			RepositoryService.getSpacecraftRepository().deleteAll(spacecrafts);
-			RepositoryService.getSpacecraftRepository().deleteAll();
-			RepositoryService.getMissionRepository().delete(testMission);
+		Session session = emf.unwrap(SessionFactory.class).openSession();
+		for (de.dlr.proseo.model.Mission testMission: testMissions) {
+			testMission = (de.dlr.proseo.model.Mission) session.merge(testMission);
+			RepositoryService.getSpacecraftRepository().deleteAll(testMission.getSpacecrafts());
+			RepositoryService.getMissionRepository().deleteById(testMission.getId());
 		}
 	}
 	
@@ -193,7 +206,7 @@ public class MissionControllerTest {
 		// Test that the correct missions provided above are in the results
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> body = entity.getBody();
-		assertEquals(testMissions.size(), entity.getBody().size());
+		assertTrue("Too few missions", entity.getBody().size() >= testMissions.size());
 		logger.info("Found {} missions", body.size());
 		
 		boolean[] missionFound = new boolean[testMissions.size()];

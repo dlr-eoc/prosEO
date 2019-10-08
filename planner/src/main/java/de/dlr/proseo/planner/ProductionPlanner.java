@@ -70,12 +70,16 @@ public class ProductionPlanner implements CommandLineRunner {
 	/**
 	 * Look for connected KubeConfig of name. 
 	 * 
-	 * @param name of KubeConfig to find
+	 * @param name of KubeConfig to find (may be null)
 	 * @return KubeConfig found or null
 	 */
 	public static KubeConfig getKubeConfig(String name) {
-		if (name == null && kubeConfigs.size() == 1) {
-			return (KubeConfig) kubeConfigs.values().toArray()[0];
+		if (name == null) {
+			if (0 < kubeConfigs.size()) {
+				return (KubeConfig) kubeConfigs.values().toArray()[0];
+			} else {
+				return null;
+			}
 		}
 		return kubeConfigs.get(name.toLowerCase());
 	}
@@ -119,14 +123,14 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getUrl());
+				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getProcessingEngineUrl());
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
-					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_CONNECTED, pf.getName(), pf.getUrl());
+					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
 					logger.info(message);
 				} else {
-					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED, pf.getName(), pf.getUrl());
+					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
 					logger.error(message);
 				}
 			}
@@ -134,7 +138,7 @@ public class ProductionPlanner implements CommandLineRunner {
 		for (KubeConfig kf : getKubeConfigs()) {
 			if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
 				kubeConfigs.remove(kf.getId().toLowerCase());
-				String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED, kf.getId(), kf.getUrl());
+				String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED, kf.getId(), kf.getProcessingEngineUrl());
 				logger.info(message);
 			}
 		}

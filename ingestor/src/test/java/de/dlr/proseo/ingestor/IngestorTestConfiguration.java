@@ -30,7 +30,7 @@ public class IngestorTestConfiguration {
 	private String userPassword;
 	
 	/** The URL of the prosEO Storage Manager mockup (from the database in the real world) */
-	@Value("${proseo.productionPlanner.url}")
+	@Value("${proseo.storageManager.url}")
 	private String storageManagerUrl;
 
 	/**

@@ -65,6 +65,10 @@
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>
 				</exclusion>
+	             <exclusion>
+	                 <groupId>xerces</groupId>
+	                 <artifactId>xmlParserAPIs</artifactId>
+	             </exclusion>
 			</exclusions>
 			<type>maven-plugin</type>
 		</dependency>

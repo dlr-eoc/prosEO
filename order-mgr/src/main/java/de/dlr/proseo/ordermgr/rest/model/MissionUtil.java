@@ -46,7 +46,8 @@ public class MissionUtil {
 			List <de.dlr.proseo.ordermgr.rest.model.Spacecraft> restSpacecrafts = new ArrayList<de.dlr.proseo.ordermgr.rest.model.Spacecraft>();
 			
 			for(Spacecraft modelSpacecraft : modelMission.getSpacecrafts()) {			
-				de.dlr.proseo.ordermgr.rest.model.Spacecraft restFinal = new de.dlr.proseo.ordermgr.rest.model.Spacecraft (modelSpacecraft.getCode(),modelSpacecraft.getName());			
+				de.dlr.proseo.ordermgr.rest.model.Spacecraft restFinal = new de.dlr.proseo.ordermgr.rest.model.Spacecraft(
+						modelSpacecraft.getId(), Long.valueOf(modelSpacecraft.getVersion()), modelSpacecraft.getCode(), modelSpacecraft.getName());			
 				restSpacecrafts.add(restFinal);						
 			}
 			restMission.setSpacecrafts(restSpacecrafts);

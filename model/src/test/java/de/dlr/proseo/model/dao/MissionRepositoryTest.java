@@ -39,7 +39,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class MissionRepositoryTest {
 
-	private static final String TEST_CODE = "ABC";
+	private static final String TEST_CODE = "$ABC$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionRepositoryTest.class);
