@@ -16,10 +16,21 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 
 import alluxio.AlluxioURI;
 import alluxio.exception.AlluxioException;
@@ -60,6 +71,8 @@ public class SampleWrapper {
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
 	private static final String WRAPPER_TIMESTAMP = String.valueOf(System.currentTimeMillis()/1000);
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+WRAPPER_TIMESTAMP+".xml";
+	private static final String CONTAINER_INPUTS_PATH_PREFIX = "inputs";
+	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = WRAPPER_TIMESTAMP;
 	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
 	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
 
@@ -83,22 +96,23 @@ public class SampleWrapper {
 	enum FS_TYPE {S3,POSIX, ALLUXIO}
 
 	/** ENV-VAR valid entries */
-	enum ENV_VARS {FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE,PROCESSOR_SHELL_COMMAND}
+	enum ENV_VARS {JOBORDER_FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,S3_BUCKET_OUTPUTS,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE,PROCESSOR_SHELL_COMMAND}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
-	private String ENV_FS_TYPE = System.getenv(ENV_VARS.FS_TYPE.toString());
+	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
 	private String ENV_S3_ENDPOINT = System.getenv(ENV_VARS.S3_ENDPOINT.toString());
 	private String ENV_S3_ACCESS_KEY = System.getenv(ENV_VARS.S3_ACCESS_KEY.toString());
 	private String ENV_S3_SECRET_ACCESS_KEY = System.getenv(ENV_VARS.S3_SECRET_ACCESS_KEY.toString());
+	private String ENV_S3_BUCKET_OUTPUTS = System.getenv(ENV_VARS.S3_BUCKET_OUTPUTS.toString());
 	private String ENV_LOGFILE_TARGET = System.getenv(ENV_VARS.LOGFILE_TARGET.toString());
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
 	private String ENV_SUCCESS_STATE = System.getenv(ENV_VARS.SUCCESS_STATE.toString());
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 
 
-	/** Base S3-Client */
-	private S3Client s3Client() {
+	/** Base V2 S3-Client */
+	private S3Client v2S3Client() {
 		try {
 			//check if S3 env vars are set
 			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
@@ -120,7 +134,39 @@ public class SampleWrapper {
 			logger.error(e1.getMessage());
 			return null;
 		}
-	};
+	}
+
+	/** Base V1 S3-Client */
+	private AmazonS3 v1S3Client() {
+		try {
+			//check if S3 env vars are set
+			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
+			if(ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY); return null;}
+			if(ENV_S3_ENDPOINT==null||ENV_S3_ENDPOINT.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT); return null;}
+
+			BasicAWSCredentials awsCreds = new BasicAWSCredentials(ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
+			ClientConfiguration clientConfiguration = new ClientConfiguration();
+			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
+			AmazonS3 amazonS3 = AmazonS3ClientBuilder
+					.standard()
+					.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(ENV_S3_ENDPOINT, Regions.EU_CENTRAL_1.name()))
+					.withPathStyleAccessEnabled(true)
+					.withClientConfiguration(clientConfiguration)
+					.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+					.build();
+			return amazonS3;
+		}	catch (AmazonServiceException e) {
+			logger.error(e.getMessage());
+			return null;
+		}  catch(AmazonClientException e) {
+			logger.error(e.getMessage());
+			return null;
+		} catch (java.lang.NullPointerException e) {
+			logger.error(e.getMessage());
+			return null;
+		}
+
+	}
 
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
@@ -132,44 +178,53 @@ public class SampleWrapper {
 		return false;
 	}
 
+	private ArrayList<String> envList(ENV_VARS[] env){
+		ArrayList<String> list = new ArrayList<String>();
+		for (int i=0;i<ENV_VARS.values().length;i++) {
+			list.add(ENV_VARS.values()[i].toString()+"="+System.getenv(ENV_VARS.values()[i].toString().toString()));
+		}
+		return list;
+	}
+
 	private Boolean checkEnv() {
 		logger.info(MSG_STARTING_SAMPLE_WRAPPER, ENV_JOBORDER_FILE);
-		logger.info("Checking ENV_VARS {}", java.util.Arrays.toString(ENV_VARS.values()));
+		logger.info("Checking {} ENV_VARS...", ENV_VARS.values().length);
+		logger.info(envList(ENV_VARS.values()).toString());
 		// check all required env-vars
-		if (!checkFS_TYPE(ENV_FS_TYPE)) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);
+		if (!checkFS_TYPE(ENV_JOBORDER_FS_TYPE)) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
 			return false;
 		}
-		if (ENV_FS_TYPE == null || ENV_FS_TYPE.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FS_TYPE);
+		if (ENV_JOBORDER_FS_TYPE == null || ENV_JOBORDER_FS_TYPE.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
 			return false;
 		}
 		if (ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);
 			return false;
 		}
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ENDPOINT == null || ENV_S3_ENDPOINT.isEmpty())) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ENDPOINT == null || ENV_S3_ENDPOINT.isEmpty())) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT);
 			return false;
 		}
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty())) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && (ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty())) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY);
 			return false;
 		}
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString())
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString())
 				&& (ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty())) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY);
 			return false;
 		}
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR,
-					ENV_VARS.FS_TYPE + ": " + ENV_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
+					ENV_VARS.JOBORDER_FS_TYPE + ": " + ENV_JOBORDER_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
 			return false;
 		}
 		;
-		if (ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR,
-					ENV_VARS.FS_TYPE + ": " + ENV_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
+					ENV_VARS.JOBORDER_FS_TYPE + ": " + ENV_JOBORDER_FS_TYPE + " does not allow " + ENV_JOBORDER_FILE);
 			return false;
 		}
 		;
@@ -189,8 +244,12 @@ public class SampleWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSOR_SHELL_COMMAND);
 			return false;
 		}
+		if(ENV_S3_BUCKET_OUTPUTS==null || ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
+			return false;
+		}
 		logger.info("ENV_VARS looking good...");
-		logger.info("PREFIX (seconds since epoch) used for JobOrderFile-Naming & Results is {}", WRAPPER_TIMESTAMP);
+		logger.info("PREFIX timestamp used for JobOrderFile-Naming & Results is {}", WRAPPER_TIMESTAMP);
 		return true;
 	}
 	/**
@@ -201,7 +260,7 @@ public class SampleWrapper {
 	private File provideInitialJOF() {
 		String JOFContainerPath = null;
 		// set JOF-path based on ENV
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
 			AmazonS3URI s3uri = new AmazonS3URI(ENV_JOBORDER_FILE);
 			JOFContainerPath = s3uri.getKey();
 			try {
@@ -212,16 +271,16 @@ public class SampleWrapper {
 			}
 		}
 		/** Set JOF-path if FS_TYPE env var (=container env var) has value `POSIX` */
-		if (ENV_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.POSIX.toString()) && !ENV_JOBORDER_FILE.startsWith("s3://")) {
 			JOFContainerPath = ENV_JOBORDER_FILE;
 		}
-		
+
 
 		/** Fetch JOF if container env-var `FS_TYPE` has value `S3` */
-		if (ENV_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
-			S3Client s3 = s3Client();
+		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
+			S3Client s3 = v2S3Client();
 			if (null == s3) return null;
-			Boolean transaction = S3Ops.fetch(s3, ENV_JOBORDER_FILE, JOFContainerPath);
+			Boolean transaction = S3Ops.v2FetchFile(s3, ENV_JOBORDER_FILE, JOFContainerPath);
 			if (!transaction) return null;
 		}
 
@@ -266,8 +325,9 @@ public class SampleWrapper {
 	{
 		logger.info("Fetch Inputs & provide a valid JobOrderFile for the container-context...");
 		int numberOfInputs = 0;
+		int numberOfFetchedInputs = 0;
 		int numberOfOutputs = 0;
-		S3Client s3 = s3Client();
+		S3Client s3 = v2S3Client();
 		if (null == s3) return null;
 		// loop all procs -> mainly only one is present
 		for(Proc item : jo.getListOfProcs()) {
@@ -281,31 +341,33 @@ public class SampleWrapper {
 					// for all S3-data we try to fetch to workdir...
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
 						// first set file_name to local work-dir path
-						fn.setFileName(fn.getOriginalFileName().replace("s3://", "inputs"+File.separator));
+						fn.setFileName(fn.getOriginalFileName().replace("s3://", CONTAINER_INPUTS_PATH_PREFIX+File.separator));
 						// now fetch from S3
-						Boolean transaction = S3Ops.fetch(s3, fn.getOriginalFileName(), fn.getFileName());
+						Boolean transaction = S3Ops.v2FetchFile(s3, fn.getOriginalFileName(), fn.getFileName());
+						if (transaction)numberOfFetchedInputs++;
 						if (!transaction) return null;
 					}
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
 						// now fetch from ALLUXIO
-						fn.setFileName("inputs"+fn.getOriginalFileName());
+						fn.setFileName(CONTAINER_INPUTS_PATH_PREFIX+fn.getOriginalFileName());
 						AlluxioURI srcPath = new AlluxioURI(fn.getOriginalFileName());
 						AlluxioURI dstPath = new AlluxioURI(fn.getFileName());
 						Boolean transaction = AlluxioOps.copyToLocal(srcPath, dstPath, ALLUXIO_READ_TYPE);
+						if (transaction)numberOfFetchedInputs++;
 						if (!transaction) return null;
 					}
 				}
 			}
-			// loop all Output
+			// loop all Output & prepare dirs
 			for (InputOutput io: item.getListOfOutputs()) {
 				// loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
 					numberOfOutputs++;
 					//fill original filename with current val of `File_Name` --> for later use --> push results step
 					fn.setOriginalFileName(fn.getFileName());
-					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && fn.getOriginalFileName().startsWith("s3://")) {
+					if(fn.getFSType().equals(FS_TYPE.S3.toString())) {
 						// first set output file_name to local work-dir path
-						fn.setFileName(fn.getOriginalFileName().replace("s3://", ""));
+						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fn.getOriginalFileName().replace("s3://", ""));
 						try {
 							File f = new File(fn.getFileName());
 							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
@@ -317,7 +379,7 @@ public class SampleWrapper {
 						}
 					}
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
-						fn.setFileName("outputs"+fn.getOriginalFileName());
+						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fn.getOriginalFileName());
 						try {
 							File f = new File(fn.getFileName());
 							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
@@ -331,9 +393,15 @@ public class SampleWrapper {
 				}
 			}
 		}
-		s3.close();
-		logger.info("Fetched {} Input-Files and prepared dirs for {} Outputs -- Ready for processing using Container-JOF {}", numberOfInputs,numberOfOutputs,CONTAINER_JOF_PATH);
-		return jo;
+		if (numberOfFetchedInputs==numberOfInputs) {
+			logger.info("Fetched {} Input-Files and prepared dirs for {} Outputs -- Ready for processing using Container-JOF {}", numberOfFetchedInputs,numberOfOutputs,CONTAINER_JOF_PATH);
+			s3.close();
+			return jo;
+		}
+		else {
+			s3.close();
+			return null;
+		}
 	}
 
 	/**
@@ -393,9 +461,11 @@ public class SampleWrapper {
 	 */
 	private Boolean pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
+		logger.info("Upload File-Pattern based on timestamp-prefix is: FS://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
 		Boolean check = false;
-
+		AmazonS3 s3 = v1S3Client();
 		int numberOfOutputs = 0;
+		int numberOfPushedOutputs = 0;
 		for(Proc item : jo.getListOfProcs()) {
 			// loop all Input
 			for (InputOutput io: item.getListOfOutputs()) {
@@ -406,19 +476,48 @@ public class SampleWrapper {
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
 						try {
 							AlluxioURI srcPath = new AlluxioURI(fn.getFileName());
-							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+WRAPPER_TIMESTAMP+File.separator+fn.getOriginalFileName());
+							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+fn.getFileName());
 							Boolean transaction = AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE);
-							check = transaction;
+							if(transaction)numberOfPushedOutputs++;
 						} catch(AlluxioException | IOException e) {
 							logger.error(e.getMessage());
-							
+
 						}
 					}
-					//TODO S3|POSIX
+					if(fn.getFSType().equals(FS_TYPE.S3.toString())) {
+						// check if we have a valid output bucket defined...
+						if(ENV_S3_BUCKET_OUTPUTS==null||ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
+							logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
+							return false;
+						}
+						try {
+							Boolean transaction = 
+									S3Ops.v1UploadFile(
+											s3
+											, fn.getFileName()
+											, ENV_S3_BUCKET_OUTPUTS
+											, io.getProductID()
+											, false
+											);
+							if(transaction) {
+								numberOfPushedOutputs++;
+								logger.info("Copied file://{} to {}",fn.getFileName(), ENV_S3_BUCKET_OUTPUTS+File.separator+io.getProductID()+File.separator+fn.getFileName());
+							}
+						} catch ( java.lang.IllegalArgumentException e) {
+							logger.error(e.getMessage());
+							return false;
+						}
+					} 
 				}
 			}
 		}
-		if (check) logger.info("Uploaded {} results to prosEO storage...",numberOfOutputs);
+		if (numberOfPushedOutputs==numberOfOutputs) {
+			logger.info("Uploaded {} results to prosEO storage...",numberOfPushedOutputs);
+			check= true;
+		}
+		else {
+			check= false;
+		}
 		/*
 		 * // DIR-TEST AlluxioURI srcPath = new AlluxioURI("inputs/"); AlluxioURI
 		 * dstPath = new AlluxioURI("/dirUploadTest"); try { Boolean transaction =
@@ -426,7 +525,7 @@ public class SampleWrapper {
 		 * transaction; } catch (AlluxioException | IOException e) { // TODO
 		 * Auto-generated catch block check = false; logger.error(e.getMessage()); }
 		 */
-		
+
 		return check;
 	}
 

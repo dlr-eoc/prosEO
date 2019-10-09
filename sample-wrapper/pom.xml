@@ -34,18 +34,19 @@
 			<artifactId>proseo-model</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>bom</artifactId>
-			<version>2.5.45</version>
-			<type>pom</type>
-			<scope>compile</scope>
-		</dependency>
+		<!-- AWS S3 SDK 2 -->
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
 			<version>2.5.45</version>
 		</dependency>
+		<!-- AWS S3 SDK 1 -->
+		<dependency>
+          <groupId>com.amazonaws</groupId>
+          <artifactId>aws-java-sdk-s3</artifactId>
+           <version>1.11.327</version>
+        </dependency>
+        <!-- Alluxio -->
 		<dependency>
 		  <groupId>org.alluxio</groupId>
 		  <artifactId>alluxio-core-client-fs</artifactId>

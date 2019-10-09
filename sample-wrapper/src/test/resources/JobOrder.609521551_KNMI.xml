@@ -196,7 +196,7 @@
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
-            <File_Name FS_TYPE="ALLUXIO">/results_C/result03.txt</File_Name>
+            <File_Name FS_TYPE="S3">/results_C/result03.txt</File_Name>
           </List_of_File_Names>
         </Output>
       </List_of_Outputs>
