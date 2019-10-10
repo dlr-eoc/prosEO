@@ -1,7 +1,7 @@
 /**
  * SimpleSelectionRule.java
  * 
- * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2016 - 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model;
 
@@ -25,7 +25,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
-import de.dlr.proseo.model.util.SelectionRule.SelectionItem;
+import de.dlr.proseo.model.util.SelectionItem;
 
 /**
  * A rule defining the required input ProductTypes for a certain output ProductType using an ordered list of SelectionPolicys.

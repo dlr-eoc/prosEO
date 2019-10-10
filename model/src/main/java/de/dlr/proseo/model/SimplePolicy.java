@@ -1,7 +1,7 @@
 /**
  * SimplePolicy.java
  * 
- * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * (C) 2016 - 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.model;
 
@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.util.SelectionRule;
-import de.dlr.proseo.model.util.SelectionRule.SelectionItem;
+import de.dlr.proseo.model.util.SelectionItem;
 
 /**
  * A product retrieval policy consisting of a retrieval mode and a time interval with delta times as defined in Annex B of ESA's Generic IPF Interface Specifications  { REF _Ref11952109 \r \h }. 

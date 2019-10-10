@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.model.util;
 
-import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,7 +73,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  * are separated from each other by commas. Parameter key and value for each entry are separated by colons (':').
  * There must not be any white space between any of the elements of the product type. Note that for the purpose of
  * the selection, source product types with the same product type name, but different parameters are considered different
- * source product types. The parameter keys and values are only evaluated for the generation of product query objects. 
+ * source product types. The parameter keys and values are only evaluated for the generation of JPQL and SQL queries. 
  * <p>
  * The following are examples for legal rules:
  * <ul>
@@ -173,107 +171,6 @@ public class SelectionRule {
 	private Map<String, SimpleSelectionRule> simpleRules = new LinkedHashMap<String, SimpleSelectionRule>();
 		
 	/**
-	 * This nested class describes a selectable item consisting of an item type (auxiliary product type), a validity start
-	 * time, a validity end time, and the original object for which the selection shall be effected. As this is only a
-	 * support structure, all instance variables are publicly accessible.
-	 */
-	public static class SelectionItem {
-		/** The product type of the item */
-		public String itemType;
-		/** The start time of the item validity period */
-		public Instant startTime;
-		/** The end time of the item validity period */
-		public Instant stopTime;
-		/** The generation time of the item */
-		public Instant generationTime;
-		/** The original object belonging to the item */
-		public Object itemObject;
-		
-		/**
-		 * Default constructor
-		 */
-		public SelectionItem() {}
-		
-		/**
-		 * Convenience constructor to create a SelectionItem with all attributes set at once.
-		 * 
-		 * @param itemType the item product type to set
-		 * @param startTime the start time of the item validity period
-		 * @param stopTime the end time of the item validity period
-		 * @param generationTime the generation time of the item
-		 * @param itemObject the original object belonging to the item
-		 */
-		public SelectionItem(String itemType, Instant startTime, Instant stopTime, Instant generationTime, Object itemObject) {
-			this.itemType = itemType;
-			this.startTime = startTime;
-			this.stopTime = stopTime;
-			this.generationTime = generationTime;
-			this.itemObject = itemObject;
-		}
-		
-		/**
-		 * Convenience method to set the validity start time from a Unix time value (milliseconds since 1970-01-01T00:00:00 UTC)
-		 * 
-		 * @param time the time in milliseconds to set the start time from
-		 */
-		public void setStartTime(long time) {
-			startTime = Instant.ofEpochMilli(time);
-		}
-		
-		/**
-		 * Convenience method to set the validity start time from a Java date object
-		 * 
-		 * @param date the date object to set the start time from
-		 */
-		public void setStartTime(Date date) {
-			setStartTime(date.getTime());
-		}
-
-		/**
-		 * Convenience method to set the validity end time from a Unix time value (milliseconds since 1970-01-01T00:00:00 UTC)
-		 * 
-		 * @param time the time in milliseconds to set the end time from
-		 */
-		public void setStopTime(long time) {
-			stopTime = Instant.ofEpochMilli(time);
-		}
-		
-		/**
-		 * Convenience method to set the validity end time from a Java date object
-		 * 
-		 * @param date the date object to set the end time from
-		 */
-		public void setStopTime(Date date) {
-			setStopTime(date.getTime());
-		}
-		
-		/* (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
-		public String toString() {
-			return "{ type: " + itemType + ", start: " + startTime + ", stop: " + stopTime + ", generated: " 
-					+ generationTime + ", object: " + itemObject + " }";
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(generationTime, itemObject, itemType, startTime, stopTime);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (!(obj instanceof SelectionItem))
-				return false;
-			SelectionItem other = (SelectionItem) obj;
-			return Objects.equals(generationTime, other.generationTime) && Objects.equals(itemObject, other.itemObject)
-					&& Objects.equals(itemType, other.itemType) && Objects.equals(startTime, other.startTime)
-					&& Objects.equals(stopTime, other.stopTime);
-		}
-	}
-	
-	/**
 	 * Gets all simple selection rules contained in the selection rule
 	 * 
 	 * @return a list of simple selection rules
@@ -282,6 +179,37 @@ public class SelectionRule {
 		List<SimpleSelectionRule> newSimpleRules = new ArrayList<>();
 		newSimpleRules.addAll(simpleRules.values());
 		return newSimpleRules;
+	}
+	
+	/**
+	 * Removes all simple selection rules from this rule
+	 */
+	public void clearSimpleRules() {
+		simpleRules.clear();
+	}
+	
+	/**
+	 * Adds a collection of simple selection rules to this rule
+	 * 
+	 * @param newSimpleRules the collection of simple selection rules to add
+	 */
+	public void addSimpleRules(Collection<SimpleSelectionRule> newSimpleRules) {
+		for (SimpleSelectionRule simpleRule: newSimpleRules) {
+			if (simpleRules.containsKey(simpleRule.getFilteredSourceProductType())) {
+				simpleRule = simpleRule.merge(simpleRules.get(simpleRule.getFilteredSourceProductType()));
+			}
+			simpleRules.put(simpleRule.getFilteredSourceProductType(), simpleRule);
+		}
+	}
+	
+	/**
+	 * Sets the collection of simple selection rules for this rule
+	 * 
+	 * @param newSimpleRules the collection of simple selection rules to set
+	 */
+	public void setSimpleRules(Collection<SimpleSelectionRule> simpleRules) {
+		clearSimpleRules();
+		addSimpleRules(simpleRules);
 	}
 	
 	/**
@@ -718,14 +646,7 @@ public class SelectionRule {
 			throw new IllegalArgumentException(MSG_MISSING_ARGUMENTS);
 		}
 		
-		List<SelectionItem> items = new ArrayList<>();
-		
-		for (Product product: products) {
-			items.add(new SelectionItem(product.getProductClass().getProductType(), product.getSensingStartTime(),
-					product.getSensingStopTime(), product.getGenerationTime(), product));
-		}
-		
-		return (Product) selectUniqueItem(productType, items, startTime, stopTime);
+		return (Product) selectUniqueItem(productType, SelectionItem.asSelectionItems(products), startTime, stopTime);
 	}
 	
 	/**
@@ -781,16 +702,8 @@ public class SelectionRule {
 			throw new IllegalArgumentException(MSG_MISSING_ARGUMENTS);
 		}
 		
-		// Convert products to selection items
-		List<SelectionItem> items = new ArrayList<>();
-		
-		for (Product product: products) {
-			items.add(new SelectionItem(product.getProductClass().getProductType(), product.getSensingStartTime(),
-					product.getSensingStopTime(), product.getGenerationTime(), product));
-		}
-		
 		// Perform the selection
-		List<Object> selectedItems = selectItems(productType, items, startTime, stopTime);
+		List<Object> selectedItems = selectItems(productType, SelectionItem.asSelectionItems(products), startTime, stopTime);
 		
 		// Convert result list to list of products
 		List<Product> selectedProducts = new ArrayList<>();
