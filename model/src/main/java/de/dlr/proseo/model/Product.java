@@ -30,8 +30,9 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(indexes = { 
-		@Index(unique = false, columnList = "sensing_start_time"), 
-		@Index(unique = false, columnList = "sensing_stop_time") })
+		@Index(unique = false, columnList = "product_class_id, sensing_start_time"), 
+		@Index(unique = false, columnList = "product_class_id, sensing_stop_time"), 
+		@Index(unique = false, columnList = "product_class_id, generation_time") })
 public class Product extends PersistentObject {
 	
 	/** Product class this products instantiates */

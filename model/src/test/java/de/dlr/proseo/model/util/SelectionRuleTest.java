@@ -44,6 +44,7 @@ public class SelectionRuleTest {
 			TEST_PRODUCT_TYPE + " Item 4", TEST_PRODUCT_TYPE + " Item 5", TEST_PRODUCT_TYPE + " Item 6", TEST_PRODUCT_TYPE + " Item 7",
 			TEST_PRODUCT_TYPE + " Item 8", TEST_PRODUCT_TYPE + " Item 9", TEST_PRODUCT_TYPE + " Item 10", TEST_PRODUCT_TYPE + " Item 11"
 	};
+	// TODO Add test cases for MINCOVER(n)
 	private static String[] rules = {
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 H, 0 H) MANDATORY",
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValIntersect(0 H, 0 H) MANDATORY",
@@ -161,25 +162,25 @@ public class SelectionRuleTest {
 		System.out.println("\n*** Starting test for parseSelectionRule() ***");
 
 		String[] legalRules = {
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0)",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) MINCOVER(50)",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) OR LatestValidity",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) OR LatestValidity OPTIONAL;"
 						+ " for " + TEST_PRODUCT_TYPE_ECMWF + " select latestvalintersect ( 12 h , 24 h )",
 				"for " + TEST_PRODUCT_TYPE + " seleCT latestvalintersect(1\tm,2\ns) MANDatory",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValidity OR LatestValIntersect(2 D, 123456789 D) OPTIONAL",
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 1) OR ValIntersect(1, 0)",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 1) OR ValIntersect(1, 0) MINCOVER ( 70 )",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 H, 1 D); FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 H)",
 				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestValidityClosest(2 d, 2 d)",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValCover(10 m, 10 m)"
 		};
 		String[] legalResults = {
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 D, 0 D) MANDATORY",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 D, 0 D) MINCOVER(50)",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 D, 0 D) OR LatestValidity MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0 D, 0 D) OR LatestValidity OPTIONAL;"
 						+ " FOR " + TEST_PRODUCT_TYPE_ECMWF + " SELECT LatestValIntersect(12 H, 24 H) MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValIntersect(1 M, 2 S) MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValidity OR LatestValIntersect(2 D, 123456789 D) OPTIONAL",
-				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 D) MANDATORY",
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 D, 1 D) MINCOVER(70)",
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(24 H, 24 H) MANDATORY",
 				"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestValidityClosest(0 D, 0 D) MANDATORY", // normalized delta times
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValCover(10 M, 10 M) MANDATORY"
@@ -200,6 +201,7 @@ public class SelectionRuleTest {
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValidity(0, 0)",		// Superfluous policy parameter
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0), 0",		// Invalid policy parameter syntax
 				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) MANDATORY OPTIONAL", // Too many options
+				"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(0, 0) MINCOVER(200)", // Invalid coverage percentage
 				"",														// empty input
 				"FOR Unknown.Type SELECT LatestValidity"				// Unknown product type
 		};
@@ -219,10 +221,11 @@ public class SelectionRuleTest {
 				"no delta times may be specified",						// RULE_POLICY_LATVAL_ERROR
 				"policy must follow",									// RULE_POLICY_SYNTAX_ERROR
 				"Expected end of text or",								// RULE_POLICY_END_ERROR
+				"Invalid minimum coverage",								// RULE_MINCOVER_ERROR
 				"rule string is empty",									// RULE_EMPTY_ERROR
 				"Source product class not found"						// RULE_SOURCE_PRODUCT_CLASS_NOT_FOUND
 		};
-		int[] illegalOffsets = { 0, 32, 32, 38, 0, 12, 12, 13, 44, 31, 37, 33, 32, 38, 0, 4 };
+		int[] illegalOffsets = { 0, 32, 32, 38, 0, 12, 12, 13, 44, 31, 37, 33, 32, 38, 47, 0, 4 };
 		
 		// Test legal rules
 		for (int i = 0; i < legalRules.length; ++i) {
@@ -714,7 +717,26 @@ public class SelectionRuleTest {
 					System.out.println(String.format("Testing rule %d and time interval %d", i, k));
 					result = SelectionRule.parseSelectionRule(targetProductClass, rules[i]).selectItems(
 							TEST_PRODUCT_TYPE, items, startStopTimes[k][0], startStopTimes[k][1]);
-					String resultString = ( null == result ? "" : concatenate(result.toArray()) );
+					
+					// Sequence of results is unpredictable: Based on Set! - Order result objects according to itemObjects sequence
+					String resultString = null;
+					if (null == result) {
+						resultString = "";
+					} else {
+						Object[] resultObjects = new Object[result.size()];
+						int resultIndex = 0;
+						for (int itemIndex = 0; itemIndex < itemObjects.length; ++itemIndex) {
+							for (Object resultObject : result) {
+								if (itemObjects[itemIndex].equals(resultObject)) {
+									resultObjects[resultIndex] = resultObject;
+									++resultIndex;
+									break;
+								}
+							}
+						}
+						resultString = concatenate(resultObjects);
+					}
+					
 					System.out.println(String.format("... result is: %s", resultString));
 					assertEquals(String.format("Unexpected selection result for rule %d and time interval %d: ", i, k),
 							expectedResults[i][k], resultString);

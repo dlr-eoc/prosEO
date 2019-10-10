@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,13 +32,12 @@ import de.dlr.proseo.model.util.SelectionRule.SelectionItem;
  * When selecting applicable Products for a JobStep the matching SelectionPolicy defines, whether a Product satisfies a ProductQuery.
  * 
  * @author Dr. Thomas Bassler
- *
  */
 @Entity
 public class SimpleSelectionRule extends PersistentObject {
 	
 	/* Error messages */
-	private static final String MSG_NO_ITEM_FOUND = "No item found for selection rule '%s' and time interval (%s, %s)";
+	private static final String MSG_NO_ITEM_FOUND = "No item found or not enough time coverage for selection rule '%s' and time interval (%s, %s)";
 	private static final String MSG_INVALID_ITEM_TYPE = "Item with different item type found";
 	
 	/**
@@ -52,6 +52,11 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * (level 7 "Mandatory" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
 	private Boolean isMandatory;
+	
+	/**
+	 * Minimum percentage of coverage of the desired validity period for fulfilment of this rule
+	 */
+	private Short minimumCoverage = 0;
 	
 	/** The product class which uses the selection rule */
 	@ManyToOne
@@ -128,6 +133,24 @@ public class SimpleSelectionRule extends PersistentObject {
 	 */
 	public void setIsMandatory(Boolean isMandatory) {
 		this.isMandatory = isMandatory;
+	}
+
+	/**
+	 * Gets the minimum percentage of coverage of the desired validity period
+	 * 
+	 * @return the minimumCoverage
+	 */
+	public Short getMinimumCoverage() {
+		return minimumCoverage;
+	}
+
+	/**
+	 * Sets the minimum percentage of coverage of the desired validity period
+	 * 
+	 * @param minimumCoverage the minimumCoverage to set
+	 */
+	public void setMinimumCoverage(Short minimumCoverage) {
+		this.minimumCoverage = minimumCoverage;
 	}
 
 	/**
@@ -306,6 +329,77 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 	
 	/**
+	 * Inner class for calculating time interval coverage
+	 */
+	private static class TimeInterval {
+		private Instant start, stop;
+		public TimeInterval(Instant start, Instant stop) { this.start = start; this.stop = stop; }
+		public List<TimeInterval> cutOut(TimeInterval other) {
+			List<TimeInterval> result = new ArrayList<>();
+			if (!other.start.isBefore(this.stop) || !other.stop.isAfter(this.start)) {
+				// No overlap
+				result.add(this);
+			} else if (other.start.isAfter(this.start)) {
+				// No overlap at start
+				result.add(new TimeInterval(this.start, other.start));
+				if (other.stop.isBefore(this.stop)) {
+					// Other interval cuts this one in two (no overlap at end)
+					result.add(new TimeInterval(other.stop, this.stop));
+				}
+			} else {
+				if (other.stop.isBefore(this.stop)) {
+					// overlapping from start
+					result.add(new TimeInterval(other.stop, this.stop));
+				} // else: total eclipse
+			}
+			return result;
+		}
+	}
+	
+	/**
+	 * Check whether the required minimum coverage of the requested time interval is reached with the given item objects.
+	 * 
+	 * @param itemObjectList the item objects to evaluate
+	 * @param startTime the beginning of the requested time interval
+	 * @param stopTime the end of the requested time interval
+	 * @return true, if the minimum coverage percentage is reached, false otherwise
+	 */
+	/* For a possibly very efficient solution check https://stackoverflow.com/questions/1982409/data-structure-for-handling-intervals */
+	private boolean hasSufficientCoverage(final Set<SelectionItem> items, final Instant startTime, final Instant stopTime) {
+		// Fulfilled, if no coverage is required
+		if (0 == minimumCoverage) {
+			return true;
+		}
+		
+		// We start the list with the requested time interval
+		List<TimeInterval> residualIntervals = new ArrayList<>();
+		residualIntervals.add(new TimeInterval(startTime, stopTime));
+		
+		// Cut out the time intervals of all items
+		for (SelectionItem item: items) {
+			List<TimeInterval> newResiduals = new ArrayList<>();
+			for (TimeInterval oldResidual: residualIntervals) {
+				newResiduals.addAll(oldResidual.cutOut(new TimeInterval(item.startTime, item.stopTime)));
+			}
+			if (newResiduals.isEmpty()) {
+				// 100 % coverage
+				return true;
+			}
+			residualIntervals = newResiduals;
+		}
+		
+		// Sum up duration of residual intervals and compare to initial interval
+		long initialDuration = Duration.between(startTime, stopTime).getSeconds();
+		long residualDuration = 0;
+		for (TimeInterval residualInterval: residualIntervals) {
+			residualDuration += Duration.between(residualInterval.start, residualInterval.stop).getSeconds();
+		}
+		
+		// Check required coverage
+		return minimumCoverage <= (residualDuration * 100) / initialDuration;
+	}
+	
+	/**
 	 * Select all items from the given collection that fulfil this rule for the given time interval.
 	 * For all items the item type must match the targetProductClass of the rule.
 	 * 
@@ -317,9 +411,9 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @throws NoSuchElementException if no item fulfils the selection rule, and the selection rule is marked as 'MANDATORY'
 	 * @throws IllegalArgumentException if any of the items is not of the correct type
 	 */
-	public List<Object> selectItems(Collection<SelectionItem> items, Instant startTime, Instant stopTime)
+	public List<Object> selectItems(final Collection<SelectionItem> items, final Instant startTime, final Instant stopTime)
 			throws NoSuchElementException, IllegalArgumentException {
-		List<Object> itemObjectList = new ArrayList<Object>();
+		Set<SelectionItem> selectedItems = new HashSet<>();
 		
 		// Check that all items conform to the product type of this rule
 		for (SelectionItem item: items) {
@@ -330,13 +424,15 @@ public class SimpleSelectionRule extends PersistentObject {
 		
 		// Iterate over all policies and test them against the item collection
 		for (SimplePolicy policy: simplePolicies) {
-			itemObjectList.addAll(policy.selectItems(items, startTime, stopTime));
-			if (!itemObjectList.isEmpty()) {
+			selectedItems.addAll(policy.selectItems(items, startTime, stopTime));
+			if (!selectedItems.isEmpty() && hasSufficientCoverage(selectedItems, startTime, stopTime)) {
 				// Short-circuited OR: first match(es) apply
+				List<Object> itemObjectList = new ArrayList<>();
+				for (SelectionItem item: selectedItems) itemObjectList.add(item.itemObject);
 				return itemObjectList;
 			}
 		}
-		// No matching items found
+		// No or not enough matching items found
 		if (isMandatory) {
 			throw new NoSuchElementException(
 					String.format(MSG_NO_ITEM_FOUND, this.toString(), startTime.toString(), stopTime.toString()));
@@ -401,6 +497,120 @@ public class SimpleSelectionRule extends PersistentObject {
 		return simpleRuleQuery.toString();
 	}
 	
+	
+	/**
+	 * Format this rule as an JPQL (Jave Persistence Query Language) query
+	 * <p>
+	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * given time interval. It is up to the calling program to select the applicable product.
+	 * 
+	 * @param startTime the start time to use in the database query
+	 * @param stopTime the stop time to use in the database query
+	 * @return an OQL string representing this rule
+	 */
+	public String asJpqlQuery(final Instant startTime, final Instant stopTime) {
+		// Generate query projection
+		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p where p.productClass.id = ");
+		simpleRuleQuery.append(sourceProductClass.getId()).append(" and ");
+		
+		// Ensure canonical ordering of policies
+		simplePolicies.sort(new Comparator<SimplePolicy>() {
+			@Override
+			public int compare(SimplePolicy o1, SimplePolicy o2) {
+				return o1.getPolicyType().compareTo(o2.getPolicyType());
+			}});
+		
+		// Generate query condition
+		
+		// Format policies
+		if (1 < simplePolicies.size()) {
+			// Wrap multiple policies in parentheses
+			simpleRuleQuery.append("(");
+		}
+		boolean first = true;
+		for (SimplePolicy simplePolicy: simplePolicies) {
+			if (first)
+				first = false;
+			else
+				simpleRuleQuery.append(" or ");
+			simpleRuleQuery.append(simplePolicy.asJpqlQueryCondition(sourceProductClass, startTime, stopTime));
+		}
+		if (1 < simplePolicies.size()) {
+			// Close parentheses for multiple policies
+			simpleRuleQuery.append(")");
+		}
+		
+		// Format filter conditions
+		if (0 < filterConditions.size()) {
+			for (String filterKey: filterConditions.keySet()) {
+				simpleRuleQuery.append(String.format(" and p.parameters['%s'].parameterValue = '%s'", 
+						filterKey, filterConditions.get(filterKey).getStringValue()));
+			}
+		}
+		return simpleRuleQuery.toString();
+	}
+	
+	/**
+	 * Format this rule as a native SQL query
+	 * <p>
+	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
+	 * given time interval. It is up to the calling program to select the applicable product.
+	 * 
+	 * @param startTime the start time to use in the database query
+	 * @param stopTime the stop time to use in the database query
+	 * @return an OQL string representing this rule
+	 */
+	public String asSqlQuery(final Instant startTime, final Instant stopTime) {
+		// Generate query projection
+		StringBuilder simpleRuleQuery = new StringBuilder("SELECT * FROM product p ");
+		
+		// Join with as many instances of the product_parameters table as there are filter conditions
+		for (int i = 0; i < filterConditions.size(); ++i) {
+			simpleRuleQuery.append(String.format("JOIN product_parameters pp%d ON p.id = pp%d.product_id ", i, i));
+		}
+		
+		// Select correct product class		
+		simpleRuleQuery.append("WHERE p.product_class_id = ").append(sourceProductClass.getId()).append(" AND ");
+		
+		// Ensure canonical ordering of policies
+		simplePolicies.sort(new Comparator<SimplePolicy>() {
+			@Override
+			public int compare(SimplePolicy o1, SimplePolicy o2) {
+				return o1.getPolicyType().compareTo(o2.getPolicyType());
+			}});
+		
+		// Generate query condition
+		
+		// Format policies
+		if (1 < simplePolicies.size()) {
+			// Wrap multiple policies in parentheses
+			simpleRuleQuery.append("(");
+		}
+		boolean first = true;
+		for (SimplePolicy simplePolicy: simplePolicies) {
+			if (first)
+				first = false;
+			else
+				simpleRuleQuery.append(" OR ");
+			simpleRuleQuery.append(simplePolicy.asSqlQueryCondition(sourceProductClass, startTime, stopTime));
+		}
+		if (1 < simplePolicies.size()) {
+			// Close parentheses for multiple policies
+			simpleRuleQuery.append(")");
+		}
+		
+		// Format filter conditions
+		int i = 0;
+		for (String filterKey: filterConditions.keySet()) {
+			simpleRuleQuery.append(
+					String.format(" AND pp%d.parameters_key = '%s' AND pp%d.parameter_value = '%s'", 
+							i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			++i;
+		}
+
+		return simpleRuleQuery.toString();
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -416,10 +626,15 @@ public class SimpleSelectionRule extends PersistentObject {
 				simpleRuleString.append(" OR ");
 			simpleRuleString.append(simplePolicy.toString());
 		}
-		if (isMandatory)
-			simpleRuleString.append(" MANDATORY");
-		else
+		if (isMandatory) {
+			if (0 < minimumCoverage) {
+				simpleRuleString.append(" MINCOVER(" + minimumCoverage + ")");
+			} else {
+				simpleRuleString.append(" MANDATORY");
+			}
+		} else {
 			simpleRuleString.append(" OPTIONAL");
+		}
 		return simpleRuleString.toString();
 	}
 	
