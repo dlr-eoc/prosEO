@@ -18,6 +18,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.glassfish.jersey.client.ClientConfig;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,10 +78,10 @@ public class SampleWrapper {
 
 	/** Set path finals for container-context & Alluxio FS-Client*/
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-	private static final String WRAPPER_TIMESTAMP = String.valueOf(System.currentTimeMillis()/1000);
-	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+WRAPPER_TIMESTAMP+".xml";
+	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
+	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
 	private static final String CONTAINER_INPUTS_PATH_PREFIX = "inputs";
-	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = WRAPPER_TIMESTAMP;
+	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
 	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
 	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
 
@@ -96,7 +105,20 @@ public class SampleWrapper {
 	enum FS_TYPE {S3,POSIX, ALLUXIO}
 
 	/** ENV-VAR valid entries */
-	enum ENV_VARS {JOBORDER_FS_TYPE,JOBORDER_FILE,S3_ENDPOINT,S3_ACCESS_KEY,S3_SECRET_ACCESS_KEY,S3_BUCKET_OUTPUTS,LOGFILE_TARGET,STATE_CALLBACK_ENDPOINT,SUCCESS_STATE,PROCESSOR_SHELL_COMMAND}
+	enum ENV_VARS {
+		JOBORDER_FS_TYPE
+		, JOBORDER_FILE
+		, S3_ENDPOINT
+		, S3_ACCESS_KEY
+		, S3_SECRET_ACCESS_KEY
+		, S3_BUCKET_OUTPUTS
+		, LOGFILE_TARGET
+		, INGESTOR_ENDPOINT
+		, STATE_CALLBACK_ENDPOINT
+		, SUCCESS_STATE
+		, PROCESSOR_SHELL_COMMAND
+		, PROCESSING_FACILITY_NAME
+	}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
 	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
@@ -109,7 +131,8 @@ public class SampleWrapper {
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
 	private String ENV_SUCCESS_STATE = System.getenv(ENV_VARS.SUCCESS_STATE.toString());
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
-
+	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
+	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
 
 	/** Base V2 S3-Client */
 	private S3Client v2S3Client() {
@@ -178,6 +201,20 @@ public class SampleWrapper {
 		return false;
 	}
 
+	/** Check if Output-File/Dir - name has trailing slash */
+	private String fileNameHavingTrailingSlash(String file_name) {
+		// TODO: better pattern detection
+		file_name=file_name
+				.replaceAll("alluxio://", "")
+				.replaceAll("s3://", "")
+				.replaceAll(":","")
+				.replaceAll("//","");
+
+		if (file_name.startsWith("/")) return file_name;
+		else file_name = "/"+file_name;
+		return file_name;
+	}
+
 	private ArrayList<String> envList(ENV_VARS[] env){
 		ArrayList<String> list = new ArrayList<String>();
 		for (int i=0;i<ENV_VARS.values().length;i++) {
@@ -186,10 +223,22 @@ public class SampleWrapper {
 		return list;
 	}
 
+	private String splash() {	
+		return "\n" +"\n" + 
+				"                                                  _|_|_|_|      _|_|\n" + 
+				" _|_|_|    _|  _|_|    _|_|      _|_|_|  _|            _|      _|\n" + 
+				" _|    _|  _|_|      _|      _|  _|_|      _|_|_|       _|      _|\n" + 
+				" _|    _|  _|        _|       _|      _|_|  _|            _|      _|\n" + 
+				" _|_|_|   _|           _|_|    _|_|_|      _|_|_|_|      _|_|\n" + 
+				" _|\n" + 
+				" _|\n";
+	}
+	
 	private Boolean checkEnv() {
-		logger.info(MSG_STARTING_SAMPLE_WRAPPER, ENV_JOBORDER_FILE);
 		logger.info("Checking {} ENV_VARS...", ENV_VARS.values().length);
-		logger.info(envList(ENV_VARS.values()).toString());
+		for (String e : envList(ENV_VARS.values())) {
+			logger.info("... {}", e);
+		}
 		// check all required env-vars
 		if (!checkFS_TYPE(ENV_JOBORDER_FS_TYPE)) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
@@ -244,8 +293,16 @@ public class SampleWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSOR_SHELL_COMMAND);
 			return false;
 		}
+		if (ENV_PROCESSING_FACILITY_NAME == null || ENV_PROCESSING_FACILITY_NAME.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSING_FACILITY_NAME);
+			return false;
+		}
 		if(ENV_S3_BUCKET_OUTPUTS==null || ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
+			return false;
+		}
+		if(ENV_INGESTOR_ENDPOINT==null || ENV_INGESTOR_ENDPOINT.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.INGESTOR_ENDPOINT);
 			return false;
 		}
 		logger.info("ENV_VARS looking good...");
@@ -367,7 +424,7 @@ public class SampleWrapper {
 					fn.setOriginalFileName(fn.getFileName());
 					if(fn.getFSType().equals(FS_TYPE.S3.toString())) {
 						// first set output file_name to local work-dir path
-						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fn.getOriginalFileName().replace("s3://", ""));
+						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fileNameHavingTrailingSlash(fn.getOriginalFileName()));
 						try {
 							File f = new File(fn.getFileName());
 							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
@@ -379,7 +436,7 @@ public class SampleWrapper {
 						}
 					}
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
-						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fn.getOriginalFileName());
+						fn.setFileName(CONTAINER_OUTPUTS_PATH_PREFIX+fileNameHavingTrailingSlash(fn.getOriginalFileName()));
 						try {
 							File f = new File(fn.getFileName());
 							if (Files.exists(Paths.get(fn.getFileName()), LinkOption.NOFOLLOW_LINKS)) f.delete();
@@ -456,80 +513,152 @@ public class SampleWrapper {
 	/**
 	 * Pushes processing results to prosEO storage
 	 * 
-	 * @param jobOrder initial JobOrder-Object
-	 * @return True/False
+	 * @param jo jobOrder  JobOrder-Object (valid in container context)
+	 * @return ArrayList<PushedProcessingOutput> all infos of pushed products
 	 */
-	private Boolean pushResults(JobOrder jo) {
+	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
-		logger.info("Upload File-Pattern based on timestamp-prefix is: FS://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
-		Boolean check = false;
+		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
 		AmazonS3 s3 = v1S3Client();
 		int numberOfOutputs = 0;
 		int numberOfPushedOutputs = 0;
+		ArrayList<PushedProcessingOutput> pushedOutputs = new ArrayList<PushedProcessingOutput>();
 		for(Proc item : jo.getListOfProcs()) {
-			// loop all Input
+			// loop all Outputs
 			for (InputOutput io: item.getListOfOutputs()) {
 				for (IpfFileName fn: io.getFileNames()) {
 					numberOfOutputs++;
-					//logger.info(fn.getFileName()+"-->"+io.getProductID()+" - "+fn.getOriginalFileName());
 					// Push files to ALLUXIO
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
 						try {
 							AlluxioURI srcPath = new AlluxioURI(fn.getFileName());
 							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+fn.getFileName());
 							Boolean transaction = AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE);
-							if(transaction)numberOfPushedOutputs++;
+							if(transaction) {
+								numberOfPushedOutputs++;
+								PushedProcessingOutput p = new PushedProcessingOutput();
+								p.setFsType(FS_TYPE.ALLUXIO.toString());
+								p.setId(io.getProductID());
+								p.setPath(dstPath.toString());
+								p.setRevision(WRAPPER_TIMESTAMP);
+								pushedOutputs.add(p);
+							}
 						} catch(AlluxioException | IOException e) {
 							logger.error(e.getMessage());
-
 						}
 					}
+					// Push files to S3 using multipart upload
 					if(fn.getFSType().equals(FS_TYPE.S3.toString())) {
 						// check if we have a valid output bucket defined...
 						if(ENV_S3_BUCKET_OUTPUTS==null||ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
 							logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
-							return false;
+							return null;
 						}
 						try {
-							Boolean transaction = 
-									S3Ops.v1UploadFile(
-											s3
-											, fn.getFileName()
-											, ENV_S3_BUCKET_OUTPUTS
-											, io.getProductID()
-											, false
-											);
+							Boolean transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_BUCKET_OUTPUTS, io.getProductID(), false);
 							if(transaction) {
 								numberOfPushedOutputs++;
-								logger.info("Copied file://{} to {}",fn.getFileName(), ENV_S3_BUCKET_OUTPUTS+File.separator+io.getProductID()+File.separator+fn.getFileName());
+								PushedProcessingOutput p = new PushedProcessingOutput();
+								p.setFsType(FS_TYPE.S3.toString());
+								p.setId(io.getProductID());
+								p.setPath(ENV_S3_BUCKET_OUTPUTS+File.separator+io.getProductID()+File.separator+fn.getFileName());
+								p.setRevision(WRAPPER_TIMESTAMP);
+								pushedOutputs.add(p);
 							}
 						} catch ( java.lang.IllegalArgumentException e) {
 							logger.error(e.getMessage());
-							return false;
+							return null;
 						}
 					} 
 				}
 			}
 		}
-		if (numberOfPushedOutputs==numberOfOutputs) {
+		if (numberOfPushedOutputs==numberOfOutputs && pushedOutputs.size()==numberOfOutputs) {
 			logger.info("Uploaded {} results to prosEO storage...",numberOfPushedOutputs);
-			check= true;
 		}
 		else {
-			check= false;
+			return null;
 		}
-		/*
-		 * // DIR-TEST AlluxioURI srcPath = new AlluxioURI("inputs/"); AlluxioURI
-		 * dstPath = new AlluxioURI("/dirUploadTest"); try { Boolean transaction =
-		 * AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE); check =
-		 * transaction; } catch (AlluxioException | IOException e) { // TODO
-		 * Auto-generated catch block check = false; logger.error(e.getMessage()); }
-		 */
 
-		return check;
+		//TODO: add to Unit Tests
+		//		// ALLUXIO-DIR-UPLOAD-TEST
+		//		AlluxioURI srcPath = new AlluxioURI("inputs/");
+		//		AlluxioURI dstPath = new AlluxioURI("/AlluxioDirUploadTest/");
+		//		try {
+		//			AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE);
+		//		} catch (AlluxioException | IOException e) { 
+		//			logger.error(e.getMessage());
+		//			return null;
+		//		}
+		//
+		//		// S3-DIR-UPLOAD-TEST
+		//		try {
+		//			S3Ops.v1Upload(
+		//					s3
+		//					, "inputs/"
+		//					, ENV_S3_BUCKET_OUTPUTS
+		//					, "S3DirUploadTest"
+		//					, false
+		//					);
+		//		} catch (Exception e) { 
+		//			logger.error(e.getMessage());
+		//			return null;
+		//		}
+		return pushedOutputs;
 	}
 
+	/**
+	 * Register pushed Products using prosEO-Ingestor REST API
+	 * 
+	 * @param pushedProducts ArrayList<PushedProcessingOutput>
+	 * @return HTTP response code of Ingestor-API
+	 */
+	private int ingestPushedOutputs(ArrayList<PushedProcessingOutput> pushedProducts) {
 
+       //POST http://localhost:8080/ingest/proseo-otc01/928928398
+		Client client = null;
+		WebTarget webTarget = null;
+		Invocation.Builder invocationBuilder = null;
+		Response response = null;
+		client = ClientBuilder.newClient( new ClientConfig());
+		
+		
+		try {
+		webTarget = client.target(ENV_INGESTOR_ENDPOINT).path("/ingest/"+ENV_PROCESSING_FACILITY_NAME+"/"+"XYZ");
+
+		invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
+		
+		String request="{\n" + 
+				"    \"id\": 1833725,\n" + 
+				"    \"version\": 0,\n" + 
+				"    \"productId\": 689327,\n" + 
+				"    \"processingFacilityName\" : \"DLR_S5P_VAL\",\n" + 
+				"    \"productFileName\": \"S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW\",\n" + 
+				"    \"auxFileNames\": [\n" + 
+				"        \"S5P_OPER_L0__ODB_1__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_2__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_3__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_4__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_5__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_6__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_7__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__ODB_8__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
+				"        \"S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW\"\n" + 
+				"    ],\n" + 
+				"    \"filePath\": \"/data/proseo/storage_val/S5P_OPER_L0__08138_01\",\n" + 
+				"    \"storageType\": \"POSIX\"\n" + 
+				"}";
+		response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON ));
+		
+
+		logger.info(String.valueOf(response.getStatus()));
+		return response.getStatus();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return 500;
+		}
+		
+	}
 
 	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
@@ -538,12 +667,15 @@ public class SampleWrapper {
 	 * @return the program exit code (OK or FAILURE)
 	 */
 	public int run() {
+		
+		logger.info(splash());
 
 		/** ProcessorWrapperFlow */
 		/** ==================== */
 
 		/** STEP [4][5] Provide the JobOrder file from the invocation arguments */
 
+		logger.info(MSG_STARTING_SAMPLE_WRAPPER, ENV_JOBORDER_FILE);
 		Boolean check = checkEnv();
 		if (!check) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
@@ -587,12 +719,25 @@ public class SampleWrapper {
 		}
 
 		/** STEP [9] Push Processing Results to prosEO Storage, if any */
-		Boolean upload = pushResults(joWork);
-		if (!upload) {
+		ArrayList<PushedProcessingOutput> pushedProducts = null;
+		pushedProducts = pushResults(joWork);
+		if (null == pushedProducts) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
+		logger.info("Upload summary: listing {} Outputs of type `PushedProcessingOutput`", pushedProducts.size());
+		for (PushedProcessingOutput p : pushedProducts) {
+			logger.info("PRODUCT_ID={}, FS_TYPE={}, PATH={}, REVISION={}",p.getId(), p.getFsType(),p.getPath(),p.getRevision());
+		}
 
+		/** STEP [11] Register pushed products using prosEO-Ingestor REST API */
+		
+		int httpReturnCode = ingestPushedOutputs(pushedProducts);
+		if (httpReturnCode !=201) {
+			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			return EXIT_CODE_FAILURE;
+		}
+		
 		logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}

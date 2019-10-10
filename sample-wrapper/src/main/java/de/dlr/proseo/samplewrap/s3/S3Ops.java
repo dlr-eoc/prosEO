@@ -84,15 +84,14 @@ public class S3Ops {
 	 */
 	public static Boolean v1UploadDir(AmazonS3 v1S3Client, String dir_path, String bucket_name,
 			String key_prefix, boolean recursive, boolean pause) {
-		logger.info("directory: " + dir_path + (recursive ?
-				" (recursive)" : "") + (pause ? " (pause)" : ""));
-
 		TransferManager xfer_mgr = TransferManagerBuilder
 				.standard()
 				.withS3Client(v1S3Client)
 				.build();
+		AmazonS3URI s3uri = new AmazonS3URI(bucket_name);
+		String bucket = s3uri.getBucket();
 		try {
-			MultipleFileUpload xfer = xfer_mgr.uploadDirectory(bucket_name,
+			MultipleFileUpload xfer = xfer_mgr.uploadDirectory(bucket,
 					key_prefix, new File(dir_path), recursive);
 			// loop with Transfer.isDone()
 			// or block with Transfer.waitForCompletion()
@@ -181,10 +180,35 @@ public class S3Ops {
 			logger.error(e.getErrorMessage());
 			return false;
 		}
-
-		// snippet-end:[s3.java1.s3_xfer_mgr_upload.single]
 	}
+	
+	/**
+	 * Upload Files or Dirs to S3 using Multipart-Uploads
+	 * 
+	 * @param v1S3Client AmazonS3 v1 client
+	 * @param file_path String
+	 * @param bucket_name String
+	 * @param key_prefix String
+	 * @param pause Boolean
+	 * @return True/False
+	 */
+	public static Boolean v1Upload(AmazonS3 v1S3Client, String file_path, String bucket_name,
+			String key_prefix, boolean pause) {
 
-
-
+		File f = new File(file_path);
+		
+		if (f.isFile()) {
+			if(v1UploadFile(v1S3Client,file_path,bucket_name,key_prefix,false)) {
+				logger.info("Copied file://{} to {}",file_path, bucket_name+File.separator+key_prefix+File.separator+file_path);
+				return true;
+			}
+		}
+		if (f.isDirectory()) {
+			if(v1UploadDir(v1S3Client,file_path,bucket_name,key_prefix,true,false)) {
+				logger.info("Copied dir://{} to {}/{}",file_path,bucket_name,key_prefix);
+				return true;
+			}
+		}
+		return false;
+	}
 }
