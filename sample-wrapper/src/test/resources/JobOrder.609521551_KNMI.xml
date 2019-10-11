@@ -178,21 +178,21 @@
         </Input>
       </List_of_Inputs>
       <List_of_Outputs count="3">
-        <Output Product_ID="291379127391739712983_1">
+        <Output Product_ID="7397129831">
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
             <File_Name FS_TYPE="ALLUXIO">results_A/result01.txt</File_Name>
           </List_of_File_Names>
         </Output>
-        <Output Product_ID="291379127391739712983_2">
+        <Output Product_ID="7397129832">
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
             <File_Name FS_TYPE="ALLUXIO">alluxio://results_B/result02.txt</File_Name>
           </List_of_File_Names>
         </Output>
-        <Output Product_ID="291379127391739712983_3">
+        <Output Product_ID="7397129833">
           <File_Type>L2__CO____</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">

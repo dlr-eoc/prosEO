@@ -1,21 +1,22 @@
 package de.dlr.proseo.samplewrap;
 
-public class PushedProcessingOutput {
-	private long id;
+public class IngestedProcessingOutput {
+	private long product_id;
 	private String fsType;
 	private String path;
 	private long revision;
+	private String ingestorHttpResponse;
 	/**
-	 * @return the id
+	 * @return the product_id
 	 */
-	public long getId() {
-		return id;
+	public long getProduct_id() {
+		return product_id;
 	}
 	/**
-	 * @param id the id to set
+	 * @param product_id the product_id to set
 	 */
-	public void setId(long id) {
-		this.id = id;
+	public void setProduct_id(long product_id) {
+		this.product_id = product_id;
 	}
 	/**
 	 * @return the fsType
@@ -52,6 +53,18 @@ public class PushedProcessingOutput {
 	 */
 	public void setRevision(long revision) {
 		this.revision = revision;
+	}
+	/**
+	 * @return the ingestorHttpResponse
+	 */
+	public String getIngestorHttpResponse() {
+		return ingestorHttpResponse;
+	}
+	/**
+	 * @param ingestorHttpResponse the ingestorHttpResponse to set
+	 */
+	public void setIngestorHttpResponse(String ingestorHttpResponse) {
+		this.ingestorHttpResponse = ingestorHttpResponse;
 	}
 
 	

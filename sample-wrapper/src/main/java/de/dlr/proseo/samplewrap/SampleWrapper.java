@@ -18,15 +18,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.glassfish.jersey.client.ClientConfig;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +31,8 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import alluxio.AlluxioURI;
 import alluxio.exception.AlluxioException;
@@ -50,6 +43,9 @@ import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.samplewrap.alluxio.AlluxioOps;
+import de.dlr.proseo.samplewrap.rest.HttpResponseInfo;
+import de.dlr.proseo.samplewrap.rest.IngestorProductFilePostRequest;
+import de.dlr.proseo.samplewrap.rest.RestOps;
 import de.dlr.proseo.samplewrap.s3.AmazonS3URI;
 import de.dlr.proseo.samplewrap.s3.S3Ops;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -118,6 +114,7 @@ public class SampleWrapper {
 		, SUCCESS_STATE
 		, PROCESSOR_SHELL_COMMAND
 		, PROCESSING_FACILITY_NAME
+		, K8S_PODNAME
 	}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
@@ -133,6 +130,7 @@ public class SampleWrapper {
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+	private String ENV_K8S_PODNAME = System.getenv(ENV_VARS.K8S_PODNAME.toString());
 
 	/** Base V2 S3-Client */
 	private S3Client v2S3Client() {
@@ -233,7 +231,7 @@ public class SampleWrapper {
 				" _|\n" + 
 				" _|\n";
 	}
-	
+
 	private Boolean checkEnv() {
 		logger.info("Checking {} ENV_VARS...", ENV_VARS.values().length);
 		for (String e : envList(ENV_VARS.values())) {
@@ -303,6 +301,10 @@ public class SampleWrapper {
 		}
 		if(ENV_INGESTOR_ENDPOINT==null || ENV_INGESTOR_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.INGESTOR_ENDPOINT);
+			return false;
+		}
+		if(ENV_K8S_PODNAME==null || ENV_K8S_PODNAME.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.K8S_PODNAME);
 			return false;
 		}
 		logger.info("ENV_VARS looking good...");
@@ -510,6 +512,16 @@ public class SampleWrapper {
 		return check;
 	}
 
+
+	public static boolean isInteger(String strLong) {
+		try {
+			@SuppressWarnings("unused")
+			long lng = Long.parseLong(strLong);
+		} catch (NumberFormatException | NullPointerException nfe) {
+			return false;
+		}
+		return true;
+	}
 	/**
 	 * Pushes processing results to prosEO storage
 	 * 
@@ -528,8 +540,12 @@ public class SampleWrapper {
 			for (InputOutput io: item.getListOfOutputs()) {
 				for (IpfFileName fn: io.getFileNames()) {
 					numberOfOutputs++;
+					if (!isInteger(io.getProductID())) {
+						logger.error("Product_ID:{} is not parseable as Long-Integer...", io.getProductID());
+						return null;
+					}
 					// Push files to ALLUXIO
-					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString())) {
+					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString()) && isInteger(io.getProductID())) {
 						try {
 							AlluxioURI srcPath = new AlluxioURI(fn.getFileName());
 							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+fn.getFileName());
@@ -538,7 +554,7 @@ public class SampleWrapper {
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.ALLUXIO.toString());
-								p.setId(io.getProductID());
+								p.setId(Long.parseLong((io.getProductID())));
 								p.setPath(dstPath.toString());
 								p.setRevision(WRAPPER_TIMESTAMP);
 								pushedOutputs.add(p);
@@ -548,7 +564,7 @@ public class SampleWrapper {
 						}
 					}
 					// Push files to S3 using multipart upload
-					if(fn.getFSType().equals(FS_TYPE.S3.toString())) {
+					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
 						// check if we have a valid output bucket defined...
 						if(ENV_S3_BUCKET_OUTPUTS==null||ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
 							logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
@@ -560,7 +576,7 @@ public class SampleWrapper {
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
-								p.setId(io.getProductID());
+								p.setId(Long.parseLong((io.getProductID())));
 								p.setPath(ENV_S3_BUCKET_OUTPUTS+File.separator+io.getProductID()+File.separator+fn.getFileName());
 								p.setRevision(WRAPPER_TIMESTAMP);
 								pushedOutputs.add(p);
@@ -613,51 +629,70 @@ public class SampleWrapper {
 	 * @param pushedProducts ArrayList<PushedProcessingOutput>
 	 * @return HTTP response code of Ingestor-API
 	 */
-	private int ingestPushedOutputs(ArrayList<PushedProcessingOutput> pushedProducts) {
+	private ArrayList<IngestedProcessingOutput> ingestPushedOutputs(ArrayList<PushedProcessingOutput> pushedProducts) {
+		logger.info("Trying to register {} products with prosEO-Ingestor@{}",pushedProducts.size(), ENV_INGESTOR_ENDPOINT);
 
-       //POST http://localhost:8080/ingest/proseo-otc01/928928398
-		Client client = null;
-		WebTarget webTarget = null;
-		Invocation.Builder invocationBuilder = null;
-		Response response = null;
-		client = ClientBuilder.newClient( new ClientConfig());
-		
-		
-		try {
-		webTarget = client.target(ENV_INGESTOR_ENDPOINT).path("/ingest/"+ENV_PROCESSING_FACILITY_NAME+"/"+"XYZ");
+		ArrayList<IngestedProcessingOutput> ingests = new ArrayList<IngestedProcessingOutput>();
 
-		invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
-		
-		String request="{\n" + 
-				"    \"id\": 1833725,\n" + 
-				"    \"version\": 0,\n" + 
-				"    \"productId\": 689327,\n" + 
-				"    \"processingFacilityName\" : \"DLR_S5P_VAL\",\n" + 
-				"    \"productFileName\": \"S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW\",\n" + 
-				"    \"auxFileNames\": [\n" + 
-				"        \"S5P_OPER_L0__ODB_1__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_2__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_3__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_4__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_5__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_6__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_7__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__ODB_8__20190509T212508_20190509T214507_08138_01.RAW\",\n" + 
-				"        \"S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW\"\n" + 
-				"    ],\n" + 
-				"    \"filePath\": \"/data/proseo/storage_val/S5P_OPER_L0__08138_01\",\n" + 
-				"    \"storageType\": \"POSIX\"\n" + 
-				"}";
-		response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON ));
-		
+		// loop pushed products and send HTTP-POST to prosEO-Ingestor in order to register the products
+		//POST http://localhost:8080/ingest/proseo-otc01/928928398
+		for (PushedProcessingOutput p : pushedProducts) {
+			String ingestorRestUrl =   "/ingest/"+ENV_PROCESSING_FACILITY_NAME+"/"+p.getId();
+			IngestorProductFilePostRequest request = new IngestorProductFilePostRequest();
+			request.setId(p.getId());
+			request.setVersion(1);
+			request.setAuxFileNames(new String[1]);
+			request.setFilePath(p.getPath());
+			request.setStorageType(p.getFsType());
+			request.setProductId(p.getId());
+			request.setProductFileName(p.getPath());
+			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
+			//			private long id;
+			//			private int version;
+			//			private long productId;
+			//			private String processingFacilityName;
+			//			private String productFileName;
+			//			private String[] auxFileNames;
+			//			private String filePath;
+			//			private String storageType;
+			// send request & get single response
+			ObjectMapper Obj = new ObjectMapper(); 
+			String jsonRequest="";
+			try {
+				jsonRequest = Obj.writeValueAsString(request);
+			} catch (JsonProcessingException e) {
+				logger.error(e.getMessage());
+			} 
+			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, RestOps.HttpMethod.POST);
 
-		logger.info(String.valueOf(response.getStatus()));
-		return response.getStatus();
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return 500;
+			if (singleResponse != null && singleResponse.gethttpCode()==201) {
+				logger.info(singleResponse.gethttpResponse());
+				IngestedProcessingOutput ingest = new IngestedProcessingOutput();
+				ingest.setFsType(p.getFsType());
+				ingest.setProduct_id(p.getId());
+				ingest.setIngestorHttpResponse(singleResponse.gethttpResponse());
+				ingest.setPath(p.getPath());
+				ingest.setRevision(p.getRevision());
+				ingests.add(ingest);
+			}
 		}
-		
+		if (ingests.size() != pushedProducts.size()) {
+			logger.error("{} out of {} products have been ingested...", ingests.size(), pushedProducts.size());
+			return null;
+		}
+
+		logger.info("{} out of {} products have been ingested...Well done!", ingests.size(), pushedProducts.size());
+		return ingests;
+	}
+
+	private HttpResponseInfo callBackSuccess(ArrayList<IngestedProcessingOutput> callBackContent) {
+		//TODO:
+		return null;
+	}
+
+	private void callBackFailure(String msg) {
+		//TODO:
+
 	}
 
 	/**
@@ -667,7 +702,7 @@ public class SampleWrapper {
 	 * @return the program exit code (OK or FAILURE)
 	 */
 	public int run() {
-		
+
 		logger.info(splash());
 
 		/** ProcessorWrapperFlow */
@@ -679,18 +714,21 @@ public class SampleWrapper {
 		Boolean check = checkEnv();
 		if (!check) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		File jobOrderFile = provideInitialJOF();
 		if (null == jobOrderFile) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -699,12 +737,14 @@ public class SampleWrapper {
 		joWork = fetchInputData(jobOrderDoc);
 		if (null == joWork) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -715,6 +755,7 @@ public class SampleWrapper {
 				);
 		if (!procRun) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -723,6 +764,7 @@ public class SampleWrapper {
 		pushedProducts = pushResults(joWork);
 		if (null == pushedProducts) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 		logger.info("Upload summary: listing {} Outputs of type `PushedProcessingOutput`", pushedProducts.size());
@@ -731,13 +773,26 @@ public class SampleWrapper {
 		}
 
 		/** STEP [11] Register pushed products using prosEO-Ingestor REST API */
-		
-		int httpReturnCode = ingestPushedOutputs(pushedProducts);
-		if (httpReturnCode !=201) {
+		ArrayList<IngestedProcessingOutput> ingestedProducts = null;
+		ingestedProducts = ingestPushedOutputs(pushedProducts);
+
+		if (null == ingestedProducts) {
 			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
-		
+
+		/** STEP [12] Callback */
+		HttpResponseInfo callBackMsg = null;
+		callBackMsg = callBackSuccess(ingestedProducts);
+
+
+		if (null == callBackMsg) {
+			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			callBackFailure("");
+			return EXIT_CODE_FAILURE;
+		}
+
 		logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}
