@@ -38,7 +38,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	
 	/* Error messages */
 	private static final String MSG_NO_ITEM_FOUND = "No item found or not enough time coverage for selection rule '%s' and time interval (%s, %s)";
-	private static final String MSG_INVALID_ITEM_TYPE = "Item with different item type found";
+	private static final String MSG_INVALID_ITEM_TYPE = "Item with different item type found ";
 	
 	/**
 	 * Processing mode, for which this selection rule is valid (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3);
@@ -417,7 +417,7 @@ public class SimpleSelectionRule extends PersistentObject {
 		
 		// Check that all items conform to the product type of this rule
 		for (SelectionItem item: items) {
-			if (!item.itemType.equals(targetProductClass.getProductType())) {
+			if (!item.itemType.equals(sourceProductClass.getProductType())) {
 				throw new IllegalArgumentException(MSG_INVALID_ITEM_TYPE + item.itemType);
 			}
 		}
@@ -510,8 +510,14 @@ public class SimpleSelectionRule extends PersistentObject {
 	 */
 	public String asJpqlQuery(final Instant startTime, final Instant stopTime) {
 		// Generate query projection
-		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p where p.productClass.id = ");
-		simpleRuleQuery.append(sourceProductClass.getId()).append(" and ");
+		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p ");
+
+		// Join with as many instances of the product_parameters table as there are filter conditions
+		for (int i = 0; i < filterConditions.size(); ++i) {
+			simpleRuleQuery.append(String.format("join p.parameters pp%d ", i, i));
+		}
+		
+		simpleRuleQuery.append("where p.productClass.id = ").append(sourceProductClass.getId()).append(" and ");
 		
 		// Ensure canonical ordering of policies
 		simplePolicies.sort(new Comparator<SimplePolicy>() {
@@ -541,11 +547,11 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Format filter conditions
-		if (0 < filterConditions.size()) {
-			for (String filterKey: filterConditions.keySet()) {
-				simpleRuleQuery.append(String.format(" and p.parameters['%s'].parameterValue = '%s'", 
-						filterKey, filterConditions.get(filterKey).getStringValue()));
-			}
+		int i = 0;
+		for (String filterKey: filterConditions.keySet()) {
+			simpleRuleQuery.append(String.format(" and key(pp%d) = '%s' and pp%d.parameterValue = '%s'", 
+					i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			++i;
 		}
 		return simpleRuleQuery.toString();
 	}

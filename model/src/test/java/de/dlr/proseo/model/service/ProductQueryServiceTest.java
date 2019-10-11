@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.TimeZone;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -51,29 +52,30 @@ import de.dlr.proseo.model.Parameter.ParameterType;
 public class ProductQueryServiceTest {
 
 	/* Various static test data */
-	private static final String TEST_CODE = "S5P";
+	private static final String TEST_CODE = "ABC";
 	private static final String TEST_TARGET_PRODUCT_TYPE = "FRESCO";
 	private static final String TEST_TARGET_MISSION_TYPE = "L2__FRESCO_";
 	private static final String TEST_SOURCE_PRODUCT_TYPE = "L1B";
 	private static final String TEST_SOURCE_MISSION_TYPE = "L1B________";
 	private static final String TEST_MODE = "OFFL";
-	private static final String TEST_SELECTION_RULE = "FOR L1B/revision:01 SELECT ValIntersect(0, 0)";
+//	private static final String TEST_SELECTION_RULE = "FOR L1B/revision:01 SELECT ValIntersect(0, 0)";
+	private static final String TEST_SELECTION_RULE = "FOR L1B SELECT ValIntersect(0, 0)";
 	private static final String TEST_SELECTION_RULE_MINCOVER = "FOR L1B SELECT ValIntersect(0, 0) MINCOVER(70)";
-	private static final Instant TEST_START_TIME_EARLY = Instant.parse("2019-08-29T23:00:00Z");
-	private static final Instant TEST_STOP_TIME_EARLY = Instant.parse("2019-08-30T01:00:00Z");
-	private static final Instant TEST_START_TIME_LATE = Instant.parse("2019-08-30T01:00:00Z");
-	private static final Instant TEST_STOP_TIME_LATE = Instant.parse("2019-08-30T03:00:00Z");
+	private static final Instant TEST_START_TIME_EARLY = Instant.parse("2009-08-29T23:00:00Z");
+	private static final Instant TEST_STOP_TIME_EARLY = Instant.parse("2009-08-30T01:00:00Z");
+	private static final Instant TEST_START_TIME_LATE = Instant.parse("2009-08-30T01:00:00Z");
+	private static final Instant TEST_STOP_TIME_LATE = Instant.parse("2009-08-30T03:00:00Z");
 
 	/* Test products */
 	private static String[][] testProductData = {
 		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "0", "1", TEST_CODE, TEST_SOURCE_PRODUCT_TYPE, TEST_MODE, "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "0", "1", TEST_CODE, TEST_SOURCE_PRODUCT_TYPE, TEST_MODE, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		{ "0", "1", TEST_CODE, TEST_SOURCE_PRODUCT_TYPE, TEST_MODE, "2009-08-29T22:49:21.074395", "2009-08-30T00:19:33.946628", "2009-10-05T10:12:39.000000", "01" },
+		{ "0", "1", TEST_CODE, TEST_SOURCE_PRODUCT_TYPE, TEST_MODE, "2009-08-30T00:19:33.946628", "2009-08-30T01:49:46.482753", "2009-10-05T10:13:22.000000", "01" },
+		{ "0", "1", "TDM", "DEM", null, "2009-08-30T00:19:33.946628", "2009-08-30T01:49:46.482753", "2009-10-05T10:13:22.000000", "02" }
 	};
 
 	@Autowired
-	ProductQueryService queryService;
+	private ProductQueryService queryService;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryServiceTest.class);
@@ -83,6 +85,7 @@ public class ProductQueryServiceTest {
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+	    TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 	}
 
 	/**
@@ -127,7 +130,7 @@ public class ProductQueryServiceTest {
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
-		logger.info("Created test product {}", testProduct.getId());
+		logger.info("Created test product {} with start time = {} and stop time = {}", testProduct.getId(), testProduct.getSensingStartTime().toString(), testProduct.getSensingStopTime().toString());
 		return testProduct;
 	}
 	
@@ -140,6 +143,7 @@ public class ProductQueryServiceTest {
 		// Create test data: mission, product class, product, selection rules (with and without MINCOVER), order, job, job step
 		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
 		if (null == mission) {
+			logger.trace("Creating mission ...");
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
 			mission.getProcessingModes().add(TEST_MODE);
@@ -149,6 +153,7 @@ public class ProductQueryServiceTest {
 		
 		ProductClass targetProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_TARGET_PRODUCT_TYPE);
 		if (null == targetProdClass) {
+			logger.trace("Creating target product class ...");
 			targetProdClass = new ProductClass();
 			targetProdClass.setMission(mission);
 			targetProdClass.setProductType(TEST_TARGET_PRODUCT_TYPE);
@@ -161,6 +166,7 @@ public class ProductQueryServiceTest {
 		
 		ProductClass sourceProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_SOURCE_PRODUCT_TYPE);
 		if (null == sourceProdClass) {
+			logger.trace("Creating source product class ...");
 			sourceProdClass = new ProductClass();
 			sourceProdClass.setMission(mission);
 			sourceProdClass.setProductType(TEST_SOURCE_PRODUCT_TYPE);
@@ -173,6 +179,8 @@ public class ProductQueryServiceTest {
 		
 		Product product0 = createProduct(testProductData[0]);
 		Product product1 = createProduct(testProductData[1]);
+		
+		logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		Job jobEarly = new Job();
 		jobEarly.setStartTime(TEST_START_TIME_EARLY);
@@ -201,7 +209,7 @@ public class ProductQueryServiceTest {
 		SimpleSelectionRule simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		ProductQuery query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
-		assertTrue("Product query 1 fails unexpectedly for JPQL", queryService.executeJpqlQuery(query));
+		assertTrue("Product query 1 fails unexpectedly for JPQL", queryService.executeQuery(query));
 		assertTrue("Product query 1 fails unexpectedly for SQL", queryService.executeSqlQuery(query));
 		
 		// Test second product query with MINCOVER --> satisfied for early interval, not satisfied for late interval
@@ -216,13 +224,13 @@ public class ProductQueryServiceTest {
 		simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepEarly);
 		logger.trace("Starting test for product query 2 and early interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 fails unexpectedly for early interval and JPQL", queryService.executeJpqlQuery(query));
+		assertTrue("Product query 2 fails unexpectedly for early interval and JPQL", queryService.executeQuery(query));
 		assertTrue("Product query 2 fails unexpectedly for early interval and SQL", queryService.executeSqlQuery(query));
 
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
 		logger.trace("Starting test for product query 2 and late interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 succeeds unexpectedly for early interval and JPQL", !queryService.executeJpqlQuery(query));
-		assertTrue("Product query 2 succeeds unexpectedly for early interval and SQL", !queryService.executeSqlQuery(query));
+		assertTrue("Product query 2 succeeds unexpectedly for late interval and JPQL", !queryService.executeQuery(query));
+		assertTrue("Product query 2 succeeds unexpectedly for late interval and SQL", !queryService.executeSqlQuery(query));
 		
 		logger.info("OK: Test for executeQuery completed");
 	}

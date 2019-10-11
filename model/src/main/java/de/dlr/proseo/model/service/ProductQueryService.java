@@ -12,6 +12,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,8 @@ public class ProductQueryService {
 	 */
 	public boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeJpqlQuery()");
+
+		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		// Check arguments
 		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getJpqlQueryCondition()) {
@@ -69,19 +73,28 @@ public class ProductQueryService {
 		}
 		
 		// Execute the query
-		Query query = null;
+		List<Product> products = null;
 		if (useNativeSQL) {
-			String sqlQuery = productQuery.getJpqlQueryCondition();
+			String sqlQuery = productQuery.getSqlQueryCondition();
 			if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
-			query = em.createNativeQuery(sqlQuery, Product.class);
+			Query query = em.createNativeQuery(sqlQuery, Product.class);
+			@SuppressWarnings("unchecked")
+			List<Product> uncheckedProducts = (List<Product>) query.getResultList(); // Only to restrict scope of @SuppressWarnings("unchecked")
+			products = uncheckedProducts;
 		} else {
 			String jpqlQuery = productQuery.getJpqlQueryCondition();
 			if (logger.isDebugEnabled()) logger.debug("Executing JPQL query: " + jpqlQuery);
-			query = em.createQuery(jpqlQuery, Product.class);
+			TypedQuery<Product> query = em.createQuery(jpqlQuery, Product.class);
+			query.setLockMode(LockModeType.READ);
+			products = query.getResultList();
 		}
-		query.setLockMode(LockModeType.READ);
-		@SuppressWarnings("unchecked")
-		List<Product> products = query.getResultList();
+		if (logger.isTraceEnabled()) {
+			logger.trace("Number of products found: " + products.size());
+			for (Product product: products) {
+				logger.trace("Found product {} with start time = {} and stop time = {}", 
+						product.getId(), product.getSensingStartTime().toString(), product.getSensingStopTime().toString());
+			}
+		}
 		
 		// Check if there is any result at all
 		if (products.isEmpty()) {
@@ -97,9 +110,11 @@ public class ProductQueryService {
 					productQuery.getJobStep().getJob().getStartTime(),
 					productQuery.getJobStep().getJob().getStopTime());
 		} catch (NoSuchElementException e) {
+			if (logger.isTraceEnabled()) logger.trace("selectItems() throws NoSuchElementException");
 			if (logger.isTraceEnabled()) logger.trace("<<< executeJpqlQuery()");
 			return testOptionalSatisfied(productQuery);
 		}
+		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		
 		// Set the query's list of satisfying products to the list of selected items (products)
 		for (Object selectedItem: selectedItems) {
@@ -120,7 +135,7 @@ public class ProductQueryService {
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeJpqlQuery(ProductQuery productQuery) throws IllegalArgumentException {
+	public boolean executeQuery(ProductQuery productQuery) throws IllegalArgumentException {
 		return executeQuery(productQuery, false);
 	}
 
