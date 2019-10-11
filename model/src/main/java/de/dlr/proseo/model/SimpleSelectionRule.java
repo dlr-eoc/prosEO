@@ -39,6 +39,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	/* Error messages */
 	private static final String MSG_NO_ITEM_FOUND = "No item found or not enough time coverage for selection rule '%s' and time interval (%s, %s)";
 	private static final String MSG_INVALID_ITEM_TYPE = "Item with different item type found ";
+	private static final String MSG_CANNOT_CREATE_QUERY = "Cannot create query (cause: %s)";
 	
 	/**
 	 * Processing mode, for which this selection rule is valid (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3);
@@ -549,8 +550,17 @@ public class SimpleSelectionRule extends PersistentObject {
 		// Format filter conditions
 		int i = 0;
 		for (String filterKey: filterConditions.keySet()) {
-			simpleRuleQuery.append(String.format(" and key(pp%d) = '%s' and pp%d.parameterValue = '%s'", 
-					i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
+			try {
+				Product.class.getDeclaredField(filterKey);
+				simpleRuleQuery.append(
+						String.format(" and p.%s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
+			} catch (NoSuchFieldException e) {
+				simpleRuleQuery.append(String.format(" and key(pp%d) = '%s' and pp%d.parameterValue = '%s'", 
+						i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
 			++i;
 		}
 		return simpleRuleQuery.toString();
@@ -608,9 +618,18 @@ public class SimpleSelectionRule extends PersistentObject {
 		// Format filter conditions
 		int i = 0;
 		for (String filterKey: filterConditions.keySet()) {
-			simpleRuleQuery.append(
-					String.format(" AND pp%d.parameters_key = '%s' AND pp%d.parameter_value = '%s'", 
-							i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
+			try {
+				Product.class.getDeclaredField(filterKey);
+				simpleRuleQuery.append(
+						String.format(" AND p.%s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
+			} catch (NoSuchFieldException e) {
+				simpleRuleQuery.append(
+						String.format(" AND pp%d.parameters_key = '%s' AND pp%d.parameter_value = '%s'", 
+								i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
 			++i;
 		}
 

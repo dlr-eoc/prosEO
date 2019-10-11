@@ -61,7 +61,7 @@ public class ProductQueryService {
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
 	public boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> executeJpqlQuery()");
+		if (logger.isTraceEnabled()) logger.trace(">>> executeQuery(useNativeSQL = " + useNativeSQL + ")");
 
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
@@ -91,14 +91,15 @@ public class ProductQueryService {
 		if (logger.isTraceEnabled()) {
 			logger.trace("Number of products found: " + products.size());
 			for (Product product: products) {
-				logger.trace("Found product {} with start time = {} and stop time = {}", 
-						product.getId(), product.getSensingStartTime().toString(), product.getSensingStopTime().toString());
+				logger.trace("Found product {} with start time = {}, stop time = {} and revision = {}", 
+						product.getId(), product.getSensingStartTime().toString(), product.getSensingStopTime().toString(),
+						product.getParameters().get("revision").getParameterValue().toString());
 			}
 		}
 		
 		// Check if there is any result at all
 		if (products.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("<<< executeJpqlQuery()");
+			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 			return testOptionalSatisfied(productQuery);
 		}
 		
@@ -111,7 +112,7 @@ public class ProductQueryService {
 					productQuery.getJobStep().getJob().getStopTime());
 		} catch (NoSuchElementException e) {
 			if (logger.isTraceEnabled()) logger.trace("selectItems() throws NoSuchElementException");
-			if (logger.isTraceEnabled()) logger.trace("<<< executeJpqlQuery()");
+			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 			return testOptionalSatisfied(productQuery);
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
@@ -124,7 +125,7 @@ public class ProductQueryService {
 		}
 		productQuery.setIsSatisfied(true);
 		
-		if (logger.isTraceEnabled()) logger.trace("<<< executeJpqlQuery()");
+		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 		return true;
 	}
 	

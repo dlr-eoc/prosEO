@@ -69,16 +69,21 @@ public class SimpleSelectionRuleTest {
 				+ "p2.productClass.id = 4711 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "')",
-			"select p from Product p where p.productClass.id = 815 and "
+			"select p from Product p "
+				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "where p.productClass.id = 815 and "
 				+ "p.sensingStartTime >= all (select p2.sensingStartTime from Product p2 where "
 				+ "p2.productClass.id = 815) and "
-				+ "p.parameters['category'].parameterValue = 'UVN' and p.parameters['revision'].parameterValue = '2.0'",
+				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
+				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0'",
 			"select p from Product p where p.productClass.id = 4711 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
 				+ "p.sensingStartTime >= all (select p2.sensingStartTime from Product p2 where "
 				+ "p2.productClass.id = 4711))",
-			"select p from Product p where p.productClass.id = 815 and "
+			"select p from Product p "
+				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "where p.productClass.id = 815 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
 				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
@@ -87,7 +92,8 @@ public class SimpleSelectionRuleTest {
 				+ "p2.productClass.id = 815 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "')) and "
-				+ "p.parameters['category'].parameterValue = 'UVN' and p.parameters['revision'].parameterValue = '2.0'",
+				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
+				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0'",
 			"select p from Product p where p.productClass.id = 4711 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "' and "
 				+ "p.sensingStartTime >= all (select p2.sensingStartTime from Product p2 where p2.productClass.id = 4711 and "
@@ -210,20 +216,20 @@ public class SimpleSelectionRuleTest {
 	 */
 	@Test
 	public final void testAsJpqlQuery() {
-//		for (int i = 0; i < selectionRuleStrings.length; ++i) {
-//			try {
-//				SelectionRule selectionRule = SelectionRule.parseSelectionRule(productClassCH4, selectionRuleStrings[i]);
-//				List<SimpleSelectionRule> simpleRules = selectionRule.getSimpleRules();
-//				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
-//					
-//					assertEquals("Unexpected JPQL query for selection rule string " + i, expectedJpqlQueries[i], 
-//							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME));
-//				}
-//			} catch (IllegalArgumentException | ParseException e) {
-//				e.printStackTrace();
-//				fail("Unexpected exception in SelectionRule#parseSelectionRule(ProductClass, String)");
-//			}
-//		}
+		for (int i = 0; i < selectionRuleStrings.length; ++i) {
+			try {
+				SelectionRule selectionRule = SelectionRule.parseSelectionRule(productClassCH4, selectionRuleStrings[i]);
+				List<SimpleSelectionRule> simpleRules = selectionRule.getSimpleRules();
+				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
+					
+					assertEquals("Unexpected JPQL query for selection rule string " + i, expectedJpqlQueries[i], 
+							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME));
+				}
+			} catch (IllegalArgumentException | ParseException e) {
+				e.printStackTrace();
+				fail("Unexpected exception in SelectionRule#parseSelectionRule(ProductClass, String)");
+			}
+		}
 		
 		logger.info("OK: Test for asJpqlQuery completed");
 	}
