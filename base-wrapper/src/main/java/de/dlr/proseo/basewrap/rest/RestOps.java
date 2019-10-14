@@ -36,7 +36,7 @@ public class RestOps {
 			Invocation.Builder invocationBuilder = null;
 			Response response = null;
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("",""));
+					.register(new RestAuth("test","test"));
 			try {
 				logger.info(endPoint+endPointPath);
 				webTarget = client.target(endPoint).path(endPointPath);

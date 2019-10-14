@@ -54,7 +54,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
- * prosEO Sample Processor Wrapper - an example of a wrapper for processors conforming to ESA's
+ * prosEO Base Processor Wrapper - for processors conforming to ESA's
  * "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003, V.1.8)
  * 
  * @author Hubert Asamer
@@ -82,8 +82,8 @@ public class BaseWrapper {
 	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
 
 	/** Error messages */
-	private static final String MSG_LEAVING_SAMPLE_WRAPPER = "Leaving sample-wrapper with exit code {} ({})";
-	private static final String MSG_STARTING_SAMPLE_WRAPPER = "Starting sample-wrapper V00.00.01 with JobOrder file {}";
+	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.01 with JobOrder file {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
 
@@ -657,9 +657,9 @@ public class BaseWrapper {
 				logger.error(e.getMessage());
 			} 
 			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, RestOps.HttpMethod.POST);
-
+			
 			if (singleResponse != null && singleResponse.gethttpCode()==201) {
-				logger.info(singleResponse.gethttpResponse());
+				logger.info("... ingestor response is  {}",singleResponse.gethttpResponse());
 				IngestedProcessingOutput ingest = new IngestedProcessingOutput();
 				ingest.setFsType(p.getFsType());
 				ingest.setProduct_id(p.getId());
@@ -667,6 +667,9 @@ public class BaseWrapper {
 				ingest.setPath(p.getPath());
 				ingest.setRevision(p.getRevision());
 				ingests.add(ingest);
+			}
+			if(singleResponse != null && singleResponse.gethttpCode()!=201) {
+				logger.info("... ingestor response is {}",singleResponse.gethttpResponse());
 			}
 		}
 		if (ingests.size() != pushedProducts.size()) {
@@ -703,24 +706,24 @@ public class BaseWrapper {
 
 		/** STEP [4][5] Provide the JobOrder file from the invocation arguments */
 
-		logger.info(MSG_STARTING_SAMPLE_WRAPPER, ENV_JOBORDER_FILE);
+		logger.info(MSG_STARTING_BASE_WRAPPER, ENV_JOBORDER_FILE);
 		Boolean check = checkEnv();
 		if (!check) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		File jobOrderFile = provideInitialJOF();
 		if (null == jobOrderFile) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
@@ -729,14 +732,14 @@ public class BaseWrapper {
 		JobOrder joWork = null;
 		joWork = fetchInputData(jobOrderDoc);
 		if (null == joWork) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
@@ -747,7 +750,7 @@ public class BaseWrapper {
 				CONTAINER_JOF_PATH
 				);
 		if (!procRun) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
@@ -756,7 +759,7 @@ public class BaseWrapper {
 		ArrayList<PushedProcessingOutput> pushedProducts = null;
 		pushedProducts = pushResults(joWork);
 		if (null == pushedProducts) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
@@ -770,7 +773,7 @@ public class BaseWrapper {
 		ingestedProducts = ingestPushedOutputs(pushedProducts);
 
 		if (null == ingestedProducts) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
@@ -781,12 +784,12 @@ public class BaseWrapper {
 
 
 		if (null == callBackMsg) {
-			logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
-		logger.info(MSG_LEAVING_SAMPLE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
+		logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}
 
