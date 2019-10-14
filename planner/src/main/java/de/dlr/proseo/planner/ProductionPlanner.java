@@ -46,7 +46,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	
 	private static Logger logger = LoggerFactory.getLogger(ProductionPlanner.class);
 
-	public static final String jobNamePrefix = "proseo";
+	public static final String jobNamePrefix = "proseojob";
 	public static final String jobContainerPrefix = "proseocont";
 
 	/**
