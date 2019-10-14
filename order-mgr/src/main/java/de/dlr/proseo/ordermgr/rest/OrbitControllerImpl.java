@@ -5,7 +5,9 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductClass;
+import com.mysema.scalagen.defs;
+
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.Mission;
-import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.ordermgr.rest.model.Orbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
@@ -40,12 +39,17 @@ public class OrbitControllerImpl implements OrbitController {
 	/* Message ID constants */
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 1005;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
-	
+	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_ORBIT_MISSING = 1006;
+
+
 	/* Message string constants */
 	private static final String MSG_ORBIT_NOT_FOUND = "No orbit found for ID %d (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Orbit deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-orbitcontroller ";
+	private static final String MSG_ORBIT_MISSING = "(E%d) Orbit not set";
+
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
@@ -61,24 +65,136 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumberTo included orbits end
 	 * @return a response entity with either a list of products and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
+	
+//	/**
+//	 * Log an informational message with the prosEO message prefix
+//	 * 
+//	 * @param messageFormat the message text with parameter placeholders in String.format() style
+//	 * @param messageId a (unique) message id
+//	 * @param messageParameters the message parameters (optional, depending on the message format)
+//	 */
+//	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
+//		// Prepend message ID to parameter list
+//		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+//		messageParamList.add(0, messageId);
+//		
+//		// Log the error message
+//		logger.info(String.format(messageFormat, messageParamList.toArray()));
+//	}
+	
+	/**
+	 * Log an error and return the corresponding HTTP message header
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return an HttpHeaders object with a formatted error message
+	 */
+	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		logger.error(message);
+		
+		// Create an HTTP "Warning" header
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
+		return responseHeaders;
+	}
+	
 	@Override
-	public ResponseEntity<List<Orbit>> getOrbits(String missionCode, String spacecraftCode, Long orbitNumberFrom,
+	public ResponseEntity<List<Orbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
 			Long orbitNumberTo, Date starttimefrom, Date starttimeto) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
+
 		List<de.dlr.proseo.ordermgr.rest.model.Orbit> result = new ArrayList<>();
 		
-		// Simple case: no search criteria set
-		if (null == missionCode && null == spacecraftCode && null ==orbitNumberFrom && null == orbitNumberTo 
-				&& null == starttimefrom && null == starttimeto) {
+//		// Simple case: no search criteria set
+//			for (de.dlr.proseo.model.Orbit  orbit: RepositoryService.getOrbitRepository().findAll()) {
+//				if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+//				Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+//				if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+//				result.add(resultOrbit);
+//			}
+//			
+//			return new ResponseEntity<>(result, HttpStatus.OK);		
+		
+		// Find using search parameters
+		//Check if Spacecraft code isn't blank and returns orbits matching to the spacecraft code
+		if("" != spacecraftCode) {
+			if(0 != orbitNumberFrom && 0 != orbitNumberTo) {
+				//Gets all matching Orbits for the matching spacecraft code and Orbit number range
+				List <de.dlr.proseo.model.Orbit> matchOrbits = RepositoryService.getOrbitRepository()
+						.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
+			
+				//Return all Orbits within given orbit number range and start time range
+				//TBA how to pass starttime as paramemter
+				if(null != starttimefrom && null != starttimeto) {
+					for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
+						if (orbit.getStartTime() == starttimefrom.toInstant() && orbit.getStopTime() == starttimeto .toInstant()) {
+							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+							Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+							result.add(resultOrbit);						
+						}
+					}
+					return new ResponseEntity<>(result, HttpStatus.OK);	
+				}
+				//Return all Orbits within given orbit number range
+				for (de.dlr.proseo.model.Orbit  orbit: matchOrbits) {
+					if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+					Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+					if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+					result.add(resultOrbit);
+				}				
+				return new ResponseEntity<>(result, HttpStatus.OK);					
+			}
+			
+			//Returns all orbits matching the spacecraft code within the start time range
+			else if (null != starttimefrom && null != starttimeto) {
+				for (de.dlr.proseo.model.Orbit orbit : RepositoryService.getOrbitRepository()
+						.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, starttimefrom.toInstant(), starttimeto.toInstant())) {
+					if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+					Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+					if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+					result.add(resultOrbit);	
+
+				}
+				return new ResponseEntity<>(result, HttpStatus.OK);								
+				
+			}
+			else {
+				for(de.dlr.proseo.model.Orbit orbit : RepositoryService.getOrbitRepository().findAll()) {
+					logger.info("SPacecraft Input value: = "+ spacecraftCode);
+					logger.info("orbit spacecraft code: = "+orbit.getSpacecraft().getCode());				
+					if(spacecraftCode.equals(orbit.getSpacecraft().getCode())) {
+						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+						Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+						result.add(resultOrbit);				
+					}
+				}
+				
+			}
+			
+			return new ResponseEntity<>(result, HttpStatus.OK);								
+		}
+		
+		//Returns all orbits in the DB when spacecraft code is blank /null 
+		//check if this is applicable at ll as spacecracft code is a mandatory parameter
+		//working
+		else {
 			for (de.dlr.proseo.model.Orbit  orbit: RepositoryService.getOrbitRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 				Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 				if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
 				result.add(resultOrbit);
 			}
-			
 		}
-		
-		return new ResponseEntity<>(result, HttpStatus.OK);
+		return new ResponseEntity<>(result, HttpStatus.OK);								
 	}
 	
 	/**
@@ -88,25 +204,19 @@ public class OrbitControllerImpl implements OrbitController {
 	 * 		   contained objects) and HTTP status "CREATED"
 	 */
 	@Override
-	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.toString());		
+	public ResponseEntity<Orbit> createOrbit(@Valid Orbit orbit) {		
+		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());
 		
-		List<de.dlr.proseo.model.Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit>();
-		List<Orbit> restOrbits = new ArrayList<Orbit>();
-		
-		//creates orbits in DB
-		for(int i=0;i<orbit.size();i++) {
-			de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(orbit.get(i));
-			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);	
-			modelOrbits.add(modelOrbit);
+		if (null == orbit) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
 		}
-		//fetch created orbits from DB
-		for (int i=0; i<modelOrbits.size();i++) {
-
-			Orbit restOrbit = OrbitUtil.toRestOrbit(modelOrbits.get(i));
-			restOrbits.add(restOrbit);			
-		}		
-		return new ResponseEntity<>(restOrbits, HttpStatus.CREATED);	
+		
+		de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(orbit);
+		
+		modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+		
+		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit), HttpStatus.CREATED);
 	}
 
 	/**
@@ -145,9 +255,9 @@ public class OrbitControllerImpl implements OrbitController {
 	@Override
 	public ResponseEntity<Orbit> modifyOrbit(Long id, @Valid Orbit orbit) {
 		
-		return null;
+//		return null;
 
-/*		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
 		
 		Optional<de.dlr.proseo.model.Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
 		
@@ -184,14 +294,14 @@ public class OrbitControllerImpl implements OrbitController {
 			modelOrbit.setSpacecraft(changedOrbit.getSpacecraft());
 		}
 		
-		// Save mission only if anything was actually changed
+		// Save orbit only if anything was actually changed
 		if (orbitChanged)	{
 			modelOrbit.incrementVersion();
 			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
 		}
 		
 		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit), HttpStatus.OK);
-*/	
+	
 	
 	}
 
@@ -232,5 +342,7 @@ public class OrbitControllerImpl implements OrbitController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
 	
 	}
+
+	
 
 }
