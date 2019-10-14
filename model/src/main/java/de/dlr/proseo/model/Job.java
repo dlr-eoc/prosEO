@@ -291,6 +291,14 @@ public class Job extends PersistentObject {
 		Job other = (Job) obj;
 		return Objects.equals(processingOrder, other.processingOrder) && Objects.equals(startTime, other.startTime)
 				&& Objects.equals(stopTime, other.stopTime);
+	}
+
+	@Override
+	public String toString() {
+		return "Job [jobState=" + jobState + ", orbit=" + orbit + ", startTime="
+				+ startTime + ", stopTime=" + stopTime + ", filterConditions=" + filterConditions + ", outputParameters="
+				+ outputParameters + ", priority=" + priority + ", processingFacility=" + processingFacility + ", jobSteps="
+				+ jobSteps + "]";
 	};
 
 }

@@ -255,4 +255,12 @@ public class JobStep extends PersistentObject {
 		this.processingStdErr = processingStdErr;
 	}
 
+	@Override
+	public String toString() {
+		return "JobStep [jobStepState=" + jobStepState + ", outputParameters=" + outputParameters
+				+ ", processingMode=" + processingMode + ", processingStartTime=" + processingStartTime + ", processingCompletionTime="
+				+ processingCompletionTime + ", processingStdOut=" + processingStdOut + ", processingStdErr=" + processingStdErr
+				+ "]";
+	}
+
 }

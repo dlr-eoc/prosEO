@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.model.util;
 
-import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +26,7 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 
 /**
@@ -39,18 +39,26 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  * a vertical bar denotes choice between two or more elements, all other punctuation characters are to be taken literally):
  * 
  * <pre> rule ::= simple_rule [ ; rule ]
- * simple_rule ::= 'FOR' source_product_type 'SELECT' policy [ 'OPTIONAL' | 'MANDATORY' ]
+ * simple_rule ::= 'FOR' source_product_type 'SELECT' policy [ 'OPTIONAL' | 'MANDATORY' | 'MINCOVER' ( digit ... ) ]
  * policy ::= simple_policy [ 'OR' policy ]
  * simple_policy ::= policy_name [ ( delta_time , delta_time ) ]
- * policy_name ::= 'ValIntersect' | 'LatestValIntersect' | 'LatestValidity' | 'LatestValidityClosest' | 'LatestValCover'
+ * policy_name ::= 'ValCover' | 'LatestValCover' | 'ValIntersect' | 'latestValIntersect' | 'LatestValidityClosest' |
+ *                 'BestCenteredCover' | 'LatestValCoverClosest' | 'LargestOverlap' | 'LargestOverlap85' | 
+ *                 'LatestValidity' | 'LatestValCoverNewestValidity'
  * source_product_type ::= product_type[/parameter_key:parameter_value[,parameter_key:parameter_value] ...] 
  * delta_time ::= digit ... [ 'd' | 'h' | 'm' | 's' ]
  * digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9</pre>
  * 
  * Key words are not case sensitive, this includes the names of selection policies. Punctuation characters need not (but may) be
  * enclosed by white space.
- * If for a simple rule neither OPTIONAL nor MANDATORY is specified, MANDATORY is the default. If for a delta time, neither 'd'
+ * <p>
+ * If for a simple rule neither OPTIONAL nor MINCOVER or MANDATORY is specified, MANDATORY is the default. If for a delta time, neither 'd'
  * (days), 'h' (hours), 'm' (minutes) nor 's' (seconds) is specified, 'd' (days) is the default.
+ * <p>
+ * A simple rule marked as OPTIONAL is fulfilled even if no items satisfy the rule. For a simple rule marked MANDATORY at
+ * least one item must fulfil the rule criteria. If the rule is marked as MINCOVER(n), the set of items fulfilling the rule
+ * criteria must as a whole cover at least n % of the validity interval given as selection parameters. 
+ * MINCOVER implies MANDATORY (even MINCOVER(0), in which case it is acceptable, if all items are outside of the validity interval).
  * <p>
  * The 'OR' operator is a short-circuited operator, i. e. if during the selection of items the first simple policy yields
  * a non-empty result set, this result set is returned, and only if the result set is empty, the policy following the 'OR'
@@ -65,7 +73,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  * are separated from each other by commas. Parameter key and value for each entry are separated by colons (':').
  * There must not be any white space between any of the elements of the product type. Note that for the purpose of
  * the selection, source product types with the same product type name, but different parameters are considered different
- * source product types. The parameter keys and values are only evaluated for the generation of product query objects. 
+ * source product types. The parameter keys and values are only evaluated for the generation of JPQL and SQL queries. 
  * <p>
  * The following are examples for legal rules:
  * <ul>
@@ -84,7 +92,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  *   <li>FOR AUX_CH4 SELECT ValIntersect(0, 0); <i>(the semicolon is a rule separator, not a rule terminator)</i></li>
  * </ul>
  * 
- * Allowed selection policies are described in "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003),
+ * Allowed selection policies are described in ESA's "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003, issue 1.8),
  * applicable product types are mission-specific and defined by the available product classes (attribute productType) for
  * the respective mission.
  * <p>
@@ -99,15 +107,23 @@ public class SelectionRule {
 	public static final String RULE_SELECT = "SELECT";
 	public static final String RULE_OPTIONAL = "OPTIONAL";
 	public static final String RULE_MANDATORY = "MANDATORY";
+	public static final String RULE_MINCOVER = "MINCOVER";
+	public static final Pattern RULE_MINCOVER_PATTERN = Pattern.compile("^" + RULE_MINCOVER + "\\s*\\(\\s*(\\d+)\\s*\\)$");
 	public static final String RULE_POLICY_OR = "OR";
 	public static final String RULE_PAREN_OPEN = "(";
 	public static final String RULE_PAREN_CLOSE = ")";
 	public static final String RULE_COMMA = ",";
+	public static final String RULE_POLICY_VALCOV = "VALCOVER";
+	public static final String RULE_POLICY_LATVALCOV = "LATESTVALCOVER";
 	public static final String RULE_POLICY_VALINT = "VALINTERSECT";
 	public static final String RULE_POLICY_LATVALINT = "LATESTVALINTERSECT";
-	public static final String RULE_POLICY_LATVAL = "LATESTVALIDITY";
 	public static final String RULE_POLICY_LATVALCLO = "LATESTVALIDITYCLOSEST";
-	public static final String RULE_POLICY_LATVALCOV = "LATESTVALCOVER";
+	public static final String RULE_POLICY_BESTCENT = "BESTCENTEREDCOVER";
+	public static final String RULE_POLICY_LATCOVCLO = "LATESTVALCOVERCLOSEST";
+	public static final String RULE_POLICY_OVERLAP = "LARGESTOVERLAP";
+	public static final String RULE_POLICY_OVERLAP85 = "LARGESTOVERLAP85";
+	public static final String RULE_POLICY_LATVALCOVNEW = "LATESTVALCOVERNEWESTVALIDITY";
+	public static final String RULE_POLICY_LATVAL = "LATESTVALIDITY";
 	public static final String RULE_DELTA_DAYS = "D";
 	public static final String RULE_DELTA_HOURS = "H";
 	public static final String RULE_DELTA_MINS = "M";
@@ -116,7 +132,9 @@ public class SelectionRule {
 	/* Messages for parsing errors */
 	private static final String RULE_EMPTY_ERROR = "Syntax error: The rule string is empty.";
 	private static final String RULE_SYNTAX_ERROR = "Syntax error: A simple rule must follow the pattern '" + RULE_FOR
-			+ "' product_type '" + RULE_SELECT + "' policy [ '" + RULE_OPTIONAL + "' | '" + RULE_MANDATORY + "' ], found: ";
+			+ "' product_type '" + RULE_SELECT + "' policy [ '" + RULE_OPTIONAL + "' | '" + RULE_MANDATORY + "' | '" + RULE_MINCOVER + "'(n) ], found: ";
+	private static final String RULE_OPTMANCOVPART_ERROR = "Only one of [ '" + RULE_OPTIONAL + "' | '" + RULE_MANDATORY + "' | '" + RULE_MINCOVER + "'(n) ] allowed, found: ";
+	private static final String RULE_MINCOVER_ERROR = "Invalid minimum coverage percentage (allowed values 0 .. 100), found: ";
 	private static final String RULE_FOR_EXPECTED_ERROR = "Syntax error: Simple rule must start with '" + RULE_FOR + "' keyword, found: ";
 	private static final String RULE_SELECT_EXPECTED_ERROR = "Syntax error: Expected '" + RULE_SELECT + "' keyword, found: ";
 	private static final String RULE_POLICY_INVALID_ERROR = "Syntax error: Allowed policies are '" + RULE_POLICY_VALINT
@@ -130,7 +148,7 @@ public class SelectionRule {
 	private static final String RULE_POLICY_SYNTAX_ERROR = "Syntax error: A policy must follow the pattern policy_name [ " +
 			RULE_PAREN_OPEN + " delta_time " + RULE_COMMA + " delta_time " + RULE_PAREN_CLOSE + " ], found: ";
 	private static final String RULE_POLICY_END_ERROR = "Syntax error: Expected end of text or one of {'" + RULE_POLICY_OR + "', '"
-			+ RULE_OPTIONAL + "', '" + RULE_MANDATORY + "', '" + RULE_SEPARATOR + "'}, found: ";
+			+ RULE_OPTIONAL + "', '" + RULE_MANDATORY + "', '" + RULE_MINCOVER + "', '" + RULE_SEPARATOR + "'}, found: ";
 	private static final String RULE_TIME_FORMAT_ERROR = "Syntax error: Delta time must be of the form digit ... [ '"
 			+ RULE_DELTA_DAYS + "' | '" + RULE_DELTA_HOURS + "' | '" + RULE_DELTA_MINS + "' | '" + RULE_DELTA_SECS + "'], found: ";
 	private static final String RULE_MALFORMED_PRODUCT_TYPE_ERROR = "Product type contains more than one slash ('/'): ";
@@ -144,97 +162,14 @@ public class SelectionRule {
 	private static final String MSG_START_OR_STOP_TIME_NULL = "Start and stop times must not be null";
 	private static final String MSG_NULL_SELECTION_RULE = "Null value for selectionRuleString not allowed!";
 	private static final String MSG_NULL_TARGET_PRODUCT_CLASS = "Null value for targetProductClass not allowed!";
+	private static final String MSG_WRONG_ITEM_CLASS = "Unexpected item class ";
 	
-	/** The static class logger */
+	/** The logger for this class */
 	private static final Logger logger = LoggerFactory.getLogger(SelectionRule.class);
 	
 	/** The simple selection rules making up this rule, mapped to (aux) product types */
 	private Map<String, SimpleSelectionRule> simpleRules = new LinkedHashMap<String, SimpleSelectionRule>();
 		
-	/**
-	 * This nested class describes a selectable item consisting of an item type (auxiliary product type), a validity start
-	 * time, a validity end time, and the original object for which the selection shall be effected. As this is only a
-	 * support structure, all instance variables are publicly accessible.
-	 */
-	public static class SelectionItem {
-		/** The (auxiliary product) type of the item */
-		public String itemType;
-		/** The start time of the item validity period */
-		public Instant startTime;
-		/** The end time of the item validity period */
-		public Instant stopTime;
-		/** The generation time of the item */
-		public Instant generationTime;
-		/** The original object belonging to the item */
-		public Object itemObject;
-		
-		/**
-		 * Default constructor
-		 */
-		public SelectionItem() {}
-		
-		/**
-		 * Convenience constructor to create a SelectionItem with all attributes set at once.
-		 * 
-		 * @param itemType the item type (aux product type) to set
-		 * @param startTime the start time of the item validity period
-		 * @param stopTime the end time of the item validity period
-		 * @param generationTime the generation time of the item
-		 * @param itemObject the original object belonging to the item
-		 */
-		public SelectionItem(String itemType, Instant startTime, Instant stopTime, Instant generationTime, Object itemObject) {
-			this.itemType = itemType;
-			this.startTime = startTime;
-			this.stopTime = stopTime;
-			this.generationTime = generationTime;
-			this.itemObject = itemObject;
-		}
-		
-		/**
-		 * Convenience method to set the validity start time from a Unix time value (milliseconds since 1970-01-01T00:00:00 UTC)
-		 * 
-		 * @param time the time in milliseconds to set the start time from
-		 */
-		public void setStartTime(long time) {
-			startTime = Instant.ofEpochMilli(time);
-		}
-		
-		/**
-		 * Convenience method to set the validity start time from a Java date object
-		 * 
-		 * @param date the date object to set the start time from
-		 */
-		public void setStartTime(Date date) {
-			setStartTime(date.getTime());
-		}
-
-		/**
-		 * Convenience method to set the validity end time from a Unix time value (milliseconds since 1970-01-01T00:00:00 UTC)
-		 * 
-		 * @param time the time in milliseconds to set the end time from
-		 */
-		public void setStopTime(long time) {
-			stopTime = Instant.ofEpochMilli(time);
-		}
-		
-		/**
-		 * Convenience method to set the validity end time from a Java date object
-		 * 
-		 * @param date the date object to set the end time from
-		 */
-		public void setStopTime(Date date) {
-			setStopTime(date.getTime());
-		}
-		
-		/* (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
-		public String toString() {
-			return "{ type: " + itemType + ", start: " + startTime + ", stop: " + stopTime + ", generated: " 
-					+ generationTime + ", object: " + itemObject + " }";
-		}
-	}
-	
 	/**
 	 * Gets all simple selection rules contained in the selection rule
 	 * 
@@ -247,7 +182,38 @@ public class SelectionRule {
 	}
 	
 	/**
-	 * Syntactical analysis of a simple rule: FOR product_type SELECT policy [ OPTIONAL | MANDATORY ]
+	 * Removes all simple selection rules from this rule
+	 */
+	public void clearSimpleRules() {
+		simpleRules.clear();
+	}
+	
+	/**
+	 * Adds a collection of simple selection rules to this rule
+	 * 
+	 * @param newSimpleRules the collection of simple selection rules to add
+	 */
+	public void addSimpleRules(Collection<SimpleSelectionRule> newSimpleRules) {
+		for (SimpleSelectionRule simpleRule: newSimpleRules) {
+			if (simpleRules.containsKey(simpleRule.getFilteredSourceProductType())) {
+				simpleRule = simpleRule.merge(simpleRules.get(simpleRule.getFilteredSourceProductType()));
+			}
+			simpleRules.put(simpleRule.getFilteredSourceProductType(), simpleRule);
+		}
+	}
+	
+	/**
+	 * Sets the collection of simple selection rules for this rule
+	 * 
+	 * @param newSimpleRules the collection of simple selection rules to set
+	 */
+	public void setSimpleRules(Collection<SimpleSelectionRule> simpleRules) {
+		clearSimpleRules();
+		addSimpleRules(simpleRules);
+	}
+	
+	/**
+	 * Syntactical analysis of a simple rule: FOR product_type SELECT policy [ OPTIONAL | MANDATORY | MINCOVER(n) ]
 	 * (see {@link SelectionRule grammar definition})
 	 * @param targetProductClass the product class, which requires source products defined by this rule
 	 * @param simpleRuleString the text string containing the simple rule to analyse (without preceding white space)
@@ -336,7 +302,9 @@ public class SelectionRule {
 		
 		int optionalPos = policyString.toUpperCase().lastIndexOf(RULE_OPTIONAL);
 		int mandatoryPos = policyString.toUpperCase().lastIndexOf(RULE_MANDATORY);
-		int simplePolicyListEnd = (optionalPos > mandatoryPos ? optionalPos : mandatoryPos);
+		int mincoverPos = policyString.toUpperCase().lastIndexOf(RULE_MINCOVER);
+		// Find the position of any of the above three (if more than one, it's a syntax error anyway)
+		int simplePolicyListEnd = (optionalPos > mandatoryPos ? optionalPos : ( mandatoryPos > mincoverPos ? mandatoryPos : mincoverPos));
 		if (-1 == simplePolicyListEnd) {
 			simplePolicyListEnd = policyString.length();
 		}
@@ -362,10 +330,38 @@ public class SelectionRule {
 				simpleRule.getSimplePolicies().add(simplePolicy);
 			}
 		}
-		simpleRule.setIsMandatory(true);
+		
+		// Default is mandatory
+		simpleRule.setIsMandatory(true);			
+		// Check that the final part indeed only contains (at most) one option
 		if (simplePolicyListEnd < policyString.length()) {
-			simpleRule.setIsMandatory(RULE_MANDATORY.equals(policyString.toUpperCase().substring(simplePolicyListEnd).trim()));
+			String optManCovPart = policyString.toUpperCase().substring(simplePolicyListEnd).trim();
+			if (-1 < optionalPos) {
+				if (RULE_OPTIONAL.equals(optManCovPart)) {
+					simpleRule.setIsMandatory(false);
+				} else {
+					throw new ParseException(RULE_OPTMANCOVPART_ERROR + optManCovPart, offset + optionalPos);
+				}
+			}
+			if (-1 < mandatoryPos) {
+				if (!RULE_MANDATORY.equals(optManCovPart)) {
+					throw new ParseException(RULE_OPTMANCOVPART_ERROR + optManCovPart, offset + mandatoryPos);
+				}
+			}
+			if (mincoverPos > -1) {
+				Matcher mincoverMatcher = RULE_MINCOVER_PATTERN.matcher(optManCovPart);
+				if (mincoverMatcher.matches()) {
+					Short minimumCoverage = Short.parseShort(mincoverMatcher.group(1));
+					if (0 > minimumCoverage || 100 < minimumCoverage) {
+						throw new ParseException(RULE_MINCOVER_ERROR + minimumCoverage, offset + policyString.lastIndexOf(mincoverMatcher.group(1)));
+					}
+					simpleRule.setMinimumCoverage(minimumCoverage);
+				} else {
+					throw new ParseException(RULE_OPTMANCOVPART_ERROR + optManCovPart, offset + mincoverPos);
+				}
+			}
 		}
+		
 		logger.debug("... policy is mandatory: " + simpleRule.getIsMandatory());
 		return simpleRule;
 	}
@@ -591,10 +587,11 @@ public class SelectionRule {
 	
 	/**
 	 * Select the one item in the given collection of items that fulfils the selection rule with respect to a given time interval.
-	 * All items in the collection must be of the same item type (aux product type). If the rule does not contain policies
+	 * All items in the collection must be of the same item product type. If the rule does not contain policies
 	 * for the item type given in the collection, the result is the same as if all items had qualified (i. e. if the collection
 	 * contains only one item, its object is returned, if it contains more than one item, NoSuchElementException is thrown).
-	 * @param productType the type of the items
+	 * 
+	 * @param productType the product type of the items
 	 * @param items the collection of items to be searched
 	 * @param startTime the start time of the time interval to check against
 	 * @param stopTime the end time of the time interval to check against
@@ -627,9 +624,36 @@ public class SelectionRule {
 	}
 	
 	/**
+	 * Select the one product in the given collection of products that fulfils the selection rule with respect to a given time interval.
+	 * All products in the collection must be of the same product type. If the rule does not contain policies
+	 * for the product type given in the collection, the result is the same as if all items had qualified (i. e. if the collection
+	 * contains only one item, its object is returned, if it contains more than one item, NoSuchElementException is thrown).
+	 * 
+	 * @param productType the product type of the items
+	 * @param products the collection of products to be searched
+	 * @param startTime the start time of the time interval to check against
+	 * @param stopTime the end time of the time interval to check against
+	 * @return the single item object fulfilling the selection rule, if exactly one such item exists, or null, if no qualifying
+	 * 		   item exists and the selection rule is marked as 'OPTIONAL'
+	 * @throws NoSuchElementException if there is more than one item fulfilling the selection rule, or if there is no such
+	 * 		   item and the selection rule is marked as 'MANDATORY'
+	 * @throws IllegalArgumentException if any of the parameters is null or if not all of the items
+	 * 		   are of the given type
+	 */
+	public Product selectUniqueProduct(String productType, final Collection<Product> products, final Instant startTime, final Instant stopTime)
+			throws NoSuchElementException, IllegalArgumentException {
+		if (null == products) {
+			throw new IllegalArgumentException(MSG_MISSING_ARGUMENTS);
+		}
+		
+		return (Product) selectUniqueItem(productType, SelectionItem.asSelectionItems(products), startTime, stopTime);
+	}
+	
+	/**
 	 * Select all items in the given collection of items that fulfil the selection rule with respect to a given time interval.
-	 * All items in the collection must be of the same item type (aux product type). If the rule does not contain policies
+	 * All items in the collection must be of the same item product type. If the rule does not contain policies
 	 * for the item type given in the collection, an empty list returned.
+	 * 
 	 * @param productType the type of the items to be searched
 	 * @param items the collection of items to be searched (may be empty, but not null)
 	 * @param startTime the start time of the time interval to check against
@@ -654,6 +678,44 @@ public class SelectionRule {
 		}
 		
 		return applicableRule.selectItems(items, startTime, stopTime);
+	}
+	
+	/**
+	 * Select all products in the given collection of products that fulfil the selection rule with respect to a given time interval.
+	 * All products in the collection must be of the same product type. If the rule does not contain policies
+	 * for the product type given in the collection, an empty list returned.
+	 * 
+	 * @param productType the type of the items to be searched
+	 * @param products the collection of products to be searched (may be empty, but not null)
+	 * @param startTime the start time of the time interval to check against
+	 * @param stopTime the end time of the time interval to check against
+	 * 
+	 * @return a (possibly empty) list of all item objects fulfilling the selection rule, or null, if no such qualifying item
+	 * 		   exists and the selection rule is marked as 'OPTIONAL'
+	 * @throws NoSuchElementException if no item fulfils the selection rule, and the selection rule is marked as 'MANDATORY'
+	 * @throws IllegalArgumentException if any of the parameters is null or if not all of the items
+	 * 		   are of the given item type
+	 */
+	public List<Product> selectProducts(final String productType, final Collection<Product> products, final Instant startTime, final Instant stopTime)
+			throws NoSuchElementException, IllegalArgumentException {
+		if (null == products) {
+			throw new IllegalArgumentException(MSG_MISSING_ARGUMENTS);
+		}
+		
+		// Perform the selection
+		List<Object> selectedItems = selectItems(productType, SelectionItem.asSelectionItems(products), startTime, stopTime);
+		
+		// Convert result list to list of products
+		List<Product> selectedProducts = new ArrayList<>();
+		for (Object item: selectedItems) {
+			if (item instanceof Product) {
+				selectedProducts.add((Product) item);
+			} else {
+				throw new ClassCastException(MSG_WRONG_ITEM_CLASS + item.getClass().toString());
+			}
+		}
+		
+		return selectedProducts;
 	}
 	
 	/**

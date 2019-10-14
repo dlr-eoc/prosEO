@@ -212,4 +212,9 @@ public class Mission extends PersistentObject {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "Mission [code=" + code + ", name=" + name + ", processingModes=" + processingModes + "]";
+	}
 }

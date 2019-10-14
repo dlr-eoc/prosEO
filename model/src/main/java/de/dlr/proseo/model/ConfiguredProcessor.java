@@ -109,5 +109,10 @@ public class ConfiguredProcessor extends PersistentObject {
 		ConfiguredProcessor other = (ConfiguredProcessor) obj;
 		return Objects.equals(identifier, other.identifier);
 	}
+
+	@Override
+	public String toString() {
+		return "ConfiguredProcessor [identifier=" + identifier + "]";
+	}
 	
 }

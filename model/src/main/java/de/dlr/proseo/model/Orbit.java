@@ -158,6 +158,11 @@ public class Orbit extends PersistentObject {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "Orbit [orbitNumber=" + orbitNumber + ", startTime=" + startTime + ", stopTime=" + stopTime + "]";
+	}
 	
 	
 }
