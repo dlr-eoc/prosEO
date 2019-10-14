@@ -176,7 +176,6 @@ resourceTypes:
     description: Get orbits for a specific mission and spacecraft;
         if both an orbit number range and a time frame are set, the orbit range takes precedence
     queryParameters:
-      missionCode: string
       spacecraftCode: string
       orbitNumberFrom?: integer
       orbitNumberTo?: integer
@@ -192,14 +191,14 @@ resourceTypes:
     description: Create new orbits
     body:
       application/json:
-        type: Orbit[]
-        example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+        type: Orbit
+        example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
     responses:
       201:
         body:
           application/json:
-            type: Orbit[]
-            example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+            type: Orbit
+            example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
   /{id}:
     uriParameters:
       id:
