@@ -1,6 +1,7 @@
 {
     "id": 1198734,
     "version": 5,
+    "missionCode": "S5P",
     "processorName": "KNMI L2",
     "processorVersion": "01.03.02",
     "isTest": false,

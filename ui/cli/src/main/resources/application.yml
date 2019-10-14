@@ -10,6 +10,6 @@ proseo:
     processorManager:
         url: https://localhost:8083/proseo/processor-mgr/v0.1
     productClassManager:
-        url: https://localhost:8084/proseo/processor-mgr/v0.1
+        url: https://localhost:8084/proseo/productclass-mgr/v0.1
     cli:
         syntaxfile: ui-cli-syntax.yml
