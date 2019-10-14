@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +33,9 @@ import javax.persistence.Table;
 		@Index(unique = true, columnList = "job_step_id, requested_product_class_id"), 
 		@Index(columnList = "requested_product_class_id") } )
 public class ProductQuery extends PersistentObject {
+
+	/* Static message strings */
+	private static final String MSG_CANNOT_ACCESS_PRODUCT_FIELD = "Cannot access product field %s (cause: %s)";
 
 	/** Job step issuing this query */
 	@ManyToOne
@@ -97,7 +101,7 @@ public class ProductQuery extends PersistentObject {
 		productQuery.requestedProductClass = selectionRule.getSourceProductClass();
 		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
-		productQuery.filterConditions.putAll(selectionRule.getFilterConditions());
+		productQuery.filterConditions.putAll(jobStep.getJob().getFilterConditions());
 		
 		return productQuery;
 	}
@@ -273,6 +277,30 @@ public class ProductQuery extends PersistentObject {
 		this.satisfyingProducts = satisfyingProducts;
 	}
 	
+	/**
+	 * Test whether the given product satisfies the filter conditions of this query
+	 * 
+	 * @param product the product to test
+	 * @return true, if all filter conditions are met, false otherwise
+	 */
+	public boolean testFilterConditions(Product product) {
+		boolean success = true;
+		
+		for (String filterKey: filterConditions.keySet()) {
+			try {
+				Field filterField = Product.class.getDeclaredField(filterKey);
+				Object productField = filterField.get(product);
+				success = success && filterConditions.get(filterKey).getParameterValue().equals(productField.toString());
+			} catch (NoSuchFieldException e) {
+				success = success &&  filterConditions.get(filterKey).equals(product.getParameters().get(filterKey));
+			} catch (SecurityException | IllegalAccessException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_ACCESS_PRODUCT_FIELD, filterKey, e.getMessage()), e);
+			}
+		}
+		
+		return success;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -291,5 +319,13 @@ public class ProductQuery extends PersistentObject {
 			return false;
 		ProductQuery other = (ProductQuery) obj;
 		return Objects.equals(jobStep, other.jobStep) && Objects.equals(requestedProductClass, other.requestedProductClass);
+	}
+
+	@Override
+	public String toString() {
+		return "ProductQuery [jobStep=" + jobStep + ", generatingRule=" + generatingRule + ", requestedProductClass="
+				+ requestedProductClass + ", jpqlQueryCondition=" + jpqlQueryCondition + ", sqlQueryCondition=" + sqlQueryCondition
+				+ ", filterConditions=" + filterConditions + ", minimumCoverage=" + minimumCoverage + ", isSatisfied=" + isSatisfied
+				+ ", satisfyingProducts=" + satisfyingProducts + "]";
 	}
 }

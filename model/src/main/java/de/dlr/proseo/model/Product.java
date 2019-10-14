@@ -396,5 +396,11 @@ public class Product extends PersistentObject {
 		param.setDoubleValue(value);
 		this.parameters.put(key, param);
 	}
+	@Override
+	public String toString() {
+		return "Product [productClass=" + productClass.getProductType() + ", mode=" + mode + ", sensingStartTime=" + sensingStartTime
+				+ ", sensingStopTime=" + sensingStopTime + ", generationTime=" + generationTime + ", productFile=" + productFile
+				+ ", parameters=" + parameters + "]";
+	}
 
 }

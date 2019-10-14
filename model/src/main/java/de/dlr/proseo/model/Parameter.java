@@ -220,5 +220,10 @@ public class Parameter {
 		} else if (!parameterValue.equals(other.parameterValue))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Parameter [parameterType=" + parameterType + ", parameterValue=" + parameterValue + "]";
 	}		
 }

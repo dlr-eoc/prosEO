@@ -191,6 +191,7 @@ public class ProductQueryServiceTest {
 		Job jobLate = new Job();
 		jobLate.setStartTime(TEST_START_TIME_LATE);
 		jobLate.setStopTime(TEST_STOP_TIME_LATE);
+		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		JobStep jobStepLate = new JobStep();
 		jobStepLate.setJob(jobLate);
 		jobStepLate.setProcessingMode(TEST_MODE);
@@ -210,6 +211,15 @@ public class ProductQueryServiceTest {
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
 		assertTrue("Product query 1 fails unexpectedly for JPQL", queryService.executeQuery(query));
 		assertTrue("Product query 1 fails unexpectedly for SQL", queryService.executeSqlQuery(query));
+		
+		// Test first product query with additional filter condition "revision:2" --> fails
+		jobLate.getFilterConditions().clear();
+		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 2));
+		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
+		logger.trace("Starting test for product query 1 with filters " + query.getFilterConditions());
+		assertTrue("Product query 1 succeeds unexpectedly for filter 'revision:2'", !queryService.executeQuery(query));
+		jobLate.getFilterConditions().clear();
+		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		
 		// Test second product query with MINCOVER --> satisfied for early interval, not satisfied for late interval
 		try {

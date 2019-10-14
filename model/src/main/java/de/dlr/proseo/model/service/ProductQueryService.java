@@ -5,8 +5,11 @@
  */
 package de.dlr.proseo.model.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -117,12 +120,26 @@ public class ProductQueryService {
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		
-		// Set the query's list of satisfying products to the list of selected items (products)
+		// Check if the additional filter conditions of the job step are met
+		Set<Product> selectedProducts = new HashSet<>();
 		for (Object selectedItem: selectedItems) {
 			if (selectedItem instanceof Product) {
-				productQuery.getSatisfyingProducts().add((Product) selectedItem);
+				Product product = (Product) selectedItem;
+				if (productQuery.testFilterConditions(product)) {
+					selectedProducts.add(product);
+				} else {
+					if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
+				}
 			}
 		}
+		if (selectedProducts.isEmpty()) {
+			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
+			return testOptionalSatisfied(productQuery);
+		}
+		if (logger.isTraceEnabled()) logger.trace("Number of products after testing filter conditions: " + selectedProducts.size());
+		
+		// Set the query's list of satisfying products to the list of selected items (products)
+		productQuery.setSatisfyingProducts(selectedProducts);
 		productQuery.setIsSatisfied(true);
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");

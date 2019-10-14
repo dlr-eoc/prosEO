@@ -5,7 +5,9 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +40,8 @@ import javax.persistence.Table;
 @Table(indexes = { @Index(unique = true, columnList = "identifier"), @Index(unique = false, columnList = "execution_time") })
 public class ProcessingOrder extends PersistentObject {
 
+	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
+
 	/** Mission, to which this order belongs */
 	@ManyToOne
 	private Mission mission;
@@ -66,6 +70,17 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
+	
+	/**
+	 * Method for slicing the orbit time interval into jobs for product generation (default "ORBIT")
+	 */
+	@Enumerated(EnumType.STRING)
+	private OrderSlicingType slicingType = OrderSlicingType.ORBIT;
+	
+	/**
+	 * Duration of a time slice for slicing type TIME_SLICE
+	 */
+	private Duration sliceDuration = null;
 	
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
@@ -115,6 +130,21 @@ public class ProcessingOrder extends PersistentObject {
 	 * </ol>
 	 */
 	public enum OrderState { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED };
+	
+	/**
+	 * Possible methods for partitioning the order time period into individual job time periods for product generation:
+	 * <ul>
+	 * <li>ORBIT: Create jobs by orbit (preferably a list of orbits is then given for the order, if no such lists exists, generate
+	 *            jobs orbit-wise so that the time interval is fully covered, i. e. with the first orbit starting no later
+	 *            than the beginning of the time interval and the last orbit ending no earlier than the end of the time interval;
+	 *            jobs will be linked to their respective orbits)</li>
+	 * <li>CALENDAR_DAY: Create jobs by calendar day (in such a way that the first job starts no later than the beginning of
+	 *            the order time interval and the last job ends no earlier than the end of the time interval)</li>
+	 * <li>TIME_SLICE: Create jobs in fixed time slices, starting with the start time of the order time interval and ending
+	 *            no earlier than the end of the time interval</li>
+	 * </ul>
+	 */
+	public enum OrderSlicingType { ORBIT, CALENDAR_DAY, TIME_SLICE };
 
 	/**
 	 * Gets the owning mission
@@ -222,6 +252,55 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setStopTime(Instant stopTime) {
 		this.stopTime = stopTime;
+	}
+
+	/**
+	 * Gets the method for partitioning the orbit time interval
+	 * 
+	 * @return the slicingType the order slicing type
+	 */
+	public OrderSlicingType getSlicingType() {
+		return slicingType;
+	}
+
+	/**
+	 * Sets the method for partitioning the orbit time interval (if the slicing type is TIME_SLICE and the slice duration
+	 * has not yet been set, then the slice duration will be set to a default value of one day; for other slicing types
+	 * the current slice duration will be deleted)
+	 * 
+	 * @param slicingType the slicing type to set
+	 */
+	public void setSlicingType(OrderSlicingType slicingType) {
+		this.slicingType = slicingType;
+		if (OrderSlicingType.TIME_SLICE.equals(slicingType)) {
+			if (null == sliceDuration) {
+				sliceDuration = Duration.of(1, ChronoUnit.DAYS);
+			}
+		} else {
+			sliceDuration = null;
+		}
+	}
+
+	/**
+	 * Gets the duration for a single slice
+	 * 
+	 * @return the slice duration for slicing type TIME_SLICE, null otherwise
+	 */
+	public Duration getSliceDuration() {
+		return sliceDuration;
+	}
+
+	/**
+	 * Sets the duration for a single slice (for slicing type TIME_SLICE only)
+	 * 
+	 * @param sliceDuration the sliceDuration to set
+	 */
+	public void setSliceDuration(Duration sliceDuration) {
+		if (OrderSlicingType.TIME_SLICE.equals(slicingType)) {
+			this.sliceDuration = sliceDuration;
+		} else {
+			throw new IllegalStateException(MSG_SLICING_DURATION_NOT_ALLOWED + slicingType);
+		}
 	}
 
 	/**
@@ -386,5 +465,13 @@ public class ProcessingOrder extends PersistentObject {
 			return false;
 		ProcessingOrder other = (ProcessingOrder) obj;
 		return Objects.equals(identifier, other.identifier) && Objects.equals(mission, other.mission);
+	}
+
+	@Override
+	public String toString() {
+		return "ProcessingOrder [mission=" + mission.getCode() + ", identifier=" + identifier + ", orderState=" + orderState + ", executionTime=" + executionTime
+				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
+				+ sliceDuration + ", filterConditions=" + filterConditions + ", outputParameters=" + outputParameters
+				+ ", processingMode=" + processingMode + "]";
 	}
 }

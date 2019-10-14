@@ -135,4 +135,9 @@ public class ProcessorClass extends PersistentObject {
 		return Objects.equals(mission, other.mission) && Objects.equals(processorName, other.processorName);
 	}
 
+	@Override
+	public String toString() {
+		return "ProcessorClass [mission=" + mission.getCode() + ", processorName=" + processorName + "]";
+	}
+
 }

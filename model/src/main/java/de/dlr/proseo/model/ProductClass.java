@@ -260,6 +260,12 @@ public class ProductClass extends PersistentObject {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "ProductClass [mission=" + mission.getCode() + ", productType=" + productType + ", missionType=" + missionType
+				+ ", description=" + description + ", processorClass=" + processorClass.getProcessorName() + "]";
+	}
 	
 	
 }
