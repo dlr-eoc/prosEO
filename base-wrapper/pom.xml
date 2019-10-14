@@ -7,10 +7,10 @@
         <artifactId>proseo</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>sample-wrapper</artifactId>
+    <artifactId>base-wrapper</artifactId>
     <name>prosEO Sample Processor Wrapper</name>
     <description>prosEO Sample Processor Wrapper  Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
-    <url>https://github.com/dlr-eoc/prosEO/sample-wrapper</url>
+    <url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
     <organization>
         <name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
         <url>http://www.dlr.de</url>

@@ -1,10 +1,10 @@
 /**
- * SampleWrapper.java
+ * BaseWrapper.java
  * 
- * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
- * (C) 2019 Hubert Asamer, DLR
+ *  (C) 2019 Hubert Asamer, DLR
+ *  (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.samplewrap;
+package de.dlr.proseo.basewrap;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,12 +42,12 @@ import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
-import de.dlr.proseo.samplewrap.alluxio.AlluxioOps;
-import de.dlr.proseo.samplewrap.rest.HttpResponseInfo;
-import de.dlr.proseo.samplewrap.rest.IngestorProductFilePostRequest;
-import de.dlr.proseo.samplewrap.rest.RestOps;
-import de.dlr.proseo.samplewrap.s3.AmazonS3URI;
-import de.dlr.proseo.samplewrap.s3.S3Ops;
+import de.dlr.proseo.basewrap.alluxio.AlluxioOps;
+import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
+import de.dlr.proseo.basewrap.rest.IngestorProductFilePostRequest;
+import de.dlr.proseo.basewrap.rest.RestOps;
+import de.dlr.proseo.basewrap.s3.AmazonS3URI;
+import de.dlr.proseo.basewrap.s3.S3Ops;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -57,11 +57,11 @@ import software.amazon.awssdk.services.s3.S3Client;
  * prosEO Sample Processor Wrapper - an example of a wrapper for processors conforming to ESA's
  * "Generic IPF Interface Specification" (MMFI-GSEG-EOPG-TN-07-0003, V.1.8)
  * 
- * @author Dr. Thomas Bassler
  * @author Hubert Asamer
+ * @author Dr. Thomas Bassler
  *
  */
-public class SampleWrapper {
+public class BaseWrapper {
 
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
@@ -89,7 +89,7 @@ public class SampleWrapper {
 
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(SampleWrapper.class);
+	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
 
 	/** IPF_Proc valid Tags Enums */
 	enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
@@ -222,14 +222,7 @@ public class SampleWrapper {
 	}
 
 	private String splash() {	
-		return "\n" +"\n" + 
-				"                                       _|_|_|_|     _|_|\n" + 
-				" _|_|_|   _|  _|_|   _|_|      _|_|_|  _|        _|     _|\n" + 
-				" _|    _| _|_|     _|    _|  _|_|      _|_|_|    _|     _|\n" + 
-				" _|    _| _|       _|    _|      _|_|  _|        _|     _|\n" + 
-				" _|_|_|   _|         _|_|    _|_|_|    _|_|_|_|     _|_|\n" + 
-				" _|\n" + 
-				" _|\n";
+		return "\n\n{\"prosEO\" : \"A Processing System for Earth Observation Data\"}\n";
 	}
 
 	private Boolean checkEnv() {
@@ -803,7 +796,7 @@ public class SampleWrapper {
 	 * @param args not used due env-var based invocation
 	 */
 	public static void main(String[] args) {
-		System.exit((new SampleWrapper()).run());
+		System.exit((new BaseWrapper()).run());
 	}
 
 }

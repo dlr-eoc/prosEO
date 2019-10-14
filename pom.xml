@@ -40,7 +40,7 @@
 		<module>productclass-mgr</module>
 		<module>processor-mgr</module>
 		<module>ui</module>
-		<module>sample-wrapper</module>
+		<module>base-wrapper</module>
 		<module>storage-mgr</module>
 	</modules>
 

@@ -1,4 +1,4 @@
-package de.dlr.proseo.samplewrap;
+package de.dlr.proseo.basewrap;
 
 public class IngestedProcessingOutput {
 	private long product_id;

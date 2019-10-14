@@ -1,4 +1,4 @@
-package de.dlr.proseo.samplewrap.s3;
+package de.dlr.proseo.basewrap.s3;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;

@@ -1,4 +1,4 @@
-package de.dlr.proseo.samplewrap.s3;
+package de.dlr.proseo.basewrap.s3;
 
 import java.io.File;
 import java.nio.file.Files;

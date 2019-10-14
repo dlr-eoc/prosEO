@@ -1,4 +1,4 @@
-package de.dlr.proseo.samplewrap.alluxio;
+package de.dlr.proseo.basewrap.alluxio;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

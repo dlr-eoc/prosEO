@@ -1,4 +1,4 @@
-package de.dlr.proseo.samplewrap.rest;
+package de.dlr.proseo.basewrap.rest;
 
 public class HttpResponseInfo {
 

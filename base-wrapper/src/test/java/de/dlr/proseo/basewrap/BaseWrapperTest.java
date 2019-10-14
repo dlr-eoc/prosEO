@@ -4,7 +4,7 @@
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  * (C) 2019 Hubert Asamer
  */
-package de.dlr.proseo.samplewrap;
+package de.dlr.proseo.basewrap;
 
 import static org.junit.Assert.*;
 
@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.basewrap.BaseWrapper;
+
 /**
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
  * 
@@ -31,10 +33,10 @@ import org.slf4j.LoggerFactory;
  * @author Hubert Asamer
  *
  */
-public class SampleWrapperTest {
+public class BaseWrapperTest {
 	
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(SampleWrapperTest.class);
+	private static Logger logger = LoggerFactory.getLogger(BaseWrapperTest.class);
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/JobOrder.609521551_KNMI.xml";
 	
     public static final String ANSI_RESET = "\u001B[0m";
@@ -165,7 +167,7 @@ public class SampleWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: JOF-path is wrong "+envmap+ANSI_RESET);
-		int rc = (new SampleWrapper()).run(); 
+		int rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 		
@@ -186,7 +188,7 @@ public class SampleWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is wrong "+envmap+ANSI_RESET);
-		rc = (new SampleWrapper()).run(); 
+		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 		
@@ -207,7 +209,7 @@ public class SampleWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: FS_TYPE is S3, but JOBORDER_FILE refers to non s3 URI "+envmap+ANSI_RESET);
-		rc = (new SampleWrapper()).run(); 
+		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 		
@@ -248,7 +250,7 @@ public class SampleWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-credentials "+envmap+ANSI_RESET);
-		rc = (new SampleWrapper()).run(); 
+		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 		
@@ -268,7 +270,7 @@ public class SampleWrapperTest {
 			e.printStackTrace();
 		}
 		logger.info(ANSI_YELLOW+"**TEST: S3-JOF but using wrong s3-URI "+envmap+ANSI_RESET);
-		rc = (new SampleWrapper()).run(); 
+		rc = (new BaseWrapper()).run(); 
 		assertEquals("Return code should be 255", 255L, (long) rc);
 		
 	}

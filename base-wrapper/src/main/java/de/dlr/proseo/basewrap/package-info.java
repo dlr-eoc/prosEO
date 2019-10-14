@@ -8,4 +8,4 @@
  * @author Dr. Thomas Bassler
  *
  */
-package de.dlr.proseo.samplewrap;
+package de.dlr.proseo.basewrap;
