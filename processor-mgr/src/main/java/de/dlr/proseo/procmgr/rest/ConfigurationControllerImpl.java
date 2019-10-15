@@ -24,14 +24,7 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.Configuration;
-<<<<<<< HEAD
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
-import de.dlr.proseo.procmgr.rest.model.Processor;
-import de.dlr.proseo.procmgr.rest.model.ProcessorUtil;
-import de.dlr.proseo.procmgr.rest.model.Task;
-import de.dlr.proseo.procmgr.rest.model.TaskUtil;
-=======
->>>>>>> refs/heads/master
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage configuration versions.
@@ -43,14 +36,14 @@ import de.dlr.proseo.procmgr.rest.model.TaskUtil;
 public class ConfigurationControllerImpl implements ConfigurationController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_CONFIGURATION_NOT_FOUND = 2250;
-	private static final int MSG_ID_CONFIGURATION_LIST_RETRIEVED = 2251;
-	private static final int MSG_ID_CONFIGURATION_RETRIEVED = 2252;
-	private static final int MSG_ID_CONFIGURATION_MISSING = 2253;
-	private static final int MSG_ID_PROCESSOR_CLASS_INVALID = 2254;
-	private static final int MSG_ID_CONFIGURATION_CREATED = 2255;
-	private static final int MSG_ID_CONFIGURATION_ID_MISSING = 2256;
-	private static final int MSG_ID_CONFIGURATION_ID_NOT_FOUND = 2257;
+	private static final int MSG_ID_CONFIGURATION_NOT_FOUND = 2300;
+	private static final int MSG_ID_CONFIGURATION_LIST_RETRIEVED = 2301;
+	private static final int MSG_ID_CONFIGURATION_RETRIEVED = 2302;
+	private static final int MSG_ID_CONFIGURATION_MISSING = 2303;
+	private static final int MSG_ID_PROCESSOR_CLASS_INVALID = 2304;
+	private static final int MSG_ID_CONFIGURATION_CREATED = 2305;
+	private static final int MSG_ID_CONFIGURATION_ID_MISSING = 2306;
+	private static final int MSG_ID_CONFIGURATION_ID_NOT_FOUND = 2307;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -117,7 +110,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param mission the mission code
 	 * @param processorName the processor name
 	 * @param configurationVersion the configuration version
-	 * @return a list of Json objects representing processors satisfying the search criteria
+	 * @return a list of Json objects representing configurations satisfying the search criteria
 	 */
 	@Override
 	public ResponseEntity<List<Configuration>> getConfigurations(String mission, String processorName,
