@@ -6,7 +6,7 @@ package de.dlr.proseo.model.dao;
 import java.time.Instant;
 import java.util.List;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ProcessingOrder;
@@ -18,7 +18,7 @@ import de.dlr.proseo.model.ProcessingOrder;
  *
  */
 @Repository
-public interface OrderRepository extends CrudRepository<ProcessingOrder, Long> {
+public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 
 	/**
 	 * Get the processing order with the given identifier
