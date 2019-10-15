@@ -71,6 +71,10 @@ public class BaseWrapper {
 	private static final String EXIT_TEXT_OK = "OK";
 	/** Exit code explanation for failure */
 	private static final String EXIT_TEXT_FAILURE = "FAILURE";
+	
+	private static final String CALLBACK_STATUS_FAILURE = "FAILURE";
+	private static final String CALLBACK_STATUS_SUCCESS = "SUCCESS";
+	
 
 	/** Set path finals for container-context & Alluxio FS-Client*/
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
@@ -111,7 +115,6 @@ public class BaseWrapper {
 		, LOGFILE_TARGET
 		, INGESTOR_ENDPOINT
 		, STATE_CALLBACK_ENDPOINT
-		, SUCCESS_STATE
 		, PROCESSOR_SHELL_COMMAND
 		, PROCESSING_FACILITY_NAME
 		, K8S_PODNAME
@@ -126,7 +129,6 @@ public class BaseWrapper {
 	private String ENV_S3_BUCKET_OUTPUTS = System.getenv(ENV_VARS.S3_BUCKET_OUTPUTS.toString());
 	private String ENV_LOGFILE_TARGET = System.getenv(ENV_VARS.LOGFILE_TARGET.toString());
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
-	private String ENV_SUCCESS_STATE = System.getenv(ENV_VARS.SUCCESS_STATE.toString());
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
@@ -274,10 +276,6 @@ public class BaseWrapper {
 		}
 		if (ENV_STATE_CALLBACK_ENDPOINT == null || ENV_STATE_CALLBACK_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STATE_CALLBACK_ENDPOINT);
-			return false;
-		}
-		if (ENV_SUCCESS_STATE == null || ENV_SUCCESS_STATE.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.SUCCESS_STATE);
 			return false;
 		}
 		if (ENV_PROCESSOR_SHELL_COMMAND == null || ENV_PROCESSOR_SHELL_COMMAND.isEmpty()) {
@@ -656,7 +654,7 @@ public class BaseWrapper {
 			} catch (JsonProcessingException e) {
 				logger.error(e.getMessage());
 			} 
-			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, RestOps.HttpMethod.POST);
+			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
 			
 			if (singleResponse != null && singleResponse.gethttpCode()==201) {
 				logger.info("... ingestor response is  {}",singleResponse.gethttpResponse());
@@ -681,14 +679,14 @@ public class BaseWrapper {
 		return ingests;
 	}
 
-	private HttpResponseInfo callBackSuccess(ArrayList<IngestedProcessingOutput> callBackContent) {
-		//TODO:
-		return null;
-	}
 
-	private void callBackFailure(String msg) {
-		//TODO:
-
+	private HttpResponseInfo callBack(String msg) {
+		String callBackRestUrl =   "/processingfacilities/"+ENV_PROCESSING_FACILITY_NAME+"/finish/"+ENV_K8S_PODNAME;
+		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, callBackRestUrl, msg, "status", RestOps.HttpMethod.PATCH);
+		if(callback != null) logger.info("... planner response is {}", callback.gethttpResponse());
+		else return null;
+		
+		return callback;
 	}
 
 	/**
@@ -709,22 +707,22 @@ public class BaseWrapper {
 		logger.info(MSG_STARTING_BASE_WRAPPER, ENV_JOBORDER_FILE);
 		Boolean check = checkEnv();
 		if (!check) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		File jobOrderFile = provideInitialJOF();
 		if (null == jobOrderFile) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
 		if (null == jobOrderDoc) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -732,15 +730,15 @@ public class BaseWrapper {
 		JobOrder joWork = null;
 		joWork = fetchInputData(jobOrderDoc);
 		if (null == joWork) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -750,8 +748,8 @@ public class BaseWrapper {
 				CONTAINER_JOF_PATH
 				);
 		if (!procRun) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
@@ -759,8 +757,8 @@ public class BaseWrapper {
 		ArrayList<PushedProcessingOutput> pushedProducts = null;
 		pushedProducts = pushResults(joWork);
 		if (null == pushedProducts) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 		logger.info("Upload summary: listing {} Outputs of type `PushedProcessingOutput`", pushedProducts.size());
@@ -773,22 +771,17 @@ public class BaseWrapper {
 		ingestedProducts = ingestPushedOutputs(pushedProducts);
 
 		if (null == ingestedProducts) {
+			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
 			return EXIT_CODE_FAILURE;
 		}
 
 		/** STEP [12] Callback */
 		HttpResponseInfo callBackMsg = null;
-		callBackMsg = callBackSuccess(ingestedProducts);
-
-
+		callBackMsg = callBack(CALLBACK_STATUS_SUCCESS);
 		if (null == callBackMsg) {
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			callBackFailure("");
-			return EXIT_CODE_FAILURE;
+			logger.warn("Callback for status {} failed, but wrapper finished with return code {}", CALLBACK_STATUS_FAILURE, EXIT_CODE_OK);	
 		}
-
 		logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_OK, EXIT_TEXT_OK);
 		return EXIT_CODE_OK;
 	}
