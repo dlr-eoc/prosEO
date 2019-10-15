@@ -13,7 +13,6 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
@@ -23,11 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor;
-import de.dlr.proseo.procmgr.rest.model.Processor;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClass;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 
@@ -54,7 +50,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	
 	/* Message string constants */
 	private static final String MSG_PROCESSOR_CLASS_NOT_FOUND = "(E%d) No processor class found for mission %s and processor name %s";
-	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor classes for mission %s and processor name %s retrieved";
+	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
 	private static final String MSG_PROCESSOR_CLASS_RETRIEVED = "(I%d) Processor class with ID %d retrieved";
 	private static final String MSG_PROCESSOR_CLASS_MISSING = "(E%d) Processor class not set";
 	private static final String MSG_PROCESSOR_CLASS_ID_MISSING = "(E%d) Processor class ID not set";
@@ -63,7 +59,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid for mission %s";
 	private static final String MSG_PROCESSOR_CLASS_CREATED = "(I%d) Processor class %s created for mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
+	private static final String HTTP_MSG_PREFIX = "199 proseo-processor-mgr ";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -116,7 +112,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 
 	 * @param mission the mission code (optional)
 	 * @param processorName the processor name (optional)
-	 * @return a list of processor classes satisfying the search criteria
+	 * @return a list of Json objects representing processor classes satisfying the search criteria
 	 */
 	@Override
 	public ResponseEntity<List<ProcessorClass>> getProcessorClass(String mission, String processorName) {
@@ -124,9 +120,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		
 		List<ProcessorClass> result = new ArrayList<>();
 		
-		de.dlr.proseo.model.ProcessorClass processorClass;
 		if (null != mission && null != processorName) {
-			processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
+			de.dlr.proseo.model.ProcessorClass processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
 					processorName);
 			if (null == processorClass) {
 				return new ResponseEntity<>(
@@ -150,8 +145,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 				query.setParameter("processorName", processorName);
 			}
 			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof ProcessorClass) {
-					result.add((ProcessorClass) resultObject);
+				if (resultObject instanceof de.dlr.proseo.model.ProcessorClass) {
+					result.add(ProcessorClassUtil.toRestProcessorClass((de.dlr.proseo.model.ProcessorClass) resultObject));
 				}
 			}
 			if (result.isEmpty()) {
