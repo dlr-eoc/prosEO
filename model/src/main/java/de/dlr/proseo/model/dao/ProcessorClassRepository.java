@@ -24,5 +24,6 @@ public interface ProcessorClassRepository extends CrudRepository<ProcessorClass,
 	 * @param processorName the processor name
 	 * @return the unique processor class identified by the processor name
 	 */
-	public ProcessorClass findByProcessorName(String processorName);
+	@Query("select pc from ProcessorClass pc where pc.mission.code = ?1 and pc.processorName = ?2")
+	public ProcessorClass findByMissionCodeAndProcessorName(String missionCode, String processorName);
 }
