@@ -29,7 +29,7 @@ services:
       - "5432:5432"
   minio:
     image: minio/minio
-    command: server /data
+    command: server --compat /data
     environment:
       - MINIO_ACCESS_KEY=short_access_key
       - MINIO_SECRET_KEY=short_secret_key

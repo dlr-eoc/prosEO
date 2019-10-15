@@ -9,7 +9,7 @@
     </parent>
     <artifactId>base-wrapper</artifactId>
     <name>prosEO Base Processor Wrapper</name>
-    <description>prosEO Base Processor Wrapper  Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
+    <description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
     <url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
     <organization>
         <name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
