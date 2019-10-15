@@ -24,11 +24,14 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.Configuration;
+<<<<<<< HEAD
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 import de.dlr.proseo.procmgr.rest.model.Processor;
 import de.dlr.proseo.procmgr.rest.model.ProcessorUtil;
 import de.dlr.proseo.procmgr.rest.model.Task;
 import de.dlr.proseo.procmgr.rest.model.TaskUtil;
+=======
+>>>>>>> refs/heads/master
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage configuration versions.

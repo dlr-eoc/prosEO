@@ -8,6 +8,7 @@ package de.dlr.proseo.model.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.dlr.proseo.model.dao.ConfigurationRepository;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
 import de.dlr.proseo.model.dao.JobRepository;
@@ -35,6 +36,10 @@ public class RepositoryService {
 	/** The single instance of this class */
 	private static RepositoryService theRepositoryService = null;
 
+	/** The repository for the Configuration class */
+	@Autowired
+    private ConfigurationRepository configurationRepository;
+	
 	/** The repository for the ConfiguredProcessor class */
 	@Autowired
     private ConfiguredProcessorRepository configuredProcessorRepository;
@@ -101,6 +106,15 @@ public class RepositoryService {
 	public RepositoryService() {
 		super();
 		theRepositoryService = this;
+	}
+
+	/**
+	 * Gets the repository for the Configuration class
+	 * 
+	 * @return the configurationRepository
+	 */
+	public static ConfigurationRepository getConfigurationRepository() {
+		return theRepositoryService.configurationRepository;
 	}
 
 	/**
