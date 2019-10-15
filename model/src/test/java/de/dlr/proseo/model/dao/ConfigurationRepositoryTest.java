@@ -1,5 +1,5 @@
 /**
- * ProcessorRepositoryTest.java
+ * ConfigurationRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -22,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
@@ -29,7 +30,7 @@ import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
- * Unit test cases for ProcessorRepository
+ * Unit test cases for ConfigurationRepository
  *
  * @author Dr. Thomas Bassler
  */
@@ -38,14 +39,14 @@ import de.dlr.proseo.model.service.RepositoryService;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class ProcessorRepositoryTest {
+public class ConfigurationRepositoryTest {
 
 	private static final String TEST_CODE = "$xyz$";
 	private static final String TEST_VERSION = "$02.00.01$";
 	private static final String TEST_NAME = "$KNMI L2$";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(ConfigurationRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -86,19 +87,16 @@ public class ProcessorRepositoryTest {
 		procClass.setProcessorName(TEST_NAME);
 		procClass = RepositoryService.getProcessorClassRepository().save(procClass);
 				
-		Processor proc = new Processor();
-		proc.setProcessorClass(procClass);
-		proc.setProcessorVersion(TEST_VERSION);
-		proc = RepositoryService.getProcessorRepository().save(proc);
+		Configuration conf = new Configuration();
+		conf.setProcessorClass(procClass);
+		conf.setConfigurationVersion(TEST_VERSION);
+		conf = RepositoryService.getConfigurationRepository().save(conf);
 
-		procClass.getProcessors().add(proc);
-		RepositoryService.getProcessorClassRepository().save(procClass);
+		// Test findByMissionCodeAndProcessorNameAndConfigurationVersion
+		conf = RepositoryService.getConfigurationRepository().findByMissionCodeAndProcessorNameAndConfigurationVersion(TEST_CODE, TEST_NAME, TEST_VERSION);
+		assertNotNull("Find by processor name and configuration version failed for Processor", conf);
 		
-		// Test findByProcessorNameAndProcessorVersion
-		proc = RepositoryService.getProcessorRepository().findByMissionCodeAndProcessorNameAndProcessorVersion(TEST_CODE, TEST_NAME, TEST_VERSION);
-		assertNotNull("Find by processor name and version failed for Processor", proc);
-		
-		logger.info("OK: Test for findByProcessorNameAndProcessorVersion completed");
+		logger.info("OK: Test for findByMissionCodeAndProcessorNameAndConfigurationVersion completed");
 		
 	}
 

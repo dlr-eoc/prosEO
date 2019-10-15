@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.procmgr.rest.model.Configuration;
-import de.dlr.proseo.procmgr.rest.model.Processor;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage configuration versions.

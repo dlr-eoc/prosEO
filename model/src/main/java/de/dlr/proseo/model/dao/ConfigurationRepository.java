@@ -1,5 +1,5 @@
 /**
- * ProcessorRepository.java
+ * ConfigurationRepository.java
  */
 package de.dlr.proseo.model.dao;
 
@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.Configuration;
 
 /**
  * Data Access Object for the Processor class
@@ -16,7 +16,7 @@ import de.dlr.proseo.model.Processor;
  *
  */
 @Repository
-public interface ProcessorRepository extends JpaRepository<Processor, Long> {
+public interface ConfigurationRepository extends JpaRepository<Configuration, Long> {
 
 	/**
 	 * Get the processor with the given mission, class name and version
@@ -25,6 +25,6 @@ public interface ProcessorRepository extends JpaRepository<Processor, Long> {
 	 * @param processorVersion the processor version
 	 * @return the unique processor identified by the search criteria
 	 */
-	@Query("select p from Processor p where p.processorClass.mission.code = ?1 and p.processorClass.processorName = ?2 and p.processorVersion = ?3")
-	public Processor findByMissionCodeAndProcessorNameAndProcessorVersion(String mission, String processorName, String processorVersion);
+	@Query("select c from Configuration c where c.processorClass.mission.code = ?1 and c.processorClass.processorName = ?2 and c.configurationVersion = ?3")
+	public Configuration findByMissionCodeAndProcessorNameAndConfigurationVersion(String mission, String processorName, String configurationVersion);
 }
