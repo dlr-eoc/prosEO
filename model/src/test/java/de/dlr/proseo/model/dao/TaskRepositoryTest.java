@@ -1,5 +1,5 @@
 /**
- * ProcessorRepositoryTest.java
+ * TaskRepositoryTest.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -24,11 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
- * Unit test cases for ProcessorRepository
+ * Unit test cases for OrbitRepository
  *
  * @author Dr. Thomas Bassler
  */
@@ -37,13 +38,14 @@ import de.dlr.proseo.model.service.RepositoryService;
 @DirtiesContext
 @Transactional
 @AutoConfigureTestEntityManager
-public class ProcessorRepositoryTest {
+public class TaskRepositoryTest {
 
 	private static final String TEST_VERSION = "$02.00.01$";
 	private static final String TEST_NAME = "$KNMI L2$";
+	private static final String TEST_TASK_NAME = "$TROPNLL2$";
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorRepositoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(TaskRepositoryTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
@@ -87,11 +89,14 @@ public class ProcessorRepositoryTest {
 		procClass.getProcessors().add(proc);
 		RepositoryService.getProcessorClassRepository().save(procClass);
 		
-		// Test findByProcessorNameAndProcessorVersion
-		proc = RepositoryService.getProcessorRepository().findByProcessorNameAndProcessorVersion(TEST_NAME, TEST_VERSION);
-		assertNotNull("Find by processor name and version failed for Processor", proc);
+		// Test save
+		Task task = new Task();
+		task.setTaskName(TEST_TASK_NAME);
+		task.setProcessor(proc);
+		task = RepositoryService.getTaskRepository().save(task);
+		assertTrue("Database ID not set for task", 0 != task.getId());
 		
-		logger.info("OK: Test for findByProcessorNameAndProcessorVersion completed");
+		logger.info("OK: Test for save completed");
 		
 	}
 

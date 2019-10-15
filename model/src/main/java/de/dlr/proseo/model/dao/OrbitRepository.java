@@ -6,8 +6,8 @@ package de.dlr.proseo.model.dao;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Orbit;
@@ -19,7 +19,7 @@ import de.dlr.proseo.model.Orbit;
  *
  */
 @Repository
-public interface OrbitRepository extends CrudRepository<Orbit, Long> {
+public interface OrbitRepository extends JpaRepository<Orbit, Long> {
 
 	/**
 	 * Get the orbit with the given spacecraft and orbit number
