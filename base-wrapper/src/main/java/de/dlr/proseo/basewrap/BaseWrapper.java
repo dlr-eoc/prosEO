@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -22,15 +21,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,19 +29,16 @@ import alluxio.AlluxioURI;
 import alluxio.exception.AlluxioException;
 import alluxio.grpc.ReadPType;
 import alluxio.grpc.WritePType;
+import de.dlr.proseo.model.fs.alluxio.AlluxioOps;
+import de.dlr.proseo.model.fs.s3.AmazonS3URI;
+import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
-import de.dlr.proseo.basewrap.alluxio.AlluxioOps;
-import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
-import de.dlr.proseo.basewrap.rest.IngestorProductFilePostRequest;
-import de.dlr.proseo.basewrap.rest.RestOps;
-import de.dlr.proseo.basewrap.s3.AmazonS3URI;
-import de.dlr.proseo.basewrap.s3.S3Ops;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
+import de.dlr.proseo.model.rest.HttpResponseInfo;
+import de.dlr.proseo.model.rest.IngestorProductFilePostRequest;
+import de.dlr.proseo.model.rest.RestOps;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
@@ -134,62 +122,6 @@ public class BaseWrapper {
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
 	private String ENV_K8S_PODNAME = System.getenv(ENV_VARS.K8S_PODNAME.toString());
 
-	/** Base V2 S3-Client */
-	private S3Client v2S3Client() {
-		try {
-			//check if S3 env vars are set
-			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
-			if(ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY); return null;}
-			if(ENV_S3_ENDPOINT==null||ENV_S3_ENDPOINT.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT); return null;}
-
-			AwsBasicCredentials creds = AwsBasicCredentials.create( ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
-			Region region = Region.EU_CENTRAL_1;
-			S3Client s3 = S3Client.builder()
-					.region(region)
-					.endpointOverride(URI.create(ENV_S3_ENDPOINT))
-					.credentialsProvider(StaticCredentialsProvider.create(creds))
-					.build();
-			return s3;
-		} catch(software.amazon.awssdk.core.exception.SdkClientException e) {
-			logger.error(e.getMessage());
-			return null;
-		} catch (java.lang.NullPointerException e1) {
-			logger.error(e1.getMessage());
-			return null;
-		}
-	}
-
-	/** Base V1 S3-Client */
-	private AmazonS3 v1S3Client() {
-		try {
-			//check if S3 env vars are set
-			if(ENV_S3_ACCESS_KEY == null || ENV_S3_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ACCESS_KEY); return null;}
-			if(ENV_S3_SECRET_ACCESS_KEY == null || ENV_S3_SECRET_ACCESS_KEY.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_SECRET_ACCESS_KEY); return null;}
-			if(ENV_S3_ENDPOINT==null||ENV_S3_ENDPOINT.isEmpty()) {logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_ENDPOINT); return null;}
-
-			BasicAWSCredentials awsCreds = new BasicAWSCredentials(ENV_S3_ACCESS_KEY,ENV_S3_SECRET_ACCESS_KEY);
-			ClientConfiguration clientConfiguration = new ClientConfiguration();
-			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
-			AmazonS3 amazonS3 = AmazonS3ClientBuilder
-					.standard()
-					.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(ENV_S3_ENDPOINT, Regions.EU_CENTRAL_1.name()))
-					.withPathStyleAccessEnabled(true)
-					.withClientConfiguration(clientConfiguration)
-					.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-					.build();
-			return amazonS3;
-		}	catch (AmazonServiceException e) {
-			logger.error(e.getMessage());
-			return null;
-		}  catch(AmazonClientException e) {
-			logger.error(e.getMessage());
-			return null;
-		} catch (java.lang.NullPointerException e) {
-			logger.error(e.getMessage());
-			return null;
-		}
-
-	}
 
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
@@ -328,7 +260,7 @@ public class BaseWrapper {
 
 		/** Fetch JOF if container env-var `FS_TYPE` has value `S3` */
 		if (ENV_JOBORDER_FS_TYPE.equals(FS_TYPE.S3.toString()) && ENV_JOBORDER_FILE.startsWith("s3://")) {
-			S3Client s3 = v2S3Client();
+			S3Client s3 = S3Ops.v2S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 			if (null == s3) return null;
 			Boolean transaction = S3Ops.v2FetchFile(s3, ENV_JOBORDER_FILE, JOFContainerPath);
 			if (!transaction) return null;
@@ -377,7 +309,7 @@ public class BaseWrapper {
 		int numberOfInputs = 0;
 		int numberOfFetchedInputs = 0;
 		int numberOfOutputs = 0;
-		S3Client s3 = v2S3Client();
+		S3Client s3 = S3Ops.v2S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 		if (null == s3) return null;
 		// loop all procs -> mainly only one is present
 		for(Proc item : jo.getListOfProcs()) {
@@ -522,7 +454,7 @@ public class BaseWrapper {
 	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
 		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
-		AmazonS3 s3 = v1S3Client();
+		AmazonS3 s3 = S3Ops.v1S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 		int numberOfOutputs = 0;
 		int numberOfPushedOutputs = 0;
 		ArrayList<PushedProcessingOutput> pushedOutputs = new ArrayList<PushedProcessingOutput>();

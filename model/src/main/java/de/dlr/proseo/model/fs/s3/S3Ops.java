@@ -1,6 +1,7 @@
-package de.dlr.proseo.basewrap.s3;
+package de.dlr.proseo.model.fs.s3;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -11,14 +12,24 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
 
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
@@ -27,6 +38,57 @@ public class S3Ops {
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
+	
+	
+	/** return Base V2 S3-Client */
+	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint) {
+		try {
+			
+			AwsBasicCredentials creds = AwsBasicCredentials.create( s3AccessKey,secretAccessKey);
+			Region region = Region.EU_CENTRAL_1;
+			S3Client s3 = S3Client.builder()
+					.region(region)
+					.endpointOverride(URI.create(s3Endpoint))
+					.credentialsProvider(StaticCredentialsProvider.create(creds))
+					.build();
+			return s3;
+		} catch(software.amazon.awssdk.core.exception.SdkClientException e) {
+			logger.error(e.getMessage());
+			return null;
+		} catch (java.lang.NullPointerException e1) {
+			logger.error(e1.getMessage());
+			return null;
+		}
+	}
+
+	/** return Base V1 S3-Client */
+	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint) {
+		try {
+			
+			BasicAWSCredentials awsCreds = new BasicAWSCredentials(s3AccessKey,secretAccessKey);
+			ClientConfiguration clientConfiguration = new ClientConfiguration();
+			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
+			AmazonS3 amazonS3 = AmazonS3ClientBuilder
+					.standard()
+					.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Regions.EU_CENTRAL_1.name()))
+					.withPathStyleAccessEnabled(true)
+					.withClientConfiguration(clientConfiguration)
+					.withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+					.build();
+			return amazonS3;
+		}	catch (AmazonServiceException e) {
+			logger.error(e.getMessage());
+			return null;
+		}  catch(AmazonClientException e) {
+			logger.error(e.getMessage());
+			return null;
+		} catch (java.lang.NullPointerException e) {
+			logger.error(e.getMessage());
+			return null;
+		}
+
+	}
+	
 
 	/**
 	 * fetch file from S3 to local file

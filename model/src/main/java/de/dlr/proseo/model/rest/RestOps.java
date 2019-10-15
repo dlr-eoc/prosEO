@@ -1,4 +1,4 @@
-package de.dlr.proseo.basewrap.rest;
+package de.dlr.proseo.model.rest;
 
 
 import javax.annotation.Nullable;

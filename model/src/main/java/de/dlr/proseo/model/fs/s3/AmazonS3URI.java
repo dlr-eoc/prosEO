@@ -12,7 +12,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package de.dlr.proseo.basewrap.s3;
+package de.dlr.proseo.model.fs.s3;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;

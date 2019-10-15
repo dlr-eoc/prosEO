@@ -1,6 +1,7 @@
 /**
  * StorageControllerImpl.java
  * 
+ * (C) 2019 DLR
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.storagemgr.rest;
@@ -16,12 +17,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.storagemgr.rest.model.Joborder;
+import de.dlr.proseo.storagemgr.rest.model.ProductFS;
 import de.dlr.proseo.storagemgr.rest.model.Storage;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services required to manage
  * any object storage, e. g. a storage based on the AWS S3 API
  * 
+ * @author Hubert Asamer
  * @author Dr. Thomas Bassler
  *
  */
@@ -52,6 +56,25 @@ public class StorageControllerImpl implements StorageController {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
+	@Override
+	public ResponseEntity<ProductFS> createProductFS(String storageId, @Valid ProductFS productFS) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<ProductFS> deleteProduct(String productId, String storageId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseEntity<Joborder> createJoborder(String storageId, @Valid Joborder joborder) {
+		
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

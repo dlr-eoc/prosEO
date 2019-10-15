@@ -18,10 +18,6 @@
     <properties>
         <!-- dropwizard downgrade hack ~ https://github.com/doanduyhai/Achilles/issues/353#issuecomment-456735770-->
         <dropwizard-metrics.version>3.2.6</dropwizard-metrics.version>
-        <awssdk1.version>1.11.327</awssdk1.version>
-        <awssdk2.version>2.5.45</awssdk2.version>
-        <alluxio.version>2.0.0</alluxio.version>
-        <javax.version>8.0.1</javax.version>
     </properties>
     <dependencies>
         <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
@@ -33,36 +29,7 @@
             <groupId>de.dlr.proseo</groupId>
             <artifactId>proseo-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <!-- AWS S3 SDK 2 -->
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>${awssdk2.version}</version>
-        </dependency>
-        <!-- AWS S3 SDK 1 -->
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>${awssdk1.version}</version>
-        </dependency>
-        <!-- Alluxio -->
-        <dependency>
-            <groupId>org.alluxio</groupId>
-            <artifactId>alluxio-core-client-fs</artifactId>
-            <version>${alluxio.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax</groupId>
-            <artifactId>javaee-api</artifactId>
-            <version>${javax.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.bundles</groupId>
-            <artifactId>jaxrs-ri</artifactId>
-            <scope>provided</scope>
-        </dependency>
+        </dependency> 
     </dependencies>
     <build>
         <finalName>proseo-base-wrapper</finalName>
