@@ -198,13 +198,13 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 	
 	/**
-	 * Create an orbit from the given Json object 
-	 * @param orbit the Json object to create the orbit from
-	 * @return a response containing a Json object corresponding to the orbit after persistence (with ID and version for all 
+	 * Create orbit/s from the given Json object 
+	 * @param orbit the List of Json object to create the orbit from
+	 * @return a response containing a List of Json object corresponding to the orbit after persistence (with ID and version for all 
 	 * 		   contained objects) and HTTP status "CREATED"
 	 */
 	@Override
-	public ResponseEntity<Orbit> createOrbit(@Valid Orbit orbit) {		
+	public ResponseEntity<List<Orbit>> createOrbit(@Valid List<Orbit> orbit) {		
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());
 		
 		if (null == orbit) {
@@ -212,11 +212,24 @@ public class OrbitControllerImpl implements OrbitController {
 					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
 		}
 		
-		de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(orbit);
+		List<de.dlr.proseo.model.Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit> ();
 		
-		modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+		List<Orbit> restOrbits = new ArrayList<Orbit> ();
+		//Insert every valid Rest orbit into the DB
+		for(Orbit tomodelOrbit : orbit) {
+			de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
+			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+			modelOrbits.add(modelOrbit);
+		}
+		 
+		//Return every inserted orbit 
+		for(de.dlr.proseo.model.Orbit torestOrbit : modelOrbits ) {
+			Orbit restOrbit = OrbitUtil.toRestOrbit(torestOrbit);
+			restOrbits.add(restOrbit);
+		}
 		
-		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit), HttpStatus.CREATED);
+		//return null;
+		return new ResponseEntity<>(restOrbits, HttpStatus.CREATED);
 	}
 
 	/**

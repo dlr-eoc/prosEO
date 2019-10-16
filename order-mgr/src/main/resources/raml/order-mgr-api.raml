@@ -191,14 +191,14 @@ resourceTypes:
     description: Create new orbits
     body:
       application/json:
-        type: Orbit
-        example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+        type: Orbit[]
+        example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
     responses:
       201:
         body:
           application/json:
-            type: Orbit
-            example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+            type: Orbit[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
   /{id}:
     uriParameters:
       id:

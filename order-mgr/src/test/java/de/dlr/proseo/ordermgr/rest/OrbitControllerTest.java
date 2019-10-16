@@ -190,25 +190,25 @@ public class OrbitControllerTest {
 		String testUrl = "http://localhost:" + this.port + ORBIT_BASE_URI + "/orbits";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<Orbit> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restOrbit, Orbit.class);
+		List<Orbit> restOrbits = new ArrayList<Orbit>();
+		
+		ResponseEntity<List> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restOrbits, List.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 	
-		restOrbit = postEntity.getBody();
-		assertNotEquals("Id should not be 0 (zero): ", 0L, restOrbit.getId().longValue());
-		assertEquals("Wrong start time: ", testOrbitData[0][10], restOrbit.getStartTime());
-		assertEquals("Wrong stop time: ", testOrbitData[0][11], restOrbit.getStopTime());
-		assertEquals("Wrong Orbit Number: ", Long.valueOf(testOrbitData[0][9]), restOrbit.getOrbitNumber());
-
+		for (int i = 0 ; i < postEntity.getBody().size() ; i++) {
+			restOrbit = (Orbit) postEntity.getBody().get(i);
+			assertNotEquals("Id should not be 0 (zero): ", 0L, restOrbit.getId().longValue());
+			assertEquals("Wrong start time: ", testOrbitData[0][10], restOrbit.getStartTime());
+			assertEquals("Wrong stop time: ", testOrbitData[0][11], restOrbit.getStopTime());
+			assertEquals("Wrong Orbit Number: ", Long.valueOf(testOrbitData[0][9]), restOrbit.getOrbitNumber());
+		}
 
 		// Test that the orbit exists
 		testUrl += "/" + restOrbit.getId();
 		ResponseEntity<Orbit> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, Orbit.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		
-		// Test that the Production Planner was informed
-		// TODO Using mock production planner
 		
 		// Clean up database
 		ArrayList<de.dlr.proseo.model.Orbit> testOrbit = new ArrayList<>();
