@@ -137,7 +137,7 @@ public class ProcessorClass extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return "ProcessorClass [mission=" + mission.getCode() + ", processorName=" + processorName + "]";
+		return "ProcessorClass [mission=" + (null == mission ? "null" : mission.getCode()) + ", processorName=" + processorName + "]";
 	}
 
 }

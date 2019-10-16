@@ -469,7 +469,8 @@ public class ProcessingOrder extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return "ProcessingOrder [mission=" + mission.getCode() + ", identifier=" + identifier + ", orderState=" + orderState + ", executionTime=" + executionTime
+		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
+				+ ", orderState=" + orderState + ", executionTime=" + executionTime
 				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
 				+ sliceDuration + ", filterConditions=" + filterConditions + ", outputParameters=" + outputParameters
 				+ ", processingMode=" + processingMode + "]";
