@@ -47,6 +47,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_CREATED = 2355;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING = 2356;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND = 2357;
+	private static final int MSG_ID_CONFIGURATION_INVALID = 2358;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -57,6 +58,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	private static final String MSG_CONFIGURED_PROCESSOR_ID_MISSING = "(E%d) Configuration ID not set";
 	private static final String MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND = "(E%d) No Configuration found with ID %d";
 	private static final String MSG_PROCESSOR_INVALID = "(E%d) Processor %s with version %s invalid for mission %s";
+	private static final String MSG_CONFIGURATION_INVALID = "(E%d) Configuration %s with version %s invalid for mission %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_CREATED = "(I%d) Configuration for processor %s with version %s created for mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-processor-mgr ";
@@ -189,6 +191,15 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		if (null == modelConfiguredProcessor.getProcessor()) {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_PROCESSOR_INVALID, MSG_ID_PROCESSOR_INVALID,
+							configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
+					HttpStatus.BAD_REQUEST);
+		}
+		
+		modelConfiguredProcessor.setConfiguration(RepositoryService.getConfigurationRepository()
+				.findByMissionCodeAndProcessorNameAndConfigurationVersion(configuredProcessor.getMissionCode(), configuredProcessor.getProcessorName(), configuredProcessor.getConfigurationVersion()));
+		if (null == modelConfiguredProcessor.getConfiguration()) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_CONFIGURATION_INVALID, MSG_ID_CONFIGURATION_INVALID,
 							configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
 					HttpStatus.BAD_REQUEST);
 		}
