@@ -1,20 +1,12 @@
-spring:
-    packagesToScan: de.dlr.proseo.model
-logging:
-    level:
-        root: INFO
-        de:
-            dlr:
-                proseo: TRACE
-        org:
-            springframework:
-                boot:
-                    test:
-                        web:
-                            client: DEBUG
 proseo:
     s3:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
       s3EndPoint: http://localhost:9000
-    
+      s3JoborderPrefixKey: /joborders
+      s3MaxNumberOfBuckets: 50
+    alluxio:
+      alluxioUnderFsS3Bucket: data
+      alluxioUnderFsS3BucketPrefix: underfs
+      alluxioUnderFsS3BucketEndPoint: http://localhost:9000
+      alluxioUnderFsMaxPrefixes: 50

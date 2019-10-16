@@ -30,6 +30,111 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
+	
+	@Value("${proseo.s3.s3JoborderPrefixKey}")
+	private String s3JoborderPrefixKey;
+	
+	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
+	private String alluxioUnderFsS3Bucket;
+	
+	@Value("${proseo.alluxio.alluxioUnderFsS3BucketEndPoint}")
+	private String alluxioUnderFsS3BucketEndPoint;
+	
+	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
+	private String alluxioUnderFsS3BucketPrefix;
+	
+	@Value("${proseo.alluxio.alluxioUnderFsMaxPrefixes}")
+	private int alluxioUnderFsMaxPrefixes;
+	
+	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
+	private int s3MaxNumberOfBuckets;
+	
+	
+
+
+	/**
+	 * @return the alluxioUnderFsMaxPrefixes
+	 */
+	public int getAlluxioUnderFsMaxPrefixes() {
+		return alluxioUnderFsMaxPrefixes;
+	}
+
+	/**
+	 * @param alluxioUnderFsMaxPrefixes the alluxioUnderFsMaxPrefixes to set
+	 */
+	public void setAlluxioUnderFsMaxPrefixes(int alluxioUnderFsMaxPrefixes) {
+		this.alluxioUnderFsMaxPrefixes = alluxioUnderFsMaxPrefixes;
+	}
+
+	/**
+	 * @return the alluxioUnderFsS3Bucket
+	 */
+	public String getAlluxioUnderFsS3Bucket() {
+		return alluxioUnderFsS3Bucket;
+	}
+
+	/**
+	 * @param alluxioUnderFsS3Bucket the alluxioUnderFsS3Bucket to set
+	 */
+	public void setAlluxioUnderFsS3Bucket(String alluxioUnderFsS3Bucket) {
+		this.alluxioUnderFsS3Bucket = alluxioUnderFsS3Bucket;
+	}
+
+	/**
+	 * @return the alluxioUnderFsS3BucketEndPoint
+	 */
+	public String getAlluxioUnderFsS3BucketEndPoint() {
+		return alluxioUnderFsS3BucketEndPoint;
+	}
+
+	/**
+	 * @param alluxioUnderFsS3BucketEndPoint the alluxioUnderFsS3BucketEndPoint to set
+	 */
+	public void setAlluxioUnderFsS3BucketEndPoint(String alluxioUnderFsS3BucketEndPoint) {
+		this.alluxioUnderFsS3BucketEndPoint = alluxioUnderFsS3BucketEndPoint;
+	}
+
+	/**
+	 * @return the alluxioUnderFsS3BucketPrefix
+	 */
+	public String getAlluxioUnderFsS3BucketPrefix() {
+		return alluxioUnderFsS3BucketPrefix;
+	}
+
+	/**
+	 * @param alluxioUnderFsS3BucketPrefix the alluxioUnderFsS3BucketPrefix to set
+	 */
+	public void setAlluxioUnderFsS3BucketPrefix(String alluxioUnderFsS3BucketPrefix) {
+		this.alluxioUnderFsS3BucketPrefix = alluxioUnderFsS3BucketPrefix;
+	}
+
+	/**
+	 * @return the s3MaxNumberOfBuckets
+	 */
+	public int getS3MaxNumberOfBuckets() {
+		return s3MaxNumberOfBuckets;
+	}
+
+	/**
+	 * @param s3MaxNumberOfBuckets the s3MaxNumberOfBuckets to set
+	 */
+	public void setS3MaxNumberOfBuckets(int s3MaxNumberOfBuckets) {
+		this.s3MaxNumberOfBuckets = s3MaxNumberOfBuckets;
+	}
+
+	/**
+	 * @return the s3JoborderPrefixKey
+	 */
+	public String getS3JoborderPrefixKey() {
+		return s3JoborderPrefixKey;
+	}
+
+	/**
+	 * @param s3JoborderPrefixKey the s3JoborderPrefixKey to set
+	 */
+	public void setS3JoborderPrefixKey(String s3JoborderPrefixKey) {
+		this.s3JoborderPrefixKey = s3JoborderPrefixKey;
+	}
 
 	/**
 	 * @return the s3AccessKey
