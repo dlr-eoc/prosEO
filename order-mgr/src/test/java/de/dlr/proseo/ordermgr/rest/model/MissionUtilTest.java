@@ -114,7 +114,7 @@ public class MissionUtilTest {
 		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
 		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
 		assertEquals("Name not preserved: ", modelmission.getName(), copiedModelMission.getName());
-		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),restMission.getSpacecrafts().size());
+		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),copiedModelMission.getSpacecrafts().size());
 
 		logger.info("Test copy REST to model OK");
 	}
