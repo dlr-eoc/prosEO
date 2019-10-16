@@ -50,29 +50,51 @@ public class Parameter {
 		this.parameterType = parameterType;
 		switch(parameterType) {
 		case STRING:
-			if (!(parameterValue instanceof String)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
-			}
 			this.parameterValue = parameterValue.toString();
 			break;
 		case BOOLEAN:
-			if (!(parameterValue instanceof Boolean)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Boolean) {
+				this.parameterValue = parameterValue.toString();
+				break;
 			}
-			this.parameterValue = parameterValue.toString();
-			break;
+			if (parameterValue instanceof String) {
+				// Boolean.parseBoolean() is too lenient for us!
+				if ("true".equals(parameterValue.toString().toLowerCase())) {
+					this.parameterValue = "true";
+					break;
+				} else if ("false".equals(parameterValue.toString().toLowerCase())) {
+					this.parameterValue = "false";
+					break;
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		case INTEGER:
-			if (!(parameterValue instanceof Short) && !(parameterValue instanceof Integer)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Short || parameterValue instanceof Integer) {
+				this.parameterValue = parameterValue.toString();
+				break;
 			}
-			this.parameterValue = parameterValue.toString();
-			break;
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = "" + Integer.parseInt((String) parameterValue);
+					break;
+				} catch (NumberFormatException e) {
+					// Handled below
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		case DOUBLE:
-			if (!(parameterValue instanceof Float) && !(parameterValue instanceof Double)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Float || parameterValue instanceof Double) {
+				this.parameterValue = parameterValue.toString();
 			}
-			this.parameterValue = parameterValue.toString();
-			break;
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = "" + Double.parseDouble((String) parameterValue);
+					break;
+				} catch (NumberFormatException e) {
+					// Handled below
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		}
 		
 		return this;
