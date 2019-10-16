@@ -19,8 +19,9 @@ import de.dlr.proseo.model.ProcessorClass;
 public interface ProcessorClassRepository extends JpaRepository<ProcessorClass, Long> {
 
 	/**
-	 * Get the processor class with the given name
+	 * Get the processor class in the given mission with the given name
 	 * 
+	 * @param missionCode the mission code
 	 * @param processorName the processor name
 	 * @return the unique processor class identified by the processor name
 	 */
