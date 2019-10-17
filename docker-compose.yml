@@ -46,7 +46,7 @@ services:
       - "19998:19998"
     hostname: alluxio-master
     volumes:
-      - ${PWD}/storage-mgr/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
+      - ${PWD}/storage-mgr/src/main/resources/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
     depends_on:
       - minio
   alluxio-worker:
