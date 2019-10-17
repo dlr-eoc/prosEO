@@ -1,18 +1,16 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
-import java.time.DateTimeException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
-import java.util.Set;
-
-import javax.validation.Valid;
 
 import de.dlr.proseo.model.Spacecraft;
 
 public class MissionUtil {
-	
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(MissionUtil.class);
+
 	/**
 	 * Convert a prosEO model Mission into a REST Mission
 	 * 
@@ -20,6 +18,8 @@ public class MissionUtil {
 	 * @return an equivalent REST mission or null, if no model mission was given
 	 */
 	public static Mission toRestMission(de.dlr.proseo.model.Mission modelMission) {
+		if (logger.isTraceEnabled()) logger.trace(">>> toRestMission({})", (null == modelMission ? "MISSING" : modelMission.getId()));
+
 		if (null == modelMission)
 			return null;
 		
@@ -65,6 +65,9 @@ public class MissionUtil {
 	 */
 
 	public static de.dlr.proseo.model.Mission toModelMission(Mission restMission) throws IllegalArgumentException{
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelMission({})", (null == restMission ? "MISSING" : restMission.getId()));
+
 		// TODO Auto-generated method stub
 		//return null;
 		
