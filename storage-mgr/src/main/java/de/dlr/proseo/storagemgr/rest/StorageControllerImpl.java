@@ -12,9 +12,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -27,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -90,59 +88,61 @@ public class StorageControllerImpl implements StorageController {
 		ArrayList<Storage> response = new ArrayList<Storage>();
 
 		try {
-
-			// fetch S3-buckets
-			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
-
-			// fetch Alluxio-Prefixes
-			AmazonS3 s3_v1 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-			List<String> allxio = S3Ops.listKeysInBucket(s3_v1, cfg.getAlluxioUnderFsS3Bucket(), cfg.getAlluxioUnderFsS3BucketPrefix(),true);
-
 			// global storages...
-			ArrayList<String> storages = new ArrayList<String>(s3bckts);
-			storages.addAll(allxio);
-			// check if we have duplicate IDs
-			Set<String> set = new HashSet<String>(storages);
-			if(set.size() < storages.size()) {
-				logger.error("TODO: there are duplicate IDs...");
+			ArrayList<String[]> storages = StorageManagerUtils
+					.getAllStorages(cfg.getS3AccessKey(), 
+							cfg.getS3SecretAccessKey(), 
+							cfg.getS3EndPoint(), 
+							cfg.getAlluxioUnderFsS3Bucket(), 
+							cfg.getAlluxioUnderFsS3BucketPrefix()
+							);
+			
+			if (null == storages) {
+				return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
-			if (id != null && s3bckts.contains(id) && !allxio.contains(id)) {
+			ArrayList<String> s3Storages = new ArrayList<String>();
+			ArrayList<String> alluxioStorages = new ArrayList<String>();
+			
+			for (String[] entry : storages) {
+				if (entry[1].equals(String.valueOf(StorageType.S_3))) {
+					s3Storages.add(entry[0]);
+				}
+				if (entry[1].equals(String.valueOf(StorageType.ALLUXIO))) {
+					alluxioStorages.add(entry[0]);
+				}
+			}
+			
+			if (id != null && s3Storages.contains(id) && !alluxioStorages.contains(id)) {
+				logger.info("queryParam->yes, s3Id->yes, alluxio->no");
 				Storage store = new Storage();
 				store.setStorageType(StorageType.S_3);
 				store.setId(id);
 				store.setDescription("S3-Bucket s3://" + id + " @" + cfg.getS3EndPoint());
 				response.add(store);
 			} 
-			if (id != null && allxio.contains(id) && !s3bckts.contains(id)) {
+			if (id != null && alluxioStorages.contains(id) && !s3Storages.contains(id)) {
+				logger.info("queryParam->yes, s3Id->no, alluxio->yes");
 				Storage store = new Storage();
 				store.setStorageType(StorageType.ALLUXIO);
 				store.setId(id);
 				store.setDescription("Alluxio Prefix alluxio://" + id);
 				response.add(store);
 			} 
-			if (id != null && !allxio.contains(id) && !s3bckts.contains(id)) {
+			if (id != null && !s3Storages.contains(id) && !alluxioStorages.contains(id)) {
+				logger.info("queryParam->yes, s3Id->no, alluxio->no");
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			} 
 			if (id==null) {
-				for (String b : s3bckts) {
+				for (String[] b : storages) {
 					Storage store = new Storage();
-					store.setStorageType(StorageType.S_3);
-					store.setId(b);
-					store.setDescription("S3-Bucket s3://" + b + " @" + cfg.getS3EndPoint());
-					response.add(store);
-				}
-				for (String b : allxio) {
-					Storage store = new Storage();
-					store.setStorageType(StorageType.ALLUXIO);
-					store.setId(b);
-					store.setDescription("Alluxio Prefix alluxio://" + b);
+					store.setStorageType(StorageType.fromValue(b[1]));
+					store.setId(b[0]);
+					store.setDescription(b[0]+b[1] + " @" + cfg.getS3EndPoint());
 					response.add(store);
 				}
 			}
-			s3.close();
-			s3_v1.shutdown();
+			
 			return new ResponseEntity<>(response, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -153,41 +153,58 @@ public class StorageControllerImpl implements StorageController {
 	@Override
 	public ResponseEntity<Storage> createStorage(@Valid Storage storage) {
 		Storage response = new Storage();
-		
-		// fetch S3-buckets
-		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-		ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
 
-		// fetch Alluxio-Prefixes
-		AmazonS3 s3_v1 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-		List<String> allxio = S3Ops.listKeysInBucket(s3_v1, cfg.getAlluxioUnderFsS3Bucket(), cfg.getAlluxioUnderFsS3BucketPrefix(),true);
-
-		// global storages...
-		ArrayList<String> storages = new ArrayList<String>(s3bckts);
-		storages.addAll(allxio);
-		// check if we have duplicate IDs
-		Set<String> set = new HashSet<String>(storages);
-		if(set.size() < storages.size() || storages.contains(storage.getId())) {
+		// check if storageId has no UpperCase letters
+		if(!storage.getId().equals(storage.getId().toLowerCase())) {
 			response.setId(storage.getId());
 			response.setStorageType(storage.getStorageType());
-			response.setDescription("Storage with storageId "+storage.getId()+" already exists...");
+			response.setDescription("StorageId must not have UpperCase letters...");
 			return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 		}
+		
+		ArrayList<String[]> storages = StorageManagerUtils
+		.getAllStorages(cfg.getS3AccessKey(), 
+				cfg.getS3SecretAccessKey(), 
+				cfg.getS3EndPoint(), 
+				cfg.getAlluxioUnderFsS3Bucket(), 
+				cfg.getAlluxioUnderFsS3BucketPrefix()
+				);
+		ArrayList<String> s3Storages = new ArrayList<String>();
+		ArrayList<String> alluxioStorages = new ArrayList<String>();
+		
+		for (String[] entry : storages) {
+			if (entry[1].equals(String.valueOf(StorageType.S_3))) {
+				s3Storages.add(entry[0]);
+			}
+			if (entry[1].equals(String.valueOf(StorageType.ALLUXIO))) {
+				alluxioStorages.add(entry[0]);
+			}
+		}
+		
 
 		if (storage.getStorageType() == StorageType.S_3) {
 			try {
-				if(s3bckts.size() > cfg.getS3MaxNumberOfBuckets()) {
+				
+				// check if we already have that ID
+				if(s3Storages.contains(storage.getId()) || alluxioStorages.contains(storage.getId())) {
+					response.setId(storage.getId());
+					response.setStorageType(storage.getStorageType());
+					response.setDescription("Storage with storageId "+storage.getId()+" already exists...");
+					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+				}
+				if(s3Storages.size() > cfg.getS3MaxNumberOfBuckets()) {
 					response.setId(storage.getId());
 					response.setStorageType(storage.getStorageType());
 					response.setDescription("Max number of S3-Buckets (="+cfg.getS3MaxNumberOfBuckets()+") is reached...");
 					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-				}				
+				}		
+				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 				String  bckt = S3Ops.createBucket(s3, storage.getId());
+				if (null == bckt) return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 				response.setId(bckt);
 				response.setStorageType(StorageType.S_3);
 				response.setDescription("created new S3-Bucket s3://"+bckt+" @"+cfg.getS3EndPoint());
 				s3.close();
-				s3_v1.shutdown();
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 			} catch (Exception e) {
 				return new ResponseEntity<>(
@@ -197,13 +214,19 @@ public class StorageControllerImpl implements StorageController {
 		}
 		if (storage.getStorageType() == StorageType.ALLUXIO) {
 			try {
-				if(allxio.size() > cfg.getAlluxioUnderFsMaxPrefixes()) {
+				if(alluxioStorages.contains(storage.getId()) || s3Storages.contains(storage.getId())) {
+					response.setId(storage.getId());
+					response.setStorageType(storage.getStorageType());
+					response.setDescription("Storage with storageId "+storage.getId()+" already exists...");
+					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+				}
+				if(alluxioStorages.size() > cfg.getAlluxioUnderFsMaxPrefixes()) {
 					response.setId(storage.getId());
 					response.setStorageType(storage.getStorageType());
 					response.setDescription("Max number of Alluxio-UnderFS Prefixes (="+cfg.getAlluxioUnderFsMaxPrefixes()+") is reached...");
 					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 				}
-				
+
 				String key = storage.getId();
 				String delimiter = "/";
 				if (!key.endsWith(delimiter)) {
@@ -214,12 +237,12 @@ public class StorageControllerImpl implements StorageController {
 					underFSPrefix += delimiter;
 				}
 				//Create a key - aka folder...
+				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 				S3Ops.createEmptyKey(s3, cfg.getAlluxioUnderFsS3Bucket(), underFSPrefix+key+"MANIFEST.txt", "prefix "+key+" created from storage-manager...");
 				response.setId(storage.getId());
 				response.setStorageType(StorageType.ALLUXIO);
 				response.setDescription("created new Alluxio-Prefix alluxio//"+storage.getId()+" @"+cfg.getS3EndPoint());
 				s3.close();
-				s3_v1.shutdown();
 				return new ResponseEntity<>(response, HttpStatus.CREATED);
 			} catch (Exception e) {
 				return new ResponseEntity<>(
@@ -235,7 +258,12 @@ public class StorageControllerImpl implements StorageController {
 
 	@Override
 	public ResponseEntity<ProductFS> createProductFS(String storageId, @Valid ProductFS productFS) {
-		// TODO Auto-generated method stub
+
+		
+
+
+
+
 		return null;
 	}
 
@@ -290,6 +318,12 @@ public class StorageControllerImpl implements StorageController {
 		response.setPathInfo("s3://" + storageId + objKey);
 		logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
 		return new ResponseEntity<>(response, HttpStatus.CREATED);
+	}
+
+	@Override
+	public ResponseEntity<ProductFS> getProductFS(String storageId, String id) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

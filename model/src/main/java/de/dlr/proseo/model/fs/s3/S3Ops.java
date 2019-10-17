@@ -142,13 +142,14 @@ public class S3Ops {
 			s3.createBucket(createBucketRequest);
 			return createBucketRequest.bucket();
 		} catch (Exception e) {
+			logger.error(e.getMessage());
 			return null;
 		}
 	}
 
 	/** 
-	 * return Base V2 S3-Client */
-	/**
+	 * return Base V2 S3-Client
+	 *
 	 * @param s3AccessKey
 	 * @param secretAccessKey
 	 * @param s3Endpoint
@@ -174,8 +175,8 @@ public class S3Ops {
 	}
 
 	/** 
-	 * return Base V1 S3-Client */
-	/**
+	 * return Base V1 S3-Client
+     *
 	 * @param s3AccessKey
 	 * @param secretAccessKey
 	 * @param s3Endpoint

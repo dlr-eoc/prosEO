@@ -6,16 +6,73 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+
+import java.util.List;
+
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.amazonaws.services.s3.AmazonS3;
+
+import de.dlr.proseo.model.fs.s3.S3Ops;
+import de.dlr.proseo.storagemgr.rest.model.StorageType;
+import software.amazon.awssdk.services.s3.S3Client;
+
 public class StorageManagerUtils {
+
+
+	private static Logger logger = LoggerFactory.getLogger(StorageManagerUtils.class);
+	
+	/**
+	 * List all available storages
+	 * 
+	 * @return ArrayList<String> of storageIds
+	 */
+	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix) {
+		try {
+			
+			// global storages...
+			ArrayList<String[]> storages = new ArrayList<String[]>();
+			
+			// fetch S3-buckets
+			S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
+			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
+			
+			for (String b : s3bckts) {
+				String[] s = new String[2];
+				s[0]=b;
+				s[1]=String.valueOf(StorageType.S_3);
+				storages.add(s);
+			}
+
+			// fetch Alluxio-Prefixes
+			AmazonS3 s3_v1 = S3Ops.v1S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
+			List<String> allxio = S3Ops.listKeysInBucket(s3_v1, alluxioUnderFsBucket,alluxioUnderFsS3BucketPrefix,true);
+
+			for (String p : allxio) {
+				String[] s = new String[2];
+				s[0]=p;
+				s[1]=String.valueOf(StorageType.ALLUXIO);
+				storages.add(s);
+			}
+			s3.close();
+			s3_v1.shutdown();
+			return storages;
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return null;
+		}
+
+	}
 
 	/**
 	 * Check if the provided String represents a valid XML Document

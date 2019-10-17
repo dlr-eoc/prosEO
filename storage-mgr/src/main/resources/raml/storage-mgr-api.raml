@@ -79,6 +79,15 @@ resourceTypes:
                 type: ProductFS
                 example: !include examples/productFS-reg.json
     /products:
+      get:
+        description: get product-infos by Id
+        queryParameters:
+          id?: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: ProductFS
       /{productId}:
         delete:
           description: delete/remove product having productId from prosEO storage
