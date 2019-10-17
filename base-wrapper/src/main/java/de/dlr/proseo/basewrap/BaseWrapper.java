@@ -51,6 +51,307 @@ import software.amazon.awssdk.services.s3.S3Client;
  */
 public class BaseWrapper {
 
+	/**
+	 * @return the logger
+	 */
+	public static Logger getLogger() {
+		return logger;
+	}
+
+	/**
+	 * @param logger the logger to set
+	 */
+	public static void setLogger(Logger logger) {
+		BaseWrapper.logger = logger;
+	}
+
+	/**
+	 * @return the eNV_JOBORDER_FS_TYPE
+	 */
+	public String getENV_JOBORDER_FS_TYPE() {
+		return ENV_JOBORDER_FS_TYPE;
+	}
+
+	/**
+	 * @param eNV_JOBORDER_FS_TYPE the eNV_JOBORDER_FS_TYPE to set
+	 */
+	public void setENV_JOBORDER_FS_TYPE(String eNV_JOBORDER_FS_TYPE) {
+		ENV_JOBORDER_FS_TYPE = eNV_JOBORDER_FS_TYPE;
+	}
+
+	/**
+	 * @return the eNV_JOBORDER_FILE
+	 */
+	public String getENV_JOBORDER_FILE() {
+		return ENV_JOBORDER_FILE;
+	}
+
+	/**
+	 * @param eNV_JOBORDER_FILE the eNV_JOBORDER_FILE to set
+	 */
+	public void setENV_JOBORDER_FILE(String eNV_JOBORDER_FILE) {
+		ENV_JOBORDER_FILE = eNV_JOBORDER_FILE;
+	}
+
+	/**
+	 * @return the eNV_S3_ENDPOINT
+	 */
+	public String getENV_S3_ENDPOINT() {
+		return ENV_S3_ENDPOINT;
+	}
+
+	/**
+	 * @param eNV_S3_ENDPOINT the eNV_S3_ENDPOINT to set
+	 */
+	public void setENV_S3_ENDPOINT(String eNV_S3_ENDPOINT) {
+		ENV_S3_ENDPOINT = eNV_S3_ENDPOINT;
+	}
+
+	/**
+	 * @return the eNV_S3_ACCESS_KEY
+	 */
+	public String getENV_S3_ACCESS_KEY() {
+		return ENV_S3_ACCESS_KEY;
+	}
+
+	/**
+	 * @param eNV_S3_ACCESS_KEY the eNV_S3_ACCESS_KEY to set
+	 */
+	public void setENV_S3_ACCESS_KEY(String eNV_S3_ACCESS_KEY) {
+		ENV_S3_ACCESS_KEY = eNV_S3_ACCESS_KEY;
+	}
+
+	/**
+	 * @return the eNV_S3_SECRET_ACCESS_KEY
+	 */
+	public String getENV_S3_SECRET_ACCESS_KEY() {
+		return ENV_S3_SECRET_ACCESS_KEY;
+	}
+
+	/**
+	 * @param eNV_S3_SECRET_ACCESS_KEY the eNV_S3_SECRET_ACCESS_KEY to set
+	 */
+	public void setENV_S3_SECRET_ACCESS_KEY(String eNV_S3_SECRET_ACCESS_KEY) {
+		ENV_S3_SECRET_ACCESS_KEY = eNV_S3_SECRET_ACCESS_KEY;
+	}
+
+	/**
+	 * @return the eNV_S3_BUCKET_OUTPUTS
+	 */
+	public String getENV_S3_BUCKET_OUTPUTS() {
+		return ENV_S3_BUCKET_OUTPUTS;
+	}
+
+	/**
+	 * @param eNV_S3_BUCKET_OUTPUTS the eNV_S3_BUCKET_OUTPUTS to set
+	 */
+	public void setENV_S3_BUCKET_OUTPUTS(String eNV_S3_BUCKET_OUTPUTS) {
+		ENV_S3_BUCKET_OUTPUTS = eNV_S3_BUCKET_OUTPUTS;
+	}
+
+	/**
+	 * @return the eNV_LOGFILE_TARGET
+	 */
+	public String getENV_LOGFILE_TARGET() {
+		return ENV_LOGFILE_TARGET;
+	}
+
+	/**
+	 * @param eNV_LOGFILE_TARGET the eNV_LOGFILE_TARGET to set
+	 */
+	public void setENV_LOGFILE_TARGET(String eNV_LOGFILE_TARGET) {
+		ENV_LOGFILE_TARGET = eNV_LOGFILE_TARGET;
+	}
+
+	/**
+	 * @return the eNV_STATE_CALLBACK_ENDPOINT
+	 */
+	public String getENV_STATE_CALLBACK_ENDPOINT() {
+		return ENV_STATE_CALLBACK_ENDPOINT;
+	}
+
+	/**
+	 * @param eNV_STATE_CALLBACK_ENDPOINT the eNV_STATE_CALLBACK_ENDPOINT to set
+	 */
+	public void setENV_STATE_CALLBACK_ENDPOINT(String eNV_STATE_CALLBACK_ENDPOINT) {
+		ENV_STATE_CALLBACK_ENDPOINT = eNV_STATE_CALLBACK_ENDPOINT;
+	}
+
+	/**
+	 * @return the eNV_PROCESSOR_SHELL_COMMAND
+	 */
+	public String getENV_PROCESSOR_SHELL_COMMAND() {
+		return ENV_PROCESSOR_SHELL_COMMAND;
+	}
+
+	/**
+	 * @param eNV_PROCESSOR_SHELL_COMMAND the eNV_PROCESSOR_SHELL_COMMAND to set
+	 */
+	public void setENV_PROCESSOR_SHELL_COMMAND(String eNV_PROCESSOR_SHELL_COMMAND) {
+		ENV_PROCESSOR_SHELL_COMMAND = eNV_PROCESSOR_SHELL_COMMAND;
+	}
+
+	/**
+	 * @return the eNV_PROCESSING_FACILITY_NAME
+	 */
+	public String getENV_PROCESSING_FACILITY_NAME() {
+		return ENV_PROCESSING_FACILITY_NAME;
+	}
+
+	/**
+	 * @param eNV_PROCESSING_FACILITY_NAME the eNV_PROCESSING_FACILITY_NAME to set
+	 */
+	public void setENV_PROCESSING_FACILITY_NAME(String eNV_PROCESSING_FACILITY_NAME) {
+		ENV_PROCESSING_FACILITY_NAME = eNV_PROCESSING_FACILITY_NAME;
+	}
+
+	/**
+	 * @return the eNV_INGESTOR_ENDPOINT
+	 */
+	public String getENV_INGESTOR_ENDPOINT() {
+		return ENV_INGESTOR_ENDPOINT;
+	}
+
+	/**
+	 * @param eNV_INGESTOR_ENDPOINT the eNV_INGESTOR_ENDPOINT to set
+	 */
+	public void setENV_INGESTOR_ENDPOINT(String eNV_INGESTOR_ENDPOINT) {
+		ENV_INGESTOR_ENDPOINT = eNV_INGESTOR_ENDPOINT;
+	}
+
+	/**
+	 * @return the eNV_K8S_PODNAME
+	 */
+	public String getENV_K8S_PODNAME() {
+		return ENV_K8S_PODNAME;
+	}
+
+	/**
+	 * @param eNV_K8S_PODNAME the eNV_K8S_PODNAME to set
+	 */
+	public void setENV_K8S_PODNAME(String eNV_K8S_PODNAME) {
+		ENV_K8S_PODNAME = eNV_K8S_PODNAME;
+	}
+
+	/**
+	 * @return the exitCodeOk
+	 */
+	public static int getExitCodeOk() {
+		return EXIT_CODE_OK;
+	}
+
+	/**
+	 * @return the exitCodeFailure
+	 */
+	public static int getExitCodeFailure() {
+		return EXIT_CODE_FAILURE;
+	}
+
+	/**
+	 * @return the exitTextOk
+	 */
+	public static String getExitTextOk() {
+		return EXIT_TEXT_OK;
+	}
+
+	/**
+	 * @return the exitTextFailure
+	 */
+	public static String getExitTextFailure() {
+		return EXIT_TEXT_FAILURE;
+	}
+
+	/**
+	 * @return the callbackStatusFailure
+	 */
+	public static String getCallbackStatusFailure() {
+		return CALLBACK_STATUS_FAILURE;
+	}
+
+	/**
+	 * @return the callbackStatusSuccess
+	 */
+	public static String getCallbackStatusSuccess() {
+		return CALLBACK_STATUS_SUCCESS;
+	}
+
+	/**
+	 * @return the workingDir
+	 */
+	public static Path getWorkingDir() {
+		return WORKING_DIR;
+	}
+
+	/**
+	 * @return the wrapperTimestamp
+	 */
+	public static long getWrapperTimestamp() {
+		return WRAPPER_TIMESTAMP;
+	}
+
+	/**
+	 * @return the containerJofPath
+	 */
+	public static String getContainerJofPath() {
+		return CONTAINER_JOF_PATH;
+	}
+
+	/**
+	 * @return the containerInputsPathPrefix
+	 */
+	public static String getContainerInputsPathPrefix() {
+		return CONTAINER_INPUTS_PATH_PREFIX;
+	}
+
+	/**
+	 * @return the containerOutputsPathPrefix
+	 */
+	public static String getContainerOutputsPathPrefix() {
+		return CONTAINER_OUTPUTS_PATH_PREFIX;
+	}
+
+	/**
+	 * @return the alluxioReadType
+	 */
+	public static ReadPType getAlluxioReadType() {
+		return ALLUXIO_READ_TYPE;
+	}
+
+	/**
+	 * @return the alluxioWriteType
+	 */
+	public static WritePType getAlluxioWriteType() {
+		return ALLUXIO_WRITE_TYPE;
+	}
+
+	/**
+	 * @return the msgLeavingBaseWrapper
+	 */
+	public static String getMsgLeavingBaseWrapper() {
+		return MSG_LEAVING_BASE_WRAPPER;
+	}
+
+	/**
+	 * @return the msgStartingBaseWrapper
+	 */
+	public static String getMsgStartingBaseWrapper() {
+		return MSG_STARTING_BASE_WRAPPER;
+	}
+
+	/**
+	 * @return the msgInvalidValueOfEnvvar
+	 */
+	public static String getMsgInvalidValueOfEnvvar() {
+		return MSG_INVALID_VALUE_OF_ENVVAR;
+	}
+
+	/**
+	 * @return the msgFileNotReadable
+	 */
+	public static String getMsgFileNotReadable() {
+		return MSG_FILE_NOT_READABLE;
+	}
+
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
 	/** Exit code for failure */

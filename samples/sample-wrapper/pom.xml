@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>de.dlr.proseo</groupId>
-        <artifactId>proseo</artifactId>
+        <artifactId>samples</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>base-wrapper</artifactId>
-    <name>prosEO Base Processor Wrapper</name>
-    <description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
-    <url>https://github.com/dlr-eoc/prosEO/base-wrapper</url>
+    <artifactId>sample-wrapper</artifactId>
+    <name>prosEO Sample Processor Wrapper</name>
+    <description></description>
+    <url>https://github.com/dlr-eoc/prosEO/samples/sample-wrapper</url>
     <organization>
         <name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
         <url>http://www.dlr.de</url>
@@ -27,12 +27,12 @@
         </dependency>
         <dependency>
             <groupId>de.dlr.proseo</groupId>
-            <artifactId>proseo-model</artifactId>
+            <artifactId>base-wrapper</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency> 
     </dependencies>
     <build>
-        <finalName>proseo-base-wrapper</finalName>
+        <finalName>proseo-sample-wrapper</finalName>
         <plugins>
             <!-- Build self-contained JAR -->
             <plugin>
@@ -49,13 +49,30 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>de.dlr.proseo.basewrap.BaseWrapper</mainClass>
+                            <mainClass>de.dlr.proseo.samplewrap.SampleWrapper</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+            </plugin>
+            <!-- Build Docker image -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-version}</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <repository>${docker.repo.dev}/proseo-sample-wrapper</repository>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
