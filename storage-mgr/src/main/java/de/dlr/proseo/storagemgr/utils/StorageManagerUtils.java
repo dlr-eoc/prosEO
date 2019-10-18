@@ -31,7 +31,25 @@ public class StorageManagerUtils {
 
 
 	private static Logger logger = LoggerFactory.getLogger(StorageManagerUtils.class);
-	
+
+	/**
+	 * @param s3AccessKey
+	 * @param s3SecretAccesKey
+	 * @param s3Endpoint
+	 * @param bucketName
+	 * @return
+	 */
+	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName) {
+
+		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint);
+		ArrayList<String> buckets = S3Ops.listBuckets(s3);
+		if (!buckets.contains(bucketName)) {
+			String  bckt = S3Ops.createBucket(s3, bucketName);
+			if (null == bckt) return false;
+		}
+		return true;	
+	}
+
 	/**
 	 * List all available storages
 	 * 
@@ -39,14 +57,14 @@ public class StorageManagerUtils {
 	 */
 	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix) {
 		try {
-			
+
 			// global storages...
 			ArrayList<String[]> storages = new ArrayList<String[]>();
-			
+
 			// fetch S3-buckets
 			S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
 			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
-			
+
 			for (String b : s3bckts) {
 				String[] s = new String[2];
 				s[0]=b;

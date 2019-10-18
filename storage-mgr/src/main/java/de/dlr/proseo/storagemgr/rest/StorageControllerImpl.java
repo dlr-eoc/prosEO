@@ -87,6 +87,9 @@ public class StorageControllerImpl implements StorageController {
 		}
 
 		try {
+			// create internal buckets if not exists..
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket());
+			
 			// global storages...
 			ArrayList<String[]> storages = StorageManagerUtils
 					.getAllStorages(cfg.getS3AccessKey(), 
@@ -153,6 +156,9 @@ public class StorageControllerImpl implements StorageController {
 	public ResponseEntity<Storage> createStorage(String procFacilityName, @Valid Storage storage) {
 		Storage response = new Storage();
 
+		// create internal buckets if not exists..
+		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket());
+		
 		// check proc-facility
 		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
 			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

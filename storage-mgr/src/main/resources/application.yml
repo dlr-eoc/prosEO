@@ -9,12 +9,12 @@ proseo:
       s3EndPoint: http://localhost:9000
       s3MaxNumberOfBuckets: 50
     alluxio:
-      alluxioUnderFsS3Bucket: data
+      alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsS3BucketEndPoint: http://localhost:9000
       alluxioUnderFsMaxPrefixes: 500
     joborder:
-      bucket: data
+      bucket: internal
       prefix: joborders
     mountpoints:
      #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
