@@ -38,6 +38,7 @@ public class CLIParser {
 	private static final int MSG_ID_TOO_MANY_PARAMETERS = 2914;
 	private static final int MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED = 2915;
 	private static final int MSG_ID_ILLEGAL_COMMAND = 2916;
+	private static final int MSG_ID_PARAMETER_MISSING = 2916;
 	
 	/* Message string constants */
 	private static final String MSG_INVALID_COMMAND_OPTION = "(E%d) Invalid command option %s found";
@@ -47,6 +48,7 @@ public class CLIParser {
 	private static final String MSG_TOO_MANY_PARAMETERS = "(E%d) Too many parameters for command %s";
 	private static final String MSG_ATTRIBUTE_PARAMETER_EXPECTED = "(E%d) Parameter of format '<attribute name>=<attribute value>' expected at position %d for command %s";
 	private static final String MSG_ILLEGAL_COMMAND = "(E%d) Illegal command %s";
+	private static final String MSG_PARAMETER_MISSING = "(E%d) Required parameter %s not found for command %s";
 	private static final String MSG_PREFIX = "199 proseo-ui-cli ";
 	
 	/** The name of the top-level command */
@@ -72,6 +74,15 @@ public class CLIParser {
 		syntax = CLISyntax.fromSyntaxFile(config.getCliSyntaxFile());		
 	}
 	
+	/**
+	 * Return the currently applicable syntax
+	 * 
+	 * @return the syntax
+	 */
+	public CLISyntax getSyntax() {
+		return syntax;
+	}
+
 	/**
 	 * Check whether the given value conforms to the given type
 	 * 
@@ -116,7 +127,9 @@ public class CLIParser {
 		for (int i = 1; i < optionString.length(); ++i) {
 			Character optionShortForm = optionString.charAt(i);
 			
-			for (CLIOption syntaxOption: syntaxCommand.getOptions()) {
+			List<CLIOption> applicableOptions = new ArrayList<>((null == syntaxCommand ? syntax.getOptions() : syntaxCommand.getOptions()));
+			applicableOptions.addAll(syntax.getGlobalOptions());
+			for (CLIOption syntaxOption: applicableOptions) {
 				if (syntaxOption.getShortForm().equals(optionShortForm) && syntaxOption.getType().equals("boolean")) {
 					ParsedOption option = new ParsedOption();
 					option.setName(syntaxOption.getName());
@@ -180,7 +193,9 @@ public class CLIParser {
 		
 		// Check whether this option is allowed for the current command
 		CLIOption currentSyntaxOption = null;
-		for (CLIOption syntaxOption: (null == syntaxCommand ? syntax.getGlobalOptions() : syntaxCommand.getOptions())) {
+		List<CLIOption> applicableOptions = new ArrayList<>((null == syntaxCommand ? syntax.getOptions() : syntaxCommand.getOptions()));
+		applicableOptions.addAll(syntax.getGlobalOptions());
+		for (CLIOption syntaxOption: applicableOptions) {
 			if (syntaxOption.getName().equals(optionLongForm) 
 					|| (null != syntaxOption.getShortForm() && syntaxOption.getShortForm().equals(optionShortForm))) {
 				currentSyntaxOption = syntaxOption;
@@ -225,9 +240,9 @@ public class CLIParser {
 		// Determine the correct parameter in the command syntax
 		CLIParameter syntaxParameter = null;
 		List<CLIParameter> syntaxParameters = syntaxCommand.getParameters();
-		int maxParam = syntaxParameters.size();
-		if (parameterPosition >= maxParam) {
-			// Check, whether last parameter is a repeatable attribute parameter
+		int maxParam = syntaxParameters.size() - 1;
+		if (parameterPosition > maxParam) {
+			// Check, whether last parameter is a repeatable parameter
 			if (syntaxParameters.get(maxParam).getRepeatable()) {
 				syntaxParameter = syntaxParameters.get(maxParam);
 			} else {
@@ -343,9 +358,22 @@ public class CLIParser {
 			}
 		}
 		
-		// Check completeness of command parameters
-		// TODO
-		
+		// Check completeness of command parameters, except if help was invoked
+		if (null != currentSyntaxCommand && !currentCommand.isHelpRequested()) {
+			// Test parameters
+			PARAMETER_LOOP: for (CLIParameter syntaxParameter : currentSyntaxCommand.getParameters()) {
+				if (syntaxParameter.getOptional())
+					continue; // Don't bother about optional parameters
+				for (ParsedParameter parameter : currentCommand.getParameters()) {
+					if (syntaxParameter.getName().equals(parameter.getName())) {
+						continue PARAMETER_LOOP;
+					}
+				}
+				// Required parameter not found
+				throw new ParseException(String.format(MSG_PREFIX + MSG_PARAMETER_MISSING, MSG_ID_PARAMETER_MISSING,
+						syntaxParameter.getName(), currentCommand.getName()), 0);
+			} 
+		}
 		if (logger.isTraceEnabled()) logger.trace("<<< parse()");
 		return command;
 	}

@@ -19,13 +19,13 @@ public class CLIOption {
 	private static final String MSG_ILLEGAL_OPTION_TYPE = "(E%d) Illegal option type %s, expected one of %s";
 
 	/** Option name */
-	private String name;
+	private String name = "";
 	/** Option type (see allowedTypes) */
-	private String type;
+	private String type = "string";
 	/** Option description (help text) */
-	private String description;
+	private String description = "";
 	/** Option short form */
-	private Character shortForm;
+	private Character shortForm = null;
 	
 	/**
 	 * @return the name

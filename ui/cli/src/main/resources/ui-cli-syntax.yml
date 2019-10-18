@@ -53,6 +53,10 @@ commands:
     - name: exit
       description: Terminate the Command Line Interface
       
+    # Show the help text (same as "proseo --help")
+    - name: help
+      description: Show the prosEO Command Line Interface help information (this page; for subcommand help, type "<subcommand> --help")
+      
     # Authentication:
     - name: login
       description: Log in to a mission in prosEO. A login is required prior to executing any other command except "mission show".

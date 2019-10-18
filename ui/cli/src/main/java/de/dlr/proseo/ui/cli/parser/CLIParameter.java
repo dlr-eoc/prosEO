@@ -19,15 +19,15 @@ public class CLIParameter {
 	private static final String MSG_ILLEGAL_PARAMETER_TYPE = "(E%d) Illegal parameter type %s, expected one of %s";
 
 	/** Parameter name */
-	private String name;
+	private String name = "";
 	/** Parameter type (see allowedTypes) */
-	private String type;
+	private String type = "string";
 	/** Parameter description (help text) */
-	private String description;
+	private String description = "";
 	/** Flag, whether parameter is optional */
-	private Boolean optional;
+	private Boolean optional = false;
 	/** Flag, whether parameter can occur multiple times */
-	private Boolean repeatable;
+	private Boolean repeatable = false;
 	
 	/**
 	 * @return the name

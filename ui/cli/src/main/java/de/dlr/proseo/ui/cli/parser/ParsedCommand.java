@@ -63,6 +63,19 @@ public class ParsedCommand {
 		this.options = options;
 	}
 	/**
+	 * Check, whether the "help" option was set
+	 * 
+	 * @return true, if help was requested, false otherwise
+	 */
+	public boolean isHelpRequested() {
+		for (ParsedOption option: options) {
+			if ("help".equals(option.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	/**
 	 * @return the parameters
 	 */
 	public List<ParsedParameter> getParameters() {
