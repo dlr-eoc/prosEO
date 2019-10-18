@@ -129,12 +129,12 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			}
 			result.add(ConfigurationUtil.toRestConfiguration(processor));
 		} else {
-			String jpqlQuery = "select c from Configuration where 1 = 1";
+			String jpqlQuery = "select c from Configuration c where 1 = 1";
 			if (null != mission) {
-				jpqlQuery += " and productClass.mission.code = :missionCode";
+				jpqlQuery += " and processorClass.mission.code = :missionCode";
 			}
 			if (null != processorName) {
-				jpqlQuery += " and productClass.processorName = :processorName";
+				jpqlQuery += " and processorClass.processorName = :processorName";
 			}
 			if (null != configurationVersion) {
 				jpqlQuery += " and configurationVersion = :configurationVersion";

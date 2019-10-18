@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# proseo
+# ------
+# 
+# Runs the prosEO Command Line Interface
+#
+
+java -jar /usr/share/proseo-ui-cli/proseo-ui-cli.jar $*

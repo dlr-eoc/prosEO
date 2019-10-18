@@ -126,12 +126,12 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		
 		List<ConfiguredProcessor> result = new ArrayList<>();
 		
-		String jpqlQuery = "select c from ConfiguredProcessor where 1 = 1";
+		String jpqlQuery = "select c from ConfiguredProcessor c where 1 = 1";
 		if (null != mission) {
-			jpqlQuery += " and processor.productClass.mission.code = :missionCode";
+			jpqlQuery += " and processor.processorClass.mission.code = :missionCode";
 		}
 		if (null != processorName) {
-			jpqlQuery += " and processor.productClass.processorName = :processorName";
+			jpqlQuery += " and processor.processorClass.processorName = :processorName";
 		}
 		if (null != processorVersion) {
 			jpqlQuery += " and processor.processorVersion = :processorVersion";

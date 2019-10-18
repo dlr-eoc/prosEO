@@ -52,6 +52,10 @@ public class CLIConfiguration {
 	@Value("${proseo.cli.syntaxfile}")
 	private String cliSyntaxFile;
 	
+	/** Check whether CLI should actually be started (default true) */
+	@Value("${proseo.cli.start:true}")
+	private Boolean cliStart;
+	
 	/**
 	 * Gets the user for prosEO component logins
 	 * 
@@ -122,6 +126,23 @@ public class CLIConfiguration {
 	 */
 	public String getCliSyntaxFile() {
 		return cliSyntaxFile;
+	}
+	
+	/**
+	 * Indicate whether the CLI prompt should be started
+	 * 
+	 * @return the cli start flag
+	 */
+	public Boolean getCliStart() {
+		return cliStart;
+	}
+
+	/**
+	 * Evaluate the program invocation arguments, which may consist of program options and a 
+	 * @param args
+	 */
+	public void initialize(String... args) {
+		
 	}
 
 }

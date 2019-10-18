@@ -1,16 +1,16 @@
 /**
- * CLIParameter.java
+ * ParsedParameter.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli.parser;
 
 /**
- * Class representing a CLI command parameter
+ * Class representing a parsed command parameter
  * 
  * @author Dr. Thomas Bassler
  */
-public class CLIParameter {
+public class ParsedParameter {
 
 	/* Message ID constants */
 	private static final int MSG_ID_ILLEGAL_PARAMETER_TYPE = 2901;
@@ -22,12 +22,10 @@ public class CLIParameter {
 	private String name;
 	/** Parameter type (see allowedTypes) */
 	private String type;
-	/** Parameter description (help text) */
-	private String description;
-	/** Flag, whether parameter is optional */
-	private Boolean optional;
-	/** Flag, whether parameter can occur multiple times */
-	private Boolean repeatable;
+	/** Parameter value */
+	private String value;
+	/** Reference to syntax element */
+	private CLIParameter syntaxParameter;
 	
 	/**
 	 * @return the name
@@ -59,46 +57,35 @@ public class CLIParameter {
 		}
 	}
 	/**
-	 * @return the description
+	 * @return the value
 	 */
-	public String getDescription() {
-		return description;
+	public String getValue() {
+		return value;
 	}
 	/**
-	 * @param description the description to set
+	 * @param value the value to set
 	 */
-	public void setDescription(String description) {
-		this.description = description;
+	public void setValue(String value) {
+		this.value = value;
 	}
+	
 	/**
-	 * @return the optional
+	 * @return the syntaxParameter
 	 */
-	public Boolean getOptional() {
-		return optional;
+	public CLIParameter getSyntaxParameter() {
+		return syntaxParameter;
 	}
+	
 	/**
-	 * @param optional the optional to set
+	 * @param syntaxParameter the syntaxParameter to set
 	 */
-	public void setOptional(Boolean optional) {
-		this.optional = optional;
-	}
-	/**
-	 * @return the repeatable
-	 */
-	public Boolean getRepeatable() {
-		return repeatable;
-	}
-	/**
-	 * @param repeatable the repeatable to set
-	 */
-	public void setRepeatable(Boolean repeatable) {
-		this.repeatable = repeatable;
+	public void setSyntaxParameter(CLIParameter syntaxParameter) {
+		this.syntaxParameter = syntaxParameter;
 	}
 	
 	@Override
 	public String toString() {
-		return "CLIParameter [\n  name=" + name + ",\n  type=" + type + ",\n  description=" + description + ",\n  optional=" + optional
-				+ ",\n  repeatable=" + repeatable + "\n]";
+		return "CLIParameter [\n  name=" + name + ",\n  type=" + type + ",\n  value=" + value + "\n]";
 	}
 
 

@@ -5,11 +5,8 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,14 +16,10 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
-
-import de.dlr.proseo.ui.cli.CLIConfiguration;
 
 /**
  * Representation of the prosEO Command Line Interface syntax
@@ -54,7 +47,7 @@ public class CLISyntax {
 	private List<CLIOption> globalOptions;
 	/** Options for the top-level "proseo" command (list from YAML specification */
 	private List<CLIOption> options;
-	/** All CLI commands (list from YAML specification) */
+	/** All second-level CLI commands (list from YAML specification) */
 	private List<CLICommand> commands;
 	
 	/** Lookup table for options for all CLI commands (based on full name) */

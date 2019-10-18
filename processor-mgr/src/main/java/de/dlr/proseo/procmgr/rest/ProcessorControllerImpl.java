@@ -175,12 +175,12 @@ public class ProcessorControllerImpl implements ProcessorController {
 			}
 			result.add(ProcessorUtil.toRestProcessor(processor));
 		} else {
-			String jpqlQuery = "select p from Processor where 1 = 1";
+			String jpqlQuery = "select p from Processor p where 1 = 1";
 			if (null != mission) {
-				jpqlQuery += " and productClass.mission.code = :missionCode";
+				jpqlQuery += " and processorClass.mission.code = :missionCode";
 			}
 			if (null != processorName) {
-				jpqlQuery += " and productClass.processorName = :processorName";
+				jpqlQuery += " and processorClass.processorName = :processorName";
 			}
 			if (null != processorVersion) {
 				jpqlQuery += " and processorVersion = :processorVersion";
