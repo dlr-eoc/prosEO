@@ -5,7 +5,8 @@
       jobOrderStringBase64?:
         type: string
         maxLength: 100000
-      storageId?: string
       uploaded?: boolean
+      fsType?:
+        enum: [S3,ALLUXIO,POSIX]
       pathInfo?: string
       message?: string

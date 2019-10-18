@@ -22,6 +22,15 @@ import org.springframework.context.annotation.Configuration;
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class StorageManagerConfiguration {
 	
+	@Value("${proseo.procFacility.name}")
+	private String procFacilityName;
+	
+	@Value("${proseo.procFacility.url}")
+	private String procFacilityUrl;
+	
+	@Value("${proseo.procFacility.descr}")
+	private String procFacilityDescr;
+	
 	@Value("${proseo.s3.s3AccessKey}")
 	private String s3AccessKey;
 	
@@ -30,9 +39,6 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.s3.s3EndPoint}")
 	private String s3EndPoint;
-	
-	@Value("${proseo.s3.s3JoborderPrefixKey}")
-	private String s3JoborderPrefixKey;
 	
 	@Value("${proseo.alluxio.alluxioUnderFsS3Bucket}")
 	private String alluxioUnderFsS3Bucket;
@@ -43,14 +49,93 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.alluxio.alluxioUnderFsS3BucketPrefix}")
 	private String alluxioUnderFsS3BucketPrefix;
 	
+	@Value("${proseo.joborder.bucket}")
+	private String joborderBucket;
+	
+	@Value("${proseo.joborder.prefix}")
+	private String joborderPrefix;
+	
 	@Value("${proseo.alluxio.alluxioUnderFsMaxPrefixes}")
 	private int alluxioUnderFsMaxPrefixes;
 	
 	@Value("${proseo.s3.s3MaxNumberOfBuckets}")
 	private int s3MaxNumberOfBuckets;
 	
+	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioCache}")
+	private String alluxioK8sMountPointCache;
 	
+	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioFuse}")
+	private String alluxioK8sMountPointFuse;
+	
+	@Value("${proseo.mountpoints.unregisteredProducts.k8sNode.unregisteredProducts}")
+	private String unregisteredProductsK8sMountPoint;
 
+	
+	
+	
+	public String getAlluxioK8sMountPointCache() {
+		return alluxioK8sMountPointCache;
+	}
+
+	public void setAlluxioK8sMountPointCache(String alluxioK8sMountPointCache) {
+		this.alluxioK8sMountPointCache = alluxioK8sMountPointCache;
+	}
+
+	public String getAlluxioK8sMountPointFuse() {
+		return alluxioK8sMountPointFuse;
+	}
+
+	public void setAlluxioK8sMountPointFuse(String alluxioK8sMountPointFuse) {
+		this.alluxioK8sMountPointFuse = alluxioK8sMountPointFuse;
+	}
+
+	public String getUnregisteredProductsK8sMountPoint() {
+		return unregisteredProductsK8sMountPoint;
+	}
+
+	public void setUnregisteredProductsK8sMountPoint(String unregisteredProductsK8sMountPoint) {
+		this.unregisteredProductsK8sMountPoint = unregisteredProductsK8sMountPoint;
+	}
+
+	public String getProcFacilityDescr() {
+		return procFacilityDescr;
+	}
+
+	public void setProcFacilityDescr(String procFacilityDescr) {
+		this.procFacilityDescr = procFacilityDescr;
+	}
+
+	public String getProcFacilityName() {
+		return procFacilityName;
+	}
+
+	public void setProcFacilityName(String procFacilityName) {
+		this.procFacilityName = procFacilityName;
+	}
+
+	public String getProcFacilityUrl() {
+		return procFacilityUrl;
+	}
+
+	public void setProcFacilityUrl(String procFacilityUrl) {
+		this.procFacilityUrl = procFacilityUrl;
+	}
+
+	public String getJoborderPrefix() {
+		return joborderPrefix;
+	}
+
+	public void setJoborderPrefix(String joborderPrefix) {
+		this.joborderPrefix = joborderPrefix;
+	}
+
+	public String getJoborderBucket() {
+		return joborderBucket;
+	}
+
+	public void setJoborderBucket(String joborderBucket) {
+		this.joborderBucket = joborderBucket;
+	}
 
 	/**
 	 * @return the alluxioUnderFsMaxPrefixes
@@ -122,19 +207,6 @@ public class StorageManagerConfiguration {
 		this.s3MaxNumberOfBuckets = s3MaxNumberOfBuckets;
 	}
 
-	/**
-	 * @return the s3JoborderPrefixKey
-	 */
-	public String getS3JoborderPrefixKey() {
-		return s3JoborderPrefixKey;
-	}
-
-	/**
-	 * @param s3JoborderPrefixKey the s3JoborderPrefixKey to set
-	 */
-	public void setS3JoborderPrefixKey(String s3JoborderPrefixKey) {
-		this.s3JoborderPrefixKey = s3JoborderPrefixKey;
-	}
 
 	/**
 	 * @return the s3AccessKey

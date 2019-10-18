@@ -7,9 +7,12 @@ mediaType: application/json
 
 
 types:
+  Info: !include types/info.raml
+  ProcFacility: !include types/procFacility.raml
   Storage: !include types/storage.raml
   ProductFS: !include types/productFS.raml
   Joborder: !include types/joborderBase64.raml
+
 
 resourceTypes:
   standard:
@@ -39,8 +42,24 @@ resourceTypes:
             The requested resource to delete was not found
           headers:
             Warning: !include types/error.raml
+/info:
+  get:
+    description: get infos for this storage-manager
+    responses:
+      200:
+        body:
+          application/json:
+            type: Info
+/processingFacility:
+  get:
+    description: get name of processingFacility where this storage-manager resides...(1:1)
+    responses:
+      200:
+        body:
+          application/json:
+            type: ProcFacility
 
-/storages:
+/{procFacilityName}/storages:
   type: standard
   get:
     description: Get storages by id
@@ -97,16 +116,17 @@ resourceTypes:
                 application/json:
                   type: ProductFS
                   example: !include examples/productFS-del.json
-    /joborders:
-      post:
-        description: upload prosEO joborder file for later use in a job
-        body:
-          application/json:
-            type: Joborder
-            example: !include examples/joborderBase64.json
-        responses:
-          201:
-            body:
-              application/json:
-                type: Joborder
-                example: !include examples/joborderBase64-response.json
+
+/{procFacilityName}/joborders:
+    post:
+      description: upload prosEO joborder file for later use in a job
+      body:
+        application/json:
+          type: Joborder
+          example: !include examples/joborderBase64.json
+      responses:
+        201:
+          body:
+            application/json:
+              type: Joborder
+              example: !include examples/joborderBase64-response.json

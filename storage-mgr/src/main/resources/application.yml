@@ -1,12 +1,30 @@
 proseo:
+    procFacility:
+      name: devel
+      url: http://localhost:9887/k8s-api-endpoint
+      descr: local env :-)
     s3:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
       s3EndPoint: http://localhost:9000
-      s3JoborderPrefixKey: /joborders
       s3MaxNumberOfBuckets: 50
     alluxio:
       alluxioUnderFsS3Bucket: data
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsS3BucketEndPoint: http://localhost:9000
-      alluxioUnderFsMaxPrefixes: 50
+      alluxioUnderFsMaxPrefixes: 500
+    joborder:
+      bucket: data
+      prefix: joborders
+    mountpoints:
+     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
+      alluxio:
+        k8sNode:
+          alluxioCache: /mnt/alluxio
+          alluxioFuse: /alluxio-fuse
+      #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
+      unregisteredProducts:
+        k8sNode:
+          unregisteredProducts: /mnt/some-dir
+          
+        

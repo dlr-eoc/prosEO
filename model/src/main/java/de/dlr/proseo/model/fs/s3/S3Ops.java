@@ -377,11 +377,14 @@ public class S3Ops {
 	public static Boolean v1Upload(AmazonS3 v1S3Client, String file_path, String bucket_name,
 			String key_prefix, boolean pause) {
 
+		String s3Prefix="s3://";
+		String separator = "/";
+		if (!bucket_name.startsWith(s3Prefix)) bucket_name =  s3Prefix+bucket_name;
 		File f = new File(file_path);
 
 		if (f.isFile()) {
 			if(v1UploadFile(v1S3Client,file_path,bucket_name,key_prefix,false)) {
-				logger.info("Copied file://{} to {}",file_path, bucket_name+File.separator+key_prefix+File.separator+file_path);
+				logger.info("Copied file://{} to {}",file_path, bucket_name+separator+key_prefix+separator+file_path);
 				return true;
 			}
 		}

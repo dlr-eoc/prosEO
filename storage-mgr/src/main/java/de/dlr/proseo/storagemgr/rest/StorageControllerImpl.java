@@ -6,15 +6,9 @@
  */
 package de.dlr.proseo.storagemgr.rest;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import java.util.UUID;
 
 import javax.validation.Valid;
 
@@ -26,17 +20,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.Joborder;
 import de.dlr.proseo.storagemgr.rest.model.ProductFS;
 import de.dlr.proseo.storagemgr.rest.model.Storage;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
-import software.amazon.awssdk.core.sync.RequestBody;
+
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
@@ -55,7 +49,7 @@ public class StorageControllerImpl implements StorageController {
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	private static Logger logger = LoggerFactory.getLogger(StorageControllerImpl.class);
-	private static final Charset JOF_CHARSET = StandardCharsets.UTF_8;
+
 	@Autowired
 	StorageManagerConfiguration cfg = new StorageManagerConfiguration();
 
@@ -83,9 +77,14 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<List<Storage>> getStoragesById(String id) {
+	public ResponseEntity<List<Storage>> getStorages(String procFacilityName, String id) {
 
 		ArrayList<Storage> response = new ArrayList<Storage>();
+
+		// check proc-facility
+		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
+			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+		}
 
 		try {
 			// global storages...
@@ -96,14 +95,14 @@ public class StorageControllerImpl implements StorageController {
 							cfg.getAlluxioUnderFsS3Bucket(), 
 							cfg.getAlluxioUnderFsS3BucketPrefix()
 							);
-			
+
 			if (null == storages) {
 				return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
 			ArrayList<String> s3Storages = new ArrayList<String>();
 			ArrayList<String> alluxioStorages = new ArrayList<String>();
-			
+
 			for (String[] entry : storages) {
 				if (entry[1].equals(String.valueOf(StorageType.S_3))) {
 					s3Storages.add(entry[0]);
@@ -112,7 +111,7 @@ public class StorageControllerImpl implements StorageController {
 					alluxioStorages.add(entry[0]);
 				}
 			}
-			
+
 			if (id != null && s3Storages.contains(id) && !alluxioStorages.contains(id)) {
 				logger.info("queryParam->yes, s3Id->yes, alluxio->no");
 				Storage store = new Storage();
@@ -142,7 +141,7 @@ public class StorageControllerImpl implements StorageController {
 					response.add(store);
 				}
 			}
-			
+
 			return new ResponseEntity<>(response, HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -151,8 +150,13 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<Storage> createStorage(@Valid Storage storage) {
+	public ResponseEntity<Storage> createStorage(String procFacilityName, @Valid Storage storage) {
 		Storage response = new Storage();
+
+		// check proc-facility
+		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
+			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+		}
 
 		// check if storageId has no UpperCase letters
 		if(!storage.getId().equals(storage.getId().toLowerCase())) {
@@ -161,17 +165,17 @@ public class StorageControllerImpl implements StorageController {
 			response.setDescription("StorageId must not have UpperCase letters...");
 			return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 		}
-		
+
 		ArrayList<String[]> storages = StorageManagerUtils
-		.getAllStorages(cfg.getS3AccessKey(), 
-				cfg.getS3SecretAccessKey(), 
-				cfg.getS3EndPoint(), 
-				cfg.getAlluxioUnderFsS3Bucket(), 
-				cfg.getAlluxioUnderFsS3BucketPrefix()
-				);
+				.getAllStorages(cfg.getS3AccessKey(), 
+						cfg.getS3SecretAccessKey(), 
+						cfg.getS3EndPoint(), 
+						cfg.getAlluxioUnderFsS3Bucket(), 
+						cfg.getAlluxioUnderFsS3BucketPrefix()
+						);
 		ArrayList<String> s3Storages = new ArrayList<String>();
 		ArrayList<String> alluxioStorages = new ArrayList<String>();
-		
+
 		for (String[] entry : storages) {
 			if (entry[1].equals(String.valueOf(StorageType.S_3))) {
 				s3Storages.add(entry[0]);
@@ -180,11 +184,11 @@ public class StorageControllerImpl implements StorageController {
 				alluxioStorages.add(entry[0]);
 			}
 		}
-		
+
 
 		if (storage.getStorageType() == StorageType.S_3) {
 			try {
-				
+
 				// check if we already have that ID
 				if(s3Storages.contains(storage.getId()) || alluxioStorages.contains(storage.getId())) {
 					response.setId(storage.getId());
@@ -257,73 +261,151 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<ProductFS> createProductFS(String storageId, @Valid ProductFS productFS) {
+	public ResponseEntity<ProductFS> createProductFS(String storageId, String procFacilityName, @Valid ProductFS productFS) {
 
-		
-
-
-
-
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<ProductFS> deleteProduct(String productId, String storageId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ResponseEntity<Joborder> createJoborder(String storageId, @Valid Joborder joborder) {
-		Joborder response = new Joborder();
-
-		// check if we have a Base64 encoded string & if we have valid XML
-		if (!joborder.getJobOrderStringBase64()
-				.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")) {
-			response.setUploaded(false);
-			response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-			response.setStorageId(storageId);
-			response.setPathInfo("n/a");
-			response.setMessage("Attribute jobOrderStringBase64 is not Base64-encoded...");
-			return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+		ProductFS response = new ProductFS();
+		// check proc-facility
+		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
+			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 		}
+		long regTimeStamp = System.currentTimeMillis()/1000;
+		String separator = "/";
 
-		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-		String objKey = cfg.getS3JoborderPrefixKey() + "/" + UUID.randomUUID().toString() + ".xml";
-		try {
-			String base64String = joborder.getJobOrderStringBase64();
-			byte[] bytes = java.util.Base64.getDecoder().decode(base64String);
-			if (!StorageManagerUtils.checkXml(StorageManagerUtils.inputStreamToString(new ByteArrayInputStream(bytes), JOF_CHARSET))) {
-				response.setUploaded(false);
-				response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-				response.setStorageId(storageId);
-				response.setPathInfo("n/a");
-				response.setMessage("XML Doc parsed from attribute jobOrderStringBase64 is not valid...");
-				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+
+		ArrayList<String[]> storages = StorageManagerUtils
+				.getAllStorages(cfg.getS3AccessKey(), 
+						cfg.getS3SecretAccessKey(), 
+						cfg.getS3EndPoint(), 
+						cfg.getAlluxioUnderFsS3Bucket(), 
+						cfg.getAlluxioUnderFsS3BucketPrefix()
+						);
+		ArrayList<String> s3Storages = new ArrayList<String>();
+		ArrayList<String> alluxioStorages = new ArrayList<String>();
+
+
+		for (String[] entry : storages) {
+			if (entry[1].equals(String.valueOf(StorageType.S_3))) {
+				s3Storages.add(entry[0]);
 			}
-			InputStream fis = new ByteArrayInputStream(bytes);
-			s3.putObject(PutObjectRequest.builder().bucket(storageId).key(objKey).build(),
-					RequestBody.fromInputStream(fis, bytes.length));
-			fis.close();
-			s3.close();
-		} catch (Exception e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			if (entry[1].equals(String.valueOf(StorageType.ALLUXIO))) {
+				alluxioStorages.add(entry[0]);
+			}
 		}
-		// now prepare response
-		response.setUploaded(true);
-		response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-		response.setStorageId(storageId);
-		response.setPathInfo("s3://" + storageId + objKey);
-		logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		if (productFS.getStorageType() == StorageType.S_3) {
+			try {
+				// check if storageID is present
+				if(!s3Storages.contains(storageId)) {
+					response.setStorageType(productFS.getStorageType());
+					response.setMessage("StorageId does not exist...");
+					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+				}
+
+				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+
+				/*
+				 * prepare final file/directory prefix within storage S3-storage pattern:
+				 * 
+				 * s3://<storageId>/<productId>/<regTimeStamp>/...<file>
+				 */				
+				String pref = 
+						productFS.getProductId()
+						+separator+regTimeStamp;
+
+				// initiate transfer
+				Boolean transfer = S3Ops.v1Upload(
+						//the client
+						s3, 
+						// the local POSIX source file or directory
+						productFS.getSourceFilePath(), 
+						// the storageId -> =BucketName
+						storageId, 
+						// the final prefix of the file or directory
+						pref, 
+						false
+						);
+				if (!transfer) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+				response.setProductId(productFS.getProductId());
+				response.setStorageId(storageId);
+				response.setRegistered(true);
+				response.setRegisteredFilePath(pref+separator+productFS.getSourceFilePath());
+				response.setSourceFilePath(productFS.getSourceFilePath());
+				response.setStorageType(productFS.getStorageType());
+				response.setDeleted(false);
+				s3.shutdown();
+				return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+			} catch (Exception e) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+		}
+		if (productFS.getStorageType() == StorageType.ALLUXIO) {
+			try {
+				// check if storageID is present
+				if(!alluxioStorages.contains(storageId)) {
+					response.setStorageType(productFS.getStorageType());
+					response.setMessage("StorageId does not exist...");
+					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+				}
+
+				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+
+				/*
+				 * prepare final file/directory prefix within storage 
+				 * 
+				 * ALLUXIO-storage pattern (UnderFS is S3):
+				 * s3://<underFSBucket>/<underFSPrefix>/<storageId>/<productId>/<regTimeStamp>/...<file>
+				 */				
+				String pref = 
+						cfg.getAlluxioUnderFsS3BucketPrefix()
+						+separator+storageId
+						+separator+productFS.getProductId()
+						+separator+regTimeStamp;
+
+				// initiate transfer
+				Boolean transfer = S3Ops.v1Upload(
+						//the client
+						s3, 
+						// the local POSIX source file or directory
+						productFS.getSourceFilePath(), 
+						// the ALLUXIO UnderFS Bucket
+						cfg.getAlluxioUnderFsS3Bucket(),
+						// the final prefix including productId pattern of the file or directory
+						pref, 
+						false
+						);
+				if (!transfer) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+				response.setProductId(productFS.getProductId());
+				response.setStorageId(storageId);
+				response.setRegistered(true);
+				response.setRegisteredFilePath(pref+separator+productFS.getSourceFilePath());
+				response.setSourceFilePath(productFS.getSourceFilePath());
+				response.setStorageType(productFS.getStorageType());
+				response.setDeleted(false);
+				s3.shutdown();
+				return new ResponseEntity<>(response, HttpStatus.CREATED);
+			} catch (Exception e) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+
+		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
 	@Override
-	public ResponseEntity<ProductFS> getProductFS(String storageId, String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<ProductFS> getProductFS(String storageId, String procFacilityName, String id) {
+		ProductFS response = new ProductFS();
+		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public ResponseEntity<ProductFS> deleteProduct(String productId, String storageId, String procFacilityName) {
+		ProductFS response = new ProductFS();
+		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
 }
