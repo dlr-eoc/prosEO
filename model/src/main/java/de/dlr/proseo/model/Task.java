@@ -217,4 +217,10 @@ public class Task extends PersistentObject {
 				&& Objects.equals(taskVersion, other.taskVersion);
 	}
 
+	@Override
+	public String toString() {
+		return "Task [taskName=" + taskName + ", taskVersion=" + taskVersion + ", isCritical=" + isCritical + ", criticalityLevel="
+				+ criticalityLevel + ", numberOfCpus=" + numberOfCpus + ", breakpointFileNames=" + breakpointFileNames + "]";
+	}
+
 }

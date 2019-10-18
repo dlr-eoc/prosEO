@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,9 +34,18 @@ import javax.persistence.Table;
 		@Index(columnList = "requested_product_class_id") } )
 public class ProductQuery extends PersistentObject {
 
+	/* Static message strings */
+	private static final String MSG_CANNOT_ACCESS_PRODUCT_FIELD = "Cannot access product field %s (cause: %s)";
+
 	/** Job step issuing this query */
 	@ManyToOne
 	private JobStep jobStep;
+	
+	/**
+	 * The selection rule, from which this query was derived
+	 */
+	@ManyToOne
+	private SimpleSelectionRule generatingRule;
 	
 	/**
 	 * The product class requested by the selection rule
@@ -63,8 +73,13 @@ public class ProductQuery extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
+	/**
+	 * Minimum percentage of coverage of the desired validity period for fulfilment of this query
+	 */
+	private Short minimumCoverage = 0;
+	
 	/** Indicates whether this query is fully satisfied by the satisfying products. */
-	private Boolean isSatisfied;
+	private Boolean isSatisfied = false;
 	
 	/**
 	 * Products satisfying this query condition
@@ -72,6 +87,25 @@ public class ProductQuery extends PersistentObject {
 	@ManyToMany(mappedBy = "satisfiedProductQueries")
 	private Set<Product> satisfyingProducts = new HashSet<>();
 
+	/**
+	 * Create a product query from a simple selection rule for a given job step
+	 * 
+	 * @param selectionRule the selection rule to create the product query from
+	 * @param jobStep the job step to generate the product query for
+	 * @return a product query object
+	 */
+	public static ProductQuery fromSimpleSelectionRule(SimpleSelectionRule selectionRule, JobStep jobStep) {
+		ProductQuery productQuery = new ProductQuery();
+		productQuery.generatingRule = selectionRule;
+		productQuery.jobStep = jobStep;
+		productQuery.requestedProductClass = selectionRule.getSourceProductClass();
+		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
+		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
+		productQuery.filterConditions.putAll(jobStep.getJob().getFilterConditions());
+		
+		return productQuery;
+	}
+	
 	/**
 	 * Gets the job step issuing the query
 	 * 
@@ -88,6 +122,24 @@ public class ProductQuery extends PersistentObject {
 	 */
 	public void setJobStep(JobStep jobStep) {
 		this.jobStep = jobStep;
+	}
+
+	/**
+	 * Gets the selection rule that generated this product query
+	 * 
+	 * @return the generatingRule
+	 */
+	public SimpleSelectionRule getGeneratingRule() {
+		return generatingRule;
+	}
+
+	/**
+	 * Sets the selection rule that generated this product query
+	 * 
+	 * @param generatingRule the generatingRule to set
+	 */
+	public void setGeneratingRule(SimpleSelectionRule generatingRule) {
+		this.generatingRule = generatingRule;
 	}
 
 	/**
@@ -163,6 +215,24 @@ public class ProductQuery extends PersistentObject {
 	}
 
 	/**
+	 * Gets the minimum percentage of coverage of the desired validity period
+	 * 
+	 * @return the minimumCoverage
+	 */
+	public Short getMinimumCoverage() {
+		return minimumCoverage;
+	}
+
+	/**
+	 * Sets the minimum percentage of coverage of the desired validity period
+	 * 
+	 * @param minimumCoverage the minimumCoverage to set
+	 */
+	public void setMinimumCoverage(Short minimumCoverage) {
+		this.minimumCoverage = minimumCoverage;
+	}
+
+	/**
 	 * Check whether this product query is satisfied
 	 * 
 	 * @return the isSatisfied
@@ -206,7 +276,31 @@ public class ProductQuery extends PersistentObject {
 	public void setSatisfyingProducts(Set<Product> satisfyingProducts) {
 		this.satisfyingProducts = satisfyingProducts;
 	}
-
+	
+	/**
+	 * Test whether the given product satisfies the filter conditions of this query
+	 * 
+	 * @param product the product to test
+	 * @return true, if all filter conditions are met, false otherwise
+	 */
+	public boolean testFilterConditions(Product product) {
+		boolean success = true;
+		
+		for (String filterKey: filterConditions.keySet()) {
+			try {
+				Field filterField = Product.class.getDeclaredField(filterKey);
+				Object productField = filterField.get(product);
+				success = success && filterConditions.get(filterKey).getParameterValue().equals(productField.toString());
+			} catch (NoSuchFieldException e) {
+				success = success &&  filterConditions.get(filterKey).equals(product.getParameters().get(filterKey));
+			} catch (SecurityException | IllegalAccessException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_ACCESS_PRODUCT_FIELD, filterKey, e.getMessage()), e);
+			}
+		}
+		
+		return success;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -225,5 +319,13 @@ public class ProductQuery extends PersistentObject {
 			return false;
 		ProductQuery other = (ProductQuery) obj;
 		return Objects.equals(jobStep, other.jobStep) && Objects.equals(requestedProductClass, other.requestedProductClass);
+	}
+
+	@Override
+	public String toString() {
+		return "ProductQuery [jobStep=" + jobStep + ", generatingRule=" + generatingRule + ", requestedProductClass="
+				+ requestedProductClass + ", jpqlQueryCondition=" + jpqlQueryCondition + ", sqlQueryCondition=" + sqlQueryCondition
+				+ ", filterConditions=" + filterConditions + ", minimumCoverage=" + minimumCoverage + ", isSatisfied=" + isSatisfied
+				+ ", satisfyingProducts=" + satisfyingProducts + "]";
 	}
 }

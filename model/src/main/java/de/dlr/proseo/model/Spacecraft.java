@@ -138,4 +138,9 @@ public class Spacecraft extends PersistentObject {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "Spacecraft [code=" + code + "]";
+	}
 }

@@ -169,6 +169,12 @@ public class ProductFile extends PersistentObject {
 			return false;
 		ProductFile other = (ProductFile) obj;
 		return Objects.equals(processingFacility, other.processingFacility) && Objects.equals(product, other.product);
+	}
+
+	@Override
+	public String toString() {
+		return "ProductFile [processingFacility=" + processingFacility + ", productFileName=" + productFileName + ", auxFileNames="
+				+ auxFileNames + ", filePath=" + filePath + ", storageType=" + storageType + "]";
 	};
 
 }

@@ -6,8 +6,8 @@ package de.dlr.proseo.model.dao;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.JobStep;
@@ -20,7 +20,7 @@ import de.dlr.proseo.model.Product;
  *
  */
 @Repository
-public interface ProductRepository extends CrudRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
 	/**
 	 * Get all products of a given mission and class with their orbit numbers in the given range

@@ -7,8 +7,8 @@ package de.dlr.proseo.model.dao;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ProductFile;
@@ -20,7 +20,7 @@ import de.dlr.proseo.model.ProductFile;
  *
  */
 @Repository
-public interface ProductFileRepository extends CrudRepository<ProductFile, Long> {
+public interface ProductFileRepository extends JpaRepository<ProductFile, Long> {
 	
 	/**
 	 * Get all product files for a given product id

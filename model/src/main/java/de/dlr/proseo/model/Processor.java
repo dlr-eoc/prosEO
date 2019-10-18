@@ -292,4 +292,12 @@ public class Processor extends PersistentObject {
 		Processor other = (Processor) obj;
 		return Objects.equals(processorClass, other.processorClass) && Objects.equals(processorVersion, other.processorVersion);
 	}
+
+	@Override
+	public String toString() {
+		return "Processor [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", processorVersion=" + processorVersion + ", isTest=" + isTest
+				+ ", minDiskSpace=" + minDiskSpace + ", maxTime=" + maxTime + ", sensingTimeFlag=" + sensingTimeFlag + ", tasks="
+				+ tasks + ", dockerImage=" + dockerImage + ", dockerRunParameters=" + dockerRunParameters + "]";
+	}
 }
