@@ -44,7 +44,7 @@
           repo_gpgcheck=1
           gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
     - name: install kubectl & other tools
-      yum: name=htop,git,wget,python-pip,nginx,certbot,python2-certbot-nginx,kubectl
+      yum: name=htop,git,wget,python-pip,nginx,certbot,python2-certbot-nginx,kubectl,httpd-tools
     - name: install docker python bindings
       command: pip install docker
     - name: add user to docker group
@@ -185,6 +185,10 @@
            root /usr/share/nginx/html;
            location /otc-proseo01/ {
               proxy_pass             http://127.0.0.1:8001/;
+              limit_except GET HEAD {
+                auth_basic           'prosEO dev area';
+                auth_basic_user_file /etc/nginx/.htpasswd;
+              }
            }
            error_page 404 /404.html;
              location = /404.html {

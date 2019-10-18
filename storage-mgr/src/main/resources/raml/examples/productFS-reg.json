@@ -1,0 +1,6 @@
+{
+    "productId": "234234234234",
+    "storageType": "S3",
+    "sourceFilePath": "/mnt/unstructuredFS/some/dir/Product23323223.nc",
+    "registeredFilePath":"s3://data/234234234234/11212121/some/dir/Product23323223.nc"
+}

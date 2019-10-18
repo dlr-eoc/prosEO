@@ -1,10 +1,10 @@
 spring:
     jpa:
-        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=Europe/Berlin
-        username: root
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
 logging:
@@ -13,11 +13,26 @@ logging:
         de:
             dlr:
                 proseo: TRACE
+        org:
+            springframework:
+                boot:
+                    test:
+                        web:
+                            client: DEBUG
 proseo:
     productionPlanner:
-        url: https://localhost:8091/proseo/planner/v0.1
+        url: http://proseo-prodplanner:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
         user: none
         password: none
     storageManager:
+        url: http://proseo-stmgr:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none
         password: none
+    user:
+        name: test
+        password: test
+    testinput:
+        directory: src/test/resources/IDA_test
+        files:
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
+            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
