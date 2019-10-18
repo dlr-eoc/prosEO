@@ -940,7 +940,6 @@ public class BaseWrapper {
 		logger.info(MSG_STARTING_BASE_WRAPPER, ENV_JOBORDER_FILE);
 		Boolean check = checkEnv();
 		if (!check) {
-			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
