@@ -2,12 +2,17 @@ package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.service.RepositoryService;
 
 public class OrbitUtil {
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
+
+	
 	/**
 	 * Convert a prosEO model Orbit into a REST Orbit
 	 * 
@@ -15,6 +20,8 @@ public class OrbitUtil {
 	 * @return an equivalent REST Orbit or null, if no model Orbit was given
 	 */
 	public static Orbit toRestOrbit(de.dlr.proseo.model.Orbit modelOrbit) {
+		if (logger.isTraceEnabled()) logger.trace(">>> toRestOrbit({})", (null == modelOrbit ? "MISSING" : modelOrbit.getId()));
+	
 		if (null == modelOrbit)
 			return null;
 		
@@ -53,16 +60,22 @@ public class OrbitUtil {
 	 * @throws IllegalArgumentException if the REST orbit violates syntax rules for date, enum or numeric values
 	 */
 	public static de.dlr.proseo.model.Orbit toModelOrbit(Orbit restOrbit) throws IllegalArgumentException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrbit({})", (null == restOrbit ? "MISSING" : restOrbit.getId()));
+
 		de.dlr.proseo.model.Orbit modelOrbit = new de.dlr.proseo.model.Orbit();
 		
 		modelOrbit.setId(restOrbit.getId());
+
 		while (modelOrbit.getVersion() < restOrbit.getVersion()) {
 			modelOrbit.incrementVersion();
 		}
 		modelOrbit.setOrbitNumber(restOrbit.getOrbitNumber().intValue());
+		
 		try {
 			modelOrbit.setStartTime(
 					Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restOrbit.getStartTime())));
+			
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrbit.getStartTime()));
 		}
@@ -71,10 +84,7 @@ public class OrbitUtil {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrbit.getStartTime()));
 		}
-				
-		de.dlr.proseo.model.Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(restOrbit.getSpacecraftCode());
-		modelOrbit.setSpacecraft(spacecraft);
-			
+		
 		return modelOrbit;
 	}
 

@@ -181,7 +181,7 @@ public class OrbitControllerTest {
 	 * 
 	 * Test: Create a new orbit
 	 */
-/*	@Test
+	@Test
 	public final void testCreateOrbit() {
 		// Create a mission in the database
 		de.dlr.proseo.model.Orbit orbitToCreate = createOrbit(testOrbitData[0]);
@@ -281,7 +281,7 @@ public class OrbitControllerTest {
 	 * Test: Update an Orbit by ID
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
-/*	@Test
+	@Test
 	public final void testModifyOrbit() {
 		// Make sure test orbits exist
 		List<de.dlr.proseo.model.Orbit> testOrbits = createTestOrbits();
@@ -319,7 +319,7 @@ public class OrbitControllerTest {
 	 * Test: List of all orbits by mission, spacecraft, start time range, orbit number range
 	 * Precondition: For all selection criteria orbits within and without a search value exist
 	 */
-	@Test
+/*	@Test
 	public final void testGetOrbits() {
 		// Make sure test products exist
 		List<de.dlr.proseo.model.Orbit> testOrbits = createTestOrbits();
@@ -333,18 +333,15 @@ public class OrbitControllerTest {
 		        // Add query parameter
 		        .queryParam("spacecraftCode", "S_TDX1")
 				.queryParam("orbitNumberFrom", 10)
-				.queryParam("orbitNumberTo", 15);
-//				.queryParam("starttimefrom", Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testOrbitData[0][10])))
-//				.queryParam("starttimeto", Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testOrbitData[0][11])));
+				.queryParam("orbitNumberTo", 15)
+				.queryParam("starttimefrom", Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testOrbitData[0][10])))
+				.queryParam("starttimeto", Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testOrbitData[0][11])));
 
-		
-		System.out.println(builder.buildAndExpand().toUri());
-
-		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.toUriString(), config.getUserName(), config.getUserPassword());
+		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 		
 		RestTemplate restTemplate = rtb.basicAuthentication(config.getUserName(), config.getUserPassword()).build();	
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, requestEntity, List.class);
+		ResponseEntity<List> entity = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, requestEntity, List.class);
 		
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
 		
@@ -388,5 +385,5 @@ public class OrbitControllerTest {
 
 		logger.info("Test OK: Get Orbits");
 	}
-
+*/
 }

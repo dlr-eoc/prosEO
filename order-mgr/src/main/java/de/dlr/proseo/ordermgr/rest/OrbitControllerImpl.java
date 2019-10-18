@@ -16,6 +16,7 @@ import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -107,21 +108,10 @@ public class OrbitControllerImpl implements OrbitController {
 	
 	@Override
 	public ResponseEntity<List<Orbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, Date starttimefrom, Date starttimeto) {
+			Long orbitNumberTo, @DateTimeFormat Date starttimefrom, @DateTimeFormat Date starttimeto) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 
-		List<de.dlr.proseo.ordermgr.rest.model.Orbit> result = new ArrayList<>();
-		
-//		// Simple case: no search criteria set
-//			for (de.dlr.proseo.model.Orbit  orbit: RepositoryService.getOrbitRepository().findAll()) {
-//				if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-//				Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-//				if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-//				result.add(resultOrbit);
-//			}
-//			
-//			return new ResponseEntity<>(result, HttpStatus.OK);		
-		
+		List<de.dlr.proseo.ordermgr.rest.model.Orbit> result = new ArrayList<>();		
 		// Find using search parameters
 		//Check if Spacecraft code isn't blank and returns orbits matching to the spacecraft code
 		if("" != spacecraftCode) {
@@ -134,7 +124,7 @@ public class OrbitControllerImpl implements OrbitController {
 				//TBA how to pass starttime as paramemter
 				if(null != starttimefrom && null != starttimeto) {
 					for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
-						if (orbit.getStartTime() == starttimefrom.toInstant() && orbit.getStopTime() == starttimeto .toInstant()) {
+						if (orbit.getStartTime().isAfter(starttimefrom.toInstant()) && orbit.getStopTime().isBefore(starttimeto .toInstant())) {
 							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 							Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
@@ -218,6 +208,11 @@ public class OrbitControllerImpl implements OrbitController {
 		//Insert every valid Rest orbit into the DB
 		for(Orbit tomodelOrbit : orbit) {
 			de.dlr.proseo.model.Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
+			
+			//Adding spacecraft object to modelOrbit
+			de.dlr.proseo.model.Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
+			modelOrbit.setSpacecraft(spacecraft);
+			
 			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
 			modelOrbits.add(modelOrbit);
 		}
@@ -286,6 +281,10 @@ public class OrbitControllerImpl implements OrbitController {
 		// Update modified attributes
 		boolean orbitChanged = false;
 		de.dlr.proseo.model.Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
+
+		//Adding spacecraft object to modelOrbit
+		de.dlr.proseo.model.Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+		changedOrbit.setSpacecraft(spacecraft);
 		
 		if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
 			orbitChanged = true;
