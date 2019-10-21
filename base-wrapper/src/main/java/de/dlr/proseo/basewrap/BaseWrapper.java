@@ -738,7 +738,7 @@ public class BaseWrapper {
 	 */
 	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
-		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
+		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<storageID>/<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
 		AmazonS3 s3 = S3Ops.v1S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 		String separator = "/";
 		int numberOfOutputs = 0;
