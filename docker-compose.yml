@@ -38,32 +38,32 @@ services:
     ports:
       - "9000:9000"
     hostname: minio
-  # alluxio-master:
-    # image: alluxio/alluxio:2.0.0
-    # command: master
-    # ports:
-      # - "19999:19999"
-      # - "19998:19998"
-    # hostname: alluxio-master
-    # volumes:
-      # - ${PWD}/storage-mgr/src/main/resources/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
-    # depends_on:
-      # - minio
-  # alluxio-worker:
-    # image: alluxio/alluxio:2.0.0
-    # command: worker
-    # ports:
-      # - "29999:29999"
-      # - "30000:30000"
-    # environment:
-      # - ALLUXIO_RAM_FOLDER=/mnt/ramdisk
-    # hostname: 127.0.0.1
-    # volumes:
-      # - ${PWD}/storage-mgr/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
-      # - /tmp:/mnt/ramdisk
-    # depends_on:
-      # - minio
-      # - alluxio-master
+  alluxio-master:
+    image: alluxio/alluxio:2.0.0
+    command: master
+    ports:
+      - "19999:19999"
+      - "19998:19998"
+    hostname: alluxio-master
+    volumes:
+      - ${PWD}/storage-mgr/src/main/resources/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
+    depends_on:
+      - minio
+  alluxio-worker:
+    image: alluxio/alluxio:2.0.0
+    command: worker
+    ports:
+      - "29999:29999"
+      - "30000:30000"
+    environment:
+      - ALLUXIO_RAM_FOLDER=/mnt/ramdisk
+    hostname: 127.0.0.1
+    volumes:
+      - ${PWD}/storage-mgr/src/main/resources/alluxio-site.properties:/opt/alluxio-2.0.0/conf/alluxio-site.properties
+      - /tmp:/mnt/ramdisk
+    depends_on:
+      - minio
+      - alluxio-master
 volumes:
   minio:
   #pgdata:
