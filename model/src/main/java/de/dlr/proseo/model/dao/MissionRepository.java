@@ -3,7 +3,7 @@
  */
 package de.dlr.proseo.model.dao;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Mission;
@@ -15,7 +15,7 @@ import de.dlr.proseo.model.Mission;
  *
  */
 @Repository
-public interface MissionRepository extends CrudRepository<Mission, Long> {
+public interface MissionRepository extends JpaRepository<Mission, Long> {
 
 	/**
 	 * Get the mission with the given code

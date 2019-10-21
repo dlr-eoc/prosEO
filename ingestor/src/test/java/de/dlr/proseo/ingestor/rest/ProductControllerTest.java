@@ -40,9 +40,11 @@ import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -62,11 +64,18 @@ public class ProductControllerTest {
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
 	
 	/* Test products */
+	private static final String TEST_CODE = "S5P";
+	private static final String TEST_PRODUCT_TYPE = "L1B";
+	private static final String TEST_MISSION_TYPE = "L1B_______";
+	private static final String TEST_MODE = "NRTI";
+	private static final String TEST_ALT_CODE = "TDM";
+	private static final String TEST_ALT_PRODUCT_TYPE = "DEM";
+	private static final String TEST_ALT_MISSION_TYPE = "TDM.DEM.DEM";
 	private static String[][] testProductData = {
 		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_MODE, "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_MODE, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** Test configuration */
@@ -183,9 +192,7 @@ public class ProductControllerTest {
 	@Test
 	public final void testDeleteProductById() {
 		// Make sure test products exist
-		List<Product> testProducts = createTestProducts();
-		Product productToDelete = testProducts.get(0);
-		testProducts.remove(0);
+		Product productToDelete = createProduct(testProductData[0]);
 		
 		// Delete the first test product
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToDelete.getId();
@@ -198,9 +205,6 @@ public class ProductControllerTest {
 				.getForEntity(testUrl, RestProduct.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
-		// Clean up database
-		deleteTestProducts(testProducts);
-
 		logger.info("Test OK: Delete Product By ID");
 	}
 
@@ -212,6 +216,48 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testGetProducts() {
+		// Make sure missions and product classes exist
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission.getProcessingModes().add(TEST_MODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+		
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			//mission.getProductClasses().add(prodClass);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		
+		Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_ALT_CODE);
+		if (null == altMission) {
+			altMission = new Mission();
+			altMission.setCode(TEST_ALT_CODE);
+			altMission = RepositoryService.getMissionRepository().save(altMission);
+		}
+		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
+		
+		ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE);
+		if (null == altProdClass) {
+			altProdClass = new ProductClass();
+			altProdClass.setMission(altMission);
+			altProdClass.setProductType(TEST_ALT_PRODUCT_TYPE);
+			altProdClass.setMissionType(TEST_ALT_MISSION_TYPE);
+			altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
+			//altMission.getProductClasses().add(altProdClass);
+			//altMission = RepositoryService.getMissionRepository().save(altMission);
+		}
+		logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
+		
 		// Make sure test products exist
 		List<Product> testProducts = createTestProducts();
 		
@@ -276,12 +322,34 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testCreateProduct() {
+		// Make sure a mission and a product class exist
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission.getProcessingModes().add(TEST_MODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+		
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			//mission.getProductClasses().add(prodClass);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		
 		// Create a product in the database
 		Product productToCreate = createProduct(testProductData[0]);
 		RestProduct restProduct = ProductUtil.toRestProduct(productToCreate);
 
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
-		logger.info("Testing URL {} / POST", testUrl);
+		logger.info("Testing URL {} / POST : {}", testUrl, restProduct.toString());
 		
 		ResponseEntity<RestProduct> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.postForEntity(testUrl, restProduct, RestProduct.class);
@@ -315,6 +383,48 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testGetProductById() {
+		// Make sure missions and product classes exist
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission.getProcessingModes().add(TEST_MODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+		
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			//mission.getProductClasses().add(prodClass);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		
+		Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == altMission) {
+			altMission = new Mission();
+			altMission.setCode(TEST_ALT_CODE);
+			altMission = RepositoryService.getMissionRepository().save(altMission);
+		}
+		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
+		
+		ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == altProdClass) {
+			altProdClass = new ProductClass();
+			altProdClass.setMission(altMission);
+			altProdClass.setProductType(TEST_PRODUCT_TYPE);
+			altProdClass.setMissionType(TEST_MISSION_TYPE);
+			altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
+			//altMission.getProductClasses().add(altProdClass);
+			//altMission = RepositoryService.getMissionRepository().save(altMission);
+		}
+		logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
+		
 		// Make sure test products exist
 		List<Product> testProducts = createTestProducts();
 		Product productToFind = testProducts.get(0);
@@ -342,9 +452,30 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testModifyProduct() {
+		// Make sure a mission and a product class exist
+		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+		if (null == mission) {
+			mission = new Mission();
+			mission.setCode(TEST_CODE);
+			mission.getProcessingModes().add(TEST_MODE);
+			mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+		
+		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+		if (null == prodClass) {
+			prodClass = new ProductClass();
+			prodClass.setMission(mission);
+			prodClass.setProductType(TEST_PRODUCT_TYPE);
+			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+			//mission.getProductClasses().add(prodClass);
+			//mission = RepositoryService.getMissionRepository().save(mission);
+		}
+		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		
 		// Make sure test products exist
-		List<Product> testProducts = createTestProducts();
-		Product productToModify = testProducts.get(0);
+		Product productToModify = createProduct(testProductData[0]);
 		
 		// Update a product attribute
 		productToModify.setMode("OFFL");
@@ -352,7 +483,7 @@ public class ProductControllerTest {
 		RestProduct restProduct = ProductUtil.toRestProduct(productToModify);
 		
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToModify.getId();
-		logger.info("Testing URL {} / PATCH", testUrl);
+		logger.info("Testing URL {} / PATCH : {}", testUrl, restProduct.toString());
 
 		restProduct = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.patchForObject(testUrl, restProduct, RestProduct.class);
@@ -365,7 +496,7 @@ public class ProductControllerTest {
 		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
 		
 		// Clean up database
-		deleteTestProducts(testProducts);
+		deleteTestProducts(Arrays.asList(productToModify));
 
 		logger.info("Test OK: Modify Product");
 	}

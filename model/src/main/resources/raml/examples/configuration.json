@@ -1,6 +1,7 @@
 {
     "id": 9276488,
     "version": 5,
+    "missionCode": "S5P",
     "processorName": "KNMI L2",
     "configurationVersion": "2019-03-30",
     "dynProcParameters": [

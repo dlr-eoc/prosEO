@@ -1,14 +1,24 @@
 title: prosEO UI Command Line Interface Syntax
+# This document describes the syntax of the prosEO Command Line Interface. It is inteded to be fed into the syntax parser of the
+# command line program and to be returned as online help for the user.
 version: v0.1
 description: |
-  This document describes the syntax of the prosEO Command Line Interface. It is inteded to be fed into the syntax parser of the
-  command line program and to be returned as online help for the user.
-  Commands can be invoked on the shell command line following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
+  Commands can be invoked on the shell command line following the name of the prosEO executable (e. g. "proseo")
+  and at least one whitespace character.
+  
   Commands may have subcommands, which precede all options and parameters.
-  Commands may have options (--option, a short form -o may be given as alias) and parameters (passed as values without the parameter name).
+  
+  Commands may have options (--option, a short form -o may be given as alias) and parameters
+  (passed as values without the parameter name).
+  
   Modal options can be combined into one option, i. e. "-a -b -c" is the same as "-abc".
-  Options with values are either of the form "-ovalue" or "--option=value"; in the case of multiple values "--option=value,value,value"
+  Options with values are either of the form "-ovalue" or "--option=value";
+  in the case of multiple values "--option=value,value,value".
+  
   Parameters are positional, except (implicitly) for attribute parameters of the form "<attribute name>=<attribute value>".
+  
+  All date-time values must conform to the ISO date-time format ("YYYY-MM-DDTHH:MM:SS").
+  
   So the general syntax is:
   ["proseo"] command [subcommand...] [option...] [parameter...]
 
@@ -39,6 +49,14 @@ options:
       shortForm: m
 
 commands:
+    # Terminate the CLI
+    - name: exit
+      description: Terminate the Command Line Interface
+      
+    # Show the help text (same as "proseo --help")
+    - name: help
+      description: Show the prosEO Command Line Interface help information (this page; for subcommand help, type "<subcommand> --help")
+      
     # Authentication:
     - name: login
       description: Log in to a mission in prosEO. A login is required prior to executing any other command except "mission show".
@@ -792,3 +810,5 @@ commands:
           optional: true
           repeatable: true
           description: An attribute of an ingested product to set in the form "<attribute name>=<attribute value>"
+# TODO Add processing facilities!
+          

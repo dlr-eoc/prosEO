@@ -185,8 +185,8 @@ public class Configuration extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return "Configuration [processorClass=" + processorClass.getProcessorName() + ", configurationVersion=" 
-				+ configurationVersion + ", dynProcParameters=" + dynProcParameters
+		return "Configuration [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", configurationVersion=" + configurationVersion + ", dynProcParameters=" + dynProcParameters
 				+ ", configurationFiles=" + configurationFiles + ", dockerRunParameters=" + dockerRunParameters + "]";
 	}
 

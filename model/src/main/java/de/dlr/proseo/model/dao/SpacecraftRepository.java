@@ -5,7 +5,7 @@
  */
 package de.dlr.proseo.model.dao;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Spacecraft;
@@ -17,7 +17,7 @@ import de.dlr.proseo.model.Spacecraft;
  *
  */
 @Repository
-public interface SpacecraftRepository extends CrudRepository<Spacecraft, Long> {
+public interface SpacecraftRepository extends JpaRepository<Spacecraft, Long> {
 
 	/**
 	 * Get the spacecraft with the given code

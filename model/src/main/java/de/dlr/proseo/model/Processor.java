@@ -295,7 +295,8 @@ public class Processor extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return "Processor [processorClass=" + processorClass.getProcessorName() + ", processorVersion=" + processorVersion + ", isTest=" + isTest
+		return "Processor [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", processorVersion=" + processorVersion + ", isTest=" + isTest
 				+ ", minDiskSpace=" + minDiskSpace + ", maxTime=" + maxTime + ", sensingTimeFlag=" + sensingTimeFlag + ", tasks="
 				+ tasks + ", dockerImage=" + dockerImage + ", dockerRunParameters=" + dockerRunParameters + "]";
 	}

@@ -398,7 +398,8 @@ public class Product extends PersistentObject {
 	}
 	@Override
 	public String toString() {
-		return "Product [productClass=" + productClass.getProductType() + ", mode=" + mode + ", sensingStartTime=" + sensingStartTime
+		return "Product [productClass=" + (null == productClass ? "null" : productClass.getProductType()) 
+				+ ", mode=" + mode + ", sensingStartTime=" + sensingStartTime
 				+ ", sensingStopTime=" + sensingStopTime + ", generationTime=" + generationTime + ", productFile=" + productFile
 				+ ", parameters=" + parameters + "]";
 	}

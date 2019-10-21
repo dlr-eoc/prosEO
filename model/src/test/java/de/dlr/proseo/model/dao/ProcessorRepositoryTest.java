@@ -22,11 +22,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for ProcessorRepository
@@ -40,8 +40,8 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProcessorRepositoryTest {
 
+	private static final String TEST_CODE = "$xyz$";
 	private static final String TEST_VERSION = "$02.00.01$";
-
 	private static final String TEST_NAME = "$KNMI L2$";
 	
 	/** A logger for this class */
@@ -77,10 +77,15 @@ public class ProcessorRepositoryTest {
 
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		ProcessorClass procClass = new ProcessorClass();
+		procClass.setMission(mission);
 		procClass.setProcessorName(TEST_NAME);
 		procClass = RepositoryService.getProcessorClassRepository().save(procClass);
-		
+				
 		Processor proc = new Processor();
 		proc.setProcessorClass(procClass);
 		proc.setProcessorVersion(TEST_VERSION);
@@ -90,7 +95,7 @@ public class ProcessorRepositoryTest {
 		RepositoryService.getProcessorClassRepository().save(procClass);
 		
 		// Test findByProcessorNameAndProcessorVersion
-		proc = RepositoryService.getProcessorRepository().findByProcessorNameAndProcessorVersion(TEST_NAME, TEST_VERSION);
+		proc = RepositoryService.getProcessorRepository().findByMissionCodeAndProcessorNameAndProcessorVersion(TEST_CODE, TEST_NAME, TEST_VERSION);
 		assertNotNull("Find by processor name and version failed for Processor", proc);
 		
 		logger.info("OK: Test for findByProcessorNameAndProcessorVersion completed");

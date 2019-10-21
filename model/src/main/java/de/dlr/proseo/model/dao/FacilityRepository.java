@@ -3,8 +3,8 @@
  */
 package de.dlr.proseo.model.dao;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.ProcessingFacility;
@@ -16,7 +16,7 @@ import de.dlr.proseo.model.ProcessingFacility;
  *
  */
 @Repository
-public interface FacilityRepository extends CrudRepository<ProcessingFacility, Long> {
+public interface FacilityRepository extends JpaRepository<ProcessingFacility, Long> {
 	
 	/**
 	 * Get the processing facility with the given name

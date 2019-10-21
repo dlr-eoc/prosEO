@@ -11,6 +11,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
@@ -48,11 +51,17 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_PRODUCT_RETRIEVED = 2008;
 	private static final int MSG_ID_PRODUCT_MODIFIED = 2009;
 	private static final int MSG_ID_PRODUCT_NOT_MODIFIED = 2010;
+	private static final int MSG_ID_PRODUCT_LIST_EMPTY = 2011;
+	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_PRODUCT_ID_MISSING = 2013;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_MISSING = "(E%d) Product not set";
+	private static final String MSG_PRODUCT_ID_MISSING = "(E%d) Product ID not set";
 	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found for ID %d";
+	private static final String MSG_PRODUCT_LIST_EMPTY = "(E%d) No products found for search criteria";
+	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
 	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "(E%d) Enclosing product with ID %d not found";
 	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "(E%d) Component product with ID %d not found";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product deletion unsuccessful for ID %d";
@@ -65,6 +74,10 @@ public class ProductControllerImpl implements ProductController {
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
 	
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 	
@@ -157,8 +170,8 @@ public class ProductControllerImpl implements ProductController {
 		
 		List<RestProduct> result = new ArrayList<>();
 		
-		// Simple case: no search criteria set
 		if (null == mission && (null == productClass || 0 == productClass.length) && null == startTimeFrom && null == startTimeTo) {
+			// Simple case: no search criteria set
 			for (Product product: RepositoryService.getProductRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found product with ID {}", product.getId());
 				RestProduct resultProduct = ProductUtil.toRestProduct(product);
@@ -166,19 +179,57 @@ public class ProductControllerImpl implements ProductController {
 
 				result.add(resultProduct);
 			}
-			
-			logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), "null", "null", "null", "null");
-			
-			return new ResponseEntity<>(result, HttpStatus.OK);
+		} else {
+			// Find using search parameters
+			String jpqlQuery = "select p from Product where 1 = 1";
+			if (null != mission) {
+				jpqlQuery += " and p.productClass.mission.code = :missionCode";
+			}
+			if (null != productClass && 0 < productClass.length) {
+				jpqlQuery += " and p.productClass.productType in (";
+				for (int i = 0; i < productClass.length; ++i) {
+					if (0 < i) jpqlQuery += ", ";
+					jpqlQuery += ":productClass" + i;
+				}
+				jpqlQuery += ")";
+			}
+			if (null != startTimeFrom) {
+				jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
+			}
+			if (null != startTimeTo) {
+				jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
+			}
+			Query query = em.createQuery(jpqlQuery);
+			if (null != mission) {
+				query.setParameter("missionCode", mission);
+			}
+			if (null != productClass && 0 < productClass.length) {
+				for (int i = 0; i < productClass.length; ++i) {
+					query.setParameter("productClass" + i, productClass[i]);
+				}
+			}
+			if (null != startTimeFrom) {
+				query.setParameter("startTimeFrom", startTimeFrom);
+			}
+			if (null != startTimeTo) {
+				query.setParameter("startTimeTo", startTimeTo);
+			}
+			for (Object resultObject: query.getResultList()) {
+				if (resultObject instanceof Product) {
+					result.add(ProductUtil.toRestProduct((Product) resultObject));
+				}
+			}
 		}
 		
-		// Find using search parameters
+		if (result.isEmpty()) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY), 
+					HttpStatus.NOT_FOUND);
+		}
 		
+		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), "null", "null", "null", "null");
 		
-		
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders("GET with search parameters not implemented (%d)", MSG_ID_NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	/**
@@ -202,6 +253,12 @@ public class ProductControllerImpl implements ProductController {
 		
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 				product.getMissionCode(), product.getProductClass());
+		if (null == modelProductClass) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
+							product.getMissionCode(), product.getProductClass()),
+					HttpStatus.BAD_REQUEST);
+		}
 		modelProduct.setProductClass(modelProductClass);
 		
 		for (Long componentProductId: product.getComponentProductIds()) {
@@ -236,12 +293,18 @@ public class ProductControllerImpl implements ProductController {
 	 * Find the product with the given ID
 	 * 
 	 * @param id the ID to look for
-	 * @return a Json object corresponding to the found product and HTTP status "OK" or an error message and
+	 * @return a Json object corresponding to the product found and HTTP status "OK" or an error message and
 	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProduct> getProductById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
+		
+		if (null == id) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_PRODUCT_ID_MISSING, MSG_ID_PRODUCT_ID_MISSING, id), 
+					HttpStatus.BAD_REQUEST);
+		}
 		
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
 		

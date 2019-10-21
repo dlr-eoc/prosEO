@@ -3,6 +3,7 @@
         "id": 3367251,
         "version": 4,
         "identifier": "KNMI L2 01.03.02 2019-03-30",
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "processorVersion": "01.03.02",
         "configurationVersion": "2019-03-30"
@@ -11,6 +12,7 @@
         "id": 3367252,
         "version": 2,
         "identifier": "KNMI L2 01.03.02 2019-04-27",
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "processorVersion": "01.03.02",
         "configurationVersion": "2019-04-27"
