@@ -220,20 +220,6 @@ public class BaseWrapper {
 	}
 
 	/**
-	 * @return the eNV_K8S_PODNAME
-	 */
-	public String getENV_K8S_PODNAME() {
-		return ENV_K8S_PODNAME;
-	}
-
-	/**
-	 * @param eNV_K8S_PODNAME the eNV_K8S_PODNAME to set
-	 */
-	public void setENV_K8S_PODNAME(String eNV_K8S_PODNAME) {
-		ENV_K8S_PODNAME = eNV_K8S_PODNAME;
-	}
-
-	/**
 	 * @return the exitCodeOk
 	 */
 	public static int getExitCodeOk() {
@@ -406,7 +392,6 @@ public class BaseWrapper {
 		, STATE_CALLBACK_ENDPOINT
 		, PROCESSOR_SHELL_COMMAND
 		, PROCESSING_FACILITY_NAME
-		, K8S_PODNAME
 	}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
@@ -421,7 +406,6 @@ public class BaseWrapper {
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
-	private String ENV_K8S_PODNAME = System.getenv(ENV_VARS.K8S_PODNAME.toString());
 
 
 	/** Check if FS_TYPE value is valid */
@@ -525,10 +509,6 @@ public class BaseWrapper {
 		}
 		if(ENV_INGESTOR_ENDPOINT==null || ENV_INGESTOR_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.INGESTOR_ENDPOINT);
-			return false;
-		}
-		if(ENV_K8S_PODNAME==null || ENV_K8S_PODNAME.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.K8S_PODNAME);
 			return false;
 		}
 		logger.info("ENV_VARS looking good...");
@@ -914,8 +894,10 @@ public class BaseWrapper {
 
 
 	private HttpResponseInfo callBack(String msg) {
-		String callBackRestUrl =   "/processingfacilities/"+ENV_PROCESSING_FACILITY_NAME+"/finish/"+ENV_K8S_PODNAME;
-		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, callBackRestUrl, msg, "status", RestOps.HttpMethod.PATCH);
+		// ENV_STATE_CALLBACK_ENDPOINT shall look like:
+		// <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
+		// queryParam status is set by wrapper
+		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
 		if(callback != null) logger.info("... planner response is {}", callback.gethttpResponse());
 		else return null;
 		
