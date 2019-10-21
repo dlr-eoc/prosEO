@@ -5,6 +5,9 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,9 +20,9 @@ import java.util.List;
 public class CLICommand {
 
 	/** Command name */
-	private String name;
+	private String name = "";
 	/** Command description (help text) */
-	private String description;
+	private String description = "";
 	/** Available subcommands */
 	private List<CLICommand> subcommands = new ArrayList<>();
 	/** Command options */
@@ -86,6 +89,35 @@ public class CLICommand {
 	 */
 	public void setParameters(List<CLIParameter> parameters) {
 		this.parameters = parameters;
+	}
+	
+	/**
+	 * Print help information for this command on the given print stream
+	 * 
+	 * @param out the print stream to write to
+	 */
+	public void printHelp(PrintStream out) {
+		out.println(description);
+		
+		out.println("Options:");
+		List<CLIOption> applicableOptions = new ArrayList<>(options);
+		applicableOptions.addAll(CLISyntax.inputSyntax.getGlobalOptions());
+		for (CLIOption option: applicableOptions) {
+			out.println(String.format("    %s --%-10s  %s", 
+					(null == option.getShortForm() ? "" : "-" + option.getShortForm() + ","), 
+					option.getName(), 
+					option.getDescription().replace('\n', ' ')));
+		}
+		
+		out.println("Positional parameters:");
+		for (CLIParameter parameter: parameters) {
+			out.println(String.format("    %-16s  %s", parameter.getName(), parameter.getDescription().replace('\n', ' ')));
+		}
+		
+		out.println("Subcommands:");
+		for (CLICommand subcommand: subcommands) {
+			out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+		}
 	}
 	
 	@Override

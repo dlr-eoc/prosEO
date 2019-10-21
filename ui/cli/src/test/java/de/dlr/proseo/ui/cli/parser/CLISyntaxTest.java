@@ -30,7 +30,7 @@ import de.dlr.proseo.ui.cli.CommandLineInterface;
  *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = CommandLineInterface.class)
+@SpringBootTest(classes = CommandLineInterface.class, properties = { "spring.main.web-application-type=NONE", "proseo.cli.start=false" } )
 public class CLISyntaxTest {
 
 	/** The configuration object for the prosEO CLI */

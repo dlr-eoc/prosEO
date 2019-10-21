@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.model.service;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,7 +34,7 @@ public class ProductQueryService {
 	
 	/** JPA entity manager */
 	@PersistenceContext
-	EntityManager em;
+	private EntityManager em;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryService.class);

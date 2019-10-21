@@ -1,16 +1,16 @@
 /**
- * CLIOption.java
+ * ParsedOption.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.cli.parser;
 
 /**
- * Class representing a prosEO CLI command option
+ * Class representing a parsed command option
  * 
  * @author Dr. Thomas Bassler
  */
-public class CLIOption {
+public class ParsedOption {
 
 	/* Message ID constants */
 	private static final int MSG_ID_ILLEGAL_OPTION_TYPE = 2902;
@@ -19,13 +19,13 @@ public class CLIOption {
 	private static final String MSG_ILLEGAL_OPTION_TYPE = "(E%d) Illegal option type %s, expected one of %s";
 
 	/** Option name */
-	private String name = "";
+	private String name;
 	/** Option type (see allowedTypes) */
-	private String type = "string";
-	/** Option description (help text) */
-	private String description = "";
-	/** Option short form */
-	private Character shortForm = null;
+	private String type;
+	/** Option value */
+	private String value;
+	/** Reference to syntax element */
+	private CLIOption syntaxOption;
 	
 	/**
 	 * @return the name
@@ -59,31 +59,31 @@ public class CLIOption {
 	/**
 	 * @return the description
 	 */
-	public String getDescription() {
-		return description;
+	public String getValue() {
+		return value;
 	}
 	/**
-	 * @param description the description to set
+	 * @param value the value to set
 	 */
-	public void setDescription(String description) {
-		this.description = description;
+	public void setValue(String value) {
+		this.value = value;
 	}
 	/**
-	 * @return the shortForm
+	 * @return the syntaxOption
 	 */
-	public Character getShortForm() {
-		return shortForm;
+	public CLIOption getSyntaxOption() {
+		return syntaxOption;
 	}
 	/**
-	 * @param shortForm the shortForm to set
+	 * @param syntaxOption the syntaxOption to set
 	 */
-	public void setShortForm(Character shortForm) {
-		this.shortForm = shortForm;
+	public void setSyntaxOption(CLIOption syntaxOption) {
+		this.syntaxOption = syntaxOption;
 	}
 	
 	@Override
 	public String toString() {
-		return "CLIOption [\n  name=" + name + ",\n  type=" + type + ",\n  description=" + description + ",\n  shortForm=" + shortForm + "\n]";
+		return "ParsedOption [\n  name=" + name + ",\n  type=" + type + ",\n  value=" + value + "\n]";
 	}
 	
 	

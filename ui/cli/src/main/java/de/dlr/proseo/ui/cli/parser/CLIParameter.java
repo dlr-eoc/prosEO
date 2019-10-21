@@ -12,19 +12,22 @@ package de.dlr.proseo.ui.cli.parser;
  */
 public class CLIParameter {
 
+	/* Message ID constants */
+	private static final int MSG_ID_ILLEGAL_PARAMETER_TYPE = 2901;
+
 	/* Message strings */
-	private static final String MSG_ILLEGAL_PARAMETER_TYPE = "Illegal parameter type %s, expected one of %s";
+	private static final String MSG_ILLEGAL_PARAMETER_TYPE = "(E%d) Illegal parameter type %s, expected one of %s";
 
 	/** Parameter name */
-	private String name;
+	private String name = "";
 	/** Parameter type (see allowedTypes) */
-	private String type;
+	private String type = "string";
 	/** Parameter description (help text) */
-	private String description;
+	private String description = "";
 	/** Flag, whether parameter is optional */
-	private Boolean optional;
+	private Boolean optional = false;
 	/** Flag, whether parameter can occur multiple times */
-	private Boolean repeatable;
+	private Boolean repeatable = false;
 	
 	/**
 	 * @return the name
@@ -51,7 +54,8 @@ public class CLIParameter {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_PARAMETER_TYPE,
+					MSG_ID_ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
 	/**
