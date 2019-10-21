@@ -149,19 +149,6 @@ public class BaseWrapper {
 		ENV_S3_BUCKET_OUTPUTS = eNV_S3_BUCKET_OUTPUTS;
 	}
 
-	/**
-	 * @return the eNV_LOGFILE_TARGET
-	 */
-	public String getENV_LOGFILE_TARGET() {
-		return ENV_LOGFILE_TARGET;
-	}
-
-	/**
-	 * @param eNV_LOGFILE_TARGET the eNV_LOGFILE_TARGET to set
-	 */
-	public void setENV_LOGFILE_TARGET(String eNV_LOGFILE_TARGET) {
-		ENV_LOGFILE_TARGET = eNV_LOGFILE_TARGET;
-	}
 
 	/**
 	 * @return the eNV_STATE_CALLBACK_ENDPOINT
@@ -387,7 +374,6 @@ public class BaseWrapper {
 		, S3_ACCESS_KEY
 		, S3_SECRET_ACCESS_KEY
 		, S3_BUCKET_OUTPUTS
-		, LOGFILE_TARGET
 		, INGESTOR_ENDPOINT
 		, STATE_CALLBACK_ENDPOINT
 		, PROCESSOR_SHELL_COMMAND
@@ -401,7 +387,6 @@ public class BaseWrapper {
 	private String ENV_S3_ACCESS_KEY = System.getenv(ENV_VARS.S3_ACCESS_KEY.toString());
 	private String ENV_S3_SECRET_ACCESS_KEY = System.getenv(ENV_VARS.S3_SECRET_ACCESS_KEY.toString());
 	private String ENV_S3_BUCKET_OUTPUTS = System.getenv(ENV_VARS.S3_BUCKET_OUTPUTS.toString());
-	private String ENV_LOGFILE_TARGET = System.getenv(ENV_VARS.LOGFILE_TARGET.toString());
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
@@ -487,10 +472,6 @@ public class BaseWrapper {
 			return false;
 		}
 		;
-		if (ENV_LOGFILE_TARGET == null || ENV_LOGFILE_TARGET.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOGFILE_TARGET);
-			return false;
-		}
 		if (ENV_STATE_CALLBACK_ENDPOINT == null || ENV_STATE_CALLBACK_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STATE_CALLBACK_ENDPOINT);
 			return false;
