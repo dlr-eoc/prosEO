@@ -4,11 +4,17 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
+import java.io.IOException;
 import java.net.ConnectException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
@@ -32,7 +38,7 @@ import io.kubernetes.client.util.Config;
  */
 public class KubeConfig {
 
-	private HashMap<Integer, KubeJob> kubeJobList = null;
+	private HashMap<String, KubeJob> kubeJobList = null;
 	
 	private ApiClient client;
 	private CoreV1Api apiV1;
@@ -44,7 +50,10 @@ public class KubeConfig {
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
 	
-
+	public KubeJob getKubeJob(String name) {
+		return kubeJobList.get(name);
+	}
+	
 	/**
 	 * Instantiate a KuebConfig obejct
 	 * 
@@ -87,10 +96,23 @@ public class KubeConfig {
 		if (isConnected()) {
 			return true;
 		} else {
-			kubeJobList = new HashMap<Integer, KubeJob>();
+			kubeJobList = new HashMap<String, KubeJob>();
 
-			client = Config.fromUrl(url, false); 
-			// Config.defaultClient();
+			if (id.equalsIgnoreCase("OTC")) {
+//				try {
+//					client = Config.fromConfig("I:\\usr\\prosEO\\kubernetes\\auth\\config");
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//					return false;
+//				}
+				client = Config.fromUserPassword(url, 
+						 "user1", 
+						 "c36ff53775d69aa6bdbfa1486d8908a2fc9c38e712e6b0b69584a4f0cd9e8006", 
+						 false);
+			} else {
+				client = Config.fromUrl(url, false);
+			}
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
@@ -99,13 +121,23 @@ public class KubeConfig {
 				batchApiV1 = null;
 				return false;
 			} else {
-				V1PodList list = null;
-				try {
-					list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
+				V1JobList list = null;
+				try {									
 					// allow more response time and enhance time out 
 					client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
 					client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
 					client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
+
+					// rebuild runtime data 
+					list = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+					for (V1Job aJob : list.getItems()) {
+						KubeJob kj = new KubeJob();
+						kj = kj.rebuild(this, aJob);
+						if (kj != null) {
+							kubeJobList.put(kj.getJobName(), kj);
+						}
+					}
+					
 				} catch (ApiException e) {
 					// message handled in caller
 					if (e.getCause() == null || e.getCause().getClass() != ConnectException.class) {
@@ -172,10 +204,19 @@ public class KubeConfig {
 	 */
 	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
-		KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test1.pl", "perl");
+		KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
 		aJob = aJob.createJob(this);
 		if (aJob != null) {
-			kubeJobList.put(aJob.getJobId(), aJob);
+			kubeJobList.put(aJob.getJobName(), aJob);
+		}
+		return aJob;
+	}
+	public KubeJob createJobImageFileCmd(String name, String image, String file, String cmd, ArrayList<String> args) {
+		int aKey = kubeJobList.size() + 1;
+		KubeJob aJob = new KubeJob(aKey, null, image, file, cmd, args);
+		aJob = aJob.createPod(this);
+		if (aJob != null) {
+			kubeJobList.put(aJob.getJobName(), aJob);
 		}
 		return aJob;
 	}
@@ -228,7 +269,7 @@ public class KubeConfig {
 	public V1Job getV1Job(String name) {
 		V1Job aV1Job = null;
 		try {
-			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, true, true);
+			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {

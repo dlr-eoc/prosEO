@@ -69,7 +69,7 @@ public class JobControllerImpl implements JobController {
     	KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob(name);
     	if (aJob != null) {
     		PlannerJob aPlan = new PlannerJob();
-    		aPlan.setId(((Integer)aJob.getJobId()).toString());
+    		aPlan.setId(String.valueOf(aJob.getJobId()));
     		aPlan.setDescription(aJob.getJobName());
     		HttpHeaders responseHeaders = new HttpHeaders();
     		responseHeaders.set(HTTP_HEADER_SUCCESS, "");

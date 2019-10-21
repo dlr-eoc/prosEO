@@ -14,20 +14,22 @@ public class PodKube extends PlannerPod {
 			this.succeded = "";
 			this.type = "";
 			this.status = "";
-			if (job.getStatus().getStartTime() != null) { 
-				starttime = job.getStatus().getStartTime().toString("dd.MM.YYYY HH:mm:ss", null);
-				type = "running";
-			}
-			if (job.getStatus().getCompletionTime() != null) { 
-				completiontime = job.getStatus().getCompletionTime().toString("dd.MM.YYYY HH:mm:ss", null);
-			}
 			if (job.getStatus() != null) {
-				if (job.getStatus().getSucceeded() != null) {
-					succeded = job.getStatus().getSucceeded().toString();
+				if (job.getStatus().getStartTime() != null) { 
+					starttime = job.getStatus().getStartTime().toString("dd.MM.YYYY HH:mm:ss", null);
+					type = "running";
 				}
-				if (job.getStatus().getConditions() != null && job.getStatus().getConditions().size() > 0) {
-					type = job.getStatus().getConditions().get(0).getType();
-					status = job.getStatus().getConditions().get(0).getStatus();
+				if (job.getStatus().getCompletionTime() != null) { 
+					completiontime = job.getStatus().getCompletionTime().toString("dd.MM.YYYY HH:mm:ss", null);
+				}
+				if (job.getStatus() != null) {
+					if (job.getStatus().getSucceeded() != null) {
+						succeded = job.getStatus().getSucceeded().toString();
+					}
+					if (job.getStatus().getConditions() != null && job.getStatus().getConditions().size() > 0) {
+						type = job.getStatus().getConditions().get(0).getType();
+						status = job.getStatus().getConditions().get(0).getStatus();
+					}
 				}
 			}
 		}

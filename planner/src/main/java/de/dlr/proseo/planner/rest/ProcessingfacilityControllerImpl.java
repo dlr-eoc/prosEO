@@ -2,7 +2,12 @@ package de.dlr.proseo.planner.rest;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 import javax.validation.Valid;
 
@@ -14,7 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.dao.JobStepRepository;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
@@ -22,6 +30,7 @@ import de.dlr.proseo.planner.rest.model.PlannerProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
+import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobList;
 
@@ -175,6 +184,10 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			// finish jobstep, collect log and data, ...
 			
 			// delete pod
+			KubeJob kj = aKubeConfig.getKubeJob(podname);
+			if (kj != null) {
+				kj.finish(aKubeConfig, podname);
+			}
 			aKubeConfig.deleteJob(podname);
 			
 			
@@ -199,6 +212,26 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			V1Job aJob = aKubeConfig.getV1Job(podname);
 			if (aJob != null) {
 				PodKube aPlan = new PodKube(aJob);
+				KubeJob kj = aKubeConfig.getKubeJob(aPlan.getName());
+				if (kj != null) {
+					String pn = kj.getPodName();
+					String cn = kj.getContainerName();
+					if (cn != null && pn != null) {
+						try {
+							String log = aKubeConfig.getApiV1().readNamespacedPodLog(pn, aKubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
+							aPlan.setLog(log);
+						} catch (ApiException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+							return null;
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							return null;
+						}
+					}
+				}
+			    
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
 				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
@@ -217,10 +250,20 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      */
 	@Override
     public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
-    	KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname);
+		KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname);
+//		ArrayList<String> args = new ArrayList<String>();
+//		args.add("-e");
+//		args.add("'$cnt = 0; $max = 120 + int(rand(60)); while ( $cnt < $max ) {print \"loop: $cnt\\n\"; sleep 1; ++$cnt;}'");	
+//		// args.add("'i=0; while [ $i -le 100 ]; do echo \\\"$i: $(date)\\\"; i=$((i+1)); sleep 1; done'");
+//		KubeJob aJob = ProductionPlanner.getKubeConfig(name)
+//							.createJobImageFileCmd(podname,
+//												   "centos/perl-524-centos7",
+//												   null,
+//												   "perl",
+//												   args);
     	if (aJob != null) {
     		PlannerJobstep aPlan = new PlannerJobstep();
-    		aPlan.setId(((Integer)aJob.getJobId()).toString());
+    		aPlan.setId(String.valueOf(aJob.getJobId()).toString());
     		aPlan.setName(aJob.getJobName());
     		HttpHeaders responseHeaders = new HttpHeaders();
     		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
