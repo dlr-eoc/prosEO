@@ -3,4 +3,6 @@
     type: object
     properties:
       id: string
+      storageType:
+        enum: [S3, ALLUXIO, POSIX]
       description?: string

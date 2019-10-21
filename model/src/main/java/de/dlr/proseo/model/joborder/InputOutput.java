@@ -7,6 +7,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 /**
@@ -34,9 +35,27 @@ public class InputOutput {
 	 */
 	private String fileNameType;
 	/**
+	 * The product id of DB
+	 */
+	private String productID;
+
+	/**
 	 * List of file names
 	 */
 	private List<IpfFileName> fileNames;
+	/**
+	 * @return the productID
+	 */
+	
+	public String getProductID() {
+		return productID;
+	}
+	/**
+	 * @param productID the productID to set
+	 */
+	public void setProductID(String productID) {
+		this.productID = productID;
+	}
 	/**
 	 * @return the fileType
 	 */
@@ -75,12 +94,15 @@ public class InputOutput {
 	/**
 	 * @param fileType
 	 * @param fileNameType
+	 * @param type
+	 * @param productID
 	 */
-	public InputOutput(String fileType, String fileNameType, String type) {
+	public InputOutput(String fileType, String fileNameType, String type, String productID) {
 		this.type = type;
 		this.fileType = fileType;
 		this.fileNameType = fileNameType;
 		this.fileNames = new ArrayList<IpfFileName>();
+		this.productID = productID;
 	}
 
 	/**
@@ -91,6 +113,9 @@ public class InputOutput {
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element ioEle = doc.createElement(type);
+	    if (productID != null && productID.length() > 0) {
+	    	ioEle.setAttribute("Product_ID", productID);
+	    }
 	    parentElement.appendChild(ioEle);
 
         Element fileTypeEle = doc.createElement("File_Type");
@@ -119,6 +144,15 @@ public class InputOutput {
 	 */
 	public void read(Node thisNode) {
 		if (thisNode != null) {
+			NamedNodeMap nodeAttributes = (thisNode).getAttributes();
+			for (int i = 0; i < nodeAttributes.getLength(); i++) {
+				Node attrNode = nodeAttributes.item(i);
+				switch (attrNode.getNodeName().toLowerCase()) {
+				case "product_id" : 
+					this.setProductID(attrNode.getTextContent().strip());
+					break;
+				}
+			}
 			Node child = thisNode.getFirstChild();
 			while (child != null) {
 				switch (child.getNodeName().toLowerCase()) {

@@ -23,9 +23,40 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/test/resources/raml/model-test.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.model</raml-base-package>
+		<awssdk1.version>1.11.327</awssdk1.version>
+        <awssdk2.version>2.5.45</awssdk2.version>
+        <alluxio.version>2.0.0</alluxio.version>
+        <javax.version>8.0.1</javax.version>
 	</properties>
 
 	<dependencies>
+	   <!-- AWS S3 SDK 2 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${awssdk2.version}</version>
+        </dependency>
+        <!-- AWS S3 SDK 1 -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>${awssdk1.version}</version>
+        </dependency>
+        <!-- Alluxio -->
+        <dependency>
+            <groupId>org.alluxio</groupId>
+            <artifactId>alluxio-core-client-fs</artifactId>
+            <version>${alluxio.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>${javax.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.bundles</groupId>
+            <artifactId>jaxrs-ri</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

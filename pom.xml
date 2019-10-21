@@ -35,12 +35,12 @@
 		<module>ingestor</module>
 		<module>model</module>
 		<module>planner</module>
-		<module>sample-processor</module>
+		<module>samples</module>
 		<module>order-mgr</module>
 		<module>productclass-mgr</module>
 		<module>processor-mgr</module>
 		<module>ui</module>
-		<module>sample-wrapper</module>
+		<module>base-wrapper</module>
 		<module>storage-mgr</module>
 	</modules>
 

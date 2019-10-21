@@ -1,0 +1,13 @@
+#%RAML 1.0 DataType
+# ProductFS:
+    type: object
+    properties:
+      productId: string
+      storageId?: string
+      storageType:
+        enum: [S3, ALLUXIO, POSIX]
+      sourceFilePath?: string
+      registeredFilePath?: string
+      registered?: boolean
+      deleted?: boolean
+      message?: string

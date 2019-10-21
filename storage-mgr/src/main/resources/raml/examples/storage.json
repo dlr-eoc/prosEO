@@ -1,1 +1,5 @@
-{ "id" : "0ae234-887f26", "description" : "Produce S5P.TROPOMI.CO2 products for orbits 2345-4567" }
+{
+    "id": "0ae234-887f26",
+    "storageType" : "S3",
+    "description": "prosEO-FS for L1B products"
+}

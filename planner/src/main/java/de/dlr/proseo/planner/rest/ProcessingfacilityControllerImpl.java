@@ -106,6 +106,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					List<PlannerPod> jobList = new ArrayList<PlannerPod>();
 					if (list != null) {
 						for (V1Job item : list.getItems()) {
+							
 							PodKube pk = new PodKube(item);
 							if (pk != null) {
 								if (status == null || pk.hasStatus(status)) {
