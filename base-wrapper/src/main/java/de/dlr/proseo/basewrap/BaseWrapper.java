@@ -51,6 +51,76 @@ import software.amazon.awssdk.services.s3.S3Client;
  */
 public class BaseWrapper {
 
+	/** Exit code for successful completion */
+	private static final int EXIT_CODE_OK = 0;
+	/** Exit code for failure */
+	private static final int EXIT_CODE_FAILURE = 255;
+	/** Exit code explanation for successful completion */
+	private static final String EXIT_TEXT_OK = "OK";
+	/** Exit code explanation for failure */
+	private static final String EXIT_TEXT_FAILURE = "FAILURE";
+
+	private static final String CALLBACK_STATUS_FAILURE = "FAILURE";
+	private static final String CALLBACK_STATUS_SUCCESS = "SUCCESS";
+
+
+	/** Set path finals for container-context & Alluxio FS-Client*/
+	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
+	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
+	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
+	private static final String CONTAINER_INPUTS_PATH_PREFIX = "inputs";
+	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
+	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
+	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
+
+	/** Error messages */
+	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.01 with JobOrder file {}";
+	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
+	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
+
+
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
+
+	/** IPF_Proc valid Tags Enums */
+	enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
+
+	/** File_Name valid Attributes Enums */
+	enum File_Name {FS_TYPE}
+
+	/** File_Name Attribute FS_TYPE valid entries */
+	enum FS_TYPE {S3,POSIX, ALLUXIO}
+
+	/** ENV-VAR valid entries */
+	enum ENV_VARS {
+		JOBORDER_FS_TYPE
+		, JOBORDER_FILE
+		, S3_ENDPOINT
+		, S3_ACCESS_KEY
+		, S3_SECRET_ACCESS_KEY
+		, S3_STORAGE_ID_OUTPUTS
+		, ALLUXIO_STORAGE_ID_OUTPUTS
+		, INGESTOR_ENDPOINT
+		, STATE_CALLBACK_ENDPOINT
+		, PROCESSOR_SHELL_COMMAND
+		, PROCESSING_FACILITY_NAME
+	}
+
+	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
+	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
+	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
+	private String ENV_S3_ENDPOINT = System.getenv(ENV_VARS.S3_ENDPOINT.toString());
+	private String ENV_S3_ACCESS_KEY = System.getenv(ENV_VARS.S3_ACCESS_KEY.toString());
+	private String ENV_S3_SECRET_ACCESS_KEY = System.getenv(ENV_VARS.S3_SECRET_ACCESS_KEY.toString());
+	private String ENV_S3_STORAGE_ID_OUTPUTS = System.getenv(ENV_VARS.S3_STORAGE_ID_OUTPUTS.toString());
+	private String ENV_ALLUXIO_STORAGE_ID_OUTPUTS = System.getenv(ENV_VARS.ALLUXIO_STORAGE_ID_OUTPUTS.toString());
+	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
+	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
+	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
+	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+
+	//#######################GETTERS-SETTERS-START#############################
 	/**
 	 * @return the logger
 	 */
@@ -133,20 +203,6 @@ public class BaseWrapper {
 	 */
 	public void setENV_S3_SECRET_ACCESS_KEY(String eNV_S3_SECRET_ACCESS_KEY) {
 		ENV_S3_SECRET_ACCESS_KEY = eNV_S3_SECRET_ACCESS_KEY;
-	}
-
-	/**
-	 * @return the eNV_S3_BUCKET_OUTPUTS
-	 */
-	public String getENV_S3_BUCKET_OUTPUTS() {
-		return ENV_S3_BUCKET_OUTPUTS;
-	}
-
-	/**
-	 * @param eNV_S3_BUCKET_OUTPUTS the eNV_S3_BUCKET_OUTPUTS to set
-	 */
-	public void setENV_S3_BUCKET_OUTPUTS(String eNV_S3_BUCKET_OUTPUTS) {
-		ENV_S3_BUCKET_OUTPUTS = eNV_S3_BUCKET_OUTPUTS;
 	}
 
 
@@ -325,74 +381,37 @@ public class BaseWrapper {
 		return MSG_FILE_NOT_READABLE;
 	}
 
-	/** Exit code for successful completion */
-	private static final int EXIT_CODE_OK = 0;
-	/** Exit code for failure */
-	private static final int EXIT_CODE_FAILURE = 255;
-	/** Exit code explanation for successful completion */
-	private static final String EXIT_TEXT_OK = "OK";
-	/** Exit code explanation for failure */
-	private static final String EXIT_TEXT_FAILURE = "FAILURE";
-	
-	private static final String CALLBACK_STATUS_FAILURE = "FAILURE";
-	private static final String CALLBACK_STATUS_SUCCESS = "SUCCESS";
-	
-
-	/** Set path finals for container-context & Alluxio FS-Client*/
-	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
-	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
-	private static final String CONTAINER_INPUTS_PATH_PREFIX = "inputs";
-	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
-	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
-	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
-
-	/** Error messages */
-	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
-	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.01 with JobOrder file {}";
-	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
-	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
-
-
-	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
-
-	/** IPF_Proc valid Tags Enums */
-	enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
-
-	/** File_Name valid Attributes Enums */
-	enum File_Name {FS_TYPE}
-
-	/** File_Name Attribute FS_TYPE valid entries */
-	enum FS_TYPE {S3,POSIX, ALLUXIO}
-
-	/** ENV-VAR valid entries */
-	enum ENV_VARS {
-		JOBORDER_FS_TYPE
-		, JOBORDER_FILE
-		, S3_ENDPOINT
-		, S3_ACCESS_KEY
-		, S3_SECRET_ACCESS_KEY
-		, S3_BUCKET_OUTPUTS
-		, INGESTOR_ENDPOINT
-		, STATE_CALLBACK_ENDPOINT
-		, PROCESSOR_SHELL_COMMAND
-		, PROCESSING_FACILITY_NAME
+	/**
+	 * @return the eNV_S3_STORAGE_ID_OUTPUTS
+	 */
+	public String getENV_S3_STORAGE_ID_OUTPUTS() {
+		return ENV_S3_STORAGE_ID_OUTPUTS;
 	}
 
-	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
-	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
-	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
-	private String ENV_S3_ENDPOINT = System.getenv(ENV_VARS.S3_ENDPOINT.toString());
-	private String ENV_S3_ACCESS_KEY = System.getenv(ENV_VARS.S3_ACCESS_KEY.toString());
-	private String ENV_S3_SECRET_ACCESS_KEY = System.getenv(ENV_VARS.S3_SECRET_ACCESS_KEY.toString());
-	private String ENV_S3_BUCKET_OUTPUTS = System.getenv(ENV_VARS.S3_BUCKET_OUTPUTS.toString());
-	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
-	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
-	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
-	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+	/**
+	 * @param eNV_S3_STORAGE_ID_OUTPUTS the eNV_S3_STORAGE_ID_OUTPUTS to set
+	 */
+	public void setENV_S3_STORAGE_ID_OUTPUTS(String eNV_S3_STORAGE_ID_OUTPUTS) {
+		ENV_S3_STORAGE_ID_OUTPUTS = eNV_S3_STORAGE_ID_OUTPUTS;
+	}
 
+	/**
+	 * @return the eNV_ALLUXIO_STORAGE_ID_OUTPUTS
+	 */
+	public String getENV_ALLUXIO_STORAGE_ID_OUTPUTS() {
+		return ENV_ALLUXIO_STORAGE_ID_OUTPUTS;
+	}
 
+	/**
+	 * @param eNV_ALLUXIO_STORAGE_ID_OUTPUTS the eNV_ALLUXIO_STORAGE_ID_OUTPUTS to set
+	 */
+	public void setENV_ALLUXIO_STORAGE_ID_OUTPUTS(String eNV_ALLUXIO_STORAGE_ID_OUTPUTS) {
+		ENV_ALLUXIO_STORAGE_ID_OUTPUTS = eNV_ALLUXIO_STORAGE_ID_OUTPUTS;
+	}
+
+	//#######################GETTERS-SETTERS-END#############################
+
+	
 	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
 		for (FS_TYPE c : FS_TYPE.values()) {
@@ -484,8 +503,12 @@ public class BaseWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROCESSING_FACILITY_NAME);
 			return false;
 		}
-		if(ENV_S3_BUCKET_OUTPUTS==null || ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
+		if(ENV_S3_STORAGE_ID_OUTPUTS==null || ENV_S3_STORAGE_ID_OUTPUTS.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_STORAGE_ID_OUTPUTS);
+			return false;
+		}
+		if(ENV_ALLUXIO_STORAGE_ID_OUTPUTS==null || ENV_ALLUXIO_STORAGE_ID_OUTPUTS.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.ALLUXIO_STORAGE_ID_OUTPUTS);
 			return false;
 		}
 		if(ENV_INGESTOR_ENDPOINT==null || ENV_INGESTOR_ENDPOINT.isEmpty()) {
@@ -717,6 +740,7 @@ public class BaseWrapper {
 		logger.info("Uploading results to prosEO storage...");
 		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
 		AmazonS3 s3 = S3Ops.v1S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
+		String separator = "/";
 		int numberOfOutputs = 0;
 		int numberOfPushedOutputs = 0;
 		ArrayList<PushedProcessingOutput> pushedOutputs = new ArrayList<PushedProcessingOutput>();
@@ -730,10 +754,11 @@ public class BaseWrapper {
 						return null;
 					}
 					// Push files to ALLUXIO
+					// Output-Top-prefix==ENV_ALLUXIO_STORAGE_ID_OUTPUTS
 					if(fn.getFSType().equals(FS_TYPE.ALLUXIO.toString()) && isInteger(io.getProductID())) {
 						try {
 							AlluxioURI srcPath = new AlluxioURI(fn.getFileName());
-							AlluxioURI dstPath = new AlluxioURI(File.separator+io.getProductID()+File.separator+fn.getFileName());
+							AlluxioURI dstPath = new AlluxioURI(separator+ENV_ALLUXIO_STORAGE_ID_OUTPUTS+separator+io.getProductID()+separator+fn.getFileName());
 							Boolean transaction = AlluxioOps.copyFromLocal(srcPath, dstPath, ALLUXIO_WRITE_TYPE);
 							if(transaction) {
 								numberOfPushedOutputs++;
@@ -749,20 +774,16 @@ public class BaseWrapper {
 						}
 					}
 					// Push files to S3 using multipart upload
+					// Output-Bucket=ENV_S3_STORAGE_ID_OUTPUTS
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
-						// check if we have a valid output bucket defined...
-						if(ENV_S3_BUCKET_OUTPUTS==null||ENV_S3_BUCKET_OUTPUTS.isEmpty()) {
-							logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.S3_BUCKET_OUTPUTS);
-							return null;
-						}
 						try {
-							Boolean transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_BUCKET_OUTPUTS, io.getProductID(), false);
+							Boolean transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
 							if(transaction) {
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
 								p.setId(Long.parseLong((io.getProductID())));
-								p.setPath(ENV_S3_BUCKET_OUTPUTS+File.separator+io.getProductID()+File.separator+fn.getFileName());
+								p.setPath(ENV_S3_STORAGE_ID_OUTPUTS+separator+io.getProductID()+separator+fn.getFileName());
 								p.setRevision(WRAPPER_TIMESTAMP);
 								pushedOutputs.add(p);
 							}
@@ -849,7 +870,7 @@ public class BaseWrapper {
 				logger.error(e.getMessage());
 			} 
 			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
-			
+
 			if (singleResponse != null && singleResponse.gethttpCode()==201) {
 				logger.info("... ingestor response is  {}",singleResponse.gethttpResponse());
 				IngestedProcessingOutput ingest = new IngestedProcessingOutput();
@@ -881,7 +902,7 @@ public class BaseWrapper {
 		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
 		if(callback != null) logger.info("... planner response is {}", callback.gethttpResponse());
 		else return null;
-		
+
 		return callback;
 	}
 
