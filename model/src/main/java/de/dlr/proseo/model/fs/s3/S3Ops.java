@@ -126,9 +126,11 @@ public class S3Ops {
 	 * Creates a new S3-Bucket
 	 * 
 	 * @param s3
+	 * @param bucketName
+	 * @param S3Region
 	 * @return String the new bucket name
 	 */
-	public static String createBucket(S3Client s3, String bucketName) {
+	public static String createBucket(S3Client s3, String bucketName, String region) {
 
 
 		try {
@@ -136,7 +138,7 @@ public class S3Ops {
 					.builder()
 					.bucket(bucketName)
 					.createBucketConfiguration(CreateBucketConfiguration.builder()
-							.locationConstraint(S3_DEFAULT_REGION.id())
+							.locationConstraint(region)
 							.build())
 					.build();
 			s3.createBucket(createBucketRequest);

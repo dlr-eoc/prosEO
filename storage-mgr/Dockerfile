@@ -1,5 +1,7 @@
 FROM openjdk:11
-MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
+
+MAINTAINER Hubert Asamer <hubert.asamer@dlr.de>
+
 ENTRYPOINT ["java", "-jar", "/usr/share/proseo-storage-mgr/proseo-storage-mgr.jar"]
 
 #ADD target/lib /usr/share/proseo-storage-mgr/lib

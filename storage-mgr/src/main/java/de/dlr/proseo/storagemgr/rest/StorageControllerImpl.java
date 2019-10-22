@@ -88,7 +88,7 @@ public class StorageControllerImpl implements StorageController {
 
 		try {
 			// create internal buckets if not exists..
-			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket());
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
 			
 			// global storages...
 			ArrayList<String[]> storages = StorageManagerUtils
@@ -157,7 +157,7 @@ public class StorageControllerImpl implements StorageController {
 		Storage response = new Storage();
 
 		// create internal buckets if not exists..
-		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket());
+		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
 		
 		// check proc-facility
 		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
@@ -209,7 +209,7 @@ public class StorageControllerImpl implements StorageController {
 					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 				}		
 				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-				String  bckt = S3Ops.createBucket(s3, storage.getId());
+				String  bckt = S3Ops.createBucket(s3, storage.getId(),cfg.getS3Region());
 				if (null == bckt) return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 				response.setId(bckt);
 				response.setStorageType(StorageType.S_3);

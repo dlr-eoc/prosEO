@@ -1,5 +1,6 @@
 FROM localhost:5000/proseo-sample-processor:0.0.1-SNAPSHOT
 
+MAINTAINER Hubert Asamer <hubert.asamer@dlr.de>
 
 ADD sample-wrapper/target/proseo-sample-wrapper-jar-with-dependencies.jar proseo-sample-wrapper.jar
 ENV PROCESSOR_SHELL_COMMAND="java -jar proseo-sample-processor.jar"
