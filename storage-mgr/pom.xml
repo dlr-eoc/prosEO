@@ -17,9 +17,10 @@
 	</organization>
 
 	<properties>
+        <module.version>0.1.0-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.storagemgr</raml-base-package>
+		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
 	</properties>
 
 	<dependencies>
@@ -80,7 +81,7 @@
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.storagemgr.rest</basePackage>
+					<basePackage>${raml-base-package}</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -95,25 +96,28 @@
 			</plugin>
 
 			<!-- Build Docker image -->
-			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-version}</version>
                 <configuration>
-					<tag>${project.version}</tag>
-				</configuration>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-storage-mgr</repository>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 </project>

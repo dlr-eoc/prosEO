@@ -29,6 +29,9 @@ import alluxio.AlluxioURI;
 import alluxio.exception.AlluxioException;
 import alluxio.grpc.ReadPType;
 import alluxio.grpc.WritePType;
+import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
+import de.dlr.proseo.basewrap.rest.IngestorProductFilePostRequest;
+import de.dlr.proseo.basewrap.rest.RestOps;
 import de.dlr.proseo.model.fs.alluxio.AlluxioOps;
 import de.dlr.proseo.model.fs.s3.AmazonS3URI;
 import de.dlr.proseo.model.fs.s3.S3Ops;
@@ -36,9 +39,6 @@ import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
-import de.dlr.proseo.model.rest.HttpResponseInfo;
-import de.dlr.proseo.model.rest.IngestorProductFilePostRequest;
-import de.dlr.proseo.model.rest.RestOps;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**

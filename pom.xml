@@ -25,8 +25,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<!-- Maven < 3.5.2 breaks injection of logger files when generating docker images for dockerfile-maven-plugin > 1.4.6 -->
-		<dockerfile-maven-version>1.4.6</dockerfile-maven-version>
         <docker-maven-version>0.31.0</docker-maven-version>
 		<raml-plugin-version>2.0.5</raml-plugin-version>
 		<raml-output-path>target/generated-raml-mvc</raml-output-path>
