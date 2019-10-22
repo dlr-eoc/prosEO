@@ -907,12 +907,33 @@ public class BaseWrapper {
 	}
 
 	/**
+	 * Hook for mission-specific modifications to the job order document before fetching input data
+	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param jobOrderDoc the job order document to modify
+	 */
+	protected void preFetchInputHook(JobOrder jobOrderDoc) {
+		// No operation
+	}
+
+	/**
+	 * Hook for mission-specific modifications to the final job order document after execution of the processor (before push of
+	 * results).
+	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param joWork the job order document to modify
+	 */
+	protected void postProcessingHook(JobOrder joWork) {
+		// No operation
+	}
+
+	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
 	 * 
 	 * @param args (not used due env-var based invocation)
 	 * @return the program exit code (OK or FAILURE)
 	 */
-	public int run() {
+	final public int run() {
 
 		logger.info(splash());
 
@@ -941,6 +962,9 @@ public class BaseWrapper {
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
+		
+		/** Hook for additional mission-specific pre-fetch operations on the job order document */
+		preFetchInputHook(jobOrderDoc);
 
 		/** STEP [6][7][8] fetch Inputs & create re-mapped JOF for container context*/
 		JobOrder joWork = null;
@@ -968,6 +992,9 @@ public class BaseWrapper {
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
+		
+		/** Hook for additional post-processing operations on the job order document */
+		postProcessingHook(joWork);
 
 		/** STEP [9] Push Processing Results to prosEO Storage, if any */
 		ArrayList<PushedProcessingOutput> pushedProducts = null;
