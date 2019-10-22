@@ -64,11 +64,11 @@ public class JobOrderTest {
 		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
-		jo.writeXML("../sample-wrapper/src/test/resources/testjo.xml", true);
+		jo.writeXML("src/test/resources/testjo.xml", true);
 
 		JobOrder jo2 = new JobOrder();
-		jo2.read("../sample-wrapper/src/test/resources/testjo.xml");
-		jo2.writeXML("../sample-wrapper/src/test/resources/testjocopy.xml", true);
+		jo2.read("src/test/resources/testjo.xml");
+		jo2.writeXML("src/test/resources/testjocopy.xml", true);
 		
 	}
 
