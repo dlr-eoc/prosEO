@@ -334,8 +334,8 @@ public class OrbitControllerTest {
 		        .queryParam("spacecraftCode", "S_TDX1")
 				.queryParam("orbitNumberFrom", 10)
 				.queryParam("orbitNumberTo", 15)
-				.queryParam("starttimefrom", testOrbitData[0][10])
-				.queryParam("starttimeto", testOrbitData[0][11]);
+				.queryParam("starttimefrom", testOrbitData[0][10].split("\\.")[0])
+				.queryParam("starttimeto", testOrbitData[0][11].split("\\.")[0]);
 
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 		
