@@ -26,8 +26,8 @@ cd docker
 {
 "insecure-registries": ["<registry-url"]
 }
-- restart docker-engine (sudo systemctl restart docker)
 ```
+- restart docker-engine (sudo systemctl restart docker)
 - login to the registry
 ```sh
 docker login <registry-url>
