@@ -97,7 +97,7 @@ public class MissionUtilTest {
 		Mission restMission = MissionUtil.toRestMission(modelmission);
 		assertNull("Unexpected name for new mission: ",  restMission.getName());
 		assertNull("Unexpected code for new mission: ", restMission.getCode());
-		logger.info("Test copy empty product OK");
+		logger.info("Test copy empty mission OK");
 		
 		// Copy a mission from model to REST
 		modelmission = createMission(testMissionData[0]);
@@ -114,7 +114,7 @@ public class MissionUtilTest {
 		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
 		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
 		assertEquals("Name not preserved: ", modelmission.getName(), copiedModelMission.getName());
-		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),restMission.getSpacecrafts().size());
+		assertEquals("Number of Spacecrafts not preserved: ", modelmission.getSpacecrafts().size(),copiedModelMission.getSpacecrafts().size());
 
 		logger.info("Test copy REST to model OK");
 	}

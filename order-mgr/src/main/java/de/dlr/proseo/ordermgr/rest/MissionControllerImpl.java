@@ -46,6 +46,12 @@ public class MissionControllerImpl implements MissionController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerImpl.class);
 
+	
+	/**
+	 * List of all missions with no search criteria
+
+	 * @return a response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating failure
+	 */
 	@Override
 	public ResponseEntity<List<Mission>> getMissions() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
@@ -73,6 +79,13 @@ public class MissionControllerImpl implements MissionController {
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
+	/**
+	 * Create a mission from the given Json object 
+	 * 
+	 * @param mission the Json object to create the mission from
+	 * @return a response containing a Json object corresponding to the mission after persistence (with ID and version for all 
+	 * 		   contained objects) and HTTP status "CREATED"
+	 */
 	@Override
 	public ResponseEntity<Mission> createMission(@Valid Mission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getClass());
@@ -86,6 +99,13 @@ public class MissionControllerImpl implements MissionController {
 		
 	}
 
+	/**
+	 * Find the mission with the given ID
+	 * 
+	 * @param id the ID to look for
+	 * @return a response entity corresponding to the found mission and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
+	 */
 	@Override
 	public ResponseEntity<Mission> getMissionById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissionById({})", id);
@@ -103,6 +123,14 @@ public class MissionControllerImpl implements MissionController {
 		return new ResponseEntity<>(MissionUtil.toRestMission(modelMission.get()), HttpStatus.OK);
 	}
 
+	/**
+	 * Update the mission with the given ID with the attribute values of the given Json object. 
+	 * @param id the ID of the product to update
+	 * @param product a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing a Json object corresponding to the mission after modification (with ID and version for all 
+	 * 		   contained objects) and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
+	 */
 	@Override
 	public ResponseEntity<Mission> modifyMission(Long id, @Valid Mission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
@@ -124,12 +152,12 @@ public class MissionControllerImpl implements MissionController {
 		
 		if (!modelMission.getCode().equals(changedMission.getCode())) {
 			missionChanged = true;
-			modelMission.setCode(changedMission.getCode());;
+			modelMission.setCode(changedMission.getCode());
 		}
 		
 		if (!modelMission.getName().equals(changedMission.getName())) {
 			missionChanged = true;
-			modelMission.setName(changedMission.getName());;
+			modelMission.setName(changedMission.getName());
 		}
 		// Save mission only if anything was actually changed
 		if (missionChanged)	{
@@ -141,6 +169,14 @@ public class MissionControllerImpl implements MissionController {
 	
 	}
 
+	
+	/**
+	 * Delete a mission by ID
+	 * 
+	 * @param the ID of the mission to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the product did not
+	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
 	@Override
 	public ResponseEntity<?> deleteMissionById(Long id) {
 		// TODO Auto-generated method stub
