@@ -214,7 +214,7 @@ public class KubeConfig {
 	public KubeJob createJobImageFileCmd(String name, String image, String file, String cmd, ArrayList<String> args) {
 		int aKey = kubeJobList.size() + 1;
 		KubeJob aJob = new KubeJob(aKey, null, image, file, cmd, args);
-		aJob = aJob.createPod(this);
+		aJob = aJob.createJob(this);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
