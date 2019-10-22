@@ -39,12 +39,12 @@ public class StorageManagerUtils {
 	 * @param bucketName
 	 * @return
 	 */
-	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName) {
+	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName, String region) {
 
 		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint);
 		ArrayList<String> buckets = S3Ops.listBuckets(s3);
 		if (!buckets.contains(bucketName)) {
-			String  bckt = S3Ops.createBucket(s3, bucketName);
+			String  bckt = S3Ops.createBucket(s3, bucketName, region);
 			if (null == bckt) return false;
 		}
 		return true;	
