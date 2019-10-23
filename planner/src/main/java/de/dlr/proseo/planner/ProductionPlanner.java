@@ -16,6 +16,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,6 +50,11 @@ public class ProductionPlanner implements CommandLineRunner {
 
 	public static final String jobNamePrefix = "proseojob";
 	public static final String jobContainerPrefix = "proseocont";
+
+	public static String hostName = "localhost";
+	public static String hostIP = "127.0.0.1";
+	public static String port = "8080";
+	
 
 	/**
 	 * Current running ProductionPlanner
@@ -97,7 +104,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param args command line arguments
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception { 
 		SpringApplication spa = new SpringApplication(ProductionPlanner.class);
 		spa.run(args);
 	}
@@ -148,7 +155,20 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Set static variable "thePlanner".
 	 */
 	public ProductionPlanner() {
-		thePlanner = this;
+		thePlanner = this;       
+		InetAddress ip;
+		String hostname;
+		try {
+			ip = InetAddress.getLocalHost();
+			hostname = ip.getHostName();
+			hostIP = ip.getHostAddress();
+			hostName = hostname;
+			System.out.println("Your current IP address : " + ip);
+			System.out.println("Your current Hostname : " + hostname);
+
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 	}	
 	
 	/* (non-Javadoc)

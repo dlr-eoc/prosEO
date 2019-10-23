@@ -67,7 +67,7 @@ public class JobstepControllerImpl implements JobstepController {
 		}
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-		return new ResponseEntity<>(list, responseHeaders, HttpStatus.FOUND);
+		return new ResponseEntity<>(list, responseHeaders, HttpStatus.OK);
 	}
 
     /**
@@ -102,7 +102,7 @@ public class JobstepControllerImpl implements JobstepController {
 
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.FOUND);
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			} 
 		}
     	String message = String.format(MSG_PREFIX + "JobStep element '%s' not found", 2001, name);
@@ -140,7 +140,7 @@ public class JobstepControllerImpl implements JobstepController {
     		logger.error(message);
     		HttpHeaders responseHeaders = new HttpHeaders();
     		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-    		return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+    		return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     	}
     	String message = String.format(MSG_PREFIX + "DELETE not implemented (%d)", 2001);
     	logger.error(message);

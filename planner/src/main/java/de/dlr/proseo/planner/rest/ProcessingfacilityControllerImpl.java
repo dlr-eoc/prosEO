@@ -59,7 +59,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-			return new ResponseEntity<>(l, responseHeaders, HttpStatus.FOUND);
+			return new ResponseEntity<>(l, responseHeaders, HttpStatus.OK);
 		}
 		String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
 		logger.error(message);
@@ -82,7 +82,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					aKubeConfig.getProcessingEngineUrl());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.FOUND);
+			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
 		} else {
 			String message = String.format(MSG_PREFIX + "Processing Facility %s not found (%d)", name, 2000);
 			logger.error(message);
@@ -125,7 +125,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						}
 						HttpHeaders responseHeaders = new HttpHeaders();
 						responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-						return new ResponseEntity<>(jobList, responseHeaders, HttpStatus.FOUND);
+						return new ResponseEntity<>(jobList, responseHeaders, HttpStatus.OK);
 					}
 				}
 			} else {
@@ -155,7 +155,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				aKubeConfig.deletePodsStatus(status);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+				return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
 			} else {
 				String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
 				logger.error(message);
@@ -193,7 +193,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-			return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
 		}
 		String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
 		logger.error(message);
@@ -234,7 +234,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			    
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
+				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
 			}
 		}
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
@@ -251,23 +251,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	@Override
     public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
 		KubeJob aJob = ProductionPlanner.getKubeConfig(name).createJob(podname);
-//		ArrayList<String> args = new ArrayList<String>();
-//		args.add("-e");
-//		args.add("'$cnt = 0; $max = 120 + int(rand(60)); while ( $cnt < $max ) {print \"loop: $cnt\\n\"; sleep 1; ++$cnt;}'");	
-//		// args.add("'i=0; while [ $i -le 100 ]; do echo \\\"$i: $(date)\\\"; i=$((i+1)); sleep 1; done'");
-//		KubeJob aJob = ProductionPlanner.getKubeConfig(name)
-//							.createJobImageFileCmd(podname,
-//												   "centos/perl-524-centos7",
-//												   null,
-//												   "perl",
-//												   args);
     	if (aJob != null) {
     		PlannerJobstep aPlan = new PlannerJobstep();
     		aPlan.setId(String.valueOf(aJob.getJobId()).toString());
     		aPlan.setName(aJob.getJobName());
     		HttpHeaders responseHeaders = new HttpHeaders();
     		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-    		return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.FOUND);
+    		return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
     	}
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
     	logger.error(message);
