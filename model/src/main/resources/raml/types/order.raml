@@ -43,10 +43,10 @@
         description: List of orbit ranges, identified by spacecraft code and orbit number from/to
       requestedProductClasses:
         type: string[]
-        description: List of internal product types
+        description: List of internal product types requested as output from the order
+      inputProductClasses:
+        type: string[]
+        description: List of internal product types given as input to the order
       processingMode:
         type: string
         description: The processing mode to run the processor(s) in
-      promisedProducts:
-        type: PromisedProduct[]
-        description: List of products provided as input to the processing order
