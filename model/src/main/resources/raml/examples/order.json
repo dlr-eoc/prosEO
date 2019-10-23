@@ -9,8 +9,8 @@
     "filterConditions": [
         {
             "key": "copernicusCollection",
-            "parameterType": "INTEGER",
-            "parameterValue": "1"
+            "parameterType": "STRING",
+            "parameterValue": "01"
         },
         {
             "key": "revision",
@@ -26,7 +26,7 @@
     "outputParameters": [
         {
             "key": "copernicusCollection",
-            "parameterType": "INTEGER",
+            "parameterType": "STRING",
             "parameterValue": "99"
         },
         {
@@ -46,27 +46,6 @@
         { "spacecraftCode": "S5P", "orbitNumberFrom": 5421, "orbitNumberTo": 5678 }
     ],
     "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
-    "processingMode": "OFFL",
-    "promisedProducts": [
-        {
-            "productClass": "L1B",
-            "parameters": [
-                {
-                    "key": "copernicusCollection",
-                    "parameterType": "INTEGER",
-                    "parameterValue": "1"
-                },
-                {
-                    "key": "revision",
-                    "parameterType": "INTEGER",
-                    "parameterValue": "13"
-                },
-                {
-                    "key": "fileClass",
-                    "parameterType": "STRING",
-                    "parameterValue": "OFFL"
-                }
-            ]
-        }
-    ]
+    "inputProductClasses": [ "L1B" ],
+    "processingMode": "OFFL"
 }

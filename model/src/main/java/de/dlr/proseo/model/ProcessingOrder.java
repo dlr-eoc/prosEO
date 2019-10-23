@@ -97,6 +97,10 @@ public class ProcessingOrder extends PersistentObject {
 	@ManyToMany
 	private Set<ProductClass> requestedProductClasses = new HashSet<>();
 	
+	/** Set of product classes provided as input data (processing job steps must not be generated) */
+	@ManyToMany
+	private Set<ProductClass> inputProductClasses = new HashSet<>();
+	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
 	
@@ -107,10 +111,6 @@ public class ProcessingOrder extends PersistentObject {
 	/** The orbits, for which products are to be generated */
 	@ManyToMany
 	private List<Orbit> requestedOrbits = new ArrayList<>();
-	
-	/** The products, which will provided as input */
-	@ManyToMany
-	private Set<Product> promisedProducts = new HashSet<>();
 	
 	/** The processing jobs belonging to this order */	
 	@OneToMany(mappedBy = "processingOrder")
@@ -358,6 +358,24 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * Gets the input product classes provided to the order
+	 * 
+	 * @return the input product classes
+	 */
+	public Set<ProductClass> getInputProductClasses() {
+		return inputProductClasses;
+	}
+
+	/**
+	 * Sets the input product classes provided to the order
+	 * 
+	 * @param inputProductClasses the input product classes to set
+	 */
+	public void setInputProductClasses(Set<ProductClass> inputProductClasses) {
+		this.inputProductClasses = inputProductClasses;
+	}
+
+	/**
 	 * Gets the processing mode for the processors
 	 * 
 	 * @return the processingMode
@@ -409,24 +427,6 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setRequestedOrbits(List<Orbit> requestedOrbits) {
 		this.requestedOrbits = requestedOrbits;
-	}
-
-	/**
-	 * Gets the promised products
-	 * 
-	 * @return the promisedProducts
-	 */
-	public Set<Product> getPromisedProducts() {
-		return promisedProducts;
-	}
-
-	/**
-	 * Sets the promised products
-	 * 
-	 * @param promisedProducts the promisedProducts to set
-	 */
-	public void setPromisedProducts(Set<Product> promisedProducts) {
-		this.promisedProducts = promisedProducts;
 	}
 
 	/**
