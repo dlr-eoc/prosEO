@@ -245,7 +245,7 @@ public class IngestControllerImpl implements IngestController {
 				String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + "/product/" + String.valueOf(newProduct.getId());
 				restTemplate = rtb.basicAuthentication(
 						ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
-				ResponseEntity<?> response = restTemplate.patchForObject(productionPlannerUrl, null, ResponseEntity.class);
+				ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
 				if (!HttpStatus.OK.equals(response.getStatusCode())) {
 					return new ResponseEntity<>(
 							errorHeaders(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER, newProduct.getId(), newProduct.getProductClass().getProductType()), 

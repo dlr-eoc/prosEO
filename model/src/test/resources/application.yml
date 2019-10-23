@@ -1,7 +1,8 @@
 spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate.ddl-auto: update
+        hibernate:
+            ddl-auto: update
     datasource:
         url: jdbc:postgresql://localhost:5432/proseo
         username: postgres

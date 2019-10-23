@@ -24,6 +24,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
@@ -85,7 +90,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s not defined for mission %s";
 	private static final String MSG_INVALID_ENCLOSING_CLASS = "(E%d) Enclosing product class %s is not defined for mission %s";
 	private static final String MSG_INVALID_COMPONENT_CLASS = "(E%d) Component product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_PROCESSOR_CLASS = "(E%d) Processor class %s is not defined";
+	private static final String MSG_INVALID_PROCESSOR_CLASS = "(E%d) Processor class %s is not defined for mission %s";
 	private static final String MSG_INVALID_SOURCE_CLASS = "(E%d) Source product class %s is not defined for mission %s";
 	private static final String MSG_INVALID_PARAMETER_KEY = "(E%d) Parameter key missing in filter condition %s";
 	private static final String MSG_INVALID_PARAMETER_TYPE = "(E%d) Invalid parameter type %s in filter condition, one of {STRING, INTEGER, BOOLEAN, DOUBLE} expected";
@@ -99,6 +104,15 @@ public class ProductClassControllerImpl implements ProductclassController {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
+
+	// single TransactionTemplate shared amongst all methods in this instance
+	private final TransactionTemplate transactionTemplate;
+
+	// use constructor-injection to supply the PlatformTransactionManager
+	public ProductClassControllerImpl(PlatformTransactionManager transactionManager) {
+		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
 	
 	/**
 	 * Log an informational message with the prosEO message prefix
@@ -171,138 +185,161 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(MSG_PRODUCT_CLASS_MISSING, MSG_ID_PRODUCT_CLASS_MISSING), HttpStatus.BAD_REQUEST);
 		}
 		
-		// Create product class object
-		ProductClass modelProductClass = ProductClassUtil.toModelProductClass(productClass);
-		Mission mission = RepositoryService.getMissionRepository().findByCode(productClass.getMissionCode());
-		if (null == mission) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, productClass.getMissionCode().toString()), HttpStatus.BAD_REQUEST);
-		}
-		modelProductClass.setMission(mission);
-		
-		// Try to save the product class, make sure product class does not yet exist
-		try {
-			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
-		} catch (DataIntegrityViolationException e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS, productClass.getProductType(), productClass.getMissionCode()), HttpStatus.BAD_REQUEST);
-		} catch (DataAccessException e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
-							productClass.getProductType(), productClass.getMissionCode(), e.getClass().toString() + ": " + e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		// Add further attributes to product class
-		if (null != productClass.getEnclosingClass()) {
-			modelProductClass.setEnclosingClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), productClass.getEnclosingClass()));
-			if (null == modelProductClass.getEnclosingClass()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS, productClass.getEnclosingClass(), mission.getCode()),
-						HttpStatus.BAD_REQUEST);
-			}
-		}
-		
-		for (String componentClass: productClass.getComponentClasses()) {
-			ProductClass modelComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), componentClass);
-			if (null == modelProductClass.getEnclosingClass()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS, componentClass, mission.getCode()),
-						HttpStatus.BAD_REQUEST);
-			}
-			modelProductClass.getComponentClasses().add(modelComponentClass);
-		}
-		
-		if (null != productClass.getProcessorClass()) {
-			modelProductClass.setProcessorClass(RepositoryService.getProcessorClassRepository().findByProcessorName(productClass.getProcessorClass()));
-			if (null == modelProductClass.getEnclosingClass()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS, productClass.getProcessorClass()),
-						HttpStatus.BAD_REQUEST);
-			}
-		}
-		
-		for (de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule rule: productClass.getSelectionRule()) {
-			SimpleSelectionRule modelRule = new SimpleSelectionRule();
-			if (mission.getProcessingModes().contains(rule.getMode())) {
-				modelRule.setMode(rule.getMode());
-			} else {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, rule.getMode(), mission.getCode()),
-						HttpStatus.BAD_REQUEST);
-			}
-			modelRule.setIsMandatory(rule.getIsMandatory());
-			modelRule.setTargetProductClass(modelProductClass);
-			modelRule.setSourceProductClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), rule.getSourceProductClass()));
-			if (null == modelRule.getSourceProductClass()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_SOURCE_CLASS, MSG_ID_INVALID_SOURCE_CLASS, rule.getSourceProductClass(), mission.getCode()),
-						HttpStatus.BAD_REQUEST);
-			}
+		return transactionTemplate.execute(new TransactionCallback<>() {
 
-			for (de.dlr.proseo.prodclmgr.rest.model.Parameter filterCondition: rule.getFilterConditions()) {
-				if (null == filterCondition.getKey()) {
+			@Override
+			public ResponseEntity<RestProductClass> doInTransaction(TransactionStatus txStatus) {
+				// Create product class object
+				ProductClass modelProductClass = ProductClassUtil.toModelProductClass(productClass);
+				Mission mission = RepositoryService.getMissionRepository().findByCode(productClass.getMissionCode());
+				if (null == mission) {
+					txStatus.setRollbackOnly();
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_PARAMETER_KEY, MSG_ID_INVALID_PARAMETER_KEY, filterCondition.toString()),
-							HttpStatus.BAD_REQUEST);
+							errorHeaders(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, productClass.getMissionCode()), HttpStatus.BAD_REQUEST);
 				}
+				modelProductClass.setMission(mission);
+				
+				// Try to save the product class, make sure product class does not yet exist
 				try {
-					Parameter modelParameter = new Parameter().init(ParameterType.valueOf(filterCondition.getParameterType()), filterCondition.getParameterValue());
-					modelRule.getFilterConditions().put(filterCondition.getKey(), modelParameter);
-				} catch (IllegalArgumentException e) {
+					modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
+				} catch (DataIntegrityViolationException e) {
+					txStatus.setRollbackOnly();
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_PARAMETER_TYPE, MSG_ID_INVALID_PARAMETER_TYPE, filterCondition.getParameterType()), HttpStatus.BAD_REQUEST);
-				}
-			}
-			
-			for (String configuredProcessor: rule.getApplicableConfiguredProcessors()) {
-				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
-				if (null == modelProcessor) {
+							errorHeaders(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS, productClass.getProductType(), productClass.getMissionCode()), HttpStatus.BAD_REQUEST);
+				} catch (DataAccessException e) {
+					txStatus.setRollbackOnly();
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor), HttpStatus.BAD_REQUEST);
+							errorHeaders(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
+									productClass.getProductType(), productClass.getMissionCode(), e.getClass().toString() + ": " + e.getMessage()), 
+							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				modelRule.getApplicableConfiguredProcessors().add(modelProcessor);
-			}
-			
-			for (de.dlr.proseo.prodclmgr.rest.model.SimplePolicy policy: rule.getSimplePolicies()) {
-				SimplePolicy modelPolicy = new SimplePolicy();
+				
+				// Add further attributes to product class
+				if (null != productClass.getEnclosingClass()) {
+					modelProductClass.setEnclosingClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), productClass.getEnclosingClass()));
+					if (null == modelProductClass.getEnclosingClass()) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS, productClass.getEnclosingClass(), mission.getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+				}
+				
+				for (String componentClass: productClass.getComponentClasses()) {
+					ProductClass modelComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), componentClass);
+					if (null == modelProductClass.getEnclosingClass()) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS, componentClass, mission.getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					modelProductClass.getComponentClasses().add(modelComponentClass);
+				}
+				
+				if (null != productClass.getProcessorClass()) {
+					modelProductClass.setProcessorClass(RepositoryService.getProcessorClassRepository()
+							.findByMissionCodeAndProcessorName(mission.getCode(), productClass.getProcessorClass()));
+					if (null == modelProductClass.getProcessorClass()) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS, productClass.getProcessorClass(), mission.getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+				}
+				
+				for (de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule rule: productClass.getSelectionRule()) {
+					SimpleSelectionRule modelRule = new SimpleSelectionRule();
+					if (mission.getProcessingModes().contains(rule.getMode())) {
+						modelRule.setMode(rule.getMode());
+					} else {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, rule.getMode(), mission.getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					modelRule.setIsMandatory(rule.getIsMandatory());
+					modelRule.setTargetProductClass(modelProductClass);
+					modelRule.setSourceProductClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), rule.getSourceProductClass()));
+					if (null == modelRule.getSourceProductClass()) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_SOURCE_CLASS, MSG_ID_INVALID_SOURCE_CLASS, rule.getSourceProductClass(), mission.getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+
+					for (de.dlr.proseo.prodclmgr.rest.model.Parameter filterCondition: rule.getFilterConditions()) {
+						if (null == filterCondition.getKey()) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_PARAMETER_KEY, MSG_ID_INVALID_PARAMETER_KEY, filterCondition.toString()),
+									HttpStatus.BAD_REQUEST);
+						}
+						try {
+							Parameter modelParameter = new Parameter().init(ParameterType.valueOf(filterCondition.getParameterType()), filterCondition.getParameterValue());
+							modelRule.getFilterConditions().put(filterCondition.getKey(), modelParameter);
+						} catch (IllegalArgumentException e) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_PARAMETER_TYPE, MSG_ID_INVALID_PARAMETER_TYPE, filterCondition.getParameterType()), HttpStatus.BAD_REQUEST);
+						}
+					}
+					
+					for (String configuredProcessor: rule.getApplicableConfiguredProcessors()) {
+						ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+						if (null == modelProcessor) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor), HttpStatus.BAD_REQUEST);
+						}
+						modelRule.getApplicableConfiguredProcessors().add(modelProcessor);
+					}
+					
+					for (de.dlr.proseo.prodclmgr.rest.model.SimplePolicy policy: rule.getSimplePolicies()) {
+						SimplePolicy modelPolicy = new SimplePolicy();
+						try {
+							modelPolicy.setPolicyType(PolicyType.valueOf(policy.getPolicyType()));
+						} catch (Exception e) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_POLICY_TYPE, MSG_ID_INVALID_POLICY_TYPE, policy.getPolicyType()), HttpStatus.BAD_REQUEST);
+						}
+						try {
+							modelPolicy.setDeltaTimeT0(new DeltaTime(policy.getDeltaTimeT0().getDuration(), TimeUnit.valueOf(policy.getDeltaTimeT0().getUnit())));
+						} catch (IllegalArgumentException e) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_TIME_UNIT, MSG_ID_INVALID_TIME_UNIT, policy.getDeltaTimeT0().getUnit()), HttpStatus.BAD_REQUEST);
+						}
+						try {
+							modelPolicy.setDeltaTimeT1(new DeltaTime(policy.getDeltaTimeT1().getDuration(), TimeUnit.valueOf(policy.getDeltaTimeT1().getUnit())));
+						} catch (IllegalArgumentException e) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_TIME_UNIT, MSG_ID_INVALID_TIME_UNIT, policy.getDeltaTimeT1().getUnit()), HttpStatus.BAD_REQUEST);
+						}
+						modelRule.getSimplePolicies().add(modelPolicy);
+					}
+					
+					modelProductClass.getRequiredSelectionRules().add(modelRule);
+				}
+				
+				// Save the product class again with all sub-object references
 				try {
-					modelPolicy.setPolicyType(PolicyType.valueOf(policy.getPolicyType()));
+					modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
 				} catch (Exception e) {
+					txStatus.setRollbackOnly();
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_POLICY_TYPE, MSG_ID_INVALID_POLICY_TYPE, policy.getPolicyType()), HttpStatus.BAD_REQUEST);
+							errorHeaders(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
+									productClass.getProductType(), productClass.getMissionCode(), e.getMessage()), 
+							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				try {
-					modelPolicy.setDeltaTimeT0(new DeltaTime(policy.getDeltaTimeT0().getDuration(), TimeUnit.valueOf(policy.getDeltaTimeT0().getUnit())));
-				} catch (IllegalArgumentException e) {
-					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_TIME_UNIT, MSG_ID_INVALID_TIME_UNIT, policy.getDeltaTimeT0().getUnit()), HttpStatus.BAD_REQUEST);
-				}
-				try {
-					modelPolicy.setDeltaTimeT1(new DeltaTime(policy.getDeltaTimeT1().getDuration(), TimeUnit.valueOf(policy.getDeltaTimeT1().getUnit())));
-				} catch (IllegalArgumentException e) {
-					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_TIME_UNIT, MSG_ID_INVALID_TIME_UNIT, policy.getDeltaTimeT1().getUnit()), HttpStatus.BAD_REQUEST);
-				}
-				modelRule.getSimplePolicies().add(modelPolicy);
+				
+				logInfo(MSG_PRODUCT_CLASS_CREATED, MSG_ID_PRODUCT_CLASS_CREATED, modelProductClass.getProductType(), mission.getCode());
+				
+				return new ResponseEntity<>(ProductClassUtil.toRestProductClass(modelProductClass), HttpStatus.CREATED);
 			}
 			
-			modelProductClass.getRequiredSelectionRules().add(modelRule);
-		}
-		
-		// Save the product class again with all sub-object references
-		try {
-			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
-		} catch (Exception e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
-							productClass.getProductType(), productClass.getMissionCode(), e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		logInfo(MSG_PRODUCT_CLASS_CREATED, MSG_ID_PRODUCT_CLASS_CREATED, modelProductClass.getProductType(), mission.getCode());
-		
-		return new ResponseEntity<>(ProductClassUtil.toRestProductClass(modelProductClass), HttpStatus.CREATED);
+		});
 	}
 
     /**
@@ -379,70 +416,84 @@ public class ProductClassControllerImpl implements ProductclassController {
 	public ResponseEntity<RestProductClass> createSelectionRuleString(Long id, @Valid List<SelectionRuleString> selectionRuleStrings) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSelectionRuleString(SelectionRuleString[{}])", (null == selectionRuleStrings ? "MISSING" : selectionRuleStrings.size()));
 
-		// Retrieve product class
-		Optional<ProductClass> optProductClass = RepositoryService.getProductClassRepository().findById(id);
-		if (optProductClass.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id),
-					HttpStatus.BAD_REQUEST);
-		}
-		ProductClass productClass = optProductClass.get();
-		
-		// Process all selection rules
-		for (SelectionRuleString restRuleString: selectionRuleStrings) {
-			// Check the selection rule parameters
-			String processingMode = restRuleString.getMode();
-			if (null == processingMode || "".equals(processingMode)) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_PROCESSING_MODE_MISSING, MSG_ID_PROCESSING_MODE_MISSING, restRuleString.toString()),
-						HttpStatus.BAD_REQUEST);
-			}
-			if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, processingMode),
-						HttpStatus.BAD_REQUEST);
-			}
-			
-			Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
-			for (String configuredProcessorIdentifier: restRuleString.getConfiguredProcessors()) {
-				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessorIdentifier);
-				if (null == configuredProcessor) {
+		return transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public ResponseEntity<RestProductClass> doInTransaction(TransactionStatus txStatus) {
+				// Retrieve product class
+				Optional<ProductClass> optProductClass = RepositoryService.getProductClassRepository().findById(id);
+				if (optProductClass.isEmpty()) {
+					txStatus.setRollbackOnly();
 					return new ResponseEntity<>(
-							errorHeaders(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessorIdentifier),
+							errorHeaders(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id),
 							HttpStatus.BAD_REQUEST);
 				}
-				configuredProcessors.add(configuredProcessor);
-			}
-			
-			// Parse the selection rule string
-			SelectionRule selectionRule = null;
-			try {
-				selectionRule = SelectionRule.parseSelectionRule(productClass, restRuleString.getSelectionRule());
-			} catch (IllegalArgumentException e) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_RULE_STRING_MISSING, MSG_ID_RULE_STRING_MISSING, restRuleString),
-						HttpStatus.BAD_REQUEST);
-			} catch (ParseException e) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_RULE_STRING, MSG_ID_INVALID_RULE_STRING, restRuleString.getSelectionRule(), e.getMessage()),
-						HttpStatus.BAD_REQUEST);
-			}
-			
-			// Complete the simple selection rules and add them to the product class
-			for (SimpleSelectionRule simpleSelectionRule: selectionRule.getSimpleRules()) {
-				simpleSelectionRule.setMode(processingMode);
-				simpleSelectionRule.getApplicableConfiguredProcessors().addAll(configuredProcessors);
-				productClass.getRequiredSelectionRules().add(simpleSelectionRule);
-			}
-		}
-		
-		// Save the new selection rules in the product class
-		productClass = RepositoryService.getProductClassRepository().save(productClass);
+				ProductClass productClass = optProductClass.get();
+				
+				// Process all selection rules
+				for (SelectionRuleString restRuleString: selectionRuleStrings) {
+					// Check the selection rule parameters
+					String processingMode = restRuleString.getMode();
+					if (null == processingMode || "".equals(processingMode)) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_PROCESSING_MODE_MISSING, MSG_ID_PROCESSING_MODE_MISSING, restRuleString.toString()),
+								HttpStatus.BAD_REQUEST);
+					}
+					if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, processingMode, productClass.getMission().getCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					
+					Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
+					for (String configuredProcessorIdentifier: restRuleString.getConfiguredProcessors()) {
+						ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessorIdentifier);
+						if (null == configuredProcessor) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessorIdentifier),
+									HttpStatus.BAD_REQUEST);
+						}
+						configuredProcessors.add(configuredProcessor);
+					}
+					
+					// Parse the selection rule string
+					SelectionRule selectionRule = null;
+					try {
+						selectionRule = SelectionRule.parseSelectionRule(productClass, restRuleString.getSelectionRule());
+					} catch (IllegalArgumentException e) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_RULE_STRING_MISSING, MSG_ID_RULE_STRING_MISSING, restRuleString),
+								HttpStatus.BAD_REQUEST);
+					} catch (ParseException e) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_INVALID_RULE_STRING, MSG_ID_INVALID_RULE_STRING, restRuleString.getSelectionRule(), e.getMessage()),
+								HttpStatus.BAD_REQUEST);
+					}
+					
+					// Complete the simple selection rules and add them to the product class
+					for (SimpleSelectionRule simpleSelectionRule: selectionRule.getSimpleRules()) {
+						simpleSelectionRule.setMode(processingMode);
+						simpleSelectionRule.getApplicableConfiguredProcessors().addAll(configuredProcessors);
+						productClass.getRequiredSelectionRules().add(simpleSelectionRule);
+					}
+				}
+				
+				// Save the new selection rules in the product class
+				productClass = RepositoryService.getProductClassRepository().save(productClass);
 
-		// Return the modified product class
-		logInfo(MSG_SELECTION_RULES_CREATED, MSG_ID_SELECTION_RULES_CREATED, selectionRuleStrings.size(), productClass.getProductType(), productClass.getMission().getCode());
+				// Return the modified product class
+				logInfo(MSG_SELECTION_RULES_CREATED, MSG_ID_SELECTION_RULES_CREATED, selectionRuleStrings.size(), productClass.getProductType(), productClass.getMission().getCode());
+				
+				return new ResponseEntity<>(ProductClassUtil.toRestProductClass(productClass), HttpStatus.CREATED);
+			}
+			
+		});
 		
-		return new ResponseEntity<>(ProductClassUtil.toRestProductClass(productClass), HttpStatus.CREATED);
 	}
 
     /**

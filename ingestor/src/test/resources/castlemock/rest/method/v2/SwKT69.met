@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <restMethod>
     <currentResponseSequenceIndex>0</currentResponseSequenceIndex>
-    <httpMethod>PATCH</httpMethod>
+    <defaultMockResponseId></defaultMockResponseId>
+    <forwardedEndpoint></forwardedEndpoint>
+    <httpMethod>GET</httpMethod>
     <id>SwKT69</id>
     <name>Product notification</name>
     <networkDelay>0</networkDelay>

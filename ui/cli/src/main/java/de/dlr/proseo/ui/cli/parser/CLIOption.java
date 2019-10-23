@@ -12,17 +12,20 @@ package de.dlr.proseo.ui.cli.parser;
  */
 public class CLIOption {
 
+	/* Message ID constants */
+	private static final int MSG_ID_ILLEGAL_OPTION_TYPE = 2902;
+
 	/* Message strings */
-	private static final String MSG_ILLEGAL_OPTION_TYPE = "Illegal option type %s, expected one of %s";
+	private static final String MSG_ILLEGAL_OPTION_TYPE = "(E%d) Illegal option type %s, expected one of %s";
 
 	/** Option name */
-	private String name;
+	private String name = "";
 	/** Option type (see allowedTypes) */
-	private String type;
+	private String type = "string";
 	/** Option description (help text) */
-	private String description;
+	private String description = "";
 	/** Option short form */
-	private Character shortForm;
+	private Character shortForm = null;
 	
 	/**
 	 * @return the name
@@ -49,7 +52,8 @@ public class CLIOption {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_OPTION_TYPE,
+					MSG_ID_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
 	/**

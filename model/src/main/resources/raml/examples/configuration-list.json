@@ -2,6 +2,7 @@
     {
         "id": 9276488,
         "version": 5,
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "configurationVersion": "2019-03-30",
         "dynProcParameters": [
@@ -28,6 +29,7 @@
     {
         "id": 9276489,
         "version": 2,
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "configurationVersion": "2019-04-27",
         "dynProcParameters": [

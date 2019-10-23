@@ -87,4 +87,9 @@ public class ConfigurationFile {
 		ConfigurationFile other = (ConfigurationFile) obj;
 		return Objects.equals(fileName, other.fileName) && Objects.equals(fileVersion, other.fileVersion);
 	}
+
+	@Override
+	public String toString() {
+		return "ConfigurationFile [fileVersion=" + fileVersion + ", fileName=" + fileName + "]";
+	}
 }

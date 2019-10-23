@@ -31,7 +31,7 @@ public class Parameter {
 	private ParameterType parameterType;
 	
 	/** The parameter value */
-	private Serializable parameterValue;
+	private String parameterValue;
 	
 	/**
 	 *  Enumeration of valid parameter types for mission-specific parameters
@@ -50,37 +50,51 @@ public class Parameter {
 		this.parameterType = parameterType;
 		switch(parameterType) {
 		case STRING:
-			if (!(parameterValue instanceof String)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
-			}
-			this.parameterValue = parameterValue;
+			this.parameterValue = parameterValue.toString();
 			break;
 		case BOOLEAN:
-			if (!(parameterValue instanceof Boolean)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Boolean) {
+				this.parameterValue = parameterValue.toString();
+				break;
 			}
-			this.parameterValue = parameterValue;
-			break;
+			if (parameterValue instanceof String) {
+				// Boolean.parseBoolean() is too lenient for us!
+				if ("true".equals(parameterValue.toString().toLowerCase())) {
+					this.parameterValue = "true";
+					break;
+				} else if ("false".equals(parameterValue.toString().toLowerCase())) {
+					this.parameterValue = "false";
+					break;
+				}
+			}
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		case INTEGER:
-			if (!(parameterValue instanceof Short) && !(parameterValue instanceof Integer)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Short || parameterValue instanceof Integer) {
+				this.parameterValue = parameterValue.toString();
+				break;
 			}
-			if (parameterValue instanceof Short) {
-				this.parameterValue = Integer.valueOf((Short) parameterValue);
-			} else {
-				this.parameterValue = parameterValue;
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = "" + Integer.parseInt((String) parameterValue);
+					break;
+				} catch (NumberFormatException e) {
+					// Handled below
+				}
 			}
-			break;
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		case DOUBLE:
-			if (!(parameterValue instanceof Float) && !(parameterValue instanceof Double)) {
-				throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
+			if (parameterValue instanceof Float || parameterValue instanceof Double) {
+				this.parameterValue = parameterValue.toString();
 			}
-			if (parameterValue instanceof Float) {
-				this.parameterValue = Double.valueOf((Float) parameterValue);
-			} else {
-				this.parameterValue = parameterValue;
+			if (parameterValue instanceof String) {
+				try {
+					this.parameterValue = "" + Double.parseDouble((String) parameterValue);
+					break;
+				} catch (NumberFormatException e) {
+					// Handled below
+				}
 			}
-			break;
+			throw new IllegalArgumentException(String.format(MSG_INVALID_PARAMETER_VALUE_FOR_TYPE, parameterValue.toString(), parameterType.toString()));
 		}
 		
 		return this;
@@ -109,7 +123,7 @@ public class Parameter {
 	 * 
 	 * @return the parameter value
 	 */
-	public Serializable getParameterValue() {
+	public String getParameterValue() {
 		return parameterValue;
 	}
 	
@@ -118,7 +132,7 @@ public class Parameter {
 	 * 
 	 * @param parameterValue the value to set
 	 */
-	public void setParameterValue(Serializable parameterValue) {
+	public void setParameterValue(String parameterValue) {
 		this.parameterValue = parameterValue;
 	}
 	
@@ -128,11 +142,7 @@ public class Parameter {
 	 * @throws ClassCastException if the parameter is not of type ParameterType.STRING
 	 */
 	public String getStringValue() throws ClassCastException {
-		if (ParameterType.STRING.equals(parameterType) && parameterValue instanceof String) {
-			return (String) parameterValue;
-		} else {
-			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.STRING.toString()));
-		}
+		return parameterValue;
 	}
 	/**
 	 * Sets the value of the parameter to the given string and the type to ParameterType.STRING
@@ -149,8 +159,8 @@ public class Parameter {
 	 * @throws ClassCastException if the parameter is not of type ParameterType.INTEGER
 	 */
 	public Integer getIntegerValue() throws ClassCastException {
-		if (ParameterType.INTEGER.equals(parameterType) && parameterValue instanceof Integer) {
-			return (Integer) parameterValue;
+		if (ParameterType.INTEGER.equals(parameterType)) {
+			return Integer.parseInt(parameterValue);
 		} else {
 			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.INTEGER.toString()));
 		}
@@ -161,7 +171,7 @@ public class Parameter {
 	 */
 	public void setIntegerValue(Integer newValue) {
 		parameterType = ParameterType.INTEGER;
-		parameterValue = newValue;
+		parameterValue = newValue.toString();
 	}
 
 	/**
@@ -170,8 +180,8 @@ public class Parameter {
 	 * @throws ClassCastException if the parameter is not of type ParameterType.BOOLEAN
 	 */
 	public Boolean getBooleanValue() throws ClassCastException {
-		if (ParameterType.BOOLEAN.equals(parameterType) && parameterValue instanceof Boolean) {
-			return (Boolean) parameterValue;
+		if (ParameterType.BOOLEAN.equals(parameterType)) {
+			return Boolean.parseBoolean(parameterValue);
 		} else {
 			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.BOOLEAN.toString()));
 		}
@@ -182,7 +192,7 @@ public class Parameter {
 	 */
 	public void setBooleanValue(Boolean newValue) {
 		parameterType = ParameterType.BOOLEAN;
-		parameterValue = newValue;
+		parameterValue = newValue.toString();
 	}
 
 	/**
@@ -191,8 +201,8 @@ public class Parameter {
 	 * @throws ClassCastException if the parameter is not of type ParameterType.DOUBLE
 	 */
 	public Double getDoubleValue() throws ClassCastException {
-		if (ParameterType.DOUBLE.equals(parameterType) && parameterValue instanceof Double) {
-			return (Double) parameterValue;
+		if (ParameterType.DOUBLE.equals(parameterType)) {
+			return Double.parseDouble(parameterValue);
 		} else {
 			throw new ClassCastException(String.format(MSG_PARAMETER_CANNOT_BE_CONVERTED, parameterType.toString(), ParameterType.DOUBLE.toString()));
 		}
@@ -203,7 +213,7 @@ public class Parameter {
 	 */
 	public void setDoubleValue(Double newValue) {
 		parameterType = ParameterType.DOUBLE;
-		parameterValue = newValue;
+		parameterValue = newValue.toString();
 	}
 	
 	@Override
@@ -232,5 +242,10 @@ public class Parameter {
 		} else if (!parameterValue.equals(other.parameterValue))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Parameter [parameterType=" + parameterType + ", parameterValue=" + parameterValue + "]";
 	}		
 }

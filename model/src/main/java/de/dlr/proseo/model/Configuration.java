@@ -183,4 +183,11 @@ public class Configuration extends PersistentObject {
 				&& Objects.equals(processorClass, other.processorClass);
 	}
 
+	@Override
+	public String toString() {
+		return "Configuration [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", configurationVersion=" + configurationVersion + ", dynProcParameters=" + dynProcParameters
+				+ ", configurationFiles=" + configurationFiles + ", dockerRunParameters=" + dockerRunParameters + "]";
+	}
+
 }

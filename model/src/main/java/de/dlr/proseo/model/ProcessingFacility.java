@@ -119,5 +119,11 @@ public class ProcessingFacility extends PersistentObject {
 		ProcessingFacility other = (ProcessingFacility) obj;
 		return Objects.equals(name, other.name);
 	}
+
+	@Override
+	public String toString() {
+		return "ProcessingFacility [name=" + name + ", description=" + description + ", processingEngineUrl=" + processingEngineUrl
+				+ ", storageManagerUrl=" + storageManagerUrl + "]";
+	}
 	
 }

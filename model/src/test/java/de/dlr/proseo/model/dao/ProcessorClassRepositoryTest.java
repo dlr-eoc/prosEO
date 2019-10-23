@@ -22,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -39,6 +40,7 @@ import de.dlr.proseo.model.service.RepositoryServiceTest;
 @AutoConfigureTestEntityManager
 public class ProcessorClassRepositoryTest {
 
+	private static final String TEST_CODE = "$xyz$";
 	private static final String TEST_NAME = "$KNMI L2$";
 	
 	/** A logger for this class */
@@ -74,12 +76,17 @@ public class ProcessorClassRepositoryTest {
 
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		ProcessorClass procClass = new ProcessorClass();
+		procClass.setMission(mission);
 		procClass.setProcessorName(TEST_NAME);
 		RepositoryService.getProcessorClassRepository().save(procClass);
 		
 		// Test findByProcessorName
-		procClass = RepositoryService.getProcessorClassRepository().findByProcessorName(TEST_NAME);
+		procClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(TEST_CODE, TEST_NAME);
 		assertNotNull("Find by processor name failed for ProcessorClass", procClass);
 		
 		logger.info("OK: Test for findByProcessorName completed");

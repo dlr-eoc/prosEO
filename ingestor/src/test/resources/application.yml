@@ -29,7 +29,7 @@ proseo:
         user: none
         password: none
     user:
-        name: thomas
+        name: s5p-proseo
         password: sieb37.Schlaefer
     testinput:
         directory: src/test/resources/IDA_test

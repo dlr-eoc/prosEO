@@ -19,6 +19,10 @@
 		<url>http://www.dlr.de</url>
 	</organization>
 
+    <properties>
+        <module.version>0.1.0-SNAPSHOT</module.version>
+    </properties>
+
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
 		<dependency>
@@ -55,21 +59,24 @@
 			</plugin>
 			<!-- Build Docker image -->
 			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${docker-maven-version}</version>
                 <configuration>
-					<tag>${project.version}</tag>
-				</configuration>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
+                </configuration>
 				<executions>
 					<execution>
 						<id>default</id>
+						<phase>install</phase>
 						<goals>
 							<goal>build</goal>
+							<goal>push</goal>
 						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-sample-processor</repository>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

@@ -24,14 +24,14 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "processor_name"))
+@Table(indexes = @Index(unique = true, columnList = "mission_id, processor_name"))
 public class ProcessorClass extends PersistentObject {
 	
 	/** The mission this processor class belongs to */
 	@ManyToOne
 	private Mission mission;
 	
-	/** User-defined unique processor class name (Processor_Name from Generic IPF Interface Specifications, sec. 4.1.3) */
+	/** User-defined processor class name (unique within a mission; Processor_Name from Generic IPF Interface Specifications, sec. 4.1.3) */
 	@Column(name = "processor_name")
 	private String processorName;
 	
@@ -133,6 +133,11 @@ public class ProcessorClass extends PersistentObject {
 			return false;
 		ProcessorClass other = (ProcessorClass) obj;
 		return Objects.equals(mission, other.mission) && Objects.equals(processorName, other.processorName);
+	}
+
+	@Override
+	public String toString() {
+		return "ProcessorClass [mission=" + (null == mission ? "null" : mission.getCode()) + ", processorName=" + processorName + "]";
 	}
 
 }
