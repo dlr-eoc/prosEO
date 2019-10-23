@@ -3,8 +3,14 @@
  */
 package de.dlr.proseo.model.joborder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,13 +49,44 @@ public class JobOrder {
 	// Error Messages
 	private static final String MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER = "Error instantiating DocumentBuilder: {}";
 	private static final String MSG_JOF_NOT_PARSEABLE = "JobOrder file {} not parseable ({})";
+	private static final String MSG_JOF_IO_ERR = "JobOrder file {} could not be opened ({})";
 	/**
 	 * 
 	 */
 	private Conf conf;
 	/**
-	 * 
+	 * The file name where job order is stored
 	 */
+	private String fileName;
+	/**
+	 * The file system type where job order is stored
+	 */
+	private String fsType;
+	/**
+	 * @return the fileName
+	 */
+	public String getFileName() {
+		return fileName;
+	}
+	/**
+	 * @param fileName the fileName to set
+	 */
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	/**
+	 * @return the fsType
+	 */
+	public String getFsType() {
+		return fsType;
+	}
+	/**
+	 * @param fsType the fsType to set
+	 */
+	public void setFsType(String fsType) {
+		this.fsType = fsType;
+	}
+	
 	private List<Proc> listOfProcs;
 	/**
 	 * @return the conf
@@ -87,6 +124,38 @@ public class JobOrder {
 	 * @return true after success, else false
 	 */
 	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
+		try {
+			FileOutputStream fout = new FileOutputStream(fileName);
+			writeXMLToStream(fout, prosEOAttributes);
+			fout.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	public String buildBase64String(Boolean prosEOAttributes) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			writeXMLToStream(baos, prosEOAttributes);	
+			String xmlString = baos.toString();
+			baos.close();
+			byte[] bytes = java.util.Base64.getEncoder().encode(xmlString.getBytes());
+			return new String(bytes);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -108,8 +177,8 @@ public class JobOrder {
 		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		    Transformer transformer = transformerFactory.newTransformer();
 		    DOMSource source = new DOMSource(doc);
-		    StreamResult result = new StreamResult(new File(fileName));
-
+		    StreamResult result = new StreamResult(aStream);
+		    
 		    // Output to console for testing
 		    // StreamResult result = new StreamResult(System.out);
 
@@ -126,13 +195,25 @@ public class JobOrder {
 		}
 		return true;
 	}
-	
 
 	/**
 	 * Read info from XML sub tree
 	 * @param thisNode XML node containing information
 	 */
 	public JobOrder read(String aFileName) {
+		try {
+			InputStream aStream = new FileInputStream(aFileName);
+			return readFromStream(aStream);
+		} catch (IOException e) {
+			logger.error(MSG_JOF_IO_ERR, aFileName, e.getMessage());
+			return null;
+		}		
+	}
+	/**
+	 * Read info from XML sub tree
+	 * @param thisNode XML node containing information
+	 */
+	public JobOrder readFromStream(InputStream aStream) {
 		DocumentBuilder docBuilder = null;
 		try {
 			docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -142,9 +223,9 @@ public class JobOrder {
 		}
 		Document jobOrderDoc = null;
 		try {
-			jobOrderDoc = docBuilder.parse(aFileName);
+			jobOrderDoc = docBuilder.parse(aStream);
 		} catch (SAXException | IOException e) {
-			logger.error(MSG_JOF_NOT_PARSEABLE, aFileName, e.getMessage());
+			logger.error(MSG_JOF_NOT_PARSEABLE, e.getMessage());
 			return null;
 		}
 		// now we have the document, fill tree structure

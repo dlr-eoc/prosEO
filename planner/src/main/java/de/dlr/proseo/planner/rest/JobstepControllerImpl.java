@@ -8,6 +8,7 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +17,8 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.dao.JobRepository;
-import de.dlr.proseo.model.dao.JobStepRepository;
-import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
-import de.dlr.proseo.planner.kubernetes.KubeJob;
-import de.dlr.proseo.planner.rest.model.PlannerJob;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.Status;
 
@@ -37,6 +33,10 @@ public class JobstepControllerImpl implements JobstepController {
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
+	/** The Production Planner instance */
+    @Autowired
+    private ProductionPlanner productionPlanner;
+    
     /**
      * Get production planner jobsteps by id
      * 
@@ -67,7 +67,7 @@ public class JobstepControllerImpl implements JobstepController {
 		}
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-		return new ResponseEntity<>(list, responseHeaders, HttpStatus.FOUND);
+		return new ResponseEntity<>(list, responseHeaders, HttpStatus.OK);
 	}
 
     /**
@@ -99,10 +99,18 @@ public class JobstepControllerImpl implements JobstepController {
 				}
 				pjs.setVersion((long) js.getVersion());
 				pjs.setProcessingmode(js.getProcessingMode());
+				if (js.getProcessingStartTime() != null) { 
+					pjs.setStarttime(js.getProcessingStartTime().toString());
+				}
+				if (js.getProcessingCompletionTime() != null) { 
+					pjs.setStoptime(js.getProcessingCompletionTime().toString());
+				}
+				pjs.setStdout(js.getProcessingStdOut());
+				pjs.setStderr(js.getProcessingStdErr());
 
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.FOUND);
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			} 
 		}
     	String message = String.format(MSG_PREFIX + "JobStep element '%s' not found", 2001, name);
@@ -134,13 +142,13 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override
     public ResponseEntity<PlannerJobstep> deleteJobstepByName(String name) {
 		// TODO Auto-generated method stub
-    	boolean result = ProductionPlanner.getKubeConfig(null).deleteJob(name);
+    	boolean result = productionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {
     		String message = String.format(MSG_PREFIX + "job deleted (%s)", name);
     		logger.error(message);
     		HttpHeaders responseHeaders = new HttpHeaders();
     		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-    		return new ResponseEntity<>(responseHeaders, HttpStatus.FOUND);
+    		return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     	}
     	String message = String.format(MSG_PREFIX + "DELETE not implemented (%d)", 2001);
     	logger.error(message);

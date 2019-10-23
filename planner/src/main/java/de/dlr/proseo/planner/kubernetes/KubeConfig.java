@@ -4,19 +4,12 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
-import java.io.IOException;
 import java.net.ConnectException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
-import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -46,6 +39,7 @@ public class KubeConfig {
 	private String id;
 	private String description;
 	private String url;
+	private String storageManagerUrl;
 	
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
@@ -61,11 +55,20 @@ public class KubeConfig {
 	 * @param aDescription Description of ProcessingFacility
 	 * @param aUrl URL of ProcessingFacility
 	 */
-	public KubeConfig (String anId, String aDescription, String aUrl) {
+	public KubeConfig (String anId, String aDescription, String aUrl, String aStorageManagerUrl) {
 		id = anId;
 		description = aDescription;
 		url = aUrl;
+		storageManagerUrl = aStorageManagerUrl;
 	}
+	
+	/**
+	 * @return the storage manager URL
+	 */
+	public String getStorageManagerUrl() {
+		return storageManagerUrl;
+	}
+
 	/**
 	 * @return the ApiClient
 	 */
@@ -204,17 +207,9 @@ public class KubeConfig {
 	 */
 	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
-		KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
+		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test1.pl", "perl", null);
+		KubeJob aJob = new KubeJob(aKey, null, "proseo-sample-integration-processor:0.0.1-SNAPSHOT", "/testdata/test1.pl", "perl", null);
 		aJob = aJob.createJob(this);
-		if (aJob != null) {
-			kubeJobList.put(aJob.getJobName(), aJob);
-		}
-		return aJob;
-	}
-	public KubeJob createJobImageFileCmd(String name, String image, String file, String cmd, ArrayList<String> args) {
-		int aKey = kubeJobList.size() + 1;
-		KubeJob aJob = new KubeJob(aKey, null, image, file, cmd, args);
-		aJob = aJob.createPod(this);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}

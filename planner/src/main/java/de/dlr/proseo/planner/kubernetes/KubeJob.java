@@ -3,6 +3,10 @@
  */
 package de.dlr.proseo.planner.kubernetes;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +18,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
@@ -22,10 +27,7 @@ import io.kubernetes.client.models.V1JobCondition;
 import io.kubernetes.client.models.V1JobSpec;
 import io.kubernetes.client.models.V1JobSpecBuilder;
 import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodBuilder;
 import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1PodSpec;
-import io.kubernetes.client.models.V1PodSpecBuilder;
 
 /**
  * A KubeJob describes the complete information to run a Kubernetes job.
@@ -66,6 +68,10 @@ public class KubeJob {
 	 * The job order file
 	 */
 	private String jobOrderFileName;
+	/**
+	 * Job Order content
+	 */
+	private String jobOrderString;
 	/**
 	 * Arguments of command
 	 */
@@ -199,8 +205,13 @@ public class KubeJob {
 		if (aKubeConfig.isConnected() && aJob != null) {
 			jobName = aJob.getMetadata().getName();
 			if (jobName.startsWith(ProductionPlanner.jobNamePrefix)) {
+				try {
 				jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
 				containerName = ProductionPlanner.jobContainerPrefix + jobId;
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+					return null;
+				}
 			} else {
 				return null;
 			}
@@ -216,7 +227,22 @@ public class KubeJob {
 	 */
 	public KubeJob createJob(KubeConfig aKubeConfig) {	
 		kubeConfig = aKubeConfig;
+		JobOrder jobOrder = null;
 		if (aKubeConfig.isConnected()) {
+			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
+			if (!js.isEmpty()) {
+				JobDispatcher jd = new JobDispatcher();
+				jobOrder = jd.createJobOrder(js.get());
+				if (jobOrder == null) {
+					// todo Exception
+					return null;
+				}
+				jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
+				if (jobOrder == null) {
+					// todo Exception
+					return null;
+				}
+			}
 			V1JobSpec jobSpec = new V1JobSpecBuilder()
 				.withNewTemplate()
 				.withNewMetadata()
@@ -227,23 +253,54 @@ public class KubeJob {
 				.addNewContainer()
 				.withName(containerName)
 				.withImage(imageName)
-				.withCommand(command)
-			    .withArgs(jobOrderFileName)
+				.withImagePullPolicy("Never")
+//				.withCommand(command)
+//			    .withArgs(jobOrderFileName)
 				.addNewEnv()
 				.withName("JOBORDER_FILE")
-				.withValue(jobOrderFileName)
+				.withValue(jobOrder.getFileName())
 				.endEnv()
 				.addNewEnv()
-				.withName("FS_TYPE")
-				.withValue("posix")
+				.withName("JOBORDER_FS_TYPE")
+				.withValue(jobOrder.getFsType())
 				.endEnv()
 				.addNewEnv()
-				.withName("LOGFILE_TARGET")
+				.withName("INGESTOR_ENDPOINT")
 				.withValue("")
 				.endEnv()
 				.addNewEnv()
 				.withName("STATE_CALLBACK_ENDPOINT")
-				.withValue("http://")
+//				.withValue("http://" + ProductionPlanner.hostName + ":" + ProductionPlanner.port)
+				.withValue("http://" + "192.168.20.155" + ":" + ProductionPlanner.port 
+						+ "/proseo/planner/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
+				.endEnv()
+				.addNewEnv()
+				.withName("S3_ENDPOINT")
+				.withValue("http://192.168.20.159:9000")
+				.endEnv()
+				.addNewEnv()
+				.withName("S3_ACCESS_KEY")
+				.withValue("short_access_key")
+				.endEnv()
+				.addNewEnv()
+				.withName("S3_SECRET_ACCESS_KEY")
+				.withValue("short_secret_key")
+				.endEnv()
+				.addNewEnv()
+				.withName("S3_STORAGE_ID_OUTPUTS")
+				.withValue("s3test")
+				.endEnv()
+				.addNewEnv()
+				.withName("ALLUXIO_STORAGE_ID_OUTPUTS")
+				.withValue("alluxio1")
+				.endEnv()
+				.addNewEnv()
+				.withName("INGESTOR_ENDPOINT")
+				.withValue("http://192.168.20.159:8082")
+				.endEnv()
+				.addNewEnv()
+				.withName("PROCESSING_FACILITY_NAME")
+				.withValue(kubeConfig.getId())
 				.endEnv()
 				.addNewVolumeMount()
 				.withName("input")
@@ -251,6 +308,8 @@ public class KubeJob {
 				.endVolumeMount()
 				.endContainer()
 				.withRestartPolicy("Never")
+				.withHostNetwork(true)
+				.withDnsPolicy("ClusterFirstWithHostNet")
 				.addNewVolume()
 				.withName("input")
 				.withNewHostPath()
@@ -270,11 +329,10 @@ public class KubeJob {
 				.build();
 			try {
 				
-				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
-				 
-				aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
-				searchPod();
 				if (!js.isEmpty()) {
+					aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+					searchPod();
+
 					js.get().setJobStepState(JobStepState.READY);	
 					RepositoryService.getJobStepRepository().save(js.get());
 				}
@@ -298,6 +356,9 @@ public class KubeJob {
 		}
 	}	
 	
+	/**
+	 * Search pod for job and set podName
+	 */
 	public void searchPod() {
 		if (kubeConfig != null && kubeConfig.isConnected()) {
 			V1PodList pl;
@@ -318,6 +379,12 @@ public class KubeJob {
 		}
 	}
 	
+	/**
+	 * Retrieve and save all necessary info before deletion of job
+	 * 
+	 * @param aKubeConfig The processing facility
+	 * @param jobname The job name
+	 */
 	public void finish(KubeConfig aKubeConfig, String jobname) {
 		if (aKubeConfig != null || kubeConfig != null) {
 			if (kubeConfig == null) {
@@ -347,7 +414,7 @@ public class KubeJob {
 				}
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
-				if (!js.isEmpty()) {
+				if (js.isPresent()) {
 					try {
 						if (aJob.getStatus() != null) {
 							DateTime d;
@@ -363,9 +430,9 @@ public class KubeJob {
 							if (aJob.getStatus().getConditions() != null) {
 								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
 								for (V1JobCondition jc : jobCondList) {
-									if (jc.getType().equalsIgnoreCase("complete") && jc.getStatus().equalsIgnoreCase("true")) {
+									if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
 										js.get().setJobStepState(JobStepState.COMPLETED);	
-									} else if (jc.getType().equalsIgnoreCase("failed")) {
+									} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
 										js.get().setJobStepState(JobStepState.FAILED);	
 									}
 								}
@@ -378,6 +445,10 @@ public class KubeJob {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
+					Optional<JobStep> jsa = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (jsa.isPresent()) {
+						jsa.get();
+					}
 				}
 			}
 		}

@@ -77,6 +77,36 @@ public class RestOps {
 				return null;
 			}
 		}
+		if (method == HttpMethod.GET) {
+			client = ClientBuilder.newClient()
+					.register(new RestAuth("test","test"));
+			try {
+				if (queryParam == null) {
+					logger.info("GET {}{}",endPoint, endPointPath);
+					webTarget = client
+							.target(endPoint)
+							.path(endPointPath);
+				} else {
+					logger.info("GET {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
+					webTarget = client
+							.target(endPoint)
+							.path(endPointPath)
+							.queryParam(queryParam, payLoad);
+				}
+				// workaround to support HTTP-PATCH
+				webTarget.property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
+				
+				invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
+				response = invocationBuilder.method("GET");
+
+				ri.sethttpCode(response.getStatus());
+				ri.sethttpResponse(response.readEntity(String.class));
+				response.close();
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+				return null;
+			}
+		}
 		return ri;
 	}
 }

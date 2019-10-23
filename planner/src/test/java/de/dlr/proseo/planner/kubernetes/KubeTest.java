@@ -31,6 +31,9 @@ public class KubeTest {
     @Autowired
     private JobStepRepository jobSteps;
     
+    @Autowired
+    private ProductionPlanner productionPlanner;
+    
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
@@ -54,11 +57,11 @@ public class KubeTest {
 		jobSteps.save(js);
 		JobDispatcher jd = new JobDispatcher();
 		jd.createJobOrder(js);
-		ProductionPlanner.updateKubeConfigs();
-		if (ProductionPlanner.getKubeConfig(null).isConnected()) {
-			KubeJob aJob = ProductionPlanner.getKubeConfig(null).createJob("test");
+		productionPlanner.updateKubeConfigs();
+		if (productionPlanner.getKubeConfig(null).isConnected()) {
+			KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test");
 			if (aJob != null) {
-				ProductionPlanner.getKubeConfig(null).deleteJob(aJob);
+				productionPlanner.getKubeConfig(null).deleteJob(aJob);
 			}
 		}
 	}
