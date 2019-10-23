@@ -76,15 +76,12 @@ public class JobOrderControllerImpl implements JoborderController{
 	}
 
 	@Override
-	public ResponseEntity<Joborder> createJoborder(String procFacilityName, @Valid Joborder joborder) {
+	public ResponseEntity<Joborder> createJoborder(@Valid Joborder joborder) {
 		Joborder response = new Joborder();
 
 		//create internal buckets, if not existing
 		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getJoborderBucket(),cfg.getS3Region());
-		// check proc-facility
-		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
-			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-		}
+		
 		String separator = "/";
 		// check if we have a Base64 encoded string & if we have valid XML
 		if (!joborder.getJobOrderStringBase64()
