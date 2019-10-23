@@ -179,9 +179,6 @@ public class MissionControllerImpl implements MissionController {
 	 */
 	@Override
 	public ResponseEntity<?> deleteMissionById(Long id) {
-		// TODO Auto-generated method stub
-		//return null;
-		
 		 if (logger.isTraceEnabled()) logger.trace(">>> deleteMissionById({})", id);
 			
 			// Test whether the mission id is valid

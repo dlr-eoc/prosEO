@@ -79,8 +79,8 @@ public class OrbitControllerTest {
 	private static String[][] testOrbitData = {
 		//mission_id, mission_version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name, orbit_id, orbit_version, orbit_number, start_time, stop_time, 
 		{ "0", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandem-X", "0", "0", "14", "2019-08-29T22:49:21.074395", "2019-10-05T10:12:39.000000"},
-		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X", "0", "0", "12", "2019-08-30T00:19:33.946628", "2019-10-05T10:13:22.000000"},
-		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X", "0", "0", "13", "2019-08-30T00:19:33.946628", "2019-10-05T10:13:22.000000"},
+		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X", "0", "0", "12", "2019-08-30T00:19:33.946628", "2019-10-06T10:13:22.000000"},
+		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X", "0", "0", "13", "2019-08-30T00:19:33.946628", "2019-10-10T10:13:22.000000"},
 		
 	};
 
@@ -334,7 +334,7 @@ public class OrbitControllerTest {
 		        .queryParam("spacecraftCode", "S_TDX1")
 				.queryParam("orbitNumberFrom", 10)
 				.queryParam("orbitNumberTo", 15)
-				.queryParam("starttimefrom", testOrbitData[1][10].split("\\.")[0])
+				.queryParam("starttimefrom", testOrbitData[0][10].split("\\.")[0])
 				.queryParam("starttimeto", testOrbitData[1][11].split("\\.")[0]);
 
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
