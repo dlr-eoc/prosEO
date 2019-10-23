@@ -207,7 +207,7 @@ public class KubeConfig {
 	 */
 	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
-		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test1.pl", "perl", null);
+		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
 		KubeJob aJob = new KubeJob(aKey, null, "proseo-sample-integration-processor:0.0.1-SNAPSHOT", "/testdata/test1.pl", "perl", null);
 		aJob = aJob.createJob(this);
 		if (aJob != null) {

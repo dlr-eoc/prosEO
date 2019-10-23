@@ -21,6 +21,7 @@ import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Copy;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobBuilder;
 import io.kubernetes.client.models.V1JobCondition;
@@ -175,6 +176,15 @@ public class KubeJob {
 		imageName = processor;
 		command = cmd;
 		jobOrderFileName = jobOrderFN;
+		try {
+            jobOrderString = Files.readString(Paths.get("C:\\usr\\prosEO\\workspace-proseo\\prosEO\\sample-wrapper\\src\\test\\resources\\JobOrder.608109247_KNMI-L2_CO.xml"));
+        } catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (args != null) {
 			this.args.addAll(args);
 		}
@@ -270,7 +280,6 @@ public class KubeJob {
 				.endEnv()
 				.addNewEnv()
 				.withName("STATE_CALLBACK_ENDPOINT")
-//				.withValue("http://" + ProductionPlanner.hostName + ":" + ProductionPlanner.port)
 				.withValue("http://" + "192.168.20.155" + ":" + ProductionPlanner.port 
 						+ "/proseo/planner/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
 				.endEnv()
@@ -329,6 +338,7 @@ public class KubeJob {
 				.build();
 			try {
 				
+
 				if (!js.isEmpty()) {
 					aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 					searchPod();
