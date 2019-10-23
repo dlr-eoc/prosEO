@@ -181,7 +181,7 @@ public class OrbitControllerTest {
 	 * 
 	 * Test: Create a new orbit
 	 */
-/*	@Test
+	@Test
 	public final void testCreateOrbit() {
 		// Create a mission in the database
 		de.dlr.proseo.model.Orbit orbitToCreate = createOrbit(testOrbitData[0]);
@@ -224,7 +224,7 @@ public class OrbitControllerTest {
 	 * Test: Get an Orbit by ID
 	 * Precondition: At least one orbit with a known ID is in the database
 	 */
-/*	@Test
+	@Test
 	public final void testGetOrbitById() {
 		// Make sure test orbits exist
 		List<de.dlr.proseo.model.Orbit> testOrbits = createTestOrbits();
@@ -251,7 +251,7 @@ public class OrbitControllerTest {
 	 * Test: Delete an Orbit by ID
 	 * Precondition: An Orbit in the database
 	 */
-/*	@Test
+	@Test
 	public final void testDeleteOrbitById() {
 		// Make sure test orbits exist
 		List<de.dlr.proseo.model.Orbit> testOrbits = createTestOrbits();
@@ -281,7 +281,7 @@ public class OrbitControllerTest {
 	 * Test: Update an Orbit by ID
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
-/*	@Test
+	@Test
 	public final void testModifyOrbit() {
 		// Make sure test orbits exist
 		List<de.dlr.proseo.model.Orbit> testOrbits = createTestOrbits();
@@ -334,8 +334,8 @@ public class OrbitControllerTest {
 		        .queryParam("spacecraftCode", "S_TDX1")
 				.queryParam("orbitNumberFrom", 10)
 				.queryParam("orbitNumberTo", 15)
-				.queryParam("starttimefrom", testOrbitData[0][10].split("\\.")[0])
-				.queryParam("starttimeto", testOrbitData[0][11].split("\\.")[0]);
+				.queryParam("starttimefrom", testOrbitData[1][10].split("\\.")[0])
+				.queryParam("starttimeto", testOrbitData[1][11].split("\\.")[0]);
 
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 		
