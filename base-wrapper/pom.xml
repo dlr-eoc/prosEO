@@ -30,6 +30,11 @@
             <artifactId>proseo-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency> 
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-ingestor</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency> 
     </dependencies>
     <build>
         <finalName>proseo-base-wrapper</finalName>
