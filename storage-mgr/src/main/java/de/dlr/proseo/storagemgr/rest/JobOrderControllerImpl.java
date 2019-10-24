@@ -17,6 +17,7 @@ import java.util.UUID;
 import javax.validation.Valid;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,13 +103,13 @@ public class JobOrderControllerImpl implements JoborderController {
 			String objKey = 
 					cfg.getJoborderPrefix()
 					+ separator
-					+ DateTime.now().getYear()
+					+ DateTime.now(DateTimeZone.UTC).getYear()
 					+ separator 
-					+ DateTime.now().getMonthOfYear()
+					+ DateTime.now(DateTimeZone.UTC).getMonthOfYear()
 					+ separator 
-					+ DateTime.now().getDayOfMonth()
+					+ DateTime.now(DateTimeZone.UTC).getDayOfMonth()
 					+ separator 
-					+ DateTime.now().getHourOfDay()
+					+ DateTime.now(DateTimeZone.UTC).getHourOfDay()
 					+ separator 
 					+ UUID.randomUUID().toString() 
 					+ ".xml";
