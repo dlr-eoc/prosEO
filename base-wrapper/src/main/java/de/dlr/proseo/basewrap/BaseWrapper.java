@@ -31,7 +31,6 @@ import alluxio.grpc.ReadPType;
 import alluxio.grpc.WritePType;
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
-import de.dlr.proseo.ingestor.rest.model.ProductFile;
 import de.dlr.proseo.model.fs.alluxio.AlluxioOps;
 import de.dlr.proseo.model.fs.s3.AmazonS3URI;
 import de.dlr.proseo.model.fs.s3.S3Ops;
@@ -846,7 +845,7 @@ public class BaseWrapper {
 			String ingestorRestUrl =   "/ingest/"+ENV_PROCESSING_FACILITY_NAME+"/"+p.getId();
 			
 			// Build request based on de.dlr.proseo.ingestor.rest.model.ProductFile
-			ProductFile request = new ProductFile();
+			IngestorProductFile request = new IngestorProductFile();
 			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
 			request.setAuxFileNames(null);
 			request.setFilePath(p.getPath());
