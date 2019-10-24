@@ -1,5 +1,5 @@
 {
-    "productId": "234234234234",
-    "storageType": "S3",
-    "sourceFilePath": "/mnt/unstructuredFS/some/dir/Product23323223.nc"
+    "productId": "newProdId001",
+    "sourceStorageType": "POSIX",
+    "sourceFilePath": "src/"
 }

@@ -777,8 +777,8 @@ public class BaseWrapper {
 					// Output-Bucket=ENV_S3_STORAGE_ID_OUTPUTS
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
 						try {
-							Boolean transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
-							if(transaction) {
+							ArrayList<String> transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
+							if(null == transaction) {
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
