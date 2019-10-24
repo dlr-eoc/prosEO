@@ -13,8 +13,8 @@
 	<description/>
 
     <modules>
-        <module>sample-wrapper</module>
         <module>sample-processor</module>
+        <module>sample-wrapper</module>
     </modules>
 
     <url>https://github.com/dlr-eoc/prosEO/samples</url>
