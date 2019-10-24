@@ -3,7 +3,7 @@
 "sourceStorageType": "POSIX",
 "sourceFilePath": "src/",
 "targetStorageId": "alluxio1",
-"targetStorageType": null,
+"targetStorageType": "S3",
 "registeredFilePath": "/alluxio1/newProdId001/1571848916/src/",
 "registered": true,
 "registeredFilesCount": 24,

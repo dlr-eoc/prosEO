@@ -6,11 +6,9 @@
 package de.dlr.proseo.planner.dispatcher;
 
 import java.io.InputStream;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Set;
 
-import org.codehaus.plexus.util.StringInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +25,6 @@ import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.storagemgr.rest.model.Joborder;
-import de.dlr.proseo.storagemgr.rest.model.ProcFacility;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
@@ -377,19 +374,14 @@ public class JobDispatcher {
 		
 		if (storageManagerUrl != null && jobOrder != null) {
 			try {
-				String pfRestUrl = "/proseo/storage-mgr/v0.1/processingFacility";
-				
 				RestTemplate restTemplate = new RestTemplate();
-				ResponseEntity<ProcFacility> pf = restTemplate.getForEntity(storageManagerUrl + pfRestUrl, ProcFacility.class);
-
-				logger.info("... response is {}",pf.getBody().toString());
-
-				String stMgrPf = pf.getBody().getName();
-				pfRestUrl = "/proseo/storage-mgr/v0.1/" + stMgrPf + "/joborders";
+				String restUrl = "/proseo/storage-mgr/v0.1/joborders";
 				String b64String = jobOrder.buildBase64String(true);
 				Joborder jo = new Joborder();
 				jo.setJobOrderStringBase64(b64String);
-				ResponseEntity<Joborder> response = restTemplate.postForEntity(storageManagerUrl + pfRestUrl, jo, Joborder.class);
+				logger.info("HTTP Request: " + storageManagerUrl + restUrl);
+				
+				ResponseEntity<Joborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, Joborder.class);
 
 				logger.info("... response is {}", response.getStatusCode());
 
