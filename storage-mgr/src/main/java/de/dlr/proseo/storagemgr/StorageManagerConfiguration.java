@@ -70,9 +70,25 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.mountpoints.unregisteredProducts.k8sNode.unregisteredProducts}")
 	private String unregisteredProductsK8sMountPoint;
 
+	@Value("${proseo.s3.s3Region}")
+	private String s3Region;
 	
 	
 	
+	/**
+	 * @return the s3Region
+	 */
+	public String getS3Region() {
+		return s3Region;
+	}
+
+	/**
+	 * @param s3Region the s3Region to set
+	 */
+	public void setS3Region(String s3Region) {
+		this.s3Region = s3Region;
+	}
+
 	public String getAlluxioK8sMountPointCache() {
 		return alluxioK8sMountPointCache;
 	}

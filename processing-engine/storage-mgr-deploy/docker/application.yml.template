@@ -1,18 +1,18 @@
 proseo:
     procFacility:
-      name: devel
-      url: http://localhost:9887/k8s-api-endpoint
-      descr: local env :-)
+      name: XXX
+      url: https://XXX
+      descr: OTC-test-integration
     s3:
-      s3AccessKey: short_access_key
-      s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://minio:9000
+      s3AccessKey: XXX
+      s3SecretAccessKey: XXX
+      s3EndPoint: XXX
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
-      alluxioUnderFsS3BucketEndPoint: http://minio:9000
+      alluxioUnderFsS3BucketEndPoint: XXX
       alluxioUnderFsMaxPrefixes: 500
     joborder:
       bucket: internal

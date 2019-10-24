@@ -10,14 +10,11 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Set;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-
 import org.codehaus.plexus.util.StringInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job;
@@ -27,10 +24,10 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.joborder.Conf;
 import de.dlr.proseo.model.joborder.JobOrder;
-import de.dlr.proseo.model.rest.HttpResponseInfo;
-import de.dlr.proseo.model.rest.RestOps;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.storagemgr.rest.model.Joborder;
+import de.dlr.proseo.storagemgr.rest.model.ProcFacility;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
@@ -381,29 +378,24 @@ public class JobDispatcher {
 		if (storageManagerUrl != null && jobOrder != null) {
 			try {
 				String pfRestUrl = "/proseo/storage-mgr/v0.1/processingFacility";
-				HttpResponseInfo singleResponse = RestOps.restApiCall(storageManagerUrl, pfRestUrl, "", null, RestOps.HttpMethod.GET);
-				logger.info("... response is {}",singleResponse.gethttpResponse());
+				
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<ProcFacility> pf = restTemplate.getForEntity(storageManagerUrl + pfRestUrl, ProcFacility.class);
 
-				JsonReader jsonReader = Json.createReader(new StringReader(singleResponse.gethttpResponse()));
-				JsonObject reply = jsonReader.readObject();
-				jsonReader.close();
+				logger.info("... response is {}",pf.getBody().toString());
 
-				String stMgrPf = reply.getString("name");
+				String stMgrPf = pf.getBody().getName();
 				pfRestUrl = "/proseo/storage-mgr/v0.1/" + stMgrPf + "/joborders";
 				String b64String = jobOrder.buildBase64String(true);
-				JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
-				bodyBuilder.add("jobOrderStringBase64", b64String);
-				JsonObject body = bodyBuilder.build();
-				String bString = body.toString();
-				singleResponse = RestOps.restApiCall(storageManagerUrl, pfRestUrl, bString, null, RestOps.HttpMethod.POST);
-				logger.info("... response is {}",singleResponse.gethttpResponse());
+				Joborder jo = new Joborder();
+				jo.setJobOrderStringBase64(b64String);
+				ResponseEntity<Joborder> response = restTemplate.postForEntity(storageManagerUrl + pfRestUrl, jo, Joborder.class);
 
-				jsonReader = Json.createReader(new StringReader(singleResponse.gethttpResponse()));
-				reply = jsonReader.readObject();
-				jsonReader.close();
-				if (reply.getBoolean("uploaded")) {
-					jobOrder.setFileName(reply.getString("pathInfo"));
-					jobOrder.setFsType(reply.getString("fsType"));
+				logger.info("... response is {}", response.getStatusCode());
+
+				if (response.getBody().getUploaded()) {
+					jobOrder.setFileName(response.getBody().getPathInfo());
+					jobOrder.setFsType(response.getBody().getFsType().value());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

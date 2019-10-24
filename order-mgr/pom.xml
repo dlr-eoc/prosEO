@@ -18,9 +18,10 @@
 	</organization>
 
 	<properties>
+        <module.version>0.0.1-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/order-mgr-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.ordermgr</raml-base-package>
+		<raml-base-package>de.dlr.proseo.ordermgr.rest</raml-base-package>
 	</properties>
 
 	<dependencies>
@@ -88,7 +89,7 @@
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.ordermgr.rest</basePackage>
+					<basePackage>${raml-base-package}</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -102,39 +103,29 @@
 				</executions>
 			</plugin>
 
-			<!-- Build Docker image -->
-			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
+            <!-- Build Docker image -->
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-version}</version>
                 <configuration>
-                    <tag>${project.version}</tag>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
                 </configuration>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-order-mgr</repository>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
-		<!-- luginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<configuration>
-						<excludes>
-							<exclude>**/MissionControllerTest</exclude>
-						</excludes>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement -->
 	</build>
 </project>

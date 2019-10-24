@@ -1,71 +1,26 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>samples</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <parent>
+        <groupId>de.dlr.proseo</groupId>
+        <artifactId>proseo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
 
+	<artifactId>samples</artifactId>
+	<packaging>pom</packaging>
 	<name>prosEO Samples including Wrapper and Sample Processor</name>
 	<description/>
-	<url>https://github.com/dlr-eoc/prosEO/samples</url>
 
+    <modules>
+        <module>sample-wrapper</module>
+        <module>sample-processor</module>
+    </modules>
+
+    <url>https://github.com/dlr-eoc/prosEO/samples</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
 
-	<parent>
-		<groupId>de.dlr.proseo</groupId>
-		<artifactId>proseo</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</parent>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
-	</properties>
-
-	<modules>
-		<module>sample-wrapper</module>
-		<module>sample-processor</module>
-	</modules>
-	<dependencies>
-	</dependencies>
-	<build>
-		<pluginManagement>
-			<plugins>
-				<!-- Make sure correct Java version is used -->
-				<plugin>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<source>${maven.compiler.source}</source>
-						<target>${maven.compiler.target}</target>
-					</configuration>
-				</plugin>
-                <!-- Build Docker image -->
-			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
-                <configuration>
-					<tag>${project.version}</tag>
-				</configuration>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-sample-integration-processor</repository>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
 </project>

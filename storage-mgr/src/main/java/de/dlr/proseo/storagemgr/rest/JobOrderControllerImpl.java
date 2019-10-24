@@ -80,7 +80,7 @@ public class JobOrderControllerImpl implements JoborderController{
 		Joborder response = new Joborder();
 
 		//create internal buckets, if not existing
-		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getJoborderBucket());
+		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getJoborderBucket(),cfg.getS3Region());
 		// check proc-facility
 		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
 			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

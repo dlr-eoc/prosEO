@@ -29,6 +29,9 @@ import alluxio.AlluxioURI;
 import alluxio.exception.AlluxioException;
 import alluxio.grpc.ReadPType;
 import alluxio.grpc.WritePType;
+import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
+import de.dlr.proseo.basewrap.rest.IngestorProductFilePostRequest;
+import de.dlr.proseo.basewrap.rest.RestOps;
 import de.dlr.proseo.model.fs.alluxio.AlluxioOps;
 import de.dlr.proseo.model.fs.s3.AmazonS3URI;
 import de.dlr.proseo.model.fs.s3.S3Ops;
@@ -36,9 +39,6 @@ import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
-import de.dlr.proseo.model.rest.HttpResponseInfo;
-import de.dlr.proseo.model.rest.IngestorProductFilePostRequest;
-import de.dlr.proseo.model.rest.RestOps;
 import software.amazon.awssdk.services.s3.S3Client;
 
 /**
@@ -738,7 +738,7 @@ public class BaseWrapper {
 	 */
 	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
-		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
+		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<storageID>/<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
 		AmazonS3 s3 = S3Ops.v1S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 		String separator = "/";
 		int numberOfOutputs = 0;
@@ -907,12 +907,33 @@ public class BaseWrapper {
 	}
 
 	/**
+	 * Hook for mission-specific modifications to the job order document before fetching input data
+	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param jobOrderDoc the job order document to modify
+	 */
+	protected void preFetchInputHook(JobOrder jobOrderDoc) {
+		// No operation
+	}
+
+	/**
+	 * Hook for mission-specific modifications to the final job order document after execution of the processor (before push of
+	 * results).
+	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param joWork the job order document to modify
+	 */
+	protected void postProcessingHook(JobOrder joWork) {
+		// No operation
+	}
+
+	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
 	 * 
 	 * @param args (not used due env-var based invocation)
 	 * @return the program exit code (OK or FAILURE)
 	 */
-	public int run() {
+	final public int run() {
 
 		logger.info(splash());
 
@@ -941,6 +962,9 @@ public class BaseWrapper {
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
+		
+		/** Hook for additional mission-specific pre-fetch operations on the job order document */
+		preFetchInputHook(jobOrderDoc);
 
 		/** STEP [6][7][8] fetch Inputs & create re-mapped JOF for container context*/
 		JobOrder joWork = null;
@@ -968,6 +992,9 @@ public class BaseWrapper {
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
+		
+		/** Hook for additional post-processing operations on the job order document */
+		postProcessingHook(joWork);
 
 		/** STEP [9] Push Processing Results to prosEO Storage, if any */
 		ArrayList<PushedProcessingOutput> pushedProducts = null;

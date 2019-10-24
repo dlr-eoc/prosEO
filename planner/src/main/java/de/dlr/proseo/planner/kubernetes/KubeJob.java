@@ -176,15 +176,15 @@ public class KubeJob {
 		imageName = processor;
 		command = cmd;
 		jobOrderFileName = jobOrderFN;
-		try {
-            jobOrderString = Files.readString(Paths.get("C:\\usr\\prosEO\\workspace-proseo\\prosEO\\sample-wrapper\\src\\test\\resources\\JobOrder.608109247_KNMI-L2_CO.xml"));
-        } catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//            jobOrderString = ""; // Files.readString(Paths.get("C:\\usr\\prosEO\\workspace-proseo\\prosEO\\sample-wrapper\\src\\test\\resources\\JobOrder.608109247_KNMI-L2_CO.xml"));
+//        } catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		if (args != null) {
 			this.args.addAll(args);
 		}

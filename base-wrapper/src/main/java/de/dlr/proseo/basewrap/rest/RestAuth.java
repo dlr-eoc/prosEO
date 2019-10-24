@@ -1,4 +1,4 @@
-package de.dlr.proseo.model.rest;
+package de.dlr.proseo.basewrap.rest;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

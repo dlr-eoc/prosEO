@@ -23,9 +23,10 @@
 	</organization>
 
 	<properties>
+        <module.version>0.1.0-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.planner</raml-base-package>
+		<raml-base-package>de.dlr.proseo.planner.rest</raml-base-package>
 	</properties>
 
 	<dependencies>
@@ -56,11 +57,6 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 		<dependency>
-      <groupId>javax.json</groupId>
-      <artifactId>javax.json-api</artifactId>
-      <version>1.0</version>
-    </dependency>
-		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
 			<version>2.3.0</version>
@@ -69,11 +65,24 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 		</dependency> -->
-		<dependency>
-			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-model</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-storage-mgr</artifactId>
+      <classifier>class</classifier>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-storage-mgr</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
 		<dependency>
 			<groupId>io.kubernetes</groupId>
 			<artifactId>client-java</artifactId>
@@ -124,7 +133,7 @@
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.planner.rest</basePackage>
+					<basePackage>${raml-base-package}</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -138,26 +147,29 @@
 				</executions>
 			</plugin>
 
-			<!-- Build Docker image -->
- 			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId> 
-				<version>${dockerfile-maven-version}</version>
+            <!-- Build Docker image -->
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-version}</version>
                 <configuration>
-					<tag>${project.version}</tag>
-				</configuration>
-				<executions>
-					<execution>
-						<id>default</id> 
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-planner</repository> 
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 </project>

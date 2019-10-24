@@ -16,6 +16,10 @@
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
+	
+	<properties>
+        <module.version>0.1.0-SNAPSHOT</module.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -42,25 +46,28 @@
 			</plugin>
 
 			<!-- Build Docker image -->
-			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-version}</version>
                 <configuration>
-                    <tag>${project.version}</tag>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
                 </configuration>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-ui-cli</repository>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 </project>

@@ -443,7 +443,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 					if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
 						txStatus.setRollbackOnly();
 						return new ResponseEntity<>(
-								errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, processingMode),
+								errorHeaders(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE, processingMode, productClass.getMission().getCode()),
 								HttpStatus.BAD_REQUEST);
 					}
 					
