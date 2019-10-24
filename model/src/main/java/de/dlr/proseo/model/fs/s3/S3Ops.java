@@ -113,16 +113,13 @@ public class S3Ops {
 	 * @param s3
 	 * @return ArrayList<String> buckets
 	 */
-	public static ArrayList<String> listBuckets(S3Client s3) {
-		try {
+	public static ArrayList<String> listBuckets(S3Client s3) throws Exception{
+
 			ArrayList<String> buckets = new ArrayList<String>();
 			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
 			ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
 			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
 			return buckets;
-		} catch (Exception e) {
-			return null;
-		}
 	}
 
 	/**
@@ -133,7 +130,7 @@ public class S3Ops {
 	 * @param S3Region
 	 * @return String the new bucket name
 	 */
-	public static String createBucket(S3Client s3, String bucketName, String region) {
+	public static String createBucket(S3Client s3, String bucketName, String region) throws Exception{
 
 		try {
 			CreateBucketRequest createBucketRequest = CreateBucketRequest.builder().bucket(bucketName)

@@ -85,6 +85,7 @@ public class StorageControllerImpl implements StorageController {
 		ArrayList<Storage> response = new ArrayList<Storage>();
 
 		try {
+
 			// create internal buckets if not exists..
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
 
@@ -96,10 +97,6 @@ public class StorageControllerImpl implements StorageController {
 							cfg.getAlluxioUnderFsS3Bucket(), 
 							cfg.getAlluxioUnderFsS3BucketPrefix()
 							);
-
-			if (null == storages) {
-				return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-			}
 
 			ArrayList<String> s3Storages = new ArrayList<String>();
 			ArrayList<String> alluxioStorages = new ArrayList<String>();
@@ -155,7 +152,13 @@ public class StorageControllerImpl implements StorageController {
 		Storage response = new Storage();
 
 		// create internal buckets if not exists..
-		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
+		try {
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
+		} catch (Exception e) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 
 		// check if storageId has no UpperCase letters
 		if(!storage.getId().equals(storage.getId().toLowerCase())) {
@@ -165,13 +168,20 @@ public class StorageControllerImpl implements StorageController {
 			return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 		}
 
-		ArrayList<String[]> storages = StorageManagerUtils
-				.getAllStorages(cfg.getS3AccessKey(), 
-						cfg.getS3SecretAccessKey(), 
-						cfg.getS3EndPoint(), 
-						cfg.getAlluxioUnderFsS3Bucket(), 
-						cfg.getAlluxioUnderFsS3BucketPrefix()
-						);
+		ArrayList<String[]> storages;
+		try {
+			storages = StorageManagerUtils
+					.getAllStorages(cfg.getS3AccessKey(), 
+							cfg.getS3SecretAccessKey(), 
+							cfg.getS3EndPoint(), 
+							cfg.getAlluxioUnderFsS3Bucket(), 
+							cfg.getAlluxioUnderFsS3BucketPrefix()
+							);
+		} catch (Exception e) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		ArrayList<String> s3Storages = new ArrayList<String>();
 		ArrayList<String> alluxioStorages = new ArrayList<String>();
 
@@ -261,19 +271,26 @@ public class StorageControllerImpl implements StorageController {
 
 	@Override
 	public ResponseEntity<ProductFS> createProductFS(String storageId, @Valid ProductFS productFS) {
-		
+
 		ProductFS response = new ProductFS();
 		long regTimeStamp = System.currentTimeMillis()/1000;
 		String separator = "/";
 
 		// fetch all stoargeIDs
-		ArrayList<String[]> storages = StorageManagerUtils
-				.getAllStorages(cfg.getS3AccessKey(), 
-						cfg.getS3SecretAccessKey(), 
-						cfg.getS3EndPoint(), 
-						cfg.getAlluxioUnderFsS3Bucket(), 
-						cfg.getAlluxioUnderFsS3BucketPrefix()
-						);
+		ArrayList<String[]> storages;
+		try {
+			storages = StorageManagerUtils
+					.getAllStorages(cfg.getS3AccessKey(), 
+							cfg.getS3SecretAccessKey(), 
+							cfg.getS3EndPoint(), 
+							cfg.getAlluxioUnderFsS3Bucket(), 
+							cfg.getAlluxioUnderFsS3BucketPrefix()
+							);
+		} catch (Exception e) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		// create FS_TYPE specific lists
 		ArrayList<String> s3Storages = new ArrayList<String>();
 		ArrayList<String> alluxioStorages = new ArrayList<String>();
@@ -298,7 +315,7 @@ public class StorageControllerImpl implements StorageController {
 		if (s3Storages.contains(storageId)) targetStorageFsType=TargetStorageType.S_3;
 		if (alluxioStorages.contains(storageId)) targetStorageFsType=TargetStorageType.ALLUXIO;
 
-		
+
 		// distinguish between requested target Storage FS_Type
 		switch (targetStorageFsType) {
 
