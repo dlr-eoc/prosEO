@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -54,7 +55,7 @@ public class Configuration extends PersistentObject {
 	/**
 	 * Additional input files for inclusion in generated Job Order Files
 	 */
-	@OneToMany
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ConfigurationInputFile> staticInputFiles = new HashSet<>();
 
 	/** Specific parameter for "docker run" valid for this configuration */
