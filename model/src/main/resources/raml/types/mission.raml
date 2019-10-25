@@ -15,9 +15,15 @@
       name:
         type: string
         description: The mission name (e. g. Sentinel-5 Precursor)
+      fileClasses:
+        type: string[]
+        description: File classes as agreed for this mission (e. g. "TEST", "OPER")
       processingModes:
         type: string[]
-        description: Processing mode tags as agreed for this mission 
+        description: Processing mode tags as agreed for this mission
+      productFileTemplate:
+        type: string
+        description: The product filename template implementing the mission's file naming convention
       spacecrafts:
         type: Spacecraft[]
         description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.

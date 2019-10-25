@@ -62,7 +62,12 @@ resourceTypes:
           headers:
             Warning: !include types/error.raml
     put?:
-      responses:          
+      responses:
+        400:
+          description: |
+            The request contained invalid data
+          headers:
+            Waring: !include types/error.raml      
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
@@ -70,11 +75,21 @@ resourceTypes:
             Warning: !include types/error.raml
     patch?:
       responses:          
+        400:
+          description: |
+            The request contained invalid data
+          headers:
+            Waring: !include types/error.raml      
         404:
           description: |
             The requested resource on which the modification is being attempted was not found              
           headers:
             Warning: !include types/error.raml
+        409:
+          description: |
+            The resource was modified since retrieval by the client
+          headers:
+            Waring: !include types/error.raml      
     delete?:
       responses:          
         404:
