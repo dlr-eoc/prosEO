@@ -121,10 +121,13 @@ public class OrbitControllerImpl implements OrbitController {
 						.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
 			
 				//Return all Orbits within given orbit number range and start time range
-				//TBA how to pass starttime as paramemter
 				if(null != starttimefrom && null != starttimeto) {
 					for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
-						if (orbit.getStartTime().isAfter(starttimefrom.toInstant()) && orbit.getStopTime().isBefore(starttimeto .toInstant())) {
+						logger.info("Orbit.starttime: "+orbit.getStartTime());
+						logger.info("Orbit.stoptime: "+orbit.getStopTime());
+
+						if (!(orbit.getStartTime().isBefore(starttimefrom.toInstant())) && 
+								!(orbit.getStopTime().isAfter(starttimeto .toInstant()))) {
 							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 							Orbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
