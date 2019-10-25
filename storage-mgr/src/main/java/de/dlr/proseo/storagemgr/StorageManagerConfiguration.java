@@ -73,8 +73,25 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3Region}")
 	private String s3Region;
 	
+	@Value("${proseo.global.storageIdPrefix}")
+	private String storageIdPrefix;
 	
 	
+	
+	/**
+	 * @return the storageIdPrefix
+	 */
+	public String getStorageIdPrefix() {
+		return storageIdPrefix;
+	}
+
+	/**
+	 * @param storageIdPrefix the storageIdPrefix to set
+	 */
+	public void setStorageIdPrefix(String storageIdPrefix) {
+		this.storageIdPrefix = storageIdPrefix;
+	}
+
 	/**
 	 * @return the s3Region
 	 */

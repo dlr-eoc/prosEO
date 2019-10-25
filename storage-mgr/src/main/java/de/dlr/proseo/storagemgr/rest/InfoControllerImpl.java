@@ -14,7 +14,7 @@ import de.dlr.proseo.storagemgr.rest.model.K8sNodeMountPoints;
 public class InfoControllerImpl implements InfoController{
 
 	@Autowired
-	StorageManagerConfiguration cfg = new StorageManagerConfiguration();
+	private StorageManagerConfiguration cfg;
 	
 	@Override
 	public ResponseEntity<Info> getInfo() {

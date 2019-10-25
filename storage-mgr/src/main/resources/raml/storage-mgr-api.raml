@@ -8,7 +8,6 @@ mediaType: application/json
 
 types:
   Info: !include types/info.raml
-  ProcFacility: !include types/procFacility.raml
   Storage: !include types/storage.raml
   ProductFS: !include types/productFS.raml
   Joborder: !include types/joborderBase64.raml
@@ -50,16 +49,8 @@ resourceTypes:
         body:
           application/json:
             type: Info
-/processingFacility:
-  get:
-    description: get name of processingFacility where this storage-manager resides...(1:1)
-    responses:
-      200:
-        body:
-          application/json:
-            type: ProcFacility
 
-/{procFacilityName}/storages:
+/storages:
   type: standard
   get:
     description: Get storages by id
@@ -117,7 +108,7 @@ resourceTypes:
                   type: ProductFS
                   example: !include examples/productFS-del.json
 
-/{procFacilityName}/joborders:
+/joborders:
     post:
       description: upload prosEO joborder file for later use in a job
       body:

@@ -1,4 +1,6 @@
 proseo:
+    global:
+      storageIdPrefix: proseo
     procFacility:
       name: XXX
       url: https://XXX

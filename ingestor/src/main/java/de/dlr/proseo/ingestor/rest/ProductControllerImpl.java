@@ -512,25 +512,15 @@ public class ProductControllerImpl implements ProductController {
 					productChanged = true;
 					modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
 				}
-				if (null == modelProduct.getOrbit() && null == product.getOrbit()) {
-					// OK - no orbit on both sides
-				} else if (null == product.getOrbit()) {
-					// Orbit was set, but is no more
-					productChanged = true;
-					modelProduct.setOrbit(null);
-				} else {
-					// Orbit shall be set, check whether it has been changed
-					if (!modelProduct.getOrbit().getSpacecraft().equals(changedProduct.getOrbit().getSpacecraft())
-						|| !modelProduct.getOrbit().getOrbitNumber().equals(changedProduct.getOrbit().getOrbitNumber())) {
-						Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-								product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
-						if (null == orbit) {
-							return new ResponseEntity<>(errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
-									product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()),
-									HttpStatus.BAD_REQUEST);
-						}
-						modelProduct.setOrbit(orbit);
-					} 
+				if (!modelProduct.getOrbit().getOrbitNumber().equals(changedProduct.getOrbit().getOrbitNumber())) {
+					Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
+							product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+					if (null == orbit) {
+						return new ResponseEntity<>(errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
+								product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					modelProduct.setOrbit(orbit);
 				}
 				// Update relationship to enclosing product
 				if (null == modelProduct.getEnclosingProduct() && null == product.getEnclosingProductId()) {
