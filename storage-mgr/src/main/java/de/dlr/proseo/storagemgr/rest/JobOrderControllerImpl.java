@@ -100,16 +100,17 @@ public class JobOrderControllerImpl implements JoborderController {
 			}
 
 			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			DateTime tstamp=DateTime.now(DateTimeZone.UTC);
 			String objKey = 
 					cfg.getJoborderPrefix()
 					+ separator
-					+ DateTime.now(DateTimeZone.UTC).getYear()
+					+ tstamp.getYear()
 					+ separator 
-					+ DateTime.now(DateTimeZone.UTC).getMonthOfYear()
+					+ tstamp.getMonthOfYear()
 					+ separator 
-					+ DateTime.now(DateTimeZone.UTC).getDayOfMonth()
+					+ tstamp.getDayOfMonth()
 					+ separator 
-					+ DateTime.now(DateTimeZone.UTC).getHourOfDay()
+					+ tstamp.getHourOfDay()
 					+ separator 
 					+ UUID.randomUUID().toString() 
 					+ ".xml";
