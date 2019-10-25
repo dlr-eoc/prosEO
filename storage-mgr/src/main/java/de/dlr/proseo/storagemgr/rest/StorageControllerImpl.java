@@ -94,6 +94,7 @@ public class StorageControllerImpl implements StorageController {
 					.getAllStorages(cfg.getS3AccessKey(), 
 							cfg.getS3SecretAccessKey(), 
 							cfg.getS3EndPoint(), 
+							cfg.getStorageIdPrefix(),
 							cfg.getAlluxioUnderFsS3Bucket(), 
 							cfg.getAlluxioUnderFsS3BucketPrefix()
 							);
@@ -174,6 +175,7 @@ public class StorageControllerImpl implements StorageController {
 					.getAllStorages(cfg.getS3AccessKey(), 
 							cfg.getS3SecretAccessKey(), 
 							cfg.getS3EndPoint(), 
+							cfg.getStorageIdPrefix(),
 							cfg.getAlluxioUnderFsS3Bucket(), 
 							cfg.getAlluxioUnderFsS3BucketPrefix()
 							);
@@ -283,6 +285,7 @@ public class StorageControllerImpl implements StorageController {
 					.getAllStorages(cfg.getS3AccessKey(), 
 							cfg.getS3SecretAccessKey(), 
 							cfg.getS3EndPoint(), 
+							cfg.getStorageIdPrefix(),
 							cfg.getAlluxioUnderFsS3Bucket(), 
 							cfg.getAlluxioUnderFsS3BucketPrefix()
 							);

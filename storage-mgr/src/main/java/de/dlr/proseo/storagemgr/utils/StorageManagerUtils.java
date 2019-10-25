@@ -51,34 +51,48 @@ public class StorageManagerUtils {
 	 * 
 	 * @return ArrayList<String> of storageIds
 	 */
-	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix) throws Exception{
-			// global storages...
-			ArrayList<String[]> storages = new ArrayList<String[]>();
+	/**
+	 * @param s3AccessKey
+	 * @param s3SecretAccessKey
+	 * @param s3Endpoint
+	 * @param globalStorageIdPrefix
+	 * @param alluxioUnderFsBucket
+	 * @param alluxioUnderFsS3BucketPrefix
+	 * @return
+	 * @throws Exception
+	 */
+	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix) throws Exception{
+		// global storages...
+		ArrayList<String[]> storages = new ArrayList<String[]>();
 
-			// fetch S3-buckets
-			S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
-			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
+		// fetch S3-buckets
+		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
+		ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
 
-			for (String b : s3bckts) {
+		for (String b : s3bckts) {
+			if(b.startsWith(globalStorageIdPrefix)) {
 				String[] s = new String[2];
 				s[0]=b;
 				s[1]=String.valueOf(StorageType.S_3);
 				storages.add(s);
 			}
+		}
 
-			// fetch Alluxio-Prefixes
-			AmazonS3 s3_v1 = S3Ops.v1S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
-			List<String> allxio = S3Ops.listKeysInBucket(s3_v1, alluxioUnderFsBucket,alluxioUnderFsS3BucketPrefix,true);
+		// fetch Alluxio-Prefixes
+		AmazonS3 s3_v1 = S3Ops.v1S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
+		List<String> allxio = S3Ops.listKeysInBucket(s3_v1, alluxioUnderFsBucket,alluxioUnderFsS3BucketPrefix,true);
 
-			for (String p : allxio) {
+		for (String p : allxio) {
+			if(p.startsWith(globalStorageIdPrefix)) {
 				String[] s = new String[2];
 				s[0]=p;
 				s[1]=String.valueOf(StorageType.ALLUXIO);
 				storages.add(s);
 			}
-			s3.close();
-			s3_v1.shutdown();
-			return storages;
+		}
+		s3.close();
+		s3_v1.shutdown();
+		return storages;
 	}
 
 	/**
