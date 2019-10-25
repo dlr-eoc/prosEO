@@ -105,10 +105,14 @@ public class ProductClassControllerImpl implements ProductclassController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
 
-	// single TransactionTemplate shared amongst all methods in this instance
+	/** single TransactionTemplate shared amongst all methods in this instance */
 	private final TransactionTemplate transactionTemplate;
 
-	// use constructor-injection to supply the PlatformTransactionManager
+	/**
+	 * Constructor using constructor-injection to supply the PlatformTransactionManager
+	 * 
+	 * @param transactionManager the platform transaction manager
+	 */
 	public ProductClassControllerImpl(PlatformTransactionManager transactionManager) {
 		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
 		this.transactionTemplate = new TransactionTemplate(transactionManager);

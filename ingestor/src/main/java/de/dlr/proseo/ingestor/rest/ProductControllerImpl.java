@@ -8,8 +8,10 @@ package de.dlr.proseo.ingestor.rest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -22,12 +24,19 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 
 /**
@@ -54,7 +63,13 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_PRODUCT_LIST_EMPTY = 2011;
 	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_PRODUCT_ID_MISSING = 2013;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_FILE_CLASS_INVALID = 2014;
+	private static final int MSG_ID_MODE_INVALID = 2015;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2016;
+	private static final int MSG_ID_COMPONENT_PRODUCT_CLASS_INVALID = 2017;
+	private static final int MSG_ID_ENCLOSING_PRODUCT_CLASS_INVALID = 2018;
+	private static final int MSG_ID_ORBIT_NOT_FOUND = 2019;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_MISSING = "(E%d) Product not set";
@@ -64,6 +79,12 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
 	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "(E%d) Enclosing product with ID %d not found";
 	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "(E%d) Component product with ID %d not found";
+	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) Orbit %d for spacecraft %s not found";
+	private static final String MSG_FILE_CLASS_INVALID = "(E%d) File class %s invalid for mission %s";
+	private static final String MSG_MODE_INVALID = "(E%d) Processing mode %s invalid for mission %s";
+	private static final String MSG_COMPONENT_PRODUCT_CLASS_INVALID = "(E%d) Component product class %s invalid for product class %s in mission %s";
+	private static final String MSG_ENCLOSING_PRODUCT_CLASS_INVALID = "(E%d) Enclosing product class %s invalid for product class %s in mission %s";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product with ID %d has been modified since retrieval by the client";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product deletion unsuccessful for ID %d";
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -80,6 +101,19 @@ public class ProductControllerImpl implements ProductController {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	
+	/** single TransactionTemplate shared amongst all methods in this instance */
+	private final TransactionTemplate transactionTemplate;
+
+	/**
+	 * Constructor using constructor-injection to supply the PlatformTransactionManager
+	 * 
+	 * @param transactionManager the platform transaction manager
+	 */
+	public ProductControllerImpl(PlatformTransactionManager transactionManager) {
+		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
 	
 	/**
 	 * Log an informational message with the prosEO message prefix
@@ -131,27 +165,35 @@ public class ProductControllerImpl implements ProductController {
 	public ResponseEntity<?> deleteProductById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductById({})", id);
 		
-		// Test whether the product id is valid
-		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
-		if (modelProduct.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND), HttpStatus.NOT_FOUND);
-		}
-		
-		// Delete the product
-		RepositoryService.getProductRepository().deleteById(id);
+		return transactionTemplate.execute(new TransactionCallback<>() {
 
-		// Test whether the deletion was successful
-		modelProduct = RepositoryService.getProductRepository().findById(id);
-		if (!modelProduct.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id), HttpStatus.NOT_MODIFIED);
-		}
-		
-		logInfo(MSG_PRODUCT_DELETED, MSG_ID_PRODUCT_DELETED, id);
-		
-		HttpHeaders responseHeaders = new HttpHeaders();
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
+			@Override
+			public ResponseEntity<?> doInTransaction(TransactionStatus txStatus) {
+				// Test whether the product id is valid
+				Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
+				if (modelProduct.isEmpty()) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND), HttpStatus.NOT_FOUND);
+				}
+				
+				// Delete the product
+				RepositoryService.getProductRepository().deleteById(id);
+
+				// Test whether the deletion was successful
+				modelProduct = RepositoryService.getProductRepository().findById(id);
+				if (!modelProduct.isEmpty()) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id), HttpStatus.NOT_MODIFIED);
+				}
+				
+				logInfo(MSG_PRODUCT_DELETED, MSG_ID_PRODUCT_DELETED, id);
+				
+				HttpHeaders responseHeaders = new HttpHeaders();
+				return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
+			}
+		});
 	}
 
 	/**
@@ -237,7 +279,7 @@ public class ProductControllerImpl implements ProductController {
 	 * 
 	 * @param product the Json object to create the product from
 	 * @return a response containing a Json object corresponding to the product after persistence (with ID and version for all 
-	 * 		   contained objects) and HTTP status "CREATED"
+	 * 		   contained objects) and HTTP status "CREATED", or HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
 	public ResponseEntity<RestProduct> createProduct(
@@ -249,44 +291,111 @@ public class ProductControllerImpl implements ProductController {
 					errorHeaders(MSG_PRODUCT_MISSING, MSG_ID_PRODUCT_MISSING), HttpStatus.BAD_REQUEST);
 		}
 
-		Product modelProduct = ProductUtil.toModelProduct(product);
-		
-		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
-				product.getMissionCode(), product.getProductClass());
-		if (null == modelProductClass) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-							product.getMissionCode(), product.getProductClass()),
-					HttpStatus.BAD_REQUEST);
-		}
-		modelProduct.setProductClass(modelProductClass);
-		
-		for (Long componentProductId: product.getComponentProductIds()) {
-			Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
-			if (componentProduct.isEmpty()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId), 
-						HttpStatus.NOT_FOUND);
-			} else {
-				modelProduct.getComponentProducts().add(componentProduct.get());
+		return transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public ResponseEntity<RestProduct> doInTransaction(TransactionStatus txStatus) {
+				// Create a database model product
+				Product modelProduct = ProductUtil.toModelProduct(product);
+				
+				// Add product class
+				ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+						product.getMissionCode(), product.getProductClass());
+				if (null == modelProductClass) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
+									product.getMissionCode(), product.getProductClass()),
+							HttpStatus.BAD_REQUEST);
+				}
+				modelProduct.setProductClass(modelProductClass);
+				
+				// Add component products
+				if (!product.getComponentProductIds().isEmpty()) {
+					Set<ProductClass> allowedComponentClasses = new HashSet<>();
+					for (SimpleSelectionRule rule : modelProductClass.getRequiredSelectionRules()) {
+						allowedComponentClasses.add(rule.getSourceProductClass());
+					}
+					for (Long componentProductId : product.getComponentProductIds()) {
+						Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
+						if (componentProduct.isEmpty()) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId),
+									HttpStatus.BAD_REQUEST);
+						} else if (!allowedComponentClasses.contains(componentProduct.get().getProductClass())) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_COMPONENT_PRODUCT_CLASS_INVALID, MSG_ID_COMPONENT_PRODUCT_CLASS_INVALID,
+											componentProduct.get().getProductClass().getProductType(), product.getProductClass(), product.getMissionCode()),
+									HttpStatus.BAD_REQUEST);
+						} else {
+							modelProduct.getComponentProducts().add(componentProduct.get());
+						}
+					} 
+				}
+				
+				// Add enclosing product
+				if (null != product.getEnclosingProductId()) {
+					Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
+					if (enclosingProduct.isEmpty()) {
+						txStatus.setRollbackOnly();
+						return new ResponseEntity<>(
+								errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
+								HttpStatus.BAD_REQUEST);
+					} else {
+						// Check that the product class of the enclosing product is valid for the product's product class
+						Set<ProductClass> allowedEnclosingClasses = new HashSet<>();
+						for (SimpleSelectionRule rule : modelProductClass.getSupportedSelectionRules()) {
+							allowedEnclosingClasses.add(rule.getTargetProductClass());
+						}
+						if (!allowedEnclosingClasses.contains(enclosingProduct.get().getProductClass())) {
+							txStatus.setRollbackOnly();
+							return new ResponseEntity<>(
+									errorHeaders(MSG_ENCLOSING_PRODUCT_CLASS_INVALID, MSG_ID_ENCLOSING_PRODUCT_CLASS_INVALID,
+											enclosingProduct.get().getProductClass().getProductType(), product.getProductClass(), product.getMissionCode()),
+									HttpStatus.BAD_REQUEST);
+						}
+						// OK - set the enclosing product
+						modelProduct.setEnclosingProduct(enclosingProduct.get());
+					} 
+				}
+
+				// Add orbit, if given
+				if (null != product.getOrbit()) {
+					Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
+							product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+					if (null == orbit) {
+						return new ResponseEntity<>(errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
+								product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					modelProduct.setOrbit(orbit);
+				}
+				// Check validity of scalar attributes
+				if (!modelProductClass.getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
+									product.getFileClass(), product.getMissionCode()),
+							HttpStatus.BAD_REQUEST);
+				}
+				if (!modelProductClass.getMission().getProcessingModes().contains(modelProduct.getMode())) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_MODE_INVALID, MSG_ID_MODE_INVALID, 
+									product.getMode(), product.getMissionCode()),
+							HttpStatus.BAD_REQUEST);
+				}
+				
+				// Everything OK, store new product in database
+				modelProduct = RepositoryService.getProductRepository().save(modelProduct);
+				
+				logInfo(MSG_PRODUCT_CREATED, MSG_ID_PRODUCT_CREATED, product.getProductClass(), product.getMissionCode());
+				
+				return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), HttpStatus.CREATED);
 			}
-		}
-		
-		if (null != product.getEnclosingProductId()) {
-			Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
-			if (enclosingProduct.isEmpty()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
-						HttpStatus.NOT_FOUND);
-			} else {
-				modelProduct.setEnclosingProduct(enclosingProduct.get());
-			} 
-		}
-		modelProduct = RepositoryService.getProductRepository().save(modelProduct);
-		
-		logInfo(MSG_PRODUCT_CREATED, MSG_ID_PRODUCT_CREATED, product.getProductClass(), product.getMissionCode());
-		
-		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), HttpStatus.CREATED);
+		});
 	}
 
 	/**
@@ -327,151 +436,231 @@ public class ProductControllerImpl implements ProductController {
 	 * @param product a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing a Json object corresponding to the product after modification (with ID and version for all 
 	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists
+	 * 		   HTTP status "NOT_FOUND", if no product with the given ID exists, or an error message and HTTP status "BAD_REQUEST",
+	 * 		   if any of the input data was invalid, or an error message and HTTP status "CONFLICT", if the product has been
+	 * 		   modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestProduct> modifyProduct(Long id,
 			RestProduct product) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
-		Optional<Product> optModelProduct = RepositoryService.getProductRepository().findById(id);
-		
-		if (optModelProduct.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id), 
-					HttpStatus.NOT_FOUND);
-		}
-		Product modelProduct = optModelProduct.get();
-		
-		// Update modified attributes
-		boolean productChanged = false;
-		Product changedProduct = ProductUtil.toModelProduct(product);
-		
-		if (!modelProduct.getProductClass().getMission().getCode().equals(product.getMissionCode())
-			|| !modelProduct.getProductClass().getProductType().equals(product.getProductClass())) {
-			productChanged = true;
-			ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
-					product.getMissionCode(), product.getProductClass());
-			modelProduct.setProductClass(modelProductClass);
-		}
-		if (!modelProduct.getMode().equals(changedProduct.getMode())) {
-			productChanged = true;
-			if (logger.isDebugEnabled()) logger.debug("Changing mode from {} to {}", modelProduct.getMode(), changedProduct.getMode());
-			modelProduct.setMode(changedProduct.getMode());
-		}
-		if (!modelProduct.getSensingStartTime().equals(changedProduct.getSensingStartTime())) {
-			productChanged = true;
-			modelProduct.setSensingStartTime(changedProduct.getSensingStartTime());
-		}
-		if (!modelProduct.getSensingStopTime().equals(changedProduct.getSensingStopTime())) {
-			productChanged = true;
-			modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
-		}
-		
-		// Update relationship to enclosing product
-		if (null == modelProduct.getEnclosingProduct() && null == product.getEnclosingProductId()) {
-			// OK - no enclosing product on both sides
-		} else if (null == product.getEnclosingProductId()) {
-			// Enclosing product was set, but is no more
-			productChanged = true;
-			Product modelEnclosingProduct = modelProduct.getEnclosingProduct();
-			modelEnclosingProduct.getComponentProducts().remove(modelProduct);
-			RepositoryService.getProductRepository().save(modelEnclosingProduct);
-			modelProduct.setEnclosingProduct(null);
-		} else {
-			// Enclosing product shall be set, check whether it has been changed
-			if (null == modelProduct.getEnclosingProduct() /* new */
-					|| modelProduct.getEnclosingProduct().getId() != product.getEnclosingProductId().longValue() /* changed */) {
-				Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
-				if (enclosingProduct.isEmpty()) {
+		return transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public ResponseEntity<RestProduct> doInTransaction(TransactionStatus status) {
+				Optional<Product> optModelProduct = RepositoryService.getProductRepository().findById(id);
+				
+				if (optModelProduct.isEmpty()) {
 					return new ResponseEntity<>(
-							errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
+							errorHeaders(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id), 
 							HttpStatus.NOT_FOUND);
-				} else {
-					productChanged = true;
-					if (null != modelProduct.getEnclosingProduct()) {
-						// Enclosing product has changed, remove this product from old enclosing product
-						Product modelEnclosingProduct = modelProduct.getEnclosingProduct();
-						modelEnclosingProduct.getComponentProducts().remove(modelProduct);
-						RepositoryService.getProductRepository().save(modelEnclosingProduct);
+				}
+				Product modelProduct = optModelProduct.get();
+				
+				// Make sure we are allowed to change the product (no intermediate update)
+				if (modelProduct.getVersion() != product.getVersion().intValue()) {
+					return new ResponseEntity<>(
+							errorHeaders(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id), 
+							HttpStatus.CONFLICT);
+				}
+				
+				// Update modified attributes
+				boolean productChanged = false;
+				Product changedProduct = ProductUtil.toModelProduct(product);
+				
+				if (!modelProduct.getProductClass().getMission().getCode().equals(product.getMissionCode())
+					|| !modelProduct.getProductClass().getProductType().equals(product.getProductClass())) {
+					ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+							product.getMissionCode(), product.getProductClass());
+					if (null == modelProductClass) {
+						return new ResponseEntity<>(
+								errorHeaders(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
+										product.getMissionCode(), product.getProductClass()),
+								HttpStatus.BAD_REQUEST);
 					}
-					// Add this product to new enclosing product
-					enclosingProduct.get().getComponentProducts().add(modelProduct);
-					RepositoryService.getProductRepository().save(enclosingProduct.get());
-					modelProduct.setEnclosingProduct(enclosingProduct.get());
+					productChanged = true;
+					modelProduct.setProductClass(modelProductClass);
 				}
-			}
-		}
-		
-		// Check for added component products
-		ADDED_PRODUCTS:
-		for (Long componentProductId: product.getComponentProductIds()) {
-			for (Product modelComponentProduct: modelProduct.getComponentProducts()) {
-				if (modelComponentProduct.getId() == componentProductId.longValue()) {
-					continue ADDED_PRODUCTS;
+				if (!modelProduct.getFileClass().equals(changedProduct.getFileClass())) {
+					if (!modelProduct.getProductClass().getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+						return new ResponseEntity<>(
+								errorHeaders(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
+										product.getFileClass(), product.getMissionCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					productChanged = true;
+					if (logger.isTraceEnabled()) logger.trace("Changing file class from {} to {}", modelProduct.getFileClass(), changedProduct.getFileClass());
+					modelProduct.setFileClass(changedProduct.getFileClass());
 				}
-			}
-			// Fall through, so there is a new component product
-			Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
-			if (componentProduct.isEmpty()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId), 
-						HttpStatus.NOT_FOUND);
-			} else {
-				productChanged = true;
-				// Set enclosing product for new component product
-				componentProduct.get().setEnclosingProduct(modelProduct);
-				RepositoryService.getProductRepository().save(componentProduct.get());
-				modelProduct.getComponentProducts().add(componentProduct.get());
-			} 
-		}
-		// Check for removed component products
-		for (Product modelComponentProduct: modelProduct.getComponentProducts()) {
-			if (product.getComponentProductIds().contains(modelComponentProduct.getId())) {
-				continue;
-			}
-			productChanged = true;
-			// Remove enclosing product from component product
-			modelComponentProduct.setEnclosingProduct(null);
-			RepositoryService.getProductRepository().save(modelComponentProduct);
-			modelProduct.getComponentProducts().remove(modelComponentProduct);
-		}
-		
-		// Check for added or changed parameters
-		for (String changedParamKey: changedProduct.getParameters().keySet()) {
-			Parameter changedParam = changedProduct.getParameters().get(changedParamKey);
-			if (modelProduct.getParameters().containsKey(changedParamKey)) {
-				Parameter modelParam = modelProduct.getParameters().get(changedParamKey);
-				if (modelParam.equals(changedParam)) {
-					continue;
+				if (!modelProduct.getMode().equals(changedProduct.getMode())) {
+					if (!modelProduct.getProductClass().getMission().getProcessingModes().contains(modelProduct.getMode())) {
+						return new ResponseEntity<>(
+								errorHeaders(MSG_MODE_INVALID, MSG_ID_MODE_INVALID, 
+										product.getMode(), product.getMissionCode()),
+								HttpStatus.BAD_REQUEST);
+					}
+					productChanged = true;
+					if (logger.isTraceEnabled()) logger.trace("Changing mode from {} to {}", modelProduct.getMode(), changedProduct.getMode());
+					modelProduct.setMode(changedProduct.getMode());
 				}
+				if (!modelProduct.getSensingStartTime().equals(changedProduct.getSensingStartTime())) {
+					productChanged = true;
+					modelProduct.setSensingStartTime(changedProduct.getSensingStartTime());
+				}
+				if (!modelProduct.getSensingStopTime().equals(changedProduct.getSensingStopTime())) {
+					productChanged = true;
+					modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
+				}
+				if (null == modelProduct.getOrbit() && null == product.getOrbit()) {
+					// OK - no orbit on both sides
+				} else if (null == product.getOrbit()) {
+					// Orbit was set, but is no more
+					productChanged = true;
+					modelProduct.setOrbit(null);
+				} else {
+					// Orbit shall be set, check whether it has been changed
+					if (!modelProduct.getOrbit().getSpacecraft().equals(changedProduct.getOrbit().getSpacecraft())
+						|| !modelProduct.getOrbit().getOrbitNumber().equals(changedProduct.getOrbit().getOrbitNumber())) {
+						Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
+								product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+						if (null == orbit) {
+							return new ResponseEntity<>(errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
+									product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()),
+									HttpStatus.BAD_REQUEST);
+						}
+						modelProduct.setOrbit(orbit);
+					} 
+				}
+				// Update relationship to enclosing product
+				if (null == modelProduct.getEnclosingProduct() && null == product.getEnclosingProductId()) {
+					// OK - no enclosing product on both sides
+				} else if (null == product.getEnclosingProductId()) {
+					// Enclosing product was set, but is no more
+					productChanged = true;
+					Product modelEnclosingProduct = modelProduct.getEnclosingProduct();
+					modelEnclosingProduct.getComponentProducts().remove(modelProduct);
+					RepositoryService.getProductRepository().save(modelEnclosingProduct);
+					modelProduct.setEnclosingProduct(null);
+				} else {
+					// Enclosing product shall be set, check whether it has been changed
+					if (null == modelProduct.getEnclosingProduct() /* new */
+							|| modelProduct.getEnclosingProduct().getId() != product.getEnclosingProductId().longValue() /* changed */) {
+						Optional<Product> enclosingProduct = RepositoryService.getProductRepository().findById(product.getEnclosingProductId());
+						if (enclosingProduct.isEmpty()) {
+							return new ResponseEntity<>(
+									errorHeaders(MSG_ENCLOSING_PRODUCT_NOT_FOUND, MSG_ID_ENCLOSING_PRODUCT_NOT_FOUND, product.getEnclosingProductId()), 
+									HttpStatus.NOT_FOUND);
+						} else {
+							// Check that the product class of the enclosing product is valid for the product's product class
+							Set<ProductClass> allowedEnclosingClasses = new HashSet<>();
+							for (SimpleSelectionRule rule : modelProduct.getProductClass().getSupportedSelectionRules()) {
+								allowedEnclosingClasses.add(rule.getTargetProductClass());
+							}
+							if (!allowedEnclosingClasses.contains(enclosingProduct.get().getProductClass())) {
+								return new ResponseEntity<>(
+										errorHeaders(MSG_ENCLOSING_PRODUCT_CLASS_INVALID, MSG_ID_ENCLOSING_PRODUCT_CLASS_INVALID,
+												enclosingProduct.get().getProductClass().getProductType(), product.getProductClass(), product.getMissionCode()),
+										HttpStatus.BAD_REQUEST);
+							}
+							// OK - set the enclosing product
+							productChanged = true;
+							if (null != modelProduct.getEnclosingProduct()) {
+								// Enclosing product has changed, remove this product from old enclosing product
+								Product modelEnclosingProduct = modelProduct.getEnclosingProduct();
+								modelEnclosingProduct.getComponentProducts().remove(modelProduct);
+								RepositoryService.getProductRepository().save(modelEnclosingProduct);
+							}
+							// Add this product to new enclosing product
+							enclosingProduct.get().getComponentProducts().add(modelProduct);
+							RepositoryService.getProductRepository().save(enclosingProduct.get());
+							modelProduct.setEnclosingProduct(enclosingProduct.get());
+						}
+					}
+				}
+				
+				// Check for added component products
+				if (!product.getComponentProductIds().isEmpty()) {
+					Set<ProductClass> allowedComponentClasses = new HashSet<>();
+					for (SimpleSelectionRule rule : modelProduct.getProductClass().getRequiredSelectionRules()) {
+						allowedComponentClasses.add(rule.getSourceProductClass());
+					}
+
+					ADDED_PRODUCTS: for (Long componentProductId : product.getComponentProductIds()) {
+						for (Product modelComponentProduct : modelProduct.getComponentProducts()) {
+							if (modelComponentProduct.getId() == componentProductId.longValue()) {
+								continue ADDED_PRODUCTS;
+							}
+						}
+						// Fall through, so there is a new component product
+						Optional<Product> componentProduct = RepositoryService.getProductRepository().findById(componentProductId);
+						if (componentProduct.isEmpty()) {
+							return new ResponseEntity<>(
+									errorHeaders(MSG_COMPONENT_PRODUCT_NOT_FOUND, MSG_ID_COMPONENT_PRODUCT_NOT_FOUND, componentProductId),
+									HttpStatus.NOT_FOUND);
+						} else if (!allowedComponentClasses.contains(componentProduct.get().getProductClass())) {
+							return new ResponseEntity<>(
+									errorHeaders(MSG_COMPONENT_PRODUCT_CLASS_INVALID, MSG_ID_COMPONENT_PRODUCT_CLASS_INVALID,
+											componentProduct.get().getProductClass().getProductType(), product.getProductClass(), product.getMissionCode()),
+									HttpStatus.BAD_REQUEST);
+						} else {
+							productChanged = true;
+							// Set enclosing product for new component product
+							componentProduct.get().setEnclosingProduct(modelProduct);
+							RepositoryService.getProductRepository().save(componentProduct.get());
+							modelProduct.getComponentProducts().add(componentProduct.get());
+						}
+					} 
+				}
+				// Check for removed component products
+				for (Product modelComponentProduct: modelProduct.getComponentProducts()) {
+					if (product.getComponentProductIds().contains(modelComponentProduct.getId())) {
+						continue;
+					}
+					productChanged = true;
+					// Remove enclosing product from component product
+					modelComponentProduct.setEnclosingProduct(null);
+					RepositoryService.getProductRepository().save(modelComponentProduct);
+					modelProduct.getComponentProducts().remove(modelComponentProduct);
+				}
+				
+				// Check for added or changed parameters
+				for (String changedParamKey: changedProduct.getParameters().keySet()) {
+					Parameter changedParam = changedProduct.getParameters().get(changedParamKey);
+					if (modelProduct.getParameters().containsKey(changedParamKey)) {
+						Parameter modelParam = modelProduct.getParameters().get(changedParamKey);
+						if (modelParam.equals(changedParam)) {
+							continue;
+						}
+					}
+					productChanged = true;
+					modelProduct.getParameters().put(changedParamKey, changedParam);
+				}
+				// Check for removed parameters
+				for (String modelParamKey: modelProduct.getParameters().keySet()) {
+					if (changedProduct.getParameters().containsKey(modelParamKey)) {
+						// If found, must be equal after checking for added/changed parameters
+						continue;
+					}
+					productChanged = true;
+					modelProduct.getParameters().remove(modelParamKey);
+				}
+				
+				// Save product only if anything was actually changed
+				HttpStatus httpStatus = null;
+				if (productChanged)	{
+					modelProduct.incrementVersion();
+					modelProduct = RepositoryService.getProductRepository().save(modelProduct);
+					httpStatus = HttpStatus.OK;
+					logInfo(MSG_PRODUCT_MODIFIED, MSG_ID_PRODUCT_MODIFIED, id);
+				} else {
+					httpStatus = HttpStatus.NOT_MODIFIED;
+					logInfo(MSG_PRODUCT_NOT_MODIFIED, MSG_ID_PRODUCT_NOT_MODIFIED, id);
+				}
+				
+				return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), httpStatus);
 			}
-			productChanged = true;
-			modelProduct.getParameters().put(changedParamKey, changedParam);
-		}
-		// Check for removed parameters
-		for (String modelParamKey: modelProduct.getParameters().keySet()) {
-			if (changedProduct.getParameters().containsKey(modelParamKey)) {
-				// If found, must be equal after checking for added/changed parameters
-				continue;
-			}
-			productChanged = true;
-			modelProduct.getParameters().remove(modelParamKey);
-		}
-		
-		// Save product only if anything was actually changed
-		HttpStatus httpStatus = null;
-		if (productChanged)	{
-			modelProduct.incrementVersion();
-			modelProduct = RepositoryService.getProductRepository().save(modelProduct);
-			httpStatus = HttpStatus.OK;
-			logInfo(MSG_PRODUCT_MODIFIED, MSG_ID_PRODUCT_MODIFIED, id);
-		} else {
-			httpStatus = HttpStatus.NOT_MODIFIED;
-			logInfo(MSG_PRODUCT_NOT_MODIFIED, MSG_ID_PRODUCT_NOT_MODIFIED, id);
-		}
-		
-		return new ResponseEntity<>(ProductUtil.toRestProduct(modelProduct), httpStatus);
+		});
 	}
 
 }

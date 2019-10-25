@@ -45,6 +45,7 @@ public class ProductUtil {
 			}
 			restProduct.setProductClass(modelProduct.getProductClass().getProductType());
 		}
+		restProduct.setFileClass(modelProduct.getFileClass());
 		restProduct.setMode(modelProduct.getMode());
 		if (null != modelProduct.getSensingStartTime()) {
 			restProduct.setSensingStartTime(
@@ -116,6 +117,7 @@ public class ProductUtil {
 				modelProduct.incrementVersion();
 			} 
 		}
+		modelProduct.setFileClass(restProduct.getFileClass());
 		modelProduct.setMode(restProduct.getMode());
 		try {
 			modelProduct.setSensingStartTime(

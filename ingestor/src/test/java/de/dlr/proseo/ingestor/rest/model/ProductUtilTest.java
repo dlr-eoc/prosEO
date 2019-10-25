@@ -34,10 +34,10 @@ public class ProductUtilTest {
 
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "7", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "8", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "9", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "7", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "8", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "9", "1", "TDM", "DEM", "TEST", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** A logger for this class */
@@ -65,12 +65,13 @@ public class ProductUtilTest {
 		testProduct.setProductClass(testProductClass);
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
-		testProduct.setMode(testData[4]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setFileClass(testData[4]);
+		testProduct.setMode(testData[5]);
+		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		
 		logger.info("Created test product {}", testProduct.getId());
 		return testProduct;
@@ -122,6 +123,7 @@ public class ProductUtilTest {
 				restProduct.getMissionCode());
 		assertEquals("Unexpected product type: ", modelProduct.getProductClass().getProductType(),
 				restProduct.getProductClass());
+		assertEquals("Unexpected file class: ", modelProduct.getFileClass(), restProduct.getFileClass());
 		assertEquals("Unexpected mode: ", modelProduct.getMode(), restProduct.getMode());
 		assertEquals("Unexpected sensing start: ", Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()),
 				restProduct.getSensingStartTime());
@@ -146,6 +148,7 @@ public class ProductUtilTest {
 		Product copiedModelProduct = ProductUtil.toModelProduct(restProduct);
 		assertEquals("ID not preserved: ", modelProduct.getId(), copiedModelProduct.getId());
 		assertEquals("Version not preserved: ", modelProduct.getVersion(), copiedModelProduct.getVersion());
+		assertEquals("File class not preserved: ", modelProduct.getFileClass(), copiedModelProduct.getFileClass());
 		assertEquals("Mode not preserved: ", modelProduct.getMode(), copiedModelProduct.getMode());
 		assertEquals("Start time not preserved: ", modelProduct.getSensingStartTime(), copiedModelProduct.getSensingStartTime());
 		assertEquals("Stop time not preserved: ", modelProduct.getSensingStopTime(), copiedModelProduct.getSensingStopTime());

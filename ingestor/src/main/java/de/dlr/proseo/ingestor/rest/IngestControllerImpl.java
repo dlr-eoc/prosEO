@@ -23,8 +23,12 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
@@ -32,10 +36,8 @@ import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductFile;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -55,8 +57,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_ERROR_STORING_PRODUCT = 2052;
 	private static final int MSG_ID_NEW_PRODUCT_ADDED = 2053;
 	private static final int MSG_ID_ERROR_NOTIFYING_PLANNER = 2054;
-	private static final int MSG_ID_INVALID_PRODUCT_TYPE = 2055;
-	private static final int MSG_ID_ORBIT_NOT_FOUND = 2056;
+	private static final int MSG_ID_PRODUCT_INGESTION_FAILED = 2055;
 	private static final int MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS = 2057;
 	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
@@ -67,8 +68,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final String MSG_ERROR_STORING_PRODUCT = "(E%d) Error storing product of class %s at processing facility %s";
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_ERROR_NOTIFYING_PLANNER = "(E%d) Error notifying prosEO Production Planner of new product %d of type %s";
-	private static final String MSG_INVALID_PRODUCT_TYPE = "(E%d) Invalid product type %s for ingestor product";
-	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) Orbit %d for spacecraft %s not found";
+	private static final String MSG_PRODUCT_INGESTION_FAILED = "(E%d) Product ingestion failed (cause: %s)";
 	private static final String MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS = "(E%d) Unexpected number of file paths (%d, expected: %d) received from Storage Manager at %s";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested in processing facility %s";
@@ -86,6 +86,23 @@ public class IngestControllerImpl implements IngestController {
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
+	
+	/** Product controller */
+	@Autowired
+	ProductControllerImpl productController;
+	
+	/** single TransactionTemplate shared amongst all methods in this instance */
+	private final TransactionTemplate transactionTemplate;
+
+	/**
+	 * Constructor using constructor-injection to supply the PlatformTransactionManager
+	 * 
+	 * @param transactionManager the platform transaction manager
+	 */
+	public IngestControllerImpl(PlatformTransactionManager transactionManager) {
+		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
 	
 	/**
 	 * Log an informational message with the prosEO message prefix
@@ -147,7 +164,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility), 
@@ -158,103 +175,103 @@ public class IngestControllerImpl implements IngestController {
 		
 		// Loop over all products to ingest
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
-			// Create a new product in the metadata database
-			Product newProduct = ProductUtil.toModelProduct(ingestorProduct);
-			
-			ProductClass productClass = RepositoryService.getProductClassRepository()
-					.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
-			if (null == productClass) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_INVALID_PRODUCT_TYPE, MSG_ID_INVALID_PRODUCT_TYPE, ingestorProduct.getProductClass()), 
-						HttpStatus.BAD_REQUEST);
-			}
-			newProduct.setProductClass(productClass);
-			
-			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-					ingestorProduct.getOrbit().getSpacecraftCode(), 
-					ingestorProduct.getOrbit().getOrbitNumber().intValue());
-			if (null == orbit) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, ingestorProduct.getOrbit().getOrbitNumber(), ingestorProduct.getOrbit().getSpacecraftCode()), 
-						HttpStatus.BAD_REQUEST);
-			}
-			newProduct.setOrbit(orbit);
-			
-			newProduct = RepositoryService.getProductRepository().save(newProduct);
-			logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newProduct.getId(), newProduct.getProductClass().getProductType());
-			
-			// Build post data for storage manager
-			Map<String, Object> postData = new HashMap<>();
-			postData.put("mountDirPath", ingestorProduct.getMountPoint());
-			postData.put("productId", String.valueOf(newProduct.getId()));
-			List<String> filePaths = new ArrayList<>();
-			filePaths.add(ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
-			for (String auxFile: ingestorProduct.getAuxFileNames()) {
-				filePaths.add(ingestorProduct.getFilePath() + File.separator + auxFile);
-			}
-			postData.put("exactFilePaths", filePaths);
-			
-			// Store the product in the storage manager for the given processing facility
-			String storageManagerUrl = facility.getStorageManagerUrl() + "/store";
-			RestTemplate restTemplate = rtb.basicAuthentication(
-					ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
-			@SuppressWarnings("rawtypes")
-			ResponseEntity<Map> responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
-			if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT, ingestorProduct.getProductClass(), processingFacility), 
-						responseEntity.getStatusCode());
-			}
-			
-			// Extract the product file paths from the response
-			@SuppressWarnings("unchecked")
-			Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
-			@SuppressWarnings("unchecked")
-			List<String> responseFilePaths = (List<String>) responseBody.get("filePaths");
-			if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS, responseFilePaths.size(), filePaths.size(), processingFacility), 
-						HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-			de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
-			newProductFile.setProcessingFacility(facility);
-			newProductFile.setFilePath((new File(responseFilePaths.get(0))).getParent());
-			newProductFile.setProductFileName(ingestorProduct.getProductFileName());
-			for (String auxFile: ingestorProduct.getAuxFileNames()) {
-				newProductFile.getAuxFileNames().add(auxFile);
-			}
-			if (responseFilePaths.get(0).startsWith("s3")) {
-				newProductFile.setStorageType(StorageType.S3);
-			} else if (responseFilePaths.get(0).startsWith("file")) {
-				newProductFile.setStorageType(StorageType.POSIX);
-			} else if (responseFilePaths.get(0).startsWith("alluxio")) {
-				newProductFile.setStorageType(StorageType.ALLUXIO);
-			} else {
-				newProductFile.setStorageType(StorageType.OTHER);
-			}
-			newProductFile.setProduct(newProduct);
-			newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
-			newProduct.getProductFile().add(newProductFile);
-			newProduct = RepositoryService.getProductRepository().save(newProduct);
-			
-			// Check whether there are open product queries for this product type
-			List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-					.findUnsatisfiedByProductClass(newProduct.getProductClass().getId());
-			if (!productQueries.isEmpty()) {
-				// If so, inform the production planner of the new product
-				String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + "/product/" + String.valueOf(newProduct.getId());
-				restTemplate = rtb.basicAuthentication(
-						ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
-				ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
-				if (!HttpStatus.OK.equals(response.getStatusCode())) {
-					return new ResponseEntity<>(
-							errorHeaders(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER, newProduct.getId(), newProduct.getProductClass().getProductType()), 
-							response.getStatusCode());
+			ResponseEntity<RestProduct> transactionResponse = transactionTemplate.execute(new TransactionCallback<>() {
+
+				@Override
+				public ResponseEntity<RestProduct> doInTransaction(TransactionStatus txStatus) {
+					// Create a new product in the metadata database
+					ResponseEntity<RestProduct> createResponse = productController.createProduct(ingestorProduct);
+					if (!HttpStatus.CREATED.equals(createResponse.getStatusCode())) {
+						return new ResponseEntity<>(createResponse.getHeaders(), createResponse.getStatusCode());
+					}
+					RestProduct newProduct = createResponse.getBody();
+					
+					// Build post data for storage manager
+					Map<String, Object> postData = new HashMap<>();
+					postData.put("mountDirPath", ingestorProduct.getMountPoint());
+					postData.put("productId", String.valueOf(newProduct.getId()));
+					List<String> filePaths = new ArrayList<>();
+					filePaths.add(ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
+					for (String auxFile: ingestorProduct.getAuxFileNames()) {
+						filePaths.add(ingestorProduct.getFilePath() + File.separator + auxFile);
+					}
+					postData.put("exactFilePaths", filePaths);
+					
+					// Store the product in the storage manager for the given processing facility
+					String storageManagerUrl = facility.getStorageManagerUrl() + "/store";
+					RestTemplate restTemplate = rtb.basicAuthentication(
+							ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
+					@SuppressWarnings("rawtypes")
+					ResponseEntity<Map> responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
+					if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
+						return new ResponseEntity<>(
+								errorHeaders(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT, ingestorProduct.getProductClass(), facility.getName()), 
+								responseEntity.getStatusCode());
+					}
+					
+					// Extract the product file paths from the response
+					@SuppressWarnings("unchecked")
+					Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
+					@SuppressWarnings("unchecked")
+					List<String> responseFilePaths = (List<String>) responseBody.get("filePaths");
+					if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
+						return new ResponseEntity<>(
+								errorHeaders(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS, responseFilePaths.size(), filePaths.size(), facility.getName()), 
+								HttpStatus.INTERNAL_SERVER_ERROR);
+					}
+					de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
+					newProductFile.setProcessingFacility(facility);
+					newProductFile.setFilePath((new File(responseFilePaths.get(0))).getParent());
+					newProductFile.setProductFileName(ingestorProduct.getProductFileName());
+					for (String auxFile: ingestorProduct.getAuxFileNames()) {
+						newProductFile.getAuxFileNames().add(auxFile);
+					}
+					if (responseFilePaths.get(0).startsWith("s3")) {
+						newProductFile.setStorageType(StorageType.S3);
+					} else if (responseFilePaths.get(0).startsWith("file")) {
+						newProductFile.setStorageType(StorageType.POSIX);
+					} else if (responseFilePaths.get(0).startsWith("alluxio")) {
+						newProductFile.setStorageType(StorageType.ALLUXIO);
+					} else {
+						newProductFile.setStorageType(StorageType.OTHER);
+					}
+					Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
+					newProductFile.setProduct(newModelProduct);
+					newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+					newModelProduct.getProductFile().add(newProductFile);
+					newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
+					
+					// Check whether there are open product queries for this product type
+					List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+							.findUnsatisfiedByProductClass(newModelProduct.getProductClass().getId());
+					if (!productQueries.isEmpty()) {
+						// If so, inform the production planner of the new product
+						String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + "/product/" + String.valueOf(newProduct.getId());
+						restTemplate = rtb.basicAuthentication(
+								ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
+						ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
+						if (!HttpStatus.OK.equals(response.getStatusCode())) {
+							return new ResponseEntity<>(
+									errorHeaders(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER, newProduct.getId(), newProduct.getProductClass()), 
+									response.getStatusCode());
+						}
+					}
+					
+					// Product ingestion successful
+					return new ResponseEntity<>(ProductUtil.toRestProduct(newModelProduct), HttpStatus.OK);
 				}
+			});
+			if (!HttpStatus.OK.equals(transactionResponse.getStatusCode())) {
+				return new ResponseEntity<>(
+						errorHeaders(MSG_PRODUCT_INGESTION_FAILED, MSG_ID_PRODUCT_INGESTION_FAILED, transactionResponse.getHeaders().get("Warning")), 
+						transactionResponse.getStatusCode());
 			}
+			
+			RestProduct restProduct = transactionResponse.getBody();
+			
+			logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, restProduct.getId(), restProduct.getProductClass());
 			
 			// Prepare response product
-			RestProduct restProduct = ProductUtil.toRestProduct(newProduct);
 			result.add(restProduct);
 		}
 		
