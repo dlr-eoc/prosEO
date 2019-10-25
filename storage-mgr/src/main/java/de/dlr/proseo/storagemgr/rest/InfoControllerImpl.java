@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import de.dlr.proseo.storagemgr.rest.model.K8sNodeMountPoints;
 public class InfoControllerImpl implements InfoController{
 
 	@Autowired
-	StorageManagerConfiguration cfg = new StorageManagerConfiguration();
+	private StorageManagerConfiguration cfg;
 	
 	@Override
 	public ResponseEntity<Info> getInfo() {

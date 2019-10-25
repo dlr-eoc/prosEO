@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -20,6 +23,7 @@ import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobList;
+import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1PodList;
 import io.kubernetes.client.util.Config;
 
@@ -31,6 +35,8 @@ import io.kubernetes.client.util.Config;
  */
 public class KubeConfig {
 
+	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
+	
 	private HashMap<String, KubeJob> kubeJobList = null;
 	
 	private ApiClient client;
@@ -265,6 +271,15 @@ public class KubeConfig {
 		V1Job aV1Job = null;
 		try {
 			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+		} catch (ApiException e) {
+			if (e.getCode() == 404) {
+				// do nothing
+				logger.info("Job " + name + " not found, is it already finished?");
+				return null;			
+			} else {
+				e. printStackTrace();
+				return null;				
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
@@ -276,6 +291,28 @@ public class KubeConfig {
 			}
 		}
 		return aV1Job;
+	}
+	/**
+	 * Retrieve a Kubernetes Pod
+	 * 
+	 * @param name of Pod
+	 * @return pod found or null
+	 */
+	public V1Pod getV1Pod(String name) {
+		V1Pod aV1Pod = null;
+		try {
+			aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
+				// nothing to do 
+				// cause there is a bug in Kubernetes API
+			} else {
+				e. printStackTrace();
+				return null;
+			}
+		}
+		return aV1Pod;
 	}
 
 	/**
