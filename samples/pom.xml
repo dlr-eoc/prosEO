@@ -9,7 +9,7 @@
 
 	<artifactId>samples</artifactId>
 	<packaging>pom</packaging>
-	<name>prosEO Samples including Wrapper and Sample Processor</name>
+	<name>prosEO Samples</name>
 	<description/>
 
     <modules>

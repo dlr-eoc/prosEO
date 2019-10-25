@@ -12,12 +12,12 @@ services:
       # - "8082:8080"
     # depends_on:
       # - proseo-db
-  proseo-stmgr:
-    image: localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT
-    ports:
-      - "8083:8080"
-    depends_on:
-      - minio
+  # proseo-stmgr:
+    # image: localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT
+    # ports:
+      # - "8083:8080"
+    # depends_on:
+      # - minio
   # proseo-db:
     # image: postgres:latest
     # environment:
@@ -38,6 +38,10 @@ services:
     ports:
       - "9000:9000"
     hostname: minio
+  registry:
+    image: registry
+    ports:
+      - "5000:5000"
   alluxio-master:
     image: alluxio/alluxio:2.0.0
     command: master
