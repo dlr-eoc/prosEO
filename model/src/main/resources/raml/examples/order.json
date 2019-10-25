@@ -4,8 +4,10 @@
     "missionCode": "S5P",
     "identifier": "RPRO Orbits 4567-5678",
     "orderState": "INITIAL",
-    "startTime": "2018-05-17T00:00:00.000000Z",
-    "stopTime": "2019-07-31T12:00:00.000000Z",
+    "startTime": "2018-05-17T00:00:00",
+    "stopTime": "2019-07-31T12:00:00",
+    "slicingType": "ORBIT",
+    "sliceOverlap": 0,
     "filterConditions": [
         {
             "key": "copernicusCollection",
@@ -47,5 +49,6 @@
     ],
     "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
     "inputProductClasses": [ "L1B" ],
+    "outputFileClass": "RPRO",
     "processingMode": "OFFL"
 }

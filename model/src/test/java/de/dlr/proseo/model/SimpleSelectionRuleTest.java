@@ -170,7 +170,7 @@ public class SimpleSelectionRuleTest {
 	private ProductClass productClassIR = new ProductClass();
 
 	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(SelectionRule.class);
+	private static final Logger logger = LoggerFactory.getLogger(SimpleSelectionRuleTest.class);
 	
 	/**
 	 * @throws java.lang.Exception
