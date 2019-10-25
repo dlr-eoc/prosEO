@@ -206,11 +206,11 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				PodKube aPlan = new PodKube(aJob);
 				KubeJob kj = aKubeConfig.getKubeJob(aPlan.getName());
 				if (kj != null) {
-					String pn = kj.getPodName();
+					ArrayList<String> podNames = kj.getPodNames();
 					String cn = kj.getContainerName();
-					if (cn != null && pn != null) {
+					if (cn != null && !podNames.isEmpty()) {
 						try {
-							String log = aKubeConfig.getApiV1().readNamespacedPodLog(pn, aKubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
+							String log = aKubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), aKubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
 							aPlan.setLog(log);
 						} catch (ApiException e1) {
 							// TODO Auto-generated catch block
@@ -227,9 +227,15 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
 				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
+			} else {
+		    	String message = String.format(MSG_PREFIX + "Not found (%d)", 2001);
+		    	logger.error(message);
+		    	HttpHeaders responseHeaders = new HttpHeaders();
+		    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 			}
 		}
-    	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
+    	String message = String.format(MSG_PREFIX + "Processing facility not connected (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
