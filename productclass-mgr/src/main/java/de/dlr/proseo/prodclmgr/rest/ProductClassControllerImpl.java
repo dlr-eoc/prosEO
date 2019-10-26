@@ -105,7 +105,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
 
-	/** single TransactionTemplate shared amongst all methods in this instance */
+	/** Single TransactionTemplate shared amongst all methods in this instance */
 	private final TransactionTemplate transactionTemplate;
 
 	/**

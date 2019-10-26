@@ -30,9 +30,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.ingestor.Ingestor;
@@ -223,7 +221,6 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -330,7 +327,6 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -392,7 +388,6 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -462,7 +457,6 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}

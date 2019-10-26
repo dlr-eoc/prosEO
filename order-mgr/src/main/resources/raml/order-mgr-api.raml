@@ -26,7 +26,6 @@ securitySchemes:
 types:
   Order: !include ../../../../../model/src/main/resources/raml/types/order.raml
   OrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
-  PromisedProduct: !include ../../../../../model/src/main/resources/raml/types/promisedproduct.raml
   Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   Mission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
   Spacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
@@ -70,8 +69,8 @@ resourceTypes:
       mission?: string
       identifier?: string
       productClasses?: string[]
-      startTimeFrom?: datetime
-      startTimeTo?: datetime
+      startTimeFrom?: datetime-only
+      startTimeTo?: datetime-only
     responses:
       200:
         body:

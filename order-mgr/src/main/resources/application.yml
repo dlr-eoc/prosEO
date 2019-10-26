@@ -3,7 +3,7 @@ spring:
         database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=Europe/Berlin
+        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=UTC
         username: root
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model

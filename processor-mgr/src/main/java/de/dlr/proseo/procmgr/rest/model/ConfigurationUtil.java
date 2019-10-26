@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
+import java.util.ArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +16,7 @@ import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
+import de.dlr.proseo.model.ConfigurationInputFile;
 
 /**
  * Utility methods for (processor) configurations, e. g. for conversion between prosEO model and REST model
@@ -60,6 +63,13 @@ public class ConfigurationUtil {
 		for (ConfigurationFile configurationFile: modelConfiguration.getConfigurationFiles()) {
 			restConfiguration.getConfigurationFiles().add(
 				new de.dlr.proseo.procmgr.rest.model.Object(configurationFile.getFileVersion(), configurationFile.getFileName()));
+		}
+		
+		for (ConfigurationInputFile staticInputFile: modelConfiguration.getStaticInputFiles()) {
+			restConfiguration.getStaticInputFiles().add(
+				new de.dlr.proseo.procmgr.rest.model.ConfigurationInputFile(
+						staticInputFile.getId(), Long.valueOf(staticInputFile.getVersion()), staticInputFile.getFileType(), 
+						staticInputFile.getFileNameType(), new ArrayList<>(staticInputFile.getFileNames())));
 		}
 		
 		return restConfiguration;

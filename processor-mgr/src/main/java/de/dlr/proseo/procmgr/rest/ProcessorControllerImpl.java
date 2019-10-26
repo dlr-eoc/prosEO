@@ -21,6 +21,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.Processor;
@@ -69,6 +74,19 @@ public class ProcessorControllerImpl implements ProcessorController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorControllerImpl.class);
 
+	/** Single TransactionTemplate shared amongst all methods in this instance */
+	private final TransactionTemplate transactionTemplate;
+
+	/**
+	 * Constructor using constructor-injection to supply the PlatformTransactionManager
+	 * 
+	 * @param transactionManager the platform transaction manager
+	 */
+	public ProcessorControllerImpl(PlatformTransactionManager transactionManager) {
+		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
+	
 	/**
 	 * Log an informational message with the prosEO message prefix
 	 * 
@@ -123,32 +141,39 @@ public class ProcessorControllerImpl implements ProcessorController {
 					errorHeaders(MSG_PROCESSOR_MISSING, MSG_ID_PROCESSOR_MISSING),
 					HttpStatus.BAD_REQUEST);
 		}
-	
-		de.dlr.proseo.model.Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
 		
-		modelProcessor.setProcessorClass(RepositoryService.getProcessorClassRepository()
-				.findByMissionCodeAndProcessorName(processor.getMissionCode(), processor.getProcessorName()));
-		if (null == modelProcessor.getProcessorClass()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PROCESSOR_CLASS_INVALID, MSG_ID_PROCESSOR_CLASS_INVALID,
-							processor.getProcessorName(), processor.getMissionCode()),
-					HttpStatus.BAD_REQUEST);
-		}
-		
-		modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
-		
-		for (Task task: processor.getTasks()) {
-			de.dlr.proseo.model.Task modelTask = TaskUtil.toModelTask(task);
-			modelTask.setProcessor(modelProcessor);
-			modelTask = RepositoryService.getTaskRepository().save(modelTask);
-		}
+		return transactionTemplate.execute(new TransactionCallback<>() {
 
-		logInfo(MSG_PROCESSOR_CREATED, MSG_ID_PROCESSOR_CREATED, 
-				modelProcessor.getProcessorClass().getProcessorName(),
-				modelProcessor.getProcessorVersion(), 
-				modelProcessor.getProcessorClass().getMission().getCode());
-		
-		return new ResponseEntity<>(ProcessorUtil.toRestProcessor(modelProcessor), HttpStatus.CREATED);
+			@Override
+			public ResponseEntity<Processor> doInTransaction(TransactionStatus txStatus) {
+				de.dlr.proseo.model.Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
+				
+				modelProcessor.setProcessorClass(RepositoryService.getProcessorClassRepository()
+						.findByMissionCodeAndProcessorName(processor.getMissionCode(), processor.getProcessorName()));
+				if (null == modelProcessor.getProcessorClass()) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_PROCESSOR_CLASS_INVALID, MSG_ID_PROCESSOR_CLASS_INVALID,
+									processor.getProcessorName(), processor.getMissionCode()),
+							HttpStatus.BAD_REQUEST);
+				}
+				
+				modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
+				
+				for (Task task: processor.getTasks()) {
+					de.dlr.proseo.model.Task modelTask = TaskUtil.toModelTask(task);
+					modelTask.setProcessor(modelProcessor);
+					modelTask = RepositoryService.getTaskRepository().save(modelTask);
+				}
+
+				logInfo(MSG_PROCESSOR_CREATED, MSG_ID_PROCESSOR_CREATED, 
+						modelProcessor.getProcessorClass().getProcessorName(),
+						modelProcessor.getProcessorVersion(), 
+						modelProcessor.getProcessorClass().getMission().getCode());
+				
+				return new ResponseEntity<>(ProcessorUtil.toRestProcessor(modelProcessor), HttpStatus.CREATED);
+			}
+		});
 	}
 
 	/**
