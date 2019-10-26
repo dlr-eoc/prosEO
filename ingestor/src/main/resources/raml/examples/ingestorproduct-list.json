@@ -4,6 +4,7 @@
         "version": 0,
         "missionCode": "S5P",
         "productClass": "L0",
+        "fileClass": "OPER",
         "sensingStartTime": "2019-05-09T21:25:08.000000",
         "sensingStopTime": "2019-05-09T21:45:08.000000",
         "generationTime": "2019-10-05T10:12:39.000000",
@@ -43,6 +44,7 @@
         "version": 0,
         "missionCode": "S5P",
         "productClass": "O3",
+        "fileClass": "RPRO",
         "mode": "OFFL",
         "sensingStartTime": "2019-05-09T22:07:07.000000",
         "sensingStopTime": "2019-05-09T23:48:37.000000",
@@ -61,15 +63,10 @@
                 "key": "revision",
                 "parameterType": "INTEGER",
                 "parameterValue": "14"
-            },
-            {
-                "key": "fileClass",
-                "parameterType": "STRING",
-                "parameterValue": "OFFL"
             }
         ],
         "mountPoint": "s3://proseo-pickup/incoming",
         "filePath": "L2/O3-614941691",
-        "productFileName": "S5P_OFFL_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc"
+        "productFileName": "S5P_RPRO_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc"
     }
 ]

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -50,6 +51,12 @@ public class Configuration extends PersistentObject {
 	/** The configuration files for this configuration */
 	@ElementCollection
 	private Set<ConfigurationFile> configurationFiles = new HashSet<>();
+	
+	/**
+	 * Additional input files for inclusion in generated Job Order Files
+	 */
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ConfigurationInputFile> staticInputFiles = new HashSet<>();
 
 	/** Specific parameter for "docker run" valid for this configuration */
 	private String dockerRunParameters;
@@ -142,6 +149,24 @@ public class Configuration extends PersistentObject {
 	 */
 	public void setConfigurationFiles(Set<ConfigurationFile> configurationFiles) {
 		this.configurationFiles = configurationFiles;
+	}
+
+	/**
+	 * Gets the static input files
+	 * 
+	 * @return the static input files
+	 */
+	public Set<ConfigurationInputFile> getStaticInputFiles() {
+		return staticInputFiles;
+	}
+
+	/**
+	 * Sets the static input files
+	 * 
+	 * @param staticInputFiles the static input files to set
+	 */
+	public void setStaticInputFiles(Set<ConfigurationInputFile> staticInputFiles) {
+		this.staticInputFiles = staticInputFiles;
 	}
 
 	/**

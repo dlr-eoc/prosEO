@@ -67,15 +67,16 @@ public class ProductControllerTest {
 	private static final String TEST_CODE = "S5P";
 	private static final String TEST_PRODUCT_TYPE = "L1B";
 	private static final String TEST_MISSION_TYPE = "L1B_______";
+	private static final String TEST_FILE_CLASS = "OPER";
 	private static final String TEST_MODE = "NRTI";
 	private static final String TEST_ALT_CODE = "TDM";
 	private static final String TEST_ALT_PRODUCT_TYPE = "DEM";
 	private static final String TEST_ALT_MISSION_TYPE = "TDM.DEM.DEM";
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_MODE, "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_MODE, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "0", "1", TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_FILE_CLASS, TEST_MODE, "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_FILE_CLASS, TEST_MODE, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE, TEST_FILE_CLASS, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** Test configuration */
@@ -146,12 +147,13 @@ public class ProductControllerTest {
 				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
-		testProduct.setMode(testData[4]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setFileClass(testData[4]);
+		testProduct.setMode(testData[5]);
+		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {}", testProduct.getId());
@@ -221,6 +223,7 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -327,6 +330,7 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -356,7 +360,7 @@ public class ProductControllerTest {
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restProduct = postEntity.getBody();
 		assertNotEquals("Id should not be 0 (zero): ", 0L, restProduct.getId().longValue());
-		assertEquals("Wrong sensing start time: ", testProductData[0][5], restProduct.getSensingStartTime());
+		assertEquals("Wrong sensing start time: ", testProductData[0][6], restProduct.getSensingStartTime());
 		
 		// Test that the product exists
 		testUrl += "/" + restProduct.getId();
@@ -388,6 +392,7 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
@@ -457,6 +462,7 @@ public class ProductControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission.getProcessingModes().add(TEST_MODE);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}

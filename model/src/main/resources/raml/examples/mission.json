@@ -3,7 +3,9 @@
     "version": 17,
     "code": "S5P",
     "name": "Sentinel-5 Precursor",
+    "fileClasses": [ "TEST", "OPER", "NRTI", "OFFL", "RPRO" ],
     "processingModes": [ "NRTI", "OFFL", "RPRO" ],
+    "productFileTemplate": "S5P_${fileClass}_${productClass.missionType}.nc",
     "spacecrafts": [
         {
             "code": "S5P",

@@ -19,16 +19,25 @@
         type: string
         description: State of the processing order; one of { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED }
       executionTime?:
-        type: datetime
+        type: datetime-only
         description: Expected execution time (optional, used for scheduling)
       startTime?:
-        type: datetime
+        type: datetime-only
         description: The start time of the time interval to process. If a range of orbit numbers is given, this time is set to 
                      the earliest start time of the selected orbits.
       stopTime?:
-        type: datetime
+        type: datetime-only
         description: The end time of the time interval to process. If a range of orbit numbers is given, this time is set to 
                      the latest stop time of the selected orbits.
+      slicingType:
+        type: string
+        description: One of { "ORBIT", "CALENDAR_DAY", "TIME_SLICE" }
+      sliceDuration?:
+        type: integer
+        description: Duration of a slice in seconds (only if slicingType == "TIME_SLICE")
+      sliceOverlap:
+        type: integer
+        description: Overlap between adjacent slices in seconds
       filterConditions:
         type: Parameter[]
         description: A set of additional conditions to apply to selected products.
@@ -47,6 +56,9 @@
       inputProductClasses:
         type: string[]
         description: List of internal product types given as input to the order
+      outputFileClass:
+        type: string
+        description: The file class for the generated output products
       processingMode:
         type: string
         description: The processing mode to run the processor(s) in
