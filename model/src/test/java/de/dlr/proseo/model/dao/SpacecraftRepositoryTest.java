@@ -7,9 +7,6 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
-import java.time.Instant;
-import java.util.List;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -25,12 +22,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for OrbitRepository

@@ -63,6 +63,7 @@ public class Mission extends PersistentObject {
 	 *			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc";
 	 * (based on the Sentinel-5P file naming convention)
 	 */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String productFileTemplate;
 	
 	/** The spacecrafts this mission owns */

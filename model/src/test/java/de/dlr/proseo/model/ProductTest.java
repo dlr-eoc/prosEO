@@ -8,10 +8,6 @@ package de.dlr.proseo.model;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.assertj.core.util.Arrays;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -19,12 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-
 import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.util.SelectionRule;
 
 /**
  * Tests the Product class (except for getter and setter methods)
