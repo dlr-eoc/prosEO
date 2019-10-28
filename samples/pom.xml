@@ -9,12 +9,12 @@
 
 	<artifactId>samples</artifactId>
 	<packaging>pom</packaging>
-	<name>prosEO Samples including Wrapper and Sample Processor</name>
+	<name>prosEO Samples</name>
 	<description/>
 
     <modules>
-        <module>sample-wrapper</module>
         <module>sample-processor</module>
+        <module>sample-wrapper</module>
     </modules>
 
     <url>https://github.com/dlr-eoc/prosEO/samples</url>

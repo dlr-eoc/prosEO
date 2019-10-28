@@ -1,4 +1,6 @@
 proseo:
+    global:
+      storageIdPrefix: proseo
     procFacility:
       name: devel
       url: http://localhost:9887/k8s-api-endpoint

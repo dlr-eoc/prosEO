@@ -30,7 +30,6 @@ import alluxio.exception.AlluxioException;
 import alluxio.grpc.ReadPType;
 import alluxio.grpc.WritePType;
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
-import de.dlr.proseo.basewrap.rest.IngestorProductFilePostRequest;
 import de.dlr.proseo.basewrap.rest.RestOps;
 import de.dlr.proseo.model.fs.alluxio.AlluxioOps;
 import de.dlr.proseo.model.fs.s3.AmazonS3URI;
@@ -777,8 +776,8 @@ public class BaseWrapper {
 					// Output-Bucket=ENV_S3_STORAGE_ID_OUTPUTS
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
 						try {
-							Boolean transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
-							if(transaction) {
+							ArrayList<String> transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
+							if(null == transaction) {
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
@@ -844,24 +843,17 @@ public class BaseWrapper {
 		//POST http://localhost:8080/ingest/proseo-otc01/928928398
 		for (PushedProcessingOutput p : pushedProducts) {
 			String ingestorRestUrl =   "/ingest/"+ENV_PROCESSING_FACILITY_NAME+"/"+p.getId();
-			IngestorProductFilePostRequest request = new IngestorProductFilePostRequest();
-			request.setId(p.getId());
-			request.setVersion(1);
-			request.setAuxFileNames(new String[1]);
+			
+			// Build request based on de.dlr.proseo.ingestor.rest.model.ProductFile
+			IngestorProductFile request = new IngestorProductFile();
+			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
+			request.setAuxFileNames(null);
 			request.setFilePath(p.getPath());
 			request.setStorageType(p.getFsType());
-			request.setProductId(p.getId());
 			request.setProductFileName(p.getPath());
-			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
-			//			private long id;
-			//			private int version;
-			//			private long productId;
-			//			private String processingFacilityName;
-			//			private String productFileName;
-			//			private String[] auxFileNames;
-			//			private String filePath;
-			//			private String storageType;
-			// send request & get single response
+			request.setProductId(p.getId());
+			request.setVersion(null);
+			
 			ObjectMapper Obj = new ObjectMapper(); 
 			String jsonRequest="";
 			try {

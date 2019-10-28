@@ -16,6 +16,8 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +43,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
  *
  */
 @Component
-public class JobOrderControllerImpl implements JoborderController{
+public class JobOrderControllerImpl implements JoborderController {
 
 	private static final Charset JOF_CHARSET = StandardCharsets.UTF_8;
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -50,14 +52,16 @@ public class JobOrderControllerImpl implements JoborderController{
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	private static Logger logger = LoggerFactory.getLogger(StorageControllerImpl.class);
 	@Autowired
-	StorageManagerConfiguration cfg = new StorageManagerConfiguration();
+	private StorageManagerConfiguration cfg;
 
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @param messageFormat     the message text with parameter placeholders in
+	 *                          String.format() style
+	 * @param messageId         a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the
+	 *                          message format)
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
@@ -76,32 +80,45 @@ public class JobOrderControllerImpl implements JoborderController{
 	}
 
 	@Override
-	public ResponseEntity<Joborder> createJoborder(String procFacilityName, @Valid Joborder joborder) {
+	public ResponseEntity<Joborder> createJoborder(@Valid Joborder joborder) {
 		Joborder response = new Joborder();
-
-		//create internal buckets, if not existing
-		StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getJoborderBucket(),cfg.getS3Region());
-		// check proc-facility
-		if (!procFacilityName.equals(cfg.getProcFacilityName())) {
-			return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-		}
 		String separator = "/";
-		// check if we have a Base64 encoded string & if we have valid XML
-		if (!joborder.getJobOrderStringBase64()
-				.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")) {
-			response.setUploaded(false);
-			response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-			response.setPathInfo("n/a");
-			response.setMessage("Attribute jobOrderStringBase64 is not Base64-encoded...");
-			return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-		}
-
-		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-		String objKey = cfg.getJoborderPrefix() + separator + UUID.randomUUID().toString() + ".xml";
 		try {
+			// create internal buckets, if not existing
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
+					cfg.getS3EndPoint(), cfg.getJoborderBucket(), cfg.getS3Region());
+
+			
+			// check if we have a Base64 encoded string & if we have valid XML
+			if (!joborder.getJobOrderStringBase64()
+					.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")) {
+				response.setUploaded(false);
+				response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
+				response.setPathInfo("n/a");
+				response.setMessage("Attribute jobOrderStringBase64 is not Base64-encoded...");
+				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+			}
+
+			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			DateTime tstamp=DateTime.now(DateTimeZone.UTC);
+			String objKey = 
+					cfg.getJoborderPrefix()
+					+ separator
+					+ tstamp.getYear()
+					+ separator 
+					+ tstamp.getMonthOfYear()
+					+ separator 
+					+ tstamp.getDayOfMonth()
+					+ separator 
+					+ tstamp.getHourOfDay()
+					+ separator 
+					+ UUID.randomUUID().toString() 
+					+ ".xml";
+
 			String base64String = joborder.getJobOrderStringBase64();
 			byte[] bytes = java.util.Base64.getDecoder().decode(base64String);
-			if (!StorageManagerUtils.checkXml(StorageManagerUtils.inputStreamToString(new ByteArrayInputStream(bytes), JOF_CHARSET))) {
+			if (!StorageManagerUtils
+					.checkXml(StorageManagerUtils.inputStreamToString(new ByteArrayInputStream(bytes), JOF_CHARSET))) {
 				response.setUploaded(false);
 				response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
 				response.setPathInfo("n/a");
@@ -113,19 +130,18 @@ public class JobOrderControllerImpl implements JoborderController{
 					RequestBody.fromInputStream(fis, bytes.length));
 			fis.close();
 			s3.close();
+			// now prepare response
+			response.setUploaded(true);
+			response.setFsType(FsType.S_3);
+			response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
+			response.setPathInfo("s3://" + cfg.getJoborderBucket() + separator + objKey);
+			logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
+			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		// now prepare response
-		response.setUploaded(true);
-		response.setFsType(FsType.S_3);
-		response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-		response.setPathInfo("s3://" + cfg.getJoborderBucket() + separator+ objKey);
-		logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
-		return new ResponseEntity<>(response, HttpStatus.CREATED);
+		
 	}
-
 
 }

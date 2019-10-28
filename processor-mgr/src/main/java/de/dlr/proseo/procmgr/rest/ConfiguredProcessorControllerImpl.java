@@ -21,6 +21,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.Configuration;
@@ -70,6 +75,19 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ConfiguredProcessorControllerImpl.class);
 
+	/** Single TransactionTemplate shared amongst all methods in this instance */
+	private final TransactionTemplate transactionTemplate;
+
+	/**
+	 * Constructor using constructor-injection to supply the PlatformTransactionManager
+	 * 
+	 * @param transactionManager the platform transaction manager
+	 */
+	public ConfiguredProcessorControllerImpl(PlatformTransactionManager transactionManager) {
+		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
+	
 	/**
 	 * Log an informational message with the prosEO message prefix
 	 * 
@@ -183,36 +201,44 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 					errorHeaders(MSG_CONFIGURED_PROCESSOR_MISSING, MSG_ID_CONFIGURED_PROCESSOR_MISSING),
 					HttpStatus.BAD_REQUEST);
 		}
-	
-		de.dlr.proseo.model.ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
 		
-		modelConfiguredProcessor.setProcessor(RepositoryService.getProcessorRepository()
-				.findByMissionCodeAndProcessorNameAndProcessorVersion(configuredProcessor.getMissionCode(), configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion()));
-		if (null == modelConfiguredProcessor.getProcessor()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PROCESSOR_INVALID, MSG_ID_PROCESSOR_INVALID,
-							configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
-					HttpStatus.BAD_REQUEST);
-		}
-		
-		modelConfiguredProcessor.setConfiguration(RepositoryService.getConfigurationRepository()
-				.findByMissionCodeAndProcessorNameAndConfigurationVersion(configuredProcessor.getMissionCode(), configuredProcessor.getProcessorName(), configuredProcessor.getConfigurationVersion()));
-		if (null == modelConfiguredProcessor.getConfiguration()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_CONFIGURATION_INVALID, MSG_ID_CONFIGURATION_INVALID,
-							configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
-					HttpStatus.BAD_REQUEST);
-		}
-		
-		modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().save(modelConfiguredProcessor);
-		
-		logInfo(MSG_CONFIGURED_PROCESSOR_CREATED, MSG_ID_CONFIGURED_PROCESSOR_CREATED, 
-				modelConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName(),
-				modelConfiguredProcessor.getProcessor().getProcessorVersion(),
-				modelConfiguredProcessor.getConfiguration().getConfigurationVersion(), 
-				modelConfiguredProcessor.getProcessor().getProcessorClass().getMission().getCode());
-		
-		return new ResponseEntity<>(ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguredProcessor), HttpStatus.CREATED);
+		return transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public ResponseEntity<ConfiguredProcessor> doInTransaction(TransactionStatus txStatus) {
+				de.dlr.proseo.model.ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
+				
+				modelConfiguredProcessor.setProcessor(RepositoryService.getProcessorRepository()
+						.findByMissionCodeAndProcessorNameAndProcessorVersion(configuredProcessor.getMissionCode(), configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion()));
+				if (null == modelConfiguredProcessor.getProcessor()) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_PROCESSOR_INVALID, MSG_ID_PROCESSOR_INVALID,
+									configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
+							HttpStatus.BAD_REQUEST);
+				}
+				
+				modelConfiguredProcessor.setConfiguration(RepositoryService.getConfigurationRepository()
+						.findByMissionCodeAndProcessorNameAndConfigurationVersion(configuredProcessor.getMissionCode(), configuredProcessor.getProcessorName(), configuredProcessor.getConfigurationVersion()));
+				if (null == modelConfiguredProcessor.getConfiguration()) {
+					txStatus.setRollbackOnly();
+					return new ResponseEntity<>(
+							errorHeaders(MSG_CONFIGURATION_INVALID, MSG_ID_CONFIGURATION_INVALID,
+									configuredProcessor.getProcessorName(), configuredProcessor.getProcessorVersion(), configuredProcessor.getMissionCode()),
+							HttpStatus.BAD_REQUEST);
+				}
+				
+				modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().save(modelConfiguredProcessor);
+				
+				logInfo(MSG_CONFIGURED_PROCESSOR_CREATED, MSG_ID_CONFIGURED_PROCESSOR_CREATED, 
+						modelConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName(),
+						modelConfiguredProcessor.getProcessor().getProcessorVersion(),
+						modelConfiguredProcessor.getConfiguration().getConfigurationVersion(), 
+						modelConfiguredProcessor.getProcessor().getProcessorClass().getMission().getCode());
+				
+				return new ResponseEntity<>(ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguredProcessor), HttpStatus.CREATED);
+			}
+		});
 	}
 
 	/**

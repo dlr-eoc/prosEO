@@ -4,19 +4,15 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
-import java.io.IOException;
 import java.net.ConnectException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -27,6 +23,7 @@ import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobList;
+import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1PodList;
 import io.kubernetes.client.util.Config;
 
@@ -38,6 +35,8 @@ import io.kubernetes.client.util.Config;
  */
 public class KubeConfig {
 
+	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
+	
 	private HashMap<String, KubeJob> kubeJobList = null;
 	
 	private ApiClient client;
@@ -46,6 +45,7 @@ public class KubeConfig {
 	private String id;
 	private String description;
 	private String url;
+	private String storageManagerUrl;
 	
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
@@ -61,11 +61,20 @@ public class KubeConfig {
 	 * @param aDescription Description of ProcessingFacility
 	 * @param aUrl URL of ProcessingFacility
 	 */
-	public KubeConfig (String anId, String aDescription, String aUrl) {
+	public KubeConfig (String anId, String aDescription, String aUrl, String aStorageManagerUrl) {
 		id = anId;
 		description = aDescription;
 		url = aUrl;
+		storageManagerUrl = aStorageManagerUrl;
 	}
+	
+	/**
+	 * @return the storage manager URL
+	 */
+	public String getStorageManagerUrl() {
+		return storageManagerUrl;
+	}
+
 	/**
 	 * @return the ApiClient
 	 */
@@ -204,16 +213,8 @@ public class KubeConfig {
 	 */
 	public KubeJob createJob(String name) {
 		int aKey = kubeJobList.size() + 1;
-		KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
-		aJob = aJob.createJob(this);
-		if (aJob != null) {
-			kubeJobList.put(aJob.getJobName(), aJob);
-		}
-		return aJob;
-	}
-	public KubeJob createJobImageFileCmd(String name, String image, String file, String cmd, ArrayList<String> args) {
-		int aKey = kubeJobList.size() + 1;
-		KubeJob aJob = new KubeJob(aKey, null, image, file, cmd, args);
+		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
+		KubeJob aJob = new KubeJob(aKey, null, "proseo-sample-integration-processor:0.0.1-SNAPSHOT", "/testdata/test1.pl", "perl", null);
 		aJob = aJob.createJob(this);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
@@ -270,6 +271,15 @@ public class KubeConfig {
 		V1Job aV1Job = null;
 		try {
 			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
+		} catch (ApiException e) {
+			if (e.getCode() == 404) {
+				// do nothing
+				logger.info("Job " + name + " not found, is it already finished?");
+				return null;			
+			} else {
+				e. printStackTrace();
+				return null;				
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
@@ -281,6 +291,28 @@ public class KubeConfig {
 			}
 		}
 		return aV1Job;
+	}
+	/**
+	 * Retrieve a Kubernetes Pod
+	 * 
+	 * @param name of Pod
+	 * @return pod found or null
+	 */
+	public V1Pod getV1Pod(String name) {
+		V1Pod aV1Pod = null;
+		try {
+			aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
+				// nothing to do 
+				// cause there is a bug in Kubernetes API
+			} else {
+				e. printStackTrace();
+				return null;
+			}
+		}
+		return aV1Pod;
 	}
 
 	/**

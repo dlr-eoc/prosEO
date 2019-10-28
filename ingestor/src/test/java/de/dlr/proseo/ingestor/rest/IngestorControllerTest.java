@@ -99,14 +99,15 @@ public class IngestorControllerTest {
 	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000000";
 	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000000";
 	private static final String TEST_MODE_OFFL = "OFFL";
+	private static final String TEST_FILE_CLASS = "OPER";
 	
 	
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "0", "1", "S5P", "L1B", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "0", "1", "TDM", "DEM", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
+		{ "0", "1", "S5P", "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
+		{ "0", "1", "S5P", "L1B", TEST_FILE_CLASS, "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
+		{ "0", "1", "TDM", "DEM", TEST_FILE_CLASS, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 
 	/** Ingestor configuration */
@@ -185,12 +186,13 @@ public class IngestorControllerTest {
 				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
-		testProduct.setMode(testData[4]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setFileClass(testData[4]);
+		testProduct.setMode(testData[5]);
+		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
-				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {}", testProduct.getId());
@@ -237,6 +239,7 @@ public class IngestorControllerTest {
 		if (null == mission) {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -294,6 +297,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setId(0L);
 		ingestorProduct.setVersion(1L);
 		ingestorProduct.setMissionCode(TEST_CODE);
+		ingestorProduct.setFileClass(TEST_FILE_CLASS);
 		ingestorProduct.setMode(TEST_MODE_OFFL);
 		de.dlr.proseo.ingestor.rest.model.Orbit restOrbit = new de.dlr.proseo.ingestor.rest.model.Orbit();
 		restOrbit.setSpacecraftCode(TEST_SC_CODE);
@@ -328,7 +332,7 @@ public class IngestorControllerTest {
 		testUrl = ingestorConfig.getProductionPlannerUrl() + "/product/4711";
 		logger.info("Testing availability of mock production planner at {}", testUrl);
 		
-		Object mockObject = new TestRestTemplate().patchForObject(testUrl, mockRequest, Object.class);
+		Object mockObject = new TestRestTemplate().getForObject(testUrl, Object.class);
 		assertNotNull("Mock production planner not available", mockObject);
 		logger.info("Got result object " + mockObject);
 		if (mockObject instanceof ResponseEntity) {

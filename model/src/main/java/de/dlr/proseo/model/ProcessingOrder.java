@@ -101,6 +101,9 @@ public class ProcessingOrder extends PersistentObject {
 	@ManyToMany
 	private Set<ProductClass> inputProductClasses = new HashSet<>();
 	
+	/** The file class of the generated output products (from the list of allowed file classes agreed for the mission) */
+	private String outputFileClass;
+	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
 	
@@ -373,6 +376,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setInputProductClasses(Set<ProductClass> inputProductClasses) {
 		this.inputProductClasses = inputProductClasses;
+	}
+
+	/**
+	 * Gets the file class of the output products
+	 * 
+	 * @return the outputFileClass
+	 */
+	public String getOutputFileClass() {
+		return outputFileClass;
+	}
+
+	/**
+	 * Sets the file class for the output products
+	 * 
+	 * @param outputFileClass the outputFileClass to set
+	 */
+	public void setOutputFileClass(String outputFileClass) {
+		this.outputFileClass = outputFileClass;
 	}
 
 	/**

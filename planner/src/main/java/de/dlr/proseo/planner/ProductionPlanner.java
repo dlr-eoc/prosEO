@@ -14,12 +14,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.dlr.proseo.model.service.RepositoryService;
@@ -49,31 +47,23 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static final String jobNamePrefix = "proseojob";
 	public static final String jobContainerPrefix = "proseocont";
 
-	/**
-	 * Current running ProductionPlanner
-	 */
-	private static ProductionPlanner thePlanner = null;
+	public static String hostName = "localhost";
+	public static String hostIP = "127.0.0.1";
+	public static String port = "8080";
 	
+
 	/**
 	 * Current running KubeConfigs
 	 */
-	private static Map<String, KubeConfig> kubeConfigs = new HashMap<>();
+	private Map<String, KubeConfig> kubeConfigs = new HashMap<>();
 	
-	/**
-	 * Ghe current running ProductionPlanner
-	 * 
-	 * @return the current running ProductionPlanner
-	 */
-	public static ProductionPlanner getPlanner() {
-		return thePlanner;		
-	}
 	/**
 	 * Look for connected KubeConfig of name. 
 	 * 
 	 * @param name of KubeConfig to find (may be null)
 	 * @return KubeConfig found or null
 	 */
-	public static KubeConfig getKubeConfig(String name) {
+	public KubeConfig getKubeConfig(String name) {
 		if (name == null) {
 			if (0 < kubeConfigs.size()) {
 				return (KubeConfig) kubeConfigs.values().toArray()[0];
@@ -87,8 +77,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	/**
 	 * @return the collection of KubeConfigs which are connected.
 	 */
-	public static Collection<KubeConfig> getKubeConfigs() {
-		return (Collection<KubeConfig>) kubeConfigs.values();
+	public Collection<KubeConfig> getKubeConfigs() {
+		return kubeConfigs.values();
 	}
 	
 	/**
@@ -97,7 +87,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param args command line arguments
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception { 
 		SpringApplication spa = new SpringApplication(ProductionPlanner.class);
 		spa.run(args);
 	}
@@ -106,7 +96,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Walk through ProcessingFacility list of DB and try to connect each.
 	 * Disconnect and remove KubeConfigs not defined in this list.
 	 */
-	public static void updateKubeConfigs() {
+	public void updateKubeConfigs() {
 		boolean found = false;
 		KubeConfig kubeConfig = null;
 		for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
@@ -123,7 +113,7 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getProcessingEngineUrl());
+				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getProcessingEngineUrl(), pf.getStorageManagerUrl());
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
@@ -143,13 +133,6 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 	}
-		
-	/**
-	 * Set static variable "thePlanner".
-	 */
-	public ProductionPlanner() {
-		thePlanner = this;
-	}	
 	
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
@@ -164,8 +147,21 @@ public class ProductionPlanner implements CommandLineRunner {
 		//        		pfs.add(arg0[i+1]);
 		//        	}
 		//        } 
+      
+		InetAddress ip;
+		String hostname;
+		try {
+			ip = InetAddress.getLocalHost();
+			hostname = ip.getHostName();
+			hostIP = ip.getHostAddress();
+			hostName = hostname;
+			System.out.println("Your current IP address : " + ip);
+			System.out.println("Your current Hostname : " + hostname);
 
-		ProductionPlanner.updateKubeConfigs();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		this.updateKubeConfigs();
 	}
 
 }

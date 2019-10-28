@@ -2,7 +2,8 @@
 #  Storage:
     type: object
     properties:
-      id: string
+      id:
+        pattern: ^proseo-[a-z0-9-]{10,50}+$
       storageType:
         enum: [S3, ALLUXIO, POSIX]
       description?: string
