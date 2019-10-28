@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  Order:
+#  RestOrder:
     type: object
     properties:
       id?:
@@ -39,16 +39,16 @@
         type: integer
         description: Overlap between adjacent slices in seconds
       filterConditions:
-        type: Parameter[]
+        type: RestParameter[]
         description: A set of additional conditions to apply to selected products.
       outputParameters:
-        type: Parameter[]
+        type: RestParameter[]
         description: A set of parameters to set for the generated products.
       configuredProcessors:
         type: string[]
         description: List of identifiers of the configured processors
       orbits:
-        type: OrbitQuery[]
+        type: RestOrbitQuery[]
         description: List of orbit ranges, identified by spacecraft code and orbit number from/to
       requestedProductClasses:
         type: string[]

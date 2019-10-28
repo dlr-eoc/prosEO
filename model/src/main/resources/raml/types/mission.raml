@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  Mission:
+#  RestMission:
     type: object
     properties:
       id?:
@@ -25,5 +25,5 @@
         type: string
         description: The product filename template implementing the mission's file naming convention
       spacecrafts:
-        type: Spacecraft[]
+        type: RestSpacecraft[]
         description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.

@@ -25,7 +25,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryApplication;
