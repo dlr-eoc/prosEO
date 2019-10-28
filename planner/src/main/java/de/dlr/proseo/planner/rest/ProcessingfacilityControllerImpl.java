@@ -16,6 +16,7 @@ import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PlannerProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PodKube;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
@@ -247,20 +248,30 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-    public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
-		KubeJob aJob = productionPlanner.getKubeConfig(name).createJob(podname);
-    	if (aJob != null) {
-    		PlannerJobstep aPlan = new PlannerJobstep();
-    		aPlan.setId(String.valueOf(aJob.getJobId()).toString());
-    		aPlan.setName(aJob.getJobName());
-    		HttpHeaders responseHeaders = new HttpHeaders();
-    		responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-    		return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
-    	}
-    	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
+		KubeConfig kc = productionPlanner.getKubeConfig(name);
+		if (kc != null) {
+			KubeJob aJob = kc.createJob(podname);
+			if (aJob != null) {
+				PlannerJobstep aPlan = new PlannerJobstep();
+				aPlan.setId(String.valueOf(aJob.getJobId()).toString());
+				aPlan.setName(aJob.getJobName());
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
+			} else {
+				String message = String.format(MSG_PREFIX + "Could not create job step on processing facility %s (%d)", name, 2001);
+				logger.error(message);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_WARNING, message);
+				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			} 
+		} else {
+			String message = String.format(MSG_PREFIX + "Processing facility %s not connected (%d)", name, 2001);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
 	}
 }
