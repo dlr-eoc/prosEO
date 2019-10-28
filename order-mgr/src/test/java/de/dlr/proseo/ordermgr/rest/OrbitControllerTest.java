@@ -73,6 +73,7 @@ public class OrbitControllerTest {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
+	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerTest.class);
 		
 	/* Test orbits */
@@ -119,7 +120,7 @@ public class OrbitControllerTest {
 		}
 
 		if (null != RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(testData[5], Integer.valueOf(testData[9]))) {
-			logger.info("Created test orbit {}", testOrbit.getId());
+			logger.info("Found test orbit {}", testOrbit.getId());
 
 			return testOrbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(testData[5], Integer.valueOf(testData[9]));	
 		}

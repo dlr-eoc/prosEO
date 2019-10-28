@@ -109,12 +109,12 @@ public class MissionUtilTest {
 		assertEquals("Unexpected mission code: ", modelmission.getCode(),restMission.getCode());
 		assertEquals("Unexpected mission name: ", modelmission.getName(),restMission.getName());
 		
-		  for (Iterator<String> it = modelmission.getProcessingModes().iterator(); it.hasNext();) {
+		for (Iterator<String> it = modelmission.getProcessingModes().iterator(); it.hasNext();) {
 		        if(!(restMission.getProcessingModes().contains((it.next())))){
 		        	logger.info("Unexpected Processing Modes  ");
 
 		        }
-		    }
+		}
 	    for (Iterator<String> it = modelmission.getFileClasses().iterator(); it.hasNext();) {
 	        if(!(restMission.getFileClasses().contains((it.next())))){
 	        	logger.info("Unexpected File Classes : ");

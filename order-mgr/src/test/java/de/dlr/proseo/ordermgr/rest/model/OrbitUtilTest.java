@@ -29,7 +29,7 @@ public class OrbitUtilTest {
 	};
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionControllerTest.class);
+	private static Logger logger = LoggerFactory.getLogger(OrbitUtilTest.class);
 	
 	/**
 	 * Create an orbit from a data array
