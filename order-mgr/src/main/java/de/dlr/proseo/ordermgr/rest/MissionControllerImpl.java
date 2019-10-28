@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.ordermgr.rest.model.Mission;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
+import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -91,6 +93,18 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getClass());
 		
 		de.dlr.proseo.model.Mission modelMission = MissionUtil.toModelMission(mission);
+		
+		modelMission.getProcessorClasses().clear();
+		for (ProcessorClass procClass : RepositoryService.getProcessorClassRepository().findAll()) {			
+			if(procClass.getMission().getCode().equals(modelMission.getCode())) {
+				modelMission.getProcessorClasses().add(procClass);
+			}		
+		}
+		
+		modelMission.getProductClasses().clear();
+		for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByMissionCode(modelMission.getCode())) {
+				modelMission.getProductClasses().add(prodClass);
+		}
 		
 		modelMission = RepositoryService.getMissionRepository().save(modelMission);
 		

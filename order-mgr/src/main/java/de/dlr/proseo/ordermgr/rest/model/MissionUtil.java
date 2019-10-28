@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
 
 public class MissionUtil {
@@ -36,11 +37,25 @@ public class MissionUtil {
 			restMission.setName(modelMission.getName());
 		}
 		
+		if(null != modelMission.getFileClasses()) {
+			
+			for (String fileClass : modelMission.getFileClasses()) {
+				restMission.getFileClasses().add(fileClass);
+			}
+			
+		}
+		
 		if (null != modelMission.getProcessingModes()) {
 			for (String processingModes : modelMission.getProcessingModes()) {
 				restMission.getProcessingModes().add(processingModes);
 			}
 		}
+		
+		if(null != modelMission.getProductFileTemplate()) {
+			restMission.setProductFileTemplate(modelMission.getProductFileTemplate());
+		}
+		
+
 		
 		if (null != modelMission.getSpacecrafts()) {
 			List <de.dlr.proseo.ordermgr.rest.model.Spacecraft> restSpacecrafts = new ArrayList<de.dlr.proseo.ordermgr.rest.model.Spacecraft>();
@@ -67,9 +82,6 @@ public class MissionUtil {
 	public static de.dlr.proseo.model.Mission toModelMission(Mission restMission) throws IllegalArgumentException{
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelMission({})", (null == restMission ? "MISSING" : restMission.getId()));
-
-		// TODO Auto-generated method stub
-		//return null;
 		
 		de.dlr.proseo.model.Mission modelMission = new de.dlr.proseo.model.Mission();
 		
@@ -79,6 +91,18 @@ public class MissionUtil {
 		}
 		modelMission.setCode(restMission.getCode());
 		modelMission.setName(restMission.getName());
+		
+		modelMission.getFileClasses().clear();
+		for(String fileClass : restMission.getFileClasses()) {
+			modelMission.getFileClasses().add(fileClass);
+		}
+		
+		modelMission.setProductFileTemplate(restMission.getProductFileTemplate());
+		
+		modelMission.getProcessingModes().clear();
+		for(String mode : restMission.getProcessingModes()) {
+			modelMission.getProcessingModes().add(mode);
+		}
 		
 		return modelMission;
 	}
