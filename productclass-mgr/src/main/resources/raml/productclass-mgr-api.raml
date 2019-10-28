@@ -25,10 +25,10 @@ securitySchemes:
 
 types:
   RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
-  SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
-  SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
-  SelectionRule: SimpleSelectionRule[]
-  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestSimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
+  RestSelectionRule: RestSimpleSelectionRule[]
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   SelectionRuleString:
     type: object
     properties:

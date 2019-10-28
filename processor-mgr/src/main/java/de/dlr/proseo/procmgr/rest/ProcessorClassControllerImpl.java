@@ -27,9 +27,10 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
+import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClass;
+import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 
 /**
@@ -133,13 +134,13 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @return a list of Json objects representing processor classes satisfying the search criteria
 	 */
 	@Override
-	public ResponseEntity<List<ProcessorClass>> getProcessorClass(String mission, String processorName) {
+	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
 		
-		List<ProcessorClass> result = new ArrayList<>();
+		List<RestProcessorClass> result = new ArrayList<>();
 		
 		if (null != mission && null != processorName) {
-			de.dlr.proseo.model.ProcessorClass processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
+			ProcessorClass processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
 					processorName);
 			if (null == processorClass) {
 				return new ResponseEntity<>(
@@ -185,7 +186,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @return a Json representation of the processor class after creation (with ID and version number)
 	 */
 	@Override
-	public ResponseEntity<ProcessorClass> createProcessorClass(@Valid ProcessorClass processorClass) {
+	public ResponseEntity<RestProcessorClass> createProcessorClass(@Valid RestProcessorClass processorClass) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessorClass({})", (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 		
 		if (null == processorClass) {
@@ -197,8 +198,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		return transactionTemplate.execute(new TransactionCallback<>() {
 
 			@Override
-			public ResponseEntity<ProcessorClass> doInTransaction(TransactionStatus txStatus) {
-				de.dlr.proseo.model.ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
+			public ResponseEntity<RestProcessorClass> doInTransaction(TransactionStatus txStatus) {
+				ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
 				
 				modelProcessorClass.setMission(RepositoryService.getMissionRepository().findByCode(processorClass.getMissionCode()));
 				if (null == modelProcessorClass.getMission()) {
@@ -238,7 +239,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 		   HTTP status "NOT_FOUND", if no processor class with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<ProcessorClass> getProcessorClassById(Long id) {
+	public ResponseEntity<RestProcessorClass> getProcessorClassById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
 		
 		if (null == id) {
@@ -247,7 +248,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 					HttpStatus.BAD_REQUEST);
 		}
 		
-		Optional<de.dlr.proseo.model.ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
 		
 		if (modelProcessorClass.isEmpty()) {
 			return new ResponseEntity<>(
@@ -270,7 +271,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 		   HTTP status "NOT_FOUND", if no processor class with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<ProcessorClass> updateProcessorClass(Long id, @Valid ProcessorClass processorClass) {
+	public ResponseEntity<RestProcessorClass> modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("PATCH for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
@@ -285,7 +286,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
-	public ResponseEntity<?> deleteProcessorclassById(Long id) {
+	public ResponseEntity<?> deleteProcessorClassById(Long id) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("DELETE for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id), 

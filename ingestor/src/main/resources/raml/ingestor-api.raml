@@ -28,8 +28,8 @@ securitySchemes:
 
 types:
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
-  ProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
-  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   IngestorProduct:
     type: RestProduct
     description: Variant of the RestProduct type with a reference to the data file location
@@ -188,40 +188,42 @@ resourceTypes:
           format: long
           description: The ID of the product to ingest product files for
       get:
-        description: Get the product file for a product at a given processing facility
+        description: Get the product file metadata for a product at a given processing facility
+        displayName: getProductFile
         responses:
           200:
             body:
               application/json:
-                type: ProductFile
+                type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       post:
-        description: Create a new product file for a product at a given processing facility
+        description: Create the metadata of a new product file for a product at a given processing facility
         displayName: ingestProductFile
         body:
           application/json:
-            type: ProductFile
+            type: RestProductFile
             example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
         responses:
           201:
             body:
               application/json:
-                type: ProductFile
+                type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       patch:
-        description: Update a product file for a product at a given processing facility
+        description: Update the product file metadata for a product at a given processing facility
+        displayName: modifyProductFile
         body:
           application/json:
-            type: ProductFile
+            type: RestProductFile
             example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
         responses:
           200:
             body:
               application/json:
-                type: ProductFile
+                type: RestProductFile
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       delete:
-        description: Delete a product file for a product from a given processing facility
+        description: Delete a product file for a product from a given processing facility (metadata and actual data file(s))
         displayName: deleteProductFile
         responses:
           204:

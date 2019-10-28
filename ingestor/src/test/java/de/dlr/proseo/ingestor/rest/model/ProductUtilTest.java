@@ -133,7 +133,7 @@ public class ProductUtilTest {
 				restProduct.getGenerationTime());
 		assertEquals("Unexpected number of parameters", modelProduct.getParameters().size(), restProduct.getParameters().size());
 		for (int i = 0; i < modelProduct.getParameters().size(); ++i) {
-			de.dlr.proseo.ingestor.rest.model.Parameter restParameter = restProduct.getParameters().get(i);
+			RestParameter restParameter = restProduct.getParameters().get(i);
 			String restKey = restParameter.getKey();
 			assertTrue("Unexpected parameter key in parameter " + i + ": ",
 					modelProduct.getParameters().containsKey(restKey));

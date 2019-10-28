@@ -42,7 +42,10 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
+import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
+import de.dlr.proseo.prodclmgr.rest.model.RestSimplePolicy;
+import de.dlr.proseo.prodclmgr.rest.model.RestSimpleSelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 
 /**
@@ -251,7 +254,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 					}
 				}
 				
-				for (de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule rule: productClass.getSelectionRule()) {
+				for (RestSimpleSelectionRule rule: productClass.getSelectionRule()) {
 					SimpleSelectionRule modelRule = new SimpleSelectionRule();
 					if (mission.getProcessingModes().contains(rule.getMode())) {
 						modelRule.setMode(rule.getMode());
@@ -271,7 +274,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 								HttpStatus.BAD_REQUEST);
 					}
 
-					for (de.dlr.proseo.prodclmgr.rest.model.Parameter filterCondition: rule.getFilterConditions()) {
+					for (RestParameter filterCondition: rule.getFilterConditions()) {
 						if (null == filterCondition.getKey()) {
 							txStatus.setRollbackOnly();
 							return new ResponseEntity<>(
@@ -298,7 +301,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 						modelRule.getApplicableConfiguredProcessors().add(modelProcessor);
 					}
 					
-					for (de.dlr.proseo.prodclmgr.rest.model.SimplePolicy policy: rule.getSimplePolicies()) {
+					for (RestSimplePolicy policy: rule.getSimplePolicies()) {
 						SimplePolicy modelPolicy = new SimplePolicy();
 						try {
 							modelPolicy.setPolicyType(PolicyType.valueOf(policy.getPolicyType()));

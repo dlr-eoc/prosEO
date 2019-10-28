@@ -33,7 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
@@ -52,7 +52,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 //@DirtiesContext
 //@Transactional
 @AutoConfigureTestEntityManager
@@ -222,6 +222,7 @@ public class ProductControllerTest {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
 			mission.getProcessingModes().add(TEST_MODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -242,6 +243,7 @@ public class ProductControllerTest {
 		if (null == altMission) {
 			altMission = new Mission();
 			altMission.setCode(TEST_ALT_CODE);
+			altMission.getFileClasses().add(TEST_FILE_CLASS);
 			altMission = RepositoryService.getMissionRepository().save(altMission);
 		}
 		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
@@ -328,6 +330,7 @@ public class ProductControllerTest {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
 			mission.getProcessingModes().add(TEST_MODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -389,6 +392,7 @@ public class ProductControllerTest {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
 			mission.getProcessingModes().add(TEST_MODE);
+			mission.getFileClasses().add(TEST_FILE_CLASS);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -409,6 +413,7 @@ public class ProductControllerTest {
 		if (null == altMission) {
 			altMission = new Mission();
 			altMission.setCode(TEST_ALT_CODE);
+			altMission.getFileClasses().add(TEST_FILE_CLASS);
 			altMission = RepositoryService.getMissionRepository().save(altMission);
 		}
 		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());

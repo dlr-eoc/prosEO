@@ -147,7 +147,7 @@ public class ProductClassUtilTest {
 		assertEquals("Unexpected number of simple selection rules", 
 				productClass.getRequiredSelectionRules().size(), restProductClass.getSelectionRule().size());
 		
-		de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule restSelectionRule = restProductClass.getSelectionRule().get(0);
+		RestSimpleSelectionRule restSelectionRule = restProductClass.getSelectionRule().get(0);
 		assertEquals("Unexpected target product class:", TEST_PRODUCT_TYPE, restSelectionRule.getTargetProductClass());
 		assertEquals("Unexpected source product class:", TEST_BASE_PRODUCT_TYPE, restSelectionRule.getSourceProductClass());
 		assertEquals("Unexpected mode:", TEST_MODE, restSelectionRule.getMode());
@@ -161,14 +161,14 @@ public class ProductClassUtilTest {
 		assertNotNull("Filter conditions missing", restSelectionRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", simpleSelectionRule.getFilterConditions().size(), restSelectionRule.getFilterConditions().size());
 		Parameter modelParameter = simpleSelectionRule.getFilterConditions().get(TEST_PARAMETER_KEY);
-		de.dlr.proseo.prodclmgr.rest.model.Parameter restParameter = restSelectionRule.getFilterConditions().get(0);
+		RestParameter restParameter = restSelectionRule.getFilterConditions().get(0);
 		assertEquals("Unexpected filter condition key:", TEST_PARAMETER_KEY, restParameter.getKey());
 		assertEquals("Unexpected filter condition type:", modelParameter.getParameterType().toString(), restParameter.getParameterType());
 		assertEquals("Unexpected filter condition value:", TEST_PARAMETER_VALUE, restParameter.getParameterValue());
 		
 		assertNotNull("Simple policies missing", restSelectionRule.getSimplePolicies());
 		assertEquals("Unexpected number of simple policies:", simpleSelectionRule.getSimplePolicies().size(), restSelectionRule.getSimplePolicies().size());
-		de.dlr.proseo.prodclmgr.rest.model.SimplePolicy restPolicy = restSelectionRule.getSimplePolicies().get(0);
+		RestSimplePolicy restPolicy = restSelectionRule.getSimplePolicies().get(0);
 		assertEquals("Unexpected policy type:", simplePolicy.getPolicyType().toString(), restPolicy.getPolicyType());
 		assertEquals("Unexpected delta time T0 duration:", simplePolicy.getDeltaTimeT0().duration, restPolicy.getDeltaTimeT0().duration.longValue());
 		assertEquals("Unexpected delta time T0 unit:", simplePolicy.getDeltaTimeT0().unit.toString(), restPolicy.getDeltaTimeT0().unit);

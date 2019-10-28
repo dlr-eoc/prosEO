@@ -38,7 +38,12 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.prodclmgr.ProductClassManager;
 import de.dlr.proseo.prodclmgr.ProductClassSecurityConfig;
 import de.dlr.proseo.prodclmgr.ProductClassTestConfiguration;
+import de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT0;
+import de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT1;
+import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
+import de.dlr.proseo.prodclmgr.rest.model.RestSimplePolicy;
+import de.dlr.proseo.prodclmgr.rest.model.RestSimpleSelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 
 /**
@@ -161,19 +166,17 @@ public class ProductClassControllerTest {
 		// TODO We could add a configured processor here, if one was created beforehand
 		
 		// Create a REST selection rule for the new product class
-		de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule newSelectionRule = new de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule();
+		RestSimpleSelectionRule newSelectionRule = new RestSimpleSelectionRule();
 		newSelectionRule.setMode(TEST_MODE);
 		newSelectionRule.setIsMandatory(true);
 		newSelectionRule.getFilterConditions().add(
-				new de.dlr.proseo.prodclmgr.rest.model.Parameter(TEST_PARAM_KEY, TEST_PARAM_TYPE, TEST_PARAM_VALUE));
+				new RestParameter(TEST_PARAM_KEY, TEST_PARAM_TYPE, TEST_PARAM_VALUE));
 		newSelectionRule.setTargetProductClass(TEST_NEW_PRODUCT_TYPE);
 		newSelectionRule.setSourceProductClass(TEST_PRODUCT_TYPE);
-		de.dlr.proseo.prodclmgr.rest.model.SimplePolicy newSimplePolicy = new de.dlr.proseo.prodclmgr.rest.model.SimplePolicy();
+		RestSimplePolicy newSimplePolicy = new RestSimplePolicy();
 		newSimplePolicy.setPolicyType(PolicyType.LatestValCover.toString());
-		newSimplePolicy.setDeltaTimeT0(
-				new de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT0(4L, TimeUnit.HOURS.toString()));
-		newSimplePolicy.setDeltaTimeT1(
-				new de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT1(180L, TimeUnit.MINUTES.toString()));
+		newSimplePolicy.setDeltaTimeT0(new DeltaTimeT0(4L, TimeUnit.HOURS.toString()));
+		newSimplePolicy.setDeltaTimeT1(new DeltaTimeT1(180L, TimeUnit.MINUTES.toString()));
 		newSelectionRule.getSimplePolicies().add(newSimplePolicy);
 		restProductClass.getSelectionRule().add(newSelectionRule);
 		
@@ -201,7 +204,7 @@ public class ProductClassControllerTest {
 		assertEquals("Unexpected mission type: ", restProductClass.getMissionType(), responseProductClass.getMissionType());
 		assertNotNull("List of selection rules missing", responseProductClass.getSelectionRule());
 		assertEquals("Unexpected number of selection rules: ", restProductClass.getSelectionRule().size(), responseProductClass.getSelectionRule().size());
-		de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
+		RestSimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
 		assertEquals("Unexpected selection rule mode: ", newSelectionRule.getMode(), responseSelectionRule.getMode());
 		assertEquals("Unexpected mandatory value: ", newSelectionRule.getIsMandatory(), responseSelectionRule.getIsMandatory());
 		assertNotNull("List of filter conditions missing", responseSelectionRule.getFilterConditions());
@@ -209,7 +212,7 @@ public class ProductClassControllerTest {
 		assertEquals("Unexpected filter condition: ", newSelectionRule.getFilterConditions().get(0), responseSelectionRule.getFilterConditions().get(0));
 		assertNotNull("List of simple policies missing", responseSelectionRule.getSimplePolicies());
 		assertEquals("Unexpected number of simple policies: ", newSelectionRule.getSimplePolicies().size(), responseSelectionRule.getSimplePolicies().size());
-		de.dlr.proseo.prodclmgr.rest.model.SimplePolicy responsePolicy = responseSelectionRule.getSimplePolicies().get(0);
+		RestSimplePolicy responsePolicy = responseSelectionRule.getSimplePolicies().get(0);
 		assertEquals("Unexpected policy type: ", newSimplePolicy.getPolicyType(), responsePolicy.getPolicyType());
 		assertEquals("Unexpected delta time T0: ", newSimplePolicy.getDeltaTimeT0(), responsePolicy.getDeltaTimeT0());
 		assertEquals("Unexpected delta time T1: ", newSimplePolicy.getDeltaTimeT1(), responsePolicy.getDeltaTimeT1());
@@ -337,7 +340,7 @@ public class ProductClassControllerTest {
 		assertNotNull("List of selection rules missing", restProductClass.getSelectionRule());
 		assertEquals("Unexpected number of selection rules:", ruleStrings.size(), restProductClass.getSelectionRule().size());
 		
-		de.dlr.proseo.prodclmgr.rest.model.SimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
+		RestSimpleSelectionRule responseRule = restProductClass.getSelectionRule().get(0);
 		assertEquals("Unexpected mode:", TEST_MODE, responseRule.getMode());
 		assertEquals("Unexpected mandatory value:", false, responseRule.getIsMandatory());
 		assertEquals("Unexpected target product class:", TEST_NEW_PRODUCT_TYPE, responseRule.getTargetProductClass());
@@ -348,7 +351,7 @@ public class ProductClassControllerTest {
 		assertNotNull("List of filter conditions missing", responseRule.getFilterConditions());
 		assertEquals("Unexpected number of filter conditions:", 1, responseRule.getFilterConditions().size());
 		
-		de.dlr.proseo.prodclmgr.rest.model.Parameter filterParameter = responseRule.getFilterConditions().get(0);
+		RestParameter filterParameter = responseRule.getFilterConditions().get(0);
 		assertEquals("Unexpected filter condition key:", TEST_PARAM_KEY, filterParameter.getKey());
 		assertEquals("Unexpected filter condition type:", TEST_PARAM_TYPE, filterParameter.getParameterType());
 		assertEquals("Unexpected filter condition value:", TEST_PARAM_VALUE, filterParameter.getParameterValue());
@@ -356,7 +359,7 @@ public class ProductClassControllerTest {
 		assertNotNull("List of simple policies missing", responseRule.getSimplePolicies());
 		assertEquals("Unexpected number of simple policies:", 2, responseRule.getSimplePolicies().size());
 		
-		for (de.dlr.proseo.prodclmgr.rest.model.SimplePolicy responsePolicy: responseRule.getSimplePolicies()) {
+		for (RestSimplePolicy responsePolicy: responseRule.getSimplePolicies()) {
 			if ("LatestValIntersect".equals(responsePolicy.getPolicyType())) {
 				assertEquals("Unexpected LatestValIntersect delta time 0 duration:", 180L, responsePolicy.getDeltaTimeT0().getDuration().longValue());
 				assertEquals("Unexpected LatestValIntersect delta time 0 unit:", TimeUnit.MINUTES.toString(), responsePolicy.getDeltaTimeT0().getUnit());

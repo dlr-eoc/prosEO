@@ -26,13 +26,13 @@ public class ConfiguredProcessorUtil {
 	 * @param modelConfiguredProcessor the prosEO model configured processor
 	 * @return an equivalent REST configured processor or null, if no model configured processor was given
 	 */
-	public static de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor toRestConfiguredProcessor(ConfiguredProcessor modelConfiguredProcessor) {
+	public static RestConfiguredProcessor toRestConfiguredProcessor(ConfiguredProcessor modelConfiguredProcessor) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestConfiguredProcessor({})", (null == modelConfiguredProcessor ? "MISSING" : modelConfiguredProcessor.getId()));
 
 		if (null == modelConfiguredProcessor)
 			return null;
 		
-		de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor restConfiguredProcessor = new de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor();
+		RestConfiguredProcessor restConfiguredProcessor = new RestConfiguredProcessor();
 		
 		restConfiguredProcessor.setId(modelConfiguredProcessor.getId());
 		restConfiguredProcessor.setVersion(Long.valueOf(modelConfiguredProcessor.getVersion()));
@@ -52,7 +52,7 @@ public class ConfiguredProcessorUtil {
 	 * @return a (roughly) equivalent model configured processor or null, if no REST processor task was given
 	 * @throws IllegalArgumentException if the REST configured processor violates syntax rules for date, enum or numeric values
 	 */
-	public static ConfiguredProcessor toModelConfiguredProcessor(de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor restConfiguredProcessor) throws IllegalArgumentException {
+	public static ConfiguredProcessor toModelConfiguredProcessor(RestConfiguredProcessor restConfiguredProcessor) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelConfiguredProcessor({})", (null == restConfiguredProcessor ? "MISSING" : restConfiguredProcessor.getIdentifier()));
 
 		if (null == restConfiguredProcessor)

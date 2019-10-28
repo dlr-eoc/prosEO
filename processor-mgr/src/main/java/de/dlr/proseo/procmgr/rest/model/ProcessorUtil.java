@@ -29,13 +29,13 @@ public class ProcessorUtil {
 	 * @param modelProcessor the prosEO model processor
 	 * @return an equivalent REST processor or null, if no model processor was given
 	 */
-	public static de.dlr.proseo.procmgr.rest.model.Processor toRestProcessor(Processor modelProcessor) {
+	public static RestProcessor toRestProcessor(Processor modelProcessor) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestProcessor({})", (null == modelProcessor ? "MISSING" : modelProcessor.getId()));
 
 		if (null == modelProcessor)
 			return null;
 		
-		de.dlr.proseo.procmgr.rest.model.Processor restProcessor = new de.dlr.proseo.procmgr.rest.model.Processor();
+		RestProcessor restProcessor = new RestProcessor();
 		
 		restProcessor.setId(modelProcessor.getId());
 		restProcessor.setVersion(Long.valueOf(modelProcessor.getVersion()));
@@ -67,7 +67,7 @@ public class ProcessorUtil {
 	 * @return a (roughly) equivalent model product or null, if no REST product was given
 	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
 	 */
-	public static Processor toModelProcessor(de.dlr.proseo.procmgr.rest.model.Processor restProcessor) throws IllegalArgumentException {
+	public static Processor toModelProcessor(RestProcessor restProcessor) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelProcessorClass({})", (null == restProcessor ? "MISSING" : restProcessor.getProcessorName()));
 
 		if (null == restProcessor)
