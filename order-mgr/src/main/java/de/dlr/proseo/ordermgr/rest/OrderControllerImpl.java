@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.ordermgr.rest.model.Order;
+import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
@@ -34,7 +34,7 @@ public class OrderControllerImpl implements OrderController {
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
 
 	@Override
-	public ResponseEntity<Order> createOrder(Order order) {
+	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
 		// TODO Auto-generated method stub
 
 		String message = String.format(MSG_PREFIX + "POST not implemented (%d)", 2001);
@@ -45,14 +45,14 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<List<Order>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
 			Date starttimeto) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ResponseEntity<Order> getOrderById(Long id) {
+	public ResponseEntity<RestOrder> getOrderById(Long id) {
 		// TODO Auto-generated method stub
 
 		String message = String.format(MSG_PREFIX + "GET for id %s not implemented (%d)", id, 2000);
@@ -63,7 +63,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<Order> modifyOrder(Long id, @Valid Order order) {
+	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
 		// TODO Auto-generated method stub
 		return null;
 	}
