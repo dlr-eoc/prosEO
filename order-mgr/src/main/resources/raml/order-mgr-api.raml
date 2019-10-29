@@ -24,12 +24,12 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Order: !include ../../../../../model/src/main/resources/raml/types/order.raml
-  OrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
-  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
-  Mission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
-  Spacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
-  Orbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
 
 
 resourceTypes:
@@ -64,30 +64,32 @@ resourceTypes:
 /orders:
   type: standard
   get:
-    description: Get orders by mission, user-defined identifier, requested product classes or start time range
+    description: Get orders by mission, user-defined identifier, requested product classes or execution start time range
+    displayName: getOrders
     queryParameters:
       mission?: string
       identifier?: string
       productClasses?: string[]
-      startTimeFrom?: datetime-only
-      startTimeTo?: datetime-only
+      executionTimeFrom?: datetime-only
+      executionTimeTo?: datetime-only
     responses:
       200:
         body:
           application/json:
-            type: Order[]
+            type: RestOrder[]
             example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
   post:
     description: Create a new order
+    displayName: createOrder
     body:
       application/json:
-        type: Order
+        type: RestOrder
         example: !include ../../../../../model/src/main/resources/raml/examples/order.json
     responses:
       201:
         body:
           application/json:
-            type: Order
+            type: RestOrder
             example: !include ../../../../../model/src/main/resources/raml/examples/order.json
   /{id}:
     uriParameters:
@@ -96,49 +98,54 @@ resourceTypes:
         format: long
     get:
       description: Get a processing order by ID
+      displayName: getOrderById
       responses:
         200:
           body:
             application/json:
-              type: Order
+              type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
     patch:
       description: Update a processing order by ID
+      displayName: modifyOrder
       body:
         application/json:
-          type: Order
+          type: RestOrder
           example: !include ../../../../../model/src/main/resources/raml/examples/order.json
       responses:
         200:
           body:
             application/json:
-              type: Order
+              type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
     delete:
       description: Delete a processing order by ID
+      displayName: deleteOrderById
       responses:
         204:
 /missions:
   type: standard
   get:
     description: Get all missions
+    displayName: getMissions
     responses:
       200:
         body:
           application/json:
-            type: Mission[]
+            type: RestMission[]
             example: !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
   post:
     description: Create a new mission
+    displayName: createMission
     body:
       application/json:
-        type: Mission
+        type: RestMission
         example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
     responses:
       201:
         body:
           application/json:
-            type: Mission
+            type: RestMission
             example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
   /{id}:
     uriParameters:
@@ -147,26 +154,29 @@ resourceTypes:
         format: long
     get:
       description: Get a mission by ID
+      displayName: getMissionById
       responses:
         200:
           body:
             application/json:
-              type: Mission
+              type: RestMission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
     patch:
       description: Update a mission by ID (including changes to the spacecraft list)
+      displayName: modifyMission
       body:
         application/json:
-          type: Mission
+          type: RestMission
           example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
       responses:
         200:
           body:
             application/json:
-              type: Mission
+              type: RestMission
               example: !include ../../../../../model/src/main/resources/raml/examples/mission.json
     delete:
       description: Delete a mission by ID
+      displayName: deleteMissionById
       responses:
         204:
 /orbits:
@@ -174,6 +184,7 @@ resourceTypes:
   get:
     description: Get orbits for a specific mission and spacecraft;
         if both an orbit number range and a time frame are set, the orbit range takes precedence
+    displayName: getOrbits
     queryParameters:
       spacecraftCode: string
       orbitNumberFrom?: integer
@@ -184,19 +195,20 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Orbit[]
+            type: RestOrbit[]
             example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
   post:
     description: Create new orbits
+    displayName: createOrbits
     body:
       application/json:
-        type: Orbit[]
+        type: RestOrbit[]
         example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
     responses:
       201:
         body:
           application/json:
-            type: Orbit[]
+            type: RestOrbit[]
             example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
   /{id}:
     uriParameters:
@@ -205,25 +217,28 @@ resourceTypes:
         format: long
     get:
       description: Get an orbit by ID
+      displayName: getOrbitById
       responses:
         200:
           body:
             application/json:
-              type: Orbit
+              type: RestOrbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
     patch:
       description: Update an orbit by ID
+      displayName: modifyOrbit
       body:
         application/json:
-          type: Orbit
+          type: RestOrbit
           example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
       responses:
         200:
           body:
             application/json:
-              type: Orbit
+              type: RestOrbit
               example: !include ../../../../../model/src/main/resources/raml/examples/orbit.json
     delete:
       description: Delete an orbit by ID
+      displayName: deleteOrbitById
       responses:
         204:
