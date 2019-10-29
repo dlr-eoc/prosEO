@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,7 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.util.SelectionItem;
 
@@ -104,6 +107,19 @@ public class ProductQueryService {
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 			return testOptionalSatisfied(productQuery);
 		}
+		
+		// Filter products available at the requested processing facility
+		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
+		List<Product> productsAtFacility = new ArrayList<>();
+		for (Product product: products) {
+			for (ProductFile productFile: product.getProductFile()) {
+				if (facility.equals(productFile.getProcessingFacility())) {
+					productsAtFacility.add(product);
+					break;
+				}
+			}
+		}
+		products = productsAtFacility;
 		
 		// Check if all conditions of the selection rule are met
 		List<Object> selectedItems = null;

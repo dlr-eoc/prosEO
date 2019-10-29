@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.SimplePolicy;
+import de.dlr.proseo.model.SimpleSelectionRule;
 
 /**
  * Utility methods for product classes, e. g. for conversion between prosEO model and REST model
@@ -53,8 +55,8 @@ public class ProductClassUtil {
 		for (ProductClass componentClass: modelProductClass.getComponentClasses()) {
 			restProductClass.getComponentClasses().add(componentClass.getProductType());
 		}
-		for (de.dlr.proseo.model.SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
-			SimpleSelectionRule restSimpleSelectionRule = new SimpleSelectionRule();
+		for (SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
+			RestSimpleSelectionRule restSimpleSelectionRule = new RestSimpleSelectionRule();
 			restSimpleSelectionRule.setId(simpleSelectionRule.getId());
 			restSimpleSelectionRule.setVersion(Long.valueOf(simpleSelectionRule.getVersion()));
 			restSimpleSelectionRule.setMode(simpleSelectionRule.getMode());
@@ -68,12 +70,12 @@ public class ProductClassUtil {
 			}
 			for (String filterConditionKey: simpleSelectionRule.getFilterConditions().keySet()) {
 				restSimpleSelectionRule.getFilterConditions().add(
-						new Parameter(filterConditionKey,
+						new RestParameter(filterConditionKey,
 								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterType().toString(),
 								simpleSelectionRule.getFilterConditions().get(filterConditionKey).getParameterValue().toString()));
 			}
-			for (de.dlr.proseo.model.SimplePolicy simplePolicy: simpleSelectionRule.getSimplePolicies()) {
-				SimplePolicy restSimplePolicy = new SimplePolicy();
+			for (SimplePolicy simplePolicy: simpleSelectionRule.getSimplePolicies()) {
+				RestSimplePolicy restSimplePolicy = new RestSimplePolicy();
 				restSimplePolicy.setId(simplePolicy.getId());
 				restSimplePolicy.setVersion(Long.valueOf(simplePolicy.getVersion()));
 				restSimplePolicy.setPolicyType(simplePolicy.getPolicyType().toString());

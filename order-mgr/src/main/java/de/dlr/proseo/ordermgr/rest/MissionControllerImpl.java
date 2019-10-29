@@ -17,8 +17,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import de.dlr.proseo.ordermgr.rest.model.Mission;
+import de.dlr.proseo.ordermgr.rest.model.RestMission;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
+import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -53,13 +56,13 @@ public class MissionControllerImpl implements MissionController {
 	 * @return a response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<Mission>> getMissions() {
+	public ResponseEntity<List<RestMission>> getMissions() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
 		
-		List<de.dlr.proseo.ordermgr.rest.model.Mission> result = new ArrayList<>();
+		List<RestMission> result = new ArrayList<>();
 		String message = String.format(HTTP_HEADER_WARNING +": " +  MSG_MISSIONS_NOT_FOUND +" "+  MSG_ID_MISSION_NOT_FOUND);
 		
-		Iterable<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findAll();
+		Iterable<Mission> modelMission = RepositoryService.getMissionRepository().findAll();
 
 		if(modelMission.spliterator().getExactSizeIfKnown() == 0) {
 			HttpHeaders responseHeaders = new HttpHeaders();
@@ -69,9 +72,9 @@ public class MissionControllerImpl implements MissionController {
 		}
 		
 		// Simple case: no search criteria set
-		for (de.dlr.proseo.model.Mission  mission: RepositoryService.getMissionRepository().findAll()) {
+		for (Mission  mission: RepositoryService.getMissionRepository().findAll()) {
 			if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
-			Mission resultMission = MissionUtil.toRestMission(mission);
+			RestMission resultMission = MissionUtil.toRestMission(mission);
 			if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
 			result.add(resultMission);
 		}		
@@ -87,10 +90,22 @@ public class MissionControllerImpl implements MissionController {
 	 * 		   contained objects) and HTTP status "CREATED"
 	 */
 	@Override
-	public ResponseEntity<Mission> createMission(@Valid Mission mission) {
+	public ResponseEntity<RestMission> createMission(@Valid RestMission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getClass());
 		
-		de.dlr.proseo.model.Mission modelMission = MissionUtil.toModelMission(mission);
+		Mission modelMission = MissionUtil.toModelMission(mission);
+		
+		modelMission.getProcessorClasses().clear();
+		for (ProcessorClass procClass : RepositoryService.getProcessorClassRepository().findAll()) {			
+			if(procClass.getMission().getCode().equals(modelMission.getCode())) {
+				modelMission.getProcessorClasses().add(procClass);
+			}		
+		}
+		
+		modelMission.getProductClasses().clear();
+		for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByMissionCode(modelMission.getCode())) {
+				modelMission.getProductClasses().add(prodClass);
+		}
 		
 		modelMission = RepositoryService.getMissionRepository().save(modelMission);
 		
@@ -107,10 +122,10 @@ public class MissionControllerImpl implements MissionController {
 	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<Mission> getMissionById(Long id) {
+	public ResponseEntity<RestMission> getMissionById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissionById({})", id);
 		
-		Optional<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
+		Optional<Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 		
 		if (modelMission.isEmpty()) {
 			String message = String.format(MSG_PREFIX + MSG_MISSION_NOT_FOUND, id, MSG_ID_MISSION_NOT_FOUND);
@@ -132,10 +147,10 @@ public class MissionControllerImpl implements MissionController {
 	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<Mission> modifyMission(Long id, @Valid Mission mission) {
+	public ResponseEntity<RestMission> modifyMission(Long id, @Valid RestMission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
 		
-		Optional<de.dlr.proseo.model.Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);
+		Optional<Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);
 		
 		if (optModelMission.isEmpty()) {
 			String message = String.format(MSG_PREFIX + MSG_MISSION_NOT_FOUND, id, MSG_ID_MISSION_NOT_FOUND);
@@ -144,11 +159,11 @@ public class MissionControllerImpl implements MissionController {
 			responseHeaders.set(HTTP_HEADER_WARNING, message);
 			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		}
-		de.dlr.proseo.model.Mission modelMission = optModelMission.get();
+		Mission modelMission = optModelMission.get();
 		
 		// Update modified attributes
 		boolean missionChanged = false;
-		de.dlr.proseo.model.Mission changedMission = MissionUtil.toModelMission(mission);
+		Mission changedMission = MissionUtil.toModelMission(mission);
 		
 		if (!modelMission.getCode().equals(changedMission.getCode())) {
 			missionChanged = true;

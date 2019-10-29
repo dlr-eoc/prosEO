@@ -27,12 +27,12 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
+import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.Processor;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClass;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
+import de.dlr.proseo.procmgr.rest.model.RestProcessor;
 import de.dlr.proseo.procmgr.rest.model.ProcessorUtil;
-import de.dlr.proseo.procmgr.rest.model.Task;
+import de.dlr.proseo.procmgr.rest.model.RestTask;
 import de.dlr.proseo.procmgr.rest.model.TaskUtil;
 
 /**
@@ -133,7 +133,7 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 * @return a Json representation of the processor after creation (with ID and version number)
 	 */
 	@Override
-	public ResponseEntity<Processor> createProcessor(Processor processor) {
+	public ResponseEntity<RestProcessor> createProcessor(RestProcessor processor) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessor({})", (null == processor ? "MISSING" : processor.getProcessorName()));
 
 		if (null == processor) {
@@ -145,8 +145,8 @@ public class ProcessorControllerImpl implements ProcessorController {
 		return transactionTemplate.execute(new TransactionCallback<>() {
 
 			@Override
-			public ResponseEntity<Processor> doInTransaction(TransactionStatus txStatus) {
-				de.dlr.proseo.model.Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
+			public ResponseEntity<RestProcessor> doInTransaction(TransactionStatus txStatus) {
+				Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
 				
 				modelProcessor.setProcessorClass(RepositoryService.getProcessorClassRepository()
 						.findByMissionCodeAndProcessorName(processor.getMissionCode(), processor.getProcessorName()));
@@ -160,8 +160,8 @@ public class ProcessorControllerImpl implements ProcessorController {
 				
 				modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
 				
-				for (Task task: processor.getTasks()) {
-					de.dlr.proseo.model.Task modelTask = TaskUtil.toModelTask(task);
+				for (RestTask task: processor.getTasks()) {
+					Task modelTask = TaskUtil.toModelTask(task);
 					modelTask.setProcessor(modelProcessor);
 					modelTask = RepositoryService.getTaskRepository().save(modelTask);
 				}
@@ -185,13 +185,13 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 * @return a list of Json objects representing processors satisfying the search criteria
 	 */
 	@Override
-	public ResponseEntity<List<Processor>> getProcessors(String mission, String processorName, String processorVersion) {
+	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, String processorName, String processorVersion) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessors({}, {}, {})", mission, processorName, processorVersion);
 		
-		List<Processor> result = new ArrayList<>();
+		List<RestProcessor> result = new ArrayList<>();
 		
 		if (null != mission && null != processorName && null != processorVersion) {
-			de.dlr.proseo.model.Processor processor = RepositoryService.getProcessorRepository()
+			Processor processor = RepositoryService.getProcessorRepository()
 					.findByMissionCodeAndProcessorNameAndProcessorVersion(mission, processorName, processorVersion);
 			if (null == processor) {
 				return new ResponseEntity<>(
@@ -221,8 +221,8 @@ public class ProcessorControllerImpl implements ProcessorController {
 				query.setParameter("processorVersion", processorVersion);
 			}
 			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.Processor) {
-					result.add(ProcessorUtil.toRestProcessor((de.dlr.proseo.model.Processor) resultObject));
+				if (resultObject instanceof Processor) {
+					result.add(ProcessorUtil.toRestProcessor((Processor) resultObject));
 				}
 			}
 			if (result.isEmpty()) {
@@ -244,7 +244,7 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 * 		   HTTP status "NOT_FOUND", if no processor with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<Processor> getProcessorById(Long id) {
+	public ResponseEntity<RestProcessor> getProcessorById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorById({})", id);
 		
 		if (null == id) {
@@ -253,7 +253,7 @@ public class ProcessorControllerImpl implements ProcessorController {
 					HttpStatus.BAD_REQUEST);
 		}
 		
-		Optional<de.dlr.proseo.model.Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
+		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		
 		if (modelProcessor.isEmpty()) {
 			return new ResponseEntity<>(
@@ -267,7 +267,7 @@ public class ProcessorControllerImpl implements ProcessorController {
 	}
 
 	@Override
-	public ResponseEntity<Processor> updateProcessor(Long id, @Valid Processor processor) {
+	public ResponseEntity<RestProcessor> modifyProcessor(Long id, @Valid RestProcessor processor) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("PATCH for processor not implemented", MSG_ID_NOT_IMPLEMENTED, id), 

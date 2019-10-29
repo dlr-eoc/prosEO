@@ -1,10 +1,10 @@
 spring:
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:postgresql://brainhost:5432/proseo
-        username: postgres
+        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=UTC
+        username: root
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
 logging:
@@ -15,7 +15,8 @@ logging:
                 proseo: TRACE
 proseo:
     productionPlanner:
-        url: https://brainhost:8091/proseo/planner/v0.1
+        url: https://localhost:8091/proseo/planner/v0.1
+        proseo:
     user:
         name: user
         password: password

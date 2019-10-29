@@ -27,12 +27,10 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.Configuration;
-import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
-import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessor;
+import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
-import de.dlr.proseo.procmgr.rest.model.Processor;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage configured processor versions.
@@ -137,12 +135,12 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @return a list of Json objects representing configured processors satisfying the search criteria
 	 */
 	@Override
-	public ResponseEntity<List<ConfiguredProcessor>> getConfiguredProcessors(String mission, String processorName,
+	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String processorName,
 			String processorVersion, String configurationVersion) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {})", 
 				mission, processorName, processorVersion, configurationVersion);
 		
-		List<ConfiguredProcessor> result = new ArrayList<>();
+		List<RestConfiguredProcessor> result = new ArrayList<>();
 		
 		String jpqlQuery = "select c from ConfiguredProcessor c where 1 = 1";
 		if (null != mission) {
@@ -171,8 +169,8 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 			query.setParameter("configurationVersion", configurationVersion);
 		}
 		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof de.dlr.proseo.model.ConfiguredProcessor) {
-				result.add(ConfiguredProcessorUtil.toRestConfiguredProcessor((de.dlr.proseo.model.ConfiguredProcessor) resultObject));
+			if (resultObject instanceof ConfiguredProcessor) {
+				result.add(ConfiguredProcessorUtil.toRestConfiguredProcessor((ConfiguredProcessor) resultObject));
 			}
 		}
 		if (result.isEmpty()) {
@@ -193,7 +191,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @return a Json representation of the configured processor after creation (with ID and version number)
 	 */
 	@Override
-	public ResponseEntity<ConfiguredProcessor> createConfiguredProcessor(@Valid ConfiguredProcessor configuredProcessor) {
+	public ResponseEntity<RestConfiguredProcessor> createConfiguredProcessor(@Valid RestConfiguredProcessor configuredProcessor) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguredProcessor({})", (null == configuredProcessor ? "MISSING" : configuredProcessor.getProcessorName()));
 
 		if (null == configuredProcessor) {
@@ -205,7 +203,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		return transactionTemplate.execute(new TransactionCallback<>() {
 
 			@Override
-			public ResponseEntity<ConfiguredProcessor> doInTransaction(TransactionStatus txStatus) {
+			public ResponseEntity<RestConfiguredProcessor> doInTransaction(TransactionStatus txStatus) {
 				de.dlr.proseo.model.ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
 				
 				modelConfiguredProcessor.setProcessor(RepositoryService.getProcessorRepository()
@@ -249,7 +247,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * 		   HTTP status "NOT_FOUND", if no configured processor with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<ConfiguredProcessor> getConfiguredProcessorById(Long id) {
+	public ResponseEntity<RestConfiguredProcessor> getConfiguredProcessorById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessorById({})", id);
 		
 		if (null == id) {
@@ -272,7 +270,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	}
 
 	@Override
-	public ResponseEntity<ConfiguredProcessor> updateConfiguredProcessor(Long id, @Valid ConfiguredProcessor configuredProcessor) {
+	public ResponseEntity<RestConfiguredProcessor> modifyConfiguredProcessor(Long id, @Valid RestConfiguredProcessor configuredProcessor) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("PATCH for configured processor not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
@@ -280,7 +278,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	}
 
 	@Override
-	public ResponseEntity<?> deleteConfiguredprocessorById(Long id) {
+	public ResponseEntity<?> deleteConfiguredProcessorById(Long id) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("DELETE for configured processor not implemented", MSG_ID_NOT_IMPLEMENTED, id), 

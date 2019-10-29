@@ -22,10 +22,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
-public class Ingestor {
+public class IngestorApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(Ingestor.class, args);
+		SpringApplication.run(IngestorApplication.class, args);
 	}
 
 }

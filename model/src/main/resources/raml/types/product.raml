@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  Product:
+#  RestProduct:
     type: object
     properties:
       id?:
@@ -50,9 +50,9 @@
           spacecraftCode: string
           orbitNumber: integer
       productFile?:
-        type: ProductFile[]
+        type: RestProductFile[]
         description: Product files for this product
       parameters:
-        type: Parameter[]
+        type: RestParameter[]
         description: A collection of mission-specific parameters for this object
       # The remaining attributes are not exposed on the REST interface  

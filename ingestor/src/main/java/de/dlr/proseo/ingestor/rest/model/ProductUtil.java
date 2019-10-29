@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductFile;
 
 /**
  * Utility methods for products, e. g. for conversion between prosEO model and REST model
@@ -72,21 +73,19 @@ public class ProductUtil {
 			restOrbit.setSpacecraftCode(modelOrbit.getSpacecraft().getCode());
 			restProduct.setOrbit(restOrbit);
 		}
-		for (de.dlr.proseo.model.ProductFile modelFile: modelProduct.getProductFile()) {
-			ProductFile restFile = new ProductFile();
+		for (ProductFile modelFile: modelProduct.getProductFile()) {
+			RestProductFile restFile = new RestProductFile();
 			restFile.setId(modelFile.getId());
 			restFile.setVersion(Long.valueOf(modelFile.getVersion()));
 			restFile.setProcessingFacilityName(modelFile.getProcessingFacility().getName());
 			restFile.setProductFileName(modelFile.getProductFileName());
 			restFile.setFilePath(modelFile.getFilePath());
 			restFile.setStorageType(modelFile.getStorageType().toString());
-			for (String modelAuxFileName: modelFile.getAuxFileNames()) {
-				restFile.getAuxFileNames().add(modelAuxFileName);
-			}
+			restFile.getAuxFileNames().addAll(modelFile.getAuxFileNames());
 			restProduct.getProductFile().add(restFile);
 		}
 		for (String productParameterKey: modelProduct.getParameters().keySet()) {
-			Parameter restParameter = new Parameter(
+			RestParameter restParameter = new RestParameter(
 					productParameterKey,
 					modelProduct.getParameters().get(productParameterKey).getParameterType().toString(),
 					modelProduct.getParameters().get(productParameterKey).getParameterValue().toString());
@@ -135,7 +134,7 @@ public class ProductUtil {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid product generation time '%s'", restProduct.getGenerationTime()));
 		}
-		for (Parameter restParameter: restProduct.getParameters()) {
+		for (RestParameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
 				modelParameter.setParameterType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));

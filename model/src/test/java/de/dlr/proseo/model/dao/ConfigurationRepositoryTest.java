@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;

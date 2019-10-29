@@ -5,20 +5,19 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -29,9 +28,6 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -41,30 +37,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.ingestor.Ingestor;
+import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
-import de.dlr.proseo.ingestor.rest.model.ProductUtil;
-import de.dlr.proseo.ingestor.rest.model.RestProduct;
+import de.dlr.proseo.ingestor.rest.model.RestParameter;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
-import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.dao.ProductClassRepository;
-import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -73,7 +61,7 @@ import de.dlr.proseo.model.service.RepositoryService;
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = Ingestor.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 // Not transactional to make sure newly created objects are visible for the Ingestor
 //@Transactional
@@ -90,7 +78,7 @@ public class IngestorControllerTest {
 	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
 	private static final String TEST_NAME = "Test Facility";
 	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
-	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
+//	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_SC_CODE = "XYZ";
 	private static final int TEST_ORBIT_NUMBER = 4712;
@@ -240,6 +228,7 @@ public class IngestorControllerTest {
 			mission = new Mission();
 			mission.setCode(TEST_CODE);
 			mission.getFileClasses().add(TEST_FILE_CLASS);
+			mission.getProcessingModes().add(TEST_MODE_OFFL);
 			mission = RepositoryService.getMissionRepository().save(mission);
 		}
 		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -311,9 +300,9 @@ public class IngestorControllerTest {
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());
-		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+		ingestorProduct.getParameters().add(new RestParameter(
 				"copernicusCollection", "STRING", "01"));
-		ingestorProduct.getParameters().add(new de.dlr.proseo.ingestor.rest.model.Parameter(
+		ingestorProduct.getParameters().add(new RestParameter(
 				"revision", "STRING", "99"));
 		List<IngestorProduct> ingestorProducts = new ArrayList<>();
 		ingestorProducts.add(ingestorProduct);

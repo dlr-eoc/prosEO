@@ -34,13 +34,13 @@ public class ConfigurationUtil {
 	 * @param modelConfiguration the prosEO model configuration
 	 * @return an equivalent REST configuration or null, if no model configuration was given
 	 */
-	public static de.dlr.proseo.procmgr.rest.model.Configuration toRestConfiguration(Configuration modelConfiguration) {
+	public static RestConfiguration toRestConfiguration(Configuration modelConfiguration) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestConfiguration({})", (null == modelConfiguration ? "MISSING" : modelConfiguration.getId()));
 
 		if (null == modelConfiguration)
 			return null;
 		
-		de.dlr.proseo.procmgr.rest.model.Configuration restConfiguration = new de.dlr.proseo.procmgr.rest.model.Configuration();
+		RestConfiguration restConfiguration = new RestConfiguration();
 		
 		restConfiguration.setId(modelConfiguration.getId());
 		restConfiguration.setVersion(Long.valueOf(modelConfiguration.getVersion()));
@@ -55,7 +55,7 @@ public class ConfigurationUtil {
 		
 		for (String paramKey: modelConfiguration.getDynProcParameters().keySet()) {
 			restConfiguration.getDynProcParameters().add(
-				new de.dlr.proseo.procmgr.rest.model.Parameter(paramKey,
+				new RestParameter(paramKey,
 						modelConfiguration.getDynProcParameters().get(paramKey).getParameterType().toString(),
 						modelConfiguration.getDynProcParameters().get(paramKey).getParameterValue()));
 		}
@@ -67,7 +67,7 @@ public class ConfigurationUtil {
 		
 		for (ConfigurationInputFile staticInputFile: modelConfiguration.getStaticInputFiles()) {
 			restConfiguration.getStaticInputFiles().add(
-				new de.dlr.proseo.procmgr.rest.model.ConfigurationInputFile(
+				new RestConfigurationInputFile(
 						staticInputFile.getId(), Long.valueOf(staticInputFile.getVersion()), staticInputFile.getFileType(), 
 						staticInputFile.getFileNameType(), new ArrayList<>(staticInputFile.getFileNames())));
 		}
@@ -82,7 +82,7 @@ public class ConfigurationUtil {
 	 * @return a (roughly) equivalent model configuration or null, if no REST configuration was given
 	 * @throws IllegalArgumentException if the REST configuration violates syntax rules for date, enum or numeric values
 	 */
-	public static Configuration toModelConfiguration(de.dlr.proseo.procmgr.rest.model.Configuration restConfiguration) throws IllegalArgumentException {
+	public static Configuration toModelConfiguration(RestConfiguration restConfiguration) throws IllegalArgumentException {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> toModelConfiguration({})", (null == restConfiguration ? "MISSING" : 
 				restConfiguration.getProcessorName() + "/" + restConfiguration.getConfigurationVersion()));
@@ -108,7 +108,7 @@ public class ConfigurationUtil {
 			modelConfiguration.getConfigurationFiles().add(modelConfigurationFile);
 		}
 		
-		for (de.dlr.proseo.procmgr.rest.model.Parameter restDynProcParam: restConfiguration.getDynProcParameters()) {
+		for (RestParameter restDynProcParam: restConfiguration.getDynProcParameters()) {
 			Parameter modelDynProcParam = new Parameter();
 			modelDynProcParam.init(ParameterType.valueOf(restDynProcParam.getParameterType()), restDynProcParam.getParameterValue());
 			modelConfiguration.getDynProcParameters().put(restDynProcParam.getKey(), modelDynProcParam);

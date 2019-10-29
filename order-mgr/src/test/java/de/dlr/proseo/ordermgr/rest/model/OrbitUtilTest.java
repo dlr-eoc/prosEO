@@ -10,6 +10,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.ordermgr.rest.MissionControllerTest;
 
 /**
@@ -29,7 +33,7 @@ public class OrbitUtilTest {
 	};
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(MissionControllerTest.class);
+	private static Logger logger = LoggerFactory.getLogger(OrbitUtilTest.class);
 	
 	/**
 	 * Create an orbit from a data array
@@ -37,11 +41,11 @@ public class OrbitUtilTest {
 	 * @param testData an array of Strings representing the orbit to create
 	 * @return a Orbit with its attributes set to the input data
 	 */
-	private de.dlr.proseo.model.Orbit createOrbit(String[] testData) {		
+	private Orbit createOrbit(String[] testData) {		
 		logger.info("... creating orbit ");
-		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
-		de.dlr.proseo.model.Spacecraft testSpacecraft = new de.dlr.proseo.model.Spacecraft();
-		de.dlr.proseo.model.Orbit testOrbit = new de.dlr.proseo.model.Orbit();
+		Mission testMission = new Mission();
+		Spacecraft testSpacecraft = new Spacecraft();
+		Orbit testOrbit = new Orbit();
 	
 		//Adding mission parameters
 		testMission.setId(Long.parseLong(testData[0]));
@@ -56,8 +60,8 @@ public class OrbitUtilTest {
 
 		//Adding orbit parameters
 		testOrbit.setOrbitNumber(Integer.valueOf(testData[10]));
-		testOrbit.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[11])));
-		testOrbit.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[12])));
+		testOrbit.setStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[11])));
+		testOrbit.setStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[12])));
 		testOrbit.setSpacecraft(testSpacecraft);
 
 		logger.info("Created test orbit {}", testOrbit.getId());
@@ -95,8 +99,8 @@ public class OrbitUtilTest {
 	@Test
 	public final void test() {
 		// Create an empty product
-		de.dlr.proseo.model.Orbit modelorbit = new de.dlr.proseo.model.Orbit();
-		Orbit restOrbit = new Orbit();
+		Orbit modelorbit = new Orbit();
+		RestOrbit restOrbit = new RestOrbit();
 
 		assertNull("Unexpected number for new orbit: ",  restOrbit.getOrbitNumber());
 		assertNull("Unexpected Spacecraft code for new orbit: ", restOrbit.getSpacecraftCode());
@@ -108,9 +112,9 @@ public class OrbitUtilTest {
 		assertEquals("Unexpected ID: ", modelorbit.getId(), restOrbit.getId().longValue());
 		assertEquals("Unexpected orbit number: ", Long.valueOf(modelorbit.getOrbitNumber()),restOrbit.getOrbitNumber());
 		//assertEquals("Unexpected Spacecrafts: ", modelorbit.getSpacecraft().getCode(),restOrbit.getSpacecraftCode());
-		assertEquals("Unexpected start time: ", de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelorbit.getStartTime()),
+		assertEquals("Unexpected start time: ", Orbit.orbitTimeFormatter.format(modelorbit.getStartTime()),
 				restOrbit.getStartTime());
-		assertEquals("Unexpected stop time: ", de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelorbit.getStopTime()),
+		assertEquals("Unexpected stop time: ", Orbit.orbitTimeFormatter.format(modelorbit.getStopTime()),
 				restOrbit.getStopTime());
 
 		logger.info("Test copy model to REST OK");

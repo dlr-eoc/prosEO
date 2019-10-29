@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  Configuration:
+#  RestConfiguration:
     type: object
     properties:
       id?:
@@ -19,7 +19,7 @@
         type: string
         description: Version identification of the configuration environment
       dynProcParameters:
-        type: Parameter[]
+        type: RestParameter[]
         description: Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator
       configurationFiles:
         type: array
@@ -30,7 +30,7 @@
             fileVersion: string
             fileName: string
       staticInputFiles:
-        type: ConfigurationInputFile[]
+        type: RestConfigurationInputFile[]
         description: Static input files for inclusion in generated Job Order Files
       configuredProcessors:
         type: string[]

@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  Processor:
+#  RestProcessor:
     type: object
     properties:
       id?:
@@ -34,7 +34,7 @@
         type: string[]
         description: The names for the processor configurations this processor version is valid for
       tasks:
-        type: Task[]
+        type: RestTask[]
         description: List of tasks for this processor
       dockerImage:
         type: string

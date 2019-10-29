@@ -27,9 +27,11 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
+import de.dlr.proseo.model.Configuration;
+import de.dlr.proseo.model.ConfigurationInputFile;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.Configuration;
-import de.dlr.proseo.procmgr.rest.model.ConfigurationInputFile;
+import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
+import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 
 /**
@@ -137,11 +139,11 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @return a list of Json objects representing configurations satisfying the search criteria
 	 */
 	@Override
-	public ResponseEntity<List<Configuration>> getConfigurations(String mission, String processorName,
+	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
 			String configurationVersion) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 		
-		List<Configuration> result = new ArrayList<>();
+		List<RestConfiguration> result = new ArrayList<>();
 		
 		if (null != mission && null != processorName && null != configurationVersion) {
 			de.dlr.proseo.model.Configuration processor = RepositoryService.getConfigurationRepository()
@@ -196,7 +198,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @return a Json representation of the configuration after creation (with ID and version number)
 	 */
 	@Override
-	public ResponseEntity<Configuration> createConfiguration(@Valid Configuration configuration) {
+	public ResponseEntity<RestConfiguration> createConfiguration(@Valid RestConfiguration configuration) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguration({})", (null == configuration ? "MISSING" : configuration.getProcessorName()));
 
 		if (null == configuration) {
@@ -208,8 +210,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 		return transactionTemplate.execute(new TransactionCallback<>() {
 
 			@Override
-			public ResponseEntity<Configuration> doInTransaction(TransactionStatus txStatus) {
-				de.dlr.proseo.model.Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
+			public ResponseEntity<RestConfiguration> doInTransaction(TransactionStatus txStatus) {
+				Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 				
 				modelConfiguration.setProcessorClass(RepositoryService.getProcessorClassRepository()
 						.findByMissionCodeAndProcessorName(configuration.getMissionCode(), configuration.getProcessorName()));
@@ -221,8 +223,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 							HttpStatus.BAD_REQUEST);
 				}
 				
-				for (ConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
-					de.dlr.proseo.model.ConfigurationInputFile modelInputFile = new de.dlr.proseo.model.ConfigurationInputFile();
+				for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
+					ConfigurationInputFile modelInputFile = new ConfigurationInputFile();
 					if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType())) {
 						txStatus.setRollbackOnly();
 						return new ResponseEntity<>(
@@ -255,7 +257,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * 		   HTTP status "NOT_FOUND", if no configuration with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<Configuration> getConfigurationById(Long id) {
+	public ResponseEntity<RestConfiguration> getConfigurationById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurationById({})", id);
 		
 		if (null == id) {
@@ -278,7 +280,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	}
 
 	@Override
-	public ResponseEntity<Configuration> updateConfiguration(Long id, @Valid Configuration configuration) {
+	public ResponseEntity<RestConfiguration> modifyConfiguration(Long id, @Valid RestConfiguration configuration) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
 				errorHeaders("PATCH for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
