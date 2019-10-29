@@ -6,7 +6,7 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.Orbit;
 
 public class OrbitUtil {
 	/** A logger for this class */
@@ -19,13 +19,13 @@ public class OrbitUtil {
 	 * @param modelOrbit the prosEO model Orbit
 	 * @return an equivalent REST Orbit or null, if no model Orbit was given
 	 */
-	public static Orbit toRestOrbit(de.dlr.proseo.model.Orbit modelOrbit) {
+	public static RestOrbit toRestOrbit(Orbit modelOrbit) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestOrbit({})", (null == modelOrbit ? "MISSING" : modelOrbit.getId()));
 	
 		if (null == modelOrbit)
 			return null;
 		
-		Orbit restOrbit = new Orbit();
+		RestOrbit restOrbit = new RestOrbit();
 		
 		restOrbit.setId(modelOrbit.getId());
 		restOrbit.setVersion(Long.valueOf(modelOrbit.getVersion()));
@@ -59,28 +59,29 @@ public class OrbitUtil {
 	 * @return a (roughly) equivalent model orbit
 	 * @throws IllegalArgumentException if the REST orbit violates syntax rules for date, enum or numeric values
 	 */
-	public static de.dlr.proseo.model.Orbit toModelOrbit(Orbit restOrbit) throws IllegalArgumentException {
+	public static Orbit toModelOrbit(RestOrbit restOrbit) throws IllegalArgumentException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrbit({})", (null == restOrbit ? "MISSING" : restOrbit.getId()));
 
-		de.dlr.proseo.model.Orbit modelOrbit = new de.dlr.proseo.model.Orbit();
+		Orbit modelOrbit = new Orbit();
 		
-		modelOrbit.setId(restOrbit.getId());
-
-		while (modelOrbit.getVersion() < restOrbit.getVersion()) {
-			modelOrbit.incrementVersion();
+		if (null != restOrbit.getId() && 0 != restOrbit.getId()) {
+			modelOrbit.setId(restOrbit.getId());
+			while (modelOrbit.getVersion() < restOrbit.getVersion()) {
+				modelOrbit.incrementVersion();
+			} 
 		}
 		modelOrbit.setOrbitNumber(restOrbit.getOrbitNumber().intValue());
 		
 		try {
 			modelOrbit.setStartTime(
-					Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restOrbit.getStartTime())));
+					Instant.from(Orbit.orbitTimeFormatter.parse(restOrbit.getStartTime())));
 			
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrbit.getStartTime()));
 		}
 		try {
-			modelOrbit.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restOrbit.getStopTime())));
+			modelOrbit.setStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(restOrbit.getStopTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrbit.getStartTime()));
 		}
