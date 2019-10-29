@@ -7,8 +7,6 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
-import java.util.Optional;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -27,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for ConfiguredProcessorRepository

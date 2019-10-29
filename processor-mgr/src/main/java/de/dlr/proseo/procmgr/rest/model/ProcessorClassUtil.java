@@ -27,13 +27,13 @@ public class ProcessorClassUtil {
 	 * @param modelProcessorClass the prosEO model product
 	 * @return an equivalent REST product or null, if no model product was given
 	 */
-	public static de.dlr.proseo.procmgr.rest.model.ProcessorClass toRestProcessorClass(ProcessorClass modelProcessorClass) {
+	public static RestProcessorClass toRestProcessorClass(ProcessorClass modelProcessorClass) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestProcessorClass({})", (null == modelProcessorClass ? "MISSING" : modelProcessorClass.getId()));
 
 		if (null == modelProcessorClass)
 			return null;
 		
-		de.dlr.proseo.procmgr.rest.model.ProcessorClass restProcessorClass = new de.dlr.proseo.procmgr.rest.model.ProcessorClass();
+		RestProcessorClass restProcessorClass = new RestProcessorClass();
 		
 		restProcessorClass.setId(modelProcessorClass.getId());
 		restProcessorClass.setVersion(Long.valueOf(modelProcessorClass.getVersion()));
@@ -54,7 +54,7 @@ public class ProcessorClassUtil {
 	 * @return a (roughly) equivalent model product or null, if no REST product was given
 	 * @throws IllegalArgumentException if the REST product violates syntax rules for date, enum or numeric values
 	 */
-	public static ProcessorClass toModelProcessorClass(de.dlr.proseo.procmgr.rest.model.ProcessorClass restProcessorClass) throws IllegalArgumentException {
+	public static ProcessorClass toModelProcessorClass(RestProcessorClass restProcessorClass) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelProcessorClass({})", (null == restProcessorClass ? "MISSING" : restProcessorClass.getProcessorName()));
 
 		if (null == restProcessorClass)

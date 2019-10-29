@@ -1,5 +1,5 @@
 #%RAML 1.0 DataType
-#  ProductClass:
+#  RestProductClass:
     type: object
     properties:
       id?:
@@ -31,5 +31,5 @@
         type: string
         description: User-defined unique processor class name for the processor class that can generate products of this class
       selectionRule?:
-        type: SelectionRule
+        type: RestSelectionRule
         description: The (set of) selection rules applicable for this product class

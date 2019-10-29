@@ -14,7 +14,9 @@ logging:
         de:
             dlr:
                 proseo: TRACE
-proseo:               
+proseo:
+    global:
+      storageIdPrefix: proseo
     procFacility:
       name: devel
       url: http://localhost:9887/k8s-api-endpoint
@@ -43,4 +45,3 @@ proseo:
       unregisteredProducts:
         k8sNode:
           unregisteredProducts: /mnt/some-dir
-          

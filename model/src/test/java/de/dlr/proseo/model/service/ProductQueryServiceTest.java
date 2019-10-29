@@ -34,10 +34,12 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.ProcessingFacility;
 
 /**
  * Test class for ProductQueryService
@@ -64,6 +66,7 @@ public class ProductQueryServiceTest {
 	private static final Instant TEST_STOP_TIME_EARLY = Instant.parse("2009-08-30T01:00:00Z");
 	private static final Instant TEST_START_TIME_LATE = Instant.parse("2009-08-30T01:00:00Z");
 	private static final Instant TEST_STOP_TIME_LATE = Instant.parse("2009-08-30T03:00:00Z");
+	private static final String TEST_FACILITY = "Test Facility";
 
 	/* Test products */
 	private static String[][] testProductData = {
@@ -112,9 +115,10 @@ public class ProductQueryServiceTest {
 	 * Create a product from a data array
 	 * 
 	 * @param testData an array of Strings representing the product to create
+	 * @param facility TODO
 	 * @return a Product with its attributes set to the input data
 	 */
-	private Product createProduct(String[] testData) {
+	private Product createProduct(String[] testData, ProcessingFacility facility) {
 		Product testProduct = new Product();
 		
 		testProduct.setProductClass(
@@ -127,6 +131,9 @@ public class ProductQueryServiceTest {
 		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+		ProductFile testProductFile = new ProductFile();
+		testProductFile.setProcessingFacility(facility);
+		testProduct.getProductFile().add(testProductFile);
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
 		logger.info("Created test product {} with start time = {} and stop time = {}", testProduct.getId(), testProduct.getSensingStartTime().toString(), testProduct.getSensingStopTime().toString());
@@ -176,12 +183,22 @@ public class ProductQueryServiceTest {
 		}
 		logger.info("Using source product class " + sourceProdClass.getProductType() + " with id " + sourceProdClass.getId());
 		
-		Product product0 = createProduct(testProductData[0]);
-		Product product1 = createProduct(testProductData[1]);
+		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_FACILITY);
+		if (null == facility) {
+			logger.trace("Creating processing facility ...");
+			facility = new ProcessingFacility();
+			facility.setName(TEST_FACILITY);
+			facility = RepositoryService.getFacilityRepository().save(facility);
+		}
+		logger.info("Using processing facility " + facility.getName());
+		
+		createProduct(testProductData[0], facility);
+		createProduct(testProductData[1], facility);
 		
 		logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		Job jobEarly = new Job();
+		jobEarly.setProcessingFacility(facility);
 		jobEarly.setStartTime(TEST_START_TIME_EARLY);
 		jobEarly.setStopTime(TEST_STOP_TIME_EARLY);
 		JobStep jobStepEarly = new JobStep();
@@ -189,6 +206,7 @@ public class ProductQueryServiceTest {
 		jobStepEarly.setProcessingMode(TEST_MODE);
 		
 		Job jobLate = new Job();
+		jobLate.setProcessingFacility(facility);
 		jobLate.setStartTime(TEST_START_TIME_LATE);
 		jobLate.setStopTime(TEST_STOP_TIME_LATE);
 		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));

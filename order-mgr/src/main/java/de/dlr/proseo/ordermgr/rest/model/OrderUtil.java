@@ -1,37 +1,19 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.DateTimeException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.hibernate.internal.util.compare.CalendarComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
-
-import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
 import de.dlr.proseo.model.ProcessingOrder.OrderState;
-import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.Parameter;
-import scala.sys.process.ProcessBuilderImpl.OrBuilder;
 public class OrderUtil {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
@@ -46,13 +28,13 @@ public class OrderUtil {
 	 */
 
 	@SuppressWarnings("unchecked")
-	public static Order toRestOrder(ProcessingOrder processingOrder) {
+	public static RestOrder toRestOrder(ProcessingOrder processingOrder) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestOrder({})", (null == processingOrder ? "MISSING" : processingOrder.getId()));
 		
 		if (null == processingOrder)
 			return null;
 		
-		Order restOrder = new Order();
+		RestOrder restOrder = new RestOrder();
 		
 		restOrder.setId(processingOrder.getId());
 		restOrder.setVersion(Long.valueOf(processingOrder.getVersion()));
@@ -85,29 +67,30 @@ public class OrderUtil {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
 		//to be added Slice Overlap
+		restOrder.setSliceOverlap((long) 20);
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 
-		if (null != processingOrder.getFilterConditions()) {
-			
-			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
-				restOrder.getFilterConditions().add(
-					new de.dlr.proseo.ordermgr.rest.model.Parameter(paramKey,
-							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
-							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
-			}
-			
-		}
-		if(null != processingOrder.getOutputParameters()) {
-			
-			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
-				restOrder.getOutputParameters().add(
-					new Parameter(paramKey,
-							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
-							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
-			}
-		}
+//		if (null != processingOrder.getFilterConditions()) {
+//			
+//			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
+//				restOrder.getFilterConditions().addAll(
+//					new de.dlr.proseo.ordermgr.rest.model.Parameter(paramKey,
+//							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
+//							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
+//			}
+//			
+//		}
+//		if(null != processingOrder.getOutputParameters()) {
+//			
+//			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
+//				restOrder.getOutputParameters().add(
+//					new Parameter(paramKey,
+//							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
+//							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
+//			}
+//		}
 		if (null != processingOrder.getRequestedProductClasses()) {
 			
 			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {
@@ -129,10 +112,14 @@ public class OrderUtil {
 			}
 		}	
 		
+		if(null != processingOrder.getOutputFileClass()) {
+			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
+		}
+		
 		//The orbit range should be altered to accommodate more ranges than just everything in between min and max
 		if (null != processingOrder.getRequestedOrbits()) {
 			
-			List<OrbitQuery> orbitQueries = new ArrayList<OrbitQuery>();
+			List<RestOrbitQuery> orbitQueries = new ArrayList<RestOrbitQuery>();
 			
 			//Get all the orbit numbers for the requested Orbits 
 			List<Long> orbNumber = new ArrayList<Long>();
@@ -141,7 +128,7 @@ public class OrderUtil {
 			}
 			
 			for (de.dlr.proseo.model.Orbit orbit : processingOrder.getRequestedOrbits()) {
-				OrbitQuery orbitQuery = new OrbitQuery();
+				RestOrbitQuery orbitQuery = new RestOrbitQuery();
 				orbitQuery.setSpacecraftCode(orbit.getSpacecraft().getCode());
 				//Set the range for OrbitNumbers assuming the smallest as OrbitNumberFrom and the highest as OrbitNumberTo
 				orbitQuery.setOrbitNumberFrom(Collections.min(orbNumber));
@@ -164,7 +151,7 @@ public class OrderUtil {
 	 * @throws IllegalArgumentException if the REST order violates syntax rules for date, enum or numeric values
 	 */
 	@SuppressWarnings("unchecked")
-	public static ProcessingOrder toModelOrder(Order restOrder) {
+	public static ProcessingOrder toModelOrder(RestOrder restOrder) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrder({})", (null == restOrder ? "MISSING" : restOrder.getId()));
 		
@@ -199,13 +186,13 @@ public class OrderUtil {
 		//processingOrder.setSliceDuration(Duration.from(restOrder.getSliceDuration()));
 		
 		//The following section needs to be verified
-		for (Parameter restParam : restOrder.getFilterConditions()) {
+		for (RestParameter restParam : restOrder.getFilterConditions()) {
 			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
 			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
 			processingOrder.getFilterConditions().put(restParam.getKey(), modelParam);
 		}
 		
-		for (Parameter restParam: restOrder.getOutputParameters()) {
+		for (RestParameter restParam: restOrder.getOutputParameters()) {
 			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
 			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
 			processingOrder.getOutputParameters().put(restParam.getKey(), modelParam);

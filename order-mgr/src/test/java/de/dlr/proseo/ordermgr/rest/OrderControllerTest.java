@@ -1,7 +1,7 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManagerFactory;
-
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Test;
@@ -28,15 +27,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
 import de.dlr.proseo.model.ProcessingOrder.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
-import de.dlr.proseo.ordermgr.rest.model.Orbit;
-import de.dlr.proseo.ordermgr.rest.model.Order;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
+import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -70,10 +69,10 @@ public class OrderControllerTest {
 	
 	/* Test orders */
 	private static String[][] testOrderData = {
-		// mission_id, mission_version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name, order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,start_time, stop_time
-		{ "1", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandom-X", "111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","30","TIME_SLICE","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000"},
-		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X", "112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000"},
-		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X",	"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000"}
+		// mission_id, mission_version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name, order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,start_time, stop_time,output_file_class
+		{ "1", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandom-X", "111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","30","ORBIT","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000","TEST"},
+		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X", "112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000","TEST"},
+		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X",	"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000","TEST"}
 		
 		
 	};
@@ -119,19 +118,24 @@ public class OrderControllerTest {
 			logger.info("Found test order {}", testOrder.getId());
 			return testOrder = RepositoryService.getOrderRepository().findByIdentifier(testData[10]);	
 		}
-		//Adding processing order parameters
-		testOrder.setId(Long.parseLong(testData[7]));
-		testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
-		testOrder.setIdentifier(testData[10]);
-		testOrder.setOrderState(OrderState.valueOf(testData[11]));
-		testOrder.setProcessingMode(testData[10]);
-//		testOrder.setSliceDuration(testData[13]);
-//		testOrder.setSlicingType(OrderSlicingType.valueOf(testData[14]));
-		testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[15])));
-		testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[16])));
-		testOrder.setMission(testMission);
-		
-		testOrder = RepositoryService.getOrderRepository().save(testOrder);
+		else{
+			//Adding processing order parameters
+			testOrder.setMission(testMission);
+			testOrder.setId(Long.parseLong(testData[7]));
+			testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
+			testOrder.setIdentifier(testData[10]);
+			testOrder.setOrderState(OrderState.valueOf(testData[11]));
+			testOrder.setProcessingMode(testData[10]);
+			testOrder.setSlicingType(OrderSlicingType.valueOf(testData[14]));
+//			//If Slice_TYpe is ORBIT then slice duration can be null
+//			//To be filled only if Slice_TYpe is TIME_SLICE
+//			if(testOrder.getSlicingType().toString().equals("ORBIT"))
+//			testOrder.setSliceDuration(null);
+			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[15])));
+			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[16])));
+			testOrder.setOutputFileClass(testData[17]);
+			testOrder = RepositoryService.getOrderRepository().save(testOrder);
+		}
 		
 		logger.info("Created test order {}", testOrder.getId());
 		return testOrder;
@@ -184,17 +188,17 @@ public class OrderControllerTest {
 	 * 
 	 * Test: Create a new order
 	 */
-	@Test
+/*	@Test
 	public final void testCreateOrder() {
 		// Create an order in the database
 		ProcessingOrder orderToCreate = createOrder(testOrderData[1]);
-		Order restOrder = OrderUtil.toRestOrder(orderToCreate);
+		RestOrder restOrder = OrderUtil.toRestOrder(orderToCreate);
 
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<Order> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restOrder, Order.class);
+		ResponseEntity<RestOrder> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restOrder, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restOrder = postEntity.getBody();
 
@@ -209,7 +213,7 @@ public class OrderControllerTest {
 		// Clean up database
 		ArrayList<ProcessingOrder> testOrder = new ArrayList<>();
 		testOrder.add(orderToCreate);
-		deleteTestOrders(testOrder);
+		//deleteTestOrders(testOrder);
 
 		logger.info("Test OK: Create order");		
 	}	
@@ -235,8 +239,8 @@ public class OrderControllerTest {
 		new TestRestTemplate(config.getUserName(), config.getUserPassword()).delete(testUrl);
 		
 		// Test that the order is gone
-		ResponseEntity<Order> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, Order.class);
+		ResponseEntity<RestOrder> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
 		// Clean up database
@@ -261,16 +265,68 @@ public class OrderControllerTest {
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders/" + orderToFind.getId();
 		logger.info("Testing URL {} / GET", testUrl);
 
-		ResponseEntity<Order> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, Order.class);
+		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong orbit ID: ", orderToFind.getId(), getEntity.getBody().getId().longValue());
 		
 		// Clean up database
-		deleteTestOrders(testOrders);
+		//deleteTestOrders(testOrders);
 
 		logger.info("Test OK: Get Order By ID");
 	}
-*/	
+	
+	/**
+	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl.modifyOrder(Long, RestOrder)}.
+	 * 
+	 * Test: Update an Order by ID
+	 * Precondition: At least one orbit with a known ID is in the database 
+	 */
+	
+	@Test
+	public final void testModifyOrder() {
+		// Make sure test orbits exist
+		List<ProcessingOrder> testOrders = createTestOrders();
+		ProcessingOrder orderToModify = testOrders.get(0);
+		
+		// Update a orbit attribute
+		orderToModify.setIdentifier("Mod_XYZG");
+		
+		RestOrder restOrder = OrderUtil.toRestOrder(orderToModify);		
+		logger.info("RestOrder modified identifier: "+restOrder.getIdentifier());
+
+		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders/" + orderToModify.getId();
+		logger.info("Testing URL {} / PATCH", testUrl);
+
+		restOrder = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.patchForObject(testUrl, restOrder, RestOrder.class);
+		assertNotNull("Modified order not set", restOrder);
+
+		// Test that the orbit attribute was changed as expected
+		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestOrder.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
+		assertEquals("Wrong Start time: ", Orbit.orbitTimeFormatter.format(orderToModify.getStartTime()), getEntity.getBody().getStartTime());
+		assertEquals("Wrong Stop time: ", Orbit.orbitTimeFormatter.format(orderToModify.getStopTime()), getEntity.getBody().getStopTime());
+		assertEquals("Wrong Execution time: ", Orbit.orbitTimeFormatter.format(orderToModify.getExecutionTime()), getEntity.getBody().getExecutionTime());
+		
+		assertEquals("Wrong Processing mode: ",  orderToModify.getProcessingMode(), getEntity.getBody().getProcessingMode());
+		assertEquals("Wrong Identifier: ",  orderToModify.getIdentifier(), getEntity.getBody().getIdentifier());
+//		assertEquals("Wrong Order state: ",  orderToModify.getOrderState().toString(), getEntity.getBody().getOrderState());
+//		assertEquals("Wrong Mission id: ",  orderToModify.getMission().getCode(), getEntity.getBody().getMissionCode());
+//		//assertEquals("Wrong output file class: ",  orderToModify.getOutputFileClass(), getEntity.getBody().getOutputFileClass());
+//
+//		//Slice duration and type to be added
+//		assertEquals("Wrong Slicing type: ",  orderToModify.getSlicingType().toString(), getEntity.getBody().getSlicingType());
+//		assertEquals("Wrong Slicing duration in seconds: ",  orderToModify.getSliceDuration().getSeconds(), getEntity.getBody().getSliceDuration());
+
+		
+		
+		// Clean up database
+		deleteTestOrders(testOrders);
+
+		logger.info("Test OK: Modify orbit");
+	}
+
 
 }

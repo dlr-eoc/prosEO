@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -19,18 +20,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
-import de.dlr.proseo.ordermgr.rest.model.OrbitQuery;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
-import de.dlr.proseo.ordermgr.rest.model.Order;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
+import de.dlr.proseo.ordermgr.rest.model.RestOrbit;
+import de.dlr.proseo.ordermgr.rest.model.RestOrbitQuery;
+import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
@@ -59,7 +58,7 @@ public class OrderControllerImpl implements OrderController {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ResponseEntity<Order> createOrder(Order order) {
+	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", order.getClass());
 		
 		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
@@ -69,7 +68,7 @@ public class OrderControllerImpl implements OrderController {
 		modelOrder.setMission(mission);	
 		
 		modelOrder.getRequestedOrbits().clear();
-		for(OrbitQuery orbitQuery : order.getOrbits()) {
+		for(RestOrbitQuery orbitQuery : order.getOrbits()) {
 			List<Orbit> orbit = RepositoryService.getOrbitRepository().
 									findBySpacecraftCodeAndOrbitNumberBetween(orbitQuery.getSpacecraftCode(), orbitQuery.getOrbitNumberFrom().intValue(), orbitQuery.getOrbitNumberTo().intValue());
 			modelOrder.getRequestedOrbits().addAll(orbit);
@@ -91,8 +90,8 @@ public class OrderControllerImpl implements OrderController {
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
 			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
-
 		}
+
 		// To be verified
 		@SuppressWarnings("rawtypes")
 		Set jobs = new HashSet();
@@ -103,7 +102,6 @@ public class OrderControllerImpl implements OrderController {
 		}
 		
 		modelOrder.setJobs(jobs);
-
 		
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 		
@@ -111,14 +109,35 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	@Override
-	public ResponseEntity<List<Order>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
 			Date starttimeto) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrder{}");
+		List<RestOrder> result = new ArrayList<>();		
+		// Find using search parameters
+		if("" != mission) {
+			
+			
+		}
+		//Find all with no search criteria
+		else{
+			for(ProcessingOrder procOrder : RepositoryService.getOrderRepository().findAll()) {
+				if (logger.isDebugEnabled()) logger.debug("Found order with ID {}", procOrder.getId());
+				RestOrder resultOrder = OrderUtil.toRestOrder(procOrder);
+				if (logger.isDebugEnabled()) logger.debug("Created result order with ID {}", resultOrder.getId());
+				result.add(resultOrder);		
+			
+			}
+		}
+			
+		return new ResponseEntity<>(result, HttpStatus.OK);								
+
+	
+
 	}
 
 	@Override
-	public ResponseEntity<Order> getOrderById(Long id) {
+	public ResponseEntity<RestOrder> getOrderById(Long id) {
 		// TODO Auto-generated method stub
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
 		
@@ -135,8 +154,9 @@ public class OrderControllerImpl implements OrderController {
 		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder.get()), HttpStatus.OK);
 	}
 
+	// To be Tested
 	@Override
-	public ResponseEntity<Order> modifyOrder(Long id, @Valid Order order) {
+	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
 		
 		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
@@ -196,10 +216,7 @@ public class OrderControllerImpl implements OrderController {
 		
 		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.OK);
 	
-	
-		
 	}
-
 	@Override
 	public ResponseEntity<?> deleteOrderById(Long id) {
 		 if (logger.isTraceEnabled()) logger.trace(">>> deleteOrderById({})", id);

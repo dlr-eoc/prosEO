@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryServiceTest;
 
 /**
  * Unit test cases for MissionRepository

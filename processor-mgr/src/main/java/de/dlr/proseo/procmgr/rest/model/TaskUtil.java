@@ -29,13 +29,13 @@ public class TaskUtil {
 	 * @param modelTask the prosEO model processor task
 	 * @return an equivalent REST processor task or null, if no model processor task was given
 	 */
-	public static de.dlr.proseo.procmgr.rest.model.Task toRestTask(Task modelTask) {
+	public static RestTask toRestTask(Task modelTask) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestTask({})", (null == modelTask ? "MISSING" : modelTask.getId()));
 
 		if (null == modelTask)
 			return null;
 		
-		de.dlr.proseo.procmgr.rest.model.Task restTask = new de.dlr.proseo.procmgr.rest.model.Task();
+		RestTask restTask = new RestTask();
 		
 		restTask.setId(modelTask.getId());
 		restTask.setVersion(Long.valueOf(modelTask.getVersion()));
@@ -62,7 +62,7 @@ public class TaskUtil {
 	 * @return a (roughly) equivalent model processor task or null, if no REST processor task was given
 	 * @throws IllegalArgumentException if the REST processor task violates syntax rules for date, enum or numeric values
 	 */
-	public static Task toModelTask(de.dlr.proseo.procmgr.rest.model.Task restTask) throws IllegalArgumentException {
+	public static Task toModelTask(RestTask restTask) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelTask({})", (null == restTask ? "MISSING" : restTask.getTaskName()));
 
 		if (null == restTask)

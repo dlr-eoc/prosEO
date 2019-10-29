@@ -27,25 +27,25 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Configuration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
-  ConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
-  ConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
-  Mission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
-  Orbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
-  OrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
-  Order: !include ../../../../../model/src/main/resources/raml/types/order.raml
-  Parameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
-  ProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
-  Processor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
-  ProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
-  Product: !include ../../../../../model/src/main/resources/raml/types/product.raml
-  ProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
-  ProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
-  SelectionRule: SimpleSelectionRule[]
-  SimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
-  SimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
-  Spacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
-  Task: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
+  RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+  RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
+  RestSelectionRule: RestSimpleSelectionRule[]
+  RestSimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
+  RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
+  RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
 
 resourceTypes:
   standard:
@@ -63,12 +63,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Configuration[]
+            type: RestConfiguration[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
   put:
     body:
       application/json:
-        type: Configuration
+        type: RestConfiguration
         example:  !include ../../../../../model/src/main/resources/raml/examples/configuration.json
 
 /configuredprocessors:
@@ -78,12 +78,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ConfiguredProcessor[]
+            type: RestConfiguredProcessor[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
   put:
     body:
       application/json:
-        type: ConfiguredProcessor
+        type: RestConfiguredProcessor
         example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
 
 /missions:
@@ -93,12 +93,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Mission[]
+            type: RestMission[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
   put:
     body:
       application/json:
-        type: Mission
+        type: RestMission
         example:  !include ../../../../../model/src/main/resources/raml/examples/mission.json
 
 /orbits:
@@ -108,12 +108,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Orbit[]
+            type: RestOrbit[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
   put:
     body:
       application/json:
-        type: Orbit
+        type: RestOrbit
         example:  !include ../../../../../model/src/main/resources/raml/examples/orbit.json
 
 /orders:
@@ -123,12 +123,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Order[]
+            type: RestOrder[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/order-list.json
   put:
     body:
       application/json:
-        type: Order
+        type: RestOrder
         example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
 
 /processingfacilities:
@@ -138,12 +138,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProcessingFacility[]
+            type: RestProcessingFacility[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
   put:
     body:
       application/json:
-        type: ProcessingFacility
+        type: RestProcessingFacility
         example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
 
 /processors:
@@ -153,12 +153,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Processor[]
+            type: RestProcessor[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
   put:
     body:
       application/json:
-        type: Processor
+        type: RestProcessor
         example:  !include ../../../../../model/src/main/resources/raml/examples/processor.json
 
 /processorclasses:
@@ -168,12 +168,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProcessorClass[]
+            type: RestProcessorClass[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
   put:
     body:
       application/json:
-        type: ProcessorClass
+        type: RestProcessorClass
         example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
 
 /products:
@@ -183,12 +183,12 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Product[]
+            type: RestProduct[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/product-list.json
   put:
     body:
       application/json:
-        type: Product
+        type: RestProduct
         example:  !include ../../../../../model/src/main/resources/raml/examples/product.json
 
 /productfiles:
@@ -198,11 +198,11 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProductFile[]
+            type: RestProductFile[]
             example:  !include ../../../../../model/src/main/resources/raml/examples/productfile-list.json
   put:
     body:
       application/json:
-        type: ProductFile
+        type: RestProductFile
         example:  !include ../../../../../model/src/main/resources/raml/examples/productfile.json
 
