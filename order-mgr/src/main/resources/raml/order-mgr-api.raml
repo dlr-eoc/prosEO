@@ -64,14 +64,14 @@ resourceTypes:
 /orders:
   type: standard
   get:
-    description: Get orders by mission, user-defined identifier, requested product classes or start time range
+    description: Get orders by mission, user-defined identifier, requested product classes or execution start time range
     displayName: getOrders
     queryParameters:
       mission?: string
       identifier?: string
       productClasses?: string[]
-      startTimeFrom?: datetime-only
-      startTimeTo?: datetime-only
+      executionTimeFrom?: datetime-only
+      executionTimeTo?: datetime-only
     responses:
       200:
         body:

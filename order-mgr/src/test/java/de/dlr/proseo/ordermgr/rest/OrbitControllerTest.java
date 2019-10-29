@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -328,7 +329,7 @@ public class OrbitControllerTest {
 		// Build URI and Query parameters
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(testUrl)
 		        // Add query parameter
-		        .queryParam("spacecraftCode", "S_TDX1")
+		        .queryParam("spacecraftCode", "")
 				.queryParam("orbitNumberFrom", 10)
 				.queryParam("orbitNumberTo", 15)
 				.queryParam("starttimefrom", testOrbitData[0][10].split("\\.")[0])
@@ -337,45 +338,53 @@ public class OrbitControllerTest {
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 		
 		RestTemplate restTemplate = rtb.basicAuthentication(config.getUserName(), config.getUserPassword()).build();	
-		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, requestEntity, List.class);
 		
-		assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
-		
-		// Test that the correct orbits provided above are in the results
-		@SuppressWarnings("unchecked")
-		List<Map<String, Object>> body = entity.getBody();
-		logger.info("Found {} orbits", body.size());
-		
-		boolean[] orbitFound = new boolean[testOrbits.size()];
-		Arrays.fill(orbitFound, false);
-		for (Map<String, Object> orbit: body) {
-			// Check, if any of the test orbits was returned
-			long orbitId = (Integer) orbit.get("id");
-			logger.info("... found orbit with ID {}", orbitId);
-			for (int i = 0; i < testOrbits.size(); ++i) {
-				Orbit testOrbit = testOrbits.get(i);
-				if (orbitId == testOrbit.getId()) {
-					orbitFound[i] = true;
-					assertEquals("Wrong orbitnumber for test orbit " + i, testOrbit.getOrbitNumber(), orbit.get("orbitNumber"));
-					assertEquals("Wrong start time for test orbit " + i,
-							testOrbit.getStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("startTime"))));
-					assertEquals("Wrong stop time for test orbit " + i,
-							testOrbit.getStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("stopTime"))));
-					assertEquals("Wrong spacecraft id for test orbit " + i,
-							testOrbit.getSpacecraft().getCode(),orbit.get("spacecraftCode"));
+		try{
+			@SuppressWarnings("rawtypes")
+			ResponseEntity<List> entity = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, requestEntity, List.class);
+			assertEquals("Wrong HTTP status: ", HttpStatus.OK, entity.getStatusCode());
+			
+			// Test that the correct orbits provided above are in the results
+			@SuppressWarnings("unchecked")
+			List<Map<String, Object>> body = entity.getBody();
+			logger.info("Found {} orbits", body.size());
+			
+			boolean[] orbitFound = new boolean[testOrbits.size()];
+			Arrays.fill(orbitFound, false);
+			for (Map<String, Object> orbit: body) {
+				// Check, if any of the test orbits was returned
+				long orbitId = (Integer) orbit.get("id");
+				logger.info("... found orbit with ID {}", orbitId);
+				for (int i = 0; i < testOrbits.size(); ++i) {
+					Orbit testOrbit = testOrbits.get(i);
+					if (orbitId == testOrbit.getId()) {
+						orbitFound[i] = true;
+						assertEquals("Wrong orbitnumber for test orbit " + i, testOrbit.getOrbitNumber(), orbit.get("orbitNumber"));
+						assertEquals("Wrong start time for test orbit " + i,
+								testOrbit.getStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("startTime"))));
+						assertEquals("Wrong stop time for test orbit " + i,
+								testOrbit.getStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("stopTime"))));
+						assertEquals("Wrong spacecraft id for test orbit " + i,
+								testOrbit.getSpacecraft().getCode(),orbit.get("spacecraftCode"));
+					}
 				}
 			}
+			
+			boolean[] expectedOrbitFound = new boolean[body.size()];
+			Arrays.fill(expectedOrbitFound, true);
+			int actualLength = 0;
+			for(int i=0;i<orbitFound.length;i++) {
+				if(orbitFound[i])
+					actualLength++;			
+			}
+			assertEquals(expectedOrbitFound.length, actualLength);
+
+		}catch (RestClientException e) {
+			
+			logger.error("Spacecraft Code cannot be blank: " +e.getMessage());
 		}
 		
-		boolean[] expectedOrbitFound = new boolean[body.size()];
-		Arrays.fill(expectedOrbitFound, true);
-		int actualLength = 0;
-		for(int i=0;i<orbitFound.length;i++) {
-			if(orbitFound[i])
-				actualLength++;			
-		}
-		assertEquals(expectedOrbitFound.length, actualLength);
+		
 					
 		// Clean up database
 		deleteTestOrbits(testOrbits);
