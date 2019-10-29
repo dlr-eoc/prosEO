@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -81,6 +82,12 @@ public class ProcessingOrder extends PersistentObject {
 	 * Duration of a time slice for slicing type TIME_SLICE
 	 */
 	private Duration sliceDuration = null;
+	
+	/**
+	 * Overlap between adjacent time slices, half of the overlap is added at each end of the slice time interval except at the 
+	 * beginning of the first and the end of the last time interval.
+	 */
+	private Duration sliceOverlap = Duration.ZERO;
 	
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
@@ -304,6 +311,24 @@ public class ProcessingOrder extends PersistentObject {
 		} else {
 			throw new IllegalStateException(MSG_SLICING_DURATION_NOT_ALLOWED + slicingType);
 		}
+	}
+
+	/**
+	 * Gets the overlap time between slices
+	 * 
+	 * @return the slice overlap
+	 */
+	public Duration getSliceOverlap() {
+		return sliceOverlap;
+	}
+
+	/**
+	 * Sets the overlap time between slices
+	 * 
+	 * @param sliceOverlap the slice overlap to set
+	 */
+	public void setSliceOverlap(Duration sliceOverlap) {
+		this.sliceOverlap = sliceOverlap;
 	}
 
 	/**

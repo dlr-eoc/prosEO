@@ -2,6 +2,7 @@
     {
         "id": 689325,
         "version": 11,
+        "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
         "missionCode": "S5P",
         "productClass": "AAI",
         "fileClass": "TEST",
@@ -34,6 +35,7 @@
     {
         "id": 689326,
         "version": 7,
+        "uuid": "2bfd2856-aec7-4d45-bcc0-6418857c448c",
         "missionCode": "S5P",
         "productClass": "O3",
         "fileClass": "RPRO",
