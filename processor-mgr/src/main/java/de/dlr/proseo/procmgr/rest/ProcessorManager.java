@@ -21,6 +21,8 @@ import javax.validation.Valid;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -36,6 +38,7 @@ import de.dlr.proseo.procmgr.rest.model.TaskUtil;
  *
  */
 @Component
+@Transactional
 public class ProcessorManager {
 	
 	/* Message ID constants */
@@ -208,8 +211,8 @@ public class ProcessorManager {
 	 * 
 	 * @param id the processor ID
 	 * @return a Json object corresponding to the processor found
-	 * @throws IllegalArgumentException if no processor class ID was given
-	 * @throws NoResultException if no processor class with the given ID exists
+	 * @throws IllegalArgumentException if no processor ID was given
+	 * @throws NoResultException if no processor with the given ID exists
 	 */
 	public RestProcessor getProcessorById(Long id) throws IllegalArgumentException, NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorById({})", id);

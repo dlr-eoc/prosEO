@@ -35,7 +35,7 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.prodclmgr.ProductClassManager;
+import de.dlr.proseo.prodclmgr.ProductClassManagerApplication;
 import de.dlr.proseo.prodclmgr.ProductClassSecurityConfig;
 import de.dlr.proseo.prodclmgr.ProductClassTestConfiguration;
 import de.dlr.proseo.prodclmgr.rest.model.DeltaTimeT0;
@@ -52,7 +52,7 @@ import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = ProductClassManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = ProductClassManagerApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 //@DirtiesContext
 //@Transactional
 @AutoConfigureTestEntityManager

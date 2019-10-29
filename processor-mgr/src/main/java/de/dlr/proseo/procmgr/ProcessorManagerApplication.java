@@ -1,5 +1,5 @@
 /**
- * ProcessorManager.java
+ * ProcessorManagerApplication.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
