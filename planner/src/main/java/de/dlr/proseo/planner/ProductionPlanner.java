@@ -8,6 +8,7 @@ package de.dlr.proseo.planner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -51,6 +52,12 @@ public class ProductionPlanner implements CommandLineRunner {
 	public static String hostIP = "127.0.0.1";
 	public static String port = "8080";
 	
+	public static ProductionPlannerConfiguration config;
+	
+
+	/** Planner configuration */
+	@Autowired
+	ProductionPlannerConfiguration plannerConfig;
 
 	/**
 	 * Current running KubeConfigs
@@ -150,6 +157,7 @@ public class ProductionPlanner implements CommandLineRunner {
       
 		InetAddress ip;
 		String hostname;
+		config = plannerConfig;
 		try {
 			ip = InetAddress.getLocalHost();
 			hostname = ip.getHostName();
