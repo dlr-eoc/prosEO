@@ -385,10 +385,12 @@ public class JobDispatcher {
 
 				logger.info("... response is {}", response.getStatusCode());
 
-				if (response.getBody().getUploaded()) {
+				if (response != null && response.getBody() != null && response.getBody().getUploaded()) {
 					jobOrder.setFileName(response.getBody().getPathInfo());
 					jobOrder.setFsType(response.getBody().getFsType().value());
-				}
+				} else {
+					return null;
+				}		
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;

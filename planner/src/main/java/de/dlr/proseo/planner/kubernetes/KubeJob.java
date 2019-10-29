@@ -14,12 +14,14 @@ import java.util.Optional;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.rest.JobControllerImpl;
 import de.dlr.proseo.planner.rest.model.PodKube;
@@ -43,7 +45,7 @@ import io.kubernetes.client.models.V1PodList;
 //@Transactional
 @Component
 public class KubeJob {
-
+	
 	private static Logger logger = LoggerFactory.getLogger(KubeJob.class);
 	/**
 	 * The job id of DB
@@ -285,8 +287,7 @@ public class KubeJob {
 				.endEnv()
 				.addNewEnv()
 				.withName("STATE_CALLBACK_ENDPOINT")
-				.withValue("http://" + "192.168.20.155" + ":" + ProductionPlanner.port 
-						+ "/proseo/planner/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
+				.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
 				.endEnv()
 				.addNewEnv()
 				.withName("S3_ENDPOINT")

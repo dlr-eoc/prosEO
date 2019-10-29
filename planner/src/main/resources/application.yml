@@ -3,7 +3,7 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:postgresql://192.168.20.155:5432/proseo
+        url: jdbc:postgresql://localhost:5432/proseo
         username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
@@ -15,6 +15,16 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
+    productionPlanner:
+        url: http://192.168.20.155:8080/proseo/planner
+        user: none
+        password: none
+        cyclewaittime: 1000
+        maxcycles: 50
+    storageManager:
+        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        user: none
+        password: none
     global:
       storageIdPrefix: proseo
     procFacility:
