@@ -8,30 +8,17 @@ package de.dlr.proseo.procmgr.rest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.Assert;
-
-import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage processor classes.
@@ -43,75 +30,28 @@ import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 public class ProcessorClassControllerImpl implements ProcessorclassController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_PROCESSOR_CLASS_NOT_FOUND = 2200;
-	private static final int MSG_ID_PROCESSOR_CLASS_LIST_RETRIEVED = 2201;
-	private static final int MSG_ID_PROCESSOR_CLASS_RETRIEVED = 2202;
-	private static final int MSG_ID_PROCESSOR_CLASS_MISSING = 2203;
-	private static final int MSG_ID_MISSION_CODE_INVALID = 2204;
-	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2205;
-	private static final int MSG_ID_PROCESSOR_CLASS_CREATED = 2208;
-	private static final int MSG_ID_PROCESSOR_CLASS_ID_MISSING = 2209;
-	private static final int MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND = 2200;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_PROCESSOR_CLASS_NOT_FOUND = "(E%d) No processor class found for mission %s and processor name %s";
-	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
-	private static final String MSG_PROCESSOR_CLASS_RETRIEVED = "(I%d) Processor class with ID %d retrieved";
-	private static final String MSG_PROCESSOR_CLASS_MISSING = "(E%d) Processor class not set";
-	private static final String MSG_PROCESSOR_CLASS_ID_MISSING = "(E%d) Processor class ID not set";
-	private static final String MSG_PROCESSOR_CLASS_ID_NOT_FOUND = "(E%d) No processor class found with ID %d";
-	private static final String MSG_MISSION_CODE_INVALID = "(E%d) Mission code %s invalid";
-	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid for mission %s";
-	private static final String MSG_PROCESSOR_CLASS_CREATED = "(I%d) Processor class %s created for mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-processor-mgr ";
 
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
+	/** The processor class manager */
+	@Autowired
+	private ProcessorClassManager processorClassManager;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorClassControllerImpl.class);
 
-	/** single TransactionTemplate shared amongst all methods in this instance */
-	private final TransactionTemplate transactionTemplate;
-
 	/**
-	 * Constructor using constructor-injection to supply the PlatformTransactionManager
-	 * 
-	 * @param transactionManager the platform transaction manager
-	 */
-	public ProcessorClassControllerImpl(PlatformTransactionManager transactionManager) {
-		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
-		this.transactionTemplate = new TransactionTemplate(transactionManager);
-	}
-	
-	/**
-	 * Log an informational message with the prosEO message prefix
+	 * Create and log a formatted error message
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
 	 * @param messageId a (unique) message id
 	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return a formatted error message
 	 */
-	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		logger.info(String.format(messageFormat, messageParamList.toArray()));
-	}
-	
-	/**
-	 * Log an error and return the corresponding HTTP message header
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return an HttpHeaders object with a formatted error message
-	 */
-	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+	private String logError(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -120,7 +60,16 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		String message = String.format(messageFormat, messageParamList.toArray());
 		logger.error(message);
 		
-		// Create an HTTP "Warning" header
+		return message;
+	}
+	
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
 		return responseHeaders;
@@ -131,134 +80,58 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 
 	 * @param mission the mission code (optional)
 	 * @param processorName the processor name (optional)
-	 * @return a list of Json objects representing processor classes satisfying the search criteria
+	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or
+	 *         HTTP status "NOT_FOUND" and an error message, if no processor classes matching the search criteria were found
 	 */
 	@Override
 	public ResponseEntity<List<RestProcessorClass>> getProcessorClasses(String mission, String processorName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClass({}, {})", mission, processorName);
 		
-		List<RestProcessorClass> result = new ArrayList<>();
-		
-		if (null != mission && null != processorName) {
-			ProcessorClass processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
-					processorName);
-			if (null == processorClass) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND, mission, processorName),
-						HttpStatus.NOT_FOUND);
-			}
-			result.add(ProcessorClassUtil.toRestProcessorClass(processorClass));
-		} else {
-			String jpqlQuery = "select pc from ProcessorClass pc where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and mission.code = :missionCode";
-			}
-			if (null != processorName) {
-				jpqlQuery += " and processorName = :processorName";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != processorName) {
-				query.setParameter("processorName", processorName);
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.ProcessorClass) {
-					result.add(ProcessorClassUtil.toRestProcessorClass((de.dlr.proseo.model.ProcessorClass) resultObject));
-				}
-			}
-			if (result.isEmpty()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND, mission, processorName),
-						HttpStatus.NOT_FOUND);
-			}
+		try {
+			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
-		logInfo(MSG_PROCESSOR_CLASS_LIST_RETRIEVED, MSG_ID_PROCESSOR_CLASS_LIST_RETRIEVED, mission, processorName);
-		
-		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	/**
 	 * Create a new processor class
 	 * 
 	 * @param processorClass a Json representation of the new processor class
-	 * @return a Json representation of the processor class after creation (with ID and version number)
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor class after persistence
+	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> createProcessorClass(@Valid RestProcessorClass processorClass) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessorClass({})", (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 		
-		if (null == processorClass) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PROCESSOR_CLASS_MISSING, MSG_ID_PROCESSOR_CLASS_MISSING),
-					HttpStatus.BAD_REQUEST);
+		try {
+			return new ResponseEntity<>(processorClassManager.createProcessorClass(processorClass), HttpStatus.CREATED);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
-		
-		return transactionTemplate.execute(new TransactionCallback<>() {
-
-			@Override
-			public ResponseEntity<RestProcessorClass> doInTransaction(TransactionStatus txStatus) {
-				ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
-				
-				modelProcessorClass.setMission(RepositoryService.getMissionRepository().findByCode(processorClass.getMissionCode()));
-				if (null == modelProcessorClass.getMission()) {
-					txStatus.setRollbackOnly();
-					return new ResponseEntity<>(
-							errorHeaders(MSG_MISSION_CODE_INVALID, MSG_ID_MISSION_CODE_INVALID, processorClass.getMissionCode()),
-							HttpStatus.BAD_REQUEST);
-				}
-				
-				for (String productType: processorClass.getProductClasses()) {
-					ProductClass productClass = RepositoryService.getProductClassRepository()
-							.findByMissionCodeAndProductType(processorClass.getMissionCode(), productType);
-					if (null == productClass) {
-						txStatus.setRollbackOnly();
-						return new ResponseEntity<>(
-								errorHeaders(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID,
-										productType, processorClass.getMissionCode()),
-								HttpStatus.BAD_REQUEST);
-					}
-				}
-				
-				modelProcessorClass = RepositoryService.getProcessorClassRepository().save(modelProcessorClass);
-				
-				logInfo(MSG_PROCESSOR_CLASS_CREATED, MSG_ID_PROCESSOR_CLASS_CREATED, 
-						modelProcessorClass.getProcessorName(), modelProcessorClass.getMission().getCode());
-				
-				return new ResponseEntity<>(ProcessorClassUtil.toRestProcessorClass(modelProcessorClass), HttpStatus.CREATED);
-			}
-		});
 	}
 
 	/**
 	 * Get a processor class by ID
 	 * 
 	 * @param id the processor class ID
-	 * @return a Json object corresponding to the processor class found and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no processor class with the given ID exists
+	 * @return HTTP status "OK" and a Json object corresponding to the processor class found or 
+	 *         HTTP status "BAD_REQUEST" and an error message, if no processor class ID was given, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> getProcessorClassById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
 		
-		if (null == id) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING, id), 
-					HttpStatus.BAD_REQUEST);
+		try {
+			return new ResponseEntity<>(processorClassManager.getProcessorClassById(id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
-		
-		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
-		
-		if (modelProcessorClass.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_PROCESSOR_CLASS_ID_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND, id), 
-					HttpStatus.NOT_FOUND);
-		}
-
-		logInfo(MSG_PROCESSOR_CLASS_RETRIEVED, MSG_ID_PROCESSOR_CLASS_RETRIEVED, id);
-		
-		return new ResponseEntity<>(ProcessorClassUtil.toRestProcessorClass(modelProcessorClass.get()), HttpStatus.OK);
 	}
 
 	/**
@@ -266,15 +139,17 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * 
 	 * @param id the ID of the processor class to update
 	 * @param processorClass a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the processor class after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no processor class with the given ID exists
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
+	 *             (with ID and version for all contained objects) or 
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "CONFLICT"and an error message, if the processor class has been modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
-				errorHeaders("PATCH for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
+				errorHeaders(logError("PATCH for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
 				HttpStatus.NOT_IMPLEMENTED);
 	}
 
@@ -282,14 +157,15 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * Delete a processor class by ID
 	 * 
 	 * @param the ID of the processor class to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the processor class did not
-	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
+	 *         HTTP status "NOT_FOUND", if the processor class did not exist, or
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteProcessorClassById(Long id) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
-				errorHeaders("DELETE for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
+				errorHeaders(logError("DELETE for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
 				HttpStatus.NOT_IMPLEMENTED);
 	}
 

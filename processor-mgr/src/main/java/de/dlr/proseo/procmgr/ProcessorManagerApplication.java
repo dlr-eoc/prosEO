@@ -24,10 +24,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
-public class ProcessorManager {
+public class ProcessorManagerApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(ProcessorManager.class, args);
+		SpringApplication.run(ProcessorManagerApplication.class, args);
 	}
 
 }
