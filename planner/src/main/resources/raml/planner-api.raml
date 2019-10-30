@@ -8,7 +8,7 @@ mediaType: application/json
 types:
   PlannerJob: !include types/planner-job.raml
   PlannerJobstep: !include types/planner-jobstep.raml
-  PlannerProcessingFacility: !include types/planner-processingfacility.raml
+  RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
   PlannerPod: !include types/planner-pod.raml
 
 resourceTypes:
@@ -126,8 +126,8 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: PlannerProcessingFacility[]
-            example: !include examples/planner-processingfacility-list.json
+            type: RestProcessingFacility[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
   /{name}:
     get:
       description: Get production planner processingfacilitiy by name 
@@ -135,8 +135,8 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: PlannerProcessingFacility
-              example: !include examples/planner-processingfacility.json
+              type: RestProcessingFacility
+              example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     /pod:
       /{podname}:
         get:
