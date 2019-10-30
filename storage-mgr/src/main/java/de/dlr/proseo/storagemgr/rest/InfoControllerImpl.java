@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.General;
-import de.dlr.proseo.storagemgr.rest.model.Info;
 import de.dlr.proseo.storagemgr.rest.model.K8sNodeMountPoints;
+import de.dlr.proseo.storagemgr.rest.model.RestInfo;
 
 @Component
 public class InfoControllerImpl implements InfoController{
@@ -17,9 +17,9 @@ public class InfoControllerImpl implements InfoController{
 	private StorageManagerConfiguration cfg;
 	
 	@Override
-	public ResponseEntity<Info> getInfo() {
+	public ResponseEntity<RestInfo> getRestInfo() {
 		
-		Info response = new Info();
+		RestInfo response = new RestInfo();
 		
 		General gen = new General();
 		gen.setAlluxioUnderFsMaxPrefixes(Long.valueOf(cfg.getAlluxioUnderFsMaxPrefixes()));
