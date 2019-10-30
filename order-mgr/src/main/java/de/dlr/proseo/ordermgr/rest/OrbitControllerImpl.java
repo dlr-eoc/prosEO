@@ -44,6 +44,7 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_ORBIT_MISSING = 1006;
+	private static final int MSG_ID_ORBIT_INCOMPLETE = 1007;
 
 
 	/* Message string constants */
@@ -52,6 +53,7 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-orbitcontroller ";
 	private static final String MSG_ORBIT_MISSING = "(E%d) Orbit not set";
+	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft Code not set in the search";
 
 
 	/** A logger for this class */
@@ -116,7 +118,7 @@ public class OrbitControllerImpl implements OrbitController {
 		List<RestOrbit> result = new ArrayList<>();		
 		// Find using search parameters
 		//Check if Spacecraft code isn't blank and returns orbits matching to the spacecraft code
-		if("" != spacecraftCode) {
+		if(!(("").equals(spacecraftCode))) {
 			if(0 != orbitNumberFrom && 0 != orbitNumberTo) {
 				//Gets all matching Orbits for the matching spacecraft code and Orbit number range
 				List <Orbit> matchOrbits = RepositoryService.getOrbitRepository()
@@ -178,18 +180,10 @@ public class OrbitControllerImpl implements OrbitController {
 			return new ResponseEntity<>(result, HttpStatus.OK);								
 		}
 		
-		//Returns all orbits in the DB when spacecraft code is blank /null 
-		//check if this is applicable at ll as spacecracft code is a mandatory parameter
-		//working
-		else {
-			for (Orbit  orbit: RepositoryService.getOrbitRepository().findAll()) {
-				if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-				RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-				if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-				result.add(resultOrbit);
-			}
-		}
-		return new ResponseEntity<>(result, HttpStatus.OK);								
+		//Returns HTTP_BAD REQUEST when spacecraft code is blank 
+		else 
+			return new ResponseEntity<>(
+					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
 	}
 	
 	/**

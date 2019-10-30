@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -48,6 +49,11 @@ public class Product extends PersistentObject {
 	
 	private static final String MSG_FILENAME_TEMPLATE_NOT_FOUND = "Product filename template for mission not found";
 
+	/**
+	 * Universally unique product identifier (Production Interface Delivery Point Specification, sec. 3.1)
+	 */
+	private UUID uuid;
+	
 	/** Product class this products instantiates */
 	@ManyToOne
 	private ProductClass productClass;
@@ -107,6 +113,22 @@ public class Product extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> parameters = new HashMap<>();
 	
+	/**
+	 * Gets the universally unique product identifier
+	 * 
+	 * @return the UUID
+	 */
+	public UUID getUuid() {
+		return uuid;
+	}
+	/**
+	 * Sets the universally unique product identifier
+	 * 
+	 * @param uuid the UUID to set
+	 */
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
+	}
 	/**
 	 * Gets the product class
 	 * 

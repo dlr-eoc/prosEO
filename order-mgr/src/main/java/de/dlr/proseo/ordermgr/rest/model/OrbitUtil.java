@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.service.RepositoryService;
 
 public class OrbitUtil {
 	/** A logger for this class */

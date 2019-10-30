@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,51 +73,22 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	/** Allowed filename types for static input files (in lower case for easier comparation) */
 	private static final List<String> ALLOWED_FILENAME_TYPES = Arrays.asList("physical", "logical", "stem", "regexp", "directory");
 
-	/** JPA entity manager */
-	@PersistenceContext
-	private EntityManager em;
+	/** The configuration manager */
+	@Autowired
+	private ConfigurationManager configurationManager;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ConfigurationControllerImpl.class);
 
-	/** Single TransactionTemplate shared amongst all methods in this instance */
-	private final TransactionTemplate transactionTemplate;
-
 	/**
-	 * Constructor using constructor-injection to supply the PlatformTransactionManager
-	 * 
-	 * @param transactionManager the platform transaction manager
-	 */
-	public ConfigurationControllerImpl(PlatformTransactionManager transactionManager) {
-		Assert.notNull(transactionManager, "The 'transactionManager' argument must not be null.");
-		this.transactionTemplate = new TransactionTemplate(transactionManager);
-	}
-	
-	/**
-	 * Log an informational message with the prosEO message prefix
+	 * Create and log a formatted error message
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
 	 * @param messageId a (unique) message id
 	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return a formatted error message
 	 */
-	private void logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		logger.info(String.format(messageFormat, messageParamList.toArray()));
-	}
-	
-	/**
-	 * Log an error and return the corresponding HTTP message header
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return an HttpHeaders object with a formatted error message
-	 */
-	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+	private String logError(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -124,7 +97,16 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 		String message = String.format(messageFormat, messageParamList.toArray());
 		logger.error(message);
 		
-		// Create an HTTP "Warning" header
+		return message;
+	}
+	
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
 		return responseHeaders;
@@ -136,162 +118,94 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param mission the mission code
 	 * @param processorName the processor name
 	 * @param configurationVersion the configuration version
-	 * @return a list of Json objects representing configurations satisfying the search criteria
+	 * @return HTTP status "OK" and a list of Json objects representing configurations satisfying the search criteria or
+	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguration>> getConfigurations(String mission, String processorName,
 			String configurationVersion) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
 		
-		List<RestConfiguration> result = new ArrayList<>();
-		
-		if (null != mission && null != processorName && null != configurationVersion) {
-			de.dlr.proseo.model.Configuration processor = RepositoryService.getConfigurationRepository()
-					.findByMissionCodeAndProcessorNameAndConfigurationVersion(mission, processorName, configurationVersion);
-			if (null == processor) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND, mission, processorName, configurationVersion),
-						HttpStatus.NOT_FOUND);
-			}
-			result.add(ConfigurationUtil.toRestConfiguration(processor));
-		} else {
-			String jpqlQuery = "select c from Configuration c where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and processorClass.mission.code = :missionCode";
-			}
-			if (null != processorName) {
-				jpqlQuery += " and processorClass.processorName = :processorName";
-			}
-			if (null != configurationVersion) {
-				jpqlQuery += " and configurationVersion = :configurationVersion";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != processorName) {
-				query.setParameter("processorName", processorName);
-			}
-			if (null != configurationVersion) {
-				query.setParameter("configurationVersion", configurationVersion);
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.Configuration) {
-					result.add(ConfigurationUtil.toRestConfiguration((de.dlr.proseo.model.Configuration) resultObject));
-				}
-			}
-			if (result.isEmpty()) {
-				return new ResponseEntity<>(
-						errorHeaders(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND, mission, processorName, configurationVersion),
-						HttpStatus.NOT_FOUND);
-			}
+		try {
+			return new ResponseEntity<>(configurationManager.getConfigurations(mission, processorName, configurationVersion), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
-		logInfo(MSG_CONFIGURATION_LIST_RETRIEVED, MSG_ID_CONFIGURATION_LIST_RETRIEVED, mission, processorName, configurationVersion);
-		
-		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
 	/**
      * Create a new configuration
      * 
      * @param configuration a Json representation of the new configuration
-	 * @return a Json representation of the configuration after creation (with ID and version number)
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the configuration after persistence
+	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> createConfiguration(@Valid RestConfiguration configuration) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguration({})", (null == configuration ? "MISSING" : configuration.getProcessorName()));
 
-		if (null == configuration) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_CONFIGURATION_MISSING, MSG_ID_CONFIGURATION_MISSING),
-					HttpStatus.BAD_REQUEST);
+		try {
+			return new ResponseEntity<>(configurationManager.createConfiguration(configuration), HttpStatus.CREATED);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
-		
-		return transactionTemplate.execute(new TransactionCallback<>() {
-
-			@Override
-			public ResponseEntity<RestConfiguration> doInTransaction(TransactionStatus txStatus) {
-				Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
-				
-				modelConfiguration.setProcessorClass(RepositoryService.getProcessorClassRepository()
-						.findByMissionCodeAndProcessorName(configuration.getMissionCode(), configuration.getProcessorName()));
-				if (null == modelConfiguration.getProcessorClass()) {
-					txStatus.setRollbackOnly();
-					return new ResponseEntity<>(
-							errorHeaders(MSG_PROCESSOR_CLASS_INVALID, MSG_ID_PROCESSOR_CLASS_INVALID,
-									configuration.getProcessorName(), configuration.getMissionCode()),
-							HttpStatus.BAD_REQUEST);
-				}
-				
-				for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
-					ConfigurationInputFile modelInputFile = new ConfigurationInputFile();
-					if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType())) {
-						txStatus.setRollbackOnly();
-						return new ResponseEntity<>(
-								errorHeaders(MSG_FILENAME_TYPE_INVALID, MSG_ID_FILENAME_TYPE_INVALID, staticInputFile.getFileNameType()),
-								HttpStatus.BAD_REQUEST);
-					}
-					modelInputFile.setFileType(staticInputFile.getFileType());
-					modelInputFile.setFileNameType(staticInputFile.getFileNameType());
-					modelInputFile.getFileNames().addAll(staticInputFile.getFileNames());
-					modelConfiguration.getStaticInputFiles().add(modelInputFile);
-				}
-				
-				modelConfiguration = RepositoryService.getConfigurationRepository().save(modelConfiguration);
-				
-				logInfo(MSG_CONFIGURATION_CREATED, MSG_ID_CONFIGURATION_CREATED, 
-						modelConfiguration.getProcessorClass().getProcessorName(),
-						modelConfiguration.getConfigurationVersion(), 
-						modelConfiguration.getProcessorClass().getMission().getCode());
-				
-				return new ResponseEntity<>(ConfigurationUtil.toRestConfiguration(modelConfiguration), HttpStatus.CREATED);
-			}
-		});
 	}
 
 	/**
 	 * Get a configuration by ID
 	 * 
 	 * @param id the configuration ID
-	 * @return a Json object corresponding to the configuration found and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no configuration with the given ID exists
+	 * @return HTTP status "OK" and a Json object corresponding to the configuration found or 
+	 *         HTTP status "BAD_REQUEST" and an error message, if no configuration ID was given, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> getConfigurationById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurationById({})", id);
 		
-		if (null == id) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_CONFIGURATION_ID_MISSING, MSG_ID_CONFIGURATION_ID_MISSING, id), 
-					HttpStatus.BAD_REQUEST);
+		try {
+			return new ResponseEntity<>(configurationManager.getConfigurationById(id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
 		
-		Optional<de.dlr.proseo.model.Configuration> modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
-		
-		if (modelConfiguration.isEmpty()) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id), 
-					HttpStatus.NOT_FOUND);
-		}
-
-		logInfo(MSG_CONFIGURATION_RETRIEVED, MSG_ID_CONFIGURATION_RETRIEVED, id);
-		
-		return new ResponseEntity<>(ConfigurationUtil.toRestConfiguration(modelConfiguration.get()), HttpStatus.OK);
 	}
 
+	/**
+	 * Update a configuration by ID
+	 * 
+	 * @param id the ID of the configuration to update
+	 * @param processorClass a Json object containing the modified (and unmodified) attributes
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification
+	 *             (with ID and version for all contained objects) or 
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "CONFLICT"and an error message, if the configuration has been modified since retrieval by the client
+	 */
 	@Override
 	public ResponseEntity<RestConfiguration> modifyConfiguration(Long id, @Valid RestConfiguration configuration) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
-				errorHeaders("PATCH for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
+				errorHeaders(logError("PATCH for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
 				HttpStatus.NOT_IMPLEMENTED);
 	}
 
+	/**
+	 * Delete a configuration by ID
+	 * 
+	 * @param the ID of the configuration to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
+	 *         HTTP status "NOT_FOUND", if the configuration did not exist, or
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
 	@Override
 	public ResponseEntity<?> deleteConfigurationById(Long id) {
 		// TODO Auto-generated method stub
 		return new ResponseEntity<>(
-				errorHeaders("DELETE for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id), 
+				errorHeaders(logError("DELETE for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
 				HttpStatus.NOT_IMPLEMENTED);
 	}
 

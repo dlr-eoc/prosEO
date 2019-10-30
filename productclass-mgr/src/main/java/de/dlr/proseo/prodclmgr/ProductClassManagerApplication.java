@@ -1,5 +1,5 @@
 /**
- * ProductClassManager.java
+ * ProductClassManagerApplication.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -24,10 +24,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
 @EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
-public class ProductClassManager {
+public class ProductClassManagerApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(ProductClassManager.class, args);
+		SpringApplication.run(ProductClassManagerApplication.class, args);
 	}
 
 }

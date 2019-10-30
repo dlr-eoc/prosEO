@@ -131,8 +131,9 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<configuration>
 						<excludes>	
-							<exclude>**/MissionControllerTest</exclude>						
-							<exclude>**/OrbitControllerTest</exclude>
+							<exclude>**/OrderControllerTest</exclude>
+							<exclude>**/MissionControllerTest</exclude>
+													
 						</excludes>
 					</configuration>
 				</plugin>

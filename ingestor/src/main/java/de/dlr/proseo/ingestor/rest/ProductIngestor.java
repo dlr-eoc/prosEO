@@ -14,7 +14,6 @@ import java.util.Map;
 
 import javax.persistence.NoResultException;
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.ServerErrorException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,9 +131,11 @@ public class ProductIngestor {
      * @param facility the processing facility to ingest products to
      * @param ingestorProduct a product description with product file locations
      * @return a Json representation of the product updated and/or created including their product files
-     */
+	 * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
+	 * @throws ProcessingException if the communication with the Storage Manager or the Production Planner fails
+	 */
 	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct)
-			throws IllegalArgumentException, ServerErrorException, ProcessingException {
+			throws IllegalArgumentException, ProcessingException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {})", facility.getName(), ingestorProduct.getProductClass());
 		
 		// Create a new product in the metadata database

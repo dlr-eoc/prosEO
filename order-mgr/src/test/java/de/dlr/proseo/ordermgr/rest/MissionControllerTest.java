@@ -6,12 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-
 import javax.persistence.EntityManagerFactory;
 
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Test;
@@ -29,12 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
@@ -311,7 +304,7 @@ public class MissionControllerTest {
 	 * Test: Update a mission by ID
 	 * Precondition: At least one mission with a known ID is in the database 
 	 */
-/*	@Test
+	@Test
 	public final void testModifyMission() {
 		// Make sure test missions exist
 		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
@@ -320,14 +313,14 @@ public class MissionControllerTest {
 		// Update a mission attribute
 		missionToModify.setCode("MOD Code");
 
-		Mission restMission = MissionUtil.toRestMission(missionToModify);
+		RestMission restMission = MissionUtil.toRestMission(missionToModify);
 		logger.info("RestMission modified Code: "+restMission.getCode());
 		
 		String testUrl = "http://localhost:" + this.port + MISSION_BASE_URI + "/missions/" + missionToModify.getId();
 		logger.info("Testing URL {} / PATCH", testUrl);
 
 		restMission = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.patchForObject(testUrl, restMission, Mission.class);
+				.patchForObject(testUrl, restMission, RestMission.class);
 		assertNotNull("Modified mission not set", restMission);
 
 		// Test that the mission attribute was changed as expected
@@ -341,5 +334,5 @@ public class MissionControllerTest {
 
 		logger.info("Test OK: Modify mission");
 	}
-*/
+
 }

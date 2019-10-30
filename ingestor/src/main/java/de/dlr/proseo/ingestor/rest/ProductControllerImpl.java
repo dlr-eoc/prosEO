@@ -30,6 +30,7 @@ import de.dlr.proseo.ingestor.rest.model.RestProduct;
 @Component
 public class ProductControllerImpl implements ProductController {
 	
+	/* Message string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
 	
