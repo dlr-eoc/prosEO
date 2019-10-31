@@ -25,9 +25,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import de.dlr.proseo.model.fs.s3.AmazonS3URI;
 import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.ProductFS;
+import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.rest.model.RestStorage;
 import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
-import de.dlr.proseo.storagemgr.rest.model.Storage;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import de.dlr.proseo.storagemgr.rest.model.TargetStorageType;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
@@ -80,9 +80,9 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<List<Storage>> getStoragesById(String id) {
+	public ResponseEntity<List<RestStorage>> getRestStoragesById(String id) {
 
-		ArrayList<Storage> response = new ArrayList<Storage>();
+		ArrayList<RestStorage> response = new ArrayList<RestStorage>();
 
 		try {
 
@@ -113,7 +113,7 @@ public class StorageControllerImpl implements StorageController {
 
 			if (id != null && s3Storages.contains(id) && !alluxioStorages.contains(id)) {
 				logger.info("queryParam->yes, s3Id->yes, alluxio->no");
-				Storage store = new Storage();
+				RestStorage store = new RestStorage();
 				store.setStorageType(StorageType.S_3);
 				store.setId(id);
 				store.setDescription("S3-Bucket s3://" + id + " @" + cfg.getS3EndPoint());
@@ -121,7 +121,7 @@ public class StorageControllerImpl implements StorageController {
 			} 
 			if (id != null && alluxioStorages.contains(id) && !s3Storages.contains(id)) {
 				logger.info("queryParam->yes, s3Id->no, alluxio->yes");
-				Storage store = new Storage();
+				RestStorage store = new RestStorage();
 				store.setStorageType(StorageType.ALLUXIO);
 				store.setId(id);
 				store.setDescription("Alluxio Prefix alluxio://" + id);
@@ -133,7 +133,7 @@ public class StorageControllerImpl implements StorageController {
 			} 
 			if (id==null) {
 				for (String[] b : storages) {
-					Storage store = new Storage();
+					RestStorage store = new RestStorage();
 					store.setStorageType(StorageType.fromValue(b[1]));
 					store.setId(b[0]);
 					store.setDescription(b[0]+b[1] + " @" + cfg.getS3EndPoint());
@@ -149,8 +149,8 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<Storage> createStorage(@Valid Storage storage) {
-		Storage response = new Storage();
+	public ResponseEntity<RestStorage> createRestStorage(@Valid RestStorage storage) {
+		RestStorage response = new RestStorage();
 
 		// create internal buckets if not exists..
 		try {
@@ -272,9 +272,9 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<ProductFS> createProductFS(String storageId, @Valid ProductFS productFS) {
+	public ResponseEntity<RestProductFS> createRestProductFS(String storageId, @Valid RestProductFS productFS) {
 
-		ProductFS response = new ProductFS();
+		RestProductFS response = new RestProductFS();
 		long regTimeStamp = System.currentTimeMillis()/1000;
 		String separator = "/";
 
@@ -512,14 +512,14 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<ProductFS> getProductFS(String storageId, String id) {
-		ProductFS response = new ProductFS();
+	public ResponseEntity<RestProductFS> getRestProductFS(String storageId, String id) {
+		RestProductFS response = new RestProductFS();
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
 	@Override
-	public ResponseEntity<ProductFS> deleteProduct(String productId, String storageId) {
-		ProductFS response = new ProductFS();
+	public ResponseEntity<RestProductFS> deleteProduct(String productId, String storageId) {
+		RestProductFS response = new RestProductFS();
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
