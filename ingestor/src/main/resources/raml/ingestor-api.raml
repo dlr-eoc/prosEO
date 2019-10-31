@@ -159,6 +159,20 @@ resourceTypes:
       description: Delete a product by ID
       responses:
         204:
+  /uuid/{uuid}:
+    uriParameters:
+      uuid:
+        type: string
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+    get:
+      description: Get a product by UUID
+      displayName: getProductByUuid
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProduct
+              example: !include ../../../../../model/src/main/resources/raml/examples/product.json
         
 /ingest:
   type: standard
