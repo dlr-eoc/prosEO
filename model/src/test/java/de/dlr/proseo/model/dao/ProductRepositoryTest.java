@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -51,6 +52,7 @@ public class ProductRepositoryTest {
 	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
 	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
+	private static final UUID TEST_UUID = UUID.randomUUID();
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductRepositoryTest.class);
@@ -110,6 +112,7 @@ public class ProductRepositoryTest {
 		mission.getProductClasses().add(prodClass);
 		
 		Product product = new Product();
+		product.setUuid(TEST_UUID);
 		product.setProductClass(prodClass);
 		product.setOrbit(orbit);
 		product.setSensingStartTime(TEST_START_TIME);
@@ -162,6 +165,12 @@ public class ProductRepositoryTest {
 		assertFalse("Find by mission code, mission type and start/stop time failed for Product", products.isEmpty());
 		
 		logger.info("OK: Test for findByMissionCodeAndMissionTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
+		
+		// Test findByUuid
+		product = RepositoryService.getProductRepository().findByUuid(TEST_UUID);
+		assertFalse("Find by UUID failed for Product", null == product);
+		
+		logger.info("OK: Test for findByUuid completed");
 	}
 
 }

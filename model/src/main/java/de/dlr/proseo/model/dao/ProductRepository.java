@@ -5,6 +5,7 @@ package de.dlr.proseo.model.dao;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -119,5 +120,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 * @return the product produced by job step
 	 */
 	public Product findByJobStep(JobStep jobStep);
+	
+	/**
+	 * Get the product with the given universally unique product identifier
+	 * 
+	 * @param uuid the product UUID
+	 * @return the requested product
+	 */
+	public Product findByUuid(UUID uuid);
 
 }
