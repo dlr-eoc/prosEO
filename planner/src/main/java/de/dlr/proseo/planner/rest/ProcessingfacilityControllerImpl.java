@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PlannerJobstep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
-import de.dlr.proseo.planner.rest.model.PlannerProcessingFacility;
+import de.dlr.proseo.planner.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
@@ -40,14 +40,18 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-    public ResponseEntity<List<PlannerProcessingFacility>> getPlannerProcessingFacilities() {
+    public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities() {
 		productionPlanner.updateKubeConfigs();
 		if (productionPlanner.getKubeConfigs() != null) {
-			List<PlannerProcessingFacility> l = new ArrayList<PlannerProcessingFacility>();
+			List<RestProcessingFacility> l = new ArrayList<RestProcessingFacility>();
 			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: productionPlanner.getKubeConfigs()) {
-				l.add(new PlannerProcessingFacility(kc.getId(),
+				l.add(new RestProcessingFacility(
+						null,
+						null,
+						kc.getId(),
 						kc.getDescription(),
-						kc.getProcessingEngineUrl()));
+						kc.getProcessingEngineUrl(),
+						kc.getStorageManagerUrl()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
@@ -65,13 +69,17 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-	public ResponseEntity<PlannerProcessingFacility> getPlannerProcessingFacilityByName(String name) {
+	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
 		// todo handle name
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
-			PlannerProcessingFacility pf = new PlannerProcessingFacility(aKubeConfig.getId(),
+			RestProcessingFacility pf = new RestProcessingFacility(
+					null,
+					null,
+					aKubeConfig.getId(),
 					aKubeConfig.getDescription(),
-					aKubeConfig.getProcessingEngineUrl());
+					aKubeConfig.getProcessingEngineUrl(),
+					aKubeConfig.getStorageManagerUrl());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
