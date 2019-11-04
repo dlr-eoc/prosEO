@@ -70,9 +70,14 @@
       </List_of_Inputs>
       <List_of_Outputs count="1">
         <Output>
-          <File_Type>L1B</File_Type>
+          <File_Type>L1B_PART1</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-1.txt</File_Name>
+        </Output>
+        <Output>
+          <File_Type>L1B_PART2</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <File_Name>src/test/resources/sample-product-out-2.txt</File_Name>
         </Output>
       </List_of_Outputs>
     </Ipf_Proc>
