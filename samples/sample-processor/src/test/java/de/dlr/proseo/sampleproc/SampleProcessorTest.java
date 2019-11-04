@@ -28,8 +28,7 @@ public class SampleProcessorTest {
 	private static final String JOB_ORDER_FILE_NAME = "src/test/resources/sample-joborder.xml";
 	private static final String INPUT_FILE_NAME = "src/test/resources/sample-product-in.txt";
 	private static final String[] OUTPUT_FILE_NAMES = {
-			"src/test/resources/sample-product-out-1.txt",
-			"src/test/resources/sample-product-out-2.txt"
+			"src/test/resources/sample-product-out-1.txt"
 	};
 
 	/**

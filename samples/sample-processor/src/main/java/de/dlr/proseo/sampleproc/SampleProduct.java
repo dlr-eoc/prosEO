@@ -22,6 +22,8 @@ public class SampleProduct {
 	private Instant startTime;
 	/** Sensing stop time */
 	private Instant stopTime;
+	/** Generation time */
+	private Instant generationTime;
 	/** Product revision */
 	private Integer revision;
 	
@@ -97,6 +99,20 @@ public class SampleProduct {
 		this.stopTime = stopTime;
 	}
 	
+	/**
+	 * @return the generationTime
+	 */
+	public Instant getGenerationTime() {
+		return generationTime;
+	}
+
+	/**
+	 * @param generationTime the generationTime to set
+	 */
+	public void setGenerationTime(Instant generationTime) {
+		this.generationTime = generationTime;
+	}
+
 	/**
 	 * @return the revision
 	 */
