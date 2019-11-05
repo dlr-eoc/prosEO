@@ -34,7 +34,7 @@ import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
  * 
- * @author Dr. Thomas Bassler
+ * @author Ranjitha Vignesh
  *
  */
 @Component
@@ -85,8 +85,7 @@ public class OrderControllerImpl implements OrderController {
 			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
 				modelOrder.getInputProductClasses().add(product);
 			}
-		}
-		
+		}		
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
 			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
@@ -104,6 +103,7 @@ public class OrderControllerImpl implements OrderController {
 		modelOrder.setJobs(jobs);
 		
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
+		
 		
 		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.CREATED);
 	}

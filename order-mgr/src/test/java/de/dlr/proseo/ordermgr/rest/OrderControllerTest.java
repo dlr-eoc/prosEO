@@ -76,6 +76,44 @@ public class OrderControllerTest {
 		
 		
 	};
+	
+	private static String [][] testFilterConditions = {
+			//processing_order_id, parameter_type, parameter_value, filter_conditions_key
+			{ "copernicusCollection1","revision1","fileClass1"},
+			{ "copernicusCollection2","revision2","fileClass2"},
+			{ "copernicusCollection3","revision3","fileClass3"}
+
+	};
+	
+	private static String [][] testOutputParam = {
+			//processing_order_id, parameter_type, parameter_value, output_parameters_key
+			{ "copernicusCollection1","revision1","fileClass1"},
+			{ "copernicusCollection2","revision2","fileClass2"},
+			{ "copernicusCollection3","revision3","fileClass3"}
+			
+	};
+	
+	private static String [][] testconfiguredProcessor = {
+			{"KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03"},
+			{"KNMI L2 01.03.02 2019-07-04", "DLR L2 01.01.05 2019-07-04"},	
+			{"KNMI L2 01.03.02 2019-07-05", "DLR L2 01.01.05 2019-07-05"}	
+	};
+	
+	private static String [][] testReqProdClass = {
+			{"O3", "CLOUD", "FRESCO", "AAI"}	
+	};
+	
+	private static String [][] testInputProdClass = {
+			{"L1B"}	
+	};
+	
+	private static String [][] testReqOrbits = {
+			//Spacecraft Code, OrbitNumber from, OrbitNumber to
+			{"S5P", "4567", "5330" },
+	        { "S5P", "5421", "5678" }
+			
+	};
+	
 	/**
 	 * Create an order from a data array
 	 * 

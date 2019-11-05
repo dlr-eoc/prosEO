@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Spacecraft;
 
 public class OrbitUtil {
 	/** A logger for this class */
@@ -85,6 +86,7 @@ public class OrbitUtil {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrbit.getStartTime()));
 		}
+		
 		
 		return modelOrbit;
 	}
