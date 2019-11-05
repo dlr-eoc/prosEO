@@ -156,7 +156,7 @@ public class MissionControllerTest {
 	 * 
 	 * Test: Create a new mission
 	 */
-/*	@Test
+	@Test
 	public final void testCreateMission() {
 		// Create a mission in the database
 		Mission missionToCreate = createMission(testMissionData[1]);
@@ -192,7 +192,7 @@ public class MissionControllerTest {
 	 * Test: List of all missions
 	 * 
 	 */
-/*	@Test
+	@Test
 	public final void testGetMissions() {
 		// Make sure test missions exist
 		List<Mission> testMissions = createTestMissions();
@@ -246,7 +246,7 @@ public class MissionControllerTest {
 	 * Test: Get a mission by ID
 	 * Precondition: At least one mission with a known ID is in the database
 	 */
-/*	@Test
+	@Test
 	public final void testGetMissionById() {
 		// Make sure test missions exist
 		List<Mission> testMissions = createTestMissions();
@@ -273,7 +273,7 @@ public class MissionControllerTest {
 	 * Test: Delete a mission by ID
 	 * Precondition: A mission in the database
 	 */
-/*	@Test
+	@Test
 	public final void testDeleteMissionById() {
 //		// Make sure test missions exist
 //		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
