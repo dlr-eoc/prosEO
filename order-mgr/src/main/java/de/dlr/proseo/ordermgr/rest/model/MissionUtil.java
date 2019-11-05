@@ -8,6 +8,7 @@ import java.util.List;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
+import de.dlr.proseo.model.service.RepositoryService;
 
 public class MissionUtil {
 	/** A logger for this class */
@@ -106,7 +107,7 @@ public class MissionUtil {
 		for(String mode : restMission.getProcessingModes()) {
 			modelMission.getProcessingModes().add(mode);
 		}
-		
+	
 		return modelMission;
 	}
 
