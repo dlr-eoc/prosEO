@@ -7,10 +7,10 @@ mediaType: application/json
 
 
 types:
-  Info: !include types/info.raml
-  Storage: !include types/storage.raml
-  ProductFS: !include types/productFS.raml
-  Joborder: !include types/joborderBase64.raml
+  RestInfo: !include types/info.raml
+  RestStorage: !include types/storage.raml
+  RestProductFS: !include types/productFS.raml
+  RestJoborder: !include types/joborderBase64.raml
 
 
 resourceTypes:
@@ -48,7 +48,7 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Info
+            type: RestInfo
 
 /storages:
   type: standard
@@ -60,19 +60,19 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Storage[]
+            type: RestStorage[]
             example: !include examples/storage-list.json
   post:
     description: Create a new storage
     body:
       application/json:
-        type: Storage
+        type: RestStorage
         example: !include examples/storage.json
     responses:
       201:
         body:
           application/json:
-            type: Storage
+            type: RestStorage
             example: !include examples/storage.json
   /{storageId}:
     /register:
@@ -80,13 +80,13 @@ resourceTypes:
         description: register products/files/dirs from unstructered storage in prosEO-storage
         body:
           application/json:
-            type: ProductFS
+            type: RestProductFS
             example: !include examples/productFS.json
         responses:
           201:
             body:
               application/json:
-                type: ProductFS
+                type: RestProductFS
                 example: !include examples/productFS-reg.json
     /products:
       get:
@@ -97,7 +97,7 @@ resourceTypes:
           200:
             body:
               application/json:
-                type: ProductFS
+                type: RestProductFS
       /{productId}:
         delete:
           description: delete/remove product having productId from prosEO storage
@@ -105,7 +105,7 @@ resourceTypes:
             200:
               body:
                 application/json:
-                  type: ProductFS
+                  type: RestProductFS
                   example: !include examples/productFS-del.json
 
 /joborders:
@@ -113,11 +113,11 @@ resourceTypes:
       description: upload prosEO joborder file for later use in a job
       body:
         application/json:
-          type: Joborder
+          type: RestJoborder
           example: !include examples/joborderBase64.json
       responses:
         201:
           body:
             application/json:
-              type: Joborder
+              type: RestJoborder
               example: !include examples/joborderBase64-response.json

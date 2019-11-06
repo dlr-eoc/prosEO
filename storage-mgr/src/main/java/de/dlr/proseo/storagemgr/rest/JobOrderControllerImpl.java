@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
-import de.dlr.proseo.storagemgr.rest.model.Joborder;
+import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -80,8 +80,8 @@ public class JobOrderControllerImpl implements JoborderController {
 	}
 
 	@Override
-	public ResponseEntity<Joborder> createJoborder(@Valid Joborder joborder) {
-		Joborder response = new Joborder();
+	public ResponseEntity<RestJoborder> createRestJoborder(@Valid RestJoborder joborder) {
+		RestJoborder response = new RestJoborder();
 		String separator = "/";
 		try {
 			// create internal buckets, if not existing
