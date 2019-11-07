@@ -6,6 +6,8 @@
  */
 package de.dlr.proseo.storagemgr.rest;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -273,6 +275,16 @@ public class StorageControllerImpl implements StorageController {
 	@Override
 	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
 
+
+		// get node name info...
+		String hostName ="";
+		try {
+			InetAddress iAddress = InetAddress.getLocalHost();
+			hostName = iAddress.getHostName();
+		} catch (UnknownHostException e1) {
+
+		}
+
 		// create internal buckets & prefixes if not exists..
 		try {
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
@@ -384,6 +396,7 @@ public class StorageControllerImpl implements StorageController {
 					response.setRegisteredFilesCount(Long.valueOf(transferSumC.size()));
 					response.setRegisteredFilesList(transferSumC);
 					response.setDeleted(false);
+					response.setMessage("registration executed on node "+hostName);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				case POSIX:
@@ -415,6 +428,7 @@ public class StorageControllerImpl implements StorageController {
 					response.setRegisteredFilesCount(Long.valueOf(transferSumP.size()));
 					response.setRegisteredFilesList(transferSumP);
 					response.setDeleted(false);
+					response.setMessage("registration executed on node "+hostName);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
@@ -496,6 +510,7 @@ public class StorageControllerImpl implements StorageController {
 					response.setRegisteredFilesCount(Long.valueOf(transferSumC.size()));
 					response.setRegisteredFilesList(transferSumC);
 					response.setDeleted(false);
+					response.setMessage("registration executed on node "+hostName);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				case POSIX:
@@ -526,6 +541,7 @@ public class StorageControllerImpl implements StorageController {
 					response.setRegisteredFilesCount(Long.valueOf(transferSumP.size()));
 					response.setRegisteredFilesList(transferSumP);
 					response.setDeleted(false);
+					response.setMessage("registration executed on node "+hostName);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
