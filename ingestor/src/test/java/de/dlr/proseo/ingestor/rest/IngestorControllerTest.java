@@ -38,6 +38,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
@@ -58,16 +61,14 @@ import de.dlr.proseo.model.service.RepositoryService;
 /**
  * Test class for the REST API of IngestorControllerImpl
  * 
+ * This class uses programmatic transaction management
+ * 
  * @author Dr. Thomas Bassler
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-// Not transactional to make sure newly created objects are visible for the Ingestor
-//@Transactional
-//@AutoConfigureTestEntityManager
 public class IngestorControllerTest {
-	
 
 	/* The base URI of the Ingestor */
 	private static String INGESTOR_BASE_URI = "/proseo/ingestor/v0.1";
@@ -83,9 +84,9 @@ public class IngestorControllerTest {
 	private static final String TEST_SC_CODE = "XYZ";
 	private static final int TEST_ORBIT_NUMBER = 4712;
 	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
-	private static final String TEST_STOP_TIME_TEXT = "2018-07-21T00:08:28.000000";
-	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000000";
-	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000000";
+	private static final String TEST_STOP_TIME_TEXT = "2018-07-21T00:08:28.000123";
+	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000456";
+	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000789";
 	private static final String TEST_MODE_OFFL = "OFFL";
 	private static final String TEST_FILE_CLASS = "OPER";
 	
@@ -106,18 +107,10 @@ public class IngestorControllerTest {
 	@Autowired
 	private IngestorTestConfiguration config;
 	
-	/** The security environment for this test */
-	@Autowired
-	private IngestorSecurityConfig ingestorSecurityConfig;
-	
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
 	
-	/** REST template builder */
-	@Autowired
-	private RestTemplateBuilder rtb;
-
 	/** The (random) port on which the Ingestor was started */
 	@LocalServerPort
 	private int port;
@@ -222,61 +215,71 @@ public class IngestorControllerTest {
 	@Test
 	public final void testIngestProducts() {
 		
-		// Make sure processing facility and product class exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
-			mission.getProcessingModes().add(TEST_MODE_OFFL);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
-		
-		Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
-		if (null == spacecraft) {
-			spacecraft = new Spacecraft();
-			spacecraft.setCode(TEST_SC_CODE);
-			spacecraft.setMission(mission);
-			spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
-			logger.info("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
-			//mission.getSpacecrafts().add(spacecraft);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
-		
-		Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(TEST_SC_CODE, TEST_ORBIT_NUMBER);
-		if (null == orbit) {
-			orbit = new Orbit();
-			orbit.setSpacecraft(spacecraft);
-			orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
-			orbit.setStartTime(TEST_START_TIME);
-			orbit = RepositoryService.getOrbitRepository().save(orbit);
-			//spacecraft.getOrbits().add(orbit);
-			//spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
-		}
-		
-		ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
-		if (null == facility) {
-			facility = new ProcessingFacility();
-			facility.setName(TEST_NAME);
-		}
-		// Make sure the following attributes are as expected	
-		facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
-		facility.setStorageManagerUrl(config.getStorageManagerUrl());
-		facility = RepositoryService.getFacilityRepository().save(facility);
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus txStatus) {
+				// Make sure processing facility and product class exist
+				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(TEST_CODE);
+					mission.getFileClasses().add(TEST_FILE_CLASS);
+					mission.getProcessingModes().add(TEST_MODE_OFFL);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == prodClass) {
+					prodClass = new ProductClass();
+					prodClass.setMission(mission);
+					prodClass.setProductType(TEST_PRODUCT_TYPE);
+					prodClass.setMissionType(TEST_MISSION_TYPE);
+					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+					//mission.getProductClasses().add(prodClass);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+				
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+				if (null == spacecraft) {
+					spacecraft = new Spacecraft();
+					spacecraft.setCode(TEST_SC_CODE);
+					spacecraft.setMission(mission);
+					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+					logger.info("Spacecraft " + spacecraft.getCode() + " created with id " + spacecraft.getId());
+					//mission.getSpacecrafts().add(spacecraft);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using spacecraft " + spacecraft.getCode() + " with id " + spacecraft.getId());
+				
+				Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(TEST_SC_CODE, TEST_ORBIT_NUMBER);
+				if (null == orbit) {
+					orbit = new Orbit();
+					orbit.setSpacecraft(spacecraft);
+					orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
+					orbit.setStartTime(TEST_START_TIME);
+					orbit = RepositoryService.getOrbitRepository().save(orbit);
+					//spacecraft.getOrbits().add(orbit);
+					//spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+				}
+				
+				ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(TEST_NAME);
+				if (null == facility) {
+					facility = new ProcessingFacility();
+					facility.setName(TEST_NAME);
+				}
+				// Make sure the following attributes are as expected	
+				facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
+				facility.setStorageManagerUrl(config.getStorageManagerUrl());
+				facility = RepositoryService.getFacilityRepository().save(facility);
+
+				return null;
+			}
+		});
 		
 		// Create a directory with product data files
 		// Static: src/test/resources/IDA_test
@@ -377,10 +380,23 @@ public class IngestorControllerTest {
 	@Test
 	public final void testGetProducts() {
 		
-		// Make sure processing facility and product class exist
+		List<Product> testProducts = new ArrayList<>();
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				// Make sure processing facility and product class exist
 				
-		// Make sure test products with product files exist
-		List<Product> testProducts = createTestProducts();
+				// Make sure test products with product files exist
+				testProducts.addAll(createTestProducts());
+
+				return null;
+			}
+		
+		});
 		
 		// Perform REST API call and check retrieved product file
 				
@@ -434,10 +450,23 @@ public class IngestorControllerTest {
 	@Test
 	public final void testDeleteProductFile() {
 		
-		// Make sure processing facility and product class exist
+		List<Product> testProducts = new ArrayList<>();
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				// Make sure processing facility and product class exist
 				
-		// Make sure test products with product files exist
-		List<Product> testProducts = createTestProducts();
+				// Make sure test products with product files exist
+				testProducts.addAll(createTestProducts());
+
+				return null;
+			}
+		
+		});
 		
 		// Create mock storage manager (logging calls)
 		
@@ -460,10 +489,23 @@ public class IngestorControllerTest {
 	@Test
 	public final void testModifyProductFile() {
 		
-		// Make sure processing facility and product class exist
+		List<Product> testProducts = new ArrayList<>();
 		
-		// Make sure test products with product files exist
-		List<Product> testProducts = createTestProducts();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				// Make sure processing facility and product class exist
+				
+				// Make sure test products with product files exist
+				testProducts.addAll(createTestProducts());
+
+				return null;
+			}
+		
+		});
 		
 		// Create mock storage manager (logging calls)
 		

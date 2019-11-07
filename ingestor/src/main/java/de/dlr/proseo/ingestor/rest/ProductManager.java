@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
 
 import javax.persistence.EntityManager;
@@ -75,6 +76,11 @@ public class ProductManager {
 	private static final int MSG_ID_COMPONENT_PRODUCT_CLASS_INVALID = 2017;
 	private static final int MSG_ID_ENCLOSING_PRODUCT_CLASS_INVALID = 2018;
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 2019;
+	private static final int MSG_ID_PRODUCT_UUID_MISSING = 2020;
+	private static final int MSG_ID_PRODUCT_UUID_INVALID = 2021;
+	private static final int MSG_ID_PRODUCT_NOT_FOUND_BY_UUID = 2022;
+	private static final int MSG_ID_PRODUCT_RETRIEVED_BY_UUID = 2023;
+	private static final int MSG_ID_DUPLICATE_PRODUCT_UUID = 2024;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -92,12 +98,18 @@ public class ProductManager {
 	private static final String MSG_ENCLOSING_PRODUCT_CLASS_INVALID = "(E%d) Enclosing product class %s invalid for product class %s in mission %s";
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product with ID %d has been modified since retrieval by the client";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product deletion unsuccessful for ID %d";
+	private static final String MSG_PRODUCT_UUID_MISSING = "(E%d) Product UUID not set";
+	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
+	private static final String MSG_PRODUCT_NOT_FOUND_BY_UUID = "(E%d) No product found for UUID %s";
+	private static final String MSG_DUPLICATE_PRODUCT_UUID = "(E%d) Duplicate product UUID %s";
+	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
 	private static final String MSG_PRODUCT_CREATED = "(I%d) Product of type %s created for mission %s";
-	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with id %d retrieved";
+	private static final String MSG_PRODUCT_RETRIEVED_BY_UUID = "(I%d) Product with UUID %s retrieved";
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
+	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with UUID %s retrieved";
 	
 	/** JPA entity manager */
 	@PersistenceContext
@@ -266,6 +278,15 @@ public class ProductManager {
 
 		// Create a database model product
 		Product modelProduct = ProductUtil.toModelProduct(product);
+		if (null == modelProduct.getUuid()) {
+			modelProduct.setUuid(UUID.randomUUID());
+		} else {
+			// Test if given UUID is not yet in use
+			if (null != RepositoryService.getProductRepository().findByUuid(modelProduct.getUuid())) {
+				throw new IllegalArgumentException(logError(MSG_DUPLICATE_PRODUCT_UUID, MSG_ID_DUPLICATE_PRODUCT_UUID, 
+						product.getUuid()));
+			}
+		}
 		
 		// Add product class
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
@@ -575,5 +596,39 @@ public class ProductManager {
 		}
 		
 		return ProductUtil.toRestProduct(modelProduct);
+	}
+	
+	/**
+	 * Find the product with the given universally unique product identifier
+	 * 
+	 * @param uuid the UUID to look for
+	 * @return a Json object corresponding to the product found
+	 * @throws IllegalArgumentException if no or an invalid product UUID was given
+	 * @throws NoResultException if no product with the given UUID exists
+	 */
+	public RestProduct getProductByUuid(String uuid) throws IllegalArgumentException, NoResultException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductByUuid({})", uuid);
+		
+		// Check input parameter
+		if (null == uuid || 0 == uuid.length()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_UUID_MISSING, MSG_ID_PRODUCT_UUID_MISSING));
+		}
+
+		UUID uuidToSearch = null;
+		try {
+			uuidToSearch = UUID.fromString(uuid);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_UUID_INVALID, MSG_ID_PRODUCT_UUID_INVALID, uuid));
+		}
+		
+		// Find the product in the database
+		Product product = RepositoryService.getProductRepository().findByUuid(uuidToSearch);
+		if (null == product) {
+			throw new NoResultException(logError(MSG_PRODUCT_NOT_FOUND_BY_UUID, MSG_ID_PRODUCT_NOT_FOUND_BY_UUID, uuid));
+		}
+
+		logInfo(MSG_PRODUCT_RETRIEVED_BY_UUID, MSG_ID_PRODUCT_RETRIEVED_BY_UUID, uuid);
+		
+		return ProductUtil.toRestProduct(product);
 	}
 }

@@ -8,9 +8,12 @@ package de.dlr.proseo.ingestor.rest;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -164,6 +167,28 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
+	}
+
+	/**
+	 * Get a product by UUID
+	 * 
+	 * @param uuid the universally unique product identifier
+	 * @return HTTP status "OK" and a Json object corresponding to the product found or 
+	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product UUID was given, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given UUID exists
+	 */
+	@Override
+	public ResponseEntity<RestProduct> getProductByUuid(
+			@Pattern(regexp = "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$") String uuid) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductByUuid({})", uuid);
+		
+		try {
+			return new ResponseEntity<>(productManager.getProductByUuid(uuid), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
 	}
 

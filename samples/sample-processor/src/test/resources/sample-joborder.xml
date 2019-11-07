@@ -3,8 +3,8 @@
   <!--/mnt/sw/TLE/bin/jo2xml.pl V1.0.2 @ 2019-04-25T15:44:34: Converted '/mnt/data1/storage_offl_l2/cache_offl_l2/WORKING-609521571/JobOrder.609521551.yml' to 'JobOrder.609521551.xml'-->
 <Ipf_Job_Order>
   <Ipf_Conf>
-    <Processor_Name>sample-processor</Processor_Name>
-    <Version>00.00.01</Version>
+    <Processor_Name>PTML1B</Processor_Name>
+    <Version>0.0.1</Version>
     <Stdout_Log_Level>INFO</Stdout_Log_Level>
     <Stderr_Log_Level>WARNING</Stderr_Log_Level>
     <Test>false</Test>
@@ -12,8 +12,8 @@
     <Processing_Station>PDGS-OP</Processing_Station>
     <Acquisition_Station>PDGS-GSN</Acquisition_Station>
     <Sensing_Time>
-      <Start>00000000_000000000000</Start>
-      <Stop>99999999_999999999999</Stop>
+      <Start>20191104_090000200000</Start>
+      <Stop>20191104_104110300000</Stop>
     </Sensing_Time>
     <Config_Files>
       <Conf_File_Name>EMPTY</Conf_File_Name>
@@ -33,39 +33,49 @@
       </Processing_Parameter>
       <Processing_Parameter>
         <Name>orbit number</Name>
-        <Value>01191</Value>
+        <Value>03000</Value>
       </Processing_Parameter>
       <Processing_Parameter>
         <Name>Processing_Mode</Name>
-        <Value>OFFL</Value>
-      </Processing_Parameter>
-      <Processing_Parameter>
-        <Name>Deadline_Time</Name>
-        <Value>20190425_161433000000</Value>
+        <Value>OPER</Value>
       </Processing_Parameter>
     </Dynamic_Processing_Parameters>
   </Ipf_Conf>
   <List_of_Ipf_Procs count="1">
     <Ipf_Proc>
-      <Task_Name>sample-processor</Task_Name>
+      <Task_Name>ptm_l01b</Task_Name>
       <Task_Version>00.00.01</Task_Version>
-      <List_of_Inputs count="1">
+      <List_of_Inputs count="3">
         <Input>
-          <File_Type>L2__CO2___</File_Type>
+          <File_Type>processing_configuration</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name>src/test/resources/ptm_l1b_config.xml</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>AUX_IERS_B</File_Type>
+          <File_Name_Type>PHYSICAL</File_Name_Type>
+          <List_of_File_Names count="1">
+            <File_Name>src/test/resources/bulletinb-380.xml</File_Name>
+          </List_of_File_Names>
+        </Input>
+        <Input>
+          <File_Type>L0</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <List_of_File_Names count="1">
             <File_Name>src/test/resources/sample-product-in.txt</File_Name>
           </List_of_File_Names>
         </Input>
       </List_of_Inputs>
-      <List_of_Outputs count="2">
+      <List_of_Outputs count="1">
         <Output>
-          <File_Type>L2__CLOUD_</File_Type>
+          <File_Type>L1B_PART1</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-1.txt</File_Name>
         </Output>
         <Output>
-          <File_Type>L2__O3____</File_Type>
+          <File_Type>L1B_PART2</File_Type>
           <File_Name_Type>PHYSICAL</File_Name_Type>
           <File_Name>src/test/resources/sample-product-out-2.txt</File_Name>
         </Output>
