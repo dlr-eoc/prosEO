@@ -410,7 +410,7 @@ public class IngestorControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProductFile(java.lang.Long, java.lang.String, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.IngestControllerImpl#ingestProductFile(java.lang.Long, ProcessingFacility, de.dlr.proseo.ingestor.rest.model.ProductFile)}.
 	 * 
 	 * Test: Ingest a product file for an existing product
 	 * Precondition: Processing facility exists, product exists, mock storage manager exists, mock production planner exists

@@ -212,6 +212,7 @@ resourceTypes:
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       post:
         description: Create the metadata of a new product file for a product at a given processing facility
+                     (it is assumed that the files themselves are already pushed to the Storage Manager)
         displayName: ingestProductFile
         body:
           application/json:
