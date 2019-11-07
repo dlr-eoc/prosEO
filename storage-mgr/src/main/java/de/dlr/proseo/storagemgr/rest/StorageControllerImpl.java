@@ -29,7 +29,6 @@ import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.rest.model.RestStorage;
 import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
-import de.dlr.proseo.storagemgr.rest.model.TargetStorageType;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
 
 import software.amazon.awssdk.services.s3.S3Client;
@@ -272,13 +271,23 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<RestProductFS> createRestProductFS(String storageId, @Valid RestProductFS productFS) {
+	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
+
+		// create internal buckets & prefixes if not exists..
+		try {
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getAlluxioUnderFsS3Bucket(),cfg.getS3Region());
+		} catch (Exception e) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 
 		RestProductFS response = new RestProductFS();
 		long regTimeStamp = System.currentTimeMillis()/1000;
 		String separator = "/";
 
-		// fetch all stoargeIDs
+		// fetch all storageIDs
 		ArrayList<String[]> storages;
 		try {
 			storages = StorageManagerUtils
@@ -310,23 +319,19 @@ public class StorageControllerImpl implements StorageController {
 
 		//check FS_TYPE of Source
 		SourceStorageType sourceStorageFsType = SourceStorageType.POSIX; // default...
-		if (productFS.getSourceStorageType().equals(SourceStorageType.S_3)) sourceStorageFsType=SourceStorageType.S_3;
-		if (productFS.getSourceStorageType().equals(SourceStorageType.POSIX)) sourceStorageFsType=SourceStorageType.POSIX;		
+		if (restProductFS.getSourceStorageType().equals(SourceStorageType.S_3)) sourceStorageFsType=SourceStorageType.S_3;
+		if (restProductFS.getSourceStorageType().equals(SourceStorageType.POSIX)) sourceStorageFsType=SourceStorageType.POSIX;		
 
-		//check FS_TYPE of referenced target storageID
-		TargetStorageType targetStorageFsType =TargetStorageType.S_3; // default...
-		if (s3Storages.contains(storageId)) targetStorageFsType=TargetStorageType.S_3;
-		if (alluxioStorages.contains(storageId)) targetStorageFsType=TargetStorageType.ALLUXIO;
 
 
 		// distinguish between requested target Storage FS_Type
-		switch (targetStorageFsType) {
+		switch (restProductFS.getTargetStorageType()) {
 
 		case S_3:
 			try {
 				// check if storageID is present
-				if(!s3Storages.contains(storageId)) {
-					response.setTargetStorageType(productFS.getTargetStorageType());
+				if(!s3Storages.contains(cfg.getS3DefaultBucket())) {
+					response.setTargetStorageType(restProductFS.getTargetStorageType());
 					response.setMessage("StorageId does not exist...");
 					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 				}
@@ -339,65 +344,76 @@ public class StorageControllerImpl implements StorageController {
 				 * s3://<storageId>/<productId>/<regTimeStamp>/...<file>
 				 */				
 				String pref = 
-						productFS.getProductId()
+						restProductFS.getProductId()
 						+separator+regTimeStamp;
 
 				// distinguish between requested source Storage FS_Type
 				switch(sourceStorageFsType) {
 				case S_3:
-					// initiate transfer from S3 filePath to S3
-					AmazonS3URI s3uri = new AmazonS3URI(productFS.getSourceFilePath());
-					String sourceBucket = s3uri.getBucket();
-					String sourceKey = s3uri.getKey();
-					if (null==sourceKey) sourceKey="";
-					ArrayList<String> transferC = S3Ops.v1Copy(
-							//the client
-							s3, 
-							// the source S3-Bucket
-							sourceBucket, 
-							// the source key
-							sourceKey, 
-							// the target s3-bucket (=storageId)
-							storageId,
-							// the final prefix including productId pattern of the file or directory
-							pref
-							);
-					if (null==transferC) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-					response.setProductId(productFS.getProductId());
-					response.setTargetStorageId(storageId);
+					// initiate transfer from S3 filePaths to S3
+					ArrayList<String> transferSumC = new ArrayList<String>();
+
+					for (String fileOrDir : restProductFS.getSourceFilePaths()) {
+						AmazonS3URI s3uri = new AmazonS3URI(fileOrDir);
+						String sourceBucket = s3uri.getBucket();
+						String sourceKey = s3uri.getKey();
+						if (null==sourceKey) sourceKey="";
+						ArrayList<String> transferC = S3Ops.v1Copy(
+								//the client
+								s3, 
+								// the source S3-Bucket
+								sourceBucket, 
+								// the source key
+								sourceKey, 
+								// the target s3-bucket (=storageId)
+								cfg.getS3DefaultBucket(),
+								// the final prefix including productId pattern of the file or directory
+								pref
+								);
+						transferSumC.addAll(transferC);
+					}
+
+					if (transferSumC.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					response.setProductId(restProductFS.getProductId());
+					response.setTargetStorageId(cfg.getS3DefaultBucket());
 					response.setRegistered(true);
-					response.setRegisteredFilePath("s3://"+storageId+separator+pref+separator+sourceKey);
-					response.setSourceFilePath(productFS.getSourceFilePath());
+					response.setRegisteredFilePath("s3://"+cfg.getS3DefaultBucket()+separator+pref+separator);
+					response.setSourceFilePaths(restProductFS.getSourceFilePaths());
 					response.setSourceStorageType(sourceStorageFsType);
-					response.setTargetStorageType(targetStorageFsType);
-					response.setRegisteredFilesCount(Long.valueOf(transferC.size()));
-					response.setRegisteredFilesList(transferC.toString());
+					response.setTargetStorageType(restProductFS.getTargetStorageType());
+					response.setRegisteredFilesCount(Long.valueOf(transferSumC.size()));
+					response.setRegisteredFilesList(transferSumC);
 					response.setDeleted(false);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				case POSIX:
 					// initiate transfer from POSIX filePath to S3
-					ArrayList<String> transferP = S3Ops.v1Upload(
-							//the client
-							s3, 
-							// the local POSIX source file or directory
-							productFS.getSourceFilePath(), 
-							// the storageId -> =BucketName
-							storageId, 
-							// the final prefix of the file or directory
-							pref, 
-							false
-							);
-					if (null == transferP) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-					response.setProductId(productFS.getProductId());
-					response.setTargetStorageId(storageId);
+					ArrayList<String> transferSumP = new ArrayList<String>();
+
+					for (String fileOrDir : restProductFS.getSourceFilePaths()) {
+						ArrayList<String> transferP = S3Ops.v1Upload(
+								//the client
+								s3, 
+								// the local POSIX source file or directory
+								fileOrDir, 
+								// the storageId -> =BucketName
+								cfg.getS3DefaultBucket(), 
+								// the final prefix of the file or directory
+								pref, 
+								false
+								);
+						transferSumP.addAll(transferP);
+					}
+					if (transferSumP.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					response.setProductId(restProductFS.getProductId());
+					response.setTargetStorageId(cfg.getS3DefaultBucket());
 					response.setRegistered(true);
-					response.setRegisteredFilePath(pref+separator+productFS.getSourceFilePath());
-					response.setSourceFilePath(productFS.getSourceFilePath());
+					response.setRegisteredFilePath("s3://"+cfg.getS3DefaultBucket()+separator+pref+separator);
+					response.setSourceFilePaths(restProductFS.getSourceFilePaths());
 					response.setSourceStorageType(sourceStorageFsType);
-					response.setTargetStorageType(productFS.getTargetStorageType());
-					response.setRegisteredFilesCount(Long.valueOf(transferP.size()));
-					response.setRegisteredFilesList(transferP.toString());
+					response.setTargetStorageType(restProductFS.getTargetStorageType());
+					response.setRegisteredFilesCount(Long.valueOf(transferSumP.size()));
+					response.setRegisteredFilesList(transferSumP);
 					response.setDeleted(false);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -413,10 +429,17 @@ public class StorageControllerImpl implements StorageController {
 		case ALLUXIO:
 			try {
 				// check if storageID is present
-				if(!alluxioStorages.contains(storageId)) {
-					response.setTargetStorageType(productFS.getTargetStorageType());
-					response.setMessage("StorageId does not exist...");
-					return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+				if(!alluxioStorages.contains(cfg.getAlluxioUnderFsDefaultPrefix())) {
+
+					// create default ALLUXIO-prefix:
+					//<alluxioUnderFsBucket>/<underFsPrefix>/<defaultPrefix=storageId>
+					S3Client s3temp = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+					S3Ops.createEmptyKey(s3temp
+							, cfg.getAlluxioUnderFsS3Bucket()
+							, cfg.getAlluxioUnderFsS3BucketPrefix()+"/"+cfg.getAlluxioUnderFsDefaultPrefix()+"/"+"MANIFEST.txt"
+									, "prefix "+cfg.getAlluxioUnderFsDefaultPrefix()+" created from storage-manager..."
+							);
+					s3temp.close();
 				}
 
 				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
@@ -425,75 +448,83 @@ public class StorageControllerImpl implements StorageController {
 				 * prepare final file/directory prefix within storage 
 				 * 
 				 * ALLUXIO-storage pattern (UnderFS is S3):
-				 * s3://<underFSBucket>/<underFSPrefix>/<storageId>/<productId>/<regTimeStamp>/...<file>
+				 * s3://<underFSBucket>/<underFSPrefix>/<defaultPrefix=storageId>/<productId>/<regTimeStamp>/...<file>
 				 */		
 				// prefix used for transfer to ALLUXIO-UnderFS
 				String s3Pref = 
 						cfg.getAlluxioUnderFsS3BucketPrefix()
-						+separator+storageId
-						+separator+productFS.getProductId()
+						+separator+cfg.getAlluxioUnderFsDefaultPrefix()
+						+separator+restProductFS.getProductId()
 						+separator+regTimeStamp;
 				// prefix used for setRegisteredFilePath
 				String alluxioPref = 
-						storageId
-						+separator+productFS.getProductId()
+						cfg.getAlluxioUnderFsDefaultPrefix()
+						+separator+restProductFS.getProductId()
 						+separator+regTimeStamp;
 
 				switch(sourceStorageFsType) {
 				case S_3:
+					ArrayList<String> transferSumC = new ArrayList<String>();
 					// initiate transfer from S3 filePath to ALLUXIO
-					AmazonS3URI s3uri = new AmazonS3URI(productFS.getSourceFilePath());
-					String sourceBucket = s3uri.getBucket();
-					String sourceKey = s3uri.getKey();
-					if (null==sourceKey) sourceKey="";
-					ArrayList<String> transferC = S3Ops.v1Copy(
-							//the client
-							s3, 
-							// the source s3-bucket
-							sourceBucket,
-							// the local S3 source file or directory
-							sourceKey, 
-							// target-bucket --> the ALLUXIO UnderFS Bucket
-							cfg.getAlluxioUnderFsS3Bucket(),
-							// the final prefix including productId pattern of the file or directory
-							s3Pref
-							);
-					if (null==transferC) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-					response.setProductId(productFS.getProductId());
-					response.setTargetStorageId(storageId);
+					for (String fileOrDir : restProductFS.getSourceFilePaths()) {
+						AmazonS3URI s3uri = new AmazonS3URI(fileOrDir);
+						String sourceBucket = s3uri.getBucket();
+						String sourceKey = s3uri.getKey();
+						if (null==sourceKey) sourceKey="";
+						ArrayList<String> transferC = S3Ops.v1Copy(
+								//the client
+								s3, 
+								// the source s3-bucket
+								sourceBucket,
+								// the local S3 source file or directory
+								sourceKey, 
+								// target-bucket --> the ALLUXIO UnderFS Bucket
+								cfg.getAlluxioUnderFsS3Bucket(),
+								// the final prefix including productId pattern of the file or directory
+								s3Pref
+								);
+						transferSumC.addAll(transferC);
+					}
+					if (transferSumC.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					response.setProductId(restProductFS.getProductId());
+					response.setTargetStorageId(cfg.getAlluxioUnderFsDefaultPrefix());
 					response.setRegistered(true);
-					response.setRegisteredFilePath(separator+alluxioPref+separator+sourceKey);
-					response.setSourceFilePath(productFS.getSourceFilePath());
+					response.setRegisteredFilePath(separator+alluxioPref+separator);
+					response.setSourceFilePaths(restProductFS.getSourceFilePaths());
 					response.setSourceStorageType(sourceStorageFsType);
-					response.setTargetStorageType(targetStorageFsType);
-					response.setRegisteredFilesCount(Long.valueOf(transferC.size()));
-					response.setRegisteredFilesList(transferC.toString());
+					response.setTargetStorageType(restProductFS.getTargetStorageType());
+					response.setRegisteredFilesCount(Long.valueOf(transferSumC.size()));
+					response.setRegisteredFilesList(transferSumC);
 					response.setDeleted(false);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				case POSIX:
+					ArrayList<String> transferSumP = new ArrayList<String>();
 					// initiate transfer from POSIX filePath to ALLUXIO
-					ArrayList<String> transferP = S3Ops.v1Upload(
-							//the client
-							s3, 
-							// the local POSIX source file or directory
-							productFS.getSourceFilePath(), 
-							// the ALLUXIO UnderFS Bucket
-							cfg.getAlluxioUnderFsS3Bucket(),
-							// the final prefix including productId pattern of the file or directory
-							s3Pref,
-							false
-							);
-					if (null == transferP) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-					response.setProductId(productFS.getProductId());
-					response.setTargetStorageId(storageId);
+					for (String fileOrDir : restProductFS.getSourceFilePaths()) {
+						ArrayList<String> transferP = S3Ops.v1Upload(
+								//the client
+								s3, 
+								// the local POSIX source file or directory
+								fileOrDir, 
+								// the ALLUXIO UnderFS Bucket
+								cfg.getAlluxioUnderFsS3Bucket(),
+								// the final prefix including productId pattern of the file or directory
+								s3Pref,
+								false
+								);
+						transferSumP.addAll(transferP);
+					}
+					if (transferSumP.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					response.setProductId(restProductFS.getProductId());
+					response.setTargetStorageId(cfg.getAlluxioUnderFsDefaultPrefix());
 					response.setRegistered(true);
-					response.setRegisteredFilePath(separator+alluxioPref+separator+productFS.getSourceFilePath());
-					response.setSourceFilePath(productFS.getSourceFilePath());
+					response.setRegisteredFilePath(separator+alluxioPref+separator);
+					response.setSourceFilePaths(restProductFS.getSourceFilePaths());
 					response.setSourceStorageType(sourceStorageFsType);
-					response.setTargetStorageType(productFS.getTargetStorageType());
-					response.setRegisteredFilesCount(Long.valueOf(transferP.size()));
-					response.setRegisteredFilesList(transferP.toString());
+					response.setTargetStorageType(restProductFS.getTargetStorageType());
+					response.setRegisteredFilesCount(Long.valueOf(transferSumP.size()));
+					response.setRegisteredFilesList(transferSumP);
 					response.setDeleted(false);
 					s3.shutdown();
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -512,15 +543,19 @@ public class StorageControllerImpl implements StorageController {
 	}
 
 	@Override
-	public ResponseEntity<RestProductFS> getRestProductFS(String storageId, String id) {
+	public ResponseEntity<RestProductFS> getRestProductFSById(String id) {
 		RestProductFS response = new RestProductFS();
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
 	@Override
-	public ResponseEntity<RestProductFS> deleteProduct(String productId, String storageId) {
+	public ResponseEntity<RestProductFS> deleteProductByProductId(String productId) {
 		RestProductFS response = new RestProductFS();
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
+
+
+
+
 
 }

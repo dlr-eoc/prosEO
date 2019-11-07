@@ -50,7 +50,7 @@ resourceTypes:
           application/json:
             type: RestInfo
 
-/storages:
+/storage:
   type: standard
   get:
     description: Get storages by id
@@ -74,7 +74,7 @@ resourceTypes:
           application/json:
             type: RestStorage
             example: !include examples/storage.json
-  /{storageId}:
+  /products:
     /register:
       post:
         description: register products/files/dirs from unstructered storage in prosEO-storage
@@ -88,25 +88,26 @@ resourceTypes:
               application/json:
                 type: RestProductFS
                 example: !include examples/productFS-reg.json
-    /products:
-      get:
-        description: get product-infos by Id
-        queryParameters:
-          id?: string
+    get:
+      description: get product-infos by Id
+      queryParameters:
+        id?: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductFS
+    /{productId}:
+      delete:
+        description: delete/remove product having productId from prosEO storage
         responses:
           200:
             body:
               application/json:
                 type: RestProductFS
-      /{productId}:
-        delete:
-          description: delete/remove product having productId from prosEO storage
-          responses:
-            200:
-              body:
-                application/json:
-                  type: RestProductFS
-                  example: !include examples/productFS-del.json
+                example: !include examples/productFS-del.json
+
+
 
 /joborders:
     post:
