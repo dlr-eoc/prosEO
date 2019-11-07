@@ -122,8 +122,9 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param processingFacility the processing facility to ingest products to
      * @param ingestorProducts a list of product descriptions with product file locations
-     * @return a Json list of the products updated and/or created including their product files and HTTP status "CREATED",
-     *   or HTTP status "BAD_REQUEST", if an invalid processing facility was given
+     * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
+     *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
+     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
 	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts) {
@@ -242,7 +243,8 @@ public class IngestControllerImpl implements IngestController {
      * @param processingFacility the name of the processing facility, from which the files shall be deleted
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
 	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility) {
@@ -263,7 +265,16 @@ public class IngestControllerImpl implements IngestController {
 					HttpStatus.NOT_FOUND);
 		}
 		
-		return new ResponseEntity<>(productIngestor.deleteProductFile(productId, facility), HttpStatus.NO_CONTENT);
+		try {
+			productIngestor.deleteProductFile(productId, facility);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (ProcessingException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
     /**
