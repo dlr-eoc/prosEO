@@ -60,7 +60,6 @@ public class ProcessorClassManager {
 	
 	/* Message string constants */
 	private static final String MSG_PROCESSOR_CLASS_NOT_FOUND = "(E%d) No processor class found for mission %s and processor name %s";
-	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
 	private static final String MSG_PROCESSOR_CLASS_MISSING = "(E%d) Processor class not set";
 	private static final String MSG_PROCESSOR_CLASS_ID_MISSING = "(E%d) Processor class ID not set";
 	private static final String MSG_PROCESSOR_CLASS_ID_NOT_FOUND = "(E%d) No processor class found with ID %d";
@@ -69,6 +68,7 @@ public class ProcessorClassManager {
 	private static final String MSG_PROCESSOR_CLASS_DATA_MISSING = "(E%d) Processor class data not set";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor class deletion unsuccessful for ID %d";
 
+	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
 	private static final String MSG_PROCESSOR_CLASS_CREATED = "(I%d) Processor class %s created for mission %s";
 	private static final String MSG_PROCESSOR_CLASS_RETRIEVED = "(I%d) Processor class with ID %d retrieved";
 	private static final String MSG_PROCESSOR_CLASS_MODIFIED = "(I%d) Processor class with id %d modified";

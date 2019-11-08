@@ -19,6 +19,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.validation.Valid;
 import javax.ws.rs.ServerErrorException;
 
@@ -40,6 +41,7 @@ import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.SelectionRule;
+import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
@@ -78,11 +80,15 @@ public class ProductClassManager {
 	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
 	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
 	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
+	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
+	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = 2121;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with id %d not found";
+	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
+	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s, product type %s and mission type %s";
 	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
 	private static final String MSG_RULE_STRING_MISSING = "(E%d) Selection rule missing in selection rule string %s";
@@ -99,6 +105,8 @@ public class ProductClassManager {
 	private static final String MSG_INVALID_PROCESSOR = "(E%d) Configured processor %s is not defined";
 	private static final String MSG_INVALID_POLICY_TYPE = "(E%d) Invalid policy type %s in selection rule, see Generic IPF Interface Specifications for valid values";
 	private static final String MSG_INVALID_TIME_UNIT = "(E%d) Invalid time unit %s in selection rule, one of {DAYS, HOURS, MINUTES, SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS} expected";
+
+	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s, product type %s and mission type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
 	private static final String MSG_SELECTION_RULES_CREATED = "(I%d) %d selection rules added to product class of type %s in mission %s";
 
@@ -159,9 +167,58 @@ public class ProductClassManager {
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
      */
 	public List<RestProductClass> getRestProductClass(String mission, String productType, String missionType) throws NoResultException {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType, missionType);
 		
-		throw new UnsupportedOperationException(logError("GET for RestProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		List<RestProductClass> result = new ArrayList<>();
+		
+		if (null != mission && null != productType) {
+			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission, productType);
+			if (null == productClass) {
+				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, 
+						productType, mission));
+			}
+			result.add(ProductClassUtil.toRestProductClass(productClass));
+		} else if (null != mission && null != missionType) {
+			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndMissionType(mission, missionType);
+			if (null == productClass) {
+				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, 
+						missionType, mission));
+			}
+			result.add(ProductClassUtil.toRestProductClass(productClass));
+		} else {
+			String jpqlQuery = "select pc from ProductClass pc where 1 = 1";
+			if (null != mission) {
+				jpqlQuery += " and mission.code = :missionCode";
+			}
+			if (null != productType) {
+				jpqlQuery += " and productType = :productType";
+			}
+			if (null != missionType) {
+				jpqlQuery += " and missionType = :missionType";
+			}
+			Query query = em.createQuery(jpqlQuery);
+			if (null != mission) {
+				query.setParameter("missionCode", mission);
+			}
+			if (null != productType) {
+				query.setParameter("productType", productType);
+			}
+			if (null != missionType) {
+				query.setParameter("missionType", missionType);
+			}
+			for (Object resultObject: query.getResultList()) {
+				if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
+					result.add(ProductClassUtil.toRestProductClass((de.dlr.proseo.model.ProductClass) resultObject));
+				}
+			}
+			if (result.isEmpty()) {
+				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, 
+						mission, productType, missionType));
+			}
+		}
+		logInfo(MSG_PRODUCT_CLASS_LIST_RETRIEVED, MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED, mission, productType, missionType);
+		
+		return result;
 	}
 
     /**
