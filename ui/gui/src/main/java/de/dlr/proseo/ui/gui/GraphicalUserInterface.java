@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 //@Configuration
 //@EnableAutoConfiguration
 @EnableConfigurationProperties
-//@ComponentScan
+
 public class GraphicalUserInterface  {
 
 	public static void main(String[] args) throws Exception {

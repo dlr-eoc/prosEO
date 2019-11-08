@@ -25,14 +25,4 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 	            .logoutSuccessUrl("/customlogin?logout")
 	            	.permitAll();
 	    }
-	
-
-//	    @Bean
-//	    public ViewResolver viewResolver() {
-//	        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-//	        viewResolver.setPrefix("/BOOT-INF/classes/templates/");
-//	        viewResolver.setSuffix(".ftl");
-//	        return viewResolver;
-//
-//	    }
 }
