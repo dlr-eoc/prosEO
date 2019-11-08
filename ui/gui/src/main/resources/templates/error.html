@@ -2,15 +2,17 @@
 <html lang ="en">
 <head>
 <meta charset ="UTF-8">
-  <title>Welcome!</title>
+  <title>Error!</title>
 </head>
+
 <body>
+
     <h1>Ooops! Something went wrong</h1>
     <div class = "container">
     <table>
         <tr>
             <td>Date</td>
-            <td>${timestamp?datetime}</td>
+            <td>${execInfo.now}</td>
         </tr>
         <tr>
             <td>Error</td>
