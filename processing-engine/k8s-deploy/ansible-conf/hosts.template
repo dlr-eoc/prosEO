@@ -1,0 +1,2 @@
+[k8s-gateway]
+X.X.X.X ansible_ssh_private_key_file=vars/XXXXX.pem

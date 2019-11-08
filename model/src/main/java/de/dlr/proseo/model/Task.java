@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -58,7 +59,7 @@ public class Task extends PersistentObject {
 	 * (level 5 "List_of_Breakpoints" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
 	@ElementCollection
-	private List<String> breakpointFileNames;
+	private List<String> breakpointFileNames = new ArrayList<>();
 
 	/**
 	 * Gets the processor this task belongs to
@@ -214,6 +215,12 @@ public class Task extends PersistentObject {
 		Task other = (Task) obj;
 		return Objects.equals(processor, other.processor) && Objects.equals(taskName, other.taskName)
 				&& Objects.equals(taskVersion, other.taskVersion);
+	}
+
+	@Override
+	public String toString() {
+		return "Task [taskName=" + taskName + ", taskVersion=" + taskVersion + ", isCritical=" + isCritical + ", criticalityLevel="
+				+ criticalityLevel + ", numberOfCpus=" + numberOfCpus + ", breakpointFileNames=" + breakpointFileNames + "]";
 	}
 
 }

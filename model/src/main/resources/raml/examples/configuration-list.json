@@ -2,6 +2,7 @@
     {
         "id": 9276488,
         "version": 5,
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "configurationVersion": "2019-03-30",
         "dynProcParameters": [
@@ -22,11 +23,20 @@
                 "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
             }
         ],
-        "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ]
+        "staticInputFiles": [
+            {
+                "fileType": "directory.lib",
+                "fileNameType": "DIRECTORY",
+                "fileNames": [ "/mnt/sw/IPF_KNMI_L2/config/lib" ]
+            }
+        ],
+        "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
+        "dockerRunParameters": "-v /my/source/directory:/container/target/directory"
     },
     {
         "id": 9276489,
         "version": 2,
+        "missionCode": "S5P",
         "processorName": "KNMI L2",
         "configurationVersion": "2019-04-27",
         "dynProcParameters": [
@@ -47,6 +57,7 @@
                 "fileName": "/mnt/sw/MPC/config/S5P_OPER_CFG_MPC_L2_00000000T000000_99999999T999999_20190215T172140.xml"
             }
         ],
+        "staticInputFiles": [ ],
         "configuredProcessors":  [ "KNMI L2 01.03.02 2019-04-27" ]
     }
 ]

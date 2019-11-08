@@ -6,6 +6,8 @@
 package de.dlr.proseo.model;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -13,10 +15,10 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A collection of job steps required to fulfil an order for a specific period of time (e. g. one orbit).
@@ -37,6 +39,7 @@ public class Job extends PersistentObject {
 	 * STARTED can be set to ON_HOLD, meaning that all qualifying dependent job steps are returned to status INITIAL (i. e. except 
 	 * those in status RUNNING, COMPLETED and FAILED).
 	 */
+	@Enumerated(EnumType.STRING)
 	private JobState jobState;
 	
 	/** The orbit this job relates to (if any) */
@@ -62,14 +65,19 @@ public class Job extends PersistentObject {
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/**
 	 * A set of parameters to set for the generated products.
 	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> outputParameters;
+	private Map<String, Parameter> outputParameters = new HashMap<>();
+	
+	/**
+	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
+	 */
+	private Integer priority;
 	
 	/** The processing facility this job runs on */
 	@ManyToOne
@@ -77,7 +85,7 @@ public class Job extends PersistentObject {
 	
 	/** The job steps for this job */
 	@OneToMany(mappedBy = "job")
-	private Set<JobStep> jobSteps;
+	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**
 	 * Enumeration describing possible job states.
@@ -211,6 +219,24 @@ public class Job extends PersistentObject {
 	}
 
 	/**
+	 * Gets the processing priority
+	 * 
+	 * @return the priority
+	 */
+	public Integer getPriority() {
+		return priority;
+	}
+
+	/**
+	 * Sets the processing priority
+	 * 
+	 * @param priority the priority to set
+	 */
+	public void setPriority(Integer priority) {
+		this.priority = priority;
+	}
+
+	/**
 	 * Gets the processing facility for this job
 	 * 
 	 * @return the processingFacility
@@ -265,6 +291,14 @@ public class Job extends PersistentObject {
 		Job other = (Job) obj;
 		return Objects.equals(processingOrder, other.processingOrder) && Objects.equals(startTime, other.startTime)
 				&& Objects.equals(stopTime, other.stopTime);
+	}
+
+	@Override
+	public String toString() {
+		return "Job [jobState=" + jobState + ", orbit=" + orbit + ", startTime="
+				+ startTime + ", stopTime=" + stopTime + ", filterConditions=" + filterConditions + ", outputParameters="
+				+ outputParameters + ", priority=" + priority + ", processingFacility=" + processingFacility + ", jobSteps="
+				+ jobSteps + "]";
 	};
 
 }

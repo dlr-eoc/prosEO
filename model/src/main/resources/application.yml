@@ -3,6 +3,6 @@ spring:
         database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:mysql://localhost:3306/proseo?serverTimezone=Europe/Berlin
-        username: root
+        url: jdbc:mysql://localhost:5432/proseo?serverTimezone=Europe/Berlin
+        username: postgres
         password: sequel09Master

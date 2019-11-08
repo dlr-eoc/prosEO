@@ -1,0 +1,25 @@
+spring:
+    main:
+        web-application-type: NONE
+logging:
+    level:
+        root: INFO
+        de:
+            dlr:
+                proseo: TRACE
+    file: proseo-ui-cli.log
+proseo:
+    user: NONE
+    password: NONE
+    ingestor:
+        url: http://brainhost:8080/proseo/ingestor/v0.1
+    productionPlanner:
+        url: http://brainhost:8081/proseo/planner/v0.1
+    orderManager:
+        url: http://brainhost:8082/proseo/order-mgr/v0.1
+    processorManager:
+        url: http://brainhost:8083/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://brainhost:8084/proseo/productclass-mgr/v0.1
+    cli:
+        syntaxfile: ui-cli-syntax.yml

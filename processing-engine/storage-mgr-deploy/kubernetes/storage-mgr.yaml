@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: proseo-storage-mgr
+spec:
+  selector:
+    matchLabels:
+      name: proseo-storage-mgr
+  template:
+    metadata:
+      labels:
+        name: proseo-storage-mgr
+        app: proseo
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: proseo-storage-mgr
+          image: <registry-url>/proseo/storage-mgr:0.0.1-SNAPSHOT-rc1
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: "128M"
+            limits:
+              cpu: "0.5"
+              memory: "256M"
+          ports:
+          - containerPort: 8080
+            name: web
+      restartPolicy: Always

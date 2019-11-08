@@ -8,6 +8,8 @@ package de.dlr.proseo.model;
 import java.util.Objects;
 
 import javax.persistence.Embeddable;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 
 /**
  * A processor configuration file
@@ -17,6 +19,7 @@ import javax.persistence.Embeddable;
  */
 @Embeddable
 public class ConfigurationFile {
+
 	
 	/** A configuration file version identifier (level 3 "Version" from Generic IPF Interface Specifications, sec. 4.1.3) */
 	private String fileVersion;
@@ -26,6 +29,8 @@ public class ConfigurationFile {
 	 * level 3 "File_Name" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
 	private String fileName;
+
+
 
 	/**
 	 * Gets the configuration file version
@@ -81,5 +86,10 @@ public class ConfigurationFile {
 			return false;
 		ConfigurationFile other = (ConfigurationFile) obj;
 		return Objects.equals(fileName, other.fileName) && Objects.equals(fileVersion, other.fileVersion);
+	}
+
+	@Override
+	public String toString() {
+		return "ConfigurationFile [fileVersion=" + fileVersion + ", fileName=" + fileName + "]";
 	}
 }

@@ -1,0 +1,208 @@
+#%RAML 1.0
+title: prosEO Model Test API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/model/{version}
+baseUriParameters:
+  port:
+    description: The port the application is running on
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
+  RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+  RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  RestProductClass: !include ../../../../../model/src/main/resources/raml/types/productclass.raml
+  RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
+  RestSelectionRule: RestSimpleSelectionRule[]
+  RestSimplePolicy: !include ../../../../../model/src/main/resources/raml/types/simplepolicy.raml
+  RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
+  RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
+  RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        404:
+    put?:
+      responses:          
+        404:
+
+/configurations:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestConfiguration[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
+  put:
+    body:
+      application/json:
+        type: RestConfiguration
+        example:  !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+
+/configuredprocessors:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestConfiguredProcessor[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
+  put:
+    body:
+      application/json:
+        type: RestConfiguredProcessor
+        example:  !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+
+/missions:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestMission[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/mission-list.json
+  put:
+    body:
+      application/json:
+        type: RestMission
+        example:  !include ../../../../../model/src/main/resources/raml/examples/mission.json
+
+/orbits:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrbit[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+  put:
+    body:
+      application/json:
+        type: RestOrbit
+        example:  !include ../../../../../model/src/main/resources/raml/examples/orbit.json
+
+/orders:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrder[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  put:
+    body:
+      application/json:
+        type: RestOrder
+        example:  !include ../../../../../model/src/main/resources/raml/examples/order.json
+
+/processingfacilities:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessingFacility[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
+  put:
+    body:
+      application/json:
+        type: RestProcessingFacility
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+
+/processors:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessor[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
+  put:
+    body:
+      application/json:
+        type: RestProcessor
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processor.json
+
+/processorclasses:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProcessorClass[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
+  put:
+    body:
+      application/json:
+        type: RestProcessorClass
+        example:  !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+
+/products:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProduct[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/product-list.json
+  put:
+    body:
+      application/json:
+        type: RestProduct
+        example:  !include ../../../../../model/src/main/resources/raml/examples/product.json
+
+/productfiles:
+  type: standard
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProductFile[]
+            example:  !include ../../../../../model/src/main/resources/raml/examples/productfile-list.json
+  put:
+    body:
+      application/json:
+        type: RestProductFile
+        example:  !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+

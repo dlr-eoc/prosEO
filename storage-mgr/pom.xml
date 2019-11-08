@@ -1,15 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>de.dlr.proseo</groupId>
-    <artifactId>proseo</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-  </parent>
-  
-  <artifactId>storage-mgr</artifactId>
-  <name>prosEO Storage Manager</name>
-  <description>prosEO Storage Manager – Abstraction layer for provider-specific object storage systems</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>proseo-storage-mgr</artifactId>
+	<name>prosEO Storage Manager</name>
+	<description>prosEO Storage Manager – Abstraction layer for provider-specific object storage systems</description>
 	<url>https://github.com/dlr-eoc/prosEO/order-mgr</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
@@ -17,9 +19,10 @@
 	</organization>
 
 	<properties>
+		<module.version>0.1.0-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.storagemgr</raml-base-package>
+		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
 	</properties>
 
 	<dependencies>
@@ -32,14 +35,6 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 		</dependency>
@@ -47,6 +42,11 @@
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 
@@ -83,7 +83,7 @@
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.storagemgr.rest</basePackage>
+					<basePackage>${raml-base-package}</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -99,17 +99,40 @@
 
 			<!-- Build Docker image -->
 			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${docker-maven-version}</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+						</image>
+					</images>
+				</configuration>
 				<executions>
 					<execution>
 						<id>default</id>
+						<phase>install</phase>
 						<goals>
 							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
 						</goals>
 						<configuration>
-							<repository>${docker.repo.dev}/proseo-storage-mgr</repository>
+							<classifier>class</classifier>
+							<includes>
+							</includes>
 						</configuration>
 					</execution>
 				</executions>

@@ -7,7 +7,9 @@ package de.dlr.proseo.model;
 
 import java.util.Objects;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * A specific version of a Processor combined with a specific Configuration object (i. e. a specific set of configuration data for
@@ -17,6 +19,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "identifier"))
 public class ConfiguredProcessor extends PersistentObject {
 
 	/** 
@@ -51,6 +54,42 @@ public class ConfiguredProcessor extends PersistentObject {
 		this.identifier = identifier;
 	}
 
+	/**
+	 * Gets the associated versioned processor
+	 * 
+	 * @return the processor
+	 */
+	public Processor getProcessor() {
+		return processor;
+	}
+
+	/**
+	 * Sets the associated versioned processor
+	 * 
+	 * @param processor the processor to set
+	 */
+	public void setProcessor(Processor processor) {
+		this.processor = processor;
+	}
+
+	/**
+	 * Gets the associated processor configuration
+	 * 
+	 * @return the configuration
+	 */
+	public Configuration getConfiguration() {
+		return configuration;
+	}
+
+	/**
+	 * Sets the associated processor configuration
+	 * 
+	 * @param configuration the configuration to set
+	 */
+	public void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -69,6 +108,11 @@ public class ConfiguredProcessor extends PersistentObject {
 			return false;
 		ConfiguredProcessor other = (ConfiguredProcessor) obj;
 		return Objects.equals(identifier, other.identifier);
+	}
+
+	@Override
+	public String toString() {
+		return "ConfiguredProcessor [identifier=" + identifier + "]";
 	}
 	
 }

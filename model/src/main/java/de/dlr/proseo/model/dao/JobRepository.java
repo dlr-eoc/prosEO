@@ -3,7 +3,7 @@
  */
 package de.dlr.proseo.model.dao;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Job;
@@ -15,6 +15,6 @@ import de.dlr.proseo.model.Job;
  *
  */
 @Repository
-public interface JobRepository extends CrudRepository<Job, Long> {
+public interface JobRepository extends JpaRepository<Job, Long> {
 
 }

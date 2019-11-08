@@ -1,0 +1,20 @@
+#%RAML 1.0 DataType
+#  RestConfigurationInputFile:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      fileType:
+        type: string
+        description: File type according to processor-specific ICD or "LOG"
+      fileNameType:
+        type: string
+        description: Type of the file names (one of { "Physical", "Logical", "Stem", "Regexp", "Directory" })
+      fileNames:
+        type: string[]
+        description: A list of legal and valid filenames

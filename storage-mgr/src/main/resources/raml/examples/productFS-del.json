@@ -1,0 +1,10 @@
+{
+    "productId": "234234234234",
+    "sourceStorageType": "POSIX",
+    "sourceFilePath": "/mnt/unstructuredFS/some/dir/Product23323223.nc",
+    "targetStorageType": "S3",
+    "targetStorageId": "s3storage123",
+    "registeredFilePath":"s3://s3storage123/234234234234/11212121/some/dir/Product23323223.nc",
+    "registered" : false,
+    "deleted" : true
+}

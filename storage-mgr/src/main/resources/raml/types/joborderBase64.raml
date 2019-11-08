@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+# RestJoborderBase64:
+    type: object
+    properties:
+      jobOrderStringBase64?:
+        type: string
+        maxLength: 1000000
+      uploaded?: boolean
+      fsType?:
+        enum: [S3,ALLUXIO,POSIX]
+      pathInfo?: string
+      message?: string

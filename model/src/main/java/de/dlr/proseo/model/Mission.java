@@ -5,11 +5,14 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * An Earth Observation mission.
@@ -18,6 +21,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "code"))
 public class Mission extends PersistentObject {
 
 	/** The mission code (e. g. S5P) */
@@ -25,6 +29,12 @@ public class Mission extends PersistentObject {
 	
 	/** The mission name (e. g. Sentinel-5 Precursor) */
 	private String name;
+	
+	/**
+	 * Allowed file classes for this mission (Ground Segment File Format Standard, sec. 4.1.2)
+	 */
+	@ElementCollection
+	private Set<String> fileClasses = new HashSet<>();
 	
 	/** 
 	 * Processing mode tags as agreed for this mission (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3).
@@ -40,23 +50,37 @@ public class Mission extends PersistentObject {
      * Example: For Sentinel-5P, the tags are "NRTI" (near real time), "OFFL" (systematic ["offline"]), "RPRO" (reprocessing)
 	 */
 	@ElementCollection
-	private Set<String> processingModes;
+	private Set<String> processingModes = new HashSet<>();
+	
+	/**
+	 * Template for the generation of product files, indicating variable parts using Spring Expression Language, e. g.
+	 * 			"S5P_${fileClass}_${productClass.missionType}_" +
+	 *			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStartTime)}_" +
+	 *			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStopTime)}_" +
+	 *			"${(new java.text.DecimalFormat(\"00000\")).format(orbit.orbitNumber)}_" +
+	 *			"${parameters.get(\"copernicusCollection\").getParameterValue()}_" +
+	 *			"${configuredProcessor.processor.processorVersion.replaceAll(\"\\.\", \"\")}_" +
+	 *			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc";
+	 * (based on the Sentinel-5P file naming convention)
+	 */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
+	private String productFileTemplate;
 	
 	/** The spacecrafts this mission owns */
 	@OneToMany(mappedBy = "mission")
-	private Set<Spacecraft> spacecrafts;
+	private Set<Spacecraft> spacecrafts = new HashSet<>();
 	
 	/** The product classes this mission produces or uses */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProductClass> productClasses;
+	private Set<ProductClass> productClasses = new HashSet<>();
 	
 	/** The processor classes this mission uses */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProcessorClass> processorClasses;
+	private Set<ProcessorClass> processorClasses = new HashSet<>();
 	
 	/** The processing orders issued for this mission */
 	@OneToMany(mappedBy = "mission")
-	private Set<ProcessingOrder> processingOrders;
+	private Set<ProcessingOrder> processingOrders = new HashSet<>();
 	
 	/**
 	 * Gets the mission code
@@ -95,6 +119,24 @@ public class Mission extends PersistentObject {
 	}
 
 	/**
+	 * Gets the allowed file classes
+	 * 
+	 * @return the fileClasses
+	 */
+	public Set<String> getFileClasses() {
+		return fileClasses;
+	}
+
+	/**
+	 * Sets the allowed file classes
+	 * 
+	 * @param fileClasses the fileClasses to set
+	 */
+	public void setFileClasses(Set<String> fileClasses) {
+		this.fileClasses = fileClasses;
+	}
+
+	/**
 	 * Gets the processing mode tags defined for the mission
 	 * 
 	 * @return the processingModes
@@ -110,6 +152,24 @@ public class Mission extends PersistentObject {
 	 */
 	public void setProcessingModes(Set<String> processingModes) {
 		this.processingModes = processingModes;
+	}
+
+	/**
+	 * Gets the product filename template
+	 * 
+	 * @return the productFileTemplate
+	 */
+	public String getProductFileTemplate() {
+		return productFileTemplate;
+	}
+
+	/**
+	 * Sets the product filename template
+	 * 
+	 * @param productFileTemplate the product filename template to set
+	 */
+	public void setProductFileTemplate(String productFileTemplate) {
+		this.productFileTemplate = productFileTemplate;
 	}
 
 	/**
@@ -207,5 +267,10 @@ public class Mission extends PersistentObject {
 		} else if (!code.equals(other.code))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Mission [code=" + code + ", name=" + name + ", processingModes=" + processingModes + "]";
 	}
 }

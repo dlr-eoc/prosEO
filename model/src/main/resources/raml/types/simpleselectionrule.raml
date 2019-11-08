@@ -1,12 +1,12 @@
 #%RAML 1.0 DataType
-#  SimpleSelectionRule:
+#  RestSimpleSelectionRule:
     type: object
     properties:
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
       mode:
@@ -16,7 +16,7 @@
         type: boolean
         description: Indicates whether the required source product is mandatory for the production of the target product
       filterConditions:
-        type: Parameter[]
+        type: RestParameter[]
         description: Parameter values to filter the selected products (triple of parameter key, parameter type and parameter value);
                      checked against product parameter values by equality.
       targetProductClass:
@@ -29,5 +29,5 @@
         type: string[]
         description: A list of identifiers for processor configurations, for which this rule is applicable
       simplePolicies:
-        type: SimplePolicy[]
+        type: RestSimplePolicy[]
         description: The selection policies applied for selecting target products (the first applicable policy in the list holds)

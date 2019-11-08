@@ -37,38 +37,38 @@ public class JobOrderTest {
 		co.getDynamicProcessingParameters().add(new ProcessingParameter("Threads", "9"));
 		jo.setConf(co);
 		Proc pr = new Proc("ProcTaskName1", "01.02.03");
-		InputOutput io = new InputOutput("CFG_CO___", "PHYSICAL", "Input");
+		InputOutput io = new InputOutput("CFG_CO___", "PHYSICAL", "Input", null);
 		io.getFileNames().add(new IpfFileName("myFile01.xml"));
 		io.getFileNames().add(new IpfFileName("myFile02.xml"));
 		pr.getListOfInputs().add(io);
-		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Input");
+		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Input", null);
 		io.getFileNames().add(new IpfFileName("myFile03.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile04.xml"));
 		pr.getListOfInputs().add(io);
-		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Output");
+		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Output", "1234");
 		io.getFileNames().add(new IpfFileName("myFile05.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
 		pr = new Proc("ProcTaskName2", "08.15");
-		io = new InputOutput("CFG_CO___", "PHYSICAL", "Input");
+		io = new InputOutput("CFG_CO___", "PHYSICAL", "Input", null);
 		io.getFileNames().add(new IpfFileName("myFile01.xml"));
 		io.getFileNames().add(new IpfFileName("myFile02.xml"));
 		pr.getListOfInputs().add(io);
-		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Input");
+		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Input", null);
 		io.getFileNames().add(new IpfFileName("myFile03.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile04.xml"));
 		pr.getListOfInputs().add(io);
-		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Output");
+		io = new InputOutput("CFG_STOP_", "PHYSICAL", "Output", "567");
 		io.getFileNames().add(new IpfFileName("myFile05.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
-		jo.writeXML("../sample-wrapper/src/test/resources/testjo.xml", true);
+		jo.writeXML("src/test/resources/testjo.xml", true);
 
 		JobOrder jo2 = new JobOrder();
-		jo2.read("../sample-wrapper/src/test/resources/testjo.xml");
-		jo2.writeXML("../sample-wrapper/src/test/resources/testjocopy.xml", true);
+		jo2.read("src/test/resources/testjo.xml");
+		jo2.writeXML("src/test/resources/testjocopy.xml", true);
 		
 	}
 

@@ -1,0 +1,15 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+    datasource:
+        url: jdbc:postgresql://brainhost:5432/proseo
+        username: postgres
+        password: sequel09Master
+    packagesToScan: de.dlr.proseo.model
+logging:
+    level:
+        root: INFO
+        de:
+            dlr:
+                proseo: TRACE

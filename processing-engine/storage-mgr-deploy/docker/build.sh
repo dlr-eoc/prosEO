@@ -1,0 +1,1 @@
+docker build -t localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-rc1 .

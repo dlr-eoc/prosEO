@@ -1,17 +1,17 @@
 #%RAML 1.0 DataType
-#  ProcessorClass:
+#  RestProcessorClass:
     type: object
     properties:
-      missionCode:
-        type: string
-        description: The mission code (e. g. S5P)
-      id:
+      id?:
         type: integer
         format: long
         description: The persistent id of this object
-      version:
+      version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      missionCode:
+        type: string
+        description: The mission code (e. g. S5P)
       processorName:
         type: string
         description: User-defined unique processor class name

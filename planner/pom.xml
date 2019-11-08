@@ -1,32 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	
-	<artifactId>planner</artifactId>
+
+	<artifactId>proseo-planner</artifactId>
 	<name>prosEO Production Planner</name>
 	<description>
-		prosEO Production Planner – The prosEO component that manages the data-driven
-		production process
+		prosEO Production Planner – The prosEO component that manages the data-driven production process
 	</description>
 
-	<url>https://github.com/dlr-eoc/prosEO/ingestor/</url>
+	<url>https://github.com/dlr-eoc/prosEO/planner/</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
 	</organization>
-	
+
 	<properties>
+        <module.version>0.1.0-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.planner</raml-base-package>
+		<raml-base-package>de.dlr.proseo.planner.rest</raml-base-package>
 	</properties>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -36,46 +38,68 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-        <dependency>
+		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-security</artifactId> 
+			</dependency> -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-<!-- 		
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
- -->		
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-        </dependency>
 		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+		<!-- <dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+		</dependency> -->
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-storage-mgr</artifactId>
+      <classifier>class</classifier>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>de.dlr.proseo</groupId>
+      <artifactId>proseo-storage-mgr</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+		<dependency>
+			<groupId>io.kubernetes</groupId>
+			<artifactId>client-java</artifactId>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>de.dlr.proseo</groupId>
-			<artifactId>proseo-model</artifactId>
-			<version>${project.version}</version>
+			<groupId>io.kubernetes</groupId>
+			<artifactId>client-java-proto</artifactId>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
-    		<groupId>io.kubernetes</groupId>
-    		<artifactId>client-java</artifactId>
-    		<version>4.0.0</version>
-		</dependency>
-		<dependency>
-    		<groupId>io.kubernetes</groupId>
-    		<artifactId>client-java-proto</artifactId>
-    		<version>4.0.0</version>
-		</dependency>
-		<dependency>
-    		<groupId>io.kubernetes</groupId>
-    		<artifactId>client-java-api</artifactId>
-    		<version>4.0.0</version>
+			<groupId>io.kubernetes</groupId>
+			<artifactId>client-java-api</artifactId>
+			<version>4.0.0</version>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<finalName>proseo-planner</finalName>
 		<plugins>
@@ -103,13 +127,13 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- Generate Spring MVC from RAML files -->
 			<plugin>
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.planner.rest</basePackage>
+					<basePackage>${raml-base-package}</basePackage>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
 				</configuration>
 				<executions>
@@ -123,82 +147,29 @@
 				</executions>
 			</plugin>
 
- 			<!-- Build Docker image -->
- 			<plugin>
-				<groupId>com.spotify</groupId>
-				<artifactId>dockerfile-maven-plugin</artifactId>
-				<version>${dockerfile-maven-version}</version>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>build</goal>
-						</goals>
-						<configuration>
-							<repository>${docker.repo.dev}/proseo-planner</repository>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
- 
+            <!-- Build Docker image -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-version}</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${docker.registry}/${project.build.finalName}:${module.version}</name>
+                        </image>
+                    </images>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>joborder-test</id>
-                        <phase>test</phase>
+                        <id>default</id>
+                        <phase>install</phase>
                         <goals>
-                            <goal>test</goal>
+                            <goal>build</goal>
+                            <goal>push</goal>
                         </goals>
-                        <configuration>
-                            <disableXmlReport>false</disableXmlReport>
-                            <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                            <reportFormat>plain</reportFormat>
-                            <includes>
-                                <include>**/*Test.java</include>
-                            </includes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											com.phoenixnap.oss
-										</groupId>
-										<artifactId>
-											springmvc-raml-plugin
-										</artifactId>
-										<versionRange>
-											[2.0.0,)
-										</versionRange>
-										<goals>
-											<goal>
-												generate-springmvc-endpoints
-											</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 </project>

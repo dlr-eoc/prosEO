@@ -5,15 +5,17 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-
-import de.dlr.proseo.model.Product.Parameter;
 
 /**
  * A specific processor configuration, tied to a specific ConfiguredProcessor object. It mainly consists of a set of configuration
@@ -31,7 +33,7 @@ public class Configuration extends PersistentObject {
 
 	/** The configured processors, for which this configuration is valid */
 	@OneToMany(mappedBy = "configuration")
-	private Set<ConfiguredProcessor> configuredProcessors;
+	private Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 	
 	/**
 	 * Version identification of the configuration environment (level 1 "Version" from Generic IPF Interface Specifications,
@@ -44,11 +46,20 @@ public class Configuration extends PersistentObject {
 	 * ("List_of_Dyn_ProcParam" from Generic IPF Interface Specifications, sec. 4.1.3).
 	 */
 	@ElementCollection
-	private Map<String, Parameter> dynProcParameters;
+	private Map<String, Parameter> dynProcParameters = new HashMap<>();
 	
 	/** The configuration files for this configuration */
 	@ElementCollection
-	private Set<ConfigurationFile> configurationFiles;
+	private Set<ConfigurationFile> configurationFiles = new HashSet<>();
+	
+	/**
+	 * Additional input files for inclusion in generated Job Order Files
+	 */
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ConfigurationInputFile> staticInputFiles = new HashSet<>();
+
+	/** Specific parameter for "docker run" valid for this configuration */
+	private String dockerRunParameters;
 
 	/**
 	 * Gets the associated processor class
@@ -138,6 +149,70 @@ public class Configuration extends PersistentObject {
 	 */
 	public void setConfigurationFiles(Set<ConfigurationFile> configurationFiles) {
 		this.configurationFiles = configurationFiles;
+	}
+
+	/**
+	 * Gets the static input files
+	 * 
+	 * @return the static input files
+	 */
+	public Set<ConfigurationInputFile> getStaticInputFiles() {
+		return staticInputFiles;
+	}
+
+	/**
+	 * Sets the static input files
+	 * 
+	 * @param staticInputFiles the static input files to set
+	 */
+	public void setStaticInputFiles(Set<ConfigurationInputFile> staticInputFiles) {
+		this.staticInputFiles = staticInputFiles;
+	}
+
+	/**
+	 * Gets the configuration-specific "docker run" parameters
+	 * 
+	 * @return the dockerRunParameters
+	 */
+	public String getDockerRunParameters() {
+		return dockerRunParameters;
+	}
+
+	/**
+	 * Sets the configuraiton-specific "docker run" parameters
+	 * 
+	 * @param dockerRunParameters the dockerRunParameters to set
+	 */
+	public void setDockerRunParameters(String dockerRunParameters) {
+		this.dockerRunParameters = dockerRunParameters;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(configurationVersion, processorClass);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof Configuration))
+			return false;
+		Configuration other = (Configuration) obj;
+		return Objects.equals(configurationVersion, other.configurationVersion)
+				&& Objects.equals(processorClass, other.processorClass);
+	}
+
+	@Override
+	public String toString() {
+		return "Configuration [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", configurationVersion=" + configurationVersion + ", dynProcParameters=" + dynProcParameters
+				+ ", configurationFiles=" + configurationFiles + ", dockerRunParameters=" + dockerRunParameters + "]";
 	}
 
 }

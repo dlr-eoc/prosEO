@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMockResponse>
+    <body>{&#13;
+	"status": "OK"&#13;
+}</body>
+    <contentEncodings/>
+    <headerQueries/>
+    <httpHeaders/>
+    <httpStatusCode>200</httpStatusCode>
+    <id>GSQ4lz</id>
+    <jsonPathExpressions/>
+    <methodId>SwKT69</methodId>
+    <name>Notification accepted</name>
+    <parameterQueries/>
+    <status>ENABLED</status>
+    <usingExpressions>false</usingExpressions>
+    <xpathExpressions/>
+</restMockResponse>

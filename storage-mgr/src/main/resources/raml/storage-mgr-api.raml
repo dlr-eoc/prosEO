@@ -1,35 +1,22 @@
 #%RAML 1.0
-title: prosEO Storage Manager REST Services API
+title: prosEO Storage Manager REST Services
 version: v0.1
-protocols: [ HTTPS ] 
+protocols: [ HTTP, HTTPS ]
 baseUri: /proseo/storage-mgr/{version}
 mediaType: application/json
 
-securitySchemes:
-  basicAuth:
-    description: Each request must contain the headers necessary for
-                 basic authentication
-    type: Basic Authentication
-    describedBy:
-      headers:
-        Authorization:
-          description: Used to send the Base64-encoded "username:password"
-                       credentials
-          type: string
-      responses:
-        401:
-          description: |
-            Unauthorized. Either the provided username and password
-            combination is invalid, or the user is not allowed to access
-            the content provided by the requested URL.
 
 types:
-  Storage: !include types/storage.raml
+  RestInfo: !include types/info.raml
+  RestStorage: !include types/storage.raml
+  RestProductFS: !include types/productFS.raml
+  RestJoborder: !include types/joborderBase64.raml
+
 
 resourceTypes:
   standard:
     get?:
-      responses:          
+      responses:
         400:
           description: |
             The request sent to the server contains data which is not as expected e.g. invalid location URI
@@ -37,24 +24,32 @@ resourceTypes:
             Warning: !include types/error.raml
         404:
           description: |
-            The requested resource was not found                     
+            The requested resource was not found
           headers:
             Warning: !include types/error.raml
     put?:
-      responses:          
+      responses:
         404:
           description: |
-            The requested resource on which the modification is being attempted was not found              
+            The requested resource on which the modification is being attempted was not found
           headers:
             Warning: !include types/error.raml
     delete?:
-      responses:          
+      responses:
         404:
-          description: | 
-            The requested resource to delete was not found 
+          description: |
+            The requested resource to delete was not found
           headers:
             Warning: !include types/error.raml
-              
+/info:
+  get:
+    description: get infos for this storage-manager
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestInfo
+
 /storages:
   type: standard
   get:
@@ -65,18 +60,64 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Storage[]
+            type: RestStorage[]
             example: !include examples/storage-list.json
   post:
     description: Create a new storage
     body:
       application/json:
-        type: Storage
+        type: RestStorage
         example: !include examples/storage.json
     responses:
       201:
         body:
           application/json:
-            type: Storage
+            type: RestStorage
             example: !include examples/storage.json
-  
+  /{storageId}:
+    /register:
+      post:
+        description: register products/files/dirs from unstructered storage in prosEO-storage
+        body:
+          application/json:
+            type: RestProductFS
+            example: !include examples/productFS.json
+        responses:
+          201:
+            body:
+              application/json:
+                type: RestProductFS
+                example: !include examples/productFS-reg.json
+    /products:
+      get:
+        description: get product-infos by Id
+        queryParameters:
+          id?: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestProductFS
+      /{productId}:
+        delete:
+          description: delete/remove product having productId from prosEO storage
+          responses:
+            200:
+              body:
+                application/json:
+                  type: RestProductFS
+                  example: !include examples/productFS-del.json
+
+/joborders:
+    post:
+      description: upload prosEO joborder file for later use in a job
+      body:
+        application/json:
+          type: RestJoborder
+          example: !include examples/joborderBase64.json
+      responses:
+        201:
+          body:
+            application/json:
+              type: RestJoborder
+              example: !include examples/joborderBase64-response.json

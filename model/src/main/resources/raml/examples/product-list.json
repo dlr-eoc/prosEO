@@ -2,10 +2,14 @@
     {
         "id": 689325,
         "version": 11,
+        "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
+        "missionCode": "S5P",
         "productClass": "AAI",
+        "fileClass": "TEST",
         "mode": "OFFL",
-        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
-        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "sensingStartTime": "2018-06-13T09:23:45.396521",
+        "sensingStopTime": "2018-06-13T10:53:45.396521",
+        "generationTime": "2019-10-05T10:12:39.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711
@@ -31,10 +35,14 @@
     {
         "id": 689326,
         "version": 7,
+        "uuid": "2bfd2856-aec7-4d45-bcc0-6418857c448c",
+        "missionCode": "S5P",
         "productClass": "O3",
+        "fileClass": "RPRO",
         "mode": "OFFL",
-        "sensingStartTime": "2018-06-13T09:23:45.396521Z",
-        "sensingStopTime": "2018-06-13T10:53:45.396521Z",
+        "sensingStartTime": "2018-06-13T09:23:45.396521",
+        "sensingStopTime": "2018-06-13T10:53:45.396521",
+        "generationTime": "2019-10-05T10:13:22.000000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711

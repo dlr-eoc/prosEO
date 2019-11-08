@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMethod>
+    <currentResponseSequenceIndex>0</currentResponseSequenceIndex>
+    <defaultMockResponseId></defaultMockResponseId>
+    <forwardedEndpoint></forwardedEndpoint>
+    <httpMethod>GET</httpMethod>
+    <id>SwKT69</id>
+    <name>Product notification</name>
+    <networkDelay>0</networkDelay>
+    <resourceId>vDzSj7</resourceId>
+    <responseStrategy>RANDOM</responseStrategy>
+    <simulateNetworkDelay>false</simulateNetworkDelay>
+    <status>MOCKED</status>
+</restMethod>

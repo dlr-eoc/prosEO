@@ -1,0 +1,12 @@
+{
+"productId": "newProdId001",
+"sourceStorageType": "POSIX",
+"sourceFilePath": "src/",
+"targetStorageId": "alluxio1",
+"targetStorageType": "S3",
+"registeredFilePath": "/alluxio1/newProdId001/1571848916/src/",
+"registered": true,
+"registeredFilesCount": 24,
+"registeredFilesList": "[underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/StorageManager.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/StorageManagerConfiguration.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/package-info.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/rest/InfoControllerImpl.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/rest/JobOrderControllerImpl.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/rest/StorageControllerImpl.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/rest/package-info.java, underfs/alluxio1/newProdId001/1571848916/main/java/de/dlr/proseo/storagemgr/utils/StorageManagerUtils.java, underfs/alluxio1/newProdId001/1571848916/main/resources/alluxio-site.properties, underfs/alluxio1/newProdId001/1571848916/main/resources/application.yml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/joborderBase64-response.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/joborderBase64.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/productFS-del.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/productFS-reg.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/productFS.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/storage-list.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/examples/storage.json, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/storage-mgr-api.html, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/storage-mgr-api.raml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/types/error.raml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/types/info.raml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/types/joborderBase64.raml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/types/productFS.raml, underfs/alluxio1/newProdId001/1571848916/main/resources/raml/types/storage.raml]",
+"deleted": false
+}

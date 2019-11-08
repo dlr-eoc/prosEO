@@ -5,19 +5,28 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import de.dlr.proseo.model.Product.Parameter;
+import javax.persistence.Table;
 
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of
@@ -29,7 +38,10 @@ import de.dlr.proseo.model.Product.Parameter;
  *
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "identifier"), @Index(unique = false, columnList = "execution_time") })
 public class ProcessingOrder extends PersistentObject {
+
+	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
 
 	/** Mission, to which this order belongs */
 	@ManyToOne
@@ -39,10 +51,11 @@ public class ProcessingOrder extends PersistentObject {
 	private String identifier;
 	
 	/** State of the processing order */
+	@Enumerated(EnumType.STRING)
 	private OrderState orderState;
 	
 	/** Expected execution time (optional, used for scheduling) */
-	@Column(columnDefinition = "TIMESTAMP")
+	@Column(name = "execution_time", columnDefinition = "TIMESTAMP")
 	private Instant executionTime;
 	
 	/**
@@ -59,39 +72,59 @@ public class ProcessingOrder extends PersistentObject {
 	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
 	
+	/**
+	 * Method for slicing the orbit time interval into jobs for product generation (default "ORBIT")
+	 */
+	@Enumerated(EnumType.STRING)
+	private OrderSlicingType slicingType = OrderSlicingType.ORBIT;
+	
+	/**
+	 * Duration of a time slice for slicing type TIME_SLICE
+	 */
+	private Duration sliceDuration = null;
+	
+	/**
+	 * Overlap between adjacent time slices, half of the overlap is added at each end of the slice time interval except at the 
+	 * beginning of the first and the end of the last time interval.
+	 */
+	private Duration sliceOverlap = Duration.ZERO;
+	
 	/** A set of additional conditions to apply to selected products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
+	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
 	@ElementCollection
-	private Map<String, Parameter> filterConditions;
+	private Map<String, Parameter> filterConditions = new HashMap<>();
 	
 	/** A set of parameters to set for the generated products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
+	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
 	 */
 	@ElementCollection
-	private Map<String, Parameter> outputParameters;
+	private Map<String, Parameter> outputParameters = new HashMap<>();
 	
 	/** Set of requested product classes */
 	@ManyToMany
-	private Set<ProductClass> requestedProductClasses;
+	private Set<ProductClass> requestedProductClasses = new HashSet<>();
+	
+	/** Set of product classes provided as input data (processing job steps must not be generated) */
+	@ManyToMany
+	private Set<ProductClass> inputProductClasses = new HashSet<>();
+	
+	/** The file class of the generated output products (from the list of allowed file classes agreed for the mission) */
+	private String outputFileClass;
 	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
 	
 	/** The processor configurations for processing the products */
 	@ManyToMany
-	private Set<ConfiguredProcessor> requestedConfiguredProcessors;
+	private Set<ConfiguredProcessor> requestedConfiguredProcessors = new HashSet<>();
 	
 	/** The orbits, for which products are to be generated */
 	@ManyToMany
-	private List<Orbit> requestedOrbits;
-	
-	/** The products, which will provided as input */
-	@ManyToMany
-	private Set<Product> promisedProducts;
+	private List<Orbit> requestedOrbits = new ArrayList<>();
 	
 	/** The processing jobs belonging to this order */	
 	@OneToMany(mappedBy = "processingOrder")
-	private Set<Job> jobs;
+	private Set<Job> jobs = new HashSet<>();
 	
 	/**
 	 * Possible states for a processing order; recommended state transitions:
@@ -107,6 +140,21 @@ public class ProcessingOrder extends PersistentObject {
 	 * </ol>
 	 */
 	public enum OrderState { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED };
+	
+	/**
+	 * Possible methods for partitioning the order time period into individual job time periods for product generation:
+	 * <ul>
+	 * <li>ORBIT: Create jobs by orbit (preferably a list of orbits is then given for the order, if no such lists exists, generate
+	 *            jobs orbit-wise so that the time interval is fully covered, i. e. with the first orbit starting no later
+	 *            than the beginning of the time interval and the last orbit ending no earlier than the end of the time interval;
+	 *            jobs will be linked to their respective orbits)</li>
+	 * <li>CALENDAR_DAY: Create jobs by calendar day (in such a way that the first job starts no later than the beginning of
+	 *            the order time interval and the last job ends no earlier than the end of the time interval)</li>
+	 * <li>TIME_SLICE: Create jobs in fixed time slices, starting with the start time of the order time interval and ending
+	 *            no earlier than the end of the time interval</li>
+	 * </ul>
+	 */
+	public enum OrderSlicingType { ORBIT, CALENDAR_DAY, TIME_SLICE };
 
 	/**
 	 * Gets the owning mission
@@ -217,6 +265,73 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * Gets the method for partitioning the orbit time interval
+	 * 
+	 * @return the slicingType the order slicing type
+	 */
+	public OrderSlicingType getSlicingType() {
+		return slicingType;
+	}
+
+	/**
+	 * Sets the method for partitioning the orbit time interval (if the slicing type is TIME_SLICE and the slice duration
+	 * has not yet been set, then the slice duration will be set to a default value of one day; for other slicing types
+	 * the current slice duration will be deleted)
+	 * 
+	 * @param slicingType the slicing type to set
+	 */
+	public void setSlicingType(OrderSlicingType slicingType) {
+		this.slicingType = slicingType;
+		if (OrderSlicingType.TIME_SLICE.equals(slicingType)) {
+			if (null == sliceDuration) {
+				sliceDuration = Duration.of(1, ChronoUnit.DAYS);
+			}
+		} else {
+			sliceDuration = null;
+		}
+	}
+
+	/**
+	 * Gets the duration for a single slice
+	 * 
+	 * @return the slice duration for slicing type TIME_SLICE, null otherwise
+	 */
+	public Duration getSliceDuration() {
+		return sliceDuration;
+	}
+
+	/**
+	 * Sets the duration for a single slice (for slicing type TIME_SLICE only)
+	 * 
+	 * @param sliceDuration the sliceDuration to set
+	 */
+	public void setSliceDuration(Duration sliceDuration) {
+		if (OrderSlicingType.TIME_SLICE.equals(slicingType)) {
+			this.sliceDuration = sliceDuration;
+		} else {
+			throw new IllegalStateException(MSG_SLICING_DURATION_NOT_ALLOWED + slicingType);
+		}
+	}
+
+	/**
+	 * Gets the overlap time between slices
+	 * 
+	 * @return the slice overlap
+	 */
+	public Duration getSliceOverlap() {
+		return sliceOverlap;
+	}
+
+	/**
+	 * Sets the overlap time between slices
+	 * 
+	 * @param sliceOverlap the slice overlap to set
+	 */
+	public void setSliceOverlap(Duration sliceOverlap) {
+		this.sliceOverlap = sliceOverlap;
+	}
+
+	/**
 	 * Gets the filter conditions
 	 * 
 	 * @return the filterConditions
@@ -268,6 +383,42 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setRequestedProductClasses(Set<ProductClass> requestedProductClasses) {
 		this.requestedProductClasses = requestedProductClasses;
+	}
+
+	/**
+	 * Gets the input product classes provided to the order
+	 * 
+	 * @return the input product classes
+	 */
+	public Set<ProductClass> getInputProductClasses() {
+		return inputProductClasses;
+	}
+
+	/**
+	 * Sets the input product classes provided to the order
+	 * 
+	 * @param inputProductClasses the input product classes to set
+	 */
+	public void setInputProductClasses(Set<ProductClass> inputProductClasses) {
+		this.inputProductClasses = inputProductClasses;
+	}
+
+	/**
+	 * Gets the file class of the output products
+	 * 
+	 * @return the outputFileClass
+	 */
+	public String getOutputFileClass() {
+		return outputFileClass;
+	}
+
+	/**
+	 * Sets the file class for the output products
+	 * 
+	 * @param outputFileClass the outputFileClass to set
+	 */
+	public void setOutputFileClass(String outputFileClass) {
+		this.outputFileClass = outputFileClass;
 	}
 
 	/**
@@ -325,24 +476,6 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
-	 * Gets the promised products
-	 * 
-	 * @return the promisedProducts
-	 */
-	public Set<Product> getPromisedProducts() {
-		return promisedProducts;
-	}
-
-	/**
-	 * Sets the promised products
-	 * 
-	 * @param promisedProducts the promisedProducts to set
-	 */
-	public void setPromisedProducts(Set<Product> promisedProducts) {
-		this.promisedProducts = promisedProducts;
-	}
-
-	/**
 	 * Gets the processing jobs
 	 * 
 	 * @return the jobs
@@ -378,5 +511,14 @@ public class ProcessingOrder extends PersistentObject {
 			return false;
 		ProcessingOrder other = (ProcessingOrder) obj;
 		return Objects.equals(identifier, other.identifier) && Objects.equals(mission, other.mission);
+	}
+
+	@Override
+	public String toString() {
+		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
+				+ ", orderState=" + orderState + ", executionTime=" + executionTime
+				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
+				+ sliceDuration + ", filterConditions=" + filterConditions + ", outputParameters=" + outputParameters
+				+ ", processingMode=" + processingMode + "]";
 	}
 }

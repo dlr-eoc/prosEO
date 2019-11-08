@@ -5,14 +5,18 @@
  */
 package de.dlr.proseo.model;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.persistence.ElementCollection;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A specific version of a ProcessorClass. Each permissible combination of a specific Processor with a specific Configuration is
@@ -23,6 +27,7 @@ import javax.persistence.OneToMany;
  *
  */
 @Entity
+@Table(indexes = @Index(unique = true, columnList = "processor_class_id, processor_version"))
 public class Processor extends PersistentObject {
 
 	/** The processor class this processor (version) belongs to */
@@ -31,12 +36,13 @@ public class Processor extends PersistentObject {
 	
 	/** The processor configurations this processor version is valid for */
 	@OneToMany(mappedBy = "processor")
-	private Set<ConfiguredProcessor> configuredProcessors;
+	private Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 	
 	/** 
 	 * Version identification of the processor executable (Docker image; 
 	 * level 1 "Version" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
+	@Column(name = "processor_version")
 	private String processorVersion;
 	
 	/** Indicates a test version of the processor ("Test" from Generic IPF Interface Specifications, sec. 4.1.3) */
@@ -61,8 +67,14 @@ public class Processor extends PersistentObject {
 	
 	/** List of tasks for this processor */
 	@OneToMany(mappedBy = "processor")
-	private List<Task> tasks;
+	private List<Task> tasks = new ArrayList<>();
 
+	/** The name of the docker image (without registry address, to be configured externally!) */
+	private String dockerImage;
+	
+	/** Parameters to add to the "docker run" command */
+	private String dockerRunParameters;
+	
 	/**
 	 * Gets the processor class
 	 * 
@@ -79,6 +91,24 @@ public class Processor extends PersistentObject {
 	 */
 	public void setProcessorClass(ProcessorClass processorClass) {
 		this.processorClass = processorClass;
+	}
+
+	/**
+	 * Gets the associated processor configurations
+	 * 
+	 * @return the processor configurations for this processor
+	 */
+	public Set<ConfiguredProcessor> getConfiguredProcessors() {
+		return configuredProcessors;
+	}
+
+	/**
+	 * Sets the associated processor configurations
+	 * 
+	 * @param configuredProcessors the processor configurations to set
+	 */
+	public void setConfiguredProcessors(Set<ConfiguredProcessor> configuredProcessors) {
+		this.configuredProcessors = configuredProcessors;
 	}
 
 	/**
@@ -207,6 +237,42 @@ public class Processor extends PersistentObject {
 		this.tasks = tasks;
 	}
 
+	/**
+	 * Gets the docker image name and tag
+	 * 
+	 * @return the docker image name and tag
+	 */
+	public String getDockerImage() {
+		return dockerImage;
+	}
+
+	/**
+	 * Sets the docker image name and tag
+	 * 
+	 * @param dockerImage the docker image name and tag to set
+	 */
+	public void setDockerImage(String dockerImage) {
+		this.dockerImage = dockerImage;
+	}
+
+	/**
+	 * Gets the run parameters for the docker image
+	 * 
+	 * @return the "docker run" parameters
+	 */
+	public String getDockerRunParameters() {
+		return dockerRunParameters;
+	}
+
+	/**
+	 * Sets the run parameters for the docker image
+	 * 
+	 * @param dockerRunParameters the "docker run" parameters to set
+	 */
+	public void setDockerRunParameters(String dockerRunParameters) {
+		this.dockerRunParameters = dockerRunParameters;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -225,5 +291,13 @@ public class Processor extends PersistentObject {
 			return false;
 		Processor other = (Processor) obj;
 		return Objects.equals(processorClass, other.processorClass) && Objects.equals(processorVersion, other.processorVersion);
+	}
+
+	@Override
+	public String toString() {
+		return "Processor [processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) 
+				+ ", processorVersion=" + processorVersion + ", isTest=" + isTest
+				+ ", minDiskSpace=" + minDiskSpace + ", maxTime=" + maxTime + ", sensingTimeFlag=" + sensingTimeFlag + ", tasks="
+				+ tasks + ", dockerImage=" + dockerImage + ", dockerRunParameters=" + dockerRunParameters + "]";
 	}
 }

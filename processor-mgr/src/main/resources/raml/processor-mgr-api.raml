@@ -24,12 +24,13 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  Parameter: !include model/types/parameter.raml
-  Processor: !include model/types/processor.raml
-  ProcessorClass: !include model/types/processorclass.raml
-  Task: !include model/types/task.raml
-  Configuration: !include model/types/configuration.raml
-  ConfiguredProcessor: !include model/types/configuredprocessor.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
+  RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
+  RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
+  RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
 
 resourceTypes:
   standard:
@@ -64,6 +65,7 @@ resourceTypes:
   type: standard
   get:
     description: Get processor classes by mission and name
+    displayName: getProcessorClasses
     queryParameters:
       mission?: string
       processorName?: string
@@ -71,20 +73,21 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ProcessorClass[]
-            example: !include model/examples/processorclass-list.json
+            type: RestProcessorClass[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass-list.json
   post:
     description: Create a new processor class
+    displayName: createProcessorClass
     body:
       application/json:
-        type: ProcessorClass
-        example: !include model/examples/processorclass.json
+        type: RestProcessorClass
+        example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     responses:
       201:
         body:
           application/json:
-            type: ProcessorClass
-            example: !include model/examples/processorclass.json
+            type: RestProcessorClass
+            example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
   /{id}:
     uriParameters:
       id:
@@ -92,26 +95,29 @@ resourceTypes:
         format: long
     get:
       description: Get a processor class by ID
+      displayName: getProcessorClassById
       responses:
         200:
           body:
             application/json:
-              type: ProcessorClass
-              example: !include model/examples/processorclass.json
-    put:
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
+    patch:
       description: Update a processor class by ID
+      displayName: modifyProcessorClass
       body:
         application/json:
-          type: ProcessorClass
-          example: !include model/examples/processorclass.json
+          type: RestProcessorClass
+          example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
       responses:
         200:
           body:
             application/json:
-              type: ProcessorClass
-              example: !include model/examples/processorclass.json
+              type: RestProcessorClass
+              example: !include ../../../../../model/src/main/resources/raml/examples/processorclass.json
     delete:
       description: Delete a processor class by ID
+      displayName: deleteProcessorClassById
       responses:
         204:
               
@@ -119,6 +125,7 @@ resourceTypes:
   type: standard
   get:
     description: Get processors by mission, name and version
+    displayName: getProcessors
     queryParameters:
       mission?: string
       processorName?: string
@@ -127,20 +134,21 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Processor[]
-            example: !include model/examples/processor-list.json
+            type: RestProcessor[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor-list.json
   post:
     description: Create a new processor
+    displayName: createProcessor
     body:
       application/json:
-        type: Processor
-        example: !include model/examples/processor.json
+        type: RestProcessor
+        example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     responses:
       201:
         body:
           application/json:
-            type: Processor
-            example: !include model/examples/processor.json
+            type: RestProcessor
+            example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
   /{id}:
     uriParameters:
       id:
@@ -148,26 +156,29 @@ resourceTypes:
         format: long
     get:
       description: Get a processor by ID
+      displayName: getProcessorById
       responses:
         200:
           body:
             application/json:
-              type: Processor
-              example: !include model/examples/processor.json
-    put:
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
+    patch:
       description: Update a processor class by ID
+      displayName: modifyProcessor
       body:
         application/json:
-          type: Processor
-          example: !include model/examples/processor.json
+          type: RestProcessor
+          example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
       responses:
         200:
           body:
             application/json:
-              type: Processor
-              example: !include model/examples/processor.json
+              type: RestProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/processor.json
     delete:
       description: Delete a processor class by ID
+      displayName: deleteProcessorById
       responses:
         204:
 
@@ -175,6 +186,7 @@ resourceTypes:
   type: standard
   get:
     description: Get configurations by mission, processor name and configuration version
+    displayName: getConfigurations
     queryParameters:
       mission?: string
       processorName?: string
@@ -183,20 +195,21 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: Configuration[]
-            example: !include model/examples/configuration-list.json
+            type: RestConfiguration[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration-list.json
   post:
     description: Create a new configuration
+    displayName: createConfiguration
     body:
       application/json:
-        type: Configuration
-        example: !include model/examples/configuration.json
+        type: RestConfiguration
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     responses:
       201:
         body:
           application/json:
-            type: Configuration
-            example: !include model/examples/configuration.json
+            type: RestConfiguration
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
   /{id}:
     uriParameters:
       id:
@@ -204,26 +217,29 @@ resourceTypes:
         format: long
     get:
       description: Get a configuration by ID
+      displayName: getConfigurationById
       responses:
         200:
           body:
             application/json:
-              type: Configuration
-              example: !include model/examples/configuration.json
-    put:
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
+    patch:
       description: Update a configuration by ID
+      displayName: modifyConfiguration
       body:
         application/json:
-          type: Configuration
-          example: !include model/examples/configuration.json
+          type: RestConfiguration
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
       responses:
         200:
           body:
             application/json:
-              type: Configuration
-              example: !include model/examples/configuration.json
+              type: RestConfiguration
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuration.json
     delete:
       description: Delete a configuration by ID
+      displayName: deleteConfigurationById
       responses:
         204:
 
@@ -231,6 +247,7 @@ resourceTypes:
   type: standard
   get:
     description: Get configured processors by mission, processor name, processor version and configuration version
+    displayName: getConfiguredProcessors
     queryParameters:
       mission?: string
       processorName?: string
@@ -240,20 +257,21 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: ConfiguredProcessor[]
-            example: !include model/examples/configuredprocessor-list.json
+            type: RestConfiguredProcessor[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor-list.json
   post:
     description: Create a new configured processor
+    displayName: createConfiguredProcessor
     body:
       application/json:
-        type: ConfiguredProcessor
-        example: !include model/examples/configuredprocessor.json
+        type: RestConfiguredProcessor
+        example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     responses:
       201:
         body:
           application/json:
-            type: ConfiguredProcessor
-            example: !include model/examples/configuredprocessor.json
+            type: RestConfiguredProcessor
+            example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
   /{id}:
     uriParameters:
       id:
@@ -261,25 +279,28 @@ resourceTypes:
         format: long
     get:
       description: Get a configured processor by ID
+      displayName: getConfiguredProcessorById
       responses:
         200:
           body:
             application/json:
-              type: ConfiguredProcessor
-              example: !include model/examples/configuredprocessor.json
-    put:
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
+    patch:
       description: Update a configured processor by ID
+      displayName: modifyConfiguredProcessor
       body:
         application/json:
-          type: ConfiguredProcessor
-          example: !include model/examples/configuredprocessor.json
+          type: RestConfiguredProcessor
+          example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
       responses:
         200:
           body:
             application/json:
-              type: ConfiguredProcessor
-              example: !include model/examples/configuredprocessor.json
+              type: RestConfiguredProcessor
+              example: !include ../../../../../model/src/main/resources/raml/examples/configuredprocessor.json
     delete:
       description: Delete a configured processor by ID
+      displayName: deleteConfiguredProcessorById
       responses:
         204:

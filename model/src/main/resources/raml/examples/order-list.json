@@ -1,17 +1,19 @@
 [
     {
-        "missionCode": "S5P",
         "id": 12345,
         "version": 3,
+        "missionCode": "S5P",
         "identifier": "RPRO Orbits 4567-5678",
         "orderState": "INITIAL",
-        "startTime": "2018-05-17T00:00:00.000000Z",
-        "stopTime": "2019-07-31T12:00:00.000000Z",
+        "startTime": "2018-05-17T00:00:00",
+        "stopTime": "2019-07-31T12:00:00",
+        "slicingType": "ORBIT",
+        "sliceOverlap": 0,
         "filterConditions": [
             {
                 "key": "copernicusCollection",
-                "parameterType": "INTEGER",
-                "parameterValue": "1"
+                "parameterType": "STRING",
+                "parameterValue": "01"
             },
             {
                 "key": "revision",
@@ -27,8 +29,8 @@
         "outputParameters": [
             {
                 "key": "copernicusCollection",
-                "parameterType": "INTEGER",
-                "parameterValue": "2"
+                "parameterType": "STRING",
+                "parameterValue": "02"
             },
             {
                 "key": "revision",
@@ -47,43 +49,27 @@
             { "spacecraftCode": "S5P", "orbitNumberFrom": 5421, "orbitNumberTo": 5678 }
         ],
         "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
-        "processingMode": "OFFL",
-        "promisedProducts": [
-            {
-                "productClass": "L1B",
-                "parameters": [
-                    {
-                        "key": "copernicusCollection",
-                        "parameterType": "INTEGER",
-                        "parameterValue": "1"
-                    },
-                    {
-                        "key": "revision",
-                        "parameterType": "INTEGER",
-                        "parameterValue": "13"
-                    },
-                    {
-                        "key": "fileClass",
-                        "parameterType": "STRING",
-                        "parameterValue": "OFFL"
-                    }
-                ]
-            }
-        ]
+        "inputProductClasses": [ "L1B" ],
+        "outputFileClass": "RPRO",
+        "processingMode": "OFFL"
     },
     {
-        "missionCode": "S5P",
         "id": 12346,
         "version": 3,
+        "missionCode": "S5P",
         "identifier": "RPRO Orbit 4711",
         "orderState": "RELEASED",
-        "startTime": "2018-06-13T09:23:45.396521Z",
-        "stopTime": "2018-06-13T10:53:45.396521Z",
+        "executionTime": "2019-10-31T12:00:00",
+        "startTime": "2018-06-13T09:23:45",
+        "stopTime": "2018-06-13T10:53:45",
+        "slicingType": "TIME_SLICE",
+        "sliceDuration": 300,
+        "sliceOverlap": 60,
         "filterConditions": [
             {
                 "key": "copernicusCollection",
-                "parameterType": "INTEGER",
-                "parameterValue": "1"
+                "parameterType": "STRING",
+                "parameterValue": "01"
             },
             {
                 "key": "revision",
@@ -99,18 +85,13 @@
         "outputParameters": [
             {
                 "key": "copernicusCollection",
-                "parameterType": "INTEGER",
+                "parameterType": "STRING",
                 "parameterValue": "99"
             },
             {
                 "key": "revision",
                 "parameterType": "INTEGER",
                 "parameterValue": "14"
-            },
-            {
-                "key": "fileClass",
-                "parameterType": "STRING",
-                "parameterValue": "NRTI"
             }
         ],
         "configuredProcessors": [ "KNMI L2 02.01.00 2019-11-17" ],
@@ -118,28 +99,8 @@
             { "spacecraftCode": "S5P", "orbitNumberFrom": 4711, "orbitNumberTo": 4711 }
         ],
         "requestedProductClasses": [ "FRESCO", "AAI" ],
-        "processingMode": "NRTI",
-        "promisedProducts": [
-            {
-                "productClass": "L1B",
-                "parameters": [
-                    {
-                        "key": "copernicusCollection",
-                        "parameterType": "INTEGER",
-                        "parameterValue": "2"
-                    },
-                    {
-                        "key": "revision",
-                        "parameterType": "INTEGER",
-                        "parameterValue": "16"
-                    },
-                    {
-                        "key": "fileClass",
-                        "parameterType": "STRING",
-                        "parameterValue": "RPRO"
-                    }
-                ]
-            }
-        ]
+        "inputProductClasses": [ ],
+        "outputFileClass": "NRTI",
+        "processingMode": "NRTI"
     }  
 ]

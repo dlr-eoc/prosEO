@@ -1,0 +1,22 @@
+#%RAML 1.0 DataType
+# RestInfo:
+type: object
+properties:
+  k8sNodeMountPoints:
+    type: object
+    properties:
+      alluxioCacheMount: string
+      alluxioFuseMount: string
+      unregisteredProductsMount: string
+  general:
+    type: object
+    properties:
+      procFacility: string
+      s3MaxNumberOfBuckets: integer
+      alluxioUnderFsMaxPrefixes: integer
+      alluxioUnderFsS3Bucket: string
+      alluxioUnderFsS3BucketPrefix: string
+      joborderBucket: string
+      joborderBucketPrefix: string
+      s3EndPoint: string
+      alluxioUnderFsS3BucketEndPoint: string
