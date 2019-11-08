@@ -1,0 +1,283 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>DLR Mission Welcome</title>
+    <!-- Bootstrap core CSS -->
+    <!-- Bootstrap core CSS -->
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+      table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #333;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+  </head>
+<body class="text-center">
+<div class="container-fluid">
+  <div th:insert="fragments/navbar.html :: navigation-bar"></div>
+</div>
+<div class="container-fluid">
+<ul class="breadcrumb">
+	<li class="breadcrumb-item"><a href="/"><span th:text="#{mission}"></span></a></li>
+	<li class="breadcrumb-item active" aria-current="page"><span th:text="#{order_show}"></span></li>
+</ul>
+</div>
+
+ <div class="container-fluid">
+<form name = "ord-shw" action="/order-show?">
+
+<div class="input-group mb-3">
+	<p class="text-left">
+	<label for="orderid"><span th:text="#{order_id}"></span></label>
+	<input type="text" class="form-control" id="orderid"></p>
+</div>
+<div class="input-group mb-3">
+<p class="text-left"><label for="fromDate"><span th:text="#{start_date}"></span></label></p>
+<p class="text-left"><input type="date" class="form-control" id="fromDate"></p>
+<p class="text-left"><label for"toDate"><span th:text="#{end_date}"></span></label></p>
+<p class="text-left"><input type="date"  class="form-control" id="toDate"></p>
+</div>
+  <div class="input-group mb-3">
+  <button type="submit" class="btn btn-primary mb-2"><span th:text="#{order_show}"></span></button>
+  </div>
+</form>     
+      
+</div>      
+<div class="container">
+<h2><span th:text="#{order}"></span></h2>
+
+<table class="table table-hover">
+  <tr>
+    <th><span th:text="#{order_id}"></span></th>
+    <th><span th:text="#{processing_order}"></span></th>
+    <th><span th:text="#{jobstate}"></span></th>
+    <th><span th:text="#{orbit}"></span></th>
+    <th>Output Product</th>
+  </tr>
+  <tr class="table-success">
+    <td><button type="button" class="collapsible">#123</button>
+<div class="content">
+  <table class="table table-sm">
+  <tr>
+  <th>Jobs</th>
+  <th>Starttime</th>
+  <th>Stoptime</th>
+  <th>Filter Conditions</th>
+  <th>Output Parameters</th>
+  <th>Output Product</th>
+  </tr>
+  <td><button type="button" class="collapsible">#3452</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Start Time</th>
+  <th>Stop Time</th>
+  <th>Output Product</th>
+  </tr>
+  <td>RUNNING</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>revision 01</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>FILECLASS OPER</td>
+  </tr>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>CO2</td>
+  
+  </table>
+  </div>
+  <button type="button" class="collapsible">#3454</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Start Time</th>
+  <th>Stop Time</th>
+  <th>Output Product</th>
+  </tr>
+  <td>FINISHED</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr><tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>revision 01</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>FILECLASS OPER</td>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>O2</td>
+  
+  </table>
+  </div>
+  <button type="button" class="collapsible">#3459</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Start Time</th>
+  <th>Stop Time</th>
+  <th>Output Product</th>
+  </tr>
+  <td>RUNNING</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>revision 02</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>FILECLASS OPER</td>
+  </tr>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>FRESCO, CH4, CLOUD</td>
+  
+  </table>
+  </div>
+  </td>
+  <td>28.01.2019 13:00</td>
+  <td>30.01.2019 13:00</td>
+  <td>
+  <table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>revision 02</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>FILECLASS OPER</td>
+  </tr>
+  </table>
+  
+  <td><input type="text" id="test" name="test1"></td>
+  <td>CO2, FRESCO, CLOUD</td>
+  </div>
+  </tr>
+  </table>
+</div></td>
+    <td>ABCDEF</td>
+    <td>RUNNING</td>
+    <td>1082</td>
+    <td>CO, FRESCO, CLOUD, CH4, O2</td>
+  <tr class = "table-danger">
+    <td><button type="button" class="collapsible">#456</button></td>
+    <td>DEFT</td>
+    <td>INITIAL</td>
+    <td>1085</td>
+    <td> CO2 <td>
+  </tr>
+  <tr class="table-info">
+    <td><button type="button" class="collapsible">#789</button></td>
+    <td>Lorem</td>
+    <td>FINISHED</td>
+    <td>1089</td>
+    <td>FRESCO<td>
+  </tr>
+ <tr class="table-success">
+    <td><button type="button" class="collapsible">#012</button></td>
+    <td>Ipsum</td>
+    <td>RUNNING</td>
+    <td>1100</td>
+    <td>CH4, CLOUD</td>
+  </tr>
+ 
+</table>	
+</div>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+              <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="../js/resources.js"></script>
+<div th:insert="fragments/footer.html :: footer"></div>
+</body> 
+</html>
