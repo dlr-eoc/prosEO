@@ -6,29 +6,24 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Orbit;
+
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbit;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbitQuery;
 import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 
 /**
@@ -51,118 +46,151 @@ public class OrderControllerImpl implements OrderController {
 	private static final String MSG_ORDER_NOT_FOUND = "No order found for ID %d (%d)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "Order deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String MSG_PREFIX = "199 proseo-ordermgr-ordercontroller ";
+	private static final String HTTP_MSG_PREFIX = "199 proseo-ordermgr-ordercontroller ";
 	private static final String MSG_ORDER_MISSING = "(E%d) Order not set";
 
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
+	
+	/** The product manager */
+	@Autowired
+	private ProcessingOrderMgr procOrderManager;
+	
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		return responseHeaders;
+	}
+	/**
+	 * Create a order from the given Json object 
+	 * 
+	 * @param order the Json object to create the order from
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the product after persistence
+	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
+	 */
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", order.getClass());
+//		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", order.getClass());
+//		
+//		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
+//		
+//		//Find the  mission for the mission code given in the rest Order
+//		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
+//		modelOrder.setMission(mission);	
+//		
+//		modelOrder.getRequestedOrbits().clear();
+//		for(RestOrbitQuery orbitQuery : order.getOrbits()) {
+//			List<Orbit> orbit = RepositoryService.getOrbitRepository().
+//									findBySpacecraftCodeAndOrbitNumberBetween(orbitQuery.getSpacecraftCode(), orbitQuery.getOrbitNumberFrom().intValue(), orbitQuery.getOrbitNumberTo().intValue());
+//			modelOrder.getRequestedOrbits().addAll(orbit);
+//		}
+//		
+//		modelOrder.getRequestedProductClasses().clear();
+//		for (String prodClass : order.getRequestedProductClasses()) {
+//			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
+//				modelOrder.getRequestedProductClasses().add(product);
+//			}
+//		}
+//		modelOrder.getInputProductClasses().clear();
+//		for (String prodClass : order.getInputProductClasses()) {
+//			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
+//				modelOrder.getInputProductClasses().add(product);
+//			}
+//		}		
+//		modelOrder.getRequestedConfiguredProcessors().clear();
+//		for (String identifier : order.getConfiguredProcessors()) {
+//			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
+//		}
+//
+//		// To be verified
+//		@SuppressWarnings("rawtypes")
+//		Set jobs = new HashSet();
+//		for(Job job : RepositoryService.getJobRepository().findAll()) {			
+//			if(job.getProcessingOrder().getId() == order.getId()) {
+//				jobs.add(job);				
+//			}
+//		}
+//		
+//		modelOrder.setJobs(jobs);
+//		
+//		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 		
-		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
+		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
 		
-		//Find the  mission for the mission code given in the rest Order
-		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
-		modelOrder.setMission(mission);	
-		
-		modelOrder.getRequestedOrbits().clear();
-		for(RestOrbitQuery orbitQuery : order.getOrbits()) {
-			List<Orbit> orbit = RepositoryService.getOrbitRepository().
-									findBySpacecraftCodeAndOrbitNumberBetween(orbitQuery.getSpacecraftCode(), orbitQuery.getOrbitNumberFrom().intValue(), orbitQuery.getOrbitNumberTo().intValue());
-			modelOrder.getRequestedOrbits().addAll(orbit);
-		}
-		
-		modelOrder.getRequestedProductClasses().clear();
-		for (String prodClass : order.getRequestedProductClasses()) {
-			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-				modelOrder.getRequestedProductClasses().add(product);
-			}
-		}
-		modelOrder.getInputProductClasses().clear();
-		for (String prodClass : order.getInputProductClasses()) {
-			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-				modelOrder.getInputProductClasses().add(product);
-			}
-		}		
-		modelOrder.getRequestedConfiguredProcessors().clear();
-		for (String identifier : order.getConfiguredProcessors()) {
-			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
-		}
-
-		// To be verified
-		@SuppressWarnings("rawtypes")
-		Set jobs = new HashSet();
-		for(Job job : RepositoryService.getJobRepository().findAll()) {			
-			if(job.getProcessingOrder().getId() == order.getId()) {
-				jobs.add(job);				
-			}
-		}
-		
-		modelOrder.setJobs(jobs);
-		
-		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		
-		
-		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.CREATED);
+		try {
+			return new ResponseEntity<>(procOrderManager.createOrder(order), HttpStatus.CREATED);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}	
 	}
-
+	/**
+	 * List of all order filtered by mission, identifier, productClasses, starttime range
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the unique order identifier string
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @return HTTP status "OK" and a list of products or
+	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
 			Date starttimeto) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, starttimefrom, starttimeto);
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrder{}");
-		List<RestOrder> result = new ArrayList<>();		
-		// Find using search parameters
-		if("" != mission) {
-			
-			
+		try {
+			return new ResponseEntity<>(
+					procOrderManager.getOrders(mission, identifier, productclasses, starttimefrom, starttimeto), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
-		//Find all with no search criteria
-		else{
-			for(ProcessingOrder procOrder : RepositoryService.getOrderRepository().findAll()) {
-				if (logger.isDebugEnabled()) logger.debug("Found order with ID {}", procOrder.getId());
-				RestOrder resultOrder = OrderUtil.toRestOrder(procOrder);
-				if (logger.isDebugEnabled()) logger.debug("Created result order with ID {}", resultOrder.getId());
-				result.add(resultOrder);		
-			
-			}
-		}
-			
-		return new ResponseEntity<>(result, HttpStatus.OK);								
-
-	
-
 	}
-
+	/**
+	 * Find the order with the given ID
+	 * 
+	 * @param id the ID to look for
+	 * @return a Json object corresponding to the found order and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no orbit with the given ID exists
+	 */
 	@Override
 	public ResponseEntity<RestOrder> getOrderById(Long id) {
 		// TODO Auto-generated method stub
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
-		
-		Optional<de.dlr.proseo.model.ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
-		
-		if (modelOrder.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_ORDER_NOT_FOUND, id, MSG_ID_ORDER_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		try {
+			return new ResponseEntity<>(procOrderManager.getOrderById(id), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
-		
-		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder.get()), HttpStatus.OK);
 	}
+	/**
+	 * Update the order with the given ID with the attribute values of the given Json object. 
+	 * @param id the ID of the order to update
+	 * @param orbit a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing a Json object corresponding to the order after modification (with ID and version for all 
+	 * 		   contained objects) and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no order with the given ID exists
+	 */
 
 	// To be Tested
 	@Override
 	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
 		
-		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
+	/*	Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
 		
 		if (optModelOrder.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_ORDER_NOT_FOUND, id, MSG_ID_ORDER_NOT_FOUND);
+			String message = String.format(HTTP_MSG_PREFIX + MSG_ORDER_NOT_FOUND, id, MSG_ID_ORDER_NOT_FOUND);
 			logger.error(message);
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -214,38 +242,40 @@ public class OrderControllerImpl implements OrderController {
 			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 		}
 		
-		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.OK);
+		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.OK);*/
+		try {
+			RestOrder changedOrder = procOrderManager.modifyOrder(id, order);
+			HttpStatus httpStatus = (order.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedOrder, httpStatus);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	
 	}
+	/**
+	 * Delete an order by ID
+	 * 
+	 * @param the ID of the order to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the orbit did not
+	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
 	@Override
 	public ResponseEntity<?> deleteOrderById(Long id) {
-		 if (logger.isTraceEnabled()) logger.trace(">>> deleteOrderById({})", id);
-			
-			// Test whether the order id is valid
-			Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
-			if (modelOrder.isEmpty()) {
-				String message = String.format(MSG_PREFIX + MSG_ORDER_NOT_FOUND, id, MSG_ID_ORDER_NOT_FOUND);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-			
-			// Delete the order
-			RepositoryService.getOrderRepository().deleteById(id);
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrderById({})", id);
 
-			// Test whether the deletion was successful
-			modelOrder = RepositoryService.getOrderRepository().findById(id);
-			if (!modelOrder.isEmpty()) {
-				String message = String.format(MSG_PREFIX + MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-			
-			HttpHeaders responseHeaders = new HttpHeaders();
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);		
+		try {
+			procOrderManager.deleteOrderById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
 }
