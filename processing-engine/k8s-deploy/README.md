@@ -1,48 +1,117 @@
-prosEO-k8s-gateway setup
-========================
-ansible playbook to configure a public k8s-gateway
+prosEO k8s setup (OpenStack)
+===========================
+deploy a k8s-cluster using terraform & kubespray
 
 ### prerequisites
-- running, managed k8s-cluster (OTC-CCE)
-- a valid kubectl config file (download from OTC-web console)
-- a running bare centos-VM in the same VPC & subnet like the k8s cluster
-- a valid domainname with A-record pointing to the public IP of the gateway-VM (`proseo-k8s-gate.de`)
-- a working ssh-key for VM-access
-- an ansible control-host
+- docker engine running at your control host
+- ssh-keygen
+- unrestricted internet access
 
-### configure ansible
-- edit file ansible-conf/hosts and set public IP and path to ssh-key
-- place kubectl-config file to `vars/kube.config`
-
-### run ansible playbook
+### deploy steps
+- create public and private ssh-key (e.g. by using ssh-keygen) and copy the keys to:
+  - ssh-keys/`cluster-key.pem` (private key)
+  - ssh-keys/`cluster-key.pub` (public key)
+- create file `terraform/.ostackrc`
 
 ```sh
-./run-playbook.sh k8s-gateway.yml
+cp terraform/.ostackrc.template terraform/.ostackrc
+vi terraform/.ostackrc
 ```
 
-### get letsencrypt ssl-cert
-- ssh into VM: ssh -i ~/ssh-key.pem linux@proseo-k8s-gate.de
-- sudo certbot certonly --nginx
-- restart nginx
+the file shall look like...
+```sh
+# .bashrc
+# User specific aliases and functions
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
 
-### k8s-access from your localhost
-- install kubectl
-- copy kubectl-config file to .kube/config
-- in file .kube/config **change** property `server` to https://proseo-k8s-gate.de/otc-proseo01
-- in file .kube/config **remove** property `certificate-authority-data`
-- run "kubectl config use-context internal"
-- test it with: kubectl cluster-info
+export OS_PASSWORD=XXXX
+export OS_USERNAME=XXXX
+export OS_TENANT_NAME=eu-de
+export OS_PROJECT_NAME=eu-de
+export OS_USER_DOMAIN_NAME=OTC-EU-DE-XXXX
+export OS_AUTH_URL=https://iam.eu-de.otc.t-systems.com:443/v3
+export OS_PROJECT_DOMAIN_NAME=XXXX
+export OS_IDENTITY_API_VERSION=3
+export OS_REGION_NAME=eu-de
+export OS_VOLUME_API_VERSION=2
+export OS_IMAGE_API_VERSION=2
+export OS_ENDPOINT_TYPE=publicURL
+export NOVA_ENDPOINT_TYPE=publicURL
+export CINDER_ENDPOINT_TYPE=publicURL
+```
+- build deployer docker image by running `build.sh`
 
-### install k8s-dashboard
+### run deployer docker image
+- cd /prosEO/processing-engine/k8s-deploy
+- `run.sh` -> this opens a shell inside the container
+
+### run terraform (inside container)
+terraform is responsible for the provisioning of the VM's and network-interfaces. 
+The current state of the deployment is stored outside the container. (prosEO/processing-engine/k8s-deploy/terraform/state), so container restarts are uncritical...
+```sh
+terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
+terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
+```
+
+### prepare created bastion-VM (inside container)
+sh```
+ssh linux@<bastion-host>
+sudo vi /etc/ssh/sshd_config
+AllowTcpForw.. yes
+sudo systemctl restart sshd
+```
+
+### check ssh-connectivity between nodes (inside container)
+sh```
+ansible -i hosts -m ping all
+```
+
+### run kubespray (inside container)
+kubespray is responsible for the complete sw-config of all k8s-components
+```sh
+cd /kubespray
+ansible-playbook -i inventory/proseo-spray/hosts --become  cluster.yml --flush-cache
+```
+
+### run post install recipe (inside container)
+the postinstall.yml is responsible for creating a stable nginx reverse proxy cfg for publishing the k8s-apis...
+```sh
+cd /kubespray
+ansible-playbook -i inventory/proseo-spray/hosts --become  postinstall.yml --flush-cache
+```
+
+### install k8s-dashboard (from bastion host)
 
 ```sh
 # install it...
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta4/aio/deploy/recommended.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta5/aio/deploy/recommended.yaml
+kubectl create serviceaccount k8s-poweruser
+kubectl create clusterrolebinding k8s-poweruser-cadmin --clusterrole=cluster-admin --serviceaccount=default:k8s-poweruser
+kubectl create clusterrolebinding k8s-poweruser-admin --clusterrole=admin --serviceaccount=default:k8s-poweruser
+kubectl -n default describe secret $(kubectl -n default get secret | awk '/^k8s-poweruser-token-/{print $1}') | awk '$1=="token:"{print $2}'
+
 # dashboard-url will be: 
-# https://proseo-k8s-gate.de/otc-proseo01/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+# https://proseo-k8s-gate.de/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 # get dashboard login-token (use last line from stdout):
-kubectl -n kube-system describe secrets \
-   `kubectl -n kube-system get secrets | awk '/clusterrole-aggregation-controller/ {print $1}'` \
-       | awk '/token:/ {print $2}'
+kubectl -n default describe secret $(kubectl -n default get secret | awk '/^k8s-poweruser-token-/{print $1}') | awk '$1=="token:"{print $2}'
+```
+
+### create k8s-secret holding credentials for private registry
+
+this secret is used when k8s needs to pull images from some private registry
+
+```sh
+# on some host where kubectl is configured
+docker login <registry-url>
+#check if docker-client file is under ~/.docker/config.json
+cat ~/.docker/config.json
+#create k8s-secret
+kubectl create secret generic regcred  --from-file=.dockerconfigjson=.docker/config.json --type=kubernetes.io/dockerconfigjson
 ```
 
