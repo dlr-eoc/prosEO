@@ -1,0 +1,59 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: sequel09Master
+    packagesToScan: de.dlr.proseo.model
+
+logging:
+    level:
+        root: INFO
+        de:
+            dlr:
+                proseo: TRACE
+proseo:
+    productionPlanner:
+        url: http://proseo-prodplanner:8080/proseo/planner
+        user: none
+        password: none
+        cyclewaittime: 1000
+        maxcycles: 50
+    storageManager:
+        url: https://proseo-k8s-gate.de/api/v1/services/storage-mgr
+        user: none
+        password: none
+    global:
+      storageIdPrefix: proseo
+    procFacility:
+      name: devel
+      url: https://proseo-k8s-gate.de/
+      descr: local env :-)
+    s3:
+      s3AccessKey: XXXX
+      s3SecretAccessKey: XXXX
+      s3EndPoint: https://obs.eu-de.otc.t-systems.com
+      s3Region: eu-de
+      s3DefaultBucket: proseo-data-001
+      s3MaxNumberOfBuckets: 50
+    alluxio:
+      alluxioUnderFsS3Bucket: otc-proseo01-internal
+      alluxioUnderFsS3BucketPrefix: underfs
+      alluxioUnderFsS3BucketEndPoint: https://obs.eu-de.otc.t-systems.com
+      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
+      alluxioUnderFsMaxPrefixes: 500
+    joborder:
+      bucket: internal
+      prefix: joborders
+    mountpoints:
+     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
+      alluxio:
+        k8sNode:
+          alluxioCache: /mnt/alluxio
+          alluxioFuse: /alluxio-fuse
+      #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
+      unregisteredProducts:
+        k8sNode:
+          unregisteredProducts: /mnt/some-dir
