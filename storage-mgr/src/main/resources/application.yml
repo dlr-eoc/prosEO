@@ -30,6 +30,6 @@ proseo:
       #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
       unregisteredProducts:
         k8sNode:
-          unregisteredProducts: /mnt/some-dir
+          unregisteredProducts: ""
           
         

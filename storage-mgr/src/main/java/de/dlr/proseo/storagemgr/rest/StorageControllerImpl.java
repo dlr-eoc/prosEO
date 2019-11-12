@@ -408,7 +408,7 @@ public class StorageControllerImpl implements StorageController {
 								//the client
 								s3, 
 								// the local POSIX source file or directory
-								fileOrDir, 
+								cfg.getUnregisteredProductsK8sMountPoint()+fileOrDir, 
 								// the storageId -> =BucketName
 								cfg.getS3DefaultBucket(), 
 								// the final prefix of the file or directory
@@ -521,7 +521,7 @@ public class StorageControllerImpl implements StorageController {
 								//the client
 								s3, 
 								// the local POSIX source file or directory
-								fileOrDir, 
+								cfg.getUnregisteredProductsK8sMountPoint()+fileOrDir, 
 								// the ALLUXIO UnderFS Bucket
 								cfg.getAlluxioUnderFsS3Bucket(),
 								// the final prefix including productId pattern of the file or directory
