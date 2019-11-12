@@ -60,7 +60,7 @@ terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
 ```
 
 ### prepare created bastion-VM (inside container)
-sh```
+```sh
 ssh linux@<bastion-host>
 sudo vi /etc/ssh/sshd_config
 AllowTcpForw.. yes
@@ -68,7 +68,8 @@ sudo systemctl restart sshd
 ```
 
 ### check ssh-connectivity between nodes (inside container)
-sh```
+```sh
+cd /kubespray/inventory/proseo-spray/
 ansible -i hosts -m ping all
 ```
 
