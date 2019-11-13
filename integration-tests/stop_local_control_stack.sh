@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
-if [[ "$#" -eq 0 || "$#" -ne 2 ]]
+PROSEO_REVISION=$(cat proseo-components/REVISION)
+
+if [[ "$#" -eq 0 || "$#" -ne 1 ]]
   then
     echo "Invalid number of args..."
-    echo "Usage: $0 <registry-url> <proseo-revison>"
+    echo "Usage: $0 <registry-url>"
     echo "* registry-url: a valid docker-registry URL where the referenced docker-images are registered"
-    echo "* proseo-revison: a valid git-revision"
     echo ""
     echo "-->used compose file is:"
     cat docker-compose.yml
@@ -23,6 +24,6 @@ else
 fi
 
 export REGISTRY_URL=$1
-export PROSEO_REVISION=$2
+export PROSEO_REVISION=$PROSEO_REVISION
 
 docker-compose down
