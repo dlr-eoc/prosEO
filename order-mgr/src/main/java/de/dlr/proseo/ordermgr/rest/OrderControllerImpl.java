@@ -77,52 +77,7 @@ public class OrderControllerImpl implements OrderController {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ResponseEntity<RestOrder> createOrder(RestOrder order) {
-//		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", order.getClass());
-//		
-//		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
-//		
-//		//Find the  mission for the mission code given in the rest Order
-//		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
-//		modelOrder.setMission(mission);	
-//		
-//		modelOrder.getRequestedOrbits().clear();
-//		for(RestOrbitQuery orbitQuery : order.getOrbits()) {
-//			List<Orbit> orbit = RepositoryService.getOrbitRepository().
-//									findBySpacecraftCodeAndOrbitNumberBetween(orbitQuery.getSpacecraftCode(), orbitQuery.getOrbitNumberFrom().intValue(), orbitQuery.getOrbitNumberTo().intValue());
-//			modelOrder.getRequestedOrbits().addAll(orbit);
-//		}
-//		
-//		modelOrder.getRequestedProductClasses().clear();
-//		for (String prodClass : order.getRequestedProductClasses()) {
-//			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-//				modelOrder.getRequestedProductClasses().add(product);
-//			}
-//		}
-//		modelOrder.getInputProductClasses().clear();
-//		for (String prodClass : order.getInputProductClasses()) {
-//			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-//				modelOrder.getInputProductClasses().add(product);
-//			}
-//		}		
-//		modelOrder.getRequestedConfiguredProcessors().clear();
-//		for (String identifier : order.getConfiguredProcessors()) {
-//			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
-//		}
-//
-//		// To be verified
-//		@SuppressWarnings("rawtypes")
-//		Set jobs = new HashSet();
-//		for(Job job : RepositoryService.getJobRepository().findAll()) {			
-//			if(job.getProcessingOrder().getId() == order.getId()) {
-//				jobs.add(job);				
-//			}
-//		}
-//		
-//		modelOrder.setJobs(jobs);
-//		
-//		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		
+	public ResponseEntity<RestOrder> createOrder(RestOrder order) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
 		
 		try {
@@ -174,89 +129,6 @@ public class OrderControllerImpl implements OrderController {
 		}
 	}
 	/**
-	 * Update the order with the given ID with the attribute values of the given Json object. 
-	 * @param id the ID of the order to update
-	 * @param orbit a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the order after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no order with the given ID exists
-	 */
-
-	// To be Tested
-	@Override
-	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
-		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
-		
-	/*	Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
-		
-		if (optModelOrder.isEmpty()) {
-			String message = String.format(HTTP_MSG_PREFIX + MSG_ORDER_NOT_FOUND, id, MSG_ID_ORDER_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}
-		ProcessingOrder modelOrder = optModelOrder.get();
-		
-		// Update modified attributes
-		boolean orderChanged = false;
-		ProcessingOrder changedOrder = OrderUtil.toModelOrder(order);
-		
-		if (!modelOrder.getMission().equals(changedOrder.getMission())) {
-			orderChanged = true;
-			modelOrder.setMission(changedOrder.getMission());
-		}
-		
-		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
-			orderChanged = true;
-			modelOrder.setIdentifier(changedOrder.getIdentifier());
-		}
-		if (!modelOrder.getOrderState().equals(changedOrder.getOrderState())) {
-			orderChanged = true;
-			modelOrder.setOrderState(changedOrder.getOrderState());
-		}
-		if (!modelOrder.getFilterConditions().equals(changedOrder.getFilterConditions())) {
-			orderChanged = true;
-			modelOrder.setFilterConditions(changedOrder.getFilterConditions());
-		}
-		if (!modelOrder.getOutputParameters().equals(changedOrder.getOutputParameters())) {
-			orderChanged = true;
-			modelOrder.setOutputParameters(changedOrder.getOutputParameters());
-		}
-		if (!modelOrder.getRequestedProductClasses().equals(changedOrder.getRequestedProductClasses())) {
-			orderChanged = true;
-			modelOrder.setRequestedProductClasses(changedOrder.getRequestedProductClasses());
-		}
-		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
-			orderChanged = true;
-			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
-		}
-		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
-			orderChanged = true;
-			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
-		}
-		
-		// Save order only if anything was actually changed
-		if (orderChanged)	{
-			modelOrder.incrementVersion();
-			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		}
-		
-		return new ResponseEntity<>(OrderUtil.toRestOrder(modelOrder), HttpStatus.OK);*/
-		try {
-			RestOrder changedOrder = procOrderManager.modifyOrder(id, order);
-			HttpStatus httpStatus = (order.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
-			return new ResponseEntity<>(changedOrder, httpStatus);
-		} catch (EntityNotFoundException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
-		} catch (IllegalArgumentException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
-		} catch (ConcurrentModificationException e) {
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
-		}
-	
-	}
-	/**
 	 * Delete an order by ID
 	 * 
 	 * @param the ID of the order to delete
@@ -277,5 +149,32 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
+	/**
+	 * Update the order with the given ID with the attribute values of the given Json object. 
+	 * @param id the ID of the order to update
+	 * @param orbit a Json object containing the modified (and unmodified) attributes
+	 * @return a response containing a Json object corresponding to the order after modification (with ID and version for all 
+	 * 		   contained objects) and HTTP status "OK" or an error message and
+	 * 		   HTTP status "NOT_FOUND", if no order with the given ID exists
+	 */
+
+	// To be Tested
+	@Override
+	public ResponseEntity<RestOrder> modifyOrder(Long id, @Valid RestOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
+		try {
+			RestOrder changedOrder = procOrderManager.modifyOrder(id, order);
+			HttpStatus httpStatus = (order.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedOrder, httpStatus);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
+	
+	}
+	
 
 }

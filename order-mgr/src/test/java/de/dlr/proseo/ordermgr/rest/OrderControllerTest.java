@@ -1,6 +1,7 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
@@ -26,11 +27,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
 import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
@@ -60,6 +73,10 @@ public class OrderControllerTest {
 	//@Autowired
 	OrdermgrSecurityConfig ordermgrSecurityConfig;
 	
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
+	
 	/** REST template builder */
 	@Autowired
 	RestTemplateBuilder rtb;
@@ -68,20 +85,38 @@ public class OrderControllerTest {
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerTest.class);
 	
 	/* Test orders */
-	private static String[][] testOrderData = {
-		// mission_id, mission_version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name, order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,start_time, stop_time,output_file_class
-		{ "1", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandom-X", "111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","30","ORBIT","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000","TEST"},
-		{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandem-X", "112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000","TEST"},
-		{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Terrasar-X",	"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000","TEST"}
-		
-		
+	private static String[][] testMission = {
+			//id,version,Code,Name,Processing_Mode,File_Class
+			{"1", "0", "ABCe", "ABCD Testing", "NRTI","OPER"},	
+			{ "11", "11", "DEFg", "DefrostMission","OFFL","OPER"},
+			{ "12", "12", "XY1Z", "XYZ Testing","RPRO","OPER"}
+			
 	};
 	
-	private static String [][] testFilterConditions = {
-			//processing_order_id, parameter_type, parameter_value, filter_conditions_key
-			{ "copernicusCollection1","revision1","fileClass1"},
-			{ "copernicusCollection2","revision2","fileClass2"},
-			{ "copernicusCollection3","revision3","fileClass3"}
+	private static String[][] testSpacecraft = {
+			//version,code,name
+			{"1","S_TDX1","Tandom-X"},
+			{"2","S_TDX2","Tandem-X"},
+			{ "3","S_TDX3","Terrasar-X"}
+			
+	};
+	
+//	private static String[][] testOrderData = {
+//		// mission_id, mission_version, mission_code, mission_name,spacecraft_version,spacecraft_code,spacecraft_name, order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,start_time, stop_time,output_file_class
+//		{ testMission[0][0], testMission[0][1], testMission[0][2], testMission[0][3], testSpacecraft[0][0],testSpacecraft[0][1], testSpacecraft[0][2],"111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","30","ORBIT","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000","TEST"},
+//		{testMission[1][0], testMission[1][1],testMission[1][2], testMission[1][3], testSpacecraft[1][0],testSpacecraft[1][1], testSpacecraft[1][2], "112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000","TEST"},
+//		{ testMission[2][0], testMission[2][1], testMission[2][2], testMission[2][3], testSpacecraft[2][0],testSpacecraft[2][1], testSpacecraft[2][2],	"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000","TEST"}
+//		
+//		
+//	};
+
+	
+	
+	private static String[][] testFilterConditions = {
+			//filter_conditions_key, parameter_type, parameter_value
+			{ "copernicusCollection","STRING","99"},
+			{ "revision","INTEGER","1"},
+			{ "productColour","STRING","blue"}
 
 	};
 	
@@ -93,7 +128,7 @@ public class OrderControllerTest {
 			
 	};
 	
-	private static String [][] testconfiguredProcessor = {
+	private static String[][] testConfProc = {
 			{"KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03"},
 			{"KNMI L2 01.03.02 2019-07-04", "DLR L2 01.01.05 2019-07-04"},	
 			{"KNMI L2 01.03.02 2019-07-05", "DLR L2 01.01.05 2019-07-05"}	
@@ -113,6 +148,14 @@ public class OrderControllerTest {
 	        { "S5P", "5421", "5678" }
 			
 	};
+	private static String[][] testOrderData = {
+			//order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,start_time, stop_time,output_file_class,outputparam_key,OutPutParama_value,PutputParam_Type
+			{"111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","30","ORBIT","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000","TEST",testOutputParam[0][2],testOutputParam[0][1],testOutputParam[0][0]},
+			{"112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000","TEST",testOutputParam[1][2],testOutputParam[0][1],testOutputParam[1][0]},
+			{"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000","TEST",testOutputParam[2][2],testOutputParam[0][1],testOutputParam[2][0]}
+			
+			
+		};
 	
 	/**
 	 * Create an order from a data array
@@ -123,56 +166,37 @@ public class OrderControllerTest {
 	private ProcessingOrder createOrder(String[] testData) {		
 		logger.info("... creating order ");
 		
-		//create TestMission
-		de.dlr.proseo.model.Mission testMission = new de.dlr.proseo.model.Mission();
-		de.dlr.proseo.model.Spacecraft testSpacecraft = new de.dlr.proseo.model.Spacecraft();
 		ProcessingOrder testOrder = new ProcessingOrder();
-
-
-		if (null != RepositoryService.getMissionRepository().findByCode(testData[2]))
-			testMission = RepositoryService.getMissionRepository().findByCode(testData[2]);
-		else {
-			//Adding mission parameters
-			testMission.setId(Long.parseLong(testData[0]));
-			testMission.setCode(testData[2]);
-			testMission.setName(testData[3]);
-			testMission = RepositoryService.getMissionRepository().save(testMission);
-			
-		}
-
-		if (null != RepositoryService.getSpacecraftRepository().findByCode(testData[5]))
-			testSpacecraft = RepositoryService.getSpacecraftRepository().findByCode(testData[5]);
-		else {
-			//adding Spacecraft parameters
-			testSpacecraft.setMission(testMission);
-			testSpacecraft.incrementVersion();
-			testSpacecraft.setCode(testData[5]);
-			testSpacecraft.setName(testData[6]);
-			testSpacecraft = RepositoryService.getSpacecraftRepository().save(testSpacecraft);
-			
-		}
-
 		if (null != RepositoryService.getOrderRepository().findByIdentifier(testData[10])) {
 			logger.info("Found test order {}", testOrder.getId());
 			return testOrder = RepositoryService.getOrderRepository().findByIdentifier(testData[10]);	
 		}
 		else{
 			//Adding processing order parameters
-			testOrder.setMission(testMission);
-			testOrder.setId(Long.parseLong(testData[7]));
-			testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
-			testOrder.setIdentifier(testData[10]);
-			testOrder.setOrderState(OrderState.valueOf(testData[11]));
-			testOrder.setProcessingMode(testData[10]);
-			testOrder.setSlicingType(OrderSlicingType.valueOf(testData[14]));
+			testOrder.setMission(RepositoryService.getMissionRepository().findByCode(testMission[0][2]));
+			testOrder.setId(Long.parseLong(testData[0]));
+			testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[2])));
+			testOrder.setIdentifier(testData[3]);
+			testOrder.setOrderState(OrderState.valueOf(testData[4]));
+			testOrder.setProcessingMode(testData[5]);
+			testOrder.setSlicingType(OrderSlicingType.valueOf(testData[7]));
 //			//If Slice_TYpe is ORBIT then slice duration can be null
 //			//To be filled only if Slice_TYpe is TIME_SLICE
 //			if(testOrder.getSlicingType().toString().equals("ORBIT"))
 //			testOrder.setSliceDuration(null);
-			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[15])));
-			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[16])));
-			testOrder.setOutputFileClass(testData[17]);
+			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[8])));
+			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
+			testOrder.setOutputFileClass(testData[10]);
+			//Filtercondiitons,confProcessors,orbits.o/p parameter reqProductCLasses,inputProducClasses,sliceoverlap
+			
+			for (int i = 0; i < testFilterConditions.length; ++i) {
+				Parameter filterCondition = new Parameter();
+				filterCondition.init(ParameterType.valueOf(testFilterConditions[i][1]), testFilterConditions[i][2]);
+				testOrder.getFilterConditions().put(testFilterConditions[i][0], filterCondition);
+			}
+			
 			testOrder = RepositoryService.getOrderRepository().save(testOrder);
+			
 		}
 		
 		logger.info("Created test order {}", testOrder.getId());
@@ -211,12 +235,11 @@ public class OrderControllerTest {
 			Set<de.dlr.proseo.model.Spacecraft> spacecrafts = testOrder.getMission().getSpacecrafts();
 			
 			RepositoryService.getOrderRepository().delete(testOrder);
-
-			for(de.dlr.proseo.model.Spacecraft spacecraft : spacecrafts) {
-				RepositoryService.getSpacecraftRepository().delete(spacecraft);
-			}
-
-			RepositoryService.getMissionRepository().deleteById(mission.getId());
+//			for(de.dlr.proseo.model.Spacecraft spacecraft : spacecrafts) {
+//				RepositoryService.getSpacecraftRepository().delete(spacecraft);
+//			}
+//
+//			RepositoryService.getMissionRepository().deleteById(mission.getId());
 
 		}
 	}
@@ -226,10 +249,44 @@ public class OrderControllerTest {
 	 * 
 	 * Test: Create a new order
 	 */
-/*	@Test
+	@Test
 	public final void testCreateOrder() {
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				// Make sure a mission exists
+				Mission mission = RepositoryService.getMissionRepository().findByCode(testMission[0][2]);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(testMission[0][2]);
+					mission.getProcessingModes().add(testMission[0][4]);
+					mission.getFileClasses().add(testMission[0][5]);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				if (null == spacecraft ) {
+					spacecraft = new Spacecraft();
+					spacecraft.setCode(testSpacecraft[0][1]);
+					spacecraft.setMission(mission);
+					spacecraft.setName(testSpacecraft[0][2]);
+					//orbits to be added
+					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+				}
+				
+				return null;
+			}
+			
+		});
+		
 		// Create an order in the database
-		ProcessingOrder orderToCreate = createOrder(testOrderData[1]);
+		ProcessingOrder orderToCreate = createOrder(testOrderData[2]);
+		
 		RestOrder restOrder = OrderUtil.toRestOrder(orderToCreate);
 
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders";
@@ -244,8 +301,8 @@ public class OrderControllerTest {
 
 		// Test that the mission exists
 		testUrl += "/" + restOrder.getId();
-		ResponseEntity<Order> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, Order.class);
+		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 	
 		// Clean up database
@@ -263,12 +320,47 @@ public class OrderControllerTest {
 	 * Test: Delete an Order by ID
 	 * Precondition: An Order in the database
 	 */
-/*	@Test
+	@Test
 	public final void testDeleteOrderById() {
-		// Make sure test orders exist
-		List<ProcessingOrder> testOrders = createTestOrders();
-		ProcessingOrder orderToDelete = testOrders.get(0);
-		testOrders.remove(0);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		
+		ProcessingOrder orderToDelete = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public ProcessingOrder doInTransaction(TransactionStatus status) {
+				
+				// Make sure a mission and spacecraft exists
+				Mission mission = RepositoryService.getMissionRepository().findByCode(testMission[0][2]);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(testMission[0][2]);
+					mission.getProcessingModes().add(testMission[0][4]);
+					mission.getFileClasses().add(testMission[0][5]);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				if (null == spacecraft ) {
+					spacecraft = new Spacecraft();
+					spacecraft.setCode(testSpacecraft[0][1]);
+					spacecraft.setMission(mission);
+					spacecraft.setName(testSpacecraft[0][2]);
+					//orbits to be added
+					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+				}
+				
+				ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[0][3]);
+				if (order == null)
+				return createOrder(testOrderData[0]);
+				
+				else return order;
+			}
+		});
+
+//		List<ProcessingOrder> testOrders = createTestOrders();
+//		ProcessingOrder orderToDelete = testOrders.get(0);
+//		testOrders.remove(0);
 		
 		// Delete the first test order
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders/" + orderToDelete.getId();
@@ -293,11 +385,47 @@ public class OrderControllerTest {
 	 * Test: Get an Order by ID
 	 * Precondition: At least one order with a known ID is in the database
 	 */
-/*	@Test
+	@Test
 	public final void testGetOrderById() {
-		// Make sure test orbits exist
-		List<ProcessingOrder> testOrders = createTestOrders();
-		ProcessingOrder orderToFind = testOrders.get(0);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		ProcessingOrder orderToFind = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public ProcessingOrder doInTransaction(TransactionStatus status) {
+				
+				// Make sure a mission and spacecraft exists
+				Mission mission = RepositoryService.getMissionRepository().findByCode(testMission[0][2]);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(testMission[0][2]);
+					mission.getProcessingModes().add(testMission[0][4]);
+					mission.getFileClasses().add(testMission[0][5]);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				if (null == spacecraft ) {
+					spacecraft = new Spacecraft();
+					spacecraft.setCode(testSpacecraft[0][1]);
+					spacecraft.setMission(mission);
+					spacecraft.setName(testSpacecraft[0][2]);
+					//orbits to be added
+					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+				}
+				
+				ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[0][3]);
+				if (order == null)
+				return createOrder(testOrderData[0]);
+				
+				else return order;
+			}
+		});
+		
+
+//		// Make sure test orbits exist
+//		List<ProcessingOrder> testOrders = createTestOrders();
+//		ProcessingOrder orderToFind = testOrders.get(0);
 
 		// Test that a order can be read
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders/" + orderToFind.getId();
@@ -308,8 +436,8 @@ public class OrderControllerTest {
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong orbit ID: ", orderToFind.getId(), getEntity.getBody().getId().longValue());
 		
-		// Clean up database
-		//deleteTestOrders(testOrders);
+//		// Clean up database
+//		deleteTestOrders(testOrders);
 
 		logger.info("Test OK: Get Order By ID");
 	}
@@ -321,11 +449,47 @@ public class OrderControllerTest {
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
 	
-	@Test
+/*	@Test
 	public final void testModifyOrder() {
-		// Make sure test orbits exist
-		List<ProcessingOrder> testOrders = createTestOrders();
-		ProcessingOrder orderToModify = testOrders.get(0);
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		ProcessingOrder orderToModify = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public ProcessingOrder doInTransaction(TransactionStatus status) {
+				
+				// Make sure a mission and spacecraft exists
+				Mission mission = RepositoryService.getMissionRepository().findByCode(testMission[0][2]);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(testMission[0][2]);
+					mission.getProcessingModes().add(testMission[0][4]);
+					mission.getFileClasses().add(testMission[0][5]);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				if (null == spacecraft ) {
+					spacecraft = new Spacecraft();
+					spacecraft.setCode(testSpacecraft[0][1]);
+					spacecraft.setMission(mission);
+					spacecraft.setName(testSpacecraft[0][2]);
+					//orbits to be added
+					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+				}
+				
+				ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[0][3]);
+				if (order == null)
+				return createOrder(testOrderData[0]);
+				
+				else return order;
+			}
+		});
+		
+//		// Make sure test orbits exist
+//		List<ProcessingOrder> testOrders = createTestOrders();
+//		ProcessingOrder orderToModify = testOrders.get(0);
 		
 		// Update a orbit attribute
 		orderToModify.setIdentifier("Mod_XYZG");
@@ -361,10 +525,10 @@ public class OrderControllerTest {
 		
 		
 		// Clean up database
-		deleteTestOrders(testOrders);
+//		deleteTestOrders(testOrders);
 
 		logger.info("Test OK: Modify orbit");
 	}
 
-
+*/
 }
