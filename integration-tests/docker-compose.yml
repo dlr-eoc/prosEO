@@ -39,17 +39,23 @@ services:
       - "8085:8080"
     depends_on:
       - proseo-db
+  proseo-pgadmin:
+    image: ${REGISTRY_URL}/dpage/pgadmin4:2019-11-12-2-integration-rc1-${PROSEO_REVISION}
+    ports:
+      - "8086:80"
+    depends_on:
+      - proseo-db
   # TODO: MYSQL->POSTGRES
   # proseo-ui-gui:
     # image: ${REGISTRY_URL}/proseo-ui-gui:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
     # ports:
-      # - "8086:8080"
+      # - "8087:8080"
     # depends_on:
       # - proseo-db
   # proseo-ui-cli:
     # image: ${REGISTRY_URL}/proseo-ui-cli:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
     # ports:
-      # - "8087:8080"
+      # - "8088:8080"
     # depends_on:
       # - proseo-db
 volumes:
