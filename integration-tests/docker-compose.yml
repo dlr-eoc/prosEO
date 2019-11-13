@@ -39,6 +39,26 @@ services:
       - "8085:8080"
     depends_on:
       - proseo-db
+  proseo-gui:
+    image: ${REGISTRY_URL}/proseo-ui-gui:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
+    ports:
+      - "8087:8080"
+    depends_on:
+      - proseo-ingestor
+      - proseo-prodplanner
+      - proseo-ordermgr
+      - proseo-procmgr
+      - proseo-prodclmgr
+  proseo-cli:
+    image: ${REGISTRY_URL}/proseo-ui-cli:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
+    ports:
+      - "8088:8080"
+    depends_on:
+      - proseo-ingestor
+      - proseo-prodplanner
+      - proseo-ordermgr
+      - proseo-procmgr
+      - proseo-prodclmgr
   # TODO: MYSQL->POSTGRES
   # proseo-ui-gui:
     # image: ${REGISTRY_URL}/proseo-ui-gui:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}

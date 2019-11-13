@@ -3,5 +3,5 @@
     <applicationId>VYrwNF</applicationId>
     <id>NUAqCO</id>
     <name>Store Product</name>
-    <uri>/storage-mgr/store</uri>
+    <uri>/storage-mgr/storage/products/register</uri>
 </restResource>

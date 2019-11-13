@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.RejectedExecutionException;
 
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
@@ -183,14 +182,15 @@ public class ProductIngestor {
 		
 		// Build post data for storage manager
 		Map<String, Object> postData = new HashMap<>();
-		postData.put("mountDirPath", ingestorProduct.getMountPoint());
 		postData.put("productId", String.valueOf(newProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
 		filePaths.add(ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
 			filePaths.add(ingestorProduct.getFilePath() + File.separator + auxFile);
 		}
-		postData.put("exactFilePaths", filePaths);
+		postData.put("sourceFilePaths", filePaths);
+		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
+		postData.put("targetStorageType", ingestorConfig.getDefaultStorageType());
 		
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
@@ -327,6 +327,21 @@ public class ProductIngestor {
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
 		
 		product.get().getProductFile().add(modelProductFile);  // Autosave with commit
+		
+		// Check whether there are open product queries for this product type TODO
+//		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+//				.findUnsatisfiedByProductClass(newModelProduct.getProductClass().getId());
+//		if (!productQueries.isEmpty()) {
+//			// If so, inform the production planner of the new product
+//			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, newProduct.getId());
+//			restTemplate = rtb.basicAuthentication(
+//					ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
+//			ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
+//			if (!HttpStatus.OK.equals(response.getStatusCode())) {
+//				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
+//						newProduct.getId(), newProduct.getProductClass(), response.getStatusCode().toString()));
+//			}
+//		}
 		
 		// Return the updated REST product file
 		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());

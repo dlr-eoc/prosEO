@@ -48,6 +48,7 @@ import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
+import de.dlr.proseo.ingestor.rest.model.SourceStorageType;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -300,6 +301,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
 		ingestorProduct.setGenerationTime(TEST_GEN_TIME_TEXT);
 		File productFile = new File(TEST_PRODUCT_PATH_2);
+		ingestorProduct.setSourceStorageType(SourceStorageType.S_3);
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());
@@ -311,7 +313,7 @@ public class IngestorControllerTest {
 		ingestorProducts.add(ingestorProduct);
 		
 		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
-		String testUrl = config.getStorageManagerUrl() + "/store?productId=4711";
+		String testUrl = config.getStorageManagerUrl() + "/storage/products/register";
 		Map<String, String> mockRequest = new HashMap<>();
 		mockRequest.put("productId", "4711");
 		

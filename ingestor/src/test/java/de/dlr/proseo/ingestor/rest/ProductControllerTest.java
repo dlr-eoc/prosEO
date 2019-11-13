@@ -37,6 +37,8 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
@@ -309,22 +311,24 @@ public class ProductControllerTest {
 		
 		boolean[] productFound = new boolean[testProducts.size()];
 		Arrays.fill(productFound, false);
-		for (Map<String, Object> product: body) {
+		ObjectMapper mapper = new ObjectMapper();
+		for (Map<String, Object> jsonProduct: body) {
+			// Convert from Json/Map to Product
+			RestProduct product = mapper.convertValue(jsonProduct, RestProduct.class);
 			// Check, if any of the test products was returned
-			long productId = (Integer) product.get("id");
-			logger.info("... found product with ID {}", productId);
+			logger.info("... found product with ID {}", product.getId());
 			for (int i = 0; i < testProducts.size(); ++i) {
 				Product testProduct = testProducts.get(i);
-				if (productId == testProduct.getId()) {
+				if (product.getId().longValue() == testProduct.getId()) {
 					productFound[i] = true;
-					assertEquals("Wrong product class for test product " + i, testProduct.getProductClass().getProductType(), product.get("productClass"));
-					assertEquals("Wrong mode for test product " + i, testProduct.getMode(), product.get("mode"));
+					assertEquals("Wrong product class for test product " + i, testProduct.getProductClass().getProductType(), product.getProductClass());
+					assertEquals("Wrong mode for test product " + i, testProduct.getMode(), product.getMode());
 					assertEquals("Wrong start time for test product " + i,
-							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStartTime"))));
+							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStartTime())));
 					assertEquals("Wrong stop time for test product " + i,
-							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStopTime"))));
+							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStopTime())));
 					assertEquals("Wrong generation time for test product " + i,
-							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("generationTime"))));
+							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getGenerationTime())));
 				}
 			}
 		}

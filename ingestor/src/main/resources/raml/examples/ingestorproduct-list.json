@@ -24,6 +24,7 @@
                 "parameterValue": "14"
             }
         ],
+        "sourceStorageType": "POSIX",
         "mountPoint": "file:///data/proseo-pickup/incoming",
         "filePath": "L0/S5P_OPER_L0__08138_01",
         "productFileName": "S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW",
@@ -65,6 +66,7 @@
                 "parameterValue": "14"
             }
         ],
+        "sourceStorageType": "S3",
         "mountPoint": "s3://proseo-pickup/incoming",
         "filePath": "L2/O3-614941691",
         "productFileName": "S5P_RPRO_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc"
