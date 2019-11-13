@@ -14,8 +14,8 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,7 +32,6 @@ import de.dlr.proseo.storagemgr.rest.model.RestStorage;
 import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
-
 import software.amazon.awssdk.services.s3.S3Client;
 
 

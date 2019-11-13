@@ -28,6 +28,7 @@ proseo:
         url: https://proseo-k8s-gate.de/api/v1/services/storage-mgr
         user: none
         password: none
+        defaultStorageType: S3
     user:
         name: test
         password: test

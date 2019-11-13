@@ -311,9 +311,10 @@ public class ProductIngestor {
 		if (product.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
 		}
+		Product modelProduct = product.get();
 		
 		// Error, if a database product file for the given facility exists already
-		for (ProductFile modelProductFile: product.get().getProductFile()) {
+		for (ProductFile modelProductFile: modelProduct.getProductFile()) {
 			if (facility.equals(modelProductFile.getProcessingFacility())) {
 				throw new IllegalArgumentException(logError(MSG_PRODUCT_FILE_EXISTS, MSG_ID_PRODUCT_FILE_EXISTS, facility));
 			}
@@ -326,22 +327,22 @@ public class ProductIngestor {
 		modelProductFile.setProduct(product.get());
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
 		
-		product.get().getProductFile().add(modelProductFile);  // Autosave with commit
+		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 		
-		// Check whether there are open product queries for this product type TODO
-//		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-//				.findUnsatisfiedByProductClass(newModelProduct.getProductClass().getId());
-//		if (!productQueries.isEmpty()) {
-//			// If so, inform the production planner of the new product
-//			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, newProduct.getId());
-//			restTemplate = rtb.basicAuthentication(
-//					ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
-//			ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
-//			if (!HttpStatus.OK.equals(response.getStatusCode())) {
-//				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
-//						newProduct.getId(), newProduct.getProductClass(), response.getStatusCode().toString()));
-//			}
-//		}
+		// Check whether there are open product queries for this product type
+		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+				.findUnsatisfiedByProductClass(modelProduct.getProductClass().getId());
+		if (!productQueries.isEmpty()) {
+			// If so, inform the production planner of the new product
+			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, modelProduct.getId());
+			RestTemplate restTemplate = rtb.basicAuthentication(
+					ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
+			ResponseEntity<?> response = restTemplate.getForObject(productionPlannerUrl, null, ResponseEntity.class);
+			if (!HttpStatus.OK.equals(response.getStatusCode())) {
+				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
+						modelProduct.getId(), modelProduct.getProductClass().getProductType(), response.getStatusCode().toString()));
+			}
+		}
 		
 		// Return the updated REST product file
 		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());

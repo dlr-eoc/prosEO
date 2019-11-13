@@ -18,8 +18,8 @@ proseo:
     orderManager:
         url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     processorManager:
-        url: http://proseo-proc-mgr:8080/proseo/processor-mgr/v0.1
+        url: http://proseo-processor-mgr:8080/proseo/processor-mgr/v0.1
     productClassManager:
-        url: http://proseo-prdclass-mgr:8080/proseo/productclass-mgr/v0.1
+        url: http://proseo-productclass-mgr:8080/proseo/productclass-mgr/v0.1
     cli:
         syntaxfile: ui-cli-syntax.yml

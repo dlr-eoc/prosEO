@@ -41,7 +41,6 @@ import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.SelectionRule;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
@@ -82,6 +81,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = 2121;
+	private static final int MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED = 2122;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
