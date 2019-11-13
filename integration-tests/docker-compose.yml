@@ -54,3 +54,9 @@ services:
       # - proseo-db
 volumes:
   pgdata:
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.177.57.0/24
