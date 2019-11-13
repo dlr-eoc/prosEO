@@ -48,6 +48,7 @@ include /opt/integration-tests/prosEO/integration-tests/controlCmp.conf;
 export PGADMIN_EMAIL=some.custom@email.address
 export PGADMIN_PASSWORD=some-pw
 ```
+- stop running compose stack using `stop_local_control_stack.sh`
 - from /opt/integration-tests/prosEO/integration-tests run the script `run_local_control_stack.sh`
 - run systemctl restart nginx
 
