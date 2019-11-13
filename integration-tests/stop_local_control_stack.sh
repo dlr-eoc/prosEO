@@ -26,4 +26,4 @@ fi
 export REGISTRY_URL=$1
 export PROSEO_REVISION=$PROSEO_REVISION
 
-docker-compose up -d
+docker-compose down
