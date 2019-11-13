@@ -16,12 +16,12 @@ prosEO test integration
 
 ## push all images
 ```sh
-./push_integration_images.sh <registry-url> <proseo-revison>
+./push_integration_images.sh <registry-url>
 ```
 
 ## start a local docker-compose stack
 ```sh
-./run_local_control_stack.sh <registry-url> <proseo-revison>
+./run_local_control_stack.sh <registry-url>
 ```
 
 ## Deploy compose-stack to a real webserver
@@ -33,6 +33,8 @@ the docker-compose config could be deployed to a public ssl-enabled webserver. T
   - order-mgr
   - processor-mgr
   - productclass-mgr
+  - ui-gui
+  - ui-cli
   - pgadmin
 - ssh to your public webserver (note: a valid domain & a valid ssl-cert are recommended)
 - clone the prosEO-repository e.g. to /opt/integration-tests/prosEO

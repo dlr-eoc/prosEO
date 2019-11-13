@@ -5,7 +5,7 @@ spring:
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
-        password: sequel09Master
+        password: ********
     packagesToScan: de.dlr.proseo.model
 logging:
     level:
@@ -25,7 +25,7 @@ proseo:
         user: none
         password: none
     storageManager:
-        url: https://proseo-k8s-gate.de/api/v1/services/storage-mgr
+        url: https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1
         user: none
         password: none
         defaultStorageType: S3

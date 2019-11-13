@@ -23,7 +23,7 @@ fi
 
 cd proseo-components
 
-for component in *; do
+for component in proseo-*; do
  cd $component
  TAGGED_IMAGENAME=$(cat Dockerfile | grep FROM | awk '{gsub("localhost:5000/",""); split($0,a," "); print a[2]}')-$TAG_SUFFIX-$PROSEO_REVISION
  echo $1/$TAGGED_IMAGENAME
