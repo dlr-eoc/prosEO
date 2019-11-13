@@ -41,6 +41,9 @@ services:
       - proseo-db
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:2019-11-12-2-integration-rc1-${PROSEO_REVISION}
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
     ports:
       - "8086:80"
     depends_on:
