@@ -166,6 +166,8 @@ public class ProcessingOrderMgr {
 
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 		
+		
+		
 		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 
 		return OrderUtil.toRestOrder(modelOrder);
@@ -313,6 +315,8 @@ public class ProcessingOrderMgr {
 			RestOrder restOrder = OrderUtil.toRestOrder(orderFound);
 			result.add(restOrder);
 		}
+		
+		
 		
 		
 		
