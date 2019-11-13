@@ -2,24 +2,24 @@ proseo:
     global:
       storageIdPrefix: proseo
     procFacility:
-      name: devel
-      url: http://localhost:9887/k8s-api-endpoint
-      descr: local env :-)
+      name: otc-proseo01
+      url: https://proseo-k8s-gate.de
+      descr: OTC-test-integration
     s3:
-      s3AccessKey: short_access_key
-      s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://minio:9000
+      s3AccessKey: XXXX
+      s3SecretAccessKey: XXXX
+      s3EndPoint: https://obs.eu-de.otc.t-systems.com 
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
     alluxio:
-      alluxioUnderFsS3Bucket: internal
+      alluxioUnderFsS3Bucket: otc-proseo01-internal
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
-      alluxioUnderFsS3BucketEndPoint: http://minio:9000
+      alluxioUnderFsS3BucketEndPoint: https://obs.eu-de.otc.t-systems.com
       alluxioUnderFsMaxPrefixes: 500
     joborder:
-      bucket: internal
+      bucket: otc-proseo01-internal
       prefix: joborders
     mountpoints:
      #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
@@ -30,6 +30,6 @@ proseo:
       #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
       unregisteredProducts:
         k8sNode:
-          unregisteredProducts: ""
+          unregisteredProducts: /mnt/some-dir
           
         

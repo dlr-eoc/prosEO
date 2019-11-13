@@ -1,0 +1,182 @@
+diff --git a/contrib/terraform/openstack/kubespray.tf b/contrib/terraform/openstack/kubespray.tf
+index b26961d6..753083e3 100644
+--- a/contrib/terraform/openstack/kubespray.tf
++++ b/contrib/terraform/openstack/kubespray.tf
+@@ -45,6 +45,8 @@ module "compute" {
+   etcd_root_volume_size_in_gb                  = "${var.etcd_root_volume_size_in_gb}"
+   master_root_volume_size_in_gb                = "${var.master_root_volume_size_in_gb}"
+   node_root_volume_size_in_gb                  = "${var.node_root_volume_size_in_gb}"
++  node_data_volume_size_in_gb                  = "${var.node_data_volume_size_in_gb}"
++  node_docker_volume_size_in_gb                = "${var.node_docker_volume_size_in_gb}"
+   gfs_root_volume_size_in_gb                   = "${var.gfs_root_volume_size_in_gb}"
+   gfs_volume_size_in_gb                        = "${var.gfs_volume_size_in_gb}"
+   public_key_path                              = "${var.public_key_path}"
+diff --git a/contrib/terraform/openstack/modules/compute/main.tf b/contrib/terraform/openstack/modules/compute/main.tf
+index c181ccfe..94f957b8 100644
+--- a/contrib/terraform/openstack/modules/compute/main.tf
++++ b/contrib/terraform/openstack/modules/compute/main.tf
+@@ -365,6 +365,15 @@ resource "openstack_compute_instance_v2" "k8s_master_no_floating_ip" {
+   }
+ }
+ 
++resource "openstack_blockstorage_volume_v2" "master_root_volumes" {
++  image_id    = "${data.openstack_images_image_v2.vm_image.id}"
++  availability_zone = "${element(var.az_list, count.index)}"
++  name        = "${var.cluster_name}-k8s-master-nf-${count.index+1}-root"
++  count       = "${var.number_of_k8s_masters_no_floating_ip}"
++  size        = "${var.master_root_volume_size_in_gb}"
++  volume_type = "SSD"
++}
++
+ resource "openstack_compute_instance_v2" "k8s_master_no_floating_ip_custom_volume_size" {
+   name              = "${var.cluster_name}-k8s-master-nf-${count.index+1}"
+   count             = "${var.master_root_volume_size_in_gb > 0 ? var.number_of_k8s_masters_no_floating_ip : 0}"
+@@ -374,9 +383,8 @@ resource "openstack_compute_instance_v2" "k8s_master_no_floating_ip_custom_volum
+   key_pair          = "${openstack_compute_keypair_v2.k8s.name}"
+ 
+   block_device {
+-    uuid                  = "${data.openstack_images_image_v2.vm_image.id}"
+-    source_type           = "image"
+-    volume_size           = "${var.master_root_volume_size_in_gb}"
++    uuid                  = "${element(openstack_blockstorage_volume_v2.master_root_volumes.*.id, count.index)}"
++    source_type           = "volume"
+     boot_index            = 0
+     destination_type      = "volume"
+     delete_on_termination = true
+@@ -544,6 +552,31 @@ resource "openstack_compute_instance_v2" "k8s_node_no_floating_ip" {
+   }
+ }
+ 
++resource "openstack_blockstorage_volume_v2" "node_root_volumes" {
++  image_id    = "${data.openstack_images_image_v2.vm_image.id}"
++  availability_zone = "${element(var.az_list, count.index)}"
++  name        = "${var.cluster_name}-k8s-node-nf-${count.index+1}-root"
++  count       = "${var.number_of_k8s_nodes_no_floating_ip}"
++  size        = "${var.node_root_volume_size_in_gb}"
++  volume_type = "SSD"
++}
++
++resource "openstack_blockstorage_volume_v2" "node_data_volumes" {
++  name        = "${var.cluster_name}-k8s-node-nf-${count.index+1}-data"
++  availability_zone = "${element(var.az_list, count.index)}"
++  count       = "${var.number_of_k8s_nodes_no_floating_ip}"
++  size        = "${var.node_data_volume_size_in_gb}"
++  volume_type = "SSD"
++}
++
++resource "openstack_blockstorage_volume_v2" "node_docker_volumes" {
++  name        = "${var.cluster_name}-k8s-node-nf-${count.index+1}-docker"
++  availability_zone = "${element(var.az_list, count.index)}"
++  count       = "${var.number_of_k8s_nodes_no_floating_ip}"
++  size        = "${var.node_docker_volume_size_in_gb}"
++  volume_type = "SSD"
++}
++
+ resource "openstack_compute_instance_v2" "k8s_node_no_floating_ip_custom_volume_size" {
+   name              = "${var.cluster_name}-k8s-node-nf-${count.index+1}"
+   count             = "${var.node_root_volume_size_in_gb > 0 ? var.number_of_k8s_nodes_no_floating_ip : 0}"
+@@ -551,13 +584,48 @@ resource "openstack_compute_instance_v2" "k8s_node_no_floating_ip_custom_volume_
+   image_name        = "${var.image}"
+   flavor_id         = "${var.flavor_k8s_node}"
+   key_pair          = "${openstack_compute_keypair_v2.k8s.name}"
++  user_data         = <<-EOF
++                        #cloud-config
++                        runcmd:
++                          - mkdir -p /mnt/cache
++                          - mkdir -p /var/lib/docker
++                          - parted /dev/vdb mklabel gpt
++                          - parted /dev/vdc mklabel gpt
++                          - parted -a opt /dev/vdb mkpart primary ext4 0% 100%
++                          - parted -a opt /dev/vdc mkpart primary ext4 0% 100%
++                          - mkfs.ext4 -L datapartition /dev/vdb1
++                          - mkfs.ext4 -L dockerpartition /dev/vdc1
++                          - mount /dev/vdb1 /mnt/cache
++                          - mount /dev/vdc1 /var/lib/docker
++                        mounts:
++                          - [ '/dev/vdb1', '/mnt/cache', 'ext4', 'defaults,nofail', '0', '2' ]
++                          - [ '/dev/vdc1', '/var/lib/docker', 'ext4', 'defaults,nofail', '0', '2' ]
++                        EOF 
+ 
+   block_device {
+-    uuid                  = "${data.openstack_images_image_v2.vm_image.id}"
+-    source_type           = "image"
+-    volume_size           = "${var.node_root_volume_size_in_gb}"
++    uuid                  = "${element(openstack_blockstorage_volume_v2.node_root_volumes.*.id, count.index)}"
++    source_type           = "volume"
+     boot_index            = 0
+     destination_type      = "volume"
++    volume_size           = "${var.node_root_volume_size_in_gb}"
++    delete_on_termination = true
++  }
++
++  block_device {
++    uuid                  = "${element(openstack_blockstorage_volume_v2.node_data_volumes.*.id, count.index)}"
++    source_type           = "volume"
++    boot_index            = 1
++    destination_type      = "volume"
++    volume_size           = "${var.node_data_volume_size_in_gb}"
++    delete_on_termination = true
++  }
++
++  block_device {
++    uuid                  = "${element(openstack_blockstorage_volume_v2.node_docker_volumes.*.id, count.index)}"
++    source_type           = "volume"
++    boot_index            = 2
++    destination_type      = "volume"
++    volume_size           = "${var.node_docker_volume_size_in_gb}"
+     delete_on_termination = true
+   }
+ 
+diff --git a/contrib/terraform/openstack/modules/compute/variables.tf b/contrib/terraform/openstack/modules/compute/variables.tf
+index 4a9680e6..803f8be2 100644
+--- a/contrib/terraform/openstack/modules/compute/variables.tf
++++ b/contrib/terraform/openstack/modules/compute/variables.tf
+@@ -30,6 +30,10 @@ variable "master_root_volume_size_in_gb" {}
+ 
+ variable "node_root_volume_size_in_gb" {}
+ 
++variable "node_data_volume_size_in_gb" {}
++
++variable "node_docker_volume_size_in_gb" {}
++
+ variable "gfs_root_volume_size_in_gb" {}
+ 
+ variable "gfs_volume_size_in_gb" {}
+diff --git a/contrib/terraform/openstack/variables.tf b/contrib/terraform/openstack/variables.tf
+index 218c82ad..215b1e80 100644
+--- a/contrib/terraform/openstack/variables.tf
++++ b/contrib/terraform/openstack/variables.tf
+@@ -60,6 +60,14 @@ variable "node_root_volume_size_in_gb" {
+   default = 0
+ }
+ 
++variable "node_data_volume_size_in_gb" {
++  default = 0
++}
++
++variable "node_docker_volume_size_in_gb" {
++  default = 0
++}
++
+ variable "gfs_root_volume_size_in_gb" {
+   default = 0
+ }
+diff --git a/roles/download/defaults/main.yml b/roles/download/defaults/main.yml
+index b80b9452..ec4d5f50 100644
+--- a/roles/download/defaults/main.yml
++++ b/roles/download/defaults/main.yml
+@@ -91,10 +91,10 @@ crictl_version: "v1.16.1"
+ # Download URLs
+ kubeadm_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubeadm_version }}/bin/linux/{{ image_arch }}/kubeadm"
+ hyperkube_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kube_version }}/bin/linux/{{ image_arch }}/hyperkube"
+-etcd_download_url: "https://github.com/coreos/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
+-cni_download_url: "https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
+-calicoctl_download_url: "https://github.com/projectcalico/calicoctl/releases/download/{{ calico_ctl_version }}/calicoctl-linux-{{ image_arch }}"
+-crictl_download_url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
++etcd_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/etcd-v3.3.10-linux-amd64.tar.gz"
++cni_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/cni-plugins-linux-amd64-v0.8.1.tgz"
++calicoctl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/calicoctl-linux-amd64"
++crictl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/critest-v1.16.1-linux-amd64.tar.gz"
+ 
+ crictl_checksums:
+   arm:
