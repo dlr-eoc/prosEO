@@ -4,29 +4,37 @@ import java.util.Map;
 
 import javax.ws.rs.QueryParam;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import com.amazonaws.http.HttpMethodName;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 @Controller
 public class ProcessorGUIController {
+	
+	/** The GUI configuration */
+	@Autowired
+	private GUIConfiguration config;
 
-	@RequestMapping(value = "/proccesor-class-show/get")
-	@ResponseBody
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(ProcessorGUIController.class);
+	
+	@RequestMapping(value = "/processor-class-show/get")
 	public String getProcessorClassName(@QueryParam("mission") String mission, @QueryParam("processorclassname") String processorclassname, Model model) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassName({}, {}, {})", mission, processorclassname, model.toString());
+
 		RestTemplate restTemplate = new RestTemplate();
-		String uri = "processorclasses?" + "mission=" + mission + "?" + "processorname=" + processorclassname;
+		String uri = config.getProcessorManager() + "/processorclasses?mission=" + mission + "&processorname=" + processorclassname;
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> response = restTemplate.getForEntity(uri, Map.class);
 		
@@ -34,8 +42,11 @@ public class ProcessorGUIController {
 		ObjectMapper mapper = new ObjectMapper();
 		RestProcessorClass restProcessorClass = mapper.convertValue(response.getBody(), RestProcessorClass.class);
 		
+		if (logger.isDebugEnabled()) logger.debug("Received response: {}", response.getBody());
+		
 		model.addAttribute("id", restProcessorClass.getId());
 		model.addAttribute("mission", restProcessorClass.getMissionCode());
+		model.addAttribute("processorclassname", restProcessorClass.getProcessorName());
 		//....
 		
 		return "processor-class-show";
