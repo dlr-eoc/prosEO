@@ -7,6 +7,10 @@ package de.dlr.proseo.ingestor.rest.model;
 
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +25,44 @@ import de.dlr.proseo.model.ProductFile;
  */
 public class ProductUtil {
 
+	/* Message ID constants */
+	private static final int MSG_ID_PRODUCT_UUID_INVALID = 2021;
+	private static final int MSG_ID_INVALID_PARAMETER_VALUE = 2049;
+	private static final int MSG_ID_INVALID_PARAMETER_TYPE = 2048;
+	private static final int MSG_ID_INVALID_PRODUCT_GENERATION_TIME = 2047;
+	private static final int MSG_ID_INVALID_SENSING_STOP_TIME = 2046;
+	private static final int MSG_ID_INVALID_SENSING_START_TIME = 2045;
+
+	/* Message string constants */
+	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
+	private static final String MSG_INVALID_PARAMETER_VALUE = "Invalid parameter value '%s' for type '%s'";
+	private static final String MSG_INVALID_PARAMETER_TYPE = "Invalid parameter type '%s'";
+	private static final String MSG_INVALID_PRODUCT_GENERATION_TIME = "Invalid product generation time '%s'";
+	private static final String MSG_INVALID_SENSING_STOP_TIME = "Invalid sensing stop time '%s'";
+	private static final String MSG_INVALID_SENSING_START_TIME = "Invalid sensing start time '%s'";
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
+	
+	/**
+	 * Create and log a formatted error message
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return a formatted error message
+	 */
+	private static String logError(String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+		
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		logger.error(message);
+		
+		return message;
+	}
 	
 	/**
 	 * Convert a prosEO model product into a REST product
@@ -40,6 +80,9 @@ public class ProductUtil {
 		
 		restProduct.setId(modelProduct.getId());
 		restProduct.setVersion(Long.valueOf(modelProduct.getVersion()));
+		if (null != modelProduct.getUuid()) {
+			restProduct.setUuid(modelProduct.getUuid().toString());
+		}
 		if (null != modelProduct.getProductClass()) {
 			if (null != modelProduct.getProductClass().getMission()) {
 				restProduct.setMissionCode(modelProduct.getProductClass().getMission().getCode());
@@ -116,30 +159,42 @@ public class ProductUtil {
 				modelProduct.incrementVersion();
 			} 
 		}
+		if (null != restProduct.getUuid()) {
+			try {
+				modelProduct.setUuid(UUID.fromString(restProduct.getUuid()));
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(
+						logError(MSG_PRODUCT_UUID_INVALID, MSG_ID_PRODUCT_UUID_INVALID, restProduct.getUuid()));
+			} 
+		}
 		modelProduct.setFileClass(restProduct.getFileClass());
 		modelProduct.setMode(restProduct.getMode());
 		try {
 			modelProduct.setSensingStartTime(
 					Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStartTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restProduct.getSensingStartTime()));
+			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_START_TIME, MSG_ID_INVALID_SENSING_START_TIME,
+					restProduct.getSensingStartTime()));
 		}
 		try {
 			modelProduct.setSensingStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStopTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restProduct.getSensingStartTime()));
+			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_STOP_TIME, MSG_ID_INVALID_SENSING_STOP_TIME,
+					restProduct.getSensingStartTime()));
 		}
 		try {
 			modelProduct.setGenerationTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getGenerationTime())));
 		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid product generation time '%s'", restProduct.getGenerationTime()));
+			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
+					restProduct.getGenerationTime()));
 		}
 		for (RestParameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
 				modelParameter.setParameterType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));
 			} catch (Exception e) {
-				throw new IllegalArgumentException(String.format("Invalid parameter type '%s'", restParameter.getParameterType()));
+				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_TYPE, MSG_ID_INVALID_PARAMETER_TYPE,
+						restParameter.getParameterType()));
 			}
 			try {
 				switch (modelParameter.getParameterType()) {
@@ -149,7 +204,7 @@ public class ProductUtil {
 				case DOUBLE:	modelParameter.setDoubleValue(Double.parseDouble(restParameter.getParameterValue())); break;
 				}
 			} catch (Exception e) {
-				throw new IllegalArgumentException(String.format("Invalid parameter value '%s' for type '%s'",
+				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_VALUE, MSG_ID_INVALID_PARAMETER_VALUE,
 						restParameter.getParameterValue(), restParameter.getParameterType()));
 			}
 			modelProduct.getParameters().put(restParameter.getKey(), modelParameter);

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.Session;
@@ -25,13 +26,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.web.client.RestTemplate;
-
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
+import org.springframework.web.client.RestTemplate;
+
 import de.dlr.proseo.ordermgr.rest.model.RestMission;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 
@@ -106,8 +107,8 @@ public class MissionControllerTest {
 		
 		//adding Spacecraft parameters
 		testSpacecraft.setMission(testMission);
-		testSpacecraft.setCode(testData[6]);
-		testSpacecraft.setName(testData[7]);
+		testSpacecraft.setCode(testData[7]);
+		testSpacecraft.setName(testData[8]);
 		testSpacecraft = RepositoryService.getSpacecraftRepository().save(testSpacecraft);
 
 		testMission.getSpacecrafts().add(testSpacecraft);
@@ -309,10 +310,19 @@ public class MissionControllerTest {
 		// Make sure test missions exist
 		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
 		de.dlr.proseo.model.Mission missionToModify = testMissions.get(0);
-		
-		// Update a mission attribute
+	
+		// Update a mission attribute and a spacecraft attribute
 		missionToModify.setCode("MOD Code");
+	
+		for (Spacecraft spacecraft : missionToModify.getSpacecrafts()) {
+			if (spacecraft.getCode().equals(testMissionData[0][7])) {
+				missionToModify.getSpacecrafts().remove(spacecraft);
+				spacecraft.setCode("MOD_SP_CODE");
+				missionToModify.getSpacecrafts().add(spacecraft);
 
+			}
+		}
+		
 		RestMission restMission = MissionUtil.toRestMission(missionToModify);
 		logger.info("RestMission modified Code: "+restMission.getCode());
 		

@@ -43,6 +43,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 @Entity
 @Table(indexes = { 
+		@Index(unique = true, columnList = "uuid"),
 		@Index(unique = false, columnList = "product_class_id, sensing_start_time"), 
 		@Index(unique = false, columnList = "product_class_id, sensing_stop_time"), 
 		@Index(unique = false, columnList = "product_class_id, generation_time") })

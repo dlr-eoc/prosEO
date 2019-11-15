@@ -34,12 +34,15 @@ types:
     type: RestProduct
     description: Variant of the RestProduct type with a reference to the data file location
     properties:
+      sourceStorageType:
+        enum: [S3, ALLUXIO, POSIX]
+        description: The type of the storage to ingest the data from
       mountPoint:
         type: string
-        description: The POSIX mount point of the storage system to ingest from
+        description: The S3/POSIX/ALLUXIO mount point of the storage system to ingest from
       filePath:
         type: string
-        description: The POSIX path to the product files
+        description: The S3/POSIX/ALLUXIO path to the product files (relative to mountPoint)
       productFileName:
         type: string
         description: File name of the main product file
@@ -159,6 +162,20 @@ resourceTypes:
       description: Delete a product by ID
       responses:
         204:
+  /uuid/{uuid}:
+    uriParameters:
+      uuid:
+        type: string
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
+    get:
+      description: Get a product by UUID
+      displayName: getProductByUuid
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProduct
+              example: !include ../../../../../model/src/main/resources/raml/examples/product.json
         
 /ingest:
   type: standard
@@ -198,6 +215,7 @@ resourceTypes:
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       post:
         description: Create the metadata of a new product file for a product at a given processing facility
+                     (it is assumed that the files themselves are already pushed to the Storage Manager)
         displayName: ingestProductFile
         body:
           application/json:

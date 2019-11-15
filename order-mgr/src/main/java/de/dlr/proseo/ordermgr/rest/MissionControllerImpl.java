@@ -6,6 +6,7 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,10 +19,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.ordermgr.rest.model.RestMission;
+import de.dlr.proseo.ordermgr.rest.model.RestSpacecraft;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 
 /**
@@ -109,9 +112,26 @@ public class MissionControllerImpl implements MissionController {
 		
 		modelMission = RepositoryService.getMissionRepository().save(modelMission);
 		
+		//Code to add spacecraft details
+		modelMission.getSpacecrafts().clear();
+		for (RestSpacecraft restSpacecraft : mission.getSpacecrafts()) {
+			Spacecraft modelSpacecraft = new Spacecraft();
+			if (null != RepositoryService.getSpacecraftRepository().findByCode(restSpacecraft.getCode())) {
+				modelSpacecraft = RepositoryService.getSpacecraftRepository().findByCode(restSpacecraft.getCode());
+			}
+			else {
+				modelSpacecraft.setCode(restSpacecraft.getCode());
+				modelSpacecraft.setName(restSpacecraft.getName());
+				modelSpacecraft.setMission(modelMission);
+				modelSpacecraft = RepositoryService.getSpacecraftRepository().save(modelSpacecraft);				
+			}
+					
+			modelMission.getSpacecrafts().add(modelSpacecraft);					
+		}		
+		modelMission = RepositoryService.getMissionRepository().save(modelMission);
+
 		return new ResponseEntity<>(MissionUtil.toRestMission(modelMission), HttpStatus.CREATED);
 	
-		
 	}
 
 	/**
@@ -163,6 +183,7 @@ public class MissionControllerImpl implements MissionController {
 		
 		// Update modified attributes
 		boolean missionChanged = false;
+		boolean spacecraftChanged = false;
 		Mission changedMission = MissionUtil.toModelMission(mission);
 		
 		if (!modelMission.getCode().equals(changedMission.getCode())) {
@@ -174,6 +195,20 @@ public class MissionControllerImpl implements MissionController {
 			missionChanged = true;
 			modelMission.setName(changedMission.getName());
 		}
+		
+		if (!modelMission.getSpacecrafts().equals (changedMission.getSpacecrafts())) {
+			missionChanged = true;
+			spacecraftChanged = true;
+			modelMission.setSpacecrafts(changedMission.getSpacecrafts());
+		}
+
+		if(spacecraftChanged) {
+			for(Spacecraft modSpacecraft : changedMission.getSpacecrafts()) {			
+				modSpacecraft = RepositoryService.getSpacecraftRepository().save(modSpacecraft);
+			}	
+		}
+		
+	
 		// Save mission only if anything was actually changed
 		if (missionChanged)	{
 			modelMission.incrementVersion();

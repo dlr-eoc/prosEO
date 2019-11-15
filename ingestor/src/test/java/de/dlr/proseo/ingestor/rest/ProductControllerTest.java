@@ -31,12 +31,19 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
+import de.dlr.proseo.ingestor.rest.model.RestParameter;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
@@ -48,6 +55,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Test class for the REST API of ProductControllerImpl
+ * 
+ * This class uses programmatic transaction management
  * 
  * @author Dr. Thomas Bassler
  */
@@ -81,9 +90,9 @@ public class ProductControllerTest {
 	@Autowired
 	IngestorTestConfiguration config;
 	
-	/** The security environment for this test */
+	/** Transaction manager for transaction control */
 	@Autowired
-	IngestorSecurityConfig ingestorSecurityConfig;
+	private PlatformTransactionManager txManager;
 	
 	/** REST template builder */
 	@Autowired
@@ -191,8 +200,16 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testDeleteProductById() {
-		// Make sure test products exist
-		Product productToDelete = createProduct(testProductData[0]);
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		Product productToDelete = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Product doInTransaction(TransactionStatus status) {
+				// Make sure test products exist
+				return createProduct(testProductData[0]);
+			}
+		});
 		
 		// Delete the first test product
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products/" + productToDelete.getId();
@@ -216,52 +233,61 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testGetProducts() {
-		// Make sure missions and product classes exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		List<Product> testProducts = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public List<Product> doInTransaction(TransactionStatus status) {
+				// Make sure missions and product classes exist
+				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(TEST_CODE);
+					mission.getProcessingModes().add(TEST_MODE);
+					mission.getFileClasses().add(TEST_FILE_CLASS);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == prodClass) {
+					prodClass = new ProductClass();
+					prodClass.setMission(mission);
+					prodClass.setProductType(TEST_PRODUCT_TYPE);
+					prodClass.setMissionType(TEST_MISSION_TYPE);
+					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+					//mission.getProductClasses().add(prodClass);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+				
+				Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_ALT_CODE);
+				if (null == altMission) {
+					altMission = new Mission();
+					altMission.setCode(TEST_ALT_CODE);
+					altMission.getFileClasses().add(TEST_FILE_CLASS);
+					altMission = RepositoryService.getMissionRepository().save(altMission);
+				}
+				logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
+				
+				ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE);
+				if (null == altProdClass) {
+					altProdClass = new ProductClass();
+					altProdClass.setMission(altMission);
+					altProdClass.setProductType(TEST_ALT_PRODUCT_TYPE);
+					altProdClass.setMissionType(TEST_ALT_MISSION_TYPE);
+					altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
+					//altMission.getProductClasses().add(altProdClass);
+					//altMission = RepositoryService.getMissionRepository().save(altMission);
+				}
+				logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
+				
+				// Make sure test products exist
+				return createTestProducts();
+			}
+		});
 		
-		Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_ALT_CODE);
-		if (null == altMission) {
-			altMission = new Mission();
-			altMission.setCode(TEST_ALT_CODE);
-			altMission.getFileClasses().add(TEST_FILE_CLASS);
-			altMission = RepositoryService.getMissionRepository().save(altMission);
-		}
-		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
-		
-		ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE);
-		if (null == altProdClass) {
-			altProdClass = new ProductClass();
-			altProdClass.setMission(altMission);
-			altProdClass.setProductType(TEST_ALT_PRODUCT_TYPE);
-			altProdClass.setMissionType(TEST_ALT_MISSION_TYPE);
-			altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
-			//altMission.getProductClasses().add(altProdClass);
-			//altMission = RepositoryService.getMissionRepository().save(altMission);
-		}
-		logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
-		
-		// Make sure test products exist
-		List<Product> testProducts = createTestProducts();
 		
 		// Get products using different selection criteria (also combined)
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
@@ -285,22 +311,24 @@ public class ProductControllerTest {
 		
 		boolean[] productFound = new boolean[testProducts.size()];
 		Arrays.fill(productFound, false);
-		for (Map<String, Object> product: body) {
+		ObjectMapper mapper = new ObjectMapper();
+		for (Map<String, Object> jsonProduct: body) {
+			// Convert from Json/Map to Product
+			RestProduct product = mapper.convertValue(jsonProduct, RestProduct.class);
 			// Check, if any of the test products was returned
-			long productId = (Integer) product.get("id");
-			logger.info("... found product with ID {}", productId);
+			logger.info("... found product with ID {}", product.getId());
 			for (int i = 0; i < testProducts.size(); ++i) {
 				Product testProduct = testProducts.get(i);
-				if (productId == testProduct.getId()) {
+				if (product.getId().longValue() == testProduct.getId()) {
 					productFound[i] = true;
-					assertEquals("Wrong product class for test product " + i, testProduct.getProductClass().getProductType(), product.get("productClass"));
-					assertEquals("Wrong mode for test product " + i, testProduct.getMode(), product.get("mode"));
+					assertEquals("Wrong product class for test product " + i, testProduct.getProductClass().getProductType(), product.getProductClass());
+					assertEquals("Wrong mode for test product " + i, testProduct.getMode(), product.getMode());
 					assertEquals("Wrong start time for test product " + i,
-							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStartTime"))));
+							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStartTime())));
 					assertEquals("Wrong stop time for test product " + i,
-							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("sensingStopTime"))));
+							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStopTime())));
 					assertEquals("Wrong generation time for test product " + i,
-							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.get("generationTime"))));
+							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getGenerationTime())));
 				}
 			}
 		}
@@ -311,7 +339,13 @@ public class ProductControllerTest {
 		// TODO Tests with different selection criteria
 		
 		// Clean up database
-		deleteTestProducts(testProducts);
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestProducts(testProducts);
+				return null;
+			}
+		});
 
 		logger.info("Test OK: Get Products");
 	}
@@ -324,32 +358,53 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testCreateProduct() {
-		// Make sure a mission and a product class exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				// Make sure a mission and a product class exist
+				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(TEST_CODE);
+					mission.getProcessingModes().add(TEST_MODE);
+					mission.getFileClasses().add(TEST_FILE_CLASS);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == prodClass) {
+					prodClass = new ProductClass();
+					prodClass.setMission(mission);
+					prodClass.setProductType(TEST_PRODUCT_TYPE);
+					prodClass.setMissionType(TEST_MISSION_TYPE);
+					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+					//mission.getProductClasses().add(prodClass);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+
+				return null;
+			}
+			
+		});
 		
 		// Create a product in the database
-		Product productToCreate = createProduct(testProductData[0]);
-		RestProduct restProduct = ProductUtil.toRestProduct(productToCreate);
+		RestProduct restProduct = new RestProduct();
+		String[] testData = testProductData[0];
+		restProduct.setMissionCode(TEST_CODE);
+		restProduct.setProductClass(TEST_PRODUCT_TYPE);
+		restProduct.setFileClass(testData[4]);
+		restProduct.setMode(testData[5]);
+		restProduct.setSensingStartTime(testData[6]);
+		restProduct.setSensingStopTime(testData[7]);
+		restProduct.setGenerationTime(testData[8]);
+		restProduct.getParameters().add(
+				new RestParameter("revision", "INTEGER", testData[9]));
 
 		String testUrl = "http://localhost:" + this.port + INGESTOR_BASE_URI + "/products";
 		logger.info("Testing URL {} / POST : {}", testUrl, restProduct.toString());
@@ -371,9 +426,14 @@ public class ProductControllerTest {
 		// TODO Using mock production planner
 		
 		// Clean up database
-		ArrayList<Product> testProducts = new ArrayList<>();
-		testProducts.add(productToCreate);
-		deleteTestProducts(testProducts);
+		final long idToDelete = restProduct.getId();
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				RepositoryService.getProductRepository().deleteById(idToDelete);
+				return null;
+			}
+		});
 
 		logger.info("Test OK: Create Product");
 	}
@@ -386,52 +446,63 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testGetProductById() {
-		// Make sure missions and product classes exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission.getFileClasses().add(TEST_FILE_CLASS);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		List<Product> testProducts = transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public List<Product> doInTransaction(TransactionStatus status) {
+				// Make sure missions and product classes exist
+				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(TEST_CODE);
+					mission.getProcessingModes().add(TEST_MODE);
+					mission.getFileClasses().add(TEST_FILE_CLASS);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == prodClass) {
+					prodClass = new ProductClass();
+					prodClass.setMission(mission);
+					prodClass.setProductType(TEST_PRODUCT_TYPE);
+					prodClass.setMissionType(TEST_MISSION_TYPE);
+					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+					//mission.getProductClasses().add(prodClass);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+				
+				Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == altMission) {
+					altMission = new Mission();
+					altMission.setCode(TEST_ALT_CODE);
+					altMission.getFileClasses().add(TEST_FILE_CLASS);
+					altMission = RepositoryService.getMissionRepository().save(altMission);
+				}
+				logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
+				
+				ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == altProdClass) {
+					altProdClass = new ProductClass();
+					altProdClass.setMission(altMission);
+					altProdClass.setProductType(TEST_PRODUCT_TYPE);
+					altProdClass.setMissionType(TEST_MISSION_TYPE);
+					altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
+					//altMission.getProductClasses().add(altProdClass);
+					//altMission = RepositoryService.getMissionRepository().save(altMission);
+				}
+				logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
+				
+				// Make sure test products exist
+				return createTestProducts();
+			}
+			
+		});
 		
-		Mission altMission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == altMission) {
-			altMission = new Mission();
-			altMission.setCode(TEST_ALT_CODE);
-			altMission.getFileClasses().add(TEST_FILE_CLASS);
-			altMission = RepositoryService.getMissionRepository().save(altMission);
-		}
-		logger.info("Using alternate mission " + altMission.getCode() + " with id " + altMission.getId());
-		
-		ProductClass altProdClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == altProdClass) {
-			altProdClass = new ProductClass();
-			altProdClass.setMission(altMission);
-			altProdClass.setProductType(TEST_PRODUCT_TYPE);
-			altProdClass.setMissionType(TEST_MISSION_TYPE);
-			altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
-			//altMission.getProductClasses().add(altProdClass);
-			//altMission = RepositoryService.getMissionRepository().save(altMission);
-		}
-		logger.info("Using alternate product class " + altProdClass.getProductType() + " with id " + altProdClass.getId());
-		
-		// Make sure test products exist
-		List<Product> testProducts = createTestProducts();
 		Product productToFind = testProducts.get(0);
 
 		// Test that a product can be read
@@ -444,7 +515,13 @@ public class ProductControllerTest {
 		assertEquals("Wrong product ID: ", productToFind.getId(), getEntity.getBody().getId().longValue());
 		
 		// Clean up database
-		deleteTestProducts(testProducts);
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestProducts(testProducts);
+				return null;
+			}
+		});
 
 		logger.info("Test OK: Get Product By ID");
 	}
@@ -457,30 +534,41 @@ public class ProductControllerTest {
 	 */
 	@Test
 	public final void testModifyProduct() {
-		// Make sure a mission and a product class exist
-		Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
-		if (null == mission) {
-			mission = new Mission();
-			mission.setCode(TEST_CODE);
-			mission.getProcessingModes().add(TEST_MODE);
-			mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 		
-		ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
-		if (null == prodClass) {
-			prodClass = new ProductClass();
-			prodClass.setMission(mission);
-			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
-			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
-			//mission.getProductClasses().add(prodClass);
-			//mission = RepositoryService.getMissionRepository().save(mission);
-		}
-		logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		// Make sure test products exist
-		Product productToModify = createProduct(testProductData[0]);
+		Product productToModify = transactionTemplate.execute(new TransactionCallback<>() {
+
+			@Override
+			public Product doInTransaction(TransactionStatus status) {
+				// Make sure a mission and a product class exist
+				Mission mission = RepositoryService.getMissionRepository().findByCode(TEST_CODE);
+				if (null == mission) {
+					mission = new Mission();
+					mission.setCode(TEST_CODE);
+					mission.getProcessingModes().add(TEST_MODE);
+					mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
+				
+				ProductClass prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
+				if (null == prodClass) {
+					prodClass = new ProductClass();
+					prodClass.setMission(mission);
+					prodClass.setProductType(TEST_PRODUCT_TYPE);
+					prodClass.setMissionType(TEST_MISSION_TYPE);
+					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
+					//mission.getProductClasses().add(prodClass);
+					//mission = RepositoryService.getMissionRepository().save(mission);
+				}
+				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
+				
+				// Make sure test products exist
+				return createProduct(testProductData[0]);
+			}
+			
+		});
+		
 		
 		// Update a product attribute
 		productToModify.setMode("OFFL");
@@ -501,7 +589,13 @@ public class ProductControllerTest {
 		assertEquals("Wrong mode: ", productToModify.getMode(), getEntity.getBody().getMode());
 		
 		// Clean up database
-		deleteTestProducts(Arrays.asList(productToModify));
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestProducts(Arrays.asList(productToModify));
+				return null;
+			}
+		});
 
 		logger.info("Test OK: Modify Product");
 	}

@@ -41,6 +41,10 @@ public class IngestorConfiguration {
 	@Value("${proseo.storageManager.password}")
 	private String storageManagerPassword;
 
+	/** The default storage type of the prosEO Storage Manager */
+	@Value("${proseo.storageManager.defaultStorageType}")
+	private String defaultStorageType;
+
 	/**
 	 * Gets the URL of the prosEO Production Planner component
 	 * 
@@ -84,6 +88,15 @@ public class IngestorConfiguration {
 	 */
 	public String getStorageManagerPassword() {
 		return storageManagerPassword;
+	}
+
+	/**
+	 * Gets the default storage type to use with the Storage Manager
+	 * 
+	 * @return the defaultStorageType
+	 */
+	public String getDefaultStorageType() {
+		return defaultStorageType;
 	}
 	
 	

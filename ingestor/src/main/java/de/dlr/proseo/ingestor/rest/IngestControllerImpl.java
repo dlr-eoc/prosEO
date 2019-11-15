@@ -9,7 +9,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
@@ -119,8 +122,9 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param processingFacility the processing facility to ingest products to
      * @param ingestorProducts a list of product descriptions with product file locations
-     * @return a Json list of the products updated and/or created including their product files and HTTP status "CREATED",
-     *   or HTTP status "BAD_REQUEST", if an invalid processing facility was given
+     * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
+     *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
+     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
 	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts) {
@@ -194,46 +198,124 @@ public class IngestControllerImpl implements IngestController {
 	}
 
     /**
-     * Create the metadata of a new product file for a product at a given processing facility
+     * Create the metadata of a new product file for a product at a given processing facility (it is assumed that the
+     * files themselves are already pushed to the Storage Manager)
      * 
      * @param productId the ID of the product to retrieve
-     * @param processingFacility 
+     * @param processingFacility the name of the processing facility, in which the files have been stored
+     * @param productFile the REST product file to store
+     * @return HTTP status "CREATED" and the updated REST product file (with ID and version) or
+     *         HTTP status "BAD_REQUEST", if the processing facility or the product cannot be found, or if the data for the
+     *         product file is invalid (also, if a product file for the given processing facility already exists)
      */
 	@Override
 	public ResponseEntity<RestProductFile> ingestProductFile(Long productId, String processingFacility,
 	        @javax.validation.Valid
 	        RestProductFile productFile) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {})", productId, processingFacility, productFile.getProductFileName());
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("POST for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		// Check whether the given processing facility is valid
+		try {
+			processingFacility = URLDecoder.decode(processingFacility, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		if (null == facility) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
+					HttpStatus.BAD_REQUEST);
+		}
+		
+		try {
+			return new ResponseEntity<>(productIngestor.ingestProductFile(productId, facility, productFile), HttpStatus.CREATED);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
      * Delete a product file for a product from a given processing facility (metadata and actual data file(s))
      * 
+     * @param productId the ID of the product to retrieve
+     * @param processingFacility the name of the processing facility, from which the files shall be deleted
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
+	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
 	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, processingFacility);
+
+		// Check whether the given processing facility is valid
+		try {
+			processingFacility = URLDecoder.decode(processingFacility, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		if (null == facility) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
+					HttpStatus.NOT_FOUND);
+		}
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			productIngestor.deleteProductFile(productId, facility);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (ProcessingException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
     /**
-     * Update the product file metadata for a product at a given processing facility
+     * Update the product file metadata for a product at a given processing facility (it is assumed that any new or changed
+     * files themselves are already pushed to the Storage Manager)
      * 
+     * @param productId the ID of the product to retrieve
+     * @param processingFacility the name of the processing facility, in which the files have been stored
+     * @param productFile the REST product file to store
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID or no processing facility with the given name exists, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "CONFLICT"and an error message, if the product file has been modified since retrieval by the client
      */
 	@Override
 	public ResponseEntity<RestProductFile> modifyProductFile(Long productId, String processingFacility, RestProductFile productFile) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyProductFile({}, {}, {})", productId, processingFacility, productFile.getProductFileName());
+
+		// Check whether the given processing facility is valid
+		try {
+			processingFacility = URLDecoder.decode(processingFacility, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		if (null == facility) {
+			return new ResponseEntity<>(
+					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
+					HttpStatus.BAD_REQUEST);
+		}
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for product file at a processing facility not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productIngestor.modifyProductFile(productId, facility, productFile), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
 }

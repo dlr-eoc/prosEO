@@ -8,8 +8,10 @@ package de.dlr.proseo.procmgr.rest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -18,15 +20,16 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
+import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
  * Service methods required to manage processor classes.
@@ -48,18 +51,29 @@ public class ProcessorClassManager {
 	private static final int MSG_ID_PROCESSOR_CLASS_CREATED = 2208;
 	private static final int MSG_ID_PROCESSOR_CLASS_ID_MISSING = 2209;
 	private static final int MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND = 2200;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_PROCESSOR_CLASS_DATA_MISSING = 2210;
+	private static final int MSG_ID_PROCESSOR_CLASS_MODIFIED = 2211;
+	private static final int MSG_ID_PROCESSOR_CLASS_NOT_MODIFIED = 2212;
+	private static final int MSG_ID_PROCESSOR_CLASS_DELETED = 2213;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2213;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PROCESSOR_CLASS_NOT_FOUND = "(E%d) No processor class found for mission %s and processor name %s";
-	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
-	private static final String MSG_PROCESSOR_CLASS_RETRIEVED = "(I%d) Processor class with ID %d retrieved";
 	private static final String MSG_PROCESSOR_CLASS_MISSING = "(E%d) Processor class not set";
 	private static final String MSG_PROCESSOR_CLASS_ID_MISSING = "(E%d) Processor class ID not set";
 	private static final String MSG_PROCESSOR_CLASS_ID_NOT_FOUND = "(E%d) No processor class found with ID %d";
 	private static final String MSG_MISSION_CODE_INVALID = "(E%d) Mission code %s invalid";
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid for mission %s";
+	private static final String MSG_PROCESSOR_CLASS_DATA_MISSING = "(E%d) Processor class data not set";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor class deletion unsuccessful for ID %d";
+
+	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
 	private static final String MSG_PROCESSOR_CLASS_CREATED = "(I%d) Processor class %s created for mission %s";
+	private static final String MSG_PROCESSOR_CLASS_RETRIEVED = "(I%d) Processor class with ID %d retrieved";
+	private static final String MSG_PROCESSOR_CLASS_MODIFIED = "(I%d) Processor class with id %d modified";
+	private static final String MSG_PROCESSOR_CLASS_NOT_MODIFIED = "(I%d) Processor class with id %d not modified (no changes)";
+	private static final String MSG_PROCESSOR_CLASS_DELETED = "(I%d) Processor class with id %d deleted";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -210,7 +224,7 @@ public class ProcessorClassManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
 		
 		if (null == id || 0 == id) {
-			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING, id));
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING));
 		}
 		
 		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
@@ -237,8 +251,63 @@ public class ProcessorClassManager {
 	 */
 	public RestProcessorClass modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("PATCH for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
+
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING));
+		}
+		if (null == processorClass) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_DATA_MISSING, MSG_ID_PROCESSOR_CLASS_DATA_MISSING));
+		}
+		
+		Optional<ProcessorClass> optProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		
+		if (optProcessorClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_CLASS_ID_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND, id));
+		}
+		ProcessorClass modelProcessorClass = optProcessorClass.get();
+		
+		// Apply changed attributes
+		ProcessorClass changedProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
+		
+		boolean processorClassChanged = false;
+		if (!modelProcessorClass.getProcessorName().equals(changedProcessorClass.getProcessorName())) {
+			processorClassChanged = true;
+			modelProcessorClass.setProcessorName(changedProcessorClass.getProcessorName());
+		}
+		
+		// Check changes in associated product classes
+		Set<ProductClass> newProductClasses = new HashSet<>();
+		for (String productType: processorClass.getProductClasses()) {
+			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(processorClass.getMissionCode(), productType);
+			if (null == productClass) {
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID,
+						productType, processorClass.getMissionCode()));
+			}
+			newProductClasses.add(productClass);
+			if (!modelProcessorClass.getProductClasses().contains(productClass)) {
+				processorClassChanged = true;
+			}
+		}
+		// Check removed product classes
+		for (ProductClass productClass: modelProcessorClass.getProductClasses()) {
+			if (!newProductClasses.contains(productClass)) {
+				processorClassChanged = true;
+			}
+		}
+
+		// Save processor class only if anything was actually changed
+		if (processorClassChanged)	{
+			modelProcessorClass.incrementVersion();
+			modelProcessorClass.setProductClasses(newProductClasses);
+			modelProcessorClass = RepositoryService.getProcessorClassRepository().save(modelProcessorClass);
+			logInfo(MSG_PROCESSOR_CLASS_MODIFIED, MSG_ID_PROCESSOR_CLASS_MODIFIED, id);
+		} else {
+			logInfo(MSG_PROCESSOR_CLASS_NOT_MODIFIED, MSG_ID_PROCESSOR_CLASS_NOT_MODIFIED, id);
+		}
+		
+		return ProcessorClassUtil.toRestProcessorClass(modelProcessorClass);
 	}
 
 	/**
@@ -249,8 +318,28 @@ public class ProcessorClassManager {
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteProcessorClassById(Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("DELETE for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
+		
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING));
+		}
+		
+		// Test whether the product id is valid
+		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		if (modelProcessorClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND));
+		}
+		
+		// Delete the processor class
+		RepositoryService.getProcessorClassRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		if (!modelProcessorClass.isEmpty()) {
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logInfo(MSG_PROCESSOR_CLASS_DELETED, MSG_ID_PROCESSOR_CLASS_DELETED, id);
 	}
 
 }

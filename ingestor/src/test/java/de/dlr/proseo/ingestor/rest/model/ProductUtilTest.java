@@ -8,6 +8,7 @@ package de.dlr.proseo.ingestor.rest.model;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,10 +35,10 @@ public class ProductUtilTest {
 
 	/* Test products */
 	private static String[][] testProductData = {
-		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
-		{ "7", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
-		{ "8", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01" },
-		{ "9", "1", "TDM", "DEM", "TEST", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
+		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter), uuid
+		{ "7", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01", "9f596831-b9e7-4c52-9da9-a2c45fe28229" },
+		{ "8", "1", "S5P", "L1B", "OPER", "NRTI", "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "01", "546c2ffa-f6bd-4a62-a09a-bc6ad1a85183" },
+		{ "9", "1", "TDM", "DEM", "TEST", null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02", "de611147-f80b-488e-a1d2-08090096b1ec" }
 	};
 
 	/** A logger for this class */
@@ -72,6 +73,7 @@ public class ProductUtilTest {
 		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
+		testProduct.setUuid(UUID.fromString(testData[10]));
 		
 		logger.info("Created test product {}", testProduct.getId());
 		return testProduct;
@@ -119,6 +121,7 @@ public class ProductUtilTest {
 		restProduct = ProductUtil.toRestProduct(modelProduct);
 		assertEquals("Unexpected ID: ", modelProduct.getId(), restProduct.getId().longValue());
 		assertEquals("Unexpected version: ", modelProduct.getVersion(), restProduct.getVersion().longValue());
+		assertEquals("Unexpected UUID: ", modelProduct.getUuid().toString(), restProduct.getUuid());
 		assertEquals("Unexpected mission code: ", modelProduct.getProductClass().getMission().getCode(),
 				restProduct.getMissionCode());
 		assertEquals("Unexpected product type: ", modelProduct.getProductClass().getProductType(),
@@ -148,6 +151,7 @@ public class ProductUtilTest {
 		Product copiedModelProduct = ProductUtil.toModelProduct(restProduct);
 		assertEquals("ID not preserved: ", modelProduct.getId(), copiedModelProduct.getId());
 		assertEquals("Version not preserved: ", modelProduct.getVersion(), copiedModelProduct.getVersion());
+		assertEquals("UUID not preserved: ", modelProduct.getUuid(), copiedModelProduct.getUuid());
 		assertEquals("File class not preserved: ", modelProduct.getFileClass(), copiedModelProduct.getFileClass());
 		assertEquals("Mode not preserved: ", modelProduct.getMode(), copiedModelProduct.getMode());
 		assertEquals("Start time not preserved: ", modelProduct.getSensingStartTime(), copiedModelProduct.getSensingStartTime());

@@ -76,8 +76,44 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.global.storageIdPrefix}")
 	private String storageIdPrefix;
 	
+	@Value("${proseo.s3.s3DefaultBucket}")
+	private String s3DefaultBucket;
+	
+	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
+	private String alluxioUnderFsDefaultPrefix;
 	
 	
+	
+	
+	
+	/**
+	 * @return the alluxioUnderFsDefaultPrefix
+	 */
+	public String getAlluxioUnderFsDefaultPrefix() {
+		return alluxioUnderFsDefaultPrefix;
+	}
+
+	/**
+	 * @param alluxioUnderFsDefaultPrefix the alluxioUnderFsDefaultPrefix to set
+	 */
+	public void setAlluxioUnderFsDefaultPrefix(String alluxioUnderFsDefaultPrefix) {
+		this.alluxioUnderFsDefaultPrefix = alluxioUnderFsDefaultPrefix;
+	}
+
+	/**
+	 * @return the s3DefaultBucket
+	 */
+	public String getS3DefaultBucket() {
+		return s3DefaultBucket;
+	}
+
+	/**
+	 * @param s3DefaultBucket the s3DefaultBucket to set
+	 */
+	public void setS3DefaultBucket(String s3DefaultBucket) {
+		this.s3DefaultBucket = s3DefaultBucket;
+	}
+
 	/**
 	 * @return the storageIdPrefix
 	 */

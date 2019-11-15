@@ -7,7 +7,10 @@ package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
@@ -148,10 +151,17 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 */
 	@Override
 	public ResponseEntity<RestProcessor> modifyProcessor(Long id, @Valid RestProcessor processor) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for processor not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessor({}, {})", id, (null == processor ? "MISSING" : processor.getProcessorName()));
+		
+		try {
+			return new ResponseEntity<>(processorManager.modifyProcessor(id, processor), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
 	/**
@@ -164,10 +174,16 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 */
 	@Override
 	public ResponseEntity<?> deleteProcessorById(Long id) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for processor not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorById({})", id);
+		
+		try {
+			processorManager.deleteProcessorById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
 }

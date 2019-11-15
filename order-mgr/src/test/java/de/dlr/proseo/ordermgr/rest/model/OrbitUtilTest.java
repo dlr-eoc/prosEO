@@ -104,7 +104,7 @@ public class OrbitUtilTest {
 
 		assertNull("Unexpected number for new orbit: ",  restOrbit.getOrbitNumber());
 		assertNull("Unexpected Spacecraft code for new orbit: ", restOrbit.getSpacecraftCode());
-		logger.info("Test copy empty product OK");
+		logger.info("Test copy empty orbit OK");
 		
 		// Copy a orbit from model to REST
 		modelorbit = createOrbit(testOrbitData[0]);

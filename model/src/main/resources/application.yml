@@ -1,8 +1,8 @@
 spring:
     jpa:
-        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:mysql://localhost:5432/proseo?serverTimezone=Europe/Berlin
+        url: jdbc:postgresql://localhost:5432/proseo
         username: postgres
         password: sequel09Master

@@ -28,6 +28,7 @@ proseo:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none
         password: none
+        defaultStorageType: S3
     user:
         name: s5p-proseo
         password: sieb37.Schlaefer
