@@ -7,8 +7,10 @@ package de.dlr.proseo.prodclmgr.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ServerErrorException;
@@ -130,15 +132,19 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<RestProductClass> getRestProductClassById(Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClassById({})", id);
 
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getRestProductClassById(id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
-     * Update a product class by ID
+     * Update a product class by ID (does not update its selection rules)
      * 
      * @param id the database ID of the product class to update
      * @param productClass a Json object describing the product class to modify
@@ -150,15 +156,21 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<RestProductClass> modifyRestProductClass(Long id, RestProductClass productClass) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyRestProductClass({}, {})", id, (null == productClass ? "MISSING" : productClass.getProductType()));
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.modifyRestProductClass(id, productClass), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
     /**
-     * Delete a product class by ID
+     * Delete a product class by ID (with all its selection rules)
      * 
      * @param id the database ID of the product class to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
@@ -167,11 +179,16 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<?> deleteProductclassById(Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			productClassManager.deleteProductclassById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
     /**
@@ -184,11 +201,13 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
     public ResponseEntity<List<SelectionRuleString>> getSelectionRuleStrings(Long id, String sourceClass) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleStrings({}, {})", id, sourceClass);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for SelectionRuleString with RestProductClass id and source product type not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getSelectionRuleStrings(id, sourceClass), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
     /**
@@ -222,11 +241,13 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<SelectionRuleString> getSelectionRuleString(Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleString({}, {})", ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getSelectionRuleString(ruleid, id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
     /**

@@ -15,6 +15,10 @@
       isMandatory:
         type: boolean
         description: Indicates whether the required source product is mandatory for the production of the target product
+      minimumCoverage?:
+        type: integer
+        format: int16
+        description: Minimum percentage of coverage of the desired validity period for fulfilment of this rule (default 0)
       filterConditions:
         type: RestParameter[]
         description: Parameter values to filter the selected products (triple of parameter key, parameter type and parameter value);

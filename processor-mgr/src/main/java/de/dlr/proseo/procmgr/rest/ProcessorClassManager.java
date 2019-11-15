@@ -318,7 +318,7 @@ public class ProcessorClassManager {
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteProcessorClassById(Long id) throws EntityNotFoundException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorClassById({})", id);
 		
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING));

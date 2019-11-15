@@ -35,6 +35,7 @@ types:
       id?:
         type: integer
         format: long
+      version?: integer
       selectionRule: string
       mode: string
       configuredProcessors: string[]
@@ -108,7 +109,7 @@ resourceTypes:
               type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     patch:
-      description: Update a product class by ID
+      description: Update a product class by ID (does not update its selection rules)
       body:
         application/json:
           type: RestProductClass
@@ -120,7 +121,7 @@ resourceTypes:
               type: RestProductClass
               example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
     delete:
-      description: Delete a product class by ID
+      description: Delete a product class by ID (with all its selection rules)
       responses:
         204:
     /selectionrules:

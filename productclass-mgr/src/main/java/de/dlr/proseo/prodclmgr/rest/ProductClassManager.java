@@ -39,8 +39,10 @@ import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.SelectionRule;
+import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
@@ -82,6 +84,19 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = 2121;
 	private static final int MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED = 2122;
+	private static final int MSG_ID_PRODUCT_CLASS_ID_MISSING = 2123;
+	private static final int MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND = 2124;
+	private static final int MSG_ID_PRODUCT_CLASS_RETRIEVED = 2125;
+	private static final int MSG_ID_PRODUCT_CLASS_DATA_MISSING = 2126;
+	private static final int MSG_ID_PRODUCT_CLASS_MODIFIED = 2127;
+	private static final int MSG_ID_PRODUCT_CLASS_NOT_MODIFIED = 2128;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2129;
+	private static final int MSG_ID_PRODUCT_CLASS_DELETED = 2130;
+	private static final int MSG_ID_SOURCE_CLASS_MISSING = 2131;
+	private static final int MSG_ID_SELECTION_RULE_LIST_RETRIEVED = 2132;
+	private static final int MSG_ID_SELECTION_RULE_ID_MISSING = 2133;
+	private static final int MSG_ID_SELECTION_RULE_ID_NOT_FOUND = 2134;
+	private static final int MSG_ID_SELECTION_RULE_RETRIEVED = 2135;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -105,10 +120,23 @@ public class ProductClassManager {
 	private static final String MSG_INVALID_PROCESSOR = "(E%d) Configured processor %s is not defined";
 	private static final String MSG_INVALID_POLICY_TYPE = "(E%d) Invalid policy type %s in selection rule, see Generic IPF Interface Specifications for valid values";
 	private static final String MSG_INVALID_TIME_UNIT = "(E%d) Invalid time unit %s in selection rule, one of {DAYS, HOURS, MINUTES, SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS} expected";
+	private static final String MSG_PRODUCT_CLASS_ID_MISSING = "(E%d) Product class ID not set";
+	private static final String MSG_PRODUCT_CLASS_ID_NOT_FOUND = "(E%d) No product class found with ID %d";
+	private static final String MSG_PRODUCT_CLASS_DATA_MISSING = "(E%d) Product class data not set";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product class deletion unsuccessful for ID %d";
+	private static final String MSG_SOURCE_CLASS_MISSING = "(E%d) Source product class not set";
+	private static final String MSG_SELECTION_RULE_ID_MISSING = "(E%d) Selection rule ID not set";
+	private static final String MSG_SELECTION_RULE_ID_NOT_FOUND = "(E%d) Selection rule with ID %d not found for product class with ID %d";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s, product type %s and mission type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
 	private static final String MSG_SELECTION_RULES_CREATED = "(I%d) %d selection rules added to product class of type %s in mission %s";
+	private static final String MSG_PRODUCT_CLASS_RETRIEVED = "(I%d) Product class with ID %d retrieved";
+	private static final String MSG_PRODUCT_CLASS_MODIFIED = "(I%d) Product class with ID %d modified";
+	private static final String MSG_PRODUCT_CLASS_NOT_MODIFIED = "(I%d) Product class with ID %d not modified (no changes)";
+	private static final String MSG_PRODUCT_CLASS_DELETED = "(I%d) Product class with ID %d deleted";
+	private static final String MSG_SELECTION_RULE_LIST_RETRIEVED = "(I%d) Selection rules for target product type %s and source product type %s retrieved";
+	private static final String MSG_SELECTION_RULE_RETRIEVED = "(I%d) Selection rule with ID %d for product class with ID %d retrieved";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -157,6 +185,38 @@ public class ProductClassManager {
 		return message;
 	}
 	
+	/**
+	 * Remove the enclosing product class from the given product class
+	 * 
+	 * @param productClass the product class to remove the enclosing class from
+	 */
+	private void removeEnclosingClass(ProductClass productClass) {
+		ProductClass enclosingClass = productClass.getEnclosingClass();
+		enclosingClass.getComponentClasses().remove(productClass);
+		RepositoryService.getProductClassRepository().save(enclosingClass);
+		productClass.setEnclosingClass(null);
+	}
+
+	/**
+	 * Set the enclosing class of the given product class to the class with the given mission code and product type
+	 * 
+	 * @param productClass the product class to update
+	 * @param missionCode the mission code of the enclosing product class
+	 * @param productType the product type of the enclosing product class
+	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist
+	 */
+	private void setEnclosingClass(ProductClass productClass, String missionCode, String productType) throws IllegalArgumentException {
+		ProductClass enclosingClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+				missionCode, productType);
+		if (null == enclosingClass) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS,
+					productType, missionCode));
+		}
+		enclosingClass.getComponentClasses().add(productClass);
+		enclosingClass = RepositoryService.getProductClassRepository().save(enclosingClass);
+		productClass.setEnclosingClass(enclosingClass);
+	}
+
     /**
      * Get product classes by mission, product type or mission type
      * 
@@ -258,11 +318,7 @@ public class ProductClassManager {
 		
 		// Add further attributes to product class
 		if (null != productClass.getEnclosingClass()) {
-			modelProductClass.setEnclosingClass(RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), productClass.getEnclosingClass()));
-			if (null == modelProductClass.getEnclosingClass()) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS,
-						productClass.getEnclosingClass(), mission.getCode()));
-			}
+			setEnclosingClass(modelProductClass, mission.getCode(), productClass.getEnclosingClass());
 		}
 		
 		for (String componentClass: productClass.getComponentClasses()) {
@@ -271,6 +327,8 @@ public class ProductClassManager {
 				throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
 						componentClass, mission.getCode()));
 			}
+			modelComponentClass.setEnclosingClass(modelProductClass);
+			modelComponentClass = RepositoryService.getProductClassRepository().save(modelComponentClass);
 			modelProductClass.getComponentClasses().add(modelComponentClass);
 		}
 		
@@ -365,13 +423,25 @@ public class ProductClassManager {
 	 * @throws NoResultException if no product class with the given ID exists
      */
 	public RestProductClass getRestProductClassById(Long id) throws IllegalArgumentException, NoResultException {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClassById({})", id);
+		
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		logInfo(MSG_PRODUCT_CLASS_RETRIEVED, MSG_ID_PRODUCT_CLASS_RETRIEVED, id);
 
-		throw new UnsupportedOperationException(logError("GET for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		return ProductClassUtil.toRestProductClass(modelProductClass.get());
 	}
 
     /**
-     * Update a product class by ID
+     * Update a product class by ID (does not update its selection rules)
      * 
      * @param id the database ID of the product class to update
      * @param productClass a Json object describing the product class to modify
@@ -382,22 +452,135 @@ public class ProductClassManager {
      */
 	public RestProductClass modifyRestProductClass(Long id, RestProductClass productClass) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyRestProductClass({}, {})", id, (null == productClass ? "MISSING" : productClass.getProductType()));
 		
-		throw new UnsupportedOperationException(logError("PATCH for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == productClass) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_DATA_MISSING, MSG_ID_PRODUCT_CLASS_DATA_MISSING));
+		}
+		
+		Optional<ProductClass> optProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (optProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		ProductClass modelProductClass = optProductClass.get();
+		
+		// Apply changed attributes
+		ProductClass changedProductClass = ProductClassUtil.toModelProductClass(productClass);
+		
+		boolean productClassChanged = false;
+		if (!modelProductClass.getProductType().equals(changedProductClass.getProductType())) {
+			productClassChanged = true;
+			modelProductClass.setProductType(changedProductClass.getProductType());
+		}
+		if (!modelProductClass.getMissionType().equals(changedProductClass.getMissionType())) {
+			productClassChanged = true;
+			modelProductClass.setMissionType(changedProductClass.getMissionType());
+		}
+		if (!modelProductClass.getDescription().equals(changedProductClass.getDescription())) {
+			productClassChanged = true;
+			modelProductClass.setDescription(changedProductClass.getDescription());
+		}
+		
+		// Check for new component product classes
+		Set<ProductClass> newComponentClasses = new HashSet<>();
+		COMPONENT_CLASSES:
+		for (String changedComponentClass: productClass.getComponentClasses()) {
+			for (ProductClass modelComponentClass: modelProductClass.getComponentClasses()) {
+				if (modelComponentClass.getProductType().equals(changedComponentClass)) {
+					// Already present
+					newComponentClasses.add(modelComponentClass);
+					continue COMPONENT_CLASSES;
+				}
+			}
+			// New component class
+			productClassChanged = true;
+			ProductClass newComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(productClass.getMissionCode(), changedComponentClass);
+			if (null == newComponentClass) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
+						changedComponentClass, productClass.getMissionCode()));
+			}
+			newComponentClass.setEnclosingClass(modelProductClass);
+			newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
+			newComponentClasses.add(newComponentClass);
+		}
+		// Check for removed component product classes
+		for (ProductClass modelComponentClass: modelProductClass.getComponentClasses()) {
+			if (!newComponentClasses.contains(modelComponentClass)) {
+				// Component class removed
+				productClassChanged = true;
+				modelComponentClass.setEnclosingClass(null);
+				RepositoryService.getProductClassRepository().save(modelComponentClass);
+			}
+		}
+		
+		// Check the enclosing class
+		if (null == productClass.getEnclosingClass() || 0 == productClass.getEnclosingClass().length()) {
+			if (null != modelProductClass.getEnclosingClass()) {
+				// Enclosing class removed
+				productClassChanged = true;
+				removeEnclosingClass(modelProductClass);
+			}
+		} else if (null == modelProductClass.getEnclosingClass()) {
+			// Enclosing class added
+			productClassChanged = true;
+			setEnclosingClass(modelProductClass, productClass.getMissionCode(), productClass.getEnclosingClass());
+		} else if (!modelProductClass.getEnclosingClass().getProductType().equals(productClass.getEnclosingClass())) {
+			// Enclosing class changed
+			productClassChanged = true;
+			// Remove the product class from the old enclosing class
+			removeEnclosingClass(modelProductClass);
+			// Add the product class to the new enclosing class
+			setEnclosingClass(modelProductClass, productClass.getMissionCode(), productClass.getEnclosingClass());
+		}
+		
+		// Save product class only if anything was actually changed
+		if (productClassChanged) {
+			modelProductClass.incrementVersion();
+			modelProductClass.setComponentClasses(newComponentClasses);
+			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
+			logInfo(MSG_PRODUCT_CLASS_MODIFIED, MSG_ID_PRODUCT_CLASS_MODIFIED, id);
+		} else {
+			logInfo(MSG_PRODUCT_CLASS_NOT_MODIFIED, MSG_ID_PRODUCT_CLASS_NOT_MODIFIED, id);
+		}
+		
+		return ProductClassUtil.toRestProductClass(modelProductClass);
 	}
 
     /**
-     * Delete a product class by ID
+     * Delete a product class by ID (with all its selection rules)
      * 
      * @param id the database ID of the product class to delete
 	 * @throws EntityNotFoundException if the processor to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
      */
 	public void deleteProductclassById(Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
 		
-		throw new UnsupportedOperationException(logError("DELETE for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		
+		// Test whether the product id is valid
+		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		if (modelProcessorClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND));
+		}
+		
+		// Delete the processor class
+		RepositoryService.getProcessorClassRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
+		if (!modelProcessorClass.isEmpty()) {
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logInfo(MSG_PRODUCT_CLASS_DELETED, MSG_ID_PRODUCT_CLASS_DELETED, id);
 	}
 
     /**
@@ -409,9 +592,41 @@ public class ProductClassManager {
 	 * @throws NoResultException if no simple selection rules matching the given search criteria could be found
      */
     public List<SelectionRuleString> getSelectionRuleStrings(Long id, String sourceClass) throws NoResultException {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleStrings({}, {})", id, sourceClass);
+
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == sourceClass || 0 == sourceClass.length()) {
+			throw new IllegalArgumentException(logError(MSG_SOURCE_CLASS_MISSING, MSG_ID_SOURCE_CLASS_MISSING));
+		}
 		
-		throw new UnsupportedOperationException(logError("GET for SelectionRuleString with RestProductClass id and source product type not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find the correct simple selection rules
+		List<SelectionRuleString> result = new ArrayList<>();
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getSourceProductClass().getProductType().equals(sourceClass)) {
+				SelectionRuleString restRule = new SelectionRuleString();
+				restRule.setId(modelRule.getId());
+				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
+				restRule.setMode(modelRule.getMode());
+				restRule.setSelectionRule(modelRule.toString());
+				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
+				}
+				result.add(restRule);
+			}
+		}
+		
+		logInfo(MSG_SELECTION_RULE_LIST_RETRIEVED, MSG_ID_SELECTION_RULE_LIST_RETRIEVED, modelProductClass.get().getProductType(), sourceClass);
+		
+		return result;
 	}
 
     /**
@@ -490,10 +705,41 @@ public class ProductClassManager {
      * @return a Json object representing the simple selection rule in Rule Language
 	 * @throws NoResultException if no selection rule or product class with the given ID exist
      */
-	public SelectionRuleString getSelectionRuleString(Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+	public SelectionRuleString getSelectionRuleString(Long ruleid, Long id) throws NoResultException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleString({}, {})", ruleid, id);
+
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == ruleid || 0 == ruleid) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_ID_MISSING, MSG_ID_SELECTION_RULE_ID_MISSING));
+		}
 		
-		throw new UnsupportedOperationException(logError("GET for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find requested simple selection rule
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getId() == id.longValue()) {
+				SelectionRuleString restRule = new SelectionRuleString();
+				restRule.setId(modelRule.getId());
+				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
+				restRule.setMode(modelRule.getMode());
+				restRule.setSelectionRule(modelRule.toString());
+				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
+				}
+				logInfo(MSG_SELECTION_RULE_RETRIEVED, MSG_ID_SELECTION_RULE_RETRIEVED, ruleid, id);
+				return restRule;
+			}
+		}
+		
+		// Selection rule not found
+		throw new NoResultException(logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
 	}
 
     /**
