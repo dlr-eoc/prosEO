@@ -6,8 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class GUIProductClassController {
 	
 		
-	   
-	    
+
 	    @RequestMapping(value = "/productclass-show")
 	    public String showProductClass() {
 	    

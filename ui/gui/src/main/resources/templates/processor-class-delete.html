@@ -32,10 +32,10 @@
 <body class="text-center"style="background-image: url(background.jpg)">
   <div th:insert="fragments/navbar.html :: navigation-bar"></div>
 <div class="container-fluid">
-<form name = "prc-cls-rm" action="/proccessor-class-delete?">
+<form name = "prc-cls-rm" th:action="@{/proccessor-class-delete/${id}?delete">
 
 <div class="input-group mb-3">
-	<p class="text-left"><input type="text" placeholder="Processor-Class Name" class="form-control" id="processorClassName"></p>
+	<p class="text-left"><input type="text" placeholder="Processor-Class Name" name = "myid" class="form-control" th:value="*{myid}" id="processorid"></p>
 </div>
   <div class="input-group mb-3">
   <button type="submit" class="btn btn-danger mb-2">Delete Processor-Class</button>
