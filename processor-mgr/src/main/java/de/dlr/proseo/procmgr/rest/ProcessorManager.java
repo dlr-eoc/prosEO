@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Processor;
-import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.RestProcessor;
@@ -56,6 +55,7 @@ public class ProcessorManager {
 	private static final int MSG_ID_PROCESSOR_NOT_MODIFIED = 2260;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2261;
 	private static final int MSG_ID_PROCESSOR_DELETED = 2262;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2263;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -66,6 +66,7 @@ public class ProcessorManager {
 	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
 	private static final String MSG_PROCESSOR_DATA_MISSING = "(E%d) Processor data not set";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor deletion unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
 
 	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
 	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
@@ -273,6 +274,11 @@ public class ProcessorManager {
 			throw new EntityNotFoundException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
 		}
 		Processor modelProcessor = optProcessor.get();
+		
+		// Make sure we are allowed to change the processor (no intermediate update)
+		if (modelProcessor.getVersion() != processor.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
 		
 		// Apply changed attributes
 		Processor changedProcessor = ProcessorUtil.toModelProcessor(processor);

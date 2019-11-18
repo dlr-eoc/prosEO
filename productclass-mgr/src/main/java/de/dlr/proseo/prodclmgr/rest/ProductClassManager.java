@@ -42,7 +42,6 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.SelectionRule;
-import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
@@ -97,11 +96,21 @@ public class ProductClassManager {
 	private static final int MSG_ID_SELECTION_RULE_ID_MISSING = 2133;
 	private static final int MSG_ID_SELECTION_RULE_ID_NOT_FOUND = 2134;
 	private static final int MSG_ID_SELECTION_RULE_RETRIEVED = 2135;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_SELECTION_RULE_DATA_MISSING = 2136;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2137;
+	private static final int MSG_ID_CONCURRENT_RULE_UPDATE = 2138;
+	private static final int MSG_ID_SELECTION_RULE_MODIFIED = 2139;
+	private static final int MSG_ID_SELECTION_RULE_NOT_MODIFIED = 2140;
+	private static final int MSG_ID_SELECTION_RULE_DELETED = 2141;
+	private static final int MSG_ID_PROCESSOR_NAME_MISSING = 2142;
+	private static final int MSG_ID_PROCESSOR_ADDED = 2143;
+	private static final int MSG_ID_PROCESSOR_NOT_FOUND = 2144;
+	private static final int MSG_ID_PROCESSOR_REMOVED = 2145;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
-	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with id %d not found";
+	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with ID %d not found";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s, product type %s and mission type %s";
 	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
@@ -127,6 +136,12 @@ public class ProductClassManager {
 	private static final String MSG_SOURCE_CLASS_MISSING = "(E%d) Source product class not set";
 	private static final String MSG_SELECTION_RULE_ID_MISSING = "(E%d) Selection rule ID not set";
 	private static final String MSG_SELECTION_RULE_ID_NOT_FOUND = "(E%d) Selection rule with ID %d not found for product class with ID %d";
+	private static final String MSG_SELECTION_RULE_DATA_MISSING = "(E%d) Selection rule data not set";
+	private static final Object MSG_EXACTLY_ONE_SELECTION_RULE_EXPECTED = "Exactly one simple selection rule expected"; // Sub-message for MSG_INVALID_RULE_STRING
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product class with ID %d has been modified since retrieval by the client";
+	private static final String MSG_CONCURRENT_RULE_UPDATE = "(E%d) The selection rule with ID %d has been modified since retrieval by the client";
+	private static final String MSG_PROCESSOR_NAME_MISSING = "(E%d) Name of configured processor not set";
+	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found in selection rule with ID %d for product class with ID %d";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s, product type %s and mission type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -137,6 +152,11 @@ public class ProductClassManager {
 	private static final String MSG_PRODUCT_CLASS_DELETED = "(I%d) Product class with ID %d deleted";
 	private static final String MSG_SELECTION_RULE_LIST_RETRIEVED = "(I%d) Selection rules for target product type %s and source product type %s retrieved";
 	private static final String MSG_SELECTION_RULE_RETRIEVED = "(I%d) Selection rule with ID %d for product class with ID %d retrieved";
+	private static final String MSG_SELECTION_RULE_MODIFIED = "(I%d) Selection rule with ID %d modified";
+	private static final String MSG_SELECTION_RULE_NOT_MODIFIED = "(I%d) Selection rule with ID %d not modified (no changes)";
+	private static final String MSG_SELECTION_RULE_DELETED = "(I%d) Selection rule with ID %d for product class with ID %d deleted";
+	private static final String MSG_PROCESSOR_ADDED = "(I%d) Configured processor %s added to selection rule with ID %d for product class with ID %d";
+	private static final String MSG_PROCESSOR_REMOVED = "(I%d) Configured processor %s removed from selection rule with ID %d for product class with ID %d";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -469,6 +489,11 @@ public class ProductClassManager {
 		}
 		ProductClass modelProductClass = optProductClass.get();
 		
+		// Make sure we are allowed to change the product class(no intermediate update)
+		if (modelProductClass.getVersion() != productClass.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
+		
 		// Apply changed attributes
 		ProductClass changedProductClass = ProductClassUtil.toModelProductClass(productClass);
 		
@@ -555,10 +580,11 @@ public class ProductClassManager {
      * Delete a product class by ID (with all its selection rules)
      * 
      * @param id the database ID of the product class to delete
-	 * @throws EntityNotFoundException if the processor to delete does not exist in the database
-	 * @throws RuntimeException if the deletion was not performed as expected
+     * @throws EntityNotFoundException if the processor to delete does not exist in the database
+     * @throws RuntimeException if the deletion was not performed as expected
+     * @throws IllegalArgumentException if the product class ID was not given
      */
-	public void deleteProductclassById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteProductclassById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -756,9 +782,106 @@ public class ProductClassManager {
 	public SelectionRuleString modifySelectionRuleString(Long ruleid, Long id,
 			SelectionRuleString selectionRuleString) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException{
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifySelectionRuleString({}, {}, {})", ruleid, id, selectionRuleString);
+
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == ruleid || 0 == ruleid) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_ID_MISSING, MSG_ID_SELECTION_RULE_ID_MISSING));
+		}
+		if (null == selectionRuleString || null == selectionRuleString.getSelectionRule() || 0 == selectionRuleString.getSelectionRule().length()) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_DATA_MISSING, MSG_ID_SELECTION_RULE_DATA_MISSING));
+		}
 		
-		throw new UnsupportedOperationException(logError("PATCH for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find requested simple selection rule
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getId() == id.longValue()) {
+				// Make sure we are allowed to change the selection rule (no intermediate update)
+				if (modelRule.getVersion() != selectionRuleString.getVersion().intValue()) {
+					throw new ConcurrentModificationException(logError(MSG_CONCURRENT_RULE_UPDATE, MSG_ID_CONCURRENT_RULE_UPDATE, ruleid));
+				}
+				
+				// Parse the selection rule string
+				SelectionRule changedRule = null;
+				try {
+					changedRule = SelectionRule.parseSelectionRule(modelProductClass.get(), selectionRuleString.getSelectionRule());
+				} catch (ParseException e) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_RULE_STRING, MSG_ID_INVALID_RULE_STRING, selectionRuleString, e.getMessage()));
+				}
+				
+				boolean ruleChanged = false;
+				// Check whether the (normalized) selection rule string was changed
+				List<SimpleSelectionRule> changedSimpleRules = changedRule.getSimpleRules();
+				if (1 != changedSimpleRules.size()) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_RULE_STRING, MSG_ID_INVALID_RULE_STRING, selectionRuleString, MSG_EXACTLY_ONE_SELECTION_RULE_EXPECTED));
+				}
+				SimpleSelectionRule changedSimpleRule = changedSimpleRules.get(0);
+				if (!modelRule.toString().equals(changedRule.toString())) {
+					ruleChanged = true;
+					modelRule.setFilterConditions(changedSimpleRule.getFilterConditions());
+					modelRule.setFilteredSourceProductType(changedSimpleRule.getFilteredSourceProductType());
+					modelRule.setIsMandatory(changedSimpleRule.getIsMandatory());
+					modelRule.setSimplePolicies(changedSimpleRule.getSimplePolicies());
+					modelRule.setSourceProductClass(changedSimpleRule.getSourceProductClass());
+				}
+				// Check mode change
+				if (!modelRule.getMode().equals(selectionRuleString.getMode())) {
+					ruleChanged = true;
+					modelRule.setMode(selectionRuleString.getMode());
+				}
+				// Check for new configured processors
+				Set<ConfiguredProcessor> newConfiguredProcessors = new HashSet<>();
+				for (String changedProcessorName: selectionRuleString.getConfiguredProcessors()) {
+					ConfiguredProcessor changedProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedProcessorName);
+					if (null == changedProcessor) {
+						throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, changedProcessorName));
+					}
+					if (!modelRule.getApplicableConfiguredProcessors().contains(changedProcessor)) {
+						ruleChanged = true;
+					}
+					newConfiguredProcessors.add(changedProcessor);
+				}
+				// Check for removed configured processors
+				for (ConfiguredProcessor oldProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					if (!newConfiguredProcessors.contains(oldProcessor)) {
+						ruleChanged = true;
+					}
+				}
+				
+				// Save simple selection rule only if anything was actually changed
+				if (ruleChanged) {
+					modelRule.incrementVersion();
+					modelRule.setApplicableConfiguredProcessors(newConfiguredProcessors);
+					RepositoryService.getProductClassRepository().save(modelProductClass.get());
+				}
+				
+				SelectionRuleString restRule = new SelectionRuleString();
+				restRule.setId(modelRule.getId());
+				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
+				restRule.setMode(modelRule.getMode());
+				restRule.setSelectionRule(modelRule.toString());
+				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
+				}
+				if (ruleChanged) {
+					logInfo(MSG_SELECTION_RULE_MODIFIED, MSG_ID_SELECTION_RULE_MODIFIED, ruleid, id);
+				} else {
+					logInfo(MSG_SELECTION_RULE_NOT_MODIFIED, MSG_ID_SELECTION_RULE_NOT_MODIFIED, ruleid, id);
+				}
+				return restRule;
+			}
+		}
+		
+		// Selection rule not found
+		throw new EntityNotFoundException(logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
 	}
 
     /**
@@ -766,27 +889,109 @@ public class ProductClassManager {
      * 
      * @param ruleid the database ID of the simple selection rule to delete
      * @param id the database ID of the product class
-	 * @throws EntityNotFoundException if the selection rule to delete does not exist in the database
-	 * @throws RuntimeException if the deletion was not performed as expected
+     * @throws EntityNotFoundException if the selection rule to delete or the product class do not exist in the database
+     * @throws IllegalArgumentException if the ID of the product class or the selection rule was not given
      */
-	public void deleteSelectionrule(Long ruleid, Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
+	public void deleteSelectionrule(Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionrule({}, {})", ruleid, id);
 		
-		throw new UnsupportedOperationException(logError("DELETE for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == ruleid || 0 == ruleid) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_ID_MISSING, MSG_ID_SELECTION_RULE_ID_MISSING));
+		}
+		
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find requested simple selection rule
+		SimpleSelectionRule modelRuleToDelete = null;
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getId() == id.longValue()) {
+				modelRuleToDelete = modelRule;
+				break;
+			}
+		}
+		
+		// Selection rule not found
+		if (null == modelRuleToDelete) {
+			throw new EntityNotFoundException(
+					logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
+		}
+		
+		modelProductClass.get().getRequiredSelectionRules().remove(modelRuleToDelete);
+		RepositoryService.getProductClassRepository().save(modelProductClass.get());
+
+		logInfo(MSG_SELECTION_RULE_DELETED, MSG_ID_SELECTION_RULE_DELETED, ruleid, id);
 	}
 
     /**
-     * Add the configured processor to the selection rule
+     * Add the configured processor to the selection rule (if it is not already part of the selection rule)
      * 
      * @param configuredProcessor the name of the configured processor to add to the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
+     * @return the modified selection rule in Rule Language
+     * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
+     * @throws IllegalArgumentException if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
-	public void addProcessorToRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException {
-		// TODO Auto-generated method stub
+	public SelectionRuleString addProcessorToRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> addProcessorToRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		throw new UnsupportedOperationException(logError("PUT for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == ruleid || 0 == ruleid) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_ID_MISSING, MSG_ID_SELECTION_RULE_ID_MISSING));
+		}
+		if (null == configuredProcessor || 0 == configuredProcessor.length()) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_NAME_MISSING, MSG_ID_PROCESSOR_NAME_MISSING));
+		}
+		
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find requested simple selection rule
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getId() == id.longValue()) {
+				// Retrieve the processor
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				if (null == newProcessor) {
+					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
+				}
+				// Add the processor, if is not yet added
+				if (!modelRule.getApplicableConfiguredProcessors().contains(newProcessor)) {
+					modelRule.getApplicableConfiguredProcessors().add(newProcessor);
+					RepositoryService.getProductClassRepository().save(modelProductClass.get());
+					logInfo(MSG_PROCESSOR_ADDED, MSG_ID_PROCESSOR_ADDED, configuredProcessor, ruleid, id);
+				} else {
+					logInfo(MSG_SELECTION_RULE_NOT_MODIFIED, MSG_ID_SELECTION_RULE_NOT_MODIFIED, ruleid, id);
+				}
+				
+				// Return the updated selection rule
+				SelectionRuleString restRule = new SelectionRuleString();
+				restRule.setId(modelRule.getId());
+				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
+				restRule.setMode(modelRule.getMode());
+				restRule.setSelectionRule(modelRule.toString());
+				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
+				}
+				return restRule;
+			}
+		}
+		
+		// Selection rule not found
+		throw new EntityNotFoundException(logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
 	}
 
     /**
@@ -795,12 +1000,61 @@ public class ProductClassManager {
      * @param configuredProcessor the name of the configured processor to remove from the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
+     * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
+     * @throws IllegalArgumentException if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
-	public void removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException {
-		// TODO Auto-generated method stub
+	public SelectionRuleString removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeProcessorFromRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		throw new UnsupportedOperationException(logError("DELETE for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED));
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
+		}
+		if (null == ruleid || 0 == ruleid) {
+			throw new IllegalArgumentException(logError(MSG_SELECTION_RULE_ID_MISSING, MSG_ID_SELECTION_RULE_ID_MISSING));
+		}
+		if (null == configuredProcessor || 0 == configuredProcessor.length()) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_NAME_MISSING, MSG_ID_PROCESSOR_NAME_MISSING));
+		}
+		
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		
+		if (modelProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Find requested simple selection rule
+		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
+			if (modelRule.getId() == id.longValue()) {
+				// Retrieve the processor
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				if (null == newProcessor) {
+					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
+				}
+				// Add the processor, if is not yet added
+				if (modelRule.getApplicableConfiguredProcessors().contains(newProcessor)) {
+					modelRule.getApplicableConfiguredProcessors().remove(newProcessor);
+					RepositoryService.getProductClassRepository().save(modelProductClass.get());
+					logInfo(MSG_PROCESSOR_REMOVED, MSG_ID_PROCESSOR_REMOVED, configuredProcessor, ruleid, id);
+				} else {
+					throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND, configuredProcessor, ruleid, id));
+				}
+				
+				// Return the updated selection rule
+				SelectionRuleString restRule = new SelectionRuleString();
+				restRule.setId(modelRule.getId());
+				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
+				restRule.setMode(modelRule.getMode());
+				restRule.setSelectionRule(modelRule.toString());
+				for (ConfiguredProcessor modelProcessor: modelRule.getApplicableConfiguredProcessors()) {
+					restRule.getConfiguredProcessors().add(modelProcessor.getIdentifier());
+				}
+				return restRule;
+			}
+		}
+		
+		// Selection rule not found
+		throw new EntityNotFoundException(logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
 	}
 
 }

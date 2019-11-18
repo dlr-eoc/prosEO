@@ -54,6 +54,7 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_MODIFIED = 2357;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_DELETED = 2358;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2359;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2360;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -64,6 +65,7 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_PROCESSOR_INVALID = "(E%d) Processor %s with version %s invalid for mission %s";
 	private static final String MSG_CONFIGURATION_INVALID = "(E%d) Configuration %s with version %s invalid for mission %s";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion of configured processor unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configured processor with ID %d has been modified since retrieval by the client";
 
 	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s, processor version %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -280,6 +282,11 @@ public class ConfiguredProcessorManager {
 			throw new NoResultException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
 		}
 		ConfiguredProcessor modelConfiguredProcessor = optConfiguredProcessor.get();
+		
+		// Make sure we are allowed to change the configured processor (no intermediate update)
+		if (modelConfiguredProcessor.getVersion() != configuredProcessor.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
 		
 		// Apply changed attributes
 		ConfiguredProcessor changedConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);

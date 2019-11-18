@@ -175,7 +175,8 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param id the database ID of the product class to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product class did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID was not given
      */
 	@Override
 	public ResponseEntity<?> deleteProductclassById(Long id) {
@@ -186,6 +187,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
@@ -265,11 +268,17 @@ public class ProductClassControllerImpl implements ProductclassController {
 	@Override
 	public ResponseEntity<SelectionRuleString> modifySelectionRuleString(Long ruleid, Long id,
 			SelectionRuleString selectionRuleString) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifySelectionRuleString({}, {}, {})", ruleid, id, selectionRuleString);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.modifySelectionRuleString(ruleid, id, selectionRuleString), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
     /**
@@ -278,34 +287,46 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param ruleid the database ID of the simple selection rule to delete
      * @param id the database ID of the product class
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND", if the simple selection rule did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_FOUND", if the if the selection rule to delete or the product class do not exist in the database, or
+	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given
      */
 	@Override
 	public ResponseEntity<?> deleteSelectionrule(Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionrule({}, {})", ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			productClassManager.deleteSelectionrule(ruleid, id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
-     * Add the configured processor to the selection rule
+     * Add the configured processor to the selection rule (if it is not already part of the selection rule)
      * 
      * @param configuredProcessor the name of the configured processor to add to the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @return a response entity with HTTP status "NO_CONTENT", if the addition was successful, or
-	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class with the given ID exist
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the modified simple selection rule in 
+	 *             Rule Language, if the addition was successful, or
+	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class 
+	 *             with the given ID exist, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
-	public ResponseEntity<?> addProcessorToRule(String configuredProcessor, Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<SelectionRuleString> addProcessorToRule(String configuredProcessor, Long ruleid, Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> addProcessorToRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PUT for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.addProcessorToRule(configuredProcessor, ruleid, id), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
@@ -314,16 +335,23 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param configuredProcessor the name of the configured processor to remove from the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class with the given ID exist
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the modified simple selection rule in
+	 *             Rule Language, if the removal was successful, or
+	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class
+	 *             with the given ID exist, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
-	public ResponseEntity<?> removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<SelectionRuleString> removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeProcessorFromRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.removeProcessorFromRule(configuredProcessor, ruleid, id), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 }

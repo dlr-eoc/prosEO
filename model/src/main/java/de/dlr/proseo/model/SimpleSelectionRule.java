@@ -21,9 +21,11 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import de.dlr.proseo.model.util.SelectionItem;
 
@@ -34,6 +36,7 @@ import de.dlr.proseo.model.util.SelectionItem;
  * @author Dr. Thomas Bassler
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "target_product_class_id, source_product_class_id, mode") })
 public class SimpleSelectionRule extends PersistentObject {
 	
 	/* Error messages */

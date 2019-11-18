@@ -180,13 +180,21 @@ resourceTypes:
               type: string
               description: The configured processor, for which the selection rule is valid
           put:
-            description: Add the configured processor to the selection rule
+            description: Add the configured processor to the selection rule (if it is not already part of the selection rule)
             displayName: addProcessorToRule
             responses:
-              204:
+              200:
+                body:
+                  application/json:
+                    type: SelectionRuleString
+                    description: The modified selection rule
           delete:
             description: Remove the configured processor from the selection rule
                          (the selection rule will be disconnected from the configured processor)
             displayName: removeProcessorFromRule
             responses:
-              204:
+              200:
+                body:
+                  application/json:
+                    type: SelectionRuleString
+                    description: The modified selection rule
