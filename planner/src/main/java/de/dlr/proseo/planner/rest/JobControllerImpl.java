@@ -20,7 +20,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
-import de.dlr.proseo.planner.rest.model.PlannerJob;
+import de.dlr.proseo.planner.rest.model.RestJob;
 
 /**
  * Spring MVC controller for the prosEO Production Planner; TODO
@@ -46,7 +46,7 @@ public class JobControllerImpl implements JobController {
      * 
      */
 	@Override
-    public ResponseEntity<List<PlannerJob>> getPlannerJobsByState(String state) {
+    public ResponseEntity<List<RestJob>> getRestJobsByState(String state) {
 		// todo remove test start
 
 		if (productionPlanner.getKubeConfig(null).isConnected()) {
@@ -58,7 +58,7 @@ public class JobControllerImpl implements JobController {
 		return null;
 	}
 	@Override
-    public ResponseEntity<PlannerJob> getPlannerJobByName(String name) {
+    public ResponseEntity<RestJob> getRestJobByName(String name) {
 		// TODO Auto-generated method stub
 		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
 		logger.error(message);
@@ -67,7 +67,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<PlannerJob> updateJobs(String name) {
+    public ResponseEntity<RestJob> updateJobs(String name) {
 		// TODO Auto-generated method stub
 		if (name != null) {
 			Optional<ProcessingOrder> orderOpt = null;
@@ -94,7 +94,7 @@ public class JobControllerImpl implements JobController {
     	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<PlannerJob> deleteJobByName(String name) {
+    public ResponseEntity<RestJob> deleteJobByName(String name) {
 		// TODO Auto-generated method stub
     	boolean result = productionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {

@@ -136,13 +136,33 @@
 	<build>
 		<finalName>proseo-model</finalName>
 		<plugins>
-			<!-- Test Spring MVC generation from RAML files -->
+            <!-- Add generated sources to Maven source directories -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <!-- where to find the generated sources -->
+                                <source>${raml-output-path}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generate convenience model classes for REST interfaces from RAML files -->
 			<plugin>
 				<groupId>com.phoenixnap.oss</groupId>
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
-					<basePackage>de.dlr.proseo.model.rest</basePackage>
-					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
+					<basePackage>${raml-base-package}.rest</basePackage>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.SpringFeignClientInterfaceRule</rule>
 				</configuration>
 				<executions>
 					<execution>
@@ -154,6 +174,18 @@
 					</execution>
 				</executions>
 			</plugin>
+            
+            <!-- Exclude generated dummy client from compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <excludes>
+                       <exclude>**/Dummy*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 </project>

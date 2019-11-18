@@ -24,7 +24,7 @@ import de.dlr.proseo.model.joborder.Conf;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
+import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.

@@ -12,12 +12,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
+import de.dlr.proseo.model.rest.model.RestProcessorClass;
 
 @Controller
 public class ProcessorGUIController {
