@@ -3,7 +3,7 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:postgresql://brainhost:5432/proseo
+        url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
@@ -13,27 +13,13 @@ logging:
         de:
             dlr:
                 proseo: TRACE
-        org:
-            springframework:
-                boot:
-                    test:
-                        web:
-                            client: DEBUG
 proseo:
     productionPlanner:
-        url: https://brainhost:8081/proseo/planner/v0.1
+        url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         user: none
         password: none
     storageManager:
-        url: http://proseo-stmgr:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        # url: from database
         user: none
         password: none
         defaultStorageType: S3
-    user:
-        name: test
-        password: test
-    testinput:
-        directory: src/test/resources/IDA_test
-        files:
-            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
-            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc

@@ -14,9 +14,6 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
-    productionPlanner:
-        url: https://localhost:8091/proseo/planner/v0.1
-        proseo:
     user:
         name: user
         password: password

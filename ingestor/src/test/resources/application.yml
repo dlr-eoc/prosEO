@@ -13,12 +13,6 @@ logging:
         de:
             dlr:
                 proseo: TRACE
-        org:
-            springframework:
-                boot:
-                    test:
-                        web:
-                            client: DEBUG
 proseo:
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner

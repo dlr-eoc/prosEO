@@ -3,7 +3,7 @@ spring:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
     datasource:
-        url: jdbc:postgresql://brainhost:5432/proseo
+        url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: sequel09Master
     packagesToScan: de.dlr.proseo.model
@@ -14,8 +14,6 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
-    productionPlanner:
-        url: https://brainhost:8091/proseo/planner/v0.1
     user:
         name: user
         password: password
