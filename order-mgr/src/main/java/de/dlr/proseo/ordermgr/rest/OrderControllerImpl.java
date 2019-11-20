@@ -16,6 +16,7 @@ import javax.validation.Valid;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -98,8 +99,8 @@ public class OrderControllerImpl implements OrderController {
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
-			Date starttimeto) {
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date starttimefrom,
+			@DateTimeFormat Date starttimeto) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, starttimefrom, starttimeto);
 		
 		try {
