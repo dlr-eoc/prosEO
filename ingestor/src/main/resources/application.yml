@@ -28,6 +28,7 @@ proseo:
         url: http://proseo-stmgr:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none
         password: none
+        defaultStorageType: S3
     user:
         name: test
         password: test

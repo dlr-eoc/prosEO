@@ -41,6 +41,7 @@
 		<module>ui</module>
 		<module>base-wrapper</module>
 		<module>storage-mgr</module>
+		<module>interfaces</module>
 	</modules>
 
 	<dependencies>

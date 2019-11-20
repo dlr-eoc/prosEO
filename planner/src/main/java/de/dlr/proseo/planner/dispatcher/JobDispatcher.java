@@ -24,7 +24,7 @@ import de.dlr.proseo.model.joborder.Conf;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.storagemgr.rest.model.Joborder;
+import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
@@ -377,11 +377,11 @@ public class JobDispatcher {
 				RestTemplate restTemplate = new RestTemplate();
 				String restUrl = "/proseo/storage-mgr/v0.1/joborders";
 				String b64String = jobOrder.buildBase64String(true);
-				Joborder jo = new Joborder();
+				RestJoborder jo = new RestJoborder();
 				jo.setJobOrderStringBase64(b64String);
 				logger.info("HTTP Request: " + storageManagerUrl + restUrl);
 				
-				ResponseEntity<Joborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, Joborder.class);
+				ResponseEntity<RestJoborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, RestJoborder.class);
 
 				logger.info("... response is {}", response.getStatusCode());
 

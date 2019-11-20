@@ -8,8 +8,12 @@ package de.dlr.proseo.procmgr.rest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -18,18 +22,19 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.Configuration;
+import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
-import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 
 /**
  * Service methods required to manage configuration versions.
@@ -51,18 +56,33 @@ public class ConfigurationManager {
 	private static final int MSG_ID_CONFIGURATION_ID_MISSING = 2306;
 	private static final int MSG_ID_CONFIGURATION_ID_NOT_FOUND = 2307;
 	private static final int MSG_ID_FILENAME_TYPE_INVALID = 2308;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_CONFIGURATION_DATA_MISSING = 2309;
+	private static final int MSG_ID_INPUT_FILE_ID_NOT_FOUND = 2310;
+	private static final int MSG_ID_CONFIGURATION_MODIFIED = 2311;
+	private static final int MSG_ID_CONFIGURATION_NOT_MODIFIED = 2312;
+	private static final int MSG_ID_CONFIGURATION_DELETED = 2313;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2314;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2315;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_CONFIGURATION_NOT_FOUND = "(E%d) No configuration found for mission %s, processor name %s and configuration version %s";
-	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
-	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
 	private static final String MSG_CONFIGURATION_MISSING = "(E%d) Configuration not set";
 	private static final String MSG_CONFIGURATION_ID_MISSING = "(E%d) Configuration ID not set";
 	private static final String MSG_CONFIGURATION_ID_NOT_FOUND = "(E%d) No Configuration found with ID %d";
 	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
 	private static final String MSG_FILENAME_TYPE_INVALID = "(E%d) Input filename type %s invalid";
+	private static final String MSG_CONFIGURATION_DATA_MISSING = "(E%d) Configuration data not set";
+	private static final String MSG_INPUT_FILE_ID_NOT_FOUND = "(E%d) No static input file found with ID %d";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Configuration deletion unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configuration with ID %d has been modified since retrieval by the client";
+
+	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
+	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
 	private static final String MSG_CONFIGURATION_CREATED = "(I%d) Configuration for processor %s with version %s created for mission %s";
+	private static final String MSG_CONFIGURATION_MODIFIED = "(I%d) Configuration with id %d modified";
+	private static final String MSG_CONFIGURATION_NOT_MODIFIED = "(I%d) Configuration with id %d not modified (no changes)";
+	private static final String MSG_CONFIGURATION_DELETED = "(I%d) Configuration with id %d deleted";
 	
 	/** Allowed filename types for static input files (in lower case for easier comparation) */
 	private static final List<String> ALLOWED_FILENAME_TYPES = Arrays.asList("physical", "logical", "stem", "regexp", "directory");
@@ -197,11 +217,11 @@ public class ConfigurationManager {
 		}
 		
 		for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
-			ConfigurationInputFile modelInputFile = new ConfigurationInputFile();
 			if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType())) {
 				throw new IllegalArgumentException(logError(MSG_FILENAME_TYPE_INVALID, MSG_ID_FILENAME_TYPE_INVALID,
 						staticInputFile.getFileNameType()));
 			}
+			ConfigurationInputFile modelInputFile = new ConfigurationInputFile();
 			modelInputFile.setFileType(staticInputFile.getFileType());
 			modelInputFile.setFileNameType(staticInputFile.getFileNameType());
 			modelInputFile.getFileNames().addAll(staticInputFile.getFileNames());
@@ -257,8 +277,128 @@ public class ConfigurationManager {
 	 */
 	public RestConfiguration modifyConfiguration(Long id, @Valid RestConfiguration configuration) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("PATCH for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguration({}, {})", id, (null == configuration ? "MISSING" : configuration.getProcessorName() + " " + configuration.getConfigurationVersion()));
+		
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_ID_MISSING, MSG_ID_CONFIGURATION_ID_MISSING));
+		}
+		if (null == configuration) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_DATA_MISSING, MSG_ID_CONFIGURATION_DATA_MISSING));
+		}
+		
+		Optional<Configuration> optConfiguration = RepositoryService.getConfigurationRepository().findById(id);
+		
+		if (optConfiguration.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id));
+		}
+		Configuration modelConfiguration = optConfiguration.get();
+		
+		// Make sure we are allowed to change the configuration (no intermediate update)
+		if (modelConfiguration.getVersion() != configuration.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
+		
+		// Apply changed attributes
+		Configuration changedConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
+		
+		boolean configurationChanged = false;
+		if (!modelConfiguration.getConfigurationVersion().equals(changedConfiguration.getConfigurationVersion())) {
+			configurationChanged = true;
+			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
+		}
+		if (!modelConfiguration.getDockerRunParameters().equals(changedConfiguration.getDockerRunParameters())) {
+			configurationChanged = true;
+			modelConfiguration.setDockerRunParameters(changedConfiguration.getDockerRunParameters());
+		}
+		
+		// Check for new or changed parameters
+		Map<String, Parameter> newParameters = new HashMap<>();
+		for (String paramKey: changedConfiguration.getDynProcParameters().keySet()) {
+			Parameter changedParameter = changedConfiguration.getDynProcParameters().get(paramKey);
+			Parameter modelParameter = modelConfiguration.getDynProcParameters().get(paramKey);
+			if (null == modelParameter || !modelParameter.equals(changedParameter)) {
+				configurationChanged = true;
+				newParameters.put(paramKey, changedParameter);
+			} else {
+				newParameters.put(paramKey, modelParameter);
+			}
+		}
+		// Check for removed parameters
+		if (!newParameters.keySet().equals(modelConfiguration.getDynProcParameters().keySet())) {
+			configurationChanged = true;
+		}
+		
+		// Check for new or changed configuration files
+		Set<ConfigurationFile> newFiles = new HashSet<>();
+		for (ConfigurationFile changedFile: changedConfiguration.getConfigurationFiles()) {
+			if (!modelConfiguration.getConfigurationFiles().contains(changedFile)) {
+				configurationChanged = true;
+			}
+			newFiles.add(changedFile);
+		}
+		// Check for removed configuration files
+		if (!newFiles.equals(modelConfiguration.getConfigurationFiles())) {
+			configurationChanged = true;
+		}
+		
+		// Check for new or changed static input files
+		Set<ConfigurationInputFile> newInputFiles = new HashSet<>();
+		for (RestConfigurationInputFile restInputFile: configuration.getStaticInputFiles()) {
+			if (null == restInputFile.getId()) {
+				// New static input file
+				configurationChanged = true;
+				ConfigurationInputFile changedInputFile = new ConfigurationInputFile();
+				changedInputFile.setFileType(restInputFile.getFileType());
+				changedInputFile.setFileNameType(restInputFile.getFileNameType());
+				changedInputFile.getFileNames().addAll(restInputFile.getFileNames());
+				newInputFiles.add(changedInputFile);
+				break;
+			}
+			ConfigurationInputFile modelInputFile = null;
+			for (ConfigurationInputFile inputFile: modelConfiguration.getStaticInputFiles()) {
+				if (inputFile.getId() == restInputFile.getId().longValue()) {
+					modelInputFile = inputFile;
+					break;
+				}
+			}
+			if (null == modelInputFile) {
+				throw new EntityNotFoundException(logError(MSG_INPUT_FILE_ID_NOT_FOUND, MSG_ID_INPUT_FILE_ID_NOT_FOUND, id));
+			}
+			if (!modelInputFile.getFileType().equals(restInputFile.getFileType())) {
+				configurationChanged = true;
+				modelInputFile.setFileType(restInputFile.getFileType());
+			}
+			if (!modelInputFile.getFileNameType().equals(restInputFile.getFileNameType())) {
+				configurationChanged = true;
+				modelInputFile.setFileNameType(restInputFile.getFileNameType());
+			}
+			if (!modelInputFile.getFileNames().equals(restInputFile.getFileNames())) {
+				configurationChanged = true;
+				modelInputFile.setFileNames(restInputFile.getFileNames());
+			}
+			newInputFiles.add(modelInputFile);
+		}
+		// Check for removed static input files
+		for (ConfigurationInputFile inputFile: modelConfiguration.getStaticInputFiles()) {
+			if (!newInputFiles.contains(inputFile)) {
+				configurationChanged = true;
+			}
+		}
+
+		// Save configuration only if anything was actually changed
+		if (configurationChanged) {
+			modelConfiguration.incrementVersion();
+			modelConfiguration.setDynProcParameters(newParameters);
+			modelConfiguration.setConfigurationFiles(newFiles);
+			modelConfiguration.setStaticInputFiles(newInputFiles);
+			modelConfiguration = RepositoryService.getConfigurationRepository().save(modelConfiguration);
+			logInfo(MSG_CONFIGURATION_MODIFIED, MSG_ID_CONFIGURATION_MODIFIED, id);
+		} else {
+			logInfo(MSG_CONFIGURATION_NOT_MODIFIED, MSG_ID_CONFIGURATION_NOT_MODIFIED, id);
+		}
+		
+		return ConfigurationUtil.toRestConfiguration(modelConfiguration);
 	}
 
 	/**
@@ -269,8 +409,28 @@ public class ConfigurationManager {
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteConfigurationById(Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("DELETE for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfigurationById({})", id);
+		
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_ID_MISSING, MSG_ID_CONFIGURATION_ID_MISSING));
+		}
+		
+		// Test whether the product id is valid
+		Optional<Configuration> modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
+		if (modelConfiguration.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND));
+		}
+		
+		// Delete the processor class
+		RepositoryService.getConfigurationRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
+		if (!modelConfiguration.isEmpty()) {
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logInfo(MSG_CONFIGURATION_DELETED, MSG_ID_CONFIGURATION_DELETED, id);
 	}
 
 }

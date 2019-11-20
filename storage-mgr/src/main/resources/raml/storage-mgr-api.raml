@@ -7,10 +7,10 @@ mediaType: application/json
 
 
 types:
-  RestInfo: !include types/info.raml
-  RestStorage: !include types/storage.raml
-  RestProductFS: !include types/productFS.raml
-  RestJoborder: !include types/joborderBase64.raml
+  RestInfo: !include ../../../../../interfaces/src/main/resources/raml/types/info.raml
+  RestStorage: !include ../../../../../interfaces/src/main/resources/raml/types/storage.raml
+  RestProductFS: !include ../../../../../interfaces/src/main/resources/raml/types/productFS.raml
+  RestJoborder: !include ../../../../../interfaces/src/main/resources/raml/types/joborderBase64.raml
 
 
 resourceTypes:
@@ -50,7 +50,7 @@ resourceTypes:
           application/json:
             type: RestInfo
 
-/storages:
+/storage:
   type: standard
   get:
     description: Get storages by id
@@ -61,52 +61,53 @@ resourceTypes:
         body:
           application/json:
             type: RestStorage[]
-            example: !include examples/storage-list.json
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage-list.json
   post:
     description: Create a new storage
     body:
       application/json:
         type: RestStorage
-        example: !include examples/storage.json
+        example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
     responses:
       201:
         body:
           application/json:
             type: RestStorage
-            example: !include examples/storage.json
-  /{storageId}:
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
+  /products:
     /register:
       post:
         description: register products/files/dirs from unstructered storage in prosEO-storage
         body:
           application/json:
             type: RestProductFS
-            example: !include examples/productFS.json
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS.json
         responses:
           201:
             body:
               application/json:
                 type: RestProductFS
-                example: !include examples/productFS-reg.json
-    /products:
-      get:
-        description: get product-infos by Id
-        queryParameters:
-          id?: string
+                example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
+    get:
+      description: get product-infos by Id
+      queryParameters:
+        id?: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductFS
+    /{productId}:
+      delete:
+        description: delete/remove product having productId from prosEO storage
         responses:
           200:
             body:
               application/json:
                 type: RestProductFS
-      /{productId}:
-        delete:
-          description: delete/remove product having productId from prosEO storage
-          responses:
-            200:
-              body:
-                application/json:
-                  type: RestProductFS
-                  example: !include examples/productFS-del.json
+                example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-del.json
+
+
 
 /joborders:
     post:
@@ -114,10 +115,10 @@ resourceTypes:
       body:
         application/json:
           type: RestJoborder
-          example: !include examples/joborderBase64.json
+          example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64.json
       responses:
         201:
           body:
             application/json:
               type: RestJoborder
-              example: !include examples/joborderBase64-response.json
+              example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64-response.json

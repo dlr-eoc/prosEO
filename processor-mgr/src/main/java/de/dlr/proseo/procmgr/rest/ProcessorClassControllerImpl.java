@@ -5,19 +5,21 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
@@ -30,7 +32,7 @@ import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 public class ProcessorClassControllerImpl implements ProcessorclassController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -43,26 +45,6 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorClassControllerImpl.class);
 
-	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
-	
 	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 * 
@@ -147,10 +129,17 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 */
 	@Override
 	public ResponseEntity<RestProcessorClass> modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
+
+		try {
+			return new ResponseEntity<>(processorClassManager.modifyProcessorClass(id, processorClass), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
 	/**
@@ -159,14 +148,23 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param the ID of the processor class to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processor class did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given
 	 */
 	@Override
 	public ResponseEntity<?> deleteProcessorClassById(Long id) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for processor class not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorClassById({})", id);
+		
+		try {
+			processorClassManager.deleteProcessorClassById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
 }

@@ -11,9 +11,11 @@ proseo:
       s3EndPoint: http://minio:9000
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
+      s3DefaultBucket: proseo-data-001
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
+      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
       alluxioUnderFsS3BucketEndPoint: http://minio:9000
       alluxioUnderFsMaxPrefixes: 500
     joborder:
@@ -28,6 +30,6 @@ proseo:
       #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
       unregisteredProducts:
         k8sNode:
-          unregisteredProducts: /mnt/some-dir
+          unregisteredProducts: ""
           
         

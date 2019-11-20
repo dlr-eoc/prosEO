@@ -21,9 +21,11 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import de.dlr.proseo.model.util.SelectionItem;
 
@@ -34,6 +36,7 @@ import de.dlr.proseo.model.util.SelectionItem;
  * @author Dr. Thomas Bassler
  */
 @Entity
+@Table(indexes = { @Index(unique = true, columnList = "target_product_class_id, source_product_class_id, mode") })
 public class SimpleSelectionRule extends PersistentObject {
 	
 	/* Error messages */
@@ -55,7 +58,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	private Boolean isMandatory;
 	
 	/**
-	 * Minimum percentage of coverage of the desired validity period for fulfilment of this rule
+	 * Minimum percentage of coverage of the desired validity period for fulfilment of this rule (default 0)
 	 */
 	private Short minimumCoverage = 0;
 	
@@ -670,12 +673,16 @@ public class SimpleSelectionRule extends PersistentObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(sourceProductClass, targetProductClass);
+		result = prime * result + Objects.hash(sourceProductClass, targetProductClass, mode);
 		return result;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
+	/**
+	 * Test equality of selection rules based on source and target product classes and processing mode
+	 * (i. e. there must be only one selection rule for the same source and target classes and the same processing mode).
+	 * 
+	 * @param obj the reference object with which to compare
+	 * @return true if this object is the same as the obj argument according to the definition above; false otherwise
 	 */
 	@Override
 	public boolean equals(Object obj) {
@@ -687,7 +694,8 @@ public class SimpleSelectionRule extends PersistentObject {
 			return false;
 		SimpleSelectionRule other = (SimpleSelectionRule) obj;
 		return Objects.equals(sourceProductClass, other.sourceProductClass)
-				&& Objects.equals(targetProductClass, other.targetProductClass);
+				&& Objects.equals(targetProductClass, other.targetProductClass)
+				&& Objects.equals(mode, other.mode);
 	}
 
 }

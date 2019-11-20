@@ -7,10 +7,12 @@ package de.dlr.proseo.procmgr.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -46,33 +48,12 @@ import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 public class ConfigurationControllerImpl implements ConfigurationController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_CONFIGURATION_NOT_FOUND = 2300;
-	private static final int MSG_ID_CONFIGURATION_LIST_RETRIEVED = 2301;
-	private static final int MSG_ID_CONFIGURATION_RETRIEVED = 2302;
-	private static final int MSG_ID_CONFIGURATION_MISSING = 2303;
-	private static final int MSG_ID_PROCESSOR_CLASS_INVALID = 2304;
-	private static final int MSG_ID_CONFIGURATION_CREATED = 2305;
-	private static final int MSG_ID_CONFIGURATION_ID_MISSING = 2306;
-	private static final int MSG_ID_CONFIGURATION_ID_NOT_FOUND = 2307;
-	private static final int MSG_ID_FILENAME_TYPE_INVALID = 2308;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_CONFIGURATION_NOT_FOUND = "(E%d) No configuration found for mission %s, processor name %s and configuration version %s";
-	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
-	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
-	private static final String MSG_CONFIGURATION_MISSING = "(E%d) Configuration not set";
-	private static final String MSG_CONFIGURATION_ID_MISSING = "(E%d) Configuration ID not set";
-	private static final String MSG_CONFIGURATION_ID_NOT_FOUND = "(E%d) No Configuration found with ID %d";
-	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
-	private static final String MSG_FILENAME_TYPE_INVALID = "(E%d) Input filename type %s invalid";
-	private static final String MSG_CONFIGURATION_CREATED = "(I%d) Configuration for processor %s with version %s created for mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-processor-mgr ";
 	
-	/** Allowed filename types for static input files (in lower case for easier comparation) */
-	private static final List<String> ALLOWED_FILENAME_TYPES = Arrays.asList("physical", "logical", "stem", "regexp", "directory");
-
 	/** The configuration manager */
 	@Autowired
 	private ConfigurationManager configurationManager;
@@ -187,10 +168,17 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> modifyConfiguration(Long id, @Valid RestConfiguration configuration) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguration({}, {})", id, (null == configuration ? "MISSING" : configuration.getProcessorName() + " " + configuration.getConfigurationVersion()));
+		
+		try {
+			return new ResponseEntity<>(configurationManager.modifyConfiguration(id, configuration), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
 	/**
@@ -203,10 +191,16 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 */
 	@Override
 	public ResponseEntity<?> deleteConfigurationById(Long id) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for configuration not implemented", MSG_ID_NOT_IMPLEMENTED, id)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfigurationById({})", id);
+		
+		try {
+			configurationManager.deleteConfigurationById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
 }

@@ -17,14 +17,14 @@ mvn clean package -pl storage-mgr -am -DskipTests
 cd processing-engine/storage-mgr-deploy/
 cd docker
 ./build.sh
-#-->image name:tag is localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT-rc1
+#-->image name:tag is localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-rc1
 ```
 
 ## push to some registry
 - in case of insecure-registry create a file `/etc/docker/daemon.json`
 ```js
 {
-"insecure-registries": ["<registry-url"]
+"insecure-registries": ["<registry-url>"]
 }
 ```
 - restart docker-engine (sudo systemctl restart docker)
@@ -39,8 +39,17 @@ docker push <registry-url>/<repo>/sample-integration-processor:0.0.1-SNAPSHOT-rc
 ```
 
 ## kubernetes
-- first build and push docker image (steps above)
-- deploy a storage-mgr daemonset (--> storage-mgr at every k8s-node)
+- create k8s-secret holding credentials for private registry
+```sh
+# on some host where kubectl is configured
+docker login <registry-url>
+#check if docker-client file is under ~/.docker/config.json
+cat ~/.docker/config.json
+#create k8s-secret
+cd && kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=.docker/config.json --type=kubernetes.io/dockerconfigjson
+```
+- build and push docker image (steps above)
+- deploy the storage-mgr service
 ```sh
 cd kubernetes
 kubectl create -f storage-mgr.yaml
