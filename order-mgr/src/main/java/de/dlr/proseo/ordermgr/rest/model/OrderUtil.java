@@ -156,29 +156,37 @@ public class OrderUtil {
 		
 		ProcessingOrder processingOrder = new ProcessingOrder();
 		
-		processingOrder.setId(restOrder.getId());
-		while (processingOrder.getVersion() < restOrder.getVersion()) {
-			processingOrder.incrementVersion();
+		if (null != restOrder.getId() && 0 != restOrder.getId()) {
+			processingOrder.setId(restOrder.getId());
+			while (processingOrder.getVersion() < restOrder.getVersion()) {
+				processingOrder.incrementVersion();
+			} 
 		}
 		processingOrder.setIdentifier(restOrder.getIdentifier());
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
-		try {
-			processingOrder.setStartTime(restOrder.getStartTime().toInstant());
-			
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
+		if (null != restOrder.getStartTime()) {
+			try {
+				processingOrder.setStartTime(restOrder.getStartTime().toInstant());
+
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
+			} 
 		}
-		try {
-			processingOrder.setStopTime(restOrder.getStopTime().toInstant());
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
+		if (null != restOrder.getStopTime()) {
+			try {
+				processingOrder.setStopTime(restOrder.getStopTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
+			} 
 		}
-		try {
-			processingOrder.setExecutionTime(restOrder.getExecutionTime().toInstant());
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
-		}	
+		if (null != restOrder.getExecutionTime()) {
+			try {
+				processingOrder.setExecutionTime(restOrder.getExecutionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
+			} 
+		}
 		//To be verified
 		processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));
 	

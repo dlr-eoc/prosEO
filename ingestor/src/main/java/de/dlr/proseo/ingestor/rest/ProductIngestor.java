@@ -29,12 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductFileUtil;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
+import de.dlr.proseo.interfaces.rest.model.RestProductFS;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
@@ -98,6 +101,7 @@ public class ProductIngestor {
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
 	private static final String URL_STORAGE_MANAGER_REGISTER = "/storage/products/register";
 	private static final String URL_STORAGE_MANAGER_DELETE = "/storage/products/%d";
+	private static final String HTTP_HEADER_WARNING = "Warning";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductIngestor.class);
@@ -184,9 +188,9 @@ public class ProductIngestor {
 		Map<String, Object> postData = new HashMap<>();
 		postData.put("productId", String.valueOf(newProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
-		filePaths.add(ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
+		filePaths.add(ingestorProduct.getMountPoint() + File.separator + ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
-			filePaths.add(ingestorProduct.getFilePath() + File.separator + auxFile);
+			filePaths.add(ingestorProduct.getMountPoint() + File.separator + ingestorProduct.getFilePath() + File.separator + auxFile);
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
@@ -194,20 +198,27 @@ public class ProductIngestor {
 		
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
+		if (logger.isDebugEnabled()) logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
 		RestTemplate restTemplate = rtb.basicAuthentication(
 				ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<Map> responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
+		ResponseEntity<Map> responseEntity = null;
+		try {
+			responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
+		} catch (RestClientException e) {
+			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
+					ingestorProduct.getProductClass(), facility.getName(),
+					responseEntity.getStatusCode().toString() + ": " + responseEntity.getHeaders().getFirst(HTTP_HEADER_WARNING)));
+		}
 		if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
 			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
 					ingestorProduct.getProductClass(), facility.getName(), responseEntity.getStatusCode().toString()));
 		}
 		
 		// Extract the product file paths from the response
-		@SuppressWarnings("unchecked")
-		Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
-		@SuppressWarnings("unchecked")
-		List<String> responseFilePaths = (List<String>) responseBody.get("filePaths");
+		ObjectMapper mapper = new ObjectMapper();
+		RestProductFS restProductFs = mapper.convertValue(responseEntity.getBody(), RestProductFS.class);
+		List<String> responseFilePaths = restProductFs.getRegisteredFilesList();
 		if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
 			throw new ProcessingException(logError(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS,
 					responseFilePaths.size(), filePaths.size(), facility.getName()));
@@ -219,13 +230,17 @@ public class ProductIngestor {
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
 			newProductFile.getAuxFileNames().add(auxFile);
 		}
-		if (responseFilePaths.get(0).startsWith("s3")) {
+		switch (restProductFs.getTargetStorageType()) {
+		case S_3:
 			newProductFile.setStorageType(StorageType.S3);
-		} else if (responseFilePaths.get(0).startsWith("file")) {
+			break;
+		case POSIX:
 			newProductFile.setStorageType(StorageType.POSIX);
-		} else if (responseFilePaths.get(0).startsWith("alluxio")) {
+			break;
+		case ALLUXIO:
 			newProductFile.setStorageType(StorageType.ALLUXIO);
-		} else {
+			break;
+		default:
 			newProductFile.setStorageType(StorageType.OTHER);
 		}
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
