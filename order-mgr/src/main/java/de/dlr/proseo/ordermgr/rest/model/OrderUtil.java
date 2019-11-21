@@ -1,6 +1,7 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -18,8 +19,6 @@ public class OrderUtil {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
 	
-	
-	
 	/**
 	 * Convert a prosEO model ProcessingOrder into a REST Order
 	 * 
@@ -27,7 +26,6 @@ public class OrderUtil {
 	 * @return an equivalent REST Order or null, if no model Order was given
 	 */
 
-	@SuppressWarnings("unchecked")
 	public static RestOrder toRestOrder(ProcessingOrder processingOrder) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestOrder({})", (null == processingOrder ? "MISSING" : processingOrder.getId()));
 		
@@ -41,6 +39,7 @@ public class OrderUtil {
 		
 		if (null != processingOrder.getMission().getCode()) {
 			restOrder.setMissionCode(processingOrder.getMission().getCode());
+
 		}	
 		if (null != processingOrder.getIdentifier()) {
 			restOrder.setIdentifier(processingOrder.getIdentifier());
@@ -72,25 +71,25 @@ public class OrderUtil {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 
-//		if (null != processingOrder.getFilterConditions()) {
-//			
-//			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
-//				restOrder.getFilterConditions().addAll(
-//					new de.dlr.proseo.ordermgr.rest.model.Parameter(paramKey,
-//							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
-//							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
-//			}
-//			
-//		}
-//		if(null != processingOrder.getOutputParameters()) {
-//			
-//			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
-//				restOrder.getOutputParameters().add(
-//					new Parameter(paramKey,
-//							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
-//							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
-//			}
-//		}
+		if (null != processingOrder.getFilterConditions()) {
+			
+			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
+				restOrder.getFilterConditions().add(
+					new RestParameter(paramKey,
+							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
+							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
+			}
+			
+		}
+		if(null != processingOrder.getOutputParameters()) {
+			
+			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
+				restOrder.getOutputParameters().add(
+					new RestParameter(paramKey,
+							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
+							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
+			}
+		}
 		if (null != processingOrder.getRequestedProductClasses()) {
 			
 			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {

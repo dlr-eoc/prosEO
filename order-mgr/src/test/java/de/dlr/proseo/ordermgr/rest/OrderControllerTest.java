@@ -1,6 +1,7 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
@@ -37,6 +38,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
@@ -44,6 +46,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
 import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
@@ -119,9 +122,9 @@ public class OrderControllerTest {
 	};
 		
 	private static String[][] testConfProc = {
-			//identifier,processor_name,processor_version,configurationVersion,missioncode
-			{"KNMI L2 01.03.02 2019-07-03", "KNMI L2", "01.03.02", "2019-03-30"},
-			{ "DLR L2 01.01.05 2019-07-04", "DLR L2", "01.03.02", "2019-03-30"},	
+			//identifier
+			{"KNMI L2 01.03.02 2019-07-03"},
+			{ "DLR L2 01.01.05 2019-07-04"},	
 	};
 	
 	private static String [][] testReqProdClass = {
@@ -193,13 +196,18 @@ public class OrderControllerTest {
 				Parameter outputParam = new Parameter();
 				outputParam.init(ParameterType.valueOf(testOutputParam[i][1]), testOutputParam[i][2]);
 				testOrder.getFilterConditions().put(testOutputParam[i][0], outputParam);
-			}	
-			testOrder = RepositoryService.getOrderRepository().save(testOrder);
-			
+			}
 
+//			for (int i = 0 ; i < testConfProc.length; ++i) {
+//				ConfiguredProcessor reqProc = new ConfiguredProcessor();
+//				reqProc.setIdentifier(testConfProc[i][0]);
+//				testOrder.getRequestedConfiguredProcessors().add(reqProc);				
+//			}	
 			
+			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
+
 		}
-		
+
 		logger.info("Created test order {}", testOrder.getId());
 		return testOrder;
 	}
@@ -270,17 +278,14 @@ public class OrderControllerTest {
 					//orbits to be added
 					spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
 				}
-				
-			
-				
-				return null;
+			return null;
 			}
 			
 		});
 		
 		List<ProcessingOrder> testOrders = new ArrayList<ProcessingOrder>() ;
-		// Create an order in the database
 		
+		// Create an order in the database
 		ProcessingOrder orderToCreate = createOrder(testOrderData[0]);
 		testOrders.add(orderToCreate);
 		RestOrder restOrder = OrderUtil.toRestOrder(orderToCreate);
@@ -302,9 +307,8 @@ public class OrderControllerTest {
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 	
 		// Clean up database
-		ArrayList<ProcessingOrder> testOrder = new ArrayList<>();
-		testOrder.add(orderToCreate);
-		deleteTestOrders(testOrder);
+		testOrders.add(orderToCreate);
+		//deleteTestOrders(testOrder);
 
 		logger.info("Test OK: Create order");		
 	}	
@@ -465,7 +469,7 @@ public class OrderControllerTest {
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
 	
-	@Test
+/*	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -564,7 +568,7 @@ public class OrderControllerTest {
 	 * Test: List of all orders by mission, product class, start time range
 	 * Precondition: For all selection criteria orders within and without a search value exist
 	 */
-/*	@Test
+	@Test
 	public final void testGetOrders() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -677,5 +681,5 @@ public class OrderControllerTest {
 
 		logger.info("Test OK: Get Orders");
 	}
-*/
+
 }

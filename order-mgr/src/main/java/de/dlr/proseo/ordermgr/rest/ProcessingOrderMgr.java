@@ -168,10 +168,7 @@ public class ProcessingOrderMgr {
 		modelOrder.setJobs(jobs);
 		
 		// Everything OK, store new order in database
-
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		
-		
 		
 		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 
