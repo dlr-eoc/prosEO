@@ -1,0 +1,41 @@
+#%RAML 1.0 DataType
+#  PlannerJob:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of this object
+      version?:
+        type: integer
+        description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
+      orderIdentifier:
+        type: string
+        description: User-defined order identifier
+      jobState:
+        enum: [ INITIAL, STARTED, ON_HOLD, COMPLETED, FAILED ]
+        description: Status of the whole job
+      orbit?:
+        type: RestOrbit
+        description: The orbit this job relates to (if any)
+      startTime?:
+        type: datetime-only
+        description: The start time of the time interval to process
+      stopTime?:
+        type: datetime-only
+        description: The end time of the time interval to process
+      filterConditions:
+        type: RestParameter[]
+        description: A set of additional conditions to apply to selected products.
+      outputParameters:
+        type: RestParameter[]
+        description: A set of parameters to set for the generated products.
+      priority:
+        type: integer
+        description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0)
+      processingFacilityName:
+        type: string
+        description: The name of the processing facility this job runs on
+      jobSteps:
+        type: RestJobStep[]
+        description: The job steps for this job

@@ -148,7 +148,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param the ID of the processor class to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processor class did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given
 	 */
 	@Override
 	public ResponseEntity<?> deleteProcessorClassById(Long id) {
@@ -159,6 +160,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

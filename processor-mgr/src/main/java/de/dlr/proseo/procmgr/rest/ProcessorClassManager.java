@@ -55,7 +55,8 @@ public class ProcessorClassManager {
 	private static final int MSG_ID_PROCESSOR_CLASS_MODIFIED = 2211;
 	private static final int MSG_ID_PROCESSOR_CLASS_NOT_MODIFIED = 2212;
 	private static final int MSG_ID_PROCESSOR_CLASS_DELETED = 2213;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2213;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2214;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2215;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -67,6 +68,7 @@ public class ProcessorClassManager {
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid for mission %s";
 	private static final String MSG_PROCESSOR_CLASS_DATA_MISSING = "(E%d) Processor class data not set";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor class deletion unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor class with ID %d has been modified since retrieval by the client";
 
 	private static final String MSG_PROCESSOR_CLASS_LIST_RETRIEVED = "(I%d) Processor class(es) for mission %s and processor name %s retrieved";
 	private static final String MSG_PROCESSOR_CLASS_CREATED = "(I%d) Processor class %s created for mission %s";
@@ -268,6 +270,11 @@ public class ProcessorClassManager {
 		}
 		ProcessorClass modelProcessorClass = optProcessorClass.get();
 		
+		// Make sure we are allowed to change the processor class (no intermediate update)
+		if (modelProcessorClass.getVersion() != processorClass.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
+		
 		// Apply changed attributes
 		ProcessorClass changedProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
 		
@@ -316,9 +323,10 @@ public class ProcessorClassManager {
 	 * @param the ID of the processor class to delete
 	 * @throws EntityNotFoundException if the processor class to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
+	 * @throws IllegalArgumentException if the ID of the processor class to delete was not given
 	 */
-	public void deleteProcessorClassById(Long id) throws EntityNotFoundException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
+	public void deleteProcessorClassById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorClassById({})", id);
 		
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_ID_MISSING, MSG_ID_PROCESSOR_CLASS_ID_MISSING));

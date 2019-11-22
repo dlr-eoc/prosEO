@@ -13,27 +13,13 @@ logging:
         de:
             dlr:
                 proseo: TRACE
-        org:
-            springframework:
-                boot:
-                    test:
-                        web:
-                            client: DEBUG
 proseo:
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         user: none
         password: none
     storageManager:
-        url: https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1
+        # url: from database
         user: none
         password: none
         defaultStorageType: S3
-    user:
-        name: test
-        password: test
-    testinput:
-        directory: src/test/resources/IDA_test
-        files:
-            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc
-            - /L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc

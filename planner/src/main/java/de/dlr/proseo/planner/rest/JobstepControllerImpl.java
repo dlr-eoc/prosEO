@@ -1,6 +1,7 @@
 package de.dlr.proseo.planner.rest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,7 +20,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
-import de.dlr.proseo.planner.rest.model.PlannerJobstep;
+import de.dlr.proseo.planner.rest.model.RestJobStep;
 import de.dlr.proseo.planner.rest.model.Status;
 
 
@@ -42,11 +43,11 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<List<PlannerJobstep>> getPlannerJobstepsByStatus(
+    public ResponseEntity<List<RestJobStep>> getRestJobStepsByStatus(
             @Valid
             Status status) {
 		
-		List<PlannerJobstep> list = new ArrayList<PlannerJobstep>(); 
+		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
 		Iterable<JobStep> it;
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
@@ -55,14 +56,14 @@ public class JobstepControllerImpl implements JobstepController {
 			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);
 		}
 		for (JobStep js : it) {
-			PlannerJobstep pjs = new PlannerJobstep();
-			pjs.setId(String.valueOf(js.getId()));
-			pjs.setName(String.valueOf(ProductionPlanner.jobNamePrefix + js.getId()));
+			RestJobStep pjs = new RestJobStep();
+			pjs.setId(Long.valueOf(js.getId()));
+			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
 			if (js.getJobStepState() != null) {
-				pjs.setState(js.getJobStepState().toString());
+				pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
 			}
 			pjs.setVersion((long) js.getVersion());
-			pjs.setProcessingmode(js.getProcessingMode());
+			pjs.setProcessingMode(js.getProcessingMode());
 			list.add(pjs);			
 		}
 		HttpHeaders responseHeaders = new HttpHeaders();
@@ -75,7 +76,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<PlannerJobstep> getPlannerJobstepByName(String name) {
+    public ResponseEntity<RestJobStep> getRestJobStepByName(String name) {
 		Long id = null;
 		JobStep jst = new JobStep();
 		jst.setProcessingMode("nix"); 
@@ -91,22 +92,22 @@ public class JobstepControllerImpl implements JobstepController {
 			Optional<JobStep> jso = RepositoryService.getJobStepRepository().findById(id);
 			if (jso.isPresent()) {
 				JobStep js = jso.get();
-				PlannerJobstep pjs = new PlannerJobstep();
-				pjs.setId(String.valueOf(js.getId()));
-				pjs.setName(String.valueOf(ProductionPlanner.jobNamePrefix + js.getId()));
+				RestJobStep pjs = new RestJobStep();
+				pjs.setId(Long.valueOf(js.getId()));
+				pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
 				if (js.getJobStepState() != null) {
-					pjs.setState(js.getJobStepState().toString());
+					pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
 				}
 				pjs.setVersion((long) js.getVersion());
-				pjs.setProcessingmode(js.getProcessingMode());
+				pjs.setProcessingMode(js.getProcessingMode());
 				if (js.getProcessingStartTime() != null) { 
-					pjs.setStarttime(js.getProcessingStartTime().toString());
+					pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
 				}
 				if (js.getProcessingCompletionTime() != null) { 
-					pjs.setStoptime(js.getProcessingCompletionTime().toString());
+					pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
 				}
-				pjs.setStdout(js.getProcessingStdOut());
-				pjs.setStderr(js.getProcessingStdErr());
+				pjs.setProcessingStdOut(js.getProcessingStdOut());
+				pjs.setProcessingStdErr(js.getProcessingStdErr());
 
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
@@ -126,7 +127,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<PlannerJobstep> updateJobsteps(String name) {
+    public ResponseEntity<RestJobStep> updateJobsteps(String name) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
     	logger.error(message);
@@ -140,7 +141,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<PlannerJobstep> deleteJobstepByName(String name) {
+    public ResponseEntity<RestJobStep> deleteJobstepByName(String name) {
 		// TODO Auto-generated method stub
     	boolean result = productionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {

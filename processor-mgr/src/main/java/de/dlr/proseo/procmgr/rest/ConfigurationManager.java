@@ -62,6 +62,7 @@ public class ConfigurationManager {
 	private static final int MSG_ID_CONFIGURATION_NOT_MODIFIED = 2312;
 	private static final int MSG_ID_CONFIGURATION_DELETED = 2313;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2314;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2315;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -74,6 +75,7 @@ public class ConfigurationManager {
 	private static final String MSG_CONFIGURATION_DATA_MISSING = "(E%d) Configuration data not set";
 	private static final String MSG_INPUT_FILE_ID_NOT_FOUND = "(E%d) No static input file found with ID %d";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Configuration deletion unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configuration with ID %d has been modified since retrieval by the client";
 
 	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -291,6 +293,11 @@ public class ConfigurationManager {
 			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id));
 		}
 		Configuration modelConfiguration = optConfiguration.get();
+		
+		// Make sure we are allowed to change the configuration (no intermediate update)
+		if (modelConfiguration.getVersion() != configuration.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
 		
 		// Apply changed attributes
 		Configuration changedConfiguration = ConfigurationUtil.toModelConfiguration(configuration);

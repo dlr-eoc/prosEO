@@ -353,7 +353,7 @@ public class ProductManager {
 			throw new IllegalArgumentException(logError(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
 					product.getFileClass(), product.getMissionCode()));
 		}
-		if (!modelProductClass.getMission().getProcessingModes().contains(modelProduct.getMode())) {
+		if (null != modelProduct.getMode() && !modelProductClass.getMission().getProcessingModes().contains(modelProduct.getMode())) {
 			throw new IllegalArgumentException(logError(MSG_MODE_INVALID, MSG_ID_MODE_INVALID,
 					product.getMode(), product.getMissionCode()));
 		}
@@ -416,7 +416,7 @@ public class ProductManager {
 		
 		// Make sure we are allowed to change the product (no intermediate update)
 		if (modelProduct.getVersion() != product.getVersion().intValue()) {
-			throw new RejectedExecutionException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
 		}
 		
 		// Update modified attributes

@@ -30,25 +30,7 @@ types:
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
-  IngestorProduct:
-    type: RestProduct
-    description: Variant of the RestProduct type with a reference to the data file location
-    properties:
-      sourceStorageType:
-        enum: [S3, ALLUXIO, POSIX]
-        description: The type of the storage to ingest the data from
-      mountPoint:
-        type: string
-        description: The S3/POSIX/ALLUXIO mount point of the storage system to ingest from
-      filePath:
-        type: string
-        description: The S3/POSIX/ALLUXIO path to the product files (relative to mountPoint)
-      productFileName:
-        type: string
-        description: File name of the main product file
-      auxFileNames?:
-        type: string[]
-        description: Names of auxiliary files being part of the product
+  IngestorProduct: !include ../../../../../interfaces/src/main/resources/raml/types/ingestorproduct.raml
 
 resourceTypes:
   standard:
@@ -191,7 +173,7 @@ resourceTypes:
       body:
         application/json:
           type: IngestorProduct[]
-          example: !include examples/ingestorproduct-list.json
+          example: !include ../../../../../interfaces/src/main/resources/raml/examples/ingestorproduct-list.json
       responses:
         201:
           body:
