@@ -32,12 +32,9 @@
 <body class="text-center"style="background-image: url(background.jpg)">
   <div th:insert="fragments/navbar.html :: navigation-bar"></div>
 <div class="container-fluid">
-<form name = "prc-cls-shw" action="/processor-class-show/get" method="get">
+<form name = "prc-cls-shw" action="/processor-class-show-id/get" method="get">
 <div class="input-group mb-3">
-	<p class="text-left"><input type="text" th:value="${missioncode}" placeholder="Mission" class="form-control" name="missioncode" id="missioncode"></p>
-</div>
-<div class="input-group mb-3">
-	<p class="text-left"><input type="text" th:value="${processorclassnamecode}" placeholder="Processor-Class Name" class="form-control" name="processorclassnamecode" id="processorclassnamecode"></p>
+	<p class="text-left"><input type="text" th:value="${processorClassId}" placeholder="Processor ID" class="form-control" id="processorClassId"></p>
 </div>
   <div class="input-group mb-3">
   <button type="submit" class="btn btn-primary mb-2">Show Processor-Class</button>

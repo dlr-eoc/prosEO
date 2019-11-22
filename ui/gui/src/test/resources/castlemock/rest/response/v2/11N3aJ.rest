@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMockResponse>
+    <body>{&#13;
+    "id": 2538579,&#13;
+    "version": 2,&#13;
+    "missionCode": "S5P",&#13;
+    "processorName": "KNMI L2",&#13;
+    "productClasses": [ "FRESCO",  "AAI", "O3PR", "O3TPR" ]&#13;
+}</body>
+    <contentEncodings/>
+    <headerQueries/>
+    <httpHeaders/>
+    <httpStatusCode>200</httpStatusCode>
+    <id>11N3aJ</id>
+    <jsonPathExpressions/>
+    <methodId>LeboW1</methodId>
+    <name>ID 2538579</name>
+    <parameterQueries/>
+    <status>ENABLED</status>
+    <usingExpressions>false</usingExpressions>
+    <xpathExpressions/>
+</restMockResponse>

@@ -38,6 +38,11 @@ public class GUIProcessorClassController {
 
 	    return "processor-class-show";
 	    }
+	    @RequestMapping(value = "/processor-class-show-id")
+	    public String showProcessorClassById() {
+
+	    return "processor-class-show-id";
+	    }
 	    @RequestMapping(value = "/processor-configuration-create")
 	    public String createProcessorConfiguration() {
 	    
