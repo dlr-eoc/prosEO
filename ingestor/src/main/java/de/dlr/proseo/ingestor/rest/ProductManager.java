@@ -416,7 +416,7 @@ public class ProductManager {
 		
 		// Make sure we are allowed to change the product (no intermediate update)
 		if (modelProduct.getVersion() != product.getVersion().intValue()) {
-			throw new RejectedExecutionException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
 		}
 		
 		// Update modified attributes

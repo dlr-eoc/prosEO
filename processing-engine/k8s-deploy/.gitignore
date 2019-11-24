@@ -1,5 +1,5 @@
-export
+cluster-key.*
+*.pub
 *.pem
 *.retry
-ansible-conf/hosts
-vars/kube.config
+.ostackrc

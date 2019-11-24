@@ -1,0 +1,95 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>prosEO – Processing System for Earth Observation Data Login RESOURCES/TEMPLATES</title>
+    <!-- Bootstrap core CSS -->
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+<!--
+    <style>
+    
+    
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    -->
+  </head>
+  
+  <body class="text-center" style="background-image: url(background.jpg)">
+  <div class="container">
+   <form th:action="@{/customlogin}" method="post">
+                <legend>Please Login</legend>
+                <div th:if="${param.error}" class="alert alert-error">    
+                    Invalid username and password.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success"> 
+                    You have been logged out.
+                </div>
+  	<div class="form-group row">
+  	<label for="username" class="col-sm-2 col-form-label"><span th:text="#{username}"></span></label>
+  	<div class="col-sm-10">
+               <input type="text" id="username" name="username"/>   
+  	</div>
+  	</div>
+  	<div class="form-group row">
+  	<label for="password" class="col-sm-2 col-form-label"><span th:text="#{password}"></span></label>
+  	<div class="col-sm-10">
+           <input type="password" id="password" name="password"/>   
+  	</div>
+  	</div>
+  	<fieldset class="form-group">
+  	<div class="row">
+  	<legend class="col-form-label col-sm-2 pt-0"><span th:text="#{missions}"></span></legend>
+  	<div class="col-sm-10">
+    	<div class="form-check">
+    	<input class="form-check-input" type="radio" name="missionRadio" id="mission1" value="Sentinel-5P" checked>
+    	<label class="form-check-label" for="mission1">
+    	Sentinel-5P
+    	</label>
+    	</div>
+    	<div class="form-check">  
+    	<input class="form-check-input" type="radio" name="missionRadio" id="mission2" value="TerraSAR-X">
+    	<label class="form-check-label" for="mission2">
+    	TerraSAR-X
+    	</label>
+    	</div> 
+    	<div class="form-check">  
+    	<input class="form-check-input" type="radio" name="missionRadio" id="mission3" value="TanDEM-X">
+    	<label class="form-check-label" for="mission3">
+    	TanDEM-X
+    	</label>
+    	</div>
+    	</div>
+    	</div>
+    	</fieldset>
+    	<div class="form-group row">
+    		<div class="col-sm-10">
+    		   <button type="submit" class="btn btn-primary"><span th:text="#{login}"></span></button>
+    		   </div>
+    		 </div>
+    		 </form>
+      
+</body>
+</html>

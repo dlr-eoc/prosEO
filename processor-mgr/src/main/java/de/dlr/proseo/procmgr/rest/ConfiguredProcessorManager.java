@@ -18,14 +18,17 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.validation.Valid;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
+import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
 /**
  * Service methods required to manage configured processor versions.
@@ -47,18 +50,29 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING = 2356;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND = 2357;
 	private static final int MSG_ID_CONFIGURATION_INVALID = 2358;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_MODIFIED = 2356;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_MODIFIED = 2357;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_DELETED = 2358;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2359;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2360;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) No configured processors found for mission %s, processor name %s, processor version %s and configuration version %s";
-	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s, processor version %s and configuration version %s retrieved";
-	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_MISSING = "(E%d) Configuration not set";
 	private static final String MSG_CONFIGURED_PROCESSOR_ID_MISSING = "(E%d) Configuration ID not set";
 	private static final String MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND = "(E%d) No Configuration found with ID %d";
 	private static final String MSG_PROCESSOR_INVALID = "(E%d) Processor %s with version %s invalid for mission %s";
 	private static final String MSG_CONFIGURATION_INVALID = "(E%d) Configuration %s with version %s invalid for mission %s";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion of configured processor unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configured processor with ID %d has been modified since retrieval by the client";
+
+	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s, processor version %s and configuration version %s retrieved";
+	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_CREATED = "(I%d) Configuration for processor %s with version %s created for mission %s";
+	private static final String MSG_CONFIGURED_PROCESSOR_MODIFIED = "(I%d) Configured processor with id %d modified";
+	private static final String MSG_CONFIGURED_PROCESSOR_NOT_MODIFIED = "(I%d) Configured processor with id %d not modified (no changes)";
+	private static final String MSG_CONFIGURED_PROCESSOR_DELETED = "(I%d) Configured processor with id %d deleted";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -231,15 +245,15 @@ public class ConfiguredProcessorManager {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_ID_MISSING, MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING, id));
 		}
 		
-		Optional<de.dlr.proseo.model.ConfiguredProcessor> modelConfiguration = RepositoryService.getConfiguredProcessorRepository().findById(id);
+		Optional<de.dlr.proseo.model.ConfiguredProcessor> modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findById(id);
 		
-		if (modelConfiguration.isEmpty()) {
+		if (modelConfiguredProcessor.isEmpty()) {
 			throw new NoResultException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
 		}
 
 		logInfo(MSG_CONFIGURED_PROCESSOR_RETRIEVED, MSG_ID_CONFIGURED_PROCESSOR_RETRIEVED, id);
 		
-		return ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguration.get());
+		return ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguredProcessor.get());
 	}
 
 	/**
@@ -255,8 +269,79 @@ public class ConfiguredProcessorManager {
 	 */
 	public RestConfiguredProcessor modifyConfiguredProcessor(Long id, @Valid RestConfiguredProcessor configuredProcessor) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("PATCH for configured processor not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguredProcessor({}, {})", id, (null == configuredProcessor ? "MISSING" : configuredProcessor.getIdentifier()));
+
+		// Check arguments
+		if (null == id) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_ID_MISSING, MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING, id));
+		}
+		
+		Optional<de.dlr.proseo.model.ConfiguredProcessor> optConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findById(id);
+		
+		if (optConfiguredProcessor.isEmpty()) {
+			throw new NoResultException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
+		}
+		ConfiguredProcessor modelConfiguredProcessor = optConfiguredProcessor.get();
+		
+		// Make sure we are allowed to change the configured processor (no intermediate update)
+		if (modelConfiguredProcessor.getVersion() != configuredProcessor.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
+		
+		// Apply changed attributes
+		ConfiguredProcessor changedConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
+		
+		boolean configuredProcessorChanged = false;
+		if (!modelConfiguredProcessor.getIdentifier().equals(changedConfiguredProcessor.getIdentifier())) {
+			configuredProcessorChanged = true;
+			modelConfiguredProcessor.setIdentifier(changedConfiguredProcessor.getIdentifier());
+		}
+
+		Processor changedProcessor = RepositoryService.getProcessorRepository()
+				.findByMissionCodeAndProcessorNameAndProcessorVersion(
+						configuredProcessor.getMissionCode(),
+						configuredProcessor.getProcessorName(),
+						configuredProcessor.getProcessorVersion());
+		if (null == changedProcessor) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_INVALID, MSG_ID_PROCESSOR_INVALID,
+					configuredProcessor.getProcessorName(),
+					configuredProcessor.getProcessorVersion(),
+					configuredProcessor.getMissionCode()));
+		}
+		if (!changedProcessor.equals(modelConfiguredProcessor.getProcessor())) {
+			configuredProcessorChanged = true;
+			modelConfiguredProcessor.getProcessor().getConfiguredProcessors().remove(modelConfiguredProcessor);
+			RepositoryService.getProcessorRepository().save(modelConfiguredProcessor.getProcessor());
+			modelConfiguredProcessor.setProcessor(changedProcessor);
+		}
+		
+		Configuration changedConfiguration = RepositoryService.getConfigurationRepository()
+				.findByMissionCodeAndProcessorNameAndConfigurationVersion(
+						configuredProcessor.getMissionCode(),
+						configuredProcessor.getProcessorName(),
+						configuredProcessor.getConfigurationVersion());
+		if (null == changedConfiguration) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_INVALID, MSG_ID_CONFIGURATION_INVALID,
+					configuredProcessor.getProcessorName(),
+					configuredProcessor.getProcessorVersion(),
+					configuredProcessor.getMissionCode()));
+		}
+		if (!changedConfiguration.equals(modelConfiguredProcessor.getConfiguration())) {
+			configuredProcessorChanged = true;
+			modelConfiguredProcessor.getConfiguration().getConfiguredProcessors().remove(modelConfiguredProcessor);
+			RepositoryService.getConfigurationRepository().save(modelConfiguredProcessor.getConfiguration());
+			modelConfiguredProcessor.setConfiguration(changedConfiguration);
+		}
+
+		// Save configured processor only if anything was actually changed
+		if (configuredProcessorChanged) {
+			modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().save(modelConfiguredProcessor);
+			logInfo(MSG_CONFIGURED_PROCESSOR_MODIFIED, MSG_ID_CONFIGURED_PROCESSOR_MODIFIED, id);
+		} else {
+			logInfo(MSG_CONFIGURED_PROCESSOR_NOT_MODIFIED, MSG_ID_CONFIGURED_PROCESSOR_NOT_MODIFIED, id);
+		}
+		
+		return ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguredProcessor);
 	}
 
 	/**
@@ -267,8 +352,29 @@ public class ConfiguredProcessorManager {
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteConfiguredProcessorById(Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("DELETE for configured processor not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfiguredProcessorById({})", id);
+
+		// Check arguments
+		if (null == id) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_ID_MISSING, MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING, id));
+		}
+		
+		Optional<de.dlr.proseo.model.ConfiguredProcessor> modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findById(id);
+		
+		if (modelConfiguredProcessor.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
+		}
+		
+		// Delete the configured processor
+		RepositoryService.getConfiguredProcessorRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findById(id);
+		if (!modelConfiguredProcessor.isEmpty()) {
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logInfo(MSG_CONFIGURED_PROCESSOR_DELETED, MSG_ID_CONFIGURED_PROCESSOR_DELETED, id);
 	}
 
 }

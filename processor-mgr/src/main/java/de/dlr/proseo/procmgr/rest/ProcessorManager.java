@@ -50,17 +50,30 @@ public class ProcessorManager {
 	private static final int MSG_ID_PROCESSOR_CREATED = 2255;
 	private static final int MSG_ID_PROCESSOR_ID_MISSING = 2256;
 	private static final int MSG_ID_PROCESSOR_ID_NOT_FOUND = 2257;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_PROCESSOR_DATA_MISSING = 2258;
+	private static final int MSG_ID_PROCESSOR_MODIFIED = 2259;
+	private static final int MSG_ID_PROCESSOR_NOT_MODIFIED = 2260;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2261;
+	private static final int MSG_ID_PROCESSOR_DELETED = 2262;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2263;
+//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) No processor found for mission %s, processor name %s and processor version %s";
-	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
-	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
 	private static final String MSG_PROCESSOR_MISSING = "(E%d) Processor not set";
 	private static final String MSG_PROCESSOR_ID_MISSING = "(E%d) Processor ID not set";
 	private static final String MSG_PROCESSOR_ID_NOT_FOUND = "(E%d) No processor found with ID %d";
 	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
+	private static final String MSG_PROCESSOR_DATA_MISSING = "(E%d) Processor data not set";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor deletion unsuccessful for ID %d";
+	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
+
+	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
+	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
 	private static final String MSG_PROCESSOR_CREATED = "(I%d) Processor %s, version %s created for mission %s";
+	private static final String MSG_PROCESSOR_MODIFIED = "(I%d) Processor with id %d modified";
+	private static final String MSG_PROCESSOR_NOT_MODIFIED = "(I%d) Processor with id %d not modified (no changes)";
+	private static final String MSG_PROCESSOR_DELETED = "(I%d) Processor with id %d deleted";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -245,8 +258,113 @@ public class ProcessorManager {
 	 */
 	public RestProcessor modifyProcessor(Long id, @Valid RestProcessor processor) throws
 			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("PATCH for processor not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessor({}, {})", id, (null == processor ? "MISSING" : processor.getProcessorName()));
+
+		// Check arguments
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_ID_MISSING, MSG_ID_PROCESSOR_ID_MISSING));
+		}
+		if (null == processor) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_DATA_MISSING, MSG_ID_PROCESSOR_DATA_MISSING));
+		}
+		
+		Optional<Processor> optProcessor = RepositoryService.getProcessorRepository().findById(id);
+		
+		if (optProcessor.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
+		}
+		Processor modelProcessor = optProcessor.get();
+		
+		// Make sure we are allowed to change the processor (no intermediate update)
+		if (modelProcessor.getVersion() != processor.getVersion().intValue()) {
+			throw new ConcurrentModificationException(logError(MSG_CONCURRENT_UPDATE, MSG_ID_CONCURRENT_UPDATE, id));
+		}
+		
+		// Apply changed attributes
+		Processor changedProcessor = ProcessorUtil.toModelProcessor(processor);
+		
+		boolean processorChanged = false;
+		
+		if (!modelProcessor.getProcessorVersion().equals(changedProcessor.getProcessorVersion())) {
+			processorChanged = true;
+			modelProcessor.setProcessorVersion(changedProcessor.getProcessorVersion());
+		}
+		if (!modelProcessor.getIsTest().equals(changedProcessor.getIsTest())) {
+			processorChanged = true;
+			modelProcessor.setIsTest(changedProcessor.getIsTest());
+		}
+		if (!modelProcessor.getMinDiskSpace().equals(changedProcessor.getMinDiskSpace())) {
+			processorChanged = true;
+			modelProcessor.setMinDiskSpace(changedProcessor.getMinDiskSpace());
+		}
+		if (!modelProcessor.getMaxTime().equals(changedProcessor.getMaxTime())) {
+			processorChanged = true;
+			modelProcessor.setMaxTime(changedProcessor.getMaxTime());
+		}
+		if (!modelProcessor.getSensingTimeFlag().equals(changedProcessor.getSensingTimeFlag())) {
+			processorChanged = true;
+			modelProcessor.setSensingTimeFlag(changedProcessor.getSensingTimeFlag());
+		}
+		if (!modelProcessor.getDockerImage().equals(changedProcessor.getDockerImage())) {
+			processorChanged = true;
+			modelProcessor.setDockerImage(changedProcessor.getDockerImage());
+		}
+		if (!modelProcessor.getDockerRunParameters().equals(changedProcessor.getDockerRunParameters())) {
+			processorChanged = true;
+			modelProcessor.setDockerRunParameters(changedProcessor.getDockerRunParameters());
+		}
+		
+		// Check task changes (modifications in sequence also count as changes)
+		List<Task> newTasks = new ArrayList<>();
+		for (int i = 0; i < processor.getTasks().size(); ++i) {
+			Task changedTask = TaskUtil.toModelTask(processor.getTasks().get(i));
+			changedTask.setProcessor(changedProcessor);
+			Task modelTask = null;
+			if (modelProcessor.getTasks().size() <= i) {
+				// More tasks in new list
+				processorChanged = true;
+				modelTask = RepositoryService.getTaskRepository().save(changedTask);
+			} else {
+				// Compare tasks
+				modelTask = modelProcessor.getTasks().get(i);
+				if (!modelTask.getTaskName().equals(changedTask.getTaskName())) {
+					processorChanged = true;
+					modelTask.setTaskName(changedTask.getTaskName());
+				}
+				if (!modelTask.getTaskVersion().equals(changedTask.getTaskVersion())) {
+					processorChanged = true;
+					modelTask.setTaskVersion(changedTask.getTaskVersion());
+				}
+				if (!modelTask.getIsCritical().equals(changedTask.getIsCritical())) {
+					processorChanged = true;
+					modelTask.setIsCritical(changedTask.getIsCritical());
+				}
+				if (!modelTask.getCriticalityLevel().equals(changedTask.getCriticalityLevel())) {
+					processorChanged = true;
+					modelTask.setCriticalityLevel(changedTask.getCriticalityLevel());
+				}
+				if (!modelTask.getNumberOfCpus().equals(changedTask.getNumberOfCpus())) {
+					processorChanged = true;
+					modelTask.setNumberOfCpus(changedTask.getNumberOfCpus());
+				}
+				if (!modelTask.getBreakpointFileNames().equals(changedTask.getBreakpointFileNames())) {
+					modelTask.setBreakpointFileNames(changedTask.getBreakpointFileNames());
+				}
+			}
+			newTasks.add(modelTask);
+		}
+		
+		// Save processor only if anything was actually changed
+		if (processorChanged)	{
+			modelProcessor.incrementVersion();
+			modelProcessor.setTasks(newTasks);;
+			modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
+			logInfo(MSG_PROCESSOR_MODIFIED, MSG_ID_PROCESSOR_MODIFIED, id);
+		} else {
+			logInfo(MSG_PROCESSOR_NOT_MODIFIED, MSG_ID_PROCESSOR_NOT_MODIFIED, id);
+		}
+		
+		return ProcessorUtil.toRestProcessor(modelProcessor);
 	}
 
 	/**
@@ -257,8 +375,28 @@ public class ProcessorManager {
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteProcessorById(Long id) throws EntityNotFoundException, RuntimeException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException(logError("DELETE for processor not implemented", MSG_ID_NOT_IMPLEMENTED, id));
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorById({})", id);
+		
+		if (null == id || 0 == id) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_ID_MISSING, MSG_ID_PROCESSOR_ID_MISSING));
+		}
+		
+		// Test whether the product id is valid
+		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
+		if (modelProcessor.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND));
+		}
+		
+		// Delete the processor class
+		RepositoryService.getProcessorClassRepository().deleteById(id);
+
+		// Test whether the deletion was successful
+		modelProcessor = RepositoryService.getProcessorRepository().findById(id);
+		if (!modelProcessor.isEmpty()) {
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
+		}
+		
+		logInfo(MSG_PROCESSOR_DELETED, MSG_ID_PROCESSOR_DELETED, id);
 	}
 
 }

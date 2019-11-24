@@ -12,23 +12,17 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 	        http
 	            .authorizeRequests()
 	            .antMatchers("/resources/**").permitAll()
+	            .antMatchers("/background.jpg").permitAll()
 	                .anyRequest().authenticated()
 	                .and()
 	            .formLogin()
 	                .loginPage("/customlogin")
+	                .failureUrl("/customlogin?error")
 	                .permitAll()
 	                .and()
 	            .logout()
+	            .logoutUrl("/logout")
+	            .logoutSuccessUrl("/customlogin?logout")
 	            	.permitAll();
 	    }
-	
-
-//	    @Bean
-//	    public ViewResolver viewResolver() {
-//	        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-//	        viewResolver.setPrefix("/BOOT-INF/classes/templates/");
-//	        viewResolver.setSuffix(".ftl");
-//	        return viewResolver;
-//
-//	    }
 }

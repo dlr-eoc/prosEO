@@ -847,17 +847,18 @@ public class BaseWrapper {
 			// Build request based on de.dlr.proseo.ingestor.rest.model.ProductFile
 			IngestorProductFile request = new IngestorProductFile();
 			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
-			request.setAuxFileNames(null);
-			request.setFilePath(p.getPath());
+			//request.setAuxFileNames(null); --> must be empty list, not null!
+			File productFile = new File(p.getPath());
+			request.setFilePath(productFile.getParent());
 			request.setStorageType(p.getFsType());
-			request.setProductFileName(p.getPath());
+			request.setProductFileName(productFile.getName());
 			request.setProductId(p.getId());
-			request.setVersion(null);
+			//request.setVersion(null); --> redundant
 			
-			ObjectMapper Obj = new ObjectMapper(); 
+			ObjectMapper obj = new ObjectMapper(); 
 			String jsonRequest="";
 			try {
-				jsonRequest = Obj.writeValueAsString(request);
+				jsonRequest = obj.writeValueAsString(request);
 			} catch (JsonProcessingException e) {
 				logger.error(e.getMessage());
 			} 

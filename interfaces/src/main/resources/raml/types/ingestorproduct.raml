@@ -1,0 +1,20 @@
+#%RAML 1.0 DataType
+#  RestStorage:
+    type: RestProduct
+    description: Variant of the RestProduct type with a reference to the data file location
+    properties:
+      sourceStorageType:
+        enum: [S3, ALLUXIO, POSIX]
+        description: The type of the storage to ingest the data from
+      mountPoint:
+        type: string
+        description: The S3/POSIX/ALLUXIO mount point of the storage system to ingest from
+      filePath:
+        type: string
+        description: The S3/POSIX/ALLUXIO path to the product files (relative to mountPoint)
+      productFileName:
+        type: string
+        description: File name of the main product file
+      auxFileNames?:
+        type: string[]
+        description: Names of auxiliary files being part of the product

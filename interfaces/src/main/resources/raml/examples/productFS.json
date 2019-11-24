@@ -1,0 +1,6 @@
+{
+    "productId": "newProdId001XYZ",
+    "sourceStorageType": "POSIX",
+    "sourceFilePaths": ["src/","target/"],
+    "targetStorageType": "S3"
+}

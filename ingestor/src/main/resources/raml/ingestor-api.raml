@@ -30,22 +30,7 @@ types:
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
-  IngestorProduct:
-    type: RestProduct
-    description: Variant of the RestProduct type with a reference to the data file location
-    properties:
-      mountPoint:
-        type: string
-        description: The POSIX mount point of the storage system to ingest from
-      filePath:
-        type: string
-        description: The POSIX path to the product files
-      productFileName:
-        type: string
-        description: File name of the main product file
-      auxFileNames?:
-        type: string[]
-        description: Names of auxiliary files being part of the product
+  IngestorProduct: !include ../../../../../interfaces/src/main/resources/raml/types/ingestorproduct.raml
 
 resourceTypes:
   standard:
@@ -188,7 +173,7 @@ resourceTypes:
       body:
         application/json:
           type: IngestorProduct[]
-          example: !include examples/ingestorproduct-list.json
+          example: !include ../../../../../interfaces/src/main/resources/raml/examples/ingestorproduct-list.json
       responses:
         201:
           body:
@@ -212,6 +197,7 @@ resourceTypes:
                 example: !include ../../../../../model/src/main/resources/raml/examples/productfile.json
       post:
         description: Create the metadata of a new product file for a product at a given processing facility
+                     (it is assumed that the files themselves are already pushed to the Storage Manager)
         displayName: ingestProductFile
         body:
           application/json:

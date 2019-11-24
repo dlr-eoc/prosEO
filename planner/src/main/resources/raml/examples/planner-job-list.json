@@ -1,4 +1,0 @@
-  [
-    { "id" : "0ae234-887f26", "description" : "Produce S5P.TROPOMI.CO2 products for orbits 2345-4567" },
-    { "id" : "25de66-08b2c9", "description" : "Produce S5P.TROPOMI.CLOUD products for orbits 1234-5678" }
-  ]

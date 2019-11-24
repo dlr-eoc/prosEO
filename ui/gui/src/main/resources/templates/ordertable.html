@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #333;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+</style>
+</head>
+<body>
+
+<h2>Order</h2>
+
+<table>
+  <tr>
+    <th>Order ID</th>
+    <th>Processing Order</th>
+    <th>Jobstate</th>
+    <th>Orbit</th>
+  </tr>
+  <tr>
+    <td><button type="button" class="collapsible">#123</button>
+<div class="content">
+  <table>
+  <tr>
+  <th>Jobsteps</th>
+  <th>Starttime</th>
+  <th>Stoptime</th>
+  <th>Filter Conditions</th>
+  <th>Output Parameters</th>
+  <th>Processing Facility</th>
+  </tr>
+  <td><button type="button" class="collapsible">#3452</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Output Parameters</th>
+  <th>Input Product Queries</th>
+  <th>Output Product</th>
+  </tr>
+  <td>RUNNING</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>rev 2.1.2</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>fileclass abcde</td>
+  </tr>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>co2</td>
+  
+  </table>
+  </div>
+  <button type="button" class="collapsible">#3454</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Output Parameters</th>
+  <th>Input Product Queries</th>
+  <th>Output Product</th>
+  </tr>
+  <td>FINISHED</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr><tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>rev 2.1.2</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>fileClass abcde</td>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>o2</td>
+  
+  </table>
+  </div>
+  <button type="button" class="collapsible">#3459</button>
+  	  <div class="content">
+  <table>
+  <tr>
+  <th>State</th>
+  <th>Output Parameters</th>
+  <th>Input Product Queries</th>
+  <th>Output Product</th>
+  </tr>
+  <td>RUNNING</td>
+  <td><table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>rev 2.1.2</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>fileclass abcde</td>
+  </tr>
+  </table></td>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>so2</td>
+  
+  </table>
+  </div>
+  </td>
+  <td>28.01.2019 13:00</td>
+  <td>30.01.2019 13:00</td>
+  <td>
+  <table>
+  <tr>
+  <th>Apply</th>
+  <th>Selected</th>
+  </tr>
+  <tr>
+  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
+  <td>rev 2.1.2</td>
+  </tr>
+  <tr>
+  <td></td>
+  <td>fileclass abcde</td>
+  </tr>
+  </table>
+  
+  <td><input type="text" id="test" name="test1"></td>
+  <td>DLR</td>
+  </div>
+  </tr>
+  </table>
+</div></td>
+    <td>ABCDEF</td>
+    <td>RUNNING</td>
+    <td>1082</td>
+  <tr>
+    <td><button type="button" class="collapsible">#456</button></td>
+    <td>DEFT</td>
+    <td>INITIAL</td>
+    <td>1085</td>
+  </tr>
+  <tr>
+    <td><button type="button" class="collapsible">#789</button></td>
+    <td>Lorem</td>
+    <td>FINISHED</td>
+    <td>1089</td>
+  </tr>
+  <tr>
+    <td><button type="button" class="collapsible">#012</button></td>
+    <td>Ipsum</td>
+    <td>RUNNING</td>
+    <td>1100</td>
+  </tr>
+ 
+</table>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+
+</body>
+</html>

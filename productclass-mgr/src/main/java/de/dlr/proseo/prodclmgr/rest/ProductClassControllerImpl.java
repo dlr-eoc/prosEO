@@ -5,49 +5,25 @@
  */
 package de.dlr.proseo.prodclmgr.rest;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.validation.Valid;
 import javax.ws.rs.ServerErrorException;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.Assert;
 
-import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.SimplePolicy;
-import de.dlr.proseo.model.SimplePolicy.DeltaTime;
-import de.dlr.proseo.model.SimplePolicy.PolicyType;
-import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.util.SelectionRule;
-import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
-import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
 import de.dlr.proseo.prodclmgr.rest.model.RestProductClass;
-import de.dlr.proseo.prodclmgr.rest.model.RestSimplePolicy;
-import de.dlr.proseo.prodclmgr.rest.model.RestSimpleSelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 
 /**
@@ -60,49 +36,9 @@ import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 public class ProductClassControllerImpl implements ProductclassController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_PRODUCT_CLASS_MISSING = 2100;
-	private static final int MSG_ID_INVALID_MISSION_CODE = 2101;
-	private static final int MSG_ID_INVALID_PROCESSING_MODE = 2102;
-	private static final int MSG_ID_INVALID_ENCLOSING_CLASS = 2103;
-	private static final int MSG_ID_INVALID_COMPONENT_CLASS = 2104;
-	private static final int MSG_ID_INVALID_PROCESSOR_CLASS = 2105;
-	private static final int MSG_ID_INVALID_SOURCE_CLASS = 2106;
-	private static final int MSG_ID_INVALID_PARAMETER_KEY = 2107;
-	private static final int MSG_ID_INVALID_PARAMETER_TYPE = 2108;
-	private static final int MSG_ID_INVALID_PROCESSOR = 2109;
-	private static final int MSG_ID_INVALID_POLICY_TYPE = 2110;
-	private static final int MSG_ID_INVALID_TIME_UNIT = 2111;
-	private static final int MSG_ID_PRODUCT_CLASS_EXISTS = 2112;
-	private static final int MSG_ID_PRODUCT_CLASS_SAVE_FAILED = 2113;
-	private static final int MSG_ID_PRODUCT_CLASS_CREATED = 2114;
-	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND = 2115;
-	private static final int MSG_ID_PROCESSING_MODE_MISSING = 2116;
-	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
-	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
-	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
 	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
-	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with id %d not found";
-	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
-	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
-	private static final String MSG_RULE_STRING_MISSING = "(E%d) Selection rule missing in selection rule string %s";
-	private static final String MSG_INVALID_RULE_STRING = "(E%d) Syntax error in selection rule %s: %s";
-	private static final String MSG_PRODUCT_CLASS_EXISTS = "(E%d) Product class %s already exists for mission %s";
-	private static final String MSG_PRODUCT_CLASS_SAVE_FAILED = "(E%d) Save failed for product class %s in mission %s (cause: %s)";
-	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s not defined for mission %s";
-	private static final String MSG_INVALID_ENCLOSING_CLASS = "(E%d) Enclosing product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_COMPONENT_CLASS = "(E%d) Component product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_PROCESSOR_CLASS = "(E%d) Processor class %s is not defined for mission %s";
-	private static final String MSG_INVALID_SOURCE_CLASS = "(E%d) Source product class %s is not defined for mission %s";
-	private static final String MSG_INVALID_PARAMETER_KEY = "(E%d) Parameter key missing in filter condition %s";
-	private static final String MSG_INVALID_PARAMETER_TYPE = "(E%d) Invalid parameter type %s in filter condition, one of {STRING, INTEGER, BOOLEAN, DOUBLE} expected";
-	private static final String MSG_INVALID_PROCESSOR = "(E%d) Configured processor %s is not defined";
-	private static final String MSG_INVALID_POLICY_TYPE = "(E%d) Invalid policy type %s in selection rule, see Generic IPF Interface Specifications for valid values";
-	private static final String MSG_INVALID_TIME_UNIT = "(E%d) Invalid time unit %s in selection rule, one of {DAYS, HOURS, MINUTES, SECONDS, MILLISECONDS, MICROSECONDS, NANOSECONDS} expected";
-	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
-	private static final String MSG_SELECTION_RULES_CREATED = "(I%d) %d selection rules added to product class of type %s in mission %s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-productclass-mgr ";
 
@@ -156,11 +92,13 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String productType, String missionType) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType, missionType);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for RestProductClass not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, missionType), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
     /**
@@ -194,15 +132,19 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<RestProductClass> getRestProductClassById(Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClassById({})", id);
 
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getRestProductClassById(id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
-     * Update a product class by ID
+     * Update a product class by ID (does not update its selection rules)
      * 
      * @param id the database ID of the product class to update
      * @param productClass a Json object describing the product class to modify
@@ -214,28 +156,42 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<RestProductClass> modifyRestProductClass(Long id, RestProductClass productClass) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyRestProductClass({}, {})", id, (null == productClass ? "MISSING" : productClass.getProductType()));
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.modifyRestProductClass(id, productClass), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
     /**
-     * Delete a product class by ID
+     * Delete a product class by ID (with all its selection rules)
      * 
      * @param id the database ID of the product class to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product class did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID was not given
      */
 	@Override
 	public ResponseEntity<?> deleteProductclassById(Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for RestProductClass with id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			productClassManager.deleteProductclassById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 
     /**
@@ -248,11 +204,13 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
     public ResponseEntity<List<SelectionRuleString>> getSelectionRuleStrings(Long id, String sourceClass) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleStrings({}, {})", id, sourceClass);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for SelectionRuleString with RestProductClass id and source product type not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getSelectionRuleStrings(id, sourceClass), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
     /**
@@ -286,11 +244,13 @@ public class ProductClassControllerImpl implements ProductclassController {
      */
 	@Override
 	public ResponseEntity<SelectionRuleString> getSelectionRuleString(Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleString({}, {})", ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("GET for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.getSelectionRuleString(ruleid, id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 
     /**
@@ -308,11 +268,17 @@ public class ProductClassControllerImpl implements ProductclassController {
 	@Override
 	public ResponseEntity<SelectionRuleString> modifySelectionRuleString(Long ruleid, Long id,
 			SelectionRuleString selectionRuleString) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> modifySelectionRuleString({}, {}, {})", ruleid, id, selectionRuleString);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PATCH for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.modifySelectionRuleString(ruleid, id, selectionRuleString), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
     /**
@@ -321,34 +287,46 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param ruleid the database ID of the simple selection rule to delete
      * @param id the database ID of the product class
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND", if the simple selection rule did not exist, or
-	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "NOT_FOUND", if the if the selection rule to delete or the product class do not exist in the database, or
+	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given
      */
 	@Override
 	public ResponseEntity<?> deleteSelectionrule(Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionrule({}, {})", ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for SelectionRuleString with RestProductClass id and SimpleSelectionRule id not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			productClassManager.deleteSelectionrule(ruleid, id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
-     * Add the configured processor to the selection rule
+     * Add the configured processor to the selection rule (if it is not already part of the selection rule)
      * 
      * @param configuredProcessor the name of the configured processor to add to the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @return a response entity with HTTP status "NO_CONTENT", if the addition was successful, or
-	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class with the given ID exist
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the modified simple selection rule in 
+	 *             Rule Language, if the addition was successful, or
+	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class 
+	 *             with the given ID exist, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
-	public ResponseEntity<?> addProcessorToRule(String configuredProcessor, Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<SelectionRuleString> addProcessorToRule(String configuredProcessor, Long ruleid, Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> addProcessorToRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("PUT for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.addProcessorToRule(configuredProcessor, ruleid, id), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
     /**
@@ -357,16 +335,23 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param configuredProcessor the name of the configured processor to remove from the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
-	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class with the given ID exist
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the modified simple selection rule in
+	 *             Rule Language, if the removal was successful, or
+	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class
+	 *             with the given ID exist, or
+	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
-	public ResponseEntity<?> removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) {
-		// TODO Auto-generated method stub
+	public ResponseEntity<SelectionRuleString> removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeProcessorFromRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
-		return new ResponseEntity<>(
-				errorHeaders(logError("DELETE for SelectionRuleString with RestProductClass id, SimpleSelectionRule id and configured processor name not implemented (%d)", MSG_ID_NOT_IMPLEMENTED)), 
-				HttpStatus.NOT_IMPLEMENTED);
+		try {
+			return new ResponseEntity<>(productClassManager.removeProcessorFromRule(configuredProcessor, ruleid, id), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 }

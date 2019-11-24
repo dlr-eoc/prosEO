@@ -1,0 +1,22 @@
+{
+    "id": 23785526,
+    "version": 1,
+    "orderIdentifier": "CH4 products for orbits 2345-4567",
+    "jobState": "INITIAL",
+    "filterConditions": [],
+    "outputParameters": [],
+    "priority": 10,
+    "processingFacilityName": "PF1",
+    "jobSteps": [
+        {
+            "id": 23785527,
+            "version": 1,
+            "jobId": 23785526,
+            "jobStepState": "INITIAL",
+            "outputParameters": [],
+            "processingMode": "OFFL",
+            "inputProductClasses": [ "L1B" ],
+            "outputProductClass": "CH4"
+        }
+    ]
+}

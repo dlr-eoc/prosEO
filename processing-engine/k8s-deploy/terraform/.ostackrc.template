@@ -1,0 +1,27 @@
+# .bashrc
+
+# User specific aliases and functions
+
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
+fi
+
+export OS_PASSWORD=XXXX
+export OS_USERNAME=XXXX
+export OS_TENANT_NAME=eu-de
+export OS_PROJECT_NAME=eu-de
+export OS_USER_DOMAIN_NAME=OTC-EU-DE-XXXX
+export OS_AUTH_URL=https://iam.eu-de.otc.t-systems.com:443/v3
+export OS_PROJECT_DOMAIN_NAME=XXXX
+export OS_IDENTITY_API_VERSION=3
+export OS_REGION_NAME=eu-de
+export OS_VOLUME_API_VERSION=2
+export OS_IMAGE_API_VERSION=2
+export OS_ENDPOINT_TYPE=publicURL
+export NOVA_ENDPOINT_TYPE=publicURL
+export CINDER_ENDPOINT_TYPE=publicURL

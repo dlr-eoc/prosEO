@@ -96,7 +96,7 @@ spec:
       volumes:
         - name: alluxio-cache
           hostPath:
-            path: /mnt/alluxio
+            path: /mnt/cache
             type: DirectoryOrCreate
         - name: alluxio-domain
           hostPath:

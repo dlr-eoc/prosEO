@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.rest.model.PlannerJobstep;
+import de.dlr.proseo.planner.rest.model.RestJobStep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PodKube;
@@ -256,13 +256,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-	public ResponseEntity<PlannerJobstep> updateProcessingfacilities(String podname, String name) {
+	public ResponseEntity<RestJobStep> updateProcessingfacilities(String podname, String name) { // TODO "updateProcessingFacility" is not a good name for jobstep/pod creation
 		KubeConfig kc = productionPlanner.getKubeConfig(name);
 		if (kc != null) {
 			KubeJob aJob = kc.createJob(podname);
 			if (aJob != null) {
-				PlannerJobstep aPlan = new PlannerJobstep();
-				aPlan.setId(String.valueOf(aJob.getJobId()).toString());
+				RestJobStep aPlan = new RestJobStep();
+				aPlan.setId(aJob.getJobId()); // TODO This is not plausible! The job step ID probably is not equal to the job ID!
 				aPlan.setName(aJob.getJobName());
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");

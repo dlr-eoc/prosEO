@@ -6,15 +6,17 @@ baseUri: /proseo/planner/{version}
 mediaType: application/json
 
 types:
-  PlannerJob: !include types/planner-job.raml
-  PlannerJobstep: !include types/planner-jobstep.raml
+  RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
+  RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
+  RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
-  PlannerPod: !include types/planner-pod.raml
+  PlannerPod: !include ../../../../../interfaces/src/main/resources/raml/types/planner-pod.raml
 
 resourceTypes:
   standard:
     get?:
-      responses:          
+      responses:
         400:
           description: |
             The request sent to the server contains data which is not as expected e.g. invalid location URI
@@ -50,8 +52,8 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: PlannerJob[]
-            example: !include examples/planner-job-list.json
+            type: RestJob[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/job-list.json
   /{name}:
     get:
       description: Get production planner job
@@ -59,24 +61,24 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: PlannerJob
-              example: !include examples/planner-job.json
+              type: RestJob
+              example: !include ../../../../../model/src/main/resources/raml/examples/job.json
     post:
       description: Create production planner job
       responses:
         200:
           body:
             application/json:
-              type: PlannerJob
-              example: !include examples/planner-job.json
+              type: RestJob
+              example: !include ../../../../../model/src/main/resources/raml/examples/job.json
     delete:
       description: Delete production planner job
       responses:
         200:
           body:
             application/json:
-              type: PlannerJob
-              example: !include examples/planner-job.json
+              type: RestJob
+              example: !include ../../../../../model/src/main/resources/raml/examples/job.json
 
 /jobsteps:
   type: standard
@@ -90,8 +92,8 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: PlannerJobstep[]
-            example: !include examples/planner-jobstep-list.json
+            type: RestJobStep[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/jobstep-list.json
   /{name}:
     get:
       description: Get production planner jobstep
@@ -99,24 +101,24 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: PlannerJobstep
-              example: !include examples/planner-jobstep.json
+              type: RestJobStep
+              example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
     post:
       description: Create production planner jobstep
       responses:
         200:
           body:
             application/json:
-              type: PlannerJobstep
-              example: !include examples/planner-jobstep.json
+              type: RestJobStep
+              example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
     delete:
       description: Delete production planner jobstep
       responses:
         200:
           body:
             application/json:
-              type: PlannerJobstep
-              example: !include examples/planner-jobstep.json
+              type: RestJobStep
+              example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
 
 /processingfacilities:
   type: standard
@@ -152,7 +154,7 @@ resourceTypes:
             201:
               body:
                 application/json:
-                  type: PlannerJobstep
+                  type: RestJobStep
     /pods:
       get: 
         description: Get pods on processing facility

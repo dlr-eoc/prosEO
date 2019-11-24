@@ -1,0 +1,93 @@
+#%RAML 1.0
+title: prosEO Interfaces Test API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/interfaces/{version}
+baseUriParameters:
+  port:
+    description: The port the application is running on
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  # Referenced model types
+  RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
+  RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
+  # Interface types
+  RestInfo: !include ../../../main/resources/raml/types/info.raml
+  RestJoborder: !include ../../../main/resources/raml/types/joborderBase64.raml
+  RestProductFS: !include ../../../main/resources/raml/types/productFS.raml
+  RestStorage: !include ../../../main/resources/raml/types/storage.raml
+  IngestorProduct: !include ../../../main/resources/raml/types/ingestorproduct.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        404:
+    put?:
+      responses:          
+        404:
+
+/dummy:
+  type: standard
+  get:
+    responses:
+      200:
+  /infos:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestInfo
+  /joborders:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestJoborder
+  /productfss:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductFS
+  /storages:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestStorage
+  /ingestorproducts:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: IngestorProduct

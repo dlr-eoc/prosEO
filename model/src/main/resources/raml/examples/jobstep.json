@@ -1,0 +1,11 @@
+{
+    "id": 23785527,
+    "version": 1,
+    "name": "proseojob23785527",
+    "jobId": 23785526,
+    "jobStepState": "INITIAL",
+    "outputParameters": [],
+    "processingMode": "OFFL",
+    "inputProductClasses": [ "L1B" ],
+    "outputProductClass": "CH4"
+}

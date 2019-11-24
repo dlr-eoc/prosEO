@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Build-Jdk-Spec: 11
-Implementation-Title: prosEO Sample Processor Wrapper
-Implementation-Version: 0.0.1-SNAPSHOT
-Implementation-Vendor: DLR - Deutsches Zentrum für Luft- und Raumfahrt 
- e. V.
-Created-By: Maven Integration for Eclipse
-

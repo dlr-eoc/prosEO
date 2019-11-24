@@ -1,0 +1,74 @@
+[
+    {
+        "id": 0,
+        "version": 0,
+        "missionCode": "S5P",
+        "productClass": "L0",
+        "fileClass": "OPER",
+        "sensingStartTime": "2019-05-09T21:25:08.000000",
+        "sensingStopTime": "2019-05-09T21:45:08.000000",
+        "generationTime": "2019-10-05T10:12:39.000000",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 8138
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "01"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            }
+        ],
+        "sourceStorageType": "POSIX",
+        "mountPoint": "file:///data/proseo-pickup/incoming",
+        "filePath": "L0/S5P_OPER_L0__08138_01",
+        "productFileName": "S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW",
+        "auxFileNames": [
+            "S5P_OPER_L0__ODB_1__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_2__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_3__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_4__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_5__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_6__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_7__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__ODB_8__20190509T212508_20190509T214507_08138_01.RAW",
+            "S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW"
+        ]
+    },
+    {
+        "id": 0,
+        "version": 0,
+        "missionCode": "S5P",
+        "productClass": "O3",
+        "fileClass": "RPRO",
+        "mode": "OFFL",
+        "sensingStartTime": "2019-05-09T22:07:07.000000",
+        "sensingStopTime": "2019-05-09T23:48:37.000000",
+        "generationTime": "2019-10-05T10:13:22.000000",
+        "orbit": {
+            "spacecraftCode": "S5P",
+            "orbitNumber": 8137
+        },
+        "parameters": [
+            {
+                "key": "copernicusCollection",
+                "parameterType": "INTEGER",
+                "parameterValue": "99"
+            },
+            {
+                "key": "revision",
+                "parameterType": "INTEGER",
+                "parameterValue": "14"
+            }
+        ],
+        "sourceStorageType": "S3",
+        "mountPoint": "s3://proseo-pickup/incoming",
+        "filePath": "L2/O3-614941691",
+        "productFileName": "S5P_RPRO_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc"
+    }
+]
