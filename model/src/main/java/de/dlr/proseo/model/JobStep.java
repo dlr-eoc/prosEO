@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -49,7 +50,7 @@ public class JobStep extends PersistentObject {
 	private String processingMode;
 	
 	/** Query objects for input products */
-	@OneToMany(mappedBy = "jobStep")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "jobStep")
 	private Set<ProductQuery> inputProductQueries = new HashSet<>();
 	
 	/** The output product of this job step */

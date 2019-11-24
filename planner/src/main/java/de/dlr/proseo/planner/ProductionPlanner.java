@@ -120,7 +120,7 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getProcessingEngineUrl(), pf.getStorageManagerUrl());
+				kubeConfig = new KubeConfig(pf);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;

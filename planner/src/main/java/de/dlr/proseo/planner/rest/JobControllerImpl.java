@@ -16,8 +16,9 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
 import de.dlr.proseo.planner.rest.model.PlannerJob;
@@ -40,6 +41,9 @@ public class JobControllerImpl implements JobController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+    
+    @Autowired
+    private OrderDispatcher orderDispatcher;
     
     /**
      * Get production planner jobs by id
@@ -84,10 +88,30 @@ public class JobControllerImpl implements JobController {
 			if (order == null) {
 				order = RepositoryService.getOrderRepository().findByIdentifier(name);
 			}
-			
+			if (order != null) {
+				if (orderDispatcher.publishOrder(order, productionPlanner.getKubeConfig("Lerchenhof").getProcessingFacility())) {
+					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' created (%d)", order.getIdentifier(), 2000);
+					logger.error(message);
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(HTTP_HEADER_WARNING, message);
+					return new ResponseEntity<>(responseHeaders, HttpStatus.CREATED);
+				} else {
+					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' not created (%d)", order.getIdentifier(), 2000);
+					logger.error(message);
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(HTTP_HEADER_WARNING, message);
+					return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				}
+			}
+		} else {
+			String message = String.format(MSG_PREFIX + "CREATE order '%s' not found (%d)", name, 2000);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		}
 		
-    	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
+    	String message = String.format(MSG_PREFIX + "CREATE parameter name missing (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
