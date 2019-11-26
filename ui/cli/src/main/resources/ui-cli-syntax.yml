@@ -16,6 +16,8 @@ description: |
   in the case of multiple values "--option=value,value,value".
   
   Parameters are positional, except (implicitly) for attribute parameters of the form "<attribute name>=<attribute value>".
+  Attribute values may be comma-separated string lists, but they cannot represent attributes of more complex types. To set
+  complex object attributes use the "--file" option and pass a Json, XML or Yaml file.
   
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DDTHH:MM:SS").
   
@@ -97,7 +99,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: attribute
               type: string
@@ -118,7 +120,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: attribute
                   type: string
@@ -156,7 +158,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: spacecraftCode
               type: string
@@ -176,7 +178,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: spacecraftCode
               type: string
@@ -216,7 +218,7 @@ commands:
             - name: orderId
               type: string
               optional: true
-              description: The order identifier
+              description: The order identifier (overrides --from and --to options)
         - name: create
           description: Create a new processing order; if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
@@ -227,7 +229,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: orderId
               type: string
@@ -248,7 +250,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: orderId
               type: string
@@ -266,32 +268,44 @@ commands:
             - name: orderId
               type: string
               description: The order identifier
-        - name: release
-          description: Release the given processing order
+        - name: approve
+          description: Approve the named processing order for planning
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: plan
-          description: Plan the jobs for the given processing order
+          description: Plan the jobs for the named processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: release
+          description: Release the jobs of the named processing order for processing
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: suspend
-          description: Suspend starting of further jobs for the given processing order
+          description: Suspend starting of further jobs for the named processing order
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: resume
-          description: Resume starting of jobs for the given processing order
+          description: Resume starting of jobs for the named processing order
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: cancel
+          description: Cancel the named processing order (remaining jobs are not executed, order state changes to failed)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: close
-          description: Close the given processing order (if it is completed or failed)
+          description: Close the named processing order (if it is completed or failed)
           parameters:
             - name: orderId
               type: string
@@ -321,7 +335,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: className
                   type: string
@@ -342,7 +356,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: className
                   type: string
@@ -380,7 +394,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -405,7 +419,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -453,7 +467,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: className
                   type: string
@@ -482,7 +496,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: className
                   type: string
@@ -537,7 +551,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -562,7 +576,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -608,7 +622,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -629,7 +643,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -666,7 +680,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: targetClassName
                   type: string
@@ -687,7 +701,7 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML }; default value JSON)
+                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
                 - name: targetClassName
                   type: string
@@ -739,7 +753,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -760,7 +774,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -780,7 +794,7 @@ commands:
               shortForm: f
             - name: format
               type: string
-              description: The file format (one of { JSON, XML }; default value JSON)
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
             - name: className
               type: string
@@ -800,7 +814,7 @@ commands:
           shortForm: f
         - name: format
           type: string
-          description: The file format (one of { JSON, XML }; default value JSON)
+          description: The file format (one of { JSON, XML, YAML }; default value JSON)
       parameters:
         - name: processingFacility
           type: string

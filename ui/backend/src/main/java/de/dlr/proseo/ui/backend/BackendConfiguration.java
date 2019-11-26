@@ -58,30 +58,12 @@ public class BackendConfiguration {
 	}
 
 	/**
-	 * Sets the user for prosEO component logins
-	 * 
-	 * @param proseoUser the prosEO user to set
-	 */
-	public void setProseoUser(String proseoUser) {
-		this.proseoUser = proseoUser;
-	}
-
-	/**
 	 * Gets the password for prosEO component logins
 	 * 
 	 * @return the prosEO password
 	 */
 	public String getProseoPassword() {
 		return proseoPassword;
-	}
-
-	/**
-	 * Sets the password for prosEO component logins
-	 * 
-	 * @param proseoPassword the prosEO password to set
-	 */
-	public void setProseoPassword(String proseoPassword) {
-		this.proseoPassword = proseoPassword;
 	}
 
 	/**
