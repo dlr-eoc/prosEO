@@ -37,6 +37,12 @@
       processingCompletionTime?:
         type: datetime-only
         description: The completion time of the processing job
+      stdoutLogLevel?:
+        enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        description: The log level of stdout 
+      stderrLogLevel?:
+        enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+        description: The log level of stderr 
       processingStdOut?:
         type: string
         description: The standard output of the processing job

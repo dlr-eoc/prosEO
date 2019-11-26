@@ -8,7 +8,9 @@
         "outputParameters": [],
         "processingMode": "OFFL",
         "inputProductClasses": [ "L1B" ],
-        "outputProductClass": "CH4"
+        "outputProductClass": "CH4",
+        "stdoutLogLevel": "INFO",
+        "stderrLogLevel": "INFO"
     },
     {
         "id": 23785538,
@@ -18,6 +20,8 @@
         "outputParameters": [],
         "processingMode": "OFFL",
         "inputProductClasses": [ "L1B", "CO" ],
-        "outputProductClass": "CH4"
+        "outputProductClass": "CH4",
+        "stdoutLogLevel": "INFO",
+        "stderrLogLevel": "INFO"
     }
 ]
