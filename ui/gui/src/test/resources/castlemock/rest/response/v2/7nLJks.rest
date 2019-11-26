@@ -2,15 +2,12 @@
 <restMockResponse>
     <body>[&#13;
 	{&#13;
-		"id": 1837725,&#13;
+		"id": 2538579,&#13;
 		"version": 2,&#13;
 		"missionCode": "S5P",&#13;
 		"processorName": "KNMI L2",&#13;
 		"productClasses": [&#13;
 			"FRESCO",&#13;
-			"CO",&#13;
-			"CH4",&#13;
-			"ALH",&#13;
 			"AAI",&#13;
 			"O3PR",&#13;
 			"O3TPR"&#13;
@@ -21,10 +18,10 @@
     <headerQueries/>
     <httpHeaders/>
     <httpStatusCode>200</httpStatusCode>
-    <id>5PPYGr</id>
+    <id>7nLJks</id>
     <jsonPathExpressions/>
     <methodId>V4N4n2</methodId>
-    <name>ID 1837725</name>
+    <name>ID 2538579</name>
     <parameterQueries/>
     <status>ENABLED</status>
     <usingExpressions>false</usingExpressions>
