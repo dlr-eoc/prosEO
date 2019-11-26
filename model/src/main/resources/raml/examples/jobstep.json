@@ -7,5 +7,7 @@
     "outputParameters": [],
     "processingMode": "OFFL",
     "inputProductClasses": [ "L1B" ],
-    "outputProductClass": "CH4"
+    "outputProductClass": "CH4",
+    "stdoutLogLevel": "INFO",
+    "stderrLogLevel": "INFO"
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -46,7 +47,22 @@ public class KubeConfig {
 	private String description;
 	private String url;
 	private String storageManagerUrl;
+	private ProcessingFacility processingFacility;
 	
+	/**
+	 * @return the processingFacility
+	 */
+	public ProcessingFacility getProcessingFacility() {
+		return processingFacility;
+	}
+
+	/**
+	 * @param processingFacility the processingFacility to set
+	 */
+	public void setProcessingFacility(ProcessingFacility processingFacility) {
+		this.processingFacility = processingFacility;
+	}
+
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
 	
@@ -55,17 +71,17 @@ public class KubeConfig {
 	}
 	
 	/**
-	 * Instantiate a KuebConfig obejct
+	 * Instantiate a KuebConfig object
 	 * 
-	 * @param anId Name of ProcessingFacility
-	 * @param aDescription Description of ProcessingFacility
-	 * @param aUrl URL of ProcessingFacility
+	 * @param pf the ProcessingFacility
 	 */
-	public KubeConfig (String anId, String aDescription, String aUrl, String aStorageManagerUrl) {
-		id = anId;
-		description = aDescription;
-		url = aUrl;
-		storageManagerUrl = aStorageManagerUrl;
+
+	public KubeConfig (ProcessingFacility pf) {
+		id = pf.getName();
+		description = pf.getDescription();
+		url = pf.getProcessingEngineUrl();
+		storageManagerUrl = pf.getStorageManagerUrl();
+		processingFacility = pf;
 	}
 	
 	/**
