@@ -3,6 +3,9 @@ package de.dlr.proseo.planner.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,8 @@ import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.RestJobStep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.RestProcessingFacility;
+import de.dlr.proseo.planner.rest.model.StderrLogLevel;
+import de.dlr.proseo.planner.rest.model.StdoutLogLevel;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
@@ -256,10 +261,23 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-	public ResponseEntity<RestJobStep> updateProcessingfacilities(String podname, String name) { // TODO "updateProcessingFacility" is not a good name for jobstep/pod creation
+	public ResponseEntity<RestJobStep> updateProcessingfacilities(String podname, String name,
+		        @Valid
+		        StdoutLogLevel stdoutLogLevel,
+		        @Valid
+		        StderrLogLevel stderrLogLevel) {
+		// TODO "updateProcessingFacility" is not a good name for jobstep/pod creation
 		KubeConfig kc = productionPlanner.getKubeConfig(name);
 		if (kc != null) {
-			KubeJob aJob = kc.createJob(podname);
+			String outLogLevel = null;
+			String errLogLevel = null;
+			if (stdoutLogLevel != null) {
+				outLogLevel = stdoutLogLevel.name();
+			}
+			if (stderrLogLevel != null) {
+				errLogLevel = stderrLogLevel.name();
+			}
+			KubeJob aJob = kc.createJob(podname, outLogLevel, errLogLevel);
 			if (aJob != null) {
 				RestJobStep aPlan = new RestJobStep();
 				aPlan.setId(aJob.getJobId()); // TODO This is not plausible! The job step ID probably is not equal to the job ID!

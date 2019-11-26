@@ -7,6 +7,8 @@ package de.dlr.proseo.planner.dispatcher;
 
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -22,6 +24,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.joborder.Conf;
 import de.dlr.proseo.model.joborder.JobOrder;
+import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
@@ -74,25 +77,36 @@ public class JobDispatcher {
 				Set<ProductQuery> productQueries = jobStep.getInputProductQueries();
 
 				jobOrder = new JobOrder();
-				String processorName;
-				String version;
-				String stdoutLogLevel;
-				String stderrLogLevel;
-				String isTest;
-				String breakpointEnable;
-				String processingStation;
-				String acquisitionStation;
+				String processorName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getProcessorClass().getProcessorName();
+				String version = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getProcessorVersion();
+				String stdoutLogLevel = jobStep.getStdoutLogLevel().name(); 
+				String stderrLogLevel = jobStep.getStderrLogLevel().name(); 
+				String isTest = "false";  // todo
+				String breakpointEnable = "true";
+				String processingStation = "";
+				String acquisitionStation = "";
+				
 
-
-				Conf co = new Conf("Hugo", "0.0", "INFO", "WARNING", "false", "false", "PDGS-NP", "PDGS-GSN");
+				Conf co = new Conf(processorName,
+					 			   version,
+					 			   stdoutLogLevel,
+					 			   stderrLogLevel,
+					 			   isTest,
+					 			   breakpointEnable,
+					 			   processingStation,
+					 			   acquisitionStation);
+				String start = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC")).format(jobStep.getJob().getStartTime());
+				String stop =  DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC")).format(jobStep.getJob().getStopTime());
+				co.setSensingTime(new SensingTime(start, stop));
 			} catch (Exception e) {
-
+				e.printStackTrace();
 			}
 
 		// read a job order file for test purposes
 		if (jobOrder == null) {
 			jobOrder = new JobOrder();
 		}
+		
 		InputStream aStream;
 		try {
 			aStream = new com.amazonaws.util.StringInputStream("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n" + 

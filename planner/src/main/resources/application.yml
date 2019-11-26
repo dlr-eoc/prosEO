@@ -36,12 +36,14 @@ proseo:
       s3SecretAccessKey: short_secret_key
       s3EndPoint: http://minio:9000
       s3Region: eu-de
+      s3DefaultBucket: proseo-data-001
       s3MaxNumberOfBuckets: 50
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsS3BucketEndPoint: http://minio:9000
       alluxioUnderFsMaxPrefixes: 500
+      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
     joborder:
       bucket: internal
       prefix: joborders

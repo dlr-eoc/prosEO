@@ -54,7 +54,7 @@ public class JobControllerImpl implements JobController {
 		// todo remove test start
 
 		if (productionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test");
+	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
 	    	if (aJob != null) {
 	    		productionPlanner.getKubeConfig(null).deleteJob(aJob);
 	    	}

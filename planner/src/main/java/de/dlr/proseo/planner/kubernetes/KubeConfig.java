@@ -227,11 +227,11 @@ public class KubeConfig {
 	 * @param name of new job
 	 * @return new job or null
 	 */
-	public KubeJob createJob(String name) {
+	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		int aKey = kubeJobList.size() + 1;
 		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
-		KubeJob aJob = new KubeJob(aKey, null, "proseo-sample-integration-processor:0.0.1-SNAPSHOT", "/testdata/test1.pl", "perl", null);
-		aJob = aJob.createJob(this);
+		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
+		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
