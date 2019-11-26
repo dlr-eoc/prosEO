@@ -109,6 +109,17 @@ public class OrbitControllerImpl implements OrbitController {
 		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
 		return responseHeaders;
 	}
+	/**
+	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
+	 * 
+	 * @param spacecraftCode 
+	 * @param orbitNumberFrom
+	 * @param orbitNumber To
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @return HTTP status "OK" and a list of products or
+	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 */
 	
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
