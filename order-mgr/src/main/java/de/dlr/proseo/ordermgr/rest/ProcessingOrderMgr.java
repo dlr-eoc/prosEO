@@ -246,6 +246,7 @@ public class ProcessingOrderMgr {
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
 	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({}, {})", id, order.getIdentifier());
 		
 		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
 		
@@ -257,6 +258,8 @@ public class ProcessingOrderMgr {
 		// Update modified attributes
 		boolean orderChanged = false;
 		ProcessingOrder changedOrder = OrderUtil.toModelOrder(order);
+		
+		logger.info("Changed order identifier: "+changedOrder.getIdentifier());
 		
 		if (!modelOrder.getMission().equals(changedOrder.getMission())) {
 			orderChanged = true;
@@ -302,14 +305,12 @@ public class ProcessingOrderMgr {
 
 	}
 	
-	
-	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date starttimefrom,
-			@DateTimeFormat Date starttimeto) {
-		// TODO Auto-generated method stub
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, starttimefrom, starttimeto);
+	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
+			@DateTimeFormat Date executionTimeTo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
 		List<RestOrder> result = new ArrayList<>();
 		
-		if (null == mission && null == identifier && (null == productclasses || 0 == productclasses.length) && null == starttimefrom && null == starttimeto) {
+		if (null == mission && null == identifier && (null == productclasses || 0 == productclasses.length) && null == executionTimeFrom && null == executionTimeTo) {
 			// Simple case: no search criteria set
 			for (ProcessingOrder order: RepositoryService.getOrderRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found order with ID {}", order.getId());
@@ -335,10 +336,10 @@ public class ProcessingOrderMgr {
 				}
 				jpqlQuery += ")";
 			}
-			if (null != starttimefrom) {
+			if (null != executionTimeFrom) {
 				jpqlQuery += " and p.startTime >= :startTimeFrom";
 			}
-			if (null != starttimeto) {
+			if (null != executionTimeTo) {
 				jpqlQuery += " and p.stopTime <= :startTimeTo";
 			}
 			Query query = em.createQuery(jpqlQuery);
@@ -353,11 +354,11 @@ public class ProcessingOrderMgr {
 					query.setParameter("productClass" + i, productclasses[i]);
 				}
 			}
-			if (null != starttimefrom) {
-				query.setParameter("startTimeFrom", starttimefrom);
+			if (null != executionTimeFrom) {
+				query.setParameter("startTimeFrom", executionTimeFrom.toInstant());
 			}
-			if (null != starttimeto) {
-				query.setParameter("startTimeTo", starttimeto);
+			if (null != executionTimeTo) {
+				query.setParameter("startTimeTo", executionTimeTo.toInstant());
 			}
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof ProcessingOrder) {

@@ -7,9 +7,14 @@ import static org.junit.Assert.assertNotNull;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import javax.persistence.EntityManagerFactory;
+
+import org.assertj.core.util.Sets;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Test;
@@ -32,6 +37,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
@@ -40,6 +46,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
@@ -56,7 +63,7 @@ import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-//@Transactional
+
 @AutoConfigureTestEntityManager
 public class OrderControllerTest {
 	/* The base URI of the Orders */
@@ -123,22 +130,21 @@ public class OrderControllerTest {
 		
 	private static String[][] testConfProc = {
 			//identifier
-			{"KNMI L2 01.03.02 2019-07-03"},
-			{ "DLR L2 01.01.05 2019-07-04"},	
+			{"O3_TPR 02.00.00 OFFL 2019-10-11"},
+			{"TROPICALIPF 01.00.00 SIR 2019-10-11"},	
 	};
 	
 	private static String [][] testReqProdClass = {
-			{"O3", "CLOUD", "FRESCO", "AAI"}	
+			{"O3"},
+			{"CLOUD"}
 	};
 	
-	private static String [][] testInputProdClass = {
-			{"L1B"}	
-	};
+	private static String  testInputProdClass = "L1B";
 	
 	private static String [][] testReqOrbits = {
 			//Spacecraft Code, OrbitNumber from, OrbitNumber to
-			{"S5P", "4567", "5330" },
-	        { "S5P", "5421", "5678" }
+			{"S5P", "8132", "8138" },
+	        { "S5P", "8136", "8141" }
 			
 	};
 	private static String[][] testOrderData = {
@@ -184,7 +190,6 @@ public class OrderControllerTest {
 			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
 			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[10])));
 			testOrder.setOutputFileClass(testData[10]);
-			//confProcessors,orbits, reqProductCLasses,inputProducClasses,
 			
 			for (int i = 0; i < testFilterConditions.length; ++i) {
 				Parameter filterCondition = new Parameter();
@@ -195,17 +200,28 @@ public class OrderControllerTest {
 			for (int i = 0; i < testOutputParam.length; ++i) {
 				Parameter outputParam = new Parameter();
 				outputParam.init(ParameterType.valueOf(testOutputParam[i][1]), testOutputParam[i][2]);
-				testOrder.getFilterConditions().put(testOutputParam[i][0], outputParam);
+				testOrder.getOutputParameters().put(testOutputParam[i][0], outputParam);
 			}
 
-//			for (int i = 0 ; i < testConfProc.length; ++i) {
-//				ConfiguredProcessor reqProc = new ConfiguredProcessor();
-//				reqProc.setIdentifier(testConfProc[i][0]);
-//				testOrder.getRequestedConfiguredProcessors().add(reqProc);				
-//			}	
+			for (int i = 0 ; i < testConfProc.length; ++i) {
+				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(testConfProc[i][0]);
+				testOrder.getRequestedConfiguredProcessors().add(reqProc);				
+			}
 			
-			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
+			for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByProductType(testInputProdClass)){
+				testOrder.getInputProductClasses().add(prodClass);
 
+			}
+			for (int i = 0; i < testReqProdClass.length; ++i) {				
+				Set<ProductClass> set = new HashSet<ProductClass>(RepositoryService.getProductClassRepository().findByProductType(testReqProdClass[i][0]));
+				testOrder.setRequestedProductClasses(set);			
+			}
+			for (int i = 0; i < testReqOrbits.length; ++i) {
+				List<Orbit> orbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(testReqOrbits[i][0], 
+						Integer.valueOf(testReqOrbits[i][1]), Integer.valueOf(testReqOrbits[i][2]));
+				testOrder.setRequestedOrbits(orbits);
+			}
+			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
 		}
 
 		logger.info("Created test order {}", testOrder.getId());
@@ -249,7 +265,8 @@ public class OrderControllerTest {
 	 * 
 	 * Test: Create a new order
 	 */
-/*	@Test
+	@Transactional
+//	@Test
 	public final void testCreateOrder() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -308,7 +325,7 @@ public class OrderControllerTest {
 	
 		// Clean up database
 		testOrders.add(orderToCreate);
-		//deleteTestOrders(testOrder);
+		deleteTestOrders(testOrders);
 
 		logger.info("Test OK: Create order");		
 	}	
@@ -320,7 +337,7 @@ public class OrderControllerTest {
 	 * Test: Delete an Order by ID
 	 * Precondition: An Order in the database
 	 */
-/*	@Test
+//	@Test
 	public final void testDeleteOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -394,7 +411,7 @@ public class OrderControllerTest {
 	 * Test: Get an Order by ID
 	 * Precondition: At least one order with a known ID is in the database
 	 */
-/*	@Test
+//	@Test
 	public final void testGetOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -469,7 +486,8 @@ public class OrderControllerTest {
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
 	
-/*	@Test
+	@Transactional//Without this i get lazy initialization error 
+	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -514,9 +532,10 @@ public class OrderControllerTest {
 			}
 		});
 
+		
 		// Update  order attribute/s
 		ProcessingOrder orderToModify = testOrders.get(0);
-		orderToModify.setProcessingMode("OFFL");		
+		//orderToModify.setProcessingMode("OFFL");		
 		orderToModify.setIdentifier("Mod_XYZG");
 		
 		RestOrder restOrder = OrderUtil.toRestOrder(orderToModify);		
@@ -568,7 +587,7 @@ public class OrderControllerTest {
 	 * Test: List of all orders by mission, product class, start time range
 	 * Precondition: For all selection criteria orders within and without a search value exist
 	 */
-	@Test
+	//@Test
 	public final void testGetOrders() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -622,10 +641,10 @@ public class OrderControllerTest {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(testUrl)
 				// Add query parameter
 				.queryParam("mission", "ABCe")
-				.queryParam("identifier", "XYZ")
+				//.queryParam("identifier", "XYZ")
 				//.queryParam("productClasses", "")
-				.queryParam("starttimefrom", testOrderData[0][9].split("\\.")[0])
-				.queryParam("starttimeto", testOrderData[1][10].split("\\.")[0]);
+				.queryParam("executionTimeFrom", testOrderData[0][9].split("\\.")[0])
+				.queryParam("executionTimeTo", testOrderData[1][10].split("\\.")[0]);
 
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 				
