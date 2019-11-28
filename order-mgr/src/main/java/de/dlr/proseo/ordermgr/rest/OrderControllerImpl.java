@@ -99,13 +99,13 @@ public class OrderControllerImpl implements OrderController {
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date starttimefrom,
-			@DateTimeFormat Date starttimeto) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, starttimefrom, starttimeto);
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
+			@DateTimeFormat Date executionTimeTo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
 		
 		try {
 			return new ResponseEntity<>(
-					procOrderManager.getOrders(mission, identifier, productclasses, starttimefrom, starttimeto), HttpStatus.OK);
+					procOrderManager.getOrders(mission, identifier, productclasses, executionTimeFrom, executionTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
