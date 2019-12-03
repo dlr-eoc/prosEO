@@ -56,8 +56,6 @@ public class OrderUtil {
 		if (null != processingOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(Date.from(processingOrder.getExecutionTime()));
 		}
-		
-		//To be verified
 		if(null != processingOrder.getSlicingType()) {
 			restOrder.setSlicingType(processingOrder.getSlicingType().name());
 		}
@@ -66,7 +64,7 @@ public class OrderUtil {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
 		//to be added Slice Overlap
-		restOrder.setSliceOverlap((long) 20);
+		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
@@ -187,10 +185,22 @@ public class OrderUtil {
 				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
 			} 
 		}
+		if (null != restOrder.getOutputFileClass()) {
+			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
+		}
 		//To be verified
-		processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));
-	
-		//processingOrder.setSliceDuration(Duration.from(restOrder.getSliceDuration()));
+		if (null != restOrder.getSlicingType()) {
+			processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));	
+
+		}
+		if (null != restOrder.getSliceDuration()) {
+			processingOrder.setSliceDuration(Duration.ofSeconds(restOrder.getSliceDuration()));
+
+		}
+		if (null != restOrder.getSliceOverlap()) {
+			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
+
+		}
 		
 		//The following section needs to be verified
 		for (RestParameter restParam : restOrder.getFilterConditions()) {

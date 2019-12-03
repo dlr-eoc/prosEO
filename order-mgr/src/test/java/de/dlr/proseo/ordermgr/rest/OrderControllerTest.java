@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +46,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -63,7 +66,7 @@ import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-
+@Transactional
 @AutoConfigureTestEntityManager
 public class OrderControllerTest {
 	/* The base URI of the Orders */
@@ -140,16 +143,21 @@ public class OrderControllerTest {
 	};
 	
 	private static String  testInputProdClass = "L1B";
-	
+	private static String  testOutputFileClass= "RPRO";
+
 	private static String [][] testReqOrbits = {
 			//Spacecraft Code, OrbitNumber from, OrbitNumber to
 			{"S5P", "8132", "8138" },
 	        { "S5P", "8136", "8141" }
 			
 	};
+	private static String testJob[][] = {
+		//id,job_state,priority,orbit_id,processing_facility_id,filterconditions,outputparameters
+			{"1111","INITIAL","1","15","Test Facility"}
+	};
 	private static String[][] testOrderData = {
 			//order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,slice_overlapstart_time, stop_time
-			{"111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI",null,"ORBIT","0","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000"},
+			{"111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","PT20.345S","TIME_SLICE","0","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000"},
 			{"112", "0", "2019-11-18T20:04:20.000000","ABCDE","PLANNED","OFFL",null,"ORBIT","0","2019-02-20T22:49:21.000000","2019-05-29T20:29:11.000000"},
 			{"113", "0", "2019-10-31T20:49:02.000000","XYZ1234","PLANNED","NRTI",null,"ORBIT","0","2019-01-02T02:40:21.000000","2019-04-29T18:29:10.000000"}
 			
@@ -179,17 +187,15 @@ public class OrderControllerTest {
 			testOrder.setOrderState(OrderState.valueOf(testData[4]));
 			testOrder.setProcessingMode(testData[5]);
 			testOrder.setSlicingType(OrderSlicingType.valueOf(testData[7]));
-//			//If Slice_TYpe is ORBIT then slice duration can be null
-//			//To be filled only if Slice_TYpe is TIME_SLICE
-//			if(testOrder.getSlicingType().toString().equals("ORBIT"))
-//			testOrder.setSliceDuration(null);
-//			sliceoverlap,slice duration for timeslice to be verified		
-//			else
-//			testOrder.setSliceDuration(Duration.valueOf(testData[7]));
-//			testOrder.setSliceOverlap(Duration.from(testData[8]));
+			testOrder.setOutputFileClass(testOutputFileClass);
+
+			//If Slice_TYpe is ORBIT then slice duration can be null
+			if(testOrder.getSlicingType().toString().equals("TIME_SLICE")) {
+				testOrder.setSliceDuration(Duration.parse(testData[6]));
+			}
+			testOrder.setSliceOverlap(Duration.ZERO);
 			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
 			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[10])));
-			testOrder.setOutputFileClass(testData[10]);
 			
 			for (int i = 0; i < testFilterConditions.length; ++i) {
 				Parameter filterCondition = new Parameter();
@@ -212,6 +218,8 @@ public class OrderControllerTest {
 				testOrder.getInputProductClasses().add(prodClass);
 
 			}
+
+		
 			for (int i = 0; i < testReqProdClass.length; ++i) {				
 				Set<ProductClass> set = new HashSet<ProductClass>(RepositoryService.getProductClassRepository().findByProductType(testReqProdClass[i][0]));
 				testOrder.setRequestedProductClasses(set);			
@@ -221,7 +229,35 @@ public class OrderControllerTest {
 						Integer.valueOf(testReqOrbits[i][1]), Integer.valueOf(testReqOrbits[i][2]));
 				testOrder.setRequestedOrbits(orbits);
 			}
+//			//JObs
+//			Job job = new Job();
+//			job.setId(Integer.valueOf(testJob[0][0]));
+//			job.setJobState(JobState.valueOf(testJob[0][1]));
+//			job.setPriority(Integer.valueOf(testJob[0][2]));
+//			for (Orbit orbit : testOrder.getRequestedOrbits()) {
+//				job.setOrbit(orbit);
+//				job.setStartTime(orbit.getStartTime());
+//				job.setStopTime(orbit.getStopTime());
+//			}
+//			job.setProcessingFacility(RepositoryService.getFacilityRepository().findByName(testJob[0][4]));
+////			for (int i = 0; i < testFilterConditions.length; ++i) {
+////				Parameter filterCondition = new Parameter();
+//				filterCondition.init(ParameterType.valueOf(testFilterConditions[i][1]), testFilterConditions[i][2]);
+//				job.getFilterConditions().put(testFilterConditions[i][0], filterCondition);
+//			}
+//			
+//			for (int i = 0; i < testOutputParam.length; ++i) {
+//				Parameter outputParam = new Parameter();
+//				outputParam.init(ParameterType.valueOf(testOutputParam[i][1]), testOutputParam[i][2]);
+//				job.getOutputParameters().put(testOutputParam[i][0], outputParam);
+//			}
+//			job = RepositoryService.getJobRepository().save(job);
+
+//			testOrder.getJobs().add(job);
+			
 			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
+//			job = RepositoryService.getJobRepository().save(job);
+			
 		}
 
 		logger.info("Created test order {}", testOrder.getId());
@@ -253,9 +289,13 @@ public class OrderControllerTest {
 	 * @param testOrders a list of test orders to delete 
 	 */
 	private void deleteTestOrders(List<ProcessingOrder> testOrders) {
-		Session session = emf.unwrap(SessionFactory.class).openSession();
+//		Session session = emf.unwrap(SessionFactory.class).openSession();
 		for (ProcessingOrder testOrder: testOrders) {
-			testOrder = (ProcessingOrder) session.merge(testOrder);
+//			testOrder = (ProcessingOrder) session.merge(testOrder);
+//			for (Job job : testOrder.getJobs()) {
+//				RepositoryService.getJobRepository().delete(job);
+//
+//			}
 			RepositoryService.getOrderRepository().delete(testOrder);
 		}
 	}
@@ -265,8 +305,8 @@ public class OrderControllerTest {
 	 * 
 	 * Test: Create a new order
 	 */
-	@Transactional
-//	@Test
+//	@Transactional
+	@Test
 	public final void testCreateOrder() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -322,10 +362,15 @@ public class OrderControllerTest {
 		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-	
+
 		// Clean up database
-		testOrders.add(orderToCreate);
-		deleteTestOrders(testOrders);
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestOrders(testOrders);
+				return null;
+			}
+		});
 
 		logger.info("Test OK: Create order");		
 	}	
@@ -487,7 +532,7 @@ public class OrderControllerTest {
 	 */
 	
 	@Transactional//Without this i get lazy initialization error 
-	@Test
+//	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
