@@ -66,7 +66,6 @@ import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-@Transactional
 @AutoConfigureTestEntityManager
 public class OrderControllerTest {
 	/* The base URI of the Orders */
@@ -218,8 +217,7 @@ public class OrderControllerTest {
 				testOrder.getInputProductClasses().add(prodClass);
 
 			}
-
-		
+	
 			for (int i = 0; i < testReqProdClass.length; ++i) {				
 				Set<ProductClass> set = new HashSet<ProductClass>(RepositoryService.getProductClassRepository().findByProductType(testReqProdClass[i][0]));
 				testOrder.setRequestedProductClasses(set);			
@@ -256,7 +254,6 @@ public class OrderControllerTest {
 //			testOrder.getJobs().add(job);
 			
 			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
-//			job = RepositoryService.getJobRepository().save(job);
 			
 		}
 
@@ -289,13 +286,7 @@ public class OrderControllerTest {
 	 * @param testOrders a list of test orders to delete 
 	 */
 	private void deleteTestOrders(List<ProcessingOrder> testOrders) {
-//		Session session = emf.unwrap(SessionFactory.class).openSession();
 		for (ProcessingOrder testOrder: testOrders) {
-//			testOrder = (ProcessingOrder) session.merge(testOrder);
-//			for (Job job : testOrder.getJobs()) {
-//				RepositoryService.getJobRepository().delete(job);
-//
-//			}
 			RepositoryService.getOrderRepository().delete(testOrder);
 		}
 	}
@@ -305,7 +296,7 @@ public class OrderControllerTest {
 	 * 
 	 * Test: Create a new order
 	 */
-//	@Transactional
+	@Transactional
 	@Test
 	public final void testCreateOrder() {
 
@@ -456,7 +447,7 @@ public class OrderControllerTest {
 	 * Test: Get an Order by ID
 	 * Precondition: At least one order with a known ID is in the database
 	 */
-//	@Test
+	@Test
 	public final void testGetOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		

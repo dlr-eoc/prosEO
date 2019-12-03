@@ -304,6 +304,16 @@ public class ProcessingOrderMgr {
 		return OrderUtil.toRestOrder(modelOrder);
 
 	}
+	/**
+	 * List of all orders filtered by mission,identifier, product class, execution time range
+	 * 
+	 * @param mission the mission code
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @return a list of orders
+	 * @throws NoResultException if no orders matching the given search criteria could be found
+	 */
 	
 	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
