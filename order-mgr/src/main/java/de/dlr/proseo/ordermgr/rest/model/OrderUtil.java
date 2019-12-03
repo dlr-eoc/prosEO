@@ -189,9 +189,18 @@ public class OrderUtil {
 			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
 		}
 		//To be verified
-		processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));	
-		processingOrder.setSliceDuration(Duration.ofSeconds(restOrder.getSliceDuration()));
-		processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
+		if (null != restOrder.getSlicingType()) {
+			processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));	
+
+		}
+		if (null != restOrder.getSliceDuration()) {
+			processingOrder.setSliceDuration(Duration.ofSeconds(restOrder.getSliceDuration()));
+
+		}
+		if (null != restOrder.getSliceOverlap()) {
+			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
+
+		}
 		
 		//The following section needs to be verified
 		for (RestParameter restParam : restOrder.getFilterConditions()) {
