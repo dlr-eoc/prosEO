@@ -23,8 +23,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import de.dlr.proseo.ui.backend.BackendConfiguration;
-import de.dlr.proseo.ui.backend.BackendConnectionService;
 import de.dlr.proseo.ui.backend.BackendUserManager;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
@@ -57,7 +55,6 @@ public class CommandLineInterface implements CommandLineRunner {
 	private static final String MSG_COMMAND_LINE_PROMPT_SUPPRESSED = "(I%d) Command line prompt suppressed by proseo.cli.start parameter";
 	private static final String MSG_COMMAND_NAME_NULL = "(E%d) Command name must not be null";
 	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
-	private static final String MSG_PREFIX = "199 proseo-ui-cli ";
 	
 	/* Other string constants */
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
@@ -87,6 +84,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	/* Classes for the various top-level commands */
 	@Autowired
 	private OrderCommandRunner orderCommandRunner;
+	@Autowired
+	private IngestorCommandRunner ingestorCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
@@ -102,7 +101,7 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check argument
 		if (null == command) {
-			throw new NullPointerException(String.format(MSG_PREFIX + MSG_COMMAND_NAME_NULL, MSG_ID_COMMAND_NAME_NULL));
+			throw new NullPointerException(String.format(MSG_COMMAND_NAME_NULL, MSG_ID_COMMAND_NAME_NULL));
 		}
 		
 		// If help is requested, show help and skip execution
@@ -143,15 +142,17 @@ public class CommandLineInterface implements CommandLineRunner {
 			case OrderCommandRunner.CMD_ORDER:
 				orderCommandRunner.executeCommand(command);
 				break;
+			case CMD_PRODUCT:
+			case CMD_INGEST:
+				ingestorCommandRunner.executeCommand(command);
+				break;
 			case CMD_MISSION:
 			case CMD_ORBIT:
 			case CMD_PROCESSOR:
 			case CMD_CONFIGURATION:
 			case CMD_PRODUCT_CLASS:
-			case CMD_PRODUCT:
-			case CMD_INGEST:
 			default:
-				String message = String.format(MSG_PREFIX + MSG_NOT_IMPLEMENTED, MSG_ID_NOT_IMPLEMENTED, command.getName());
+				String message = String.format(MSG_NOT_IMPLEMENTED, MSG_ID_NOT_IMPLEMENTED, command.getName());
 				System.err.println(message);
 				break;
 			}
@@ -174,10 +175,10 @@ public class CommandLineInterface implements CommandLineRunner {
 		try {
 			parser.loadSyntax();
 		} catch (FileNotFoundException e) {
-			logger.error(String.format(MSG_PREFIX + MSG_SYNTAX_FILE_NOT_FOUND, MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
+			logger.error(String.format(MSG_SYNTAX_FILE_NOT_FOUND, MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
 			throw e;
 		} catch (YAMLException e) {
-			logger.error(String.format(MSG_PREFIX + MSG_SYNTAX_FILE_ERROR, MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile()));
+			logger.error(String.format(MSG_SYNTAX_FILE_ERROR, MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile(), e.getMessage()));
 			throw e;
 		}
 		
@@ -191,7 +192,7 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check whether the command line prompt shall be started
 		if (!config.getCliStart()) {
-			logger.info(String.format(MSG_PREFIX + MSG_COMMAND_LINE_PROMPT_SUPPRESSED, MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
+			logger.info(String.format(MSG_COMMAND_LINE_PROMPT_SUPPRESSED, MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
 			if (logger.isTraceEnabled()) logger.trace("<<< run()");
 			return;
 		}

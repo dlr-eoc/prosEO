@@ -8,6 +8,7 @@ package de.dlr.proseo.ui.cli;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.Arrays;
 
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.type.Date;
+import java.util.Date;
 
 import antlr.collections.List;
 
@@ -120,15 +121,22 @@ public class CLIUtil {
 			throw new IllegalArgumentException(message);
 		}
 		try {
+			attributeField.setAccessible(true);
 			if (List.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute as multi-valued String list
 				attributeField.set(restObject, Arrays.asList(paramParts[1].split(",")));
 			} else if (Number.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Long (there are no floating point attributes in RestOrder)
+				attributeField.set(restObject, Long.parseLong(paramParts[1]));
 			} else if (Date.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Date of the form "yyyy-MM-dd'T'HH:mm:ss"
+				attributeField.set(restObject, Date.from(Instant.parse(paramParts[1] + "Z"))); // no timezone expected
+			} else if (Instant.class.isAssignableFrom(attributeField.getType())) {
+				// Parse attribute value as Instant of the form "yyyy-MM-dd'T'HH:mm:ss"
+				attributeField.set(restObject, Instant.parse(paramParts[1] + "Z")); // no timezone expected
 			} else if (String.class.isAssignableFrom(attributeField.getType())) {
 				// Use attribute value as is
+				attributeField.set(restObject, paramParts[1]);
 			} else {
 				// Attribute type not supported
 				String message = String.format(MSG_INVALID_ATTRIBUTE_TYPE, MSG_ID_INVALID_ATTRIBUTE_TYPE,

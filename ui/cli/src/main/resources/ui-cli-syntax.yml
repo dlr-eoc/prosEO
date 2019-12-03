@@ -242,7 +242,7 @@ commands:
               description: An order attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the order definition file
         - name: update
-          description: Update a processing order
+          description: Update a processing order (only allowed in status initial)
           options:
             - name: file
               type: string
@@ -251,6 +251,9 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete attributes not given in the order definition file and/or the command parameters
           parameters:
             - name: orderId
               type: string
@@ -263,49 +266,56 @@ commands:
               description: An order attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the order definition file
         - name: delete
-          description: Delete the named processing order
+          description: Delete the named processing order (only allowed in status closed)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: approve
-          description: Approve the named processing order for planning
+          description: Approve the named processing order for planning (must be in status initial)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: plan
-          description: Plan the jobs for the named processing order
+          description: Plan the jobs for the named processing order (must be in status approved)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: release
-          description: Release the jobs of the named processing order for processing
+          description: Release the jobs of the named processing order for processing (must be in status planned)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: suspend
-          description: Suspend starting of further jobs for the named processing order
+          description: Suspend starting of further jobs for the named processing order (order reverts to status planned)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: resume
-          description: Resume starting of jobs for the named processing order
+          description: Resume starting of jobs for the named processing order after suspend
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: cancel
-          description: Cancel the named processing order (remaining jobs are not executed, order state changes to failed)
+          description: Cancel the named processing order (remaining jobs are not executed, order state changes to failed;
+              order must be in status planned, i. e. not yet released or suspended)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: close
           description: Close the named processing order (if it is completed or failed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+        - name: reset
+          description: Reset the named processing order to initial state (if it is approved or planned)
           parameters:
             - name: orderId
               type: string
@@ -735,13 +745,14 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of order start time
+              description: Lower bound of sensing start time
             - name: to
               type: datetime
-              description: Upper bound of order start time
+              description: Upper bound of sensing start time
           parameters:
             - name: className
               type: string
+              repeatable: true
               description: The name of the product class to show
         - name: create
           description: Create a new product for the current mission and product class; 
@@ -775,11 +786,14 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete attributes not given in the product definition file and/or the command parameters
           parameters:
-            - name: className
-              type: string
+            - name: id
+              type: integer
               optional: true
-              description: The class name of the product to update (mandatory if not read from file)
+              description: The database ID of the product to update (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -796,10 +810,10 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
-            - name: className
-              type: string
+            - name: id
+              type: integer
               optional: true
-              description: The class name of the product to delete (mandatory if not read from file)
+              description: The database ID of the product to delete (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
@@ -810,7 +824,7 @@ commands:
       options:
         - name: file
           type: string
-          description: Path to file to read the ingested products from
+          description: Path to file to read the ingested products from (mandatory)
           shortForm: f
         - name: format
           type: string
@@ -819,10 +833,5 @@ commands:
         - name: processingFacility
           type: string
           description: The name of the facility to ingest the products to
-        - name: attribute
-          type: string
-          optional: true
-          repeatable: true
-          description: An attribute of an ingested product to set in the form "<attribute name>=<attribute value>"
 # TODO Add processing facilities!
           
