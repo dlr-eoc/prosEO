@@ -65,7 +65,7 @@ public class IngestorCommandRunner {
 	private static final String MSG_INVALID_COMMAND_NAME = "(E%d) Invalid command name %s";
 	private static final String MSG_SUBCOMMAND_MISSING = "(E%d) Subcommand missing for command %s";
 	private static final String MSG_USER_NOT_LOGGED_IN = "(E%d) User not logged in";
-	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized to manage orders for mission %s";
+	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized to manage products for mission %s";
 	private static final String MSG_NO_PRODUCTS_FOUND = "(E%d) No products found for given search criteria";
 	private static final String MSG_INVALID_TIME = "(E%d) Time format %s not parseable";
 	private static final String MSG_INVALID_DATABASE_ID = "(E%d) Database ID %s not numeric";
@@ -310,7 +310,7 @@ public class IngestorCommandRunner {
 			return;
 		}
 		
-		/* Display the order(s) found */
+		/* Display the product(s) found */
 		ObjectMapper mapper = new ObjectMapper();
 		for (Object result: resultList) {
 			RestProduct restProduct = mapper.convertValue(result, RestProduct.class);
@@ -459,7 +459,7 @@ public class IngestorCommandRunner {
 			return;
 		}
 		
-		/* Report success, giving new order version */
+		/* Report success, giving new product version */
 		String message = String.format(MSG_PRODUCT_UPDATED, MSG_ID_PRODUCT_UPDATED, restProduct.getId(), restProduct.getVersion());
 		logger.info(message);
 		System.out.println(message);
