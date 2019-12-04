@@ -216,6 +216,8 @@ public class KubeJob {
 		podNames = new ArrayList<String>();
 
 		jobId = jsId;
+		jobName = ProductionPlanner.jobNamePrefix + jobId;
+		containerName = ProductionPlanner.jobContainerPrefix + jobId;
 		
 	}
 	
@@ -279,6 +281,7 @@ public class KubeJob {
 					// todo Exception
 					return null;
 				}
+				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
 						.withNewTemplate()
 						.withNewMetadata()

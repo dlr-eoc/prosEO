@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -16,14 +17,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import de.dlr.proseo.model.ConfigurationFile;
+import de.dlr.proseo.model.ConfigurationInputFile;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
+import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.joborder.Conf;
+import de.dlr.proseo.model.joborder.InputOutput;
+import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
+import de.dlr.proseo.model.joborder.Proc;
+import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -38,7 +48,8 @@ import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 public class JobDispatcher {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobDispatcher.class);
-
+	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
+	
 	private JobOrder jobOrder;
 	
 	
@@ -81,10 +92,10 @@ public class JobDispatcher {
 				String version = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getProcessorVersion();
 				String stdoutLogLevel = jobStep.getStdoutLogLevel().name(); 
 				String stderrLogLevel = jobStep.getStderrLogLevel().name(); 
-				String isTest = "false";  // todo
+				String isTest = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getIsTest() == true ? "true" : "false";
 				String breakpointEnable = "true";
-				String processingStation = "";
-				String acquisitionStation = "";
+				String processingStation = jobStep.getJob().getProcessingOrder().getMission().getName() + " " + jobStep.getJob().getProcessingFacility().getName();
+				// String acquisitionStation = ""; // unknown, not to set
 				
 
 				Conf co = new Conf(processorName,
@@ -94,10 +105,47 @@ public class JobDispatcher {
 					 			   isTest,
 					 			   breakpointEnable,
 					 			   processingStation,
-					 			   acquisitionStation);
-				String start = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC")).format(jobStep.getJob().getStartTime());
-				String stop =  DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC")).format(jobStep.getJob().getStopTime());
+					 			   null);
+				String start = timeFormatter.format(jobStep.getJob().getStartTime());
+				String stop =  timeFormatter.format(jobStep.getJob().getStopTime());
 				co.setSensingTime(new SensingTime(start, stop));
+				
+				// config files 
+				for (ConfigurationFile cf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getConfigurationFiles()) {
+					co.getConfigFileNames().add(cf.getFileName());					
+				}
+				// dynamic parameter
+				Map<String,Parameter> dpp = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDynProcParameters();
+				for (String dppn : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDynProcParameters().keySet()) {
+					co.getDynamicProcessingParameters().add((new ProcessingParameter(dppn, dpp.get(dppn).getParameterValue())));
+				}
+				jobOrder.setConf(co);
+				// list of ipf procs
+				for (Task t : jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getTasks()) {
+					Proc proc = new Proc(t.getTaskName(), t.getTaskVersion());
+					// add static config files first
+					for (ConfigurationInputFile scf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getStaticInputFiles()) {
+						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), "Input", null);
+						for (String sioFName: scf.getFileNames()) {
+							sio.getFileNames().add(new IpfFileName(sioFName));
+						}
+						proc.getListOfInputs().add(sio);
+					}
+					// dynamic input files calculated by input products
+					for (ProductQuery pq : jobStep.getOutputProduct().getSatisfiedProductQueries()) {
+						for (Product p : pq.getSatisfyingProducts()) {
+							for (ProductFile pf : p.getProductFile()) {
+								InputOutput sio = new InputOutput(p.getProductClass().getProductType(), null, "Input", String.valueOf(p.getId()));
+								sio.getFileNames().add(new IpfFileName(pf.getProductFilePathName(), pf.getStorageType().name()));
+								proc.getListOfInputs().add(sio);
+							}
+						}
+					}
+					Product p = jobStep.getOutputProduct();
+					addIpfIOOutput(p, proc); 
+					jobOrder.getListOfProcs().add(proc);
+				}
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -106,7 +154,7 @@ public class JobDispatcher {
 		if (jobOrder == null) {
 			jobOrder = new JobOrder();
 		}
-		
+		jobOrder.writeXML("c:\\tmp\\jo.xml", true);
 		InputStream aStream;
 		try {
 			aStream = new com.amazonaws.util.StringInputStream("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n" + 
@@ -375,6 +423,16 @@ public class JobDispatcher {
 		return jobOrder;
 	}
 	
+	public void addIpfIOOutput(Product p, Proc proc) {
+		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), null, "Output", String.valueOf(p.getId()));
+		sio.getFileNames().add(new IpfFileName(p.getProductClass().getMissionType(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
+		// sio.getFileNames().add(new IpfFileName(p.generateFilename(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
+		proc.getListOfOutputs().add(sio);
+		for (Product sp : p.getComponentProducts()) {
+			addIpfIOOutput(sp, proc);
+		}
+	}
+
 	/**
 	 * Send the job order as Base64 string to storage manager
 	 * 
