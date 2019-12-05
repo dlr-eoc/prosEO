@@ -90,7 +90,6 @@ public class ProductQueryService {
 			String jpqlQuery = productQuery.getJpqlQueryCondition();
 			if (logger.isDebugEnabled()) logger.debug("Executing JPQL query: " + jpqlQuery);
 			TypedQuery<Product> query = em.createQuery(jpqlQuery, Product.class);
-			query.setLockMode(LockModeType.READ);
 			products = query.getResultList();
 		}
 		if (logger.isTraceEnabled()) {
@@ -154,7 +153,11 @@ public class ProductQueryService {
 		if (logger.isTraceEnabled()) logger.trace("Number of products after testing filter conditions: " + selectedProducts.size());
 		
 		// Set the query's list of satisfying products to the list of selected items (products)
-		productQuery.setSatisfyingProducts(selectedProducts);
+		productQuery.getSatisfyingProducts().clear();
+		for (Product product: selectedProducts) {
+			product.getSatisfiedProductQueries().add(productQuery);
+			productQuery.getSatisfyingProducts().add(product);
+		}
 		productQuery.setIsSatisfied(true);
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");

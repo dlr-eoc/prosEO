@@ -45,17 +45,17 @@ public class Processor extends PersistentObject {
 	@Column(name = "processor_version")
 	private String processorVersion;
 	
-	/** Indicates a test version of the processor ("Test" from Generic IPF Interface Specifications, sec. 4.1.3) */
-	private Boolean isTest;
+	/** Indicates a test version of the processor ("Test" from Generic IPF Interface Specifications, sec. 4.1.3; default false) */
+	private Boolean isTest = false;
 	
 	/**
 	 * Minimum disk space in MB, worst case estimate plus safety margin
-	 * ("Min_Disk_Space" from Generic IPF Interface Specifications, sec. 4.1.3)
+	 * ("Min_Disk_Space" from Generic IPF Interface Specifications, sec. 4.1.3; default 1024 [MB])
 	 */
-	private Integer minDiskSpace;
+	private Integer minDiskSpace = 1024;
 	
 	/** Execution time limit in seconds (default 0 means no limit; "Max_Time" from Generic IPF Interface Specifications, sec. 4.1.3) */
-	private Integer maxTime;
+	private Integer maxTime = 0;
 	
 	/** 
 	 * Indicates whether the processor uses a sensing time interval as main processing parameter; if "true" a start/stop time is 
@@ -63,7 +63,7 @@ public class Processor extends PersistentObject {
 	 * ("Sensing_Time_flag" from Generic IPF Interface Specifications, sec. 4.1.3; 
 	 * deviating from the specification the default value is "true", because prosEO aims primarily at time-based processing)
 	 */
-	private Boolean sensingTimeFlag;
+	private Boolean sensingTimeFlag = true;
 	
 	/** List of tasks for this processor */
 	@OneToMany(mappedBy = "processor")
