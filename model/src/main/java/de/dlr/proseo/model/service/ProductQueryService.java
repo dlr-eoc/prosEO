@@ -48,7 +48,7 @@ public class ProductQueryService {
 	 * @param productQuery the product query to check
 	 * @return true, if the product query is optional and therefore satisfied, false otherwise
 	 */
-	private boolean testOptionalSatisfied(ProductQuery productQuery) {
+	private boolean testOptionalSatisfied(ProductQuery productQuery, boolean checkOnly) {
 		if (productQuery.getGeneratingRule().isMandatory()) {
 			productQuery.setIsSatisfied(false);
 			return false;
@@ -62,10 +62,13 @@ public class ProductQueryService {
 	 * Execute the query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param useNativeSQL set to true, if native SQL is to be used, and to false for JPQL
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL) throws IllegalArgumentException {
+	public boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL, boolean checkOnly) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeQuery(useNativeSQL = " + useNativeSQL + ")");
 
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
@@ -97,14 +100,16 @@ public class ProductQueryService {
 			for (Product product: products) {
 				logger.trace("Found product {} with start time = {}, stop time = {} and revision = {}", 
 						product.getId(), product.getSensingStartTime().toString(), product.getSensingStopTime().toString(),
-						product.getParameters().get("revision").getParameterValue().toString());
+						product.getParameters().get("revision") != null 
+							? product.getParameters().get("revision").getParameterValue().toString()
+							: "");
 			}
 		}
 		
 		// Check if there is any result at all
 		if (products.isEmpty()) {
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery);
+			return testOptionalSatisfied(productQuery, checkOnly);
 		}
 		
 		// Filter products available at the requested processing facility
@@ -130,7 +135,7 @@ public class ProductQueryService {
 		} catch (NoSuchElementException e) {
 			if (logger.isTraceEnabled()) logger.trace("selectItems() throws NoSuchElementException");
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery);
+			return testOptionalSatisfied(productQuery, checkOnly);
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		
@@ -148,18 +153,19 @@ public class ProductQueryService {
 		}
 		if (selectedProducts.isEmpty()) {
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery);
+			return testOptionalSatisfied(productQuery, checkOnly);
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after testing filter conditions: " + selectedProducts.size());
-		
-		// Set the query's list of satisfying products to the list of selected items (products)
-		productQuery.getSatisfyingProducts().clear();
-		for (Product product: selectedProducts) {
-			product.getSatisfiedProductQueries().add(productQuery);
-			productQuery.getSatisfyingProducts().add(product);
-		}
-		productQuery.setIsSatisfied(true);
-		
+
+		if (!checkOnly) {
+			// Set the query's list of satisfying products to the list of selected items (products)
+			productQuery.getSatisfyingProducts().clear();
+			for (Product product: selectedProducts) {
+				product.getSatisfiedProductQueries().add(productQuery);
+				productQuery.getSatisfyingProducts().add(product);
+			}
+			productQuery.setIsSatisfied(true);
+		}		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 		return true;
 	}
@@ -168,22 +174,26 @@ public class ProductQueryService {
 	 * Execute the JPQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeQuery(ProductQuery productQuery) throws IllegalArgumentException {
-		return executeQuery(productQuery, false);
+	public boolean executeQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
+		return executeQuery(productQuery, false, checkOnly);
 	}
 
 	/**
 	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeSqlQuery(ProductQuery productQuery) throws IllegalArgumentException {
-		return executeQuery(productQuery, true);
+	public boolean executeSqlQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
+		return executeQuery(productQuery, true, checkOnly);
 	}
 
 }

@@ -78,11 +78,6 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override
     public ResponseEntity<RestJobStep> getRestJobStepByName(String name) {
 		Long id = null;
-		JobStep jst = new JobStep();
-		jst.setProcessingMode("nix"); 
-		RepositoryService.getJobStepRepository().save(jst);
-		JobDispatcher jd = new JobDispatcher();
-		jd.createJobOrder(jst);
 		if (name.matches("[0-9]+")) {
 			id = Long.valueOf(name);
 		} else if (name.startsWith(ProductionPlanner.jobNamePrefix)) {

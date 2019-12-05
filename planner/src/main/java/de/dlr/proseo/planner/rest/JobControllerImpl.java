@@ -18,6 +18,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.JobStepDispatcher;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
@@ -41,9 +42,12 @@ public class JobControllerImpl implements JobController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
-    
+
     @Autowired
     private OrderDispatcher orderDispatcher;
+
+    @Autowired
+    private JobStepDispatcher jobStepDispatcher;
     
     /**
      * Get production planner jobs by id
@@ -54,7 +58,7 @@ public class JobControllerImpl implements JobController {
 		// todo remove test start
 
 		if (productionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test");
+	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
 	    	if (aJob != null) {
 	    		productionPlanner.getKubeConfig(null).deleteJob(aJob);
 	    	}
@@ -90,6 +94,7 @@ public class JobControllerImpl implements JobController {
 			}
 			if (order != null) {
 				if (orderDispatcher.publishOrder(order, productionPlanner.getKubeConfig("Lerchenhof").getProcessingFacility())) {
+					jobStepDispatcher.searchForJobStepsToRun(productionPlanner.getKubeConfig("Lerchenhof").getProcessingFacility());
 					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' created (%d)", order.getIdentifier(), 2000);
 					logger.error(message);
 					HttpHeaders responseHeaders = new HttpHeaders();

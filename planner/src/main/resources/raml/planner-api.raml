@@ -150,6 +150,13 @@ resourceTypes:
                   type: PlannerPod
         post:
           description: Create jobstep/pod for test purpose
+          queryParameters:
+            stdoutLogLevel?:
+              type: string
+              enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+            stderrLogLevel?:
+              type: string
+              enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
           responses:
             201:
               body:
