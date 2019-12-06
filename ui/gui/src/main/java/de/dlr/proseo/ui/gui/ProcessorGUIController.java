@@ -2,10 +2,12 @@ package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
@@ -32,7 +35,7 @@ public class ProcessorGUIController {
 	/** WebClient-Service-Builder */
 	@Autowired
 	private processorService processorService;
-	
+	/** List for query Results */
 	private List<String> procs1 = new ArrayList<>();
 //TABLE processor-class-show backup
 //	    <table class="table">
@@ -159,7 +162,7 @@ public class ProcessorGUIController {
 ////		 
 //		return "processor-class-show";
 //	}
-	
+
 //	@RequestMapping(value= "/processor-class-show/get")
 //	public String getProcessorClassName(@RequestParam("missioncode") String mission, 
 //			 @RequestParam("processorclassnamecode") String processorclassname,Model model) { 
@@ -204,17 +207,28 @@ public class ProcessorGUIController {
 //		 logger.trace(model.toString());
 //		 return "processor-class-show::form-basic";
 //	}
-	
-	@RequestMapping(value= "/processor-class-show/get")
-	public DeferredResult<String> getProcessorClassName(@RequestParam(required=false,value="mission") String mission, 
-			@RequestParam(required=false,value="processorclassName") String processorclassname, Model model) { 
-		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassName({}, {}, model)", mission,  processorclassname);
-		Flux<RestProcessorClass> flux = processorService.get(mission, processorclassname);
+	/**
+	 * 
+	 * @param mission            parameter of search
+	 * @param processorclassname of search
+	 * @param model              of current view
+	 * @return thymeleaf fragment with result from the query
+	 */
+	@RequestMapping(value = "/processor-class-show/get")
+	public DeferredResult<String> getProcessorClassName(
+			@RequestParam(required = false, value = "mission") String mission,
+			@RequestParam(required = false, value = "processorclassName") String processorclassname, Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProcessorClassName({}, {}, model)", mission, processorclassname);
+		Flux<RestProcessorClass> mono = processorService.get(mission, processorclassname)
+				.onStatus(HttpStatus::is4xxClientError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.onStatus(HttpStatus::is5xxServerError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.bodyToFlux(RestProcessorClass.class);
 
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<RestProcessorClass> procs = new ArrayList<>();
 
-		flux.subscribe(processorClassList -> {
+		mono.subscribe(processorClassList -> {
 			logger.trace("Now in Consumer::accept({})", processorClassList);
 			procs.add(processorClassList);
 			model.addAttribute("procs", procs);
@@ -225,49 +239,150 @@ public class ProcessorGUIController {
 			logger.trace(">>>>MODEL" + model.toString());
 			deferredResult.setResult("processor-class-show :: #content");
 		});
-		
+
 		logger.trace("Immediately returning deferred result");
 		return deferredResult;
 	}
+
+	@RequestMapping(value = "/processor-class-show-id/get")
+	public DeferredResult<String> getProcessorClassById(@RequestParam(required = true, value = "id") String id,
+			Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getProcessorClassName({}, {}, model)", id);
+		Flux<RestProcessorClass> mono = processorService.getById(id)
+				.onStatus(HttpStatus::is4xxClientError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.onStatus(HttpStatus::is5xxServerError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.bodyToFlux(RestProcessorClass.class);
+
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<RestProcessorClass> procs = new ArrayList<>();
+
+		mono.subscribe(processorClassList -> {
+			logger.trace("Now in Consumer::accept({})", processorClassList);
+			procs.add(processorClassList);
+			model.addAttribute("procs", procs);
+
+			logger.trace(model.toString() + "MODEL TO STRING");
+			logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+			logger.trace(">>>>MONO" + procs.toString());
+			logger.trace(">>>>MODEL" + model.toString());
+			deferredResult.setResult("processor-class-show-id :: #content");
+		});
+
+		logger.trace("Immediately returning deferred result");
+		return deferredResult;
+	}
+
 	/**
-	 * Fehlermeldungen weitergeben (SIEHE processorclass.raml)
+	 * ONSTATUS Für Fehlermeldungen abarbeiten (typisch: 400 BAD REQUEST, 401 NOT
+	 * AUTHORIZED, 404 NOT FOUND, 500 INTERNAL, CREATE=201 (FALLS 200 = LOGGEN),
+	 * DELETE=204, REST=200
 	 * 
-	 * ONSTATUS Für Fehlermeldungen abarbeiten (typisch: 400 BAD REQUEST, 401 NOT AUTHORIZED, 404 NOT FOUND, 500 INTERNAL, CREATE=201 (FALLS 200 = LOGGEN), DELETE=204, REST=200
-	 * @param processorClassId rauslassen!!!
-	 * @param processorClassVersion rauslassen!!!
-	 * @param processorClassmission
-	 * @param processorClassName
-	 * @param processorClassProductClass
-	 * @param model
-	 * @return
+	 * @param processorClassmission      of the new Processor-Class
+	 * @param processorClassName         of the new Processor-Class
+	 * @param processorClassProductClass of the new Processor-Class
+	 * @param model                      of current view
+	 * @return thymeleaf fragment with result from query
 	 * 
 	 * 
 	 * 
 	 */
-	@RequestMapping(value= "/processor-class-create/post", method = RequestMethod.POST)
-	public Model postProcessorClassName(@RequestParam("id") String processorClassId,
-			@RequestParam("version") String processorClassVersion,
-			@RequestParam("missionCode") String processorClassmission,
+	@RequestMapping(value = "/processor-class-create/post", method = RequestMethod.POST)
+	public DeferredResult<String> postProcessorClassName(@RequestParam("missionCode") String processorClassmission,
 			@RequestParam("processorName") String processorClassName,
 			@RequestParam("productClasses") String[] processorClassProductClass, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> postProcessorClassName({}, {}, {})", processorClassmission, processorClassName,
-					processorClassId, processorClassVersion, processorClassmission, model.toString());
-		Mono<RestProcessorClass> mono = processorService.post(processorClassId,processorClassVersion,processorClassmission ,processorClassName,processorClassProductClass);
-
+					processorClassmission,processorClassProductClass.toString(), model.toString());
+		Flux<RestProcessorClass> mono = processorService
+				.post(processorClassmission, processorClassName, processorClassProductClass)
+				.onStatus(HttpStatus::is4xxClientError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.onStatus(HttpStatus::is5xxServerError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.bodyToFlux(RestProcessorClass.class);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<RestProcessorClass> procs = new ArrayList<>();
-		mono.subscribe(value -> procs.add(value));
-		model.addAttribute("procs", procs);
 
+		mono.subscribe(processorClassList -> {
+			logger.trace("Now in Consumer::accept({})", processorClassList);
+			procs.add(processorClassList);
+			model.addAttribute("procs", procs);
+
+			logger.trace(model.toString() + "MODEL TO STRING");
+			logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+			logger.trace(">>>>MONO" + procs.toString());
+			logger.trace(">>>>MODEL" + model.toString());
+			deferredResult.setResult("processor-class-show :: #content");
+		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
 		logger.trace(">>>>MONO" + procs.toString());
 		logger.trace(">>>>MODEL" + model.toString());
-		return model;
+		return deferredResult;
 	}
-	
-	
-	//ALTE FUNKTIONEN MIT RESTTEMPLATE
+
+	@RequestMapping(value = "/processor-class-update/patch", method = RequestMethod.PATCH)
+	public DeferredResult<String> patchProcessorClassName(@RequestParam("id") String id,
+			@RequestParam("missionCode") String processorClassmission,
+			@RequestParam("processorName") String processorClassName,
+			@RequestParam("productClasses") String[] processorClassProductClass, Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> postProcessorClassName({}, {}, {}, {})", id, processorClassmission, processorClassName,
+					processorClassmission, model.toString());
+		Flux<RestProcessorClass> mono = processorService
+				.patch(id, processorClassmission, processorClassName, processorClassProductClass)
+				.onStatus(HttpStatus::is4xxClientError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.onStatus(HttpStatus::is5xxServerError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.bodyToFlux(RestProcessorClass.class);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<RestProcessorClass> procs = new ArrayList<>();
+
+		mono.subscribe(processorClassList -> {
+			logger.trace("Now in Consumer::accept({})", processorClassList);
+			procs.add(processorClassList);
+			model.addAttribute("procs", procs);
+
+			logger.trace(model.toString() + "MODEL TO STRING");
+			logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+			logger.trace(">>>>MONO" + procs.toString());
+			logger.trace(">>>>MODEL" + model.toString());
+			deferredResult.setResult("processor-class-update :: #content");
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+		logger.trace(">>>>MONO" + procs.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		return deferredResult;
+	}
+
+	@RequestMapping(value = "/processor-class-delete/", method = RequestMethod.DELETE)
+	public DeferredResult<String> deleteProcessorClass(@RequestParam("processorClassId") String id, Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteProcessorClassName({}, {}, {})", id, model.toString());
+		Flux<RestProcessorClass> mono = processorService.delete(id)
+				.onStatus(HttpStatus::is4xxClientError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.onStatus(HttpStatus::is5xxServerError,clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
+				.bodyToFlux(RestProcessorClass.class);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<RestProcessorClass> procs = new ArrayList<>();
+
+		mono.subscribe(processorClassList -> {
+			logger.trace("Now in Consumer::accept({})", processorClassList);
+			procs.add(processorClassList);
+			model.addAttribute("status", processorClassList);
+
+			logger.trace(model.toString() + "MODEL TO STRING");
+			logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+			logger.trace(">>>>MONO" + procs.toString());
+			logger.trace(">>>>MODEL" + model.toString());
+			deferredResult.setResult("processor-class-show :: #content");
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
+		logger.trace(">>>>MONO" + procs.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		return deferredResult;
+	}
+	// ALTE FUNKTIONEN MIT RESTTEMPLATE
 //	@RequestMapping(value = "/processor-class-create/post")
 //	public String postProcessorClass(@RequestParam("processorClassId") String processorClassId,
 //			@RequestParam("processorClassVersion") String processorClassVersion,

@@ -37,37 +37,72 @@
 	<p class="text-left"><input type="text" th:value="${processorClassId}" placeholder="Processor ID" class="form-control" id="processorClassId"></p>
 </div>
   <div class="input-group mb-3">
-  <button type="submit" class="btn btn-primary mb-2">Show Processor-Class</button>
+  <button type="button" onclick="retrieveData();" class="btn btn-primary mb-2">Show Processor-Class</button>
   </div>
 </form>
 </div>
 <div class="container">
-      <table class="table">
-      	<thead class="thead-dark">
-     	 <tr>
-      		<th scope="col">ID</th>
-      		<th scope="col">version</th>
-      		<th scope="col">missionCode</th>
-      		<th scope="col">processorName</th>
-      		<th scope="col">productClasses</th>
-      	</tr>
-       </thead>
-       <tbody>
-      		<tr>
-      		<td th:text="${id}"></td>
-      		<td th:text="${version}"></td>
-      		<td th:text="${mission}"></td>
-      		<td th:text="${processorclassname}"></td>
-      		<td th:text="${productclasses}"></td>
-      	</tr>
-      	</tbody>
-     	</table>
-      	
+  <div id="content" name="content">
+	    <table class="table" id="processorTable" name="processorTable">
+  	<thead class="thead-dark">
+ 	 <tr>
+  		<th scope="col">ID</th>
+  		<th scope="col">version</th>
+  		<th scope="col">missionCode</th>
+  		<th scope="col">processorName</th>
+  		<th scope="col">productClasses</th>
+  	</tr>
+   </thead>
+   <tbody th:unless="${procs} == null">
+  		<tr th:each="processor : ${procs}">
+  		<td th:text="${processor?.id}"></td>
+  		<td th:text="${processor?.version}"></td>
+  		<td th:text="${processor?.missionCode}"></td>
+  		<td th:text="${processor?.processorName}"></td>
+  		<td th:text="${processor?.productClasses}"></td>
+  	</tr>
+  	</tbody>
+ 	</table>
+  </div>
+  <p id="test" name="test">PARAM</p>
+  <div th:fragment="resultLists"></div>
+   	
                   
-</div>                        
+</div>                              
+</div>    
+<script>                    
+function retrieveData() {
+	var tableRows = $("processorTable").rows;
+	if(tableRows > 1 && tableRows != null) {
+	$("processorTable > tbody").empty();
+	}
+    var url = "/processor-class-show-id/get";
+    var prop = document.getElementById('test');
+    var id = document.getElementById('processorClassId').value;
+   if($("processorClassId") != null) {
+   url+= "?id=" + id;
+   }
+    else {
+    	prop.innerHTML = "UNGÜLTIGE EINGABE";
+    	return;
+    }
+    
+    
+    $.ajax({
+    url: url,
+    method: "GET",
+    success: function (res) {
+        $("#content").html(res);
+    },
+    fail: function (err) {
+        console.log(err);
+        prop.innerHTML = "Fehler!" + err;
+    }
 
-
-              <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+});
+};
+</script>
+              <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script src="../js/resources.js"></script>
