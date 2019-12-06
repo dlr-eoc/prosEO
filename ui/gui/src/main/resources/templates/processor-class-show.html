@@ -40,17 +40,14 @@
 	<p class="text-left"><input type="text" th:value="${processorclassnamecode}" placeholder="Processor-Class Name" class="form-control" name="processorclassnamecode" id="processorclassnamecode"></p>
 </div>
   <div class="input-group mb-3">
-  <button type="button"  onclick = "functionOne()" class="btn btn-primary mb-2">Show Processor-Class</button>
-  <button class="btn btn-primary btn-sm"
-onclick="retrieveData();">Search</button>
-<button id="testButton" name= "testButton" onclick="retrieveData();" type="button">DRITTE FUNKTION</button>
+  <button type="button"  onclick = "retrieveData();" class="btn btn-primary mb-2">Show Processor-Class</button>
   </div>
 </form>
 
 </div>
 <div class="container">
   <div id="content" name="content">
-	    <table class="table">
+	    <table class="table" id="processorTable" name="processorTable">
   	<thead class="thead-dark">
  	 <tr>
   		<th scope="col">ID</th>
@@ -92,6 +89,10 @@ var uri ="/processor-class-show/get?mission=" + mission + "&processorclassName="
 };
 
 function retrieveData() {
+	var tableRows = $("processorTable").rows;
+	if(tableRows > 1 && tableRows != null) {
+	$("processorTable > tbody").empty();
+	}
     var url = "/processor-class-show/get";
     var prop = document.getElementById('test');
     if ($("#missioncode").val() != "" && $("#processorclassnamecode").val() != "") {
@@ -114,6 +115,7 @@ function retrieveData() {
     },
     fail: function (err) {
         console.log(err);
+        prop.innerHTML = "Fehler!" + err;
     }
 
 });

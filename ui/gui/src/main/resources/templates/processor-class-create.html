@@ -35,12 +35,6 @@
 <form name = "prc-cls-crt" action="/processor-class-create/post">
 
 <div class="input-group mb-3">
-	<p class="text-left"><input type="number" th:value="${processorClassId}" placeholder="Processor-Class ID" class="form-control" id="processorClassId"></p>
-</div>
-<div class="input-group mb-3">
-	<p class="text-left"><input type="number" th:value="${processorClassVersion}" placeholder="version" class="form-control" id="processorClassVersion"></p>
-</div>
-<div class="input-group mb-3">
 	<p class="text-left"><input type="text" th:value="${processorClassmissionCode}" placeholder="missionCode" class="form-control" id="processorClassmissionCode"></p>
 </div>
 <div class="input-group mb-3">
@@ -55,30 +49,45 @@
 </form>
 </div>
 <div class="container">
-<div id = "content"> </div>
-<p id="test" name="test">VALUE</p>     
+  <div id="content" name="content">
+	    <table class="table" id="processorTable" name="processorTable">
+  	<thead class="thead-dark">
+ 	 <tr>
+  		<th scope="col">ID</th>
+  		<th scope="col">version</th>
+  		<th scope="col">missionCode</th>
+  		<th scope="col">processorName</th>
+  		<th scope="col">productClasses</th>
+  	</tr>
+   </thead>
+   <tbody th:unless="${procs} == null">
+  		<tr th:each="processor : ${procs}">
+  		<td th:text="${processor?.id}"></td>
+  		<td th:text="${processor?.version}"></td>
+  		<td th:text="${processor?.missionCode}"></td>
+  		<td th:text="${processor?.processorName}"></td>
+  		<td th:text="${processor?.productClasses}"></td>
+  	</tr>
+  	</tbody>
+ 	</table>
+  </div>
+  <p id="test" name="test">PARAM</p>
+  <div th:fragment="resultLists"></div>
+   	
                   
-</div>        
-            
+</div>     
               
 <script>
 function postData() {
     var url = "/processor-class-create/post";
     var prop = document.getElementById('test');
-    if ($("#processorClassmissionCode").val() != "" && $("#processorClassName").val() != "" && $("#processorClassVersion").val() != "" && $("#processorClassId").val() != "" && $("#productClass").val() != "" ) {
-        url += "?id=" + $("#processorClassId").val() + "&missionCode=" + $("#processorClassmissionCode").val() + "&processorName=" + $("#processorClassName").val() +"&version=" + $("#processorClassVersion").val() +"&productClasses=" +  $("#productClass").val() ;
+    if ($("#processorClassmissionCode").val() != "" && $("#processorClassName").val() != ""   && $("#productClass").val() != "" ) {
+        url += "?missionCode=" + $("#processorClassmissionCode").val() + "&processorName=" + $("#processorClassName").val()  +"&productClasses=" +  $("#productClass").val() ;
     } else {
     	prop.innerHTML = "UNGÜLTIGE EINGABE";
     	return;
     }
-    var data = {
-	    "id": 1837725,
-	    "version": 2,
-	    "missionCode": "S5P",
-	    "processorName": "KNMI L2",
-	    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]
-	};
-    
+ 
     $.ajax({
     url: url,
     method: "POST",
@@ -86,7 +95,8 @@ function postData() {
         $("#content").html(res);
     },
     fail: function (err) {
-        console.log(err);
+    console.log(err);
+        prop.innerHTML = "Fehler!" + err;
     }
 
 });
