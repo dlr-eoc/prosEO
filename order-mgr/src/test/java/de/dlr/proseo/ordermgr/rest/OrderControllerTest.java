@@ -100,7 +100,7 @@ public class OrderControllerTest {
 	/* Test orders */
 	private static String[][] testMission = {
 			//id,version,Code,Name,Processing_Mode,File_Class,Product_file_template
-			{"1", "0", "ABCe", "ABCD Testing", "NRTI","OPER","test_file_temp"},	
+			{"1", "0", "S5P", "ABCD Testing", "NRTI","OPER","test_file_temp"},	
 			{ "11", "11", "DEFg", "DefrostMission","OFFL","OPER","test_file_temp"},
 			{ "12", "12", "XY1Z", "XYZ Testing","RPRO","OPER","test_file_temp"}
 			
@@ -211,7 +211,9 @@ public class OrderControllerTest {
 
 			for (int i = 0 ; i < testConfProc.length; ++i) {
 				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(testConfProc[i][0]);
-				testOrder.getRequestedConfiguredProcessors().add(reqProc);				
+				if (null != reqProc) {
+					testOrder.getRequestedConfiguredProcessors().add(reqProc);
+				}				
 			}
 			
 			for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByProductType(testInputProdClass)){
@@ -345,7 +347,13 @@ public class OrderControllerTest {
 		// Create an order in the database
 		ProcessingOrder orderToCreate = createOrder(testOrderData[0]);
 		testOrders.add(orderToCreate);
-		RestOrder restOrder = OrderUtil.toRestOrder(orderToCreate);
+		RestOrder restOrder = null;
+		try {
+			restOrder = OrderUtil.toRestOrder(orderToCreate);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders";
 		logger.info("Testing URL {} / POST", testUrl);

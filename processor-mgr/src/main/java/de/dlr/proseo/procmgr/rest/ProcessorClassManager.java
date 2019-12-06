@@ -204,6 +204,9 @@ public class ProcessorClassManager {
 				throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID,
 								productType, processorClass.getMissionCode()));
 			}
+			productClass.setProcessorClass(modelProcessorClass);
+			productClass = RepositoryService.getProductClassRepository().save(productClass);
+			modelProcessorClass.getProductClasses().add(productClass);
 		}
 		
 		modelProcessorClass = RepositoryService.getProcessorClassRepository().save(modelProcessorClass);
@@ -292,6 +295,8 @@ public class ProcessorClassManager {
 				throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID,
 						productType, processorClass.getMissionCode()));
 			}
+			productClass.setProcessorClass(modelProcessorClass);
+			productClass = RepositoryService.getProductClassRepository().save(productClass);
 			newProductClasses.add(productClass);
 			if (!modelProcessorClass.getProductClasses().contains(productClass)) {
 				processorClassChanged = true;
@@ -301,6 +306,8 @@ public class ProcessorClassManager {
 		for (ProductClass productClass: modelProcessorClass.getProductClasses()) {
 			if (!newProductClasses.contains(productClass)) {
 				processorClassChanged = true;
+				productClass.setProcessorClass(null);
+				RepositoryService.getProductClassRepository().save(productClass);
 			}
 		}
 
@@ -336,6 +343,12 @@ public class ProcessorClassManager {
 		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
 		if (modelProcessorClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND));
+		}
+		
+		// Remove processor class from product classes
+		for (ProductClass productClass: modelProcessorClass.get().getProductClasses()) {
+			productClass.setProcessorClass(null);
+			RepositoryService.getProductClassRepository().save(productClass);
 		}
 		
 		// Delete the processor class

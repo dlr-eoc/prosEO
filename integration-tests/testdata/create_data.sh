@@ -439,6 +439,11 @@ curl --insecure --data @- --header "Content-Type: application/json" --user s5p-p
             "key": "revision",
             "parameterType": "INTEGER",
             "parameterValue": "99"
+        },
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "77"
         }
     ],
     "configuredProcessors": [ "PTML2 0.0.1 OPER 2019-11-04" ],
@@ -480,6 +485,11 @@ curl --insecure --data @- --header "Content-Type: application/json" --user s5p-p
             "key": "revision",
             "parameterType": "INTEGER",
             "parameterValue": "99"
+        },
+        {
+            "key": "copernicusCollection",
+            "parameterType": "INTEGER",
+            "parameterValue": "77"
         }
     ],
     "configuredProcessors": [ "PTML3 0.0.1 OPER 2019-11-04" ],
