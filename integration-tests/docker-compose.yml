@@ -49,16 +49,16 @@ services:
       - proseo-order-mgr
       - proseo-processor-mgr
       - proseo-productclass-mgr
-  proseo-cli:
-    image: ${REGISTRY_URL}/proseo-ui-cli:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
-    ports:
-      - "8088:8080"
-    depends_on:
-      - proseo-ingestor
-      - proseo-prodplanner
-      - proseo-order-mgr
-      - proseo-processor-mgr
-      - proseo-productclass-mgr
+#  proseo-cli:
+#    image: ${REGISTRY_URL}/proseo-ui-cli:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
+#    ports:
+#      - "8088:8080"
+#    depends_on:
+#      - proseo-ingestor
+#      - proseo-prodplanner
+#      - proseo-order-mgr
+#      - proseo-processor-mgr
+#      - proseo-productclass-mgr
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:2019-11-12-2-integration-rc1-${PROSEO_REVISION}
     environment:

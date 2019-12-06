@@ -190,6 +190,9 @@ public class ProcessorClassManager {
 		}
 		
 		ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
+
+		modelProcessorClass = RepositoryService.getProcessorClassRepository().save(modelProcessorClass);
+		if (logger.isTraceEnabled()) logger.trace("... creating processor class with database ID = " + modelProcessorClass.getId());
 		
 		modelProcessorClass.setMission(RepositoryService.getMissionRepository().findByCode(processorClass.getMissionCode()));
 		if (null == modelProcessorClass.getMission()) {
@@ -205,11 +208,8 @@ public class ProcessorClassManager {
 								productType, processorClass.getMissionCode()));
 			}
 			productClass.setProcessorClass(modelProcessorClass);
-			productClass = RepositoryService.getProductClassRepository().save(productClass);
 			modelProcessorClass.getProductClasses().add(productClass);
 		}
-		
-		modelProcessorClass = RepositoryService.getProcessorClassRepository().save(modelProcessorClass);
 		
 		logInfo(MSG_PROCESSOR_CLASS_CREATED, MSG_ID_PROCESSOR_CLASS_CREATED, 
 				modelProcessorClass.getProcessorName(), modelProcessorClass.getMission().getCode());

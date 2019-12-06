@@ -89,8 +89,9 @@ public class BackendConnectionService {
 			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage()), e);
-			throw e;
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
 		}
 		
 		// All GET requests should return HTTP status OK
@@ -138,8 +139,9 @@ public class BackendConnectionService {
 			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage()), e);
-			throw e;
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
 		}
 		
 		// All POST requests should return HTTP status CREATED
@@ -212,12 +214,14 @@ public class BackendConnectionService {
 						e.getStatusCode(), e.getReasonPhrase(), "See service log"));
 				throw new HttpClientErrorException(HttpStatus.NOT_FOUND, e.getMessage());
 			} else {
-				logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage()), e);
-				throw new RestClientException(e.getMessage(), e);
+				String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+				logger.error(message, e);
+				throw new RestClientException(message, e);
 			}
 		} catch (IOException e) {
-			logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage()), e);
-			throw new RestClientException(e.getMessage(), e);
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
 		}
 	}
 	
@@ -248,8 +252,9 @@ public class BackendConnectionService {
 			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage()), e);
-			throw e;
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
 		}
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< deleteFromService()");

@@ -328,18 +328,18 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Read original processor class from Processor Manager service */
-		RestProcessorClass restProcessorClass = null;
 		if (null == updatedProcessorClass.getProcessorName() || 0 == updatedProcessorClass.getProcessorName().length()) {
 			// No identifying value given
 			System.err.println(String.format(MSG_NO_PROCCLASS_IDENTIFIER_GIVEN, MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN));
 			return;
 		}
+		List<?> resultList = null;
 		try {
-			restProcessorClass = backendConnector.getFromService(backendConfig.getIngestorUrl(),
+			resultList = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "?mission=" + backendUserMgr.getMission() + "&processorName=" + updatedProcessorClass.getProcessorName(),
-					RestProcessorClass.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_PROCESSORCLASS_NOT_FOUND, MSG_ID_PROCESSORCLASS_NOT_FOUND, restProcessorClass.getProcessorName());
+			String message = String.format(MSG_PROCESSORCLASS_NOT_FOUND, MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
 			logger.error(message);
 			System.err.println(message);
 			return;
@@ -352,6 +352,14 @@ public class ProcessorCommandRunner {
 			System.err.println(e.getMessage());
 			return;
 		}
+		if (resultList.isEmpty()) {
+			String message = String.format(MSG_PROCESSORCLASS_NOT_FOUND, MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestProcessorClass restProcessorClass = mapper.convertValue(resultList.get(0), RestProcessorClass.class);
 
 		/* Compare attributes of database product with updated product */
 		// No modification of ID, version, mission code or processor class name allowed
@@ -402,11 +410,11 @@ public class ProcessorCommandRunner {
 		String processorName = deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the processor class using Processor Manager service */
-		RestProcessorClass restProcessorClass = null;
+		List<?> resultList = null;
 		try {
-			restProcessorClass = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), 
+			resultList = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), 
 					URI_PATH_PROCESSORCLASSES + "?mission=" + backendUserMgr.getMission() + "&processorName=" + processorName, 
-					RestProcessorClass.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PROCESSORCLASS_NOT_FOUND, MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
 			logger.error(message);
@@ -421,6 +429,14 @@ public class ProcessorCommandRunner {
 			System.err.println(e.getMessage());
 			return;
 		}
+		if (resultList.isEmpty()) {
+			String message = String.format(MSG_PROCESSORCLASS_NOT_FOUND, MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestProcessorClass restProcessorClass = mapper.convertValue(resultList.get(0), RestProcessorClass.class);
 		
 		/* Delete processor class using Processor Manager service */
 		try {
@@ -711,21 +727,21 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Read original processor from Processor Manager service */
-		RestProcessor restProcessor = null;
 		if (null == updatedProcessor.getProcessorName() || 0 == updatedProcessor.getProcessorName().length()
 				|| null == updatedProcessor.getProcessorVersion() || 0 == updatedProcessor.getProcessorVersion().length()) {
 			// No identifying value given
 			System.err.println(String.format(MSG_NO_PROCESSOR_IDENTIFIER_GIVEN, MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
+		List<?> resultList = null;
 		try {
-			restProcessor = backendConnector.getFromService(backendConfig.getIngestorUrl(),
+			resultList = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORS + "?mission=" + backendUserMgr.getMission() 
 						+ "&processorName=" + updatedProcessor.getProcessorName() + "&processorVersion=" + updatedProcessor.getProcessorVersion(),
-					RestProcessor.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND, 
-					restProcessor.getProcessorName(), restProcessor.getProcessorVersion());
+					updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
 			logger.error(message);
 			System.err.println(message);
 			return;
@@ -738,6 +754,15 @@ public class ProcessorCommandRunner {
 			System.err.println(e.getMessage());
 			return;
 		}
+		if (resultList.isEmpty()) {
+			String message = String.format(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND, 
+					updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestProcessor restProcessor = mapper.convertValue(resultList.get(0), RestProcessor.class);
 
 		/* Compare attributes of database processor with updated processor */
 		// No modification of ID, version, mission code, processor class name or version allowed
@@ -808,12 +833,12 @@ public class ProcessorCommandRunner {
 		String processorVersion = deleteCommand.getParameters().get(1).getValue();
 		
 		/* Retrieve the processor using Processor Manager service */
-		RestProcessor restProcessor = null;
+		List<?> resultList = null;
 		try {
-			restProcessor = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), 
+			resultList = backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), 
 					URI_PATH_PROCESSORS + "?mission=" + backendUserMgr.getMission()
 						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
-					RestProcessor.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
 			logger.error(message);
@@ -828,6 +853,14 @@ public class ProcessorCommandRunner {
 			System.err.println(e.getMessage());
 			return;
 		}
+		if (resultList.isEmpty()) {
+			String message = String.format(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestProcessor restProcessor = mapper.convertValue(resultList.get(0), RestProcessor.class);
 		
 		/* Delete processor using Processor Manager service */
 		try {

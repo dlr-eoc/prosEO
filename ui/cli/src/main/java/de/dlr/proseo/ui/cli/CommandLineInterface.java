@@ -86,6 +86,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	private OrderCommandRunner orderCommandRunner;
 	@Autowired
 	private IngestorCommandRunner ingestorCommandRunner;
+	@Autowired
+	private ProcessorCommandRunner processorCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
@@ -146,10 +148,12 @@ public class CommandLineInterface implements CommandLineRunner {
 			case CMD_INGEST:
 				ingestorCommandRunner.executeCommand(command);
 				break;
-			case CMD_MISSION:
-			case CMD_ORBIT:
 			case CMD_PROCESSOR:
 			case CMD_CONFIGURATION:
+				processorCommandRunner.executeCommand(command);
+				break;
+			case CMD_MISSION:
+			case CMD_ORBIT:
 			case CMD_PRODUCT_CLASS:
 			default:
 				String message = String.format(MSG_NOT_IMPLEMENTED, MSG_ID_NOT_IMPLEMENTED, command.getName());

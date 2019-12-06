@@ -20,8 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
+import java.util.List;
 
-import antlr.collections.List;
 
 /**
  * Utility methods for command interpretation
