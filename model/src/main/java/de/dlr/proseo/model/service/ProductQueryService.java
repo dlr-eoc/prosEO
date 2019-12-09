@@ -62,6 +62,9 @@ public class ProductQueryService {
 	 * Execute the query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param useNativeSQL set to true, if native SQL is to be used, and to false for JPQL
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
@@ -171,22 +174,26 @@ public class ProductQueryService {
 	 * Execute the JPQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeQuery(ProductQuery productQuery) throws IllegalArgumentException {
-		return executeQuery(productQuery, false, false);
+	public boolean executeQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
+		return executeQuery(productQuery, false, checkOnly);
 	}
 
 	/**
 	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * 
 	 * @param productQuery the product query to execute
+	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
+	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeSqlQuery(ProductQuery productQuery) throws IllegalArgumentException {
-		return executeQuery(productQuery, true, false);
+	public boolean executeSqlQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
+		return executeQuery(productQuery, true, checkOnly);
 	}
 
 }

@@ -31,10 +31,33 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
+		      <groupId>com.fasterxml.jackson.dataformat</groupId>
+		      <artifactId>jackson-dataformat-xml</artifactId>
+		      </dependency>
+		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-ui-backend</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-interfaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>

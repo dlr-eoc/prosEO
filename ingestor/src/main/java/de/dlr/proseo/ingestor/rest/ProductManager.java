@@ -213,7 +213,7 @@ public class ProductManager {
 			}
 		} else {
 			// Find using search parameters
-			String jpqlQuery = "select p from Product where 1 = 1";
+			String jpqlQuery = "select p from Product p where 1 = 1";
 			if (null != mission) {
 				jpqlQuery += " and p.productClass.mission.code = :missionCode";
 			}
@@ -257,7 +257,7 @@ public class ProductManager {
 			throw new NoResultException(logError(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY));
 		}
 		
-		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), "null", "null", "null", "null");
+		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission, productClass, startTimeFrom, startTimeTo);
 		
 		return result;
 	}
@@ -353,7 +353,7 @@ public class ProductManager {
 			throw new IllegalArgumentException(logError(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
 					product.getFileClass(), product.getMissionCode()));
 		}
-		if (!modelProductClass.getMission().getProcessingModes().contains(modelProduct.getMode())) {
+		if (null != modelProduct.getMode() && !modelProductClass.getMission().getProcessingModes().contains(modelProduct.getMode())) {
 			throw new IllegalArgumentException(logError(MSG_MODE_INVALID, MSG_ID_MODE_INVALID,
 					product.getMode(), product.getMissionCode()));
 		}
@@ -443,8 +443,9 @@ public class ProductManager {
 			if (logger.isTraceEnabled()) logger.trace("Changing file class from {} to {}", modelProduct.getFileClass(), changedProduct.getFileClass());
 			modelProduct.setFileClass(changedProduct.getFileClass());
 		}
-		if (!modelProduct.getMode().equals(changedProduct.getMode())) {
-			if (!modelProduct.getProductClass().getMission().getProcessingModes().contains(modelProduct.getMode())) {
+		if ((null != modelProduct.getMode() && !modelProduct.getMode().equals(changedProduct.getMode())) 
+				|| (null == modelProduct.getMode() && null != changedProduct.getMode()) ) {
+			if (null != changedProduct.getMode() && !modelProduct.getProductClass().getMission().getProcessingModes().contains(changedProduct.getMode())) {
 				throw new IllegalArgumentException(logError(MSG_MODE_INVALID, MSG_ID_MODE_INVALID, 
 						product.getMode(), product.getMissionCode()));
 			}
@@ -459,6 +460,10 @@ public class ProductManager {
 		if (!modelProduct.getSensingStopTime().equals(changedProduct.getSensingStopTime())) {
 			productChanged = true;
 			modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
+		}
+		if (!modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
+			productChanged = true;
+			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
 		}
 		
 		// Update orbit relationship

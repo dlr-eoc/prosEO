@@ -13,13 +13,18 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
@@ -163,10 +168,7 @@ public class ProcessingOrderMgr {
 		modelOrder.setJobs(jobs);
 		
 		// Everything OK, store new order in database
-
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		
-		
 		
 		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
 
@@ -244,6 +246,7 @@ public class ProcessingOrderMgr {
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
 	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({}, {})", id, order.getIdentifier());
 		
 		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
 		
@@ -255,6 +258,8 @@ public class ProcessingOrderMgr {
 		// Update modified attributes
 		boolean orderChanged = false;
 		ProcessingOrder changedOrder = OrderUtil.toModelOrder(order);
+		
+		logger.info("Changed order identifier: "+changedOrder.getIdentifier());
 		
 		if (!modelOrder.getMission().equals(changedOrder.getMission())) {
 			orderChanged = true;
@@ -281,10 +286,7 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setRequestedProductClasses(changedOrder.getRequestedProductClasses());
 		}
-		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
-			orderChanged = true;
-			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
-		}
+
 		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
 			orderChanged = true;
 			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
@@ -303,24 +305,70 @@ public class ProcessingOrderMgr {
 
 	}
 	
-	
-	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, Date starttimefrom,
-			Date starttimeto) {
-		// TODO Auto-generated method stub
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, starttimefrom, starttimeto);
+	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
+			@DateTimeFormat Date executionTimeTo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
 		List<RestOrder> result = new ArrayList<>();
+		
+		if (null == mission && null == identifier && (null == productclasses || 0 == productclasses.length) && null == executionTimeFrom && null == executionTimeTo) {
+			// Simple case: no search criteria set
+			for (ProcessingOrder order: RepositoryService.getOrderRepository().findAll()) {
+				if (logger.isDebugEnabled()) logger.debug("Found order with ID {}", order.getId());
+				RestOrder resultOrder = OrderUtil.toRestOrder(order);
+				if (logger.isDebugEnabled()) logger.debug("Created result order with ID {}", resultOrder.getId());
 
-		if(null != identifier) {
-			ProcessingOrder orderFound = RepositoryService.getOrderRepository().findByIdentifier(identifier);
-			RestOrder restOrder = OrderUtil.toRestOrder(orderFound);
-			result.add(restOrder);
+				result.add(resultOrder);
+			}
+		}else {
+			// Find using search parameters
+			String jpqlQuery = "select p from ProcessingOrder p where 1 = 1";
+			if (null != mission) {
+				jpqlQuery += " and p.mission.code = :mission";
+			}
+			if (null != identifier) {
+				jpqlQuery += " and p.identifier = :identifier";
+			}
+			if (null != productclasses && 0 < productclasses.length) {
+				jpqlQuery += " and p.productClass.productType in (";
+				for (int i = 0; i < productclasses.length; ++i) {
+					if (0 < i) jpqlQuery += ", ";
+					jpqlQuery += ":productClass" + i;
+				}
+				jpqlQuery += ")";
+			}
+			if (null != executionTimeFrom) {
+				jpqlQuery += " and p.startTime >= :startTimeFrom";
+			}
+			if (null != executionTimeTo) {
+				jpqlQuery += " and p.stopTime <= :startTimeTo";
+			}
+			Query query = em.createQuery(jpqlQuery);
+			if (null != mission) {
+				query.setParameter("mission", mission);
+			}
+			if (null != identifier) {
+				query.setParameter("identifier", identifier);
+			}
+			if (null != productclasses && 0 < productclasses.length) {
+				for (int i = 0; i < productclasses.length; ++i) {
+					query.setParameter("productClass" + i, productclasses[i]);
+				}
+			}
+			if (null != executionTimeFrom) {
+				query.setParameter("startTimeFrom", executionTimeFrom.toInstant());
+			}
+			if (null != executionTimeTo) {
+				query.setParameter("startTimeTo", executionTimeTo.toInstant());
+			}
+			for (Object resultObject: query.getResultList()) {
+				if (resultObject instanceof ProcessingOrder) {
+					result.add(OrderUtil.toRestOrder((ProcessingOrder) resultObject));
+				}
+			}
+
 		}
-		
-		
-		
-		
-		
 		return result;
+
 	}
 
 }

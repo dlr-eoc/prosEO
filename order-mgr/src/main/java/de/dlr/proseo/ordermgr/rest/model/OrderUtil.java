@@ -1,6 +1,7 @@
 package de.dlr.proseo.ordermgr.rest.model;
 
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -18,8 +19,6 @@ public class OrderUtil {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
 	
-	
-	
 	/**
 	 * Convert a prosEO model ProcessingOrder into a REST Order
 	 * 
@@ -27,7 +26,6 @@ public class OrderUtil {
 	 * @return an equivalent REST Order or null, if no model Order was given
 	 */
 
-	@SuppressWarnings("unchecked")
 	public static RestOrder toRestOrder(ProcessingOrder processingOrder) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestOrder({})", (null == processingOrder ? "MISSING" : processingOrder.getId()));
 		
@@ -41,6 +39,7 @@ public class OrderUtil {
 		
 		if (null != processingOrder.getMission().getCode()) {
 			restOrder.setMissionCode(processingOrder.getMission().getCode());
+
 		}	
 		if (null != processingOrder.getIdentifier()) {
 			restOrder.setIdentifier(processingOrder.getIdentifier());
@@ -57,8 +56,6 @@ public class OrderUtil {
 		if (null != processingOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(Date.from(processingOrder.getExecutionTime()));
 		}
-		
-		//To be verified
 		if(null != processingOrder.getSlicingType()) {
 			restOrder.setSlicingType(processingOrder.getSlicingType().name());
 		}
@@ -67,30 +64,30 @@ public class OrderUtil {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
 		//to be added Slice Overlap
-		restOrder.setSliceOverlap((long) 20);
+		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 
-//		if (null != processingOrder.getFilterConditions()) {
-//			
-//			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
-//				restOrder.getFilterConditions().addAll(
-//					new de.dlr.proseo.ordermgr.rest.model.Parameter(paramKey,
-//							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
-//							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
-//			}
-//			
-//		}
-//		if(null != processingOrder.getOutputParameters()) {
-//			
-//			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
-//				restOrder.getOutputParameters().add(
-//					new Parameter(paramKey,
-//							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
-//							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
-//			}
-//		}
+		if (null != processingOrder.getFilterConditions()) {
+			
+			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
+				restOrder.getFilterConditions().add(
+					new RestParameter(paramKey,
+							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
+							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
+			}
+			
+		}
+		if(null != processingOrder.getOutputParameters()) {
+			
+			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
+				restOrder.getOutputParameters().add(
+					new RestParameter(paramKey,
+							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
+							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
+			}
+		}
 		if (null != processingOrder.getRequestedProductClasses()) {
 			
 			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {
@@ -157,33 +154,53 @@ public class OrderUtil {
 		
 		ProcessingOrder processingOrder = new ProcessingOrder();
 		
-		processingOrder.setId(restOrder.getId());
-		while (processingOrder.getVersion() < restOrder.getVersion()) {
-			processingOrder.incrementVersion();
+		if (null != restOrder.getId() && 0 != restOrder.getId()) {
+			processingOrder.setId(restOrder.getId());
+			while (processingOrder.getVersion() < restOrder.getVersion()) {
+				processingOrder.incrementVersion();
+			} 
 		}
 		processingOrder.setIdentifier(restOrder.getIdentifier());
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
-		try {
-			processingOrder.setStartTime(restOrder.getStartTime().toInstant());
-			
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
+		if (null != restOrder.getStartTime()) {
+			try {
+				processingOrder.setStartTime(restOrder.getStartTime().toInstant());
+
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
+			} 
 		}
-		try {
-			processingOrder.setStopTime(restOrder.getStopTime().toInstant());
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
+		if (null != restOrder.getStopTime()) {
+			try {
+				processingOrder.setStopTime(restOrder.getStopTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
+			} 
 		}
-		try {
-			processingOrder.setExecutionTime(restOrder.getExecutionTime().toInstant());
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
-		}	
+		if (null != restOrder.getExecutionTime()) {
+			try {
+				processingOrder.setExecutionTime(restOrder.getExecutionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
+			} 
+		}
+		if (null != restOrder.getOutputFileClass()) {
+			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
+		}
 		//To be verified
-		processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));
-	
-		//processingOrder.setSliceDuration(Duration.from(restOrder.getSliceDuration()));
+		if (null != restOrder.getSlicingType()) {
+			processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));	
+
+		}
+		if (null != restOrder.getSliceDuration()) {
+			processingOrder.setSliceDuration(Duration.ofSeconds(restOrder.getSliceDuration()));
+
+		}
+		if (null != restOrder.getSliceOverlap()) {
+			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
+
+		}
 		
 		//The following section needs to be verified
 		for (RestParameter restParam : restOrder.getFilterConditions()) {

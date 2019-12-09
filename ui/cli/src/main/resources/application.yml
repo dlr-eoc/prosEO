@@ -1,4 +1,11 @@
 spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: sequel09Master
     main:
         web-application-type: NONE
 logging:

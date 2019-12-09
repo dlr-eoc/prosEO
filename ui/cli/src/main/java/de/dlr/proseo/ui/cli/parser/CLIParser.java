@@ -234,8 +234,8 @@ public class CLIParser {
 	 * 		   number of positional parameters is exhausted
 	 */
 	private ParsedParameter parseParameter(String parameterString, int parameterPosition, CLICommand syntaxCommand) throws ParseException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseParameter({}, {})",
-				parameterString, syntaxCommand.getName());
+		if (logger.isTraceEnabled()) logger.trace(">>> parseParameter({}, {}, {})",
+				parameterString, parameterPosition, syntaxCommand.getName());
 				
 		// Determine the correct parameter in the command syntax
 		CLIParameter syntaxParameter = null;
@@ -255,11 +255,12 @@ public class CLIParser {
 		}
 		
 		// Check, whether parameter value conforms to the expected parameter type
-		if ("attribute".equals(syntaxParameter.getType()) && !parameterString.contains("=")) {
+		boolean isAttribute = "attribute".equals(syntaxParameter.getName());
+		if (isAttribute && !parameterString.contains("=")) {
 			throw new ParseException(String.format(MSG_PREFIX + MSG_ATTRIBUTE_PARAMETER_EXPECTED,
 					MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}
-		String parameterValue = ("attribute".equals(syntaxParameter.getType()) ? parameterString.split("=")[1] : parameterString );
+		String parameterValue = (isAttribute ? parameterString.split("=")[1] : parameterString );
 		if (!isTypeOK(syntaxParameter.getType(), parameterValue)) {
 			throw new ParseException(String.format(MSG_PREFIX + MSG_ATTRIBUTE_PARAMETER_EXPECTED,
 					MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);

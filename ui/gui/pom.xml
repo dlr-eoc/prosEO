@@ -44,6 +44,15 @@
 			<artifactId>mysql-connector-java</artifactId>
 		</dependency>
 		<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+		<groupId>org.projectreactor</groupId>
+		<artifactId>reactor-spring</artifactId>
+		<version>1.0.1.RELEASE</version>
+		</dependency>
+		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-model</artifactId>
 			<version>${project.version}</version>
@@ -83,6 +92,26 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- required for adding generated sources -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<!-- where to find the generated sources -->
+								<source>../../processor-mgr/${raml-output-path}</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<!-- Build Docker image -->

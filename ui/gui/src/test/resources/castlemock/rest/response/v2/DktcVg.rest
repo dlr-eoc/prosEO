@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<restMockResponse>
+    <body>{&#13;
+&#13;
+	"msg": SUCCESSFULLY REMOVED ID 812314&#13;
+&#13;
+}</body>
+    <contentEncodings/>
+    <headerQueries/>
+    <httpHeaders/>
+    <httpStatusCode>204</httpStatusCode>
+    <id>DktcVg</id>
+    <jsonPathExpressions/>
+    <methodId>eXkRLZ</methodId>
+    <name>Erfolgreich</name>
+    <parameterQueries/>
+    <status>ENABLED</status>
+    <usingExpressions>false</usingExpressions>
+    <xpathExpressions/>
+</restMockResponse>

@@ -52,18 +52,18 @@ public class KubeTest {
 
 	@Test
 	public void test() {
-		JobStep js = new JobStep();
-		js.setProcessingMode("nix"); 
-		jobSteps.save(js);
-		JobDispatcher jd = new JobDispatcher();
-		jd.createJobOrder(js);
-		productionPlanner.updateKubeConfigs();
-		if (productionPlanner.getKubeConfig(null).isConnected()) {
-			KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
-			if (aJob != null) {
-				productionPlanner.getKubeConfig(null).deleteJob(aJob);
-			}
-		}
+//		JobStep js = new JobStep();
+//		js.setProcessingMode("nix"); 
+//		jobSteps.save(js);
+//		JobDispatcher jd = new JobDispatcher();
+//		jd.createJobOrder(js);
+//		productionPlanner.updateKubeConfigs();
+//		if (productionPlanner.getKubeConfig(null).isConnected()) {
+//			KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
+//			if (aJob != null) {
+//				productionPlanner.getKubeConfig(null).deleteJob(aJob);
+//			}
+//		}
 	}
 
 }

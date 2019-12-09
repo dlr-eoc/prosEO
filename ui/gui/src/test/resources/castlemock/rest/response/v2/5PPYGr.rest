@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <restMockResponse>
-    <body>{&#13;
-    "id": 1837725,&#13;
-    "version": 2,&#13;
-    "missionCode": "S5P",&#13;
-    "processorName": "KNMI L2",&#13;
-    "productClasses": [ "FRESCO", "CO", "CH4", "ALH", "AAI", "O3PR", "O3TPR" ]&#13;
-}</body>
+    <body>[&#13;
+	{&#13;
+		"id": 1837725,&#13;
+		"version": 2,&#13;
+		"missionCode": "S5P",&#13;
+		"processorName": "KNMI L2",&#13;
+		"productClasses": [&#13;
+			"FRESCO",&#13;
+			"CO",&#13;
+			"CH4",&#13;
+			"ALH",&#13;
+			"AAI",&#13;
+			"O3PR",&#13;
+			"O3TPR"&#13;
+		]&#13;
+	}&#13;
+]</body>
     <contentEncodings/>
     <headerQueries/>
     <httpHeaders/>
