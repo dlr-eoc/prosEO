@@ -348,7 +348,7 @@ public class OrderControllerTest {
 	 * Test: Delete an Order by ID
 	 * Precondition: An Order in the database
 	 */
-//	@Test
+	@Test
 	public final void testDeleteOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -422,7 +422,7 @@ public class OrderControllerTest {
 	 * Test: Get an Order by ID
 	 * Precondition: At least one order with a known ID is in the database
 	 */
-//	@Test
+	@Test
 	public final void testGetOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -596,7 +596,7 @@ public class OrderControllerTest {
 	 * Test: List of all orders by mission, product class, start time range
 	 * Precondition: For all selection criteria orders within and without a search value exist
 	 */
-	//@Test
+	@Test
 	public final void testGetOrders() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
