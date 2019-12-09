@@ -62,6 +62,7 @@ import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
 import de.dlr.proseo.ordermgr.rest.model.RestOrder;
+import net.bytebuddy.asm.Advice.This;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -151,7 +152,7 @@ public class OrderControllerTest {
 			
 	};
 	private static String testJob[][] = {
-		//id,job_state,priority,orbit_id,processing_facility_id,filterconditions,outputparameters
+		//id,job_state,priority,orbit_id,processing_facility_id,filterconditions, outputparameters
 			{"1111","INITIAL","1","15","Test Facility"}
 	};
 	private static String[][] testOrderData = {
@@ -173,9 +174,9 @@ public class OrderControllerTest {
 		logger.info("... creating order ");
 		
 		ProcessingOrder testOrder = new ProcessingOrder();
-		if (null != RepositoryService.getOrderRepository().findByIdentifier(testData[10])) {
+		if (null != RepositoryService.getOrderRepository().findByIdentifier(testData[3])) {
 			logger.info("Found test order {}", testOrder.getId());
-			return testOrder = RepositoryService.getOrderRepository().findByIdentifier(testData[10]);	
+			return testOrder = RepositoryService.getOrderRepository().findByIdentifier(testData[3]);	
 		}
 		else{
 			//Adding processing order parameters
@@ -227,34 +228,8 @@ public class OrderControllerTest {
 						Integer.valueOf(testReqOrbits[i][1]), Integer.valueOf(testReqOrbits[i][2]));
 				testOrder.setRequestedOrbits(orbits);
 			}
-//			//JObs
-//			Job job = new Job();
-//			job.setId(Integer.valueOf(testJob[0][0]));
-//			job.setJobState(JobState.valueOf(testJob[0][1]));
-//			job.setPriority(Integer.valueOf(testJob[0][2]));
-//			for (Orbit orbit : testOrder.getRequestedOrbits()) {
-//				job.setOrbit(orbit);
-//				job.setStartTime(orbit.getStartTime());
-//				job.setStopTime(orbit.getStopTime());
-//			}
-//			job.setProcessingFacility(RepositoryService.getFacilityRepository().findByName(testJob[0][4]));
-////			for (int i = 0; i < testFilterConditions.length; ++i) {
-////				Parameter filterCondition = new Parameter();
-//				filterCondition.init(ParameterType.valueOf(testFilterConditions[i][1]), testFilterConditions[i][2]);
-//				job.getFilterConditions().put(testFilterConditions[i][0], filterCondition);
-//			}
-//			
-//			for (int i = 0; i < testOutputParam.length; ++i) {
-//				Parameter outputParam = new Parameter();
-//				outputParam.init(ParameterType.valueOf(testOutputParam[i][1]), testOutputParam[i][2]);
-//				job.getOutputParameters().put(testOutputParam[i][0], outputParam);
-//			}
-//			job = RepositoryService.getJobRepository().save(job);
-
-//			testOrder.getJobs().add(job);
-			
 			testOrder = RepositoryService.getOrderRepository().save(testOrder);	
-			
+		
 		}
 
 		logger.info("Created test order {}", testOrder.getId());
@@ -447,7 +422,7 @@ public class OrderControllerTest {
 	 * Test: Get an Order by ID
 	 * Precondition: At least one order with a known ID is in the database
 	 */
-	@Test
+//	@Test
 	public final void testGetOrderById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -523,7 +498,7 @@ public class OrderControllerTest {
 	 */
 	
 	@Transactional//Without this i get lazy initialization error 
-//	@Test
+	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -567,17 +542,15 @@ public class OrderControllerTest {
 				return createOrders;
 			}
 		});
-
-		
+			
 		// Update  order attribute/s
 		ProcessingOrder orderToModify = testOrders.get(0);
-		//orderToModify.setProcessingMode("OFFL");		
-		orderToModify.setIdentifier("Mod_XYZG");
+		orderToModify.setProcessingMode("OFFL_MOD");		
+		//orderToModify.setIdentifier("Mod_XYZG");
 		
 		RestOrder restOrder = OrderUtil.toRestOrder(orderToModify);		
-		logger.info("RestOrder modified identifier: "+restOrder.getIdentifier());
 
-		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders/" + orderToModify.getId();
+		String testUrl = "http://localhost:" + this.port  + ORDER_BASE_URI + "/orders/" + orderToModify.getId();
 		logger.info("Testing URL {} / PATCH : {}", testUrl, restOrder.toString());
 
 		restOrder = new TestRestTemplate(config.getUserName(), config.getUserPassword())
@@ -588,15 +561,15 @@ public class OrderControllerTest {
 		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-//		assertEquals("Wrong Start time: ", Orbit.orbitTimeFormatter.format(orderToModify.getStartTime()), getEntity.getBody().getStartTime());
-//		assertEquals("Wrong Stop time: ", Orbit.orbitTimeFormatter.format(orderToModify.getStopTime()), getEntity.getBody().getStopTime());
-//		assertEquals("Wrong Execution time: ", Orbit.orbitTimeFormatter.format(orderToModify.getExecutionTime()), getEntity.getBody().getExecutionTime());
+		assertEquals("Wrong Start time: ", orderToModify.getStartTime(), getEntity.getBody().getStartTime().toInstant());
+		assertEquals("Wrong Stop time: ", orderToModify.getStopTime(), getEntity.getBody().getStopTime().toInstant());
+		assertEquals("Wrong Execution time: ", orderToModify.getExecutionTime(), getEntity.getBody().getExecutionTime().toInstant());
 		
 		assertEquals("Wrong Processing mode: ",  orderToModify.getProcessingMode(), getEntity.getBody().getProcessingMode());
 		assertEquals("Wrong Identifier: ",  orderToModify.getIdentifier(), getEntity.getBody().getIdentifier());
 //		assertEquals("Wrong Order state: ",  orderToModify.getOrderState().toString(), getEntity.getBody().getOrderState());
-//		assertEquals("Wrong Mission code: ",  orderToModify.getMission().getCode(), getEntity.getBody().getMissionCode());
-//		assertEquals("Wrong output file class: ",  orderToModify.getOutputFileClass(), getEntity.getBody().getOutputFileClass());
+		assertEquals("Wrong Mission code: ",  orderToModify.getMission().getCode(), getEntity.getBody().getMissionCode());
+		assertEquals("Wrong output file class: ",  orderToModify.getOutputFileClass(), getEntity.getBody().getOutputFileClass());
 //
 //		//Slice duration and type to be added
 //		assertEquals("Wrong Slicing type: ",  orderToModify.getSlicingType().toString(), getEntity.getBody().getSlicingType());

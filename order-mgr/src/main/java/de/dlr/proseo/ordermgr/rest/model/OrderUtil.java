@@ -163,6 +163,7 @@ public class OrderUtil {
 		processingOrder.setIdentifier(restOrder.getIdentifier());
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
+
 		if (null != restOrder.getStartTime()) {
 			try {
 				processingOrder.setStartTime(restOrder.getStartTime().toInstant());

@@ -22,10 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
 import de.dlr.proseo.ordermgr.rest.model.RestOrbitQuery;
@@ -155,18 +156,7 @@ public class ProcessingOrderMgr {
 		for (String identifier : order.getConfiguredProcessors()) {
 			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
 		}
-
-		// To be verified
-		@SuppressWarnings("rawtypes")
-		Set jobs = new HashSet();
-		for(Job job : RepositoryService.getJobRepository().findAll()) {			
-			if(job.getProcessingOrder().getId() == order.getId()) {
-				jobs.add(job);				
-			}
-		}
-		
-		modelOrder.setJobs(jobs);
-		
+	
 		// Everything OK, store new order in database
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 		
@@ -246,10 +236,14 @@ public class ProcessingOrderMgr {
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
 	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
-		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({}, {})", id, order.getIdentifier());
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
+		
+		if (null == id) {
+			throw new IllegalArgumentException(logError(MSG_ORDER_ID_MISSING, MSG_ID_ORDER_MISSING, id));
+		}
 		
 		Optional<ProcessingOrder> optModelOrder = RepositoryService.getOrderRepository().findById(id);
-		
+				
 		if (optModelOrder.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND, id));
 		}
@@ -259,11 +253,12 @@ public class ProcessingOrderMgr {
 		boolean orderChanged = false;
 		ProcessingOrder changedOrder = OrderUtil.toModelOrder(order);
 		
-		logger.info("Changed order identifier: "+changedOrder.getIdentifier());
+		logger.info("Model order missioncode: "+modelOrder.getMission().getCode());
 		
 		if (!modelOrder.getMission().equals(changedOrder.getMission())) {
 			orderChanged = true;
-			modelOrder.setMission(changedOrder.getMission());
+			Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
+			modelOrder.setMission(mission);
 		}
 		
 		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
@@ -300,7 +295,6 @@ public class ProcessingOrderMgr {
 		} else {
 			logInfo(MSG_ORDER_NOT_MODIFIED, MSG_ID_ORDER_NOT_MODIFIED, id);
 		}
-		
 		return OrderUtil.toRestOrder(modelOrder);
 
 	}
