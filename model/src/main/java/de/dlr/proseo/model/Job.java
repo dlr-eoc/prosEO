@@ -90,7 +90,7 @@ public class Job extends PersistentObject {
 	/**
 	 * Enumeration describing possible job states.
 	 */
-	public enum JobState { INITIAL, STARTED, ON_HOLD, COMPLETED, FAILED }
+	public enum JobState { INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED }
 
 	/**
 	 * Gets the order this job belongs to

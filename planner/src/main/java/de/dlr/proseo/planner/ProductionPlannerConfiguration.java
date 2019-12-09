@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class ProductionPlannerConfiguration {
-	
+
 	/** The URL of the prosEO Production Planner */
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlannerUrl;
@@ -32,19 +32,35 @@ public class ProductionPlannerConfiguration {
 	/** The password to use for prosEO Production Planner logins */
 	@Value("${proseo.productionPlanner.password}")
 	private String productionPlannerPassword;
+
+	/** The URL of the prosEO Ingestor */
+	@Value("${proseo.ingestor.url}")
+	private String ingestorUrl;
 	
-	/** The URL of the prosEO Storage Manager */
-	@Value("${proseo.storageManager.url}")
-	private String storageManagerUrl;
+	/** The user name to use for prosEO Ingestor logins */
+	@Value("${proseo.ingestor.user}")
+	private String ingestorUser;
 
-	/** The user name to use for prosEO Storage Manager logins */
-	@Value("${proseo.storageManager.user}")
-	private String storageManagerUser;
+	/** The password to use for prosEO Ingestor logins */
+	@Value("${proseo.ingestor.password}")
+	private String ingestorPassword;
+	
+	/** The URL of the prosEO S3 */
+	@Value("${proseo.s3.s3EndPoint}")
+	private String s3EndPoint;
 
-	/** The password to use for prosEO Storage Manager logins */
-	@Value("${proseo.storageManager.password}")
-	private String storageManagerPassword;
+	/** The user name to use for prosEO S3 logins */
+	@Value("${proseo.s3.s3SecretAccessKey}")
+	private String s3SecretAccessKey;
 
+	/** The password to use for prosEO S3 logins */
+	@Value("${proseo.s3.s3AccessKey}")
+	private String s3AccessKey;
+	
+	/** The bucket to use for prosEO S3 logins */
+	@Value("${proseo.s3.s3DefaultBucket}")
+	private String s3DefaultBucket;
+	
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private String productionPlannerCycleWaitTime;
@@ -54,10 +70,10 @@ public class ProductionPlannerConfiguration {
 	private String productionPlannerMaxCycles;
 
 	/**
-	 * @return the storageManagerUrl
+	 * @return the s3Url
 	 */
-	public String getStorageManagerUrl() {
-		return storageManagerUrl;
+	public String getS3EndPoint() {
+		return s3EndPoint;
 	}
 
 	/**
@@ -102,21 +118,46 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
-	 * Gets the user for storage manager logins
+	 * Gets the user for S3 logins
 	 * 
-	 * @return the storage manager user
+	 * @return the S3 user
 	 */
-	public String getStorageManagerUser() {
-		return storageManagerUser;
+	public String getS3AccessKey() {
+		return s3AccessKey;
 	}
 
 	/**
-	 * Gets the password for storage manager logins
+	 * Gets the password for S3 logins
 	 * 
-	 * @return the storage manager password
+	 * @return the S3 password
 	 */
-	public String getStorageManagerPassword() {
-		return storageManagerPassword;
+	public String getS3SecretAccessKey() {
+		return s3SecretAccessKey;
+	}
+
+
+	public String getS3DefaultBucket() {
+		return s3DefaultBucket;
+	}
+	/**
+	 * @return the ingestorUrl
+	 */
+	public String getIngestorUrl() {
+		return ingestorUrl;
+	}
+
+	/**
+	 * @return the ingestorUser
+	 */
+	public String getIngestorUser() {
+		return ingestorUser;
+	}
+
+	/**
+	 * @return the ingestorPassword
+	 */
+	public String getIngestorPassword() {
+		return ingestorPassword;
 	}
 	
 }

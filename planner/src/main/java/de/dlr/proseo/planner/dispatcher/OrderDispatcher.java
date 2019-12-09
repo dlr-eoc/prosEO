@@ -1,6 +1,12 @@
 package de.dlr.proseo.planner.dispatcher;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -48,11 +54,13 @@ public class OrderDispatcher {
 				}
 				switch (order.getSlicingType()) {
 				case CALENDAR_DAY:
+					answer = createJobsForDay(order, pf);
 					break;
 				case ORBIT:
 					answer = createJobsForOrbit(order, pf);
 					break;
 				case TIME_SLICE:
+					answer = createJobsForTimeSlices(order, pf);
 					break;
 				default:
 					logger.info("Order " + order.getId() + " slicing type not set");
@@ -121,25 +129,153 @@ public class OrderDispatcher {
 						logger.info("Order " + order.getId() + ": requested configured processor(s) not set");
 						answer = false;
 					} else {
-
 						// create jobs
 						// for each orbit
 						for (Orbit orbit : orbits) {
 							// create job
+							createJobForOrbitOrTime(order, orbit, null, null, pf);
+						}
+					}
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+	
+	public boolean createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
+		boolean answer = true;
+
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		try {
+			// get first day
+			
+			if (order.getStartTime() == null || order.getStopTime() == null) {
+				logger.info("Order " + order.getId() + ": requested calendar day not set");
+				answer = false;
+			} else {
+				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
+				stopT = order.getStopTime();
+				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					logger.info("Order " + order.getId() + ": requested product class(es) not set");
+					answer = false;
+				} else {
+
+					// configured processor
+					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
+					if (configuredProcessors.isEmpty()) {
+						logger.info("Order " + order.getId() + ": requested configured processor(s) not set");
+						answer = false;
+					} else {
+						// create jobs
+						// for each orbit
+						while (startT.isBefore(stopT)) {
+							// create job
+							createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+							startT = sliceStopT;
+							sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+						} 
+					}
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+
+	public boolean createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
+		boolean answer = true;
+
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		try {
+			// get first day
+			
+			if (order.getStartTime() == null || order.getStopTime() == null || order.getSliceDuration() == null) {
+				logger.info("Order " + order.getId() + ": requested time slice settings not set");
+				answer = false;
+			} else {
+				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
+				stopT = order.getStopTime();
+				sliceStopT = startT.plus(order.getSliceDuration());
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					logger.info("Order " + order.getId() + ": requested product class(es) not set");
+					answer = false;
+				} else {
+
+					// configured processor
+					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
+					if (configuredProcessors.isEmpty()) {
+						logger.info("Order " + order.getId() + ": requested configured processor(s) not set");
+						answer = false;
+					} else {
+						// create jobs
+						// for each orbit
+						while (startT.isBefore(stopT)) {
+							// create job
+							createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+							startT = sliceStopT;
+							sliceStopT = startT.plus(order.getSliceDuration());
+						} 
+					}
+				} 
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+	
+	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
+		boolean answer = true;
+		// there has to be a list of orbits
+
+		try {
+			if (orbit == null && (startT == null || stopT == null)) {
+				logger.info("Order " + order.getId() + ": requested orbit or start/stop time not set");
+				answer = false;
+			} else {
+				// create a job for each orbit
+				// set order start time and stop time
+				// we need			
+				// product class
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					logger.info("Order " + order.getId() + ": requested product class(es) not set");
+					answer = false;
+				} else {
+
+					// configured processor
+					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
+					if (configuredProcessors.isEmpty()) {
+						logger.info("Order " + order.getId() + ": requested configured processor(s) not set");
+						answer = false;
+					} else {
+
+						// create job
+							// create job
 							Job job = new Job();
 							job.setOrbit(orbit);
 							job.setJobState(JobState.INITIAL);
-							Instant startT;
-							Instant stopT;
-							if (order.getStartTime() != null) {
-								startT = order.getStartTime().isBefore(orbit.getStartTime())? orbit.getStartTime() : order.getStartTime();
-							} else {
+							if (startT == null) {
 								startT = orbit.getStartTime();
 							}
 							job.setStartTime(startT);
-							if (order.getStopTime() != null) {
-								stopT = order.getStopTime().isAfter(orbit.getStopTime())? orbit.getStopTime() : order.getStopTime();
-							} else {
+							if (stopT == null) {
 								stopT = orbit.getStopTime();
 							}
 							job.setStopTime(stopT);
@@ -235,7 +371,7 @@ public class OrderDispatcher {
 //									}
 								}
 							}
-						}
+						
 					}
 				}
 			}
@@ -272,53 +408,57 @@ public class OrderDispatcher {
 			configuredProcessor = searchConfiguredProcessorForProductClass(rootProductClass);
 			
 		}
-		// now we have all product classes, create related products
-		// also create job steps with queries related to product class
-		// collect created products
-		List <Product> products = new ArrayList<Product>();
+		if (configuredProcessor == null ) {
+			jobStep = null;
+		} else {
+			// now we have all product classes, create related products
+			// also create job steps with queries related to product class
+			// collect created products
+			List <Product> products = new ArrayList<Product>();
 
-		Product rootProduct = createProducts(rootProductClass, 
-											 null, 
-											 configuredProcessor, 
-											 job.getOrbit(), 
-											 job,
-											 jobStep, 
-											 job.getProcessingOrder().getOutputFileClass(), 
-											 job.getStartTime(), 
-											 job.getStopTime(), 
-											 products);
-		// now we have to create the product queries for job step.
+			Product rootProduct = createProducts(rootProductClass, 
+					null, 
+					configuredProcessor, 
+					job.getOrbit(), 
+					job,
+					jobStep, 
+					job.getProcessingOrder().getOutputFileClass(), 
+					job.getStartTime(), 
+					job.getStopTime(), 
+					products);
+			// now we have to create the product queries for job step.
 
-		for (Product p : products) {
-			for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
-				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
-				if (!jobStep.getInputProductQueries().contains(pq)) {
-					jobStep.getInputProductQueries().add(pq);
+			for (Product p : products) {
+				for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
+					ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+					if (!jobStep.getInputProductQueries().contains(pq)) {
+						jobStep.getInputProductQueries().add(pq);
+					}
 				}
 			}
-		}
-		allProducts.addAll(products);
-		// this means also to create new job steps for products which are not satisfied
-		// check all queries for existing product definition (has not to be created!)
+			allProducts.addAll(products);
+			// this means also to create new job steps for products which are not satisfied
+			// check all queries for existing product definition (has not to be created!)
 
-		Boolean hasUnsatisfiedInputQueries = false;
-		for (ProductQuery pq : jobStep.getInputProductQueries()) {
-			if (productQueryService.executeQuery(pq, false, true)) {
-				// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
-			} else {
-				// create job step to build product.
-				// todo how to find configured processor?
+			Boolean hasUnsatisfiedInputQueries = false;
+			for (ProductQuery pq : jobStep.getInputProductQueries()) {
+				if (productQueryService.executeQuery(pq, false, true)) {
+					// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
+				} else {
+					// create job step to build product.
+					// todo how to find configured processor?
 
-				createJobStepForProduct(job,
-										pq.getRequestedProductClass(),
-										configuredProcessors,
-										jobStepList,
-										allProducts);
-				 hasUnsatisfiedInputQueries = true;
+					createJobStepForProduct(job,
+							pq.getRequestedProductClass(),
+							configuredProcessors,
+							jobStepList,
+							allProducts);
+					hasUnsatisfiedInputQueries = true;
+				}
 			}
-		}
-		if (hasUnsatisfiedInputQueries) {
-			jobStep.setJobStepState(JobStepState.WAITING_INPUT);
+			if (hasUnsatisfiedInputQueries) {
+				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
+			}
 		}
 	}
 
@@ -355,6 +495,10 @@ public class OrderDispatcher {
 		p.getParameters().clear();
 		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters());
 		p.setProductClass(productClass);
+		if (cp == null) {
+			String h = "help";
+			h = h + "xx";
+		}
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);
 		p.setJobStep(js);
