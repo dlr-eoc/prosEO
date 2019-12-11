@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.rest.model.RestProduct;
-import de.dlr.proseo.ui.backend.BackendConfiguration;
-import de.dlr.proseo.ui.backend.BackendConnectionService;
-import de.dlr.proseo.ui.backend.BackendUserManager;
+import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.backend.ServiceConnection;
+import de.dlr.proseo.ui.backend.UserManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -57,8 +57,9 @@ public class IngestorCommandRunner {
 	private static final int MSG_ID_PRODUCT_UPDATED = 2955;
 	private static final int MSG_ID_PRODUCT_DELETED = 2956;
 	private static final int MSG_ID_INGESTION_FILE_MISSING = 2957;
-	private static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2957;
-	private static final int MSG_ID_PRODUCTS_INGESTED = 2957;
+	private static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2958;
+	private static final int MSG_ID_PRODUCTS_INGESTED = 2959;
+	private static final int MSG_ID_PRODUCT_DATA_INVALID = 2960;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 
 	/* Message string constants */
@@ -73,6 +74,7 @@ public class IngestorCommandRunner {
 	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) Product with database ID %d not found";
 	private static final String MSG_INGESTION_FILE_MISSING = "(E%d) No file for product ingestion given";
 	private static final String MSG_PROCESSING_FACILITY_MISSING = "(E%d) No processing facility to ingest to given";
+	private static final String MSG_PRODUCT_DATA_INVALID = "(E%d) Product data invalid (cause: %s)";
 //	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
 
 	private static final String MSG_OPERATION_CANCELLED = "(I%d) Operation cancelled";
@@ -101,17 +103,17 @@ public class IngestorCommandRunner {
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
-	/** The configuration object for the prosEO User Interface */
-	@Autowired
-	private BackendConfiguration backendConfig;
-	
 	/** The user manager used by all command runners */
 	@Autowired
-	private BackendUserManager backendUserMgr;
+	private UserManager userManager;
 	
-	/** The connector service to the prosEO backend services prosEO */
+	/** The configuration object for the prosEO backend services */
 	@Autowired
-	private BackendConnectionService backendConnector;
+	private ServiceConfiguration serviceConfig;
+	
+	/** The connector service to the prosEO backend services */
+	@Autowired
+	private ServiceConnection serviceConnection;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestorCommandRunner.class);
@@ -171,7 +173,7 @@ public class IngestorCommandRunner {
 		
 		/* Set missing attributes to default values where possible */
 		if (null == restProduct.getMissionCode() || 0 == restProduct.getMissionCode().length()) {
-			restProduct.setMissionCode(backendUserMgr.getMission());
+			restProduct.setMissionCode(userManager.getMission());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -249,11 +251,15 @@ public class IngestorCommandRunner {
 		
 		/* Create product */
 		try {
-			restProduct = backendConnector.postToService(backendConfig.getIngestorUrl(), URI_PATH_PRODUCTS, 
-					restProduct, RestProduct.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+			restProduct = serviceConnection.postToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS, 
+					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
+		} catch (HttpClientErrorException.BadRequest e) {
+			// Already logged
+			System.err.println(String.format(MSG_PRODUCT_DATA_INVALID, MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
+			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -277,7 +283,7 @@ public class IngestorCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> showProduct({})", (null == showCommand ? "null" : showCommand.getName()));
 		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_PRODUCTS + "?mission=" + backendUserMgr.getMission();
+		String requestURI = URI_PATH_PRODUCTS + "?mission=" + userManager.getMission();
 		
 		for (ParsedOption option: showCommand.getOptions()) {
 			if ("from".equals(option.getName())) {
@@ -293,8 +299,8 @@ public class IngestorCommandRunner {
 		/* Get the product information from the Ingestor */
 		List<?> resultList = null;
 		try {
-			resultList = backendConnector.getFromService(backendConfig.getIngestorUrl(),
-					requestURI, List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+			resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
+					requestURI, List.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_NO_PRODUCTS_FOUND, MSG_ID_NO_PRODUCTS_FOUND);
 			logger.error(message);
@@ -302,7 +308,7 @@ public class IngestorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -389,17 +395,21 @@ public class IngestorCommandRunner {
 			return;
 		}
 		try {
-			restProduct = backendConnector.getFromService(backendConfig.getIngestorUrl(),
+			restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
 					URI_PATH_PRODUCTS + "/" + updatedProduct.getId(),
-					RestProduct.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					RestProduct.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 			logger.error(message);
 			System.err.println(message);
 			return;
+		} catch (HttpClientErrorException.BadRequest e) {
+			// Already logged
+			System.err.println(String.format(MSG_PRODUCT_DATA_INVALID, MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
+			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -442,8 +452,8 @@ public class IngestorCommandRunner {
 		
 		/* Update product using Ingestor service */
 		try {
-			restProduct = backendConnector.patchToService(backendConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + restProduct.getId(),
-					restProduct, RestProduct.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+			restProduct = serviceConnection.patchToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + restProduct.getId(),
+					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 			logger.error(message);
@@ -451,7 +461,7 @@ public class IngestorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -490,8 +500,8 @@ public class IngestorCommandRunner {
 		
 		/* Delete product using Ingestor service */
 		try {
-			backendConnector.deleteFromService(backendConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + productIdString, 
-					backendUserMgr.getUser(), backendUserMgr.getPassword());
+			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + productIdString, 
+					userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
 			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId);
 			logger.error(message);
@@ -499,7 +509,7 @@ public class IngestorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (Exception e) {
 			// Already logged
@@ -524,7 +534,6 @@ public class IngestorCommandRunner {
 		/* Check command options */
 		File productFile = null;
 		String productFileFormat = null;
-		boolean isDeleteAttributes = false;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -532,9 +541,6 @@ public class IngestorCommandRunner {
 				break;
 			case "format":
 				productFileFormat = option.getValue().toUpperCase();
-				break;
-			case "delete-attributes":
-				isDeleteAttributes = true;
 				break;
 			}
 		}
@@ -562,12 +568,12 @@ public class IngestorCommandRunner {
 		/* Ingest all given products to the given processing facility using the Ingestor service */
 		List<?> ingestedProducts = null;
 		try {
-			ingestedProducts = backendConnector.postToService(backendConfig.getIngestorUrl(),
+			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
 					URI_PATH_INGESTOR + "/" + processingFacility,
-					productsToIngest, List.class, backendUserMgr.getUser(), backendUserMgr.getPassword());
+					productsToIngest, List.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  backendUserMgr.getUser(), backendUserMgr.getMission()));
+			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -590,7 +596,7 @@ public class IngestorCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeCommand({})", (null == command ? "null" : command.getName()));
 		
 		/* Check that user is logged in */
-		if (null == backendUserMgr.getUser()) {
+		if (null == userManager.getUser()) {
 			System.err.println(String.format(MSG_USER_NOT_LOGGED_IN, MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 		}
 		
@@ -608,11 +614,22 @@ public class IngestorCommandRunner {
 		
 		/* Execute the (sub)command */
 		if (CMD_INGEST.equals(command.getName())) {
-			ingestProduct(command);
+			if (command.isHelpRequested()) {
+				command.getSyntaxCommand().printHelp(System.out);
+			} else {
+				ingestProduct(command);
+			}
 			return;
 		}
 		
+		/* Check for subcommand help request */
 		ParsedCommand subcommand = command.getSubcommand();
+		if (subcommand.isHelpRequested()) {
+			subcommand.getSyntaxCommand().printHelp(System.out);
+			return;
+		}
+		
+		/* Execute subcommand */
 		switch(subcommand.getName()) {
 		case CMD_CREATE:	createProduct(subcommand); break;
 		case CMD_SHOW:		showProduct(subcommand); break;

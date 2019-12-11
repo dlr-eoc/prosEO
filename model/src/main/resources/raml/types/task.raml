@@ -29,7 +29,8 @@
         description: A version identifier for the task
       isCritical?:
         type: boolean
-        description: Indicates whether a failure of the task results in a failure of the whole processor
+        default: true
+        description: Indicates whether a failure of the task results in a failure of the whole processor (default true)
       criticalityLevel?:
         type: integer
         description: Task priority, in case of failure all running tasks with a lower priority number will be aborted

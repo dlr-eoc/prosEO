@@ -17,7 +17,7 @@
         description: User-defined order identifier
       orderState:
         type: string
-        description: State of the processing order; one of { INITIAL, RELEASED, PLANNED, RUNNING, COMPLETED, FAILED, CLOSED }
+        description: State of the processing order; one of { INITIAL, APPROVED, RELEASED, PLANNED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED }
       executionTime?:
         type: datetime-only
         description: Expected execution time (optional, used for scheduling)

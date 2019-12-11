@@ -1,5 +1,5 @@
 /**
- * BackendUserManager.java
+ * UserManager.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -19,7 +19,7 @@ import org.springframework.web.client.RestClientException;
  *
  */
 @Component
-public class BackendUserManager {
+public class UserManager {
 
 	/* Message ID constants */
 	private static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
@@ -53,14 +53,14 @@ public class BackendUserManager {
 
 	/** The configuration object for the prosEO User Interface */
 	@Autowired
-	private BackendConfiguration backendConfig;
+	private ServiceConfiguration backendConfig;
 	
 	/** The connector service to the prosEO backend services prosEO */
 	@Autowired
-	private BackendConnectionService backendConnector;
+	private ServiceConnection backendConnector;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(BackendUserManager.class);
+	private static Logger logger = LoggerFactory.getLogger(UserManager.class);
 	
 	/**
 	 * Test whether the given user can connect to the Processor Manager with the given password
@@ -84,7 +84,7 @@ public class BackendUserManager {
 			System.err.println(message);
 			return false;
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, mission);
+			String message = String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, username, mission);
 			logger.error(message);
 			System.err.println(message);
 			return false;

@@ -38,7 +38,8 @@ public class CLIParser {
 	private static final int MSG_ID_TOO_MANY_PARAMETERS = 2914;
 	private static final int MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED = 2915;
 	private static final int MSG_ID_ILLEGAL_COMMAND = 2916;
-	private static final int MSG_ID_PARAMETER_MISSING = 2916;
+	private static final int MSG_ID_ILLEGAL_SUBCOMMAND = 2917;
+	private static final int MSG_ID_PARAMETER_MISSING = 2918;
 	
 	/* Message string constants */
 	private static final String MSG_INVALID_COMMAND_OPTION = "(E%d) Invalid command option %s found";
@@ -48,6 +49,7 @@ public class CLIParser {
 	private static final String MSG_TOO_MANY_PARAMETERS = "(E%d) Too many parameters for command %s";
 	private static final String MSG_ATTRIBUTE_PARAMETER_EXPECTED = "(E%d) Parameter of format '<attribute name>=<attribute value>' expected at position %d for command %s";
 	private static final String MSG_ILLEGAL_COMMAND = "(E%d) Illegal command %s";
+	private static final String MSG_ILLEGAL_SUBCOMMAND = "(E%d) Illegal subcommand %s";
 	private static final String MSG_PARAMETER_MISSING = "(E%d) Required parameter %s not found for command %s";
 	private static final String MSG_PREFIX = "199 proseo-ui-cli ";
 	
@@ -349,6 +351,9 @@ public class CLIParser {
 				} else if (null == currentSyntaxCommand) {
 					// Illegal command (because no parameters are expected without a command)
 					throw new ParseException(String.format(MSG_PREFIX + MSG_ILLEGAL_COMMAND, MSG_ID_ILLEGAL_COMMAND, token), 0);
+				} else if (currentSyntaxCommand.getParameters().isEmpty()) {
+					// Illegal command (because no parameters are expected without a command)
+					throw new ParseException(String.format(MSG_PREFIX + MSG_ILLEGAL_SUBCOMMAND, MSG_ID_ILLEGAL_SUBCOMMAND, token), 0);
 				} else {
 					// Handle token as parameter (no more commands or options allowed)
 					optionFound = true;

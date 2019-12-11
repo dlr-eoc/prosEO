@@ -307,7 +307,8 @@ public class ConfigurationManager {
 			configurationChanged = true;
 			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
 		}
-		if (!modelConfiguration.getDockerRunParameters().equals(changedConfiguration.getDockerRunParameters())) {
+		if (null == modelConfiguration.getDockerRunParameters() && null != changedConfiguration.getDockerRunParameters()
+				|| null != modelConfiguration.getDockerRunParameters() && !modelConfiguration.getDockerRunParameters().equals(changedConfiguration.getDockerRunParameters())) {
 			configurationChanged = true;
 			modelConfiguration.setDockerRunParameters(changedConfiguration.getDockerRunParameters());
 		}

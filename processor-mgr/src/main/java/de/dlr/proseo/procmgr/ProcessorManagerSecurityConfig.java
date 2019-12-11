@@ -32,7 +32,7 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 	private static Logger logger = LoggerFactory.getLogger(ProcessorManagerSecurityConfig.class);
 	
 	/**
-	 * Set the Ingestor security options
+	 * Set the Processor Manager security options
 	 * 
 	 * @param http the HTTP security object
 	 */
@@ -48,10 +48,10 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 	}
 
 	/**
-	 * Initialize the users, passwords and roles for the ProductClassManager from the prosEO database
+	 * Initialize the users, passwords and roles for the Processor Manager from the prosEO database
 	 * 
 	 * @param builder to manage authentications
-	 * @param dataSource the data source configured for the ProductClassManager
+	 * @param dataSource the data source configured for the Processor Manager
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
 	@Autowired
