@@ -47,7 +47,7 @@ public class Orbit extends PersistentObject {
 	private Instant startTime;
 	
 	/** The stop time of the orbit (e. g. using a Spacecraft Midnight Crossing [SMX] event) */
-	@Column(columnDefinition = "TIMESTAMP(6)")
+	@Column(name = "stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
 	
 	/**

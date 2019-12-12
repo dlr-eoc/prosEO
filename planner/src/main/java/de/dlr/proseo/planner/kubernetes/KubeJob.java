@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
@@ -270,6 +272,8 @@ public class KubeJob {
 				} else if (jobStep.getStdoutLogLevel() == null) {
 					jobStep.setStderrLogLevel(StdLogLevel.INFO);
 				}
+				Instant genTime = Instant.now();
+				setGenerationTime(jobStep.getOutputProduct(), genTime);
 				JobDispatcher jd = new JobDispatcher();
 				jobOrder = jd.createJobOrder(jobStep);
 				if (jobOrder == null) {
@@ -313,19 +317,19 @@ public class KubeJob {
 						.endEnv()
 						.addNewEnv()
 						.withName("S3_ENDPOINT")
-						.withValue("http://192.168.20.159:9000")
+						.withValue(ProductionPlanner.config.getS3EndPoint())
 						.endEnv()
 						.addNewEnv()
 						.withName("S3_ACCESS_KEY")
-						.withValue("short_access_key")
+						.withValue(ProductionPlanner.config.getS3AccessKey())
 						.endEnv()
 						.addNewEnv()
 						.withName("S3_SECRET_ACCESS_KEY")
-						.withValue("short_secret_key")
+						.withValue(ProductionPlanner.config.getS3SecretAccessKey())
 						.endEnv()
 						.addNewEnv()
 						.withName("S3_STORAGE_ID_OUTPUTS")
-						.withValue("s3test")
+						.withValue(ProductionPlanner.config.getS3DefaultBucket())
 						.endEnv()
 						.addNewEnv()
 						.withName("ALLUXIO_STORAGE_ID_OUTPUTS")
@@ -333,7 +337,7 @@ public class KubeJob {
 						.endEnv()
 						.addNewEnv()
 						.withName("INGESTOR_ENDPOINT")
-						.withValue("http://192.168.20.159:8082")
+						.withValue(ProductionPlanner.config.getIngestorUrl())
 						.endEnv()
 						.addNewEnv()
 						.withName("PROCESSING_FACILITY_NAME")
@@ -371,7 +375,7 @@ public class KubeJob {
 						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 						searchPod();
 
-						jobStep.setJobStepState(JobStepState.READY);	
+						jobStep.setJobStepState(JobStepState.RUNNING);	
 						RepositoryService.getJobStepRepository().save(jobStep);
 						logger.info("Job " + kubeConfig.getId() + "/" + jobName + " created");
 					}
@@ -576,5 +580,15 @@ public class KubeJob {
 			logger.info("Job " + kubeConfig.getId() + "/" + aJobName + " finished");
 		}
 		return success;
+	}
+	
+	void setGenerationTime(Product product, Instant genTime) {
+		if (product != null && genTime != null) {
+			product.setGenerationTime(genTime);
+			for (Product p : product.getComponentProducts()) {
+				setGenerationTime(p, genTime);
+			}
+			RepositoryService.getProductRepository().save(product);
+		}
 	}
 }

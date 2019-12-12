@@ -31,9 +31,18 @@ public class JobStepDispatcher {
 		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
-		List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+		List<JobStep> jobSteps = null;
+		if (processingFacility == null) {
+			jobSteps = new ArrayList<>();
+			for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
+				jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
+			}
+		} else {
+			jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+		}
 		for (JobStep js : jobSteps) {
 			Boolean hasUnsatisfiedInputQueries = false;
+			logger.trace("Looking for product queries of job step: " + js.getId());
 			for (ProductQuery pq : js.getInputProductQueries()) {
 				if (!pq.isSatisfied()) {
 					if (productQueryService.executeQuery(pq, false, false)) {
