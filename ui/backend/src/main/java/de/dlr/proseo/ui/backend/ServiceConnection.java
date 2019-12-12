@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.backend;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -47,20 +49,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ServiceConnection {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_HTTP_REQUEST_FAILED = 2804;
-	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 2805;
-	private static final int MSG_ID_NOT_AUTHORIZED = 2806;
-	private static final int MSG_ID_SERIALIZATION_FAILED = 2807;
-	private static final int MSG_ID_INVALID_URL = 2808;
-	private static final int MSG_ID_UNEXPECTED_STATUS = 2809;
 	
 	/* Message string constants */
-	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
-	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
-	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized for requested service";
-	private static final String MSG_SERIALIZATION_FAILED = "(E%d) Cannot convert object to Json (cause: %s)";
-	private static final String MSG_INVALID_URL = "(E%d) Invalid request URL %s (cause: %s)";
-	private static final String MSG_UNEXPECTED_STATUS = "(E%d) Unexpected HTTP status %s received";
 
 	/** REST template builder */
 	@Autowired
@@ -91,14 +81,14 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
 		} catch (Exception e) {
@@ -108,7 +98,7 @@ public class ServiceConnection {
 		
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
 					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
 			logger.error(message);
 			throw new RuntimeException(message);
@@ -144,14 +134,14 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw HttpClientErrorException.create(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"), e.getResponseHeaders(), e.getResponseBodyAsByteArray(), null);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
 		} catch (Exception e) {
@@ -161,7 +151,7 @@ public class ServiceConnection {
 		
 		// All POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
-			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
 					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
 			logger.error(message);
 			throw new RuntimeException(message);
@@ -199,7 +189,7 @@ public class ServiceConnection {
 		try {
 			req.setURI(new URI(serviceUrl + requestPath));
 		} catch (URISyntaxException e) {
-			String message = String.format(MSG_INVALID_URL, MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		}
@@ -210,7 +200,7 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... serialized Json object: " + jsonObject);
 			req.setEntity(new StringEntity(jsonObject));
 		} catch (Exception e) {
-			String message = String.format(MSG_SERIALIZATION_FAILED, MSG_ID_SERIALIZATION_FAILED, e.getMessage());
+			String message = uiMsg(MSG_ID_SERIALIZATION_FAILED, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		}
@@ -225,20 +215,20 @@ public class ServiceConnection {
 					if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode) {
 						if (null != httpResponse.getEntity())
 							httpResponse.getEntity().getContent().close();
-						logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, warningMessage));
+						logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, warningMessage));
 						throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
 					} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
 						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
 						if (null != httpResponse.getEntity())
 							httpResponse.getEntity().getContent().close();
-						logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+						logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
 								httpStatusCode, reasonPhrase, warningMessage));
 						throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
 					} else if (300 <= httpStatusCode){
 						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
 						if (null != httpResponse.getEntity())
 							httpResponse.getEntity().getContent().close();
-						logger.error(String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
+						logger.error(uiMsg(MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
 						throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
 					}
 					return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
@@ -249,7 +239,7 @@ public class ServiceConnection {
 				throw e;
 			}
 		} catch (IOException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
 		} catch (Exception e) {
@@ -281,19 +271,19 @@ public class ServiceConnection {
 			entity = restTemplate.exchange(new URI(requestUrl), HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = e.getResponseHeaders().getFirst("Warning");
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), message));
 			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, e.getMessage()), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
 			throw e;
 		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
 		} catch (URISyntaxException e) {
-			String message = String.format(MSG_INVALID_URL, MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		} catch (Exception e) {
@@ -304,13 +294,13 @@ public class ServiceConnection {
 		// Check for deletion failure indicated by 304 NOT_MODIFIED
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
 			String message = entity.getHeaders().getFirst("Warning");
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
 					entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(), message));
 			throw new RestClientResponseException(message, entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(),
 					entity.getHeaders(), null, StandardCharsets.UTF_8);
 		} else if (!HttpStatus.NO_CONTENT.equals(entity.getStatusCode())) {
 			// Ignore unexpected status code, but log it as warning
-			logger.warn(String.format(MSG_UNEXPECTED_STATUS, MSG_ID_UNEXPECTED_STATUS, entity.getStatusCode().getReasonPhrase()));
+			logger.warn(uiMsg(MSG_ID_UNEXPECTED_STATUS, entity.getStatusCode().getReasonPhrase()));
 		}
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< deleteFromService()");

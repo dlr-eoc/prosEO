@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.cli;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.ZoneId;
@@ -31,7 +33,6 @@ import de.dlr.proseo.ui.backend.UserManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
-import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 /**
  * Run commands for managing prosEO processor classes, versions and configurations (create, read, update, delete etc.). 
@@ -43,65 +44,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 @Component
 public class ProcessorCommandRunner {
 
-	/* Message ID constants */
-	// Same as in OrderCommandRunner
-//	private static final int MSG_ID_INVALID_COMMAND_NAME = 2930;
-//	private static final int MSG_ID_SUBCOMMAND_MISSING = 2931;
-//	private static final int MSG_ID_USER_NOT_LOGGED_IN = 2932;
-//	private static final int MSG_ID_NOT_AUTHORIZED = 2933;
-//	private static final int MSG_ID_OPERATION_CANCELLED = 2934;
-	
-	// Specific to ProcessorCommandRunner
-//	private static final int MSG_ID_NO_PROCESSORCLASSES_FOUND = 2980;
-//	private static final int MSG_ID_PROCESSORCLASS_CREATED = 2981;
-//	private static final int MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN = 2983;
-//	private static final int MSG_ID_PROCESSORCLASS_NOT_FOUND = 2984;
-//	private static final int MSG_ID_PROCESSORCLASS_UPDATED = 2985;
-//	private static final int MSG_ID_PROCESSORCLASS_DELETED = 2986;
-//	private static final int MSG_ID_INVALID_CRITICALITY_LEVEL = 2987;
-//	private static final int MSG_ID_PROCESSOR_CREATED = 2988;
-//	private static final int MSG_ID_NO_PROCESSORS_FOUND = 2989;
-//	private static final int MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN = 2970;
-//	private static final int MSG_ID_PROCESSOR_NOT_FOUND = 2971;
-//	private static final int MSG_ID_PROCESSOR_NOT_FOUND_BY_ID = 2972;
-//	private static final int MSG_ID_PROCESSOR_UPDATED = 2973;
-//	private static final int MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID = 2974;
-//	private static final int MSG_ID_PROCESSOR_DELETED = 2975;
-//	private static final int MSG_ID_PROCESSORCLASS_DATA_INVALID = 2976;
-//	private static final int MSG_ID_PROCESSOR_DATA_INVALID = 2977;
-//	private static final int MSG_ID_PROCESSOR_DELETE_FAILED = 2978;
-//	private static final int MSG_ID_EXCEPTION = 2979;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-
-	/* Message string constants */
-//	private static final String MSG_INVALID_COMMAND_NAME = "(E%d) Invalid command name %s";
-//	private static final String MSG_SUBCOMMAND_MISSING = "(E%d) Subcommand missing for command %s";
-//	private static final String MSG_USER_NOT_LOGGED_IN = "(E%d) User not logged in";
-//	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized to manage orders for mission %s";
-//	private static final String MSG_EXCEPTION = "(E%d) Command failed (cause: %s)";
-//	private static final String MSG_NO_PROCESSORCLASSES_FOUND = "(E%d) No processor classes found for given search criteria";
-//	private static final String MSG_NO_PROCCLASS_IDENTIFIER_GIVEN = "(E%d) No processor class name given";
-//	private static final String MSG_PROCESSORCLASS_NOT_FOUND = "(E%d) Processor class %s not found";
-//	private static final String MSG_PROCESSORCLASS_NOT_FOUND_BY_ID = "(E%d) Processor class with database ID %d not found";
-//	private static final String MSG_PROCESSORCLASS_DATA_INVALID = "(E%d) Processor class data invalid (cause: %s)";
-//	private static final String MSG_INVALID_CRITICALITY_LEVEL = "(E%d) Invalid criticality level %s (expected integer > 1)";
-//	private static final String MSG_NO_PROCESSORS_FOUND = "(E%d) No processors found for given search criteria";
-//	private static final String MSG_NO_PROCESSOR_IDENTIFIER_GIVEN = "(E%d) No processor name and/or version given";
-//	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) Processor %s with version %s not found";
-//	private static final String MSG_PROCESSOR_NOT_FOUND_BY_ID = "(E%d) Processor with database ID %d not found";
-//	private static final String MSG_PROCESSOR_DATA_INVALID = "(E%d) Processor data invalid (cause: %s)";
-//	private static final String MSG_PROCESSOR_DELETE_FAILED = "(E%d) Deletion of processor %s with version %s failed (cause: %s)";
-//	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
-//
-//	private static final String MSG_OPERATION_CANCELLED = "(I%d) Operation cancelled";
-//	private static final String MSG_PROCESSORCLASS_CREATED = "(I%d) Processor class %s created (database ID %d)";
-//	private static final String MSG_PROCESSORCLASS_UPDATED = "(I%d) Processor class with database ID %d updated (new version %d)";
-//	private static final String MSG_PROCESSORCLASS_DELETED = "(I%d) Processor class with database ID %d deleted";
-//	private static final String MSG_PROCESSOR_CREATED = "(I%d) Processor %s with version %s created (database ID %d)";
-//	private static final String MSG_PROCESSOR_UPDATED = "(I%d) Processor with database ID %d updated (new version %d)";
-//	private static final String MSG_PROCESSOR_DELETED = "(I%d) Processor with database ID %d deleted";
-
-	/* Other string constants */
+	/* General string constants */
 	public static final String CMD_PROCESSOR = "processor";
 	private static final String CMD_CLASS = "class";
 	private static final String CMD_CONFIGURATION = "configuration";
@@ -123,6 +66,8 @@ public class ProcessorCommandRunner {
 	private static final String URI_PATH_PROCESSORS = "/processors";
 	private static final String URI_PATH_CONFIGURATIONS = "/configurations";
 	private static final String URI_PATH_CONFIGUREDPROCESSORS = "/configuredprocessors";
+	
+	private static final String PROCESSORS = "processors";
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
@@ -230,7 +175,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -273,7 +218,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -365,7 +310,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -399,7 +344,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -442,7 +387,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (Exception e) {
 			// Already logged
@@ -470,7 +415,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (Exception e) {
 			// Already logged
@@ -627,7 +572,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -676,7 +621,7 @@ public class ProcessorCommandRunner {
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -773,7 +718,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, 
 						updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
 			} else if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission());
 			} else {
 				message = e.getMessage();
 			}
@@ -840,7 +785,7 @@ public class ProcessorCommandRunner {
 		} catch (HttpClientErrorException.Unauthorized e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException.Unauthorized " + e.getMessage());
 			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught RuntimeException " + e.getMessage());
@@ -887,7 +832,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
@@ -924,7 +869,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());

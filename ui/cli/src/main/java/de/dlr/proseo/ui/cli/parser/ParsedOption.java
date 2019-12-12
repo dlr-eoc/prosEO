@@ -5,18 +5,14 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 /**
  * Class representing a parsed command option
  * 
  * @author Dr. Thomas Bassler
  */
 public class ParsedOption {
-
-	/* Message ID constants */
-	private static final int MSG_ID_ILLEGAL_OPTION_TYPE = 2902;
-
-	/* Message strings */
-	private static final String MSG_ILLEGAL_OPTION_TYPE = "(E%d) Illegal option type %s, expected one of %s";
 
 	/** Option name */
 	private String name;
@@ -52,8 +48,7 @@ public class ParsedOption {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_OPTION_TYPE,
-					MSG_ID_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(uiMsg(MSG_ID_ILLEGAL_OPTION_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
 	/**

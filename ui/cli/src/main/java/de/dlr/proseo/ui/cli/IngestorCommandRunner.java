@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.cli;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -39,51 +41,7 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 @Component
 public class IngestorCommandRunner {
 
-	/* Message ID constants */
-	// Same as in OrderCommandRunner
-	private static final int MSG_ID_INVALID_COMMAND_NAME = 2930;
-	private static final int MSG_ID_SUBCOMMAND_MISSING = 2931;
-	private static final int MSG_ID_USER_NOT_LOGGED_IN = 2932;
-	private static final int MSG_ID_NOT_AUTHORIZED = 2933;
-	private static final int MSG_ID_OPERATION_CANCELLED = 2934;
-	private static final int MSG_ID_INVALID_TIME = 2945;
-	
-	// Specific to IngestorCommandRunner
-	private static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
-	private static final int MSG_ID_PRODUCT_CREATED = 2951;
-	private static final int MSG_ID_INVALID_DATABASE_ID = 2952;
-	private static final int MSG_ID_NO_IDENTIFIER_GIVEN = 2953;
-	private static final int MSG_ID_PRODUCT_NOT_FOUND = 2954;
-	private static final int MSG_ID_PRODUCT_UPDATED = 2955;
-	private static final int MSG_ID_PRODUCT_DELETED = 2956;
-	private static final int MSG_ID_INGESTION_FILE_MISSING = 2957;
-	private static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2958;
-	private static final int MSG_ID_PRODUCTS_INGESTED = 2959;
-	private static final int MSG_ID_PRODUCT_DATA_INVALID = 2960;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-
-	/* Message string constants */
-	private static final String MSG_INVALID_COMMAND_NAME = "(E%d) Invalid command name %s";
-	private static final String MSG_SUBCOMMAND_MISSING = "(E%d) Subcommand missing for command %s";
-	private static final String MSG_USER_NOT_LOGGED_IN = "(E%d) User not logged in";
-	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized to manage products for mission %s";
-	private static final String MSG_NO_PRODUCTS_FOUND = "(E%d) No products found for given search criteria";
-	private static final String MSG_INVALID_TIME = "(E%d) Time format %s not parseable";
-	private static final String MSG_INVALID_DATABASE_ID = "(E%d) Database ID %s not numeric";
-	private static final String MSG_NO_IDENTIFIER_GIVEN = "(E%d) No product database ID given";
-	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) Product with database ID %d not found";
-	private static final String MSG_INGESTION_FILE_MISSING = "(E%d) No file for product ingestion given";
-	private static final String MSG_PROCESSING_FACILITY_MISSING = "(E%d) No processing facility to ingest to given";
-	private static final String MSG_PRODUCT_DATA_INVALID = "(E%d) Product data invalid (cause: %s)";
-//	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
-
-	private static final String MSG_OPERATION_CANCELLED = "(I%d) Operation cancelled";
-	private static final String MSG_PRODUCT_CREATED = "(I%d) Product of class %s created (database ID %d, UUID %s)";
-	private static final String MSG_PRODUCT_UPDATED = "(I%d) Product with database ID %d updated (new version %d)";
-	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with database ID %d deleted";
-	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested to processing facility %s";
-
-	/* Other string constants */
+	/* General string constants */
 	public static final String CMD_PRODUCT = "product";
 	private static final String CMD_SHOW = "show";
 	private static final String CMD_CREATE = "create";
@@ -100,6 +58,8 @@ public class IngestorCommandRunner {
 	
 	private static final String URI_PATH_INGESTOR = "/ingest";
 	private static final String URI_PATH_PRODUCTS = "/products";
+	
+	private static final String PRODUCTS = "products";
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
@@ -182,7 +142,7 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_PRODUCT_CLASS);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			restProduct.setProductClass(response);
@@ -191,7 +151,7 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_FILE_CLASS);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			restProduct.setFileClass(response);
@@ -200,52 +160,52 @@ public class IngestorCommandRunner {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStartTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
-				System.err.println(String.format(MSG_INVALID_TIME, MSG_ID_INVALID_TIME, response));
+				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_STOP_TIME);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
-				System.err.println(String.format(MSG_INVALID_TIME, MSG_ID_INVALID_TIME, response));
+				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
-				System.err.println(String.format(MSG_INVALID_TIME, MSG_ID_INVALID_TIME, response));
+				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getGenerationTime() || 0 == restProduct.getGenerationTime().length()) {
 			System.out.print(PROMPT_GENERATION_TIME);
 			String response = System.console().readLine();
 			if ("".equals(response)) {
-				System.out.println(String.format(MSG_OPERATION_CANCELLED, MSG_ID_OPERATION_CANCELLED));
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setGenerationTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
-				System.err.println(String.format(MSG_INVALID_TIME, MSG_ID_INVALID_TIME, response));
+				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		
@@ -255,11 +215,11 @@ public class IngestorCommandRunner {
 					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.BadRequest e) {
 			// Already logged
-			System.err.println(String.format(MSG_PRODUCT_DATA_INVALID, MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
+			System.err.println(uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage()));
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -268,7 +228,7 @@ public class IngestorCommandRunner {
 		}
 
 		/* Report success, giving newly assigned product ID and UUID */
-		String message = String.format(MSG_PRODUCT_CREATED, MSG_ID_PRODUCT_CREATED,
+		String message = uiMsg(MSG_ID_PRODUCT_CREATED,
 				restProduct.getProductClass(), restProduct.getId(), restProduct.getUuid());
 		logger.info(message);
 		System.out.println(message);
@@ -302,13 +262,13 @@ public class IngestorCommandRunner {
 			resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
 					requestURI, List.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_NO_PRODUCTS_FOUND, MSG_ID_NO_PRODUCTS_FOUND);
+			String message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
 			logger.error(message);
 			System.err.println(message);
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -373,7 +333,7 @@ public class IngestorCommandRunner {
 				try {
 					updatedProduct.setId(Long.parseLong(param.getValue()));
 				} catch (NumberFormatException e) {
-					System.err.println(String.format(MSG_INVALID_DATABASE_ID, MSG_ID_INVALID_DATABASE_ID, param.getValue()));
+					System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, param.getValue()));
 					return;
 				}
 			} else {
@@ -391,7 +351,7 @@ public class IngestorCommandRunner {
 		RestProduct restProduct = null;
 		if (null == updatedProduct.getId() || 0 == updatedProduct.getId().longValue()) {
 			// No identifying value given
-			System.err.println(String.format(MSG_NO_IDENTIFIER_GIVEN, MSG_ID_NO_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODUCT_DBID_GIVEN));
 			return;
 		}
 		try {
@@ -399,17 +359,17 @@ public class IngestorCommandRunner {
 					URI_PATH_PRODUCTS + "/" + updatedProduct.getId(),
 					RestProduct.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 			logger.error(message);
 			System.err.println(message);
 			return;
 		} catch (HttpClientErrorException.BadRequest e) {
 			// Already logged
-			System.err.println(String.format(MSG_PRODUCT_DATA_INVALID, MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
+			System.err.println(uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -455,13 +415,13 @@ public class IngestorCommandRunner {
 			restProduct = serviceConnection.patchToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + restProduct.getId(),
 					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 			logger.error(message);
 			System.err.println(message);
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -470,7 +430,7 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Report success, giving new product version */
-		String message = String.format(MSG_PRODUCT_UPDATED, MSG_ID_PRODUCT_UPDATED, restProduct.getId(), restProduct.getVersion());
+		String message = uiMsg(MSG_ID_PRODUCT_UPDATED, restProduct.getId(), restProduct.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -486,7 +446,7 @@ public class IngestorCommandRunner {
 		/* Get product database ID from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(String.format(MSG_NO_IDENTIFIER_GIVEN, MSG_ID_NO_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODUCT_DBID_GIVEN));
 			return;
 		}
 		String productIdString = deleteCommand.getParameters().get(0).getValue();
@@ -494,7 +454,7 @@ public class IngestorCommandRunner {
 		try {
 			productId = Long.parseLong(productIdString);
 		} catch (NumberFormatException e) {
-			System.err.println(String.format(MSG_INVALID_DATABASE_ID, MSG_ID_INVALID_DATABASE_ID, productIdString));
+			System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productIdString));
 			return;
 		}
 		
@@ -503,13 +463,13 @@ public class IngestorCommandRunner {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + productIdString, 
 					userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId);
+			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
 			logger.error(message);
 			System.err.println(message);
 			return;
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (Exception e) {
 			// Already logged
@@ -518,7 +478,7 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Report success */
-		String message = String.format(MSG_PRODUCT_DELETED, MSG_ID_PRODUCT_DELETED, productId);
+		String message = uiMsg(MSG_ID_PRODUCT_DELETED, productId);
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -545,13 +505,13 @@ public class IngestorCommandRunner {
 			}
 		}
 		if (null == productFile) {
-			System.err.println(String.format(MSG_INGESTION_FILE_MISSING, MSG_ID_INGESTION_FILE_MISSING));
+			System.err.println(uiMsg(MSG_ID_INGESTION_FILE_MISSING));
 			return;
 		}
 		
 		/* Get processing facility from command parameters */
 		if (ingestCommand.getParameters().isEmpty()) {
-			System.err.println(String.format(MSG_PROCESSING_FACILITY_MISSING, MSG_ID_PROCESSING_FACILITY_MISSING));
+			System.err.println(uiMsg(MSG_ID_PROCESSING_FACILITY_MISSING));
 			return;
 		}
 		String processingFacility = ingestCommand.getParameters().get(0).getValue();
@@ -573,7 +533,7 @@ public class IngestorCommandRunner {
 					productsToIngest, List.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException.Unauthorized e) {
 			// Already logged
-			System.err.println(String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), userManager.getMission()));
+			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
 			return;
 		} catch (RuntimeException e) {
 			// Already logged
@@ -582,7 +542,7 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Report success */
-		String message = String.format(MSG_PRODUCTS_INGESTED, MSG_ID_PRODUCTS_INGESTED, ingestedProducts.size(), processingFacility);
+		String message = uiMsg(MSG_ID_PRODUCTS_INGESTED, ingestedProducts.size(), processingFacility);
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -597,18 +557,18 @@ public class IngestorCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == userManager.getUser()) {
-			System.err.println(String.format(MSG_USER_NOT_LOGGED_IN, MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 		}
 		
 		/* Check argument */
 		if (!CMD_PRODUCT.equals(command.getName()) && !CMD_INGEST.equals(command.getName())) {
-			System.err.println(String.format(MSG_INVALID_COMMAND_NAME, MSG_ID_INVALID_COMMAND_NAME, command.getName()));
+			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
 		/* Make sure a subcommand is given */
 		if (CMD_PRODUCT.equals(command.getName()) && (null == command.getSubcommand() || null == command.getSubcommand().getName())) {
-			System.err.println(String.format(MSG_SUBCOMMAND_MISSING, MSG_ID_SUBCOMMAND_MISSING, command.getName()));
+			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 		

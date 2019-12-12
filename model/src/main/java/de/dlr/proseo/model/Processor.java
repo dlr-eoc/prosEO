@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Index;
@@ -66,7 +67,7 @@ public class Processor extends PersistentObject {
 	private Boolean sensingTimeFlag = true;
 	
 	/** List of tasks for this processor */
-	@OneToMany(mappedBy = "processor")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "processor")
 	private List<Task> tasks = new ArrayList<>();
 
 	/** The name of the docker image (without registry address, to be configured externally!) */

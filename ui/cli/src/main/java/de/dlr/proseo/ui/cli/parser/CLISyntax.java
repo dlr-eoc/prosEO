@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -32,12 +34,6 @@ import org.yaml.snakeyaml.error.YAMLException;
  */
 public class CLISyntax {
 
-	/* Message ID constants */
-	private static final int MSG_ID_SYNTAX_LOADED = 2900;
-
-	/* Message string constants */
-	private static final String MSG_SYNTAX_LOADED = "(I%d) Command line syntax loaded from syntax file %s";
-	
 	/** CLI syntax file title */
 	private String title;
 	/** CLI syntax version */
@@ -282,7 +278,7 @@ public class CLISyntax {
 	    // TODO
 	    
 	    // Return parsed syntax object
-	    logger.info(String.format(MSG_SYNTAX_LOADED, MSG_ID_SYNTAX_LOADED, syntaxFileName));
+	    logger.info(uiMsg(MSG_ID_SYNTAX_LOADED, syntaxFileName));
 		if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
 		
 		return inputSyntax;

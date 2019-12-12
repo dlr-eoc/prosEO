@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.backend;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,26 +23,7 @@ import org.springframework.web.client.RestClientException;
 @Component
 public class UserManager {
 
-	/* Message ID constants */
-	private static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
-	private static final int MSG_ID_LOGGED_IN = 2823;
-	private static final int MSG_ID_LOGIN_FAILED = 2824;
-	private static final int MSG_ID_LOGGED_OUT = 2825;
-	private static final int MSG_ID_LOGIN_CANCELLED = 2826;
-	private static final int MSG_ID_MISSION_NOT_FOUND = 2827;
-	private static final int MSG_ID_NOT_AUTHORIZED = 2828;
-
-	/* Message string constants */
-	private static final String MSG_HTTP_CONNECTION_FAILURE = "(E%d) HTTP connection failure (cause: %s)";
-	private static final String MSG_MISSION_NOT_FOUND = "(E%d) Mission %s not found";
-	private static final String MSG_LOGIN_FAILED = "(E%d) Login for user %s failed";
-	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized for mission %s";
-
-	private static final String MSG_LOGGED_IN = "(I%d) User %s logged in";
-	private static final String MSG_LOGGED_OUT = "(I%d) User %s logged out";
-	private static final String MSG_LOGIN_CANCELLED = "(I%d) No username given, login cancelled";
-
-	/* Other string constants */
+	/* General string constants */
 	private static final String PROSEO_USERNAME_PROMPT = "Username: ";
 	private static final String PROSEO_PASSWORD_PROMPT = "Password for user %s: ";
 	
@@ -79,17 +62,17 @@ public class UserManager {
 		try {
 			backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), "/processorclasses?mission=" + mission, Object.class, username, password);
 		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission);
+			String message = uiMsg(MSG_ID_MISSION_NOT_FOUND, mission);
 			logger.error(message);
 			System.err.println(message);
 			return false;
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, username, mission);
+			String message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
 			logger.error(message);
 			System.err.println(message);
 			return false;
 		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_CONNECTION_FAILURE, MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage());
+			String message = uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage());
 			logger.error(message, e);
 			System.err.println(message);
 			return false;
@@ -115,7 +98,7 @@ public class UserManager {
 			username = new String(System.console().readLine());
 		}
 		if (null == username || "".equals(username)) {
-			System.err.println(String.format(MSG_LOGIN_CANCELLED, MSG_ID_LOGIN_CANCELLED));
+			System.err.println(uiMsg(MSG_ID_LOGIN_CANCELLED));
 		}
 		
 		// Ask for password, if not set
@@ -131,14 +114,14 @@ public class UserManager {
 			this.password.set(password);
 			this.mission.set(mission);
 			// Report success
-			String message = String.format(MSG_LOGGED_IN, MSG_ID_LOGGED_IN, username);
+			String message = uiMsg(MSG_ID_LOGGED_IN, username);
 			logger.info(message);
 			System.out.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return true;
 		} else {
 			// Report failure
-			String message = String.format(MSG_LOGIN_FAILED, MSG_ID_LOGIN_FAILED, username);
+			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
 			logger.error(message);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
@@ -159,7 +142,7 @@ public class UserManager {
 		password.remove();
 		mission.remove();
 		
-		String message = String.format(MSG_LOGGED_OUT, MSG_ID_LOGGED_OUT, oldUser);
+		String message = uiMsg(MSG_ID_LOGGED_OUT, oldUser);
 		logger.info(message);
 		System.out.println(message);
 		if (logger.isTraceEnabled()) logger.trace("<<< doLogout()");

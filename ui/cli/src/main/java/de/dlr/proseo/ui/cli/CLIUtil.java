@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.cli;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -30,22 +32,6 @@ import java.util.List;
  */
 public class CLIUtil {
 
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_FILE_TYPE = 2990;
-	private static final int MSG_ID_INVALID_FILE_STRUCTURE = 2991;
-	private static final int MSG_ID_INVALID_FILE_SYNTAX = 2992;
-	private static final int MSG_ID_INVALID_ATTRIBUTE_NAME = 2993;
-	private static final int MSG_ID_INVALID_ATTRIBUTE_TYPE = 2994;
-	private static final int MSG_ID_REFLECTION_EXCEPTION = 2995;
-	
-	/* Message string constants */
-	private static final String MSG_INVALID_FILE_TYPE = "(E%d) Invalid order file type %s";
-	private static final String MSG_INVALID_FILE_STRUCTURE = "(E%d) %s content of order file %s invalid for order generation (cause: %s)";
-	private static final String MSG_INVALID_FILE_SYNTAX = "(E%d) Order file %s contains invalid %s content (cause: %s)";
-	private static final String MSG_INVALID_ATTRIBUTE_NAME = "(E%d) Invalid attribute name %s";
-	private static final String MSG_INVALID_ATTRIBUTE_TYPE = "(E%d) Attribute %s cannot be converted to type %s";
-	private static final String MSG_REFLECTION_EXCEPTION = "(E%d) Reflection exception setting attribute %s (cause: %s)";
-	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
 	
@@ -76,7 +62,7 @@ public class CLIUtil {
 			mapper = new ObjectMapper(new YAMLFactory());
 			break;
 		default:
-			String message = String.format(MSG_INVALID_FILE_TYPE, MSG_ID_INVALID_FILE_TYPE, fileFormat);
+			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
@@ -84,13 +70,11 @@ public class CLIUtil {
 		try {
 			return mapper.readValue(objectFile, clazz);
 		} catch (JsonParseException e) {
-			String message = String.format(MSG_INVALID_FILE_SYNTAX, MSG_ID_INVALID_FILE_SYNTAX,
-					objectFile.toString(), fileFormat, e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_FILE_SYNTAX, objectFile.toString(), fileFormat, e.getMessage());
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (JsonMappingException e) {
-			String message = String.format(MSG_INVALID_FILE_STRUCTURE, MSG_ID_INVALID_FILE_STRUCTURE,
-					fileFormat, objectFile.toString(), e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_FILE_STRUCTURE, fileFormat, objectFile.toString(), e.getMessage());
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
@@ -116,7 +100,7 @@ public class CLIUtil {
 		try {
 			attributeField = restObject.getClass().getDeclaredField(paramParts[0]);
 		} catch (Exception e) {
-			String message = (String.format(MSG_INVALID_ATTRIBUTE_NAME, MSG_ID_INVALID_ATTRIBUTE_NAME, paramParts[0]));
+			String message = (uiMsg(MSG_ID_INVALID_ATTRIBUTE_NAME, paramParts[0]));
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
@@ -139,14 +123,12 @@ public class CLIUtil {
 				attributeField.set(restObject, paramParts[1]);
 			} else {
 				// Attribute type not supported
-				String message = String.format(MSG_INVALID_ATTRIBUTE_TYPE, MSG_ID_INVALID_ATTRIBUTE_TYPE,
-						paramParts[0], attributeField.getType().toString());
+				String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
 				logger.error(message);
 				throw new ClassCastException(message);
 			}
 		} catch (Exception e) {
-			String message = String.format(MSG_REFLECTION_EXCEPTION, MSG_ID_REFLECTION_EXCEPTION,
-					paramParts[0], e.getMessage());
+			String message = uiMsg(MSG_ID_REFLECTION_EXCEPTION, paramParts[0], e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		}
