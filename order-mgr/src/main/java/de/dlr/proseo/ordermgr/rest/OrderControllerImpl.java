@@ -76,7 +76,6 @@ public class OrderControllerImpl implements OrderController {
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public ResponseEntity<RestOrder> createOrder(RestOrder order) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
