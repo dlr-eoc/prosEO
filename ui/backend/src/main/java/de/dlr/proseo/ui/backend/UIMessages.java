@@ -23,68 +23,39 @@ public class UIMessages {
 
 	/* Message IDs (publicly accessible) */
 	// General
-	public static final int MSG_ID_INVALID_COMMAND_NAME = 2930;
-	public static final int MSG_ID_SUBCOMMAND_MISSING = 2931;
-	public static final int MSG_ID_USER_NOT_LOGGED_IN = 2932;
-	public static final int MSG_ID_NOT_AUTHORIZED = 2933;
-	public static final int MSG_ID_OPERATION_CANCELLED = 2934;
-	public static final int MSG_ID_INVALID_TIME = 2945;
+	public static final int MSG_ID_INVALID_COMMAND_NAME = 2800;
+	public static final int MSG_ID_SUBCOMMAND_MISSING = 2801;
+	public static final int MSG_ID_USER_NOT_LOGGED_IN = 2802;
+	public static final int MSG_ID_NOT_AUTHORIZED = 2803;
+	public static final int MSG_ID_OPERATION_CANCELLED = 2804;
+	public static final int MSG_ID_INVALID_TIME = 2805;
+	public static final int MSG_ID_EXCEPTION = 2806;
 	public static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
-	// Order CLI
-	public static final int MSG_ID_NO_ORDERS_FOUND = 2935;
-	public static final int MSG_ID_INVALID_SLICING_TYPE = 2936;
-	public static final int MSG_ID_INVALID_SLICE_DURATION = 2937;
-	public static final int MSG_ID_INVALID_ORBIT_NUMBER = 2938;
-	public static final int MSG_ID_ORDER_CREATED = 2939;
-	public static final int MSG_ID_ORDER_NOT_FOUND = 2940;
-	public static final int MSG_ID_NO_IDENTIFIER_GIVEN = 2941;
-	public static final int MSG_ID_INVALID_ORDER_STATE = 2942;
-	public static final int MSG_ID_ORDER_UPDATED = 2943;
-	public static final int MSG_ID_ORDER_DELETED = 2944;
-	public static final int MSG_ID_ORDER_DATA_INVALID = 2946;
-
-	// Ingestor/product CLI
-	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
-	public static final int MSG_ID_PRODUCT_CREATED = 2951;
-	public static final int MSG_ID_INVALID_DATABASE_ID = 2952;
-	public static final int MSG_ID_NO_PRODUCT_DBID_GIVEN = 2953;
-	public static final int MSG_ID_PRODUCT_NOT_FOUND = 2954;
-	public static final int MSG_ID_PRODUCT_UPDATED = 2955;
-	public static final int MSG_ID_PRODUCT_DELETED = 2956;
-	public static final int MSG_ID_INGESTION_FILE_MISSING = 2957;
-	public static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2958;
-	public static final int MSG_ID_PRODUCTS_INGESTED = 2959;
-	public static final int MSG_ID_PRODUCT_DATA_INVALID = 2960;
+	// Service connection
+	public static final int MSG_ID_HTTP_REQUEST_FAILED = 2810;
+	public static final int MSG_ID_SERVICE_REQUEST_FAILED = 2811;
+	public static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 2812;
+	public static final int MSG_ID_SERIALIZATION_FAILED = 2813;
+	public static final int MSG_ID_INVALID_URL = 2814;
+	public static final int MSG_ID_UNEXPECTED_STATUS = 2815;
 	
-	// Processor CLI
-	public static final int MSG_ID_NO_PROCESSORCLASSES_FOUND = 2980;
-	public static final int MSG_ID_PROCESSORCLASS_CREATED = 2981;
-	public static final int MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN = 2983;
-	public static final int MSG_ID_PROCESSORCLASS_NOT_FOUND = 2984;
-	public static final int MSG_ID_PROCESSORCLASS_UPDATED = 2985;
-	public static final int MSG_ID_PROCESSORCLASS_DELETED = 2986;
-	public static final int MSG_ID_INVALID_CRITICALITY_LEVEL = 2987;
-	public static final int MSG_ID_PROCESSOR_CREATED = 2988;
-	public static final int MSG_ID_NO_PROCESSORS_FOUND = 2989;
-	public static final int MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN = 2970;
-	public static final int MSG_ID_PROCESSOR_NOT_FOUND = 2971;
-	public static final int MSG_ID_PROCESSOR_NOT_FOUND_BY_ID = 2972;
-	public static final int MSG_ID_PROCESSOR_UPDATED = 2973;
-	public static final int MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID = 2974;
-	public static final int MSG_ID_PROCESSOR_DELETED = 2975;
-	public static final int MSG_ID_PROCESSORCLASS_DATA_INVALID = 2976;
-	public static final int MSG_ID_PROCESSOR_DATA_INVALID = 2977;
-	public static final int MSG_ID_PROCESSOR_DELETE_FAILED = 2978;
-	public static final int MSG_ID_EXCEPTION = 2979;
-
+	// User Manager
+	public static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
+	public static final int MSG_ID_LOGGED_IN = 2821;
+	public static final int MSG_ID_LOGIN_FAILED = 2822;
+	public static final int MSG_ID_LOGGED_OUT = 2823;
+	public static final int MSG_ID_LOGIN_CANCELLED = 2824;
+	public static final int MSG_ID_MISSION_NOT_FOUND = 2825;
+	public static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 2826;
+	
 	// CLIUtil
-	public static final int MSG_ID_INVALID_FILE_TYPE = 2990;
-	public static final int MSG_ID_INVALID_FILE_STRUCTURE = 2991;
-	public static final int MSG_ID_INVALID_FILE_SYNTAX = 2992;
-	public static final int MSG_ID_INVALID_ATTRIBUTE_NAME = 2993;
-	public static final int MSG_ID_INVALID_ATTRIBUTE_TYPE = 2994;
-	public static final int MSG_ID_REFLECTION_EXCEPTION = 2995;
+	public static final int MSG_ID_INVALID_FILE_TYPE = 2830;
+	public static final int MSG_ID_INVALID_FILE_STRUCTURE = 2831;
+	public static final int MSG_ID_INVALID_FILE_SYNTAX = 2832;
+	public static final int MSG_ID_INVALID_ATTRIBUTE_NAME = 2833;
+	public static final int MSG_ID_INVALID_ATTRIBUTE_TYPE = 2834;
+	public static final int MSG_ID_REFLECTION_EXCEPTION = 2835;
 
 	// CLI Parser
 	public static final int MSG_ID_SYNTAX_LOADED = 2900;
@@ -106,23 +77,53 @@ public class UIMessages {
 	public static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
 	public static final int MSG_ID_COMMAND_NAME_NULL = 2923;
 	
-	// Service connection
-	public static final int MSG_ID_HTTP_REQUEST_FAILED = 2804;
-	public static final int MSG_ID_SERVICE_REQUEST_FAILED = 2805;
-	public static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 2806;
-	public static final int MSG_ID_SERIALIZATION_FAILED = 2807;
-	public static final int MSG_ID_INVALID_URL = 2808;
-	public static final int MSG_ID_UNEXPECTED_STATUS = 2809;
+	// Order CLI
+	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
+	public static final int MSG_ID_INVALID_SLICING_TYPE = 2931;
+	public static final int MSG_ID_INVALID_SLICE_DURATION = 2932;
+	public static final int MSG_ID_INVALID_ORBIT_NUMBER = 2933;
+	public static final int MSG_ID_ORDER_CREATED = 2934;
+	public static final int MSG_ID_ORDER_NOT_FOUND = 2935;
+	public static final int MSG_ID_NO_IDENTIFIER_GIVEN = 2936;
+	public static final int MSG_ID_INVALID_ORDER_STATE = 2937;
+	public static final int MSG_ID_ORDER_UPDATED = 2938;
+	public static final int MSG_ID_ORDER_DELETED = 2939;
+	public static final int MSG_ID_ORDER_DATA_INVALID = 2940;
+
+	// Ingestor/product CLI
+	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
+	public static final int MSG_ID_PRODUCT_CREATED = 2951;
+	public static final int MSG_ID_INVALID_DATABASE_ID = 2952;
+	public static final int MSG_ID_NO_PRODUCT_DBID_GIVEN = 2953;
+	public static final int MSG_ID_PRODUCT_NOT_FOUND = 2954;
+	public static final int MSG_ID_PRODUCT_UPDATED = 2955;
+	public static final int MSG_ID_PRODUCT_DELETED = 2956;
+	public static final int MSG_ID_INGESTION_FILE_MISSING = 2957;
+	public static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2958;
+	public static final int MSG_ID_PRODUCTS_INGESTED = 2959;
+	public static final int MSG_ID_PRODUCT_DATA_INVALID = 2960;
 	
-	// User Manager
-	public static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
-	public static final int MSG_ID_LOGGED_IN = 2823;
-	public static final int MSG_ID_LOGIN_FAILED = 2824;
-	public static final int MSG_ID_LOGGED_OUT = 2825;
-	public static final int MSG_ID_LOGIN_CANCELLED = 2826;
-	public static final int MSG_ID_MISSION_NOT_FOUND = 2827;
-	public static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 2828;
-	
+	// Processor CLI
+	public static final int MSG_ID_NO_PROCESSORCLASSES_FOUND = 2970;
+	public static final int MSG_ID_PROCESSORCLASS_CREATED = 2971;
+	public static final int MSG_ID_NO_PROCCLASS_IDENTIFIER_GIVEN = 2973;
+	public static final int MSG_ID_PROCESSORCLASS_NOT_FOUND = 2974;
+	public static final int MSG_ID_PROCESSORCLASS_UPDATED = 2975;
+	public static final int MSG_ID_PROCESSORCLASS_DELETED = 2976;
+	public static final int MSG_ID_INVALID_CRITICALITY_LEVEL = 2977;
+	public static final int MSG_ID_PROCESSOR_CREATED = 2978;
+	public static final int MSG_ID_NO_PROCESSORS_FOUND = 2979;
+	public static final int MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN = 2980;
+	public static final int MSG_ID_PROCESSOR_NOT_FOUND = 2981;
+	public static final int MSG_ID_PROCESSOR_NOT_FOUND_BY_ID = 2982;
+	public static final int MSG_ID_PROCESSOR_UPDATED = 2983;
+	public static final int MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID = 2984;
+	public static final int MSG_ID_PROCESSOR_DELETED = 2985;
+	public static final int MSG_ID_PROCESSORCLASS_DATA_INVALID = 2986;
+	public static final int MSG_ID_PROCESSOR_DATA_INVALID = 2987;
+	public static final int MSG_ID_PROCESSOR_DELETE_FAILED = 2988;
+	public static final int MSG_ID_PROCESSORCLASS_DELETE_FAILED = 2989;
+
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
 	
@@ -177,6 +178,7 @@ public class UIMessages {
 		MSG_PROCESSORCLASS_NOT_FOUND ("(E%d) Processor class %s not found", MSG_ID_PROCESSORCLASS_NOT_FOUND),
 		MSG_PROCESSORCLASS_NOT_FOUND_BY_ID ("(E%d) Processor class with database ID %d not found", MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID),
 		MSG_PROCESSORCLASS_DATA_INVALID ("(E%d) Processor class data invalid (cause: %s)", MSG_ID_PROCESSORCLASS_DATA_INVALID),
+		MSG_PROCESSORCLASS_DELETE_FAILED ("(E%d) Deletion of processor class %s failed (cause: %s)", MSG_ID_PROCESSORCLASS_DELETE_FAILED),
 		MSG_INVALID_CRITICALITY_LEVEL ("(E%d) Invalid criticality level %s (expected integer > 1)", MSG_ID_INVALID_CRITICALITY_LEVEL),
 		MSG_NO_PROCESSORS_FOUND ("(E%d) No processors found for given search criteria", MSG_ID_NO_PROCESSORS_FOUND),
 		MSG_NO_PROCESSOR_IDENTIFIER_GIVEN ("(E%d) No processor name and/or version given", MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN),

@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientResponseException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.Orbit;
@@ -109,7 +111,7 @@ public class IngestorCommandRunner {
 			try {
 				restProduct = CLIUtil.parseObjectFile(productFile, productFileFormat, RestProduct.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -125,7 +127,7 @@ public class IngestorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProduct, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -213,17 +215,22 @@ public class IngestorCommandRunner {
 		try {
 			restProduct = serviceConnection.postToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS, 
 					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.BadRequest e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission()));
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 
@@ -261,18 +268,22 @@ public class IngestorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
 					requestURI, List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -320,7 +331,7 @@ public class IngestorCommandRunner {
 			try {
 				updatedProduct = CLIUtil.parseObjectFile(productFile, productFileFormat, RestProduct.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -341,7 +352,7 @@ public class IngestorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProduct, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -358,22 +369,22 @@ public class IngestorCommandRunner {
 			restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
 					URI_PATH_PRODUCTS + "/" + updatedProduct.getId(),
 					RestProduct.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.BadRequest e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 
@@ -414,18 +425,25 @@ public class IngestorCommandRunner {
 		try {
 			restProduct = serviceConnection.patchToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + restProduct.getId(),
 					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -462,18 +480,22 @@ public class IngestorCommandRunner {
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + productIdString, 
 					userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission()));
-			return;
 		} catch (Exception e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -531,13 +553,19 @@ public class IngestorCommandRunner {
 			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
 					URI_PATH_INGESTOR + "/" + processingFacility,
 					productsToIngest, List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PRODUCTS, userManager.getMission()));
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		

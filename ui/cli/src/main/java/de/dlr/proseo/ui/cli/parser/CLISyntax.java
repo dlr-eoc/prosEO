@@ -294,14 +294,14 @@ public class CLISyntax {
 		out.println("Options for the 'proseo' command:");
 		for (CLIOption option: options) {
 			out.println(String.format("    %s --%-10s  %s", 
-					(null == option.getShortForm() ? "" : "-" + option.getShortForm() + ","), 
+					(null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","), 
 					option.getName(), 
 					option.getDescription().replace('\n', ' ')));
 		}
 		out.println("Options for all commands:");
 		for (CLIOption option: globalOptions) {
 			out.println(String.format("    %s --%-10s  %s", 
-					(null == option.getShortForm() ? "" : "-" + option.getShortForm() + ","), 
+					(null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","), 
 					option.getName(), 
 					option.getDescription().replace('\n', ' ')));
 		}

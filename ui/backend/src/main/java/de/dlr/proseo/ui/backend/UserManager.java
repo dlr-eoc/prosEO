@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Management of user login and logout (thread safe)
@@ -61,20 +62,23 @@ public class UserManager {
 		// Attempt connection to Processor Manager (as a substitute)
 		try {
 			backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), "/processorclasses?mission=" + mission, Object.class, username, password);
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_MISSION_NOT_FOUND, mission);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, mission);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return false;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
-			logger.error(message);
-			System.err.println(message);
-			return false;
-		} catch (RestClientException e) {
-			String message = uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage());
-			logger.error(message, e);
-			System.err.println(message);
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage()));
 			return false;
 		}
 		

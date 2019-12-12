@@ -67,7 +67,10 @@ public class ProcessorCommandRunner {
 	private static final String URI_PATH_CONFIGURATIONS = "/configurations";
 	private static final String URI_PATH_CONFIGUREDPROCESSORS = "/configuredprocessors";
 	
+	private static final String PROCESSORCLASSES = "processor classes";
 	private static final String PROCESSORS = "processors";
+	private static final String CONFIGURATIONS = "configurations";
+	private static final String CONFIGUREDPROCESSORS = "configured processors";
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
@@ -117,7 +120,7 @@ public class ProcessorCommandRunner {
 			try {
 				restProcessorClass = CLIUtil.parseObjectFile(processorClassFile, processorClassFileFormat, RestProcessorClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -133,7 +136,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProcessorClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -165,25 +168,31 @@ public class ProcessorCommandRunner {
 			restProcessorClass.setProductClasses(Arrays.asList(response.split(",")));
 		}
 		
-		/* Create product */
+		/* Create processor class */
 		try {
 			restProcessorClass = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_PROCESSORCLASSES, 
 					restProcessorClass, RestProcessorClass.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.BadRequest e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID,  e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission()));
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 
-		/* Report success, giving newly assigned product ID and UUID */
+		/* Report success, giving newly assigned processor class ID */
 		String message = uiMsg(MSG_ID_PROCESSORCLASS_CREATED,
 				restProcessorClass.getProcessorName(), restProcessorClass.getId());
 		logger.info(message);
@@ -211,18 +220,23 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					requestURI, List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -266,7 +280,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedProcessorClass = CLIUtil.parseObjectFile(processorClassFile, processorClassFileFormat, RestProcessorClass.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -282,7 +296,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProcessorClass, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -299,22 +313,23 @@ public class ProcessorCommandRunner {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "?mission=" + userManager.getMission() + "&processorName=" + updatedProcessorClass.getProcessorName(),
 					List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.BadRequest e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID,  e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
@@ -337,18 +352,26 @@ public class ProcessorCommandRunner {
 			restProcessorClass = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "/" + restProcessorClass.getId(),
 					restProcessorClass, RestProcessorClass.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -380,18 +403,23 @@ public class ProcessorCommandRunner {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
 					URI_PATH_PROCESSORCLASSES + "?mission=" + userManager.getMission() + "&processorName=" + processorName, 
 					List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (Exception e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
@@ -408,18 +436,26 @@ public class ProcessorCommandRunner {
 			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "/" + restProcessorClass.getId(), 
 					userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DELETE_FAILED, processorName, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (Exception e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -460,7 +496,7 @@ public class ProcessorCommandRunner {
 			try {
 				restProcessor = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -479,7 +515,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(restProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -562,25 +598,30 @@ public class ProcessorCommandRunner {
 			restProcessor.setDockerImage(response);
 		}
 		
-		/* Create product */
+		/* Create processor */
 		try {
 			restProcessor = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_PROCESSORS, 
 					restProcessor, RestProcessor.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.BadRequest e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 
-		/* Report success, giving newly assigned product ID and UUID */
+		/* Report success, giving newly assigned processor ID and version */
 		String message = uiMsg(MSG_ID_PROCESSOR_CREATED,
 				restProcessor.getProcessorName(), restProcessor.getProcessorVersion(), restProcessor.getId());
 		logger.info(message);
@@ -614,18 +655,23 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					requestURI, List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = uiMsg(MSG_ID_NO_PROCESSORS_FOUND);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PROCESSORS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -673,7 +719,7 @@ public class ProcessorCommandRunner {
 			try {
 				updatedProcessor = CLIUtil.parseObjectFile(processorFile, processorFileFormat, RestProcessor.class);
 			} catch (IllegalArgumentException | IOException e) {
-				System.err.println(e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 				return;
 			}
 		}
@@ -692,7 +738,7 @@ public class ProcessorCommandRunner {
 				try {
 					CLIUtil.setAttribute(updatedProcessor, param.getValue());
 				} catch (Exception e) {
-					System.err.println(e.getMessage());
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 					return;
 				}
 			}
@@ -712,26 +758,25 @@ public class ProcessorCommandRunner {
 						+ "&processorName=" + updatedProcessor.getProcessorName() + "&processorVersion=" + updatedProcessor.getProcessorVersion(),
 					List.class, userManager.getUser(), userManager.getPassword());
 		} catch (HttpClientErrorException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
-			if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, 
 						updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
-			} else if (HttpStatus.UNAUTHORIZED.equals(e.getStatusCode())) {
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission());
-			} else {
-				message = e.getMessage();
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (RuntimeException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught RuntimeException " + e.getMessage());
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("Got empty result list");
 			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, 
 					updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
 			logger.error(message);
@@ -771,26 +816,25 @@ public class ProcessorCommandRunner {
 			restProcessor = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORS + "/" + restProcessor.getId(),
 					restProcessor, RestProcessor.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException.NotFound e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException.NotFound " + e.getMessage());
-			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
-			logger.error(message);
+		} catch (HttpClientErrorException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return;
-		} catch (HttpClientErrorException.BadRequest e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException.BadRequest " + e.getMessage());
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getMessage()));
-			return;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException.Unauthorized " + e.getMessage());
-			// Already logged
-			System.err.println(uiMsg(MSG_ID_NOT_AUTHORIZED,  userManager.getUser(), PROCESSORS, userManager.getMission()));
-			return;
 		} catch (RuntimeException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught RuntimeException " + e.getMessage());
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		
@@ -825,7 +869,6 @@ public class ProcessorCommandRunner {
 						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
 					List.class, userManager.getUser(), userManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -834,17 +877,13 @@ public class ProcessorCommandRunner {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
 				break;
-			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
-				break;
 			default:
-				message = e.getMessage();
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			// Already logged
-			System.err.println(e.getMessage());
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
 		if (resultList.isEmpty()) {
@@ -862,7 +901,6 @@ public class ProcessorCommandRunner {
 					URI_PATH_PROCESSORS + "/" + restProcessor.getId(), 
 					userManager.getUser(), userManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -875,12 +913,11 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
 				break;
 			default:
-				message = e.getMessage();
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
 			return;
 		} catch (Exception e) {
-			// Already logged
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return;
 		}
