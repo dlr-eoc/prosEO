@@ -15,6 +15,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
@@ -84,7 +85,9 @@ public class processorService {
 	 * @param processorClassProductClass of the new Processor-Class
 	 * @return response from query
 	 */
-	public ResponseSpec post(String mission,  String processorClassName,String[] processorClassProductClass) {
+	public Mono<ClientResponse> post(String mission,  String processorClassName,String[] processorClassProductClass) {
+		
+		logger.trace(">>>>>ResponseSpec POST: {}, {}, {},",mission,processorClassName,processorClassProductClass);
 		String uri ="";
 		Map<String,Object> map = new HashMap<>();
 		if(null != mission  && null != processorClassName  && null != processorClassProductClass) {
@@ -93,6 +96,11 @@ public class processorService {
 		map.put("missionCode", mission);
 		map.put("processorName", processorClassName);
 		map.put("productClasses", processorClassProductClass);
+		logger.trace(">>PRODUCTCLASSES ARRAY: {}", processorClassProductClass);
+		logger.trace(">>PRODUCTCLASSES TO STRING: {}", processorClassProductClass.toString());
+		
+		logger.trace(">>PARAMETERS IN POST: {}, {}, {},", mission, processorClassName,processorClassProductClass);
+		logger.trace(">>>MAP AFTER PARAMETERS: {}", map);
 		}
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
                 HttpClient.create().followRedirect((req, res) -> {
@@ -106,7 +114,7 @@ public class processorService {
 				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer"))
 				.header(Headers.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.accept(MediaType.APPLICATION_JSON)
-				.retrieve();
+				.exchange();
 
 	}
 	
@@ -153,6 +161,33 @@ public class processorService {
 		return webclient.build().delete().uri(uri)
 				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
 		}
+	/**
+	 * 
+	 * @param mission
+	 * @param processorName
+	 * @param processorVersion
+	 * @return responseSpec for processors
+	 */
+	public ResponseSpec get(String mission, String processorName, String processorVersion) {
+		String uri ="http://localhost:8090/castlemock/mock/rest/project/eW2ujU/application/79M2j9/processors" ;	
+		if(null != mission && null != processorName && null != processorVersion) {
+			uri += "?mission=" + mission + "&processorName=" + processorName + "%processorVersion=" + processorVersion;
+		} else if (null != processorName) {
+			uri += "?processorName=" + processorName;
+		} else if (null != mission) { 
+			uri += "?mission=" + mission;
+		} 
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		ResponseSpec responseSpec = webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
+		return responseSpec;
+
+	}
 
 }
 	

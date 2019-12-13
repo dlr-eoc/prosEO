@@ -13,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 public class GUIProcessorClassController {
 	
 	   @RequestMapping(value="/test")
-	   public ProcessorGUIController test() {
-		  ProcessorGUIController response = new ProcessorGUIController();
+	   public ProcessorClassGUIController test() {
+		  ProcessorClassGUIController response = new ProcessorClassGUIController();
 		  return response;
 	   }
 	    
