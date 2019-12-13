@@ -39,9 +39,9 @@ public class Task extends PersistentObject {
 	
 	/**
 	 * Indicates whether a failure of the task results in a failure of the whole processor
-	 * (level 5 "Critical" from Generic IPF Interface Specifications, sec. 4.1.3)
+	 * (level 5 "Critical" from Generic IPF Interface Specifications, sec. 4.1.3; default true)
 	 */
-	private Boolean isCritical;
+	private Boolean isCritical = true;
 	
 	/**
 	 * Used in case of Pools composed by more than one task. If a critical task with a criticality level of "n" fails it will
@@ -51,7 +51,7 @@ public class Task extends PersistentObject {
 	 */
 	private Integer criticalityLevel;
 	
-	/** The number of CPUs used by the task (level 5 "Number_of_CPUs" from Generic IPF Interface Specifications, sec. 4.1.3) */
+	/** The number of CPUs used by the task (level 5 "Number_of_CPUs" from Generic IPF Interface Specifications, sec. 4.1.3; optional) */
 	private Integer numberOfCpus;
 	
 	/**

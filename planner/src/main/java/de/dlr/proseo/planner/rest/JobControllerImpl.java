@@ -14,10 +14,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.JobStepDispatcher;
+import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.JobController;
 import de.dlr.proseo.planner.rest.model.RestJob;
@@ -40,6 +44,12 @@ public class JobControllerImpl implements JobController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+
+    @Autowired
+    private OrderDispatcher orderDispatcher;
+
+    @Autowired
+    private JobStepDispatcher jobStepDispatcher;
     
     /**
      * Get production planner jobs by id
@@ -50,7 +60,7 @@ public class JobControllerImpl implements JobController {
 		// todo remove test start
 
 		if (productionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test");
+	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
 	    	if (aJob != null) {
 	    		productionPlanner.getKubeConfig(null).deleteJob(aJob);
 	    	}
@@ -67,7 +77,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<RestJob> updateJobs(String name) {
+    public ResponseEntity<RestJob> updateJobs(String name, String facility) {
 		// TODO Auto-generated method stub
 		if (name != null) {
 			Optional<ProcessingOrder> orderOpt = null;
@@ -84,10 +94,41 @@ public class JobControllerImpl implements JobController {
 			if (order == null) {
 				order = RepositoryService.getOrderRepository().findByIdentifier(name);
 			}
-			
+			if (order != null) {
+				ProcessingFacility pf = null;
+				if (facility != null) {
+					KubeConfig kc = productionPlanner.getKubeConfig(facility);
+					if (kc != null) {
+						pf = kc.getProcessingFacility();
+					}
+				}
+				if (pf == null) {
+					productionPlanner.getKubeConfig("Lerchenhof").getProcessingFacility();
+				}
+				if (orderDispatcher.publishOrder(order, pf)) {
+					jobStepDispatcher.searchForJobStepsToRun(pf);
+					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' created (%d)", order.getIdentifier(), 2000);
+					logger.error(message);
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(HTTP_HEADER_WARNING, message);
+					return new ResponseEntity<>(responseHeaders, HttpStatus.CREATED);
+				} else {
+					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' not created (%d)", order.getIdentifier(), 2000);
+					logger.error(message);
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(HTTP_HEADER_WARNING, message);
+					return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				}
+			}
+		} else {
+			String message = String.format(MSG_PREFIX + "CREATE order '%s' not found (%d)", name, 2000);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		}
 		
-    	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
+    	String message = String.format(MSG_PREFIX + "CREATE parameter name missing (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
@@ -105,6 +146,34 @@ public class JobControllerImpl implements JobController {
     		return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
     	}
     	String message = String.format(MSG_PREFIX + "DELETE not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	@Override 
+	public ResponseEntity<RestJob> getRestJobByResumeId(String resumeId) {
+		// TODO Auto-generated method stub
+    	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	@Override 
+	public ResponseEntity<RestJob> getRestJobByCancelId(String cancelId){
+		// TODO Auto-generated method stub
+
+    	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	@Override 
+	public ResponseEntity<RestJob> getRestJobBySuspendId(String suspendId) {
+		// TODO Auto-generated method stub
+    	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);

@@ -56,6 +56,7 @@ public class ProcessorManager {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2261;
 	private static final int MSG_ID_PROCESSOR_DELETED = 2262;
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2263;
+	private static final int MSG_ID_DELETE_FAILURE = 2264;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -65,6 +66,7 @@ public class ProcessorManager {
 	private static final String MSG_PROCESSOR_ID_NOT_FOUND = "(E%d) No processor found with ID %d";
 	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
 	private static final String MSG_PROCESSOR_DATA_MISSING = "(E%d) Processor data not set";
+	private static final String MSG_DELETE_FAILURE = "(E%d) Processor deletion failed for ID %d (cause: %s)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor deletion unsuccessful for ID %d";
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
 
@@ -309,7 +311,8 @@ public class ProcessorManager {
 			processorChanged = true;
 			modelProcessor.setDockerImage(changedProcessor.getDockerImage());
 		}
-		if (!modelProcessor.getDockerRunParameters().equals(changedProcessor.getDockerRunParameters())) {
+		if (null == modelProcessor.getDockerRunParameters() && null != changedProcessor.getDockerRunParameters()
+				|| null != modelProcessor.getDockerRunParameters() && !modelProcessor.getDockerRunParameters().equals(changedProcessor.getDockerRunParameters())) {
 			processorChanged = true;
 			modelProcessor.setDockerRunParameters(changedProcessor.getDockerRunParameters());
 		}
@@ -343,11 +346,13 @@ public class ProcessorManager {
 					processorChanged = true;
 					modelTask.setCriticalityLevel(changedTask.getCriticalityLevel());
 				}
-				if (!modelTask.getNumberOfCpus().equals(changedTask.getNumberOfCpus())) {
+				if (null == modelTask.getNumberOfCpus() && null != changedTask.getNumberOfCpus()
+						|| null != modelTask.getNumberOfCpus() && !modelTask.getNumberOfCpus().equals(changedTask.getNumberOfCpus())) {
 					processorChanged = true;
 					modelTask.setNumberOfCpus(changedTask.getNumberOfCpus());
 				}
 				if (!modelTask.getBreakpointFileNames().equals(changedTask.getBreakpointFileNames())) {
+					processorChanged = true;
 					modelTask.setBreakpointFileNames(changedTask.getBreakpointFileNames());
 				}
 			}
@@ -388,7 +393,11 @@ public class ProcessorManager {
 		}
 		
 		// Delete the processor class
-		RepositoryService.getProcessorClassRepository().deleteById(id);
+		try {
+			RepositoryService.getProcessorRepository().deleteById(id);
+		} catch (Exception e) {
+			throw new RuntimeException(logError(MSG_DELETE_FAILURE, MSG_ID_DELETE_FAILURE, id, e.getMessage()));
+		}
 
 		// Test whether the deletion was successful
 		modelProcessor = RepositoryService.getProcessorRepository().findById(id);

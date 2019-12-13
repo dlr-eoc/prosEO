@@ -104,7 +104,7 @@ public class CLICommand {
 		applicableOptions.addAll(CLISyntax.inputSyntax.getGlobalOptions());
 		for (CLIOption option: applicableOptions) {
 			out.println(String.format("    %s --%-10s  %s", 
-					(null == option.getShortForm() ? "" : "-" + option.getShortForm() + ","), 
+					(null == option.getShortForm() ? "   " : "-" + option.getShortForm() + ","), 
 					option.getName(), 
 					option.getDescription().replace('\n', ' ')));
 		}

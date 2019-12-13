@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -49,7 +50,7 @@ public class JobStep extends PersistentObject {
 	private String processingMode;
 	
 	/** Query objects for input products */
-	@OneToMany(mappedBy = "jobStep")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "jobStep")
 	private Set<ProductQuery> inputProductQueries = new HashSet<>();
 	
 	/** The output product of this job step */
@@ -69,11 +70,54 @@ public class JobStep extends PersistentObject {
 	/** The standard error output of the processing job */
 	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String processingStdErr;
-	
+
+	/**
+	 * The log level of stdout
+	 */
+	private StdLogLevel stdoutLogLevel = StdLogLevel.INFO;
+
+	/**
+	 * The log level of stderr
+	 */
+	private StdLogLevel stderrLogLevel = StdLogLevel.INFO;
+
 	/**
 	 * The possible processing states for a job step
 	 */
 	public enum JobStepState { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED }
+
+	/**
+	 * The possible log levels for stdout and stderr
+	 */
+	public enum StdLogLevel { DEBUG, INFO, PROGRESS, WARNING, ERROR }
+
+	/**
+	 * @return the stdoutLogLevel
+	 */
+	public StdLogLevel getStdoutLogLevel() {
+		return stdoutLogLevel;
+	}
+
+	/**
+	 * @return the stderrLogLevel
+	 */
+	public StdLogLevel getStderrLogLevel() {
+		return stderrLogLevel;
+	}
+
+	/**
+	 * @param stdoutLogLevel the stdoutLogLevel to set
+	 */
+	public void setStdoutLogLevel(StdLogLevel stdoutLogLevel) {
+		this.stdoutLogLevel = stdoutLogLevel;
+	}
+
+	/**
+	 * @param stderrLogLevel the stderrLogLevel to set
+	 */
+	public void setStderrLogLevel(StdLogLevel stderrLogLevel) {
+		this.stderrLogLevel = stderrLogLevel;
+	}
 
 	/**
 	 * Gets the enclosing job

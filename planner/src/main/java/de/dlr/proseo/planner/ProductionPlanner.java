@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -120,7 +121,7 @@ public class ProductionPlanner implements CommandLineRunner {
 				}
 			}
 			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf.getName(), pf.getDescription(), pf.getProcessingEngineUrl(), pf.getStorageManagerUrl());
+				kubeConfig = new KubeConfig(pf);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
@@ -157,6 +158,7 @@ public class ProductionPlanner implements CommandLineRunner {
       
 		InetAddress ip;
 		String hostname;
+		TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 		config = plannerConfig;
 		try {
 			ip = InetAddress.getLocalHost();

@@ -79,7 +79,7 @@ public class Product extends PersistentObject {
 	private Instant generationTime;
 	
 	/** Set of component products */
-	@OneToMany(mappedBy = "enclosingProduct")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "enclosingProduct")
 	private Set<Product> componentProducts = new HashSet<>();
 	
 	/** Product for which this product is a component */

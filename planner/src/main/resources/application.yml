@@ -16,13 +16,17 @@ logging:
                 proseo: TRACE
 proseo:
     productionPlanner:
-        url: http://192.168.20.155:8080/proseo/planner
+        url: http://lerchenhof.dyndns.org:8080/proseo/planner
         user: none
         password: none
         cyclewaittime: 1000
         maxcycles: 50
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        user: none
+        password: none
+    ingestor:
+        url: http://lerchenhof.dyndns.org:8081/storage-mgr
         user: none
         password: none
     global:
@@ -36,12 +40,14 @@ proseo:
       s3SecretAccessKey: short_secret_key
       s3EndPoint: http://minio:9000
       s3Region: eu-de
+      s3DefaultBucket: proseo-data-001
       s3MaxNumberOfBuckets: 50
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsS3BucketEndPoint: http://minio:9000
       alluxioUnderFsMaxPrefixes: 500
+      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
     joborder:
       bucket: internal
       prefix: joborders

@@ -18,18 +18,22 @@
       processorVersion:
         type: string
         description: Version identification of the processor executable (Docker image)
-      isTest:
+      isTest?:
         type: boolean
-        description: Indicates a test version of the processor
-      minDiskSpace:
+        default: false
+        description: Indicates a test version of the processor (default false)
+      minDiskSpace?:
         type: integer
-        description: Minimum disk space in MB, worst case estimate plus safety margin
-      maxTime:
+        default: 1024
+        description: Minimum disk space in MB, worst case estimate plus safety margin (default 1024)
+      maxTime?:
         type: integer
-        description: Execution time limit in seconds
-      sensingTimeFlag:
+        default: 0
+        description: Execution time limit in seconds (default 0 means unlimited)
+      sensingTimeFlag?:
         type: boolean
-        description: Indicates whether the processor uses a sensing time interval as main processing parameter
+        default: true
+        description: Indicates whether the processor uses a sensing time interval as main processing parameter (default true)
       configuredProcessors:
         type: string[]
         description: The names for the processor configurations this processor version is valid for

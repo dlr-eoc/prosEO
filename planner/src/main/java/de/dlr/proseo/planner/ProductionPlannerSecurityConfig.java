@@ -1,9 +1,9 @@
 /**
- * ProcessorManagerSecurityConfig.java
+ * ProductionPlannerSecurityConfig.java
  * 
  * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
-package de.dlr.proseo.procmgr;
+package de.dlr.proseo.planner;
 
 import javax.sql.DataSource;
 
@@ -26,13 +26,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 @Configuration
 @EnableWebSecurity
-public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter {
+public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProcessorManagerSecurityConfig.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductionPlannerSecurityConfig.class);
 	
 	/**
-	 * Set the Processor Manager security options
+	 * Set the Ingestor security options
 	 * 
 	 * @param http the HTTP security object
 	 */
@@ -42,16 +42,17 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/processingfacilities/*/finish/*").permitAll()
 				.anyRequest().authenticated()
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
 
 	/**
-	 * Initialize the users, passwords and roles for the Processor Manager from the prosEO database
+	 * Initialize the users, passwords and roles for the ProductClassManager from the prosEO database
 	 * 
 	 * @param builder to manage authentications
-	 * @param dataSource the data source configured for the Processor Manager
+	 * @param dataSource the data source configured for the ProductClassManager
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
 	@Autowired

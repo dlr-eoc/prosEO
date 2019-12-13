@@ -119,7 +119,7 @@ public class OrderUtilTest {
 		assertEquals("Unexpected ID: ", modelOrder.getId(), restOrder.getId().longValue());
 		assertEquals("Unexpected Mission code: ", modelOrder.getMission().getCode(), restOrder.getMissionCode());
 		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), restOrder.getIdentifier());
-//		assertEquals("Unexpected order state: ", modelOrder.getOrderState(), restOrder.getOrderState());
+		assertEquals("Unexpected order state: ", modelOrder.getOrderState().toString(), restOrder.getOrderState().toString());
 		logger.info("model execution time: "+modelOrder.getExecutionTime());
 		logger.info("rest execution time: "+restOrder.getExecutionTime().toInstant());
 
@@ -128,6 +128,7 @@ public class OrderUtilTest {
 		assertEquals("Unexpected stop time: ", modelOrder.getStopTime(), restOrder.getStopTime().toInstant());
 
 		assertEquals("Unexpected processing Mode: ", modelOrder.getProcessingMode(), restOrder.getProcessingMode());
+
 //		//Validation for requestedOrbits, requestedProductClasses,requestedConfiguredProcesors,
 //		//filterconditions,inputProductClasses, outputParameters
 

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.JobStep.StdLogLevel;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.ProductionPlannerConfiguration;
@@ -209,6 +212,16 @@ public class KubeJob {
 		
 		
 	}
+	public KubeJob (Long jsId, String jobOrderFN) {
+		
+		jobOrderFileName = jobOrderFN;
+		podNames = new ArrayList<String>();
+
+		jobId = jsId;
+		jobName = ProductionPlanner.jobNamePrefix + jobId;
+		containerName = ProductionPlanner.jobContainerPrefix + jobId;
+		
+	}
 	
 	/**
 	 * Rebuild kube job entries of processing facility after restart of planner
@@ -242,14 +255,27 @@ public class KubeJob {
 	 * @param aKubeConfig The processing facility
 	 * @return The kube job
 	 */
-	public KubeJob createJob(KubeConfig aKubeConfig) {	
+	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) {	
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
 		if (aKubeConfig.isConnected()) {
 			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
 			if (!js.isEmpty()) {
+				JobStep jobStep = js.get();
+				if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
+					jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
+				} else if (jobStep.getStdoutLogLevel() == null) {
+					jobStep.setStdoutLogLevel(StdLogLevel.INFO);
+				}
+				if (stderrLogLevel != null && !stderrLogLevel.isEmpty()) {
+					jobStep.setStderrLogLevel(JobStep.StdLogLevel.valueOf(stderrLogLevel));
+				} else if (jobStep.getStdoutLogLevel() == null) {
+					jobStep.setStderrLogLevel(StdLogLevel.INFO);
+				}
+				Instant genTime = Instant.now();
+				setGenerationTime(jobStep.getOutputProduct(), genTime);
 				JobDispatcher jd = new JobDispatcher();
-				jobOrder = jd.createJobOrder(js.get());
+				jobOrder = jd.createJobOrder(jobStep);
 				if (jobOrder == null) {
 					// todo Exception
 					return null;
@@ -259,108 +285,109 @@ public class KubeJob {
 					// todo Exception
 					return null;
 				}
-			}
-			V1JobSpec jobSpec = new V1JobSpecBuilder()
-				.withNewTemplate()
-				.withNewMetadata()
-				.withName(jobName + "spec")
-				.addToLabels("jobgroup", jobName + "spec")
-				.endMetadata()
-				.withNewSpec()
-				.addNewContainer()
-				.withName(containerName)
-				.withImage(imageName)
-				.withImagePullPolicy("Never")
-//				.withCommand(command)
-//			    .withArgs(jobOrderFileName)
-				.addNewEnv()
-				.withName("JOBORDER_FILE")
-				.withValue(jobOrder.getFileName())
-				.endEnv()
-				.addNewEnv()
-				.withName("JOBORDER_FS_TYPE")
-				.withValue(jobOrder.getFsType())
-				.endEnv()
-				.addNewEnv()
-				.withName("INGESTOR_ENDPOINT")
-				.withValue("")
-				.endEnv()
-				.addNewEnv()
-				.withName("STATE_CALLBACK_ENDPOINT")
-				.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
-				.endEnv()
-				.addNewEnv()
-				.withName("S3_ENDPOINT")
-				.withValue("http://192.168.20.159:9000")
-				.endEnv()
-				.addNewEnv()
-				.withName("S3_ACCESS_KEY")
-				.withValue("short_access_key")
-				.endEnv()
-				.addNewEnv()
-				.withName("S3_SECRET_ACCESS_KEY")
-				.withValue("short_secret_key")
-				.endEnv()
-				.addNewEnv()
-				.withName("S3_STORAGE_ID_OUTPUTS")
-				.withValue("s3test")
-				.endEnv()
-				.addNewEnv()
-				.withName("ALLUXIO_STORAGE_ID_OUTPUTS")
-				.withValue("alluxio1")
-				.endEnv()
-				.addNewEnv()
-				.withName("INGESTOR_ENDPOINT")
-				.withValue("http://192.168.20.159:8082")
-				.endEnv()
-				.addNewEnv()
-				.withName("PROCESSING_FACILITY_NAME")
-				.withValue(kubeConfig.getId())
-				.endEnv()
-				.addNewVolumeMount()
-				.withName("ramdisk")
-				.withMountPath("/mnt/ramdisk")
-				.endVolumeMount()
-				.endContainer()
-				.addNewVolume()
-				.withName("ramdisk")
-				.withNewHostPath()
-				.withPath("/tmp")
-				.endHostPath()
-				.endVolume()
-				.withRestartPolicy("Never")
-				.withHostNetwork(true)
-				.withDnsPolicy("ClusterFirstWithHostNet")
-				.endSpec()
-				.endTemplate()
-				.withBackoffLimit(0)
-				.build();			
-			V1Job job = new V1JobBuilder()
-				.withNewMetadata()
-				.withName(jobName)
-				.addToLabels("jobgroup", jobName + "spec")
-				.endMetadata()
-				.withSpec(jobSpec)
-				.build();
-			try {
-				
+				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
+				V1JobSpec jobSpec = new V1JobSpecBuilder()
+						.withNewTemplate()
+						.withNewMetadata()
+						.withName(jobName + "spec")
+						.addToLabels("jobgroup", jobName + "spec")
+						.endMetadata()
+						.withNewSpec()
+						.addNewContainer()
+						.withName(containerName)
+						.withImage(imageName)
+						.withImagePullPolicy("Never")
+						//				.withCommand(command)
+						//			    .withArgs(jobOrderFileName)
+						.addNewEnv()
+						.withName("JOBORDER_FILE")
+						.withValue(jobOrder.getFileName())
+						.endEnv()
+						.addNewEnv()
+						.withName("JOBORDER_FS_TYPE")
+						.withValue(jobOrder.getFsType())
+						.endEnv()
+						.addNewEnv()
+						.withName("INGESTOR_ENDPOINT")
+						.withValue("")
+						.endEnv()
+						.addNewEnv()
+						.withName("STATE_CALLBACK_ENDPOINT")
+						.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
+						.endEnv()
+						.addNewEnv()
+						.withName("S3_ENDPOINT")
+						.withValue(ProductionPlanner.config.getS3EndPoint())
+						.endEnv()
+						.addNewEnv()
+						.withName("S3_ACCESS_KEY")
+						.withValue(ProductionPlanner.config.getS3AccessKey())
+						.endEnv()
+						.addNewEnv()
+						.withName("S3_SECRET_ACCESS_KEY")
+						.withValue(ProductionPlanner.config.getS3SecretAccessKey())
+						.endEnv()
+						.addNewEnv()
+						.withName("S3_STORAGE_ID_OUTPUTS")
+						.withValue(ProductionPlanner.config.getS3DefaultBucket())
+						.endEnv()
+						.addNewEnv()
+						.withName("ALLUXIO_STORAGE_ID_OUTPUTS")
+						.withValue("alluxio1")
+						.endEnv()
+						.addNewEnv()
+						.withName("INGESTOR_ENDPOINT")
+						.withValue(ProductionPlanner.config.getIngestorUrl())
+						.endEnv()
+						.addNewEnv()
+						.withName("PROCESSING_FACILITY_NAME")
+						.withValue(kubeConfig.getId())
+						.endEnv()
+						.addNewVolumeMount()
+						.withName("ramdisk")
+						.withMountPath("/mnt/ramdisk")
+						.endVolumeMount()
+						.endContainer()
+						.addNewVolume()
+						.withName("ramdisk")
+						.withNewHostPath()
+						.withPath("/tmp")
+						.endHostPath()
+						.endVolume()
+						.withRestartPolicy("Never")
+						.withHostNetwork(true)
+						.withDnsPolicy("ClusterFirstWithHostNet")
+						.endSpec()
+						.endTemplate()
+						.withBackoffLimit(0)
+						.build();			
+				V1Job job = new V1JobBuilder()
+						.withNewMetadata()
+						.withName(jobName)
+						.addToLabels("jobgroup", jobName + "spec")
+						.endMetadata()
+						.withSpec(jobSpec)
+						.build();
+				try {
 
-				if (!js.isEmpty()) {
-					aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
-					searchPod();
 
-					js.get().setJobStepState(JobStepState.READY);	
-					RepositoryService.getJobStepRepository().save(js.get());
-					logger.info("Job " + kubeConfig.getId() + "/" + jobName + " created");
+					if (!js.isEmpty()) {
+						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+						searchPod();
+
+						jobStep.setJobStepState(JobStepState.RUNNING);	
+						RepositoryService.getJobStepRepository().save(jobStep);
+						logger.info("Job " + kubeConfig.getId() + "/" + jobName + " created");
+					}
+				} catch (ApiException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					return null;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
 				}
-			} catch (ApiException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				return null;
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return null;
 			}
 			/*
 			 * try { pod = apiV1.createNamespacedPod(aKubeConfig.getNamespace(), pod, null, null, null); }
@@ -553,5 +580,15 @@ public class KubeJob {
 			logger.info("Job " + kubeConfig.getId() + "/" + aJobName + " finished");
 		}
 		return success;
+	}
+	
+	void setGenerationTime(Product product, Instant genTime) {
+		if (product != null && genTime != null) {
+			product.setGenerationTime(genTime);
+			for (Product p : product.getComponentProducts()) {
+				setGenerationTime(p, genTime);
+			}
+			RepositoryService.getProductRepository().save(product);
+		}
 	}
 }

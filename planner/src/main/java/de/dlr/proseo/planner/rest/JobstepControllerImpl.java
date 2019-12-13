@@ -14,14 +14,21 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
+import de.dlr.proseo.planner.dispatcher.JobStepDispatcher;
+import de.dlr.proseo.planner.rest.model.RestJob;
 import de.dlr.proseo.planner.rest.model.RestJobStep;
 import de.dlr.proseo.planner.rest.model.Status;
+import de.dlr.proseo.planner.rest.model.StderrLogLevel;
+import de.dlr.proseo.planner.rest.model.StdoutLogLevel;
 
 
 
@@ -37,18 +44,22 @@ public class JobstepControllerImpl implements JobstepController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+    @Autowired
+    private JobStepDispatcher jobStepDispatcher;
     
     /**
-     * Get production planner jobsteps by id
+     * Get production planner jobsteps by status
      * 
      */
 	@Override
+	@Transactional
     public ResponseEntity<List<RestJobStep>> getRestJobStepsByStatus(
             @Valid
             Status status) {
 		
 		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
 		Iterable<JobStep> it;
+		jobStepDispatcher.searchForJobStepsToRun(null);
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
 		} else {
@@ -56,14 +67,7 @@ public class JobstepControllerImpl implements JobstepController {
 			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);
 		}
 		for (JobStep js : it) {
-			RestJobStep pjs = new RestJobStep();
-			pjs.setId(Long.valueOf(js.getId()));
-			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
-			if (js.getJobStepState() != null) {
-				pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
-			}
-			pjs.setVersion((long) js.getVersion());
-			pjs.setProcessingMode(js.getProcessingMode());
+			RestJobStep pjs = createAndCopyToRestJobStep(js);
 			list.add(pjs);			
 		}
 		HttpHeaders responseHeaders = new HttpHeaders();
@@ -76,13 +80,9 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
+	@Transactional
     public ResponseEntity<RestJobStep> getRestJobStepByName(String name) {
 		Long id = null;
-		JobStep jst = new JobStep();
-		jst.setProcessingMode("nix"); 
-		RepositoryService.getJobStepRepository().save(jst);
-		JobDispatcher jd = new JobDispatcher();
-		jd.createJobOrder(jst);
 		if (name.matches("[0-9]+")) {
 			id = Long.valueOf(name);
 		} else if (name.startsWith(ProductionPlanner.jobNamePrefix)) {
@@ -92,23 +92,9 @@ public class JobstepControllerImpl implements JobstepController {
 			Optional<JobStep> jso = RepositoryService.getJobStepRepository().findById(id);
 			if (jso.isPresent()) {
 				JobStep js = jso.get();
-				RestJobStep pjs = new RestJobStep();
-				pjs.setId(Long.valueOf(js.getId()));
-				pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
-				if (js.getJobStepState() != null) {
-					pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
-				}
-				pjs.setVersion((long) js.getVersion());
-				pjs.setProcessingMode(js.getProcessingMode());
-				if (js.getProcessingStartTime() != null) { 
-					pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
-				}
-				if (js.getProcessingCompletionTime() != null) { 
-					pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
-				}
-				pjs.setProcessingStdOut(js.getProcessingStdOut());
-				pjs.setProcessingStdErr(js.getProcessingStdErr());
-
+				
+				RestJobStep pjs = createAndCopyToRestJobStep(js);
+				
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
 				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
@@ -157,4 +143,67 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
+
+	private RestJobStep createAndCopyToRestJobStep(JobStep js) {
+		RestJobStep pjs = new RestJobStep();
+		if (js != null) {
+			pjs = new RestJobStep();
+			pjs.setId(Long.valueOf(js.getId()));
+			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
+			if (js.getJobStepState() != null) {
+				pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
+			}
+			pjs.setVersion((long) js.getVersion());
+			pjs.setProcessingMode(js.getProcessingMode());
+			if (js.getProcessingStartTime() != null) { 
+				pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
+			}
+			if (js.getProcessingCompletionTime() != null) { 
+				pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
+			}
+			pjs.setProcessingStdOut(js.getProcessingStdOut());
+			pjs.setProcessingStdErr(js.getProcessingStdErr());
+			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
+			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
+			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
+			pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
+			for (ProductQuery pq : js.getInputProductQueries()) {
+				String pt = pq.getRequestedProductClass().getProductType();
+				if (!pjs.getInputProductClasses().contains(pt)) {
+					pjs.getInputProductClasses().add(pt);
+				}
+			}
+		} 
+		return pjs;
+	}
+	@Override 
+	public ResponseEntity<RestJobStep> getRestJobStepByResumeId(String resumeId) {
+		// TODO Auto-generated method stub
+    	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	@Override 
+	public ResponseEntity<RestJobStep> getRestJobStepByCancelId(String cancelId){
+		// TODO Auto-generated method stub
+
+    	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	@Override 
+	public ResponseEntity<RestJobStep> getRestJobStepBySuspendId(String suspendId) {
+		// TODO Auto-generated method stub
+    	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
 }

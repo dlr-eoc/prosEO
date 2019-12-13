@@ -1,2 +1,3 @@
 /target/
-/proseo-ui-cli.log
+/proseo-ui-cli.log*
+/application.yml

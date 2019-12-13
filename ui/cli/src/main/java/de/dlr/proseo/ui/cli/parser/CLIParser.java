@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -30,27 +32,6 @@ import de.dlr.proseo.ui.cli.CLIConfiguration;
 @Component
 public class CLIParser {
 
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_COMMAND_OPTION = 2910;
-	private static final int MSG_ID_OPTION_NOT_ALLOWED = 2911;
-	private static final int MSG_ID_ILLEGAL_OPTION = 2912;
-	private static final int MSG_ID_ILLEGAL_OPTION_VALUE = 2913;
-	private static final int MSG_ID_TOO_MANY_PARAMETERS = 2914;
-	private static final int MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED = 2915;
-	private static final int MSG_ID_ILLEGAL_COMMAND = 2916;
-	private static final int MSG_ID_PARAMETER_MISSING = 2916;
-	
-	/* Message string constants */
-	private static final String MSG_INVALID_COMMAND_OPTION = "(E%d) Invalid command option %s found";
-	private static final String MSG_OPTION_NOT_ALLOWED = "(E%d) Option %s not allowed after command parameter";
-	private static final String MSG_ILLEGAL_OPTION = "(E%d) Option %s not allowed for command %s";
-	private static final String MSG_ILLEGAL_OPTION_VALUE = "(E%d) Illegal option value %s for option %s of type %s";
-	private static final String MSG_TOO_MANY_PARAMETERS = "(E%d) Too many parameters for command %s";
-	private static final String MSG_ATTRIBUTE_PARAMETER_EXPECTED = "(E%d) Parameter of format '<attribute name>=<attribute value>' expected at position %d for command %s";
-	private static final String MSG_ILLEGAL_COMMAND = "(E%d) Illegal command %s";
-	private static final String MSG_PARAMETER_MISSING = "(E%d) Required parameter %s not found for command %s";
-	private static final String MSG_PREFIX = "199 proseo-ui-cli ";
-	
 	/** The name of the top-level command */
 	public static final String TOP_LEVEL_COMMAND_NAME = "proseo";
 	
@@ -188,7 +169,7 @@ public class CLIParser {
 		
 		// Check for existence of option name
 		if (null == optionLongForm && null == optionShortForm) {
-			throw new ParseException(String.format(MSG_PREFIX + MSG_INVALID_COMMAND_OPTION, MSG_ID_INVALID_COMMAND_OPTION, optionString), 0);
+			throw new ParseException(uiMsg(MSG_ID_INVALID_COMMAND_OPTION, optionString), 0);
 		}
 		
 		// Check whether this option is allowed for the current command
@@ -203,13 +184,13 @@ public class CLIParser {
 			}
 		}
 		if (null == currentSyntaxOption) {
-			throw new ParseException(String.format(MSG_PREFIX + MSG_ILLEGAL_OPTION, MSG_ID_ILLEGAL_OPTION, optionString, syntaxCommand.getName()), 0);
+			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION, optionString, syntaxCommand.getName()), 0);
 		}
 
 		// Check the type conformity of the option value
 		if (!isTypeOK(currentSyntaxOption.getType(), optionValue)) {
-			throw new ParseException(String.format(MSG_PREFIX + MSG_ILLEGAL_OPTION_VALUE, 
-					MSG_ID_ILLEGAL_OPTION_VALUE, optionValue, currentSyntaxOption.getName(), currentSyntaxOption.getType()), 0);
+			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION_VALUE, optionValue,
+					currentSyntaxOption.getName(), currentSyntaxOption.getType()), 0);
 		}
 		
 		// Prepare and return the parsed option
@@ -234,8 +215,8 @@ public class CLIParser {
 	 * 		   number of positional parameters is exhausted
 	 */
 	private ParsedParameter parseParameter(String parameterString, int parameterPosition, CLICommand syntaxCommand) throws ParseException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseParameter({}, {})",
-				parameterString, syntaxCommand.getName());
+		if (logger.isTraceEnabled()) logger.trace(">>> parseParameter({}, {}, {})",
+				parameterString, parameterPosition, syntaxCommand.getName());
 				
 		// Determine the correct parameter in the command syntax
 		CLIParameter syntaxParameter = null;
@@ -246,8 +227,7 @@ public class CLIParser {
 			if (syntaxParameters.get(maxParam).getRepeatable()) {
 				syntaxParameter = syntaxParameters.get(maxParam);
 			} else {
-				throw new ParseException(String.format(MSG_PREFIX + MSG_TOO_MANY_PARAMETERS,
-						MSG_ID_TOO_MANY_PARAMETERS, syntaxCommand.getName()), 0);
+				throw new ParseException(uiMsg(MSG_ID_TOO_MANY_PARAMETERS, syntaxCommand.getName()), 0);
 			}
 		} else {
 			// Use parameter at given position
@@ -255,14 +235,13 @@ public class CLIParser {
 		}
 		
 		// Check, whether parameter value conforms to the expected parameter type
-		if ("attribute".equals(syntaxParameter.getType()) && !parameterString.contains("=")) {
-			throw new ParseException(String.format(MSG_PREFIX + MSG_ATTRIBUTE_PARAMETER_EXPECTED,
-					MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
+		boolean isAttribute = "attribute".equals(syntaxParameter.getName());
+		if (isAttribute && !parameterString.contains("=")) {
+			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}
-		String parameterValue = ("attribute".equals(syntaxParameter.getType()) ? parameterString.split("=")[1] : parameterString );
+		String parameterValue = (isAttribute ? parameterString.split("=")[1] : parameterString );
 		if (!isTypeOK(syntaxParameter.getType(), parameterValue)) {
-			throw new ParseException(String.format(MSG_PREFIX + MSG_ATTRIBUTE_PARAMETER_EXPECTED,
-					MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
+			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}
 		
 		// Prepare and return parsed parameter
@@ -304,7 +283,7 @@ public class CLIParser {
 				// Handle token as option
 				if (parameterFound) {
 					// Option not allowed after parameters
-					throw new ParseException(String.format(MSG_PREFIX + MSG_OPTION_NOT_ALLOWED, MSG_ID_OPTION_NOT_ALLOWED, token), 0);
+					throw new ParseException(uiMsg(MSG_ID_OPTION_NOT_ALLOWED, token), 0);
 				}
 				optionFound = true;
 				currentCommand.getOptions().addAll(parseOption(token, currentSyntaxCommand));
@@ -347,7 +326,10 @@ public class CLIParser {
 					currentCommand.setSyntaxCommand(currentSyntaxCommand);
 				} else if (null == currentSyntaxCommand) {
 					// Illegal command (because no parameters are expected without a command)
-					throw new ParseException(String.format(MSG_PREFIX + MSG_ILLEGAL_COMMAND, MSG_ID_ILLEGAL_COMMAND, token), 0);
+					throw new ParseException(uiMsg(MSG_ID_ILLEGAL_COMMAND, token), 0);
+				} else if (currentSyntaxCommand.getParameters().isEmpty()) {
+					// Illegal command (because no parameters are expected without a command)
+					throw new ParseException(uiMsg(MSG_ID_ILLEGAL_SUBCOMMAND, token), 0);
 				} else {
 					// Handle token as parameter (no more commands or options allowed)
 					optionFound = true;
@@ -370,8 +352,7 @@ public class CLIParser {
 					}
 				}
 				// Required parameter not found
-				throw new ParseException(String.format(MSG_PREFIX + MSG_PARAMETER_MISSING, MSG_ID_PARAMETER_MISSING,
-						syntaxParameter.getName(), currentCommand.getName()), 0);
+				throw new ParseException(uiMsg(MSG_ID_PARAMETER_MISSING, syntaxParameter.getName(), currentCommand.getName()), 0);
 			} 
 		}
 		if (logger.isTraceEnabled()) logger.trace("<<< parse()");

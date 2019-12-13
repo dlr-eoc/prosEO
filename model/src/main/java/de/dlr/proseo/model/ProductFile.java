@@ -27,6 +27,12 @@ import javax.persistence.Table;
 @Entity
 @Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility_id"))
 public class ProductFile extends PersistentObject {
+	
+	// the path separator string
+	// at the moment there is no specialized handling for path strings
+	// todo: is it guaranteed that all components are working at the same manor?
+	
+	private static String pathSeparator = "/";
 
 	/** The product this data file belongs to */
 	@ManyToOne
@@ -151,6 +157,20 @@ public class ProductFile extends PersistentObject {
 		this.storageType = storageType;
 	}
 
+	/**
+	 * @return generated file name path
+	 */
+	public String getProductFilePathName() {
+		String pn = "";
+		if (filePath != null && !filePath.isBlank()) {
+			pn += filePath + pathSeparator;
+		}
+		if (productFileName != null && !filePath.isBlank()) {
+			pn += productFileName;
+		}
+		return pn;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

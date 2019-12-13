@@ -76,6 +76,7 @@ public class ProductControllerTest {
 	private static final String TEST_MISSION_TYPE = "L1B_______";
 	private static final String TEST_FILE_CLASS = "OPER";
 	private static final String TEST_MODE = "NRTI";
+	private static final String TEST_MODE_2 = "OFFL";
 	private static final String TEST_ALT_CODE = "TDM";
 	private static final String TEST_ALT_PRODUCT_TYPE = "DEM";
 	private static final String TEST_ALT_MISSION_TYPE = "TDM.DEM.DEM";
@@ -547,6 +548,7 @@ public class ProductControllerTest {
 					mission = new Mission();
 					mission.setCode(TEST_CODE);
 					mission.getProcessingModes().add(TEST_MODE);
+					mission.getProcessingModes().add(TEST_MODE_2);
 					mission = RepositoryService.getMissionRepository().save(mission);
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
@@ -571,7 +573,7 @@ public class ProductControllerTest {
 		
 		
 		// Update a product attribute
-		productToModify.setMode("OFFL");
+		productToModify.setMode(TEST_MODE_2);
 
 		RestProduct restProduct = ProductUtil.toRestProduct(productToModify);
 		

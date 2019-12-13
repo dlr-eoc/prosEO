@@ -1,5 +1,5 @@
 /**
- * BackendConfiguration.java
+ * ServiceConfiguration.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
-public class BackendConfiguration {
+public class ServiceConfiguration {
 	
 	/** The user name to use for prosEO component logins */
 	@Value("${proseo.user}")
@@ -58,30 +58,12 @@ public class BackendConfiguration {
 	}
 
 	/**
-	 * Sets the user for prosEO component logins
-	 * 
-	 * @param proseoUser the prosEO user to set
-	 */
-	public void setProseoUser(String proseoUser) {
-		this.proseoUser = proseoUser;
-	}
-
-	/**
 	 * Gets the password for prosEO component logins
 	 * 
 	 * @return the prosEO password
 	 */
 	public String getProseoPassword() {
 		return proseoPassword;
-	}
-
-	/**
-	 * Sets the password for prosEO component logins
-	 * 
-	 * @param proseoPassword the prosEO password to set
-	 */
-	public void setProseoPassword(String proseoPassword) {
-		this.proseoPassword = proseoPassword;
 	}
 
 	/**

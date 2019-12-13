@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.ApiClient;
@@ -46,7 +47,22 @@ public class KubeConfig {
 	private String description;
 	private String url;
 	private String storageManagerUrl;
+	private ProcessingFacility processingFacility;
 	
+	/**
+	 * @return the processingFacility
+	 */
+	public ProcessingFacility getProcessingFacility() {
+		return processingFacility;
+	}
+
+	/**
+	 * @param processingFacility the processingFacility to set
+	 */
+	public void setProcessingFacility(ProcessingFacility processingFacility) {
+		this.processingFacility = processingFacility;
+	}
+
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
 	
@@ -55,17 +71,17 @@ public class KubeConfig {
 	}
 	
 	/**
-	 * Instantiate a KuebConfig obejct
+	 * Instantiate a KuebConfig object
 	 * 
-	 * @param anId Name of ProcessingFacility
-	 * @param aDescription Description of ProcessingFacility
-	 * @param aUrl URL of ProcessingFacility
+	 * @param pf the ProcessingFacility
 	 */
-	public KubeConfig (String anId, String aDescription, String aUrl, String aStorageManagerUrl) {
-		id = anId;
-		description = aDescription;
-		url = aUrl;
-		storageManagerUrl = aStorageManagerUrl;
+
+	public KubeConfig (ProcessingFacility pf) {
+		id = pf.getName();
+		description = pf.getDescription();
+		url = pf.getProcessingEngineUrl();
+		storageManagerUrl = pf.getStorageManagerUrl();
+		processingFacility = pf;
 	}
 	
 	/**
@@ -211,11 +227,11 @@ public class KubeConfig {
 	 * @param name of new job
 	 * @return new job or null
 	 */
-	public KubeJob createJob(String name) {
+	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		int aKey = kubeJobList.size() + 1;
 		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
-		KubeJob aJob = new KubeJob(aKey, null, "proseo-sample-integration-processor:0.0.1-SNAPSHOT", "/testdata/test1.pl", "perl", null);
-		aJob = aJob.createJob(this);
+		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
+		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}

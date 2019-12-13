@@ -6,11 +6,13 @@
 
 package de.dlr.proseo.ui.cli;
 
-import java.io.BufferedReader;
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +22,10 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import de.dlr.proseo.ui.backend.BackendConfiguration;
-import de.dlr.proseo.ui.backend.BackendConnectionService;
+import de.dlr.proseo.ui.backend.UserManager;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
@@ -38,117 +40,49 @@ import de.dlr.proseo.ui.cli.parser.ParsedOption;
 @EnableAutoConfiguration
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
+@EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class CommandLineInterface implements CommandLineRunner {
 
+	private static final String CMD_EXIT = "exit";
 	/* Message ID constants */
-	private static final int MSG_ID_SYNTAX_FILE_NOT_FOUND = 2920;
-	private static final int MSG_ID_SYNTAX_FILE_ERROR = 2921;
-	private static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
-	private static final int MSG_ID_COMMAND_NAME_NULL = 2923;
-	private static final int MSG_ID_LOGGED_IN = 2924;
-	private static final int MSG_ID_LOGIN_FAILED = 2925;
-	private static final int MSG_ID_LOGGED_OUT = 2926;
-	private static final int MSG_ID_LOGIN_CANCELLED = 2927;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_SYNTAX_FILE_NOT_FOUND = "(E%d) Syntax file %s not found";
-	private static final String MSG_SYNTAX_FILE_ERROR = "(E%d) Parsing error in syntax file %s (cause: %s)";
-	private static final String MSG_COMMAND_LINE_PROMPT_SUPPRESSED = "(I%d) Command line prompt suppressed by proseo.cli.start parameter";
-	private static final String MSG_COMMAND_NAME_NULL = "(E%d) Command name must not be null";
-	private static final String MSG_LOGGED_IN = "(I%d) User %s logged in";
-	private static final String MSG_LOGIN_FAILED = "(E%d) Login for user %s failed";
-	private static final String MSG_LOGGED_OUT = "(I%d) User %s logged out";
-	private static final String MSG_LOGIN_CANCELLED = "(I%d) No username given, login cancelled";
-	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
-	private static final String MSG_PREFIX = "199 proseo-ui-cli ";
 	
 	/* Other string constants */
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
-	private static final String PROSEO_USERNAME_PROMPT = "Username: ";
-	private static final String PROSEO_PASSWORD_PROMPT = "Password for user %s: ";
-	
-	/** The configuration object for the prosEO User Interface */
-	@Autowired
-	private BackendConfiguration backendConfig;
+	private static final String CMD_INGEST = "ingest";
+	private static final String CMD_PRODUCT = "product";
+	private static final String CMD_PRODUCT_CLASS = "productClass";
+	private static final String CMD_CONFIGURATION = "configuration";
+	private static final String CMD_PROCESSOR = "processor";
+	private static final String CMD_ORBIT = "orbit";
+	private static final String CMD_MISSION = "mission";
+	private static final String CMD_HELP = "help";
+	private static final String CMD_LOGOUT = "logout";
+	private static final String CMD_LOGIN = "login";
 	
 	/** The configuration object for the prosEO CLI */
 	@Autowired
 	private CLIConfiguration config;
 	
-	/** The connector service to the prosEO backend services prosEO */
-	@Autowired
-	private BackendConnectionService backendConnector;
-	
 	/** The command line parser */
 	@Autowired
 	private CLIParser parser;
 	
+	/** The user manager used by all command runners */
+	@Autowired
+	private UserManager userManager;
+	
+	/* Classes for the various top-level commands */
+	@Autowired
+	private OrderCommandRunner orderCommandRunner;
+	@Autowired
+	private IngestorCommandRunner ingestorCommandRunner;
+	@Autowired
+	private ProcessorCommandRunner processorCommandRunner;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
-	
-	/**
-	 * Log in to prosEO
-	 * 
-	 * @param username the user name for login (optional, will be requested from standard input, if not set)
-	 * @param password the password for login (optional, will be requested from standard input, if not set)
-	 * @return true, if the login was successful, false otherwise
-	 */
-	private boolean doLogin(String username, String password) {
-		if (logger.isTraceEnabled()) logger.trace(">>> doLogin({}, PWD)", username);
-		
-		// Ask for username, if not set
-		if (null == username || "".equals(username)) {
-			System.out.print(PROSEO_USERNAME_PROMPT);
-			username = new String(System.console().readPassword());
-		}
-		if (null == username || "".equals(username)) {
-			System.err.println(String.format(MSG_PREFIX + MSG_LOGIN_CANCELLED, MSG_ID_LOGIN_CANCELLED));
-		}
-		
-		// Ask for password, if not set
-		if (null == password || "".equals(password)) {
-			System.out.print(String.format(PROSEO_PASSWORD_PROMPT, username));
-			password = new String(System.console().readPassword());
-		}
-		
-		// Test connection to some backend service
-		if (backendConnector.testConnectionProcessorManager(username, password)) {
-			backendConfig.setProseoUser(username);
-			backendConfig.setProseoPassword(password);
-			
-			String message = String.format(MSG_PREFIX + MSG_LOGGED_IN, MSG_ID_LOGGED_IN, username);
-			logger.info(message);
-			System.out.println(message);
-			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
-			return true;
-		} else {
-			backendConfig.setProseoUser(null);
-			backendConfig.setProseoPassword(null);
-			
-			String message = String.format(MSG_PREFIX + MSG_LOGIN_FAILED, MSG_ID_LOGIN_FAILED, username);
-			logger.info(message);
-			System.err.println(message);
-			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
-			return false;
-		}
-		
-	}
-	
-	/**
-	 * Log the logged in user out from prosEO
-	 */
-	private void doLogout() {
-		if (logger.isTraceEnabled()) logger.trace(">>> doLogout()");
-		String username = backendConfig.getProseoUser();
-		backendConfig.setProseoUser(null);
-		backendConfig.setProseoPassword(null);
-		
-		String message = String.format(MSG_PREFIX + MSG_LOGGED_OUT, MSG_ID_LOGGED_OUT, username);
-		logger.info(message);
-		System.out.println(message);
-		if (logger.isTraceEnabled()) logger.trace("<<< doLogout()");
-	}
 	
 	/**
 	 * Execute the given command (may result in just evaluating the top-level options; "exit" is handled in main command loop)
@@ -161,7 +95,7 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check argument
 		if (null == command) {
-			throw new NullPointerException(String.format(MSG_PREFIX + MSG_COMMAND_NAME_NULL, MSG_ID_COMMAND_NAME_NULL));
+			throw new NullPointerException(uiMsg(MSG_ID_COMMAND_NAME_NULL));
 		}
 		
 		// If help is requested, show help and skip execution
@@ -182,30 +116,39 @@ public class CommandLineInterface implements CommandLineRunner {
 		} else {
 			// Hand command down to appropriate command executor class
 			switch (command.getName()) {
-			case "login":
-				String username = null, password = null;
+			case CMD_LOGIN:
+				String username = null, password = null, mission = null;
 				for (ParsedOption option: command.getOptions()) {
 					if ("user".equals(option.getName())) username = option.getValue();
 					if ("password".equals(option.getName())) password = option.getValue();
 				}
-				doLogin(username, password);
+				if (0 < command.getParameters().size()) {
+					mission = command.getParameters().get(0).getValue();
+				}
+				userManager.doLogin(username, password, mission);
 				break;
-			case "logout":
-				doLogout();
+			case CMD_LOGOUT:
+				userManager.doLogout();
 				break;
-			case "help":
+			case CMD_HELP:
 				parser.getSyntax().printHelp(System.out);
 				break;
-			case "mission":
-			case "orbit":
-			case "order":
-			case "processor":
-			case "configuration":
-			case "productClass":
-			case "product":
-			case "ingest":
+			case OrderCommandRunner.CMD_ORDER:
+				orderCommandRunner.executeCommand(command);
+				break;
+			case CMD_PRODUCT:
+			case CMD_INGEST:
+				ingestorCommandRunner.executeCommand(command);
+				break;
+			case CMD_PROCESSOR:
+			case CMD_CONFIGURATION:
+				processorCommandRunner.executeCommand(command);
+				break;
+			case CMD_MISSION:
+			case CMD_ORBIT:
+			case CMD_PRODUCT_CLASS:
 			default:
-				String message = String.format(MSG_PREFIX + MSG_NOT_IMPLEMENTED, MSG_ID_NOT_IMPLEMENTED, command.getName());
+				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());
 				System.err.println(message);
 				break;
 			}
@@ -228,10 +171,10 @@ public class CommandLineInterface implements CommandLineRunner {
 		try {
 			parser.loadSyntax();
 		} catch (FileNotFoundException e) {
-			logger.error(String.format(MSG_PREFIX + MSG_SYNTAX_FILE_NOT_FOUND, MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
+			logger.error(uiMsg(MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
 			throw e;
 		} catch (YAMLException e) {
-			logger.error(String.format(MSG_PREFIX + MSG_SYNTAX_FILE_ERROR, MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile()));
+			logger.error(uiMsg(MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile(), e.getMessage()));
 			throw e;
 		}
 		
@@ -245,24 +188,28 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check whether the command line prompt shall be started
 		if (!config.getCliStart()) {
-			logger.info(String.format(MSG_PREFIX + MSG_COMMAND_LINE_PROMPT_SUPPRESSED, MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
+			logger.info(uiMsg(MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
 			if (logger.isTraceEnabled()) logger.trace("<<< run()");
 			return;
 		}
 		
 		// If no command is given, enter command prompt loop
-		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+		LineReader userInput = LineReaderBuilder.builder().build();
 		while (true) {
-			System.out.print(PROSEO_COMMAND_PROMPT);
 			ParsedCommand command;
 			try {
-				command = parser.parse(userInput.readLine());
+				String commandLine = userInput.readLine(PROSEO_COMMAND_PROMPT);
+				if (commandLine.isBlank()) {
+					// Silently ignore empty input lines
+					continue;
+				}
+				command = parser.parse(commandLine);
 			} catch (ParseException e) {
 				System.err.println(e.getMessage());
 				continue;
 			}
 			if (logger.isTraceEnabled()) logger.trace("... received command '{}'", (null == command ? "null" : command.getName()));
-			if ("exit".equals(command.getName())) {
+			if (CMD_EXIT.equals(command.getName())) {
 				break;
 			}
 			executeCommand(command);

@@ -9,7 +9,9 @@ types:
   RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
   RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
   RestOrbit: !include ../../../../../model/src/main/resources/raml/types/orbit.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
   RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
   PlannerPod: !include ../../../../../interfaces/src/main/resources/raml/types/planner-pod.raml
 
@@ -41,7 +43,59 @@ resourceTypes:
             The requested resource to delete was not found 
           headers:
             Warning: !include types/error.raml
-
+/orders:
+  type: standard
+  get:
+    description: Get all processing orders
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestOrder[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  /release:
+    /{releaseId}:
+      get:
+        description: Release processing order of id on processing facility
+        queryParameters:
+          facility: string
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /resume:
+    /{resumeId}:
+      get:
+        description: Resume prcessing order of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /cancel:
+    /{cancelId}:
+      get:
+        description: Cancel prcessing order of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /suspend:
+    /{suspendId}:
+      get:
+        description: Suspend prcessing order of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    
 /jobs:
   type: standard
   get:
@@ -65,6 +119,9 @@ resourceTypes:
               example: !include ../../../../../model/src/main/resources/raml/examples/job.json
     post:
       description: Create production planner job
+      queryParameters:
+        facility?:
+          type: string
       responses:
         200:
           body:
@@ -79,6 +136,36 @@ resourceTypes:
             application/json:
               type: RestJob
               example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /resume:
+    /{resumeId}:
+      get:
+        description: Resume job of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /cancel:
+    /{cancelId}:
+      get:
+        description: Cancel job of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /suspend:
+    /{suspendId}:
+      get:
+        description: Suspend job of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJob
+                example: !include ../../../../../model/src/main/resources/raml/examples/job.json
 
 /jobsteps:
   type: standard
@@ -119,7 +206,36 @@ resourceTypes:
             application/json:
               type: RestJobStep
               example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
-
+  /resume:
+    /{resumeId}:
+      get:
+        description: Resume job step of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /cancel:
+    /{cancelId}:
+      get:
+        description: Cancel job step of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
+  /suspend:
+    /{suspendId}:
+      get:
+        description: Suspend job step of id 
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobStep
+                example: !include ../../../../../model/src/main/resources/raml/examples/jobstep.json
 /processingfacilities:
   type: standard
   get:
@@ -150,6 +266,13 @@ resourceTypes:
                   type: PlannerPod
         post:
           description: Create jobstep/pod for test purpose
+          queryParameters:
+            stdoutLogLevel?:
+              type: string
+              enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
+            stderrLogLevel?:
+              type: string
+              enum: [ DEBUG, INFO, PROGRESS, WARNING, ERROR ]
           responses:
             201:
               body:

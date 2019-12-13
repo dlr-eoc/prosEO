@@ -259,9 +259,11 @@ public class Conf {
         processingStationEle.appendChild(doc.createTextNode(processingStation));
         configEle.appendChild(processingStationEle);
         
-        Element acquisitionStationEle = doc.createElement("Acquisition_Station");
-        acquisitionStationEle.appendChild(doc.createTextNode(acquisitionStation));
-        configEle.appendChild(acquisitionStationEle);
+        if (acquisitionStation != null && !acquisitionStation.isBlank()) {
+        	Element acquisitionStationEle = doc.createElement("Acquisition_Station");
+        	acquisitionStationEle.appendChild(doc.createTextNode(acquisitionStation));
+        	configEle.appendChild(acquisitionStationEle);
+        }
 	    
         if (sensingTime != null) {
         	sensingTime.buildXML(doc, configEle, prosEOAttributes);
