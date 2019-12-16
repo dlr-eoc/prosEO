@@ -55,7 +55,7 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	@Transactional
-	public ResponseEntity<List<RestOrder>> getRestOrders() {
+	public ResponseEntity<List<RestOrder>> getOrders() {
 		
 		Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
 		List<RestOrder> list = new ArrayList<RestOrder>();
@@ -71,11 +71,11 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Release processing order of id on processing facility
+	 * Plan processing order of id on processing facility
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> getRestOrder(String releaseId, String facility) {
+	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
 		if (releaseId != null) {
 			ProcessingOrder order = findOrder(releaseId);
 			if (order != null) {
@@ -121,11 +121,11 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Resume prcessing order of id
+	 * Release prcessing order of id
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> getRestOrderByResumeId(String resumeId) {
+	public ResponseEntity<RestOrder> releaseOrder(String resumeId) {
     	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
@@ -138,7 +138,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> getRestOrderByCancelId(String cancelId) {
+	public ResponseEntity<RestOrder> cancelOrder(String cancelId) {
     	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
@@ -151,7 +151,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
-	public ResponseEntity<RestOrder> getRestOrderBySuspendId(String suspendId) {
+	public ResponseEntity<RestOrder> suspendOrder(String suspendId) {
     	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
     	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();

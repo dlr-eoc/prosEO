@@ -14,11 +14,12 @@ logging:
         de:
             dlr:
                 proseo: TRACE
+server.tomcat.accesslog.enabled: true                
 proseo:
     productionPlanner:
-        url: http://lerchenhof.dyndns.org:8080/proseo/planner
-        user: none
-        password: none
+        url: http://192.168.20.204:8080/proseo/planner
+        user: s5p-proseo
+        password: sieb37.Schlaefer
         cyclewaittime: 1000
         maxcycles: 50
     storageManager:
@@ -26,7 +27,7 @@ proseo:
         user: none
         password: none
     ingestor:
-        url: http://lerchenhof.dyndns.org:8081/storage-mgr
+        url: http://192.168.20.155:8081/proseo/ingestor
         user: none
         password: none
     global:

@@ -53,7 +53,7 @@ public class JobstepControllerImpl implements JobstepController {
      */
 	@Override
 	@Transactional
-    public ResponseEntity<List<RestJobStep>> getRestJobStepsByStatus(
+    public ResponseEntity<List<RestJobStep>> getJobSteps(
             @Valid
             Status status) {
 		
@@ -81,7 +81,7 @@ public class JobstepControllerImpl implements JobstepController {
      */
 	@Override
 	@Transactional
-    public ResponseEntity<RestJobStep> getRestJobStepByName(String name) {
+    public ResponseEntity<RestJobStep> getJobStep(String name) {
 		Long id = null;
 		if (name.matches("[0-9]+")) {
 			id = Long.valueOf(name);
@@ -113,7 +113,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<RestJobStep> updateJobsteps(String name) {
+    public ResponseEntity<RestJobStep> createJobStep(String name) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "CREATE not implemented (%d)", 2001);
     	logger.error(message);
@@ -127,7 +127,7 @@ public class JobstepControllerImpl implements JobstepController {
      * 
      */
 	@Override
-    public ResponseEntity<RestJobStep> deleteJobstepByName(String name) {
+    public ResponseEntity<RestJobStep> deleteJobStep(String name) {
 		// TODO Auto-generated method stub
     	boolean result = productionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {
@@ -178,7 +178,7 @@ public class JobstepControllerImpl implements JobstepController {
 		return pjs;
 	}
 	@Override 
-	public ResponseEntity<RestJobStep> getRestJobStepByResumeId(String resumeId) {
+	public ResponseEntity<RestJobStep> resumeJobStep(String resumeId) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
     	logger.error(message);
@@ -187,7 +187,7 @@ public class JobstepControllerImpl implements JobstepController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJobStep> getRestJobStepByCancelId(String cancelId){
+	public ResponseEntity<RestJobStep> cancelJobStep(String cancelId){
 		// TODO Auto-generated method stub
 
     	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
@@ -197,7 +197,7 @@ public class JobstepControllerImpl implements JobstepController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJobStep> getRestJobStepBySuspendId(String suspendId) {
+	public ResponseEntity<RestJobStep> suspendJobStep(String suspendId) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
     	logger.error(message);
