@@ -58,14 +58,11 @@ public class JobControllerImpl implements JobController {
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state) {
 		// todo remove test start
-
-		if (productionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
-	    	if (aJob != null) {
-	    		productionPlanner.getKubeConfig(null).deleteJob(aJob);
-	    	}
-		}
-		return null;
+		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
+		logger.error(message);
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
     public ResponseEntity<RestJob> getJob(String name) {

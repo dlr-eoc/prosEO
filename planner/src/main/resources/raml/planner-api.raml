@@ -169,7 +169,7 @@ resourceTypes:
                 example: !include ../../../../../model/src/main/resources/raml/examples/job.json
   /suspend:
     /{id}:
-      get:
+      patch:
         description: Suspend job of id 
         displayName: suspendJob
         responses:

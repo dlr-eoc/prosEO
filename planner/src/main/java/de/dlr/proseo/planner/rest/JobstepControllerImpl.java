@@ -167,7 +167,9 @@ public class JobstepControllerImpl implements JobstepController {
 			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
 			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
 			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
-			pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
+			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
+				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
+			}
 			for (ProductQuery pq : js.getInputProductQueries()) {
 				String pt = pq.getRequestedProductClass().getProductType();
 				if (!pjs.getInputProductClasses().contains(pt)) {
