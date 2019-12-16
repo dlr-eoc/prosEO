@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +27,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.backend.UserManager;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -67,7 +66,7 @@ public class IngestorCommandRunner {
 
 	/** The user manager used by all command runners */
 	@Autowired
-	private UserManager userManager;
+	private LoginManager loginManager;
 	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
@@ -135,7 +134,7 @@ public class IngestorCommandRunner {
 		
 		/* Set missing attributes to default values where possible */
 		if (null == restProduct.getMissionCode() || 0 == restProduct.getMissionCode().length()) {
-			restProduct.setMissionCode(userManager.getMission());
+			restProduct.setMissionCode(loginManager.getMission());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -214,7 +213,7 @@ public class IngestorCommandRunner {
 		/* Create product */
 		try {
 			restProduct = serviceConnection.postToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS, 
-					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
+					restProduct, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -222,7 +221,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -249,8 +248,18 @@ public class IngestorCommandRunner {
 	private void showProduct(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showProduct({})", (null == showCommand ? "null" : showCommand.getName()));
 		
+		/* Check command options */
+		String productOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				productOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_PRODUCTS + "?mission=" + userManager.getMission();
+		String requestURI = URI_PATH_PRODUCTS + "?mission=" + loginManager.getMission();
 		
 		for (ParsedOption option: showCommand.getOptions()) {
 			if ("from".equals(option.getName())) {
@@ -267,7 +276,7 @@ public class IngestorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
-					requestURI, List.class, userManager.getUser(), userManager.getPassword());
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -275,7 +284,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -288,12 +297,14 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Display the product(s) found */
-		ObjectMapper mapper = new ObjectMapper();
-		for (Object result: resultList) {
-			RestProduct restProduct = mapper.convertValue(result, RestProduct.class);
-			
-			// TODO Format output
-			System.out.println(restProduct);
+		try {
+			CLIUtil.printObject(System.out, resultList, productOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
 		}
 	}
 	
@@ -368,7 +379,7 @@ public class IngestorCommandRunner {
 		try {
 			restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
 					URI_PATH_PRODUCTS + "/" + updatedProduct.getId(),
-					RestProduct.class, userManager.getUser(), userManager.getPassword());
+					RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -376,7 +387,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -424,7 +435,7 @@ public class IngestorCommandRunner {
 		/* Update product using Ingestor service */
 		try {
 			restProduct = serviceConnection.patchToService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + restProduct.getId(),
-					restProduct, RestProduct.class, userManager.getUser(), userManager.getPassword());
+					restProduct, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -435,7 +446,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -479,7 +490,7 @@ public class IngestorCommandRunner {
 		/* Delete product using Ingestor service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(), URI_PATH_PRODUCTS + "/" + productIdString, 
-					userManager.getUser(), userManager.getPassword());
+					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -487,7 +498,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -552,12 +563,12 @@ public class IngestorCommandRunner {
 		try {
 			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
 					URI_PATH_INGESTOR + "/" + processingFacility,
-					productsToIngest, List.class, userManager.getUser(), userManager.getPassword());
+					productsToIngest, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PRODUCTS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -584,7 +595,7 @@ public class IngestorCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeCommand({})", (null == command ? "null" : command.getName()));
 		
 		/* Check that user is logged in */
-		if (null == userManager.getUser()) {
+		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 		}
 		

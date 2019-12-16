@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import de.dlr.proseo.ui.backend.UserManager;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
@@ -71,7 +71,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/** The user manager used by all command runners */
 	@Autowired
-	private UserManager userManager;
+	private LoginManager loginManager;
 	
 	/* Classes for the various top-level commands */
 	@Autowired
@@ -125,10 +125,10 @@ public class CommandLineInterface implements CommandLineRunner {
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();
 				}
-				userManager.doLogin(username, password, mission);
+				loginManager.doLogin(username, password, mission);
 				break;
 			case CMD_LOGOUT:
-				userManager.doLogout();
+				loginManager.doLogout();
 				break;
 			case CMD_HELP:
 				parser.getSyntax().printHelp(System.out);

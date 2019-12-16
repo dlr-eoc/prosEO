@@ -1,5 +1,5 @@
 /**
- * UserManager.java
+ * LoginManager.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -22,7 +22,7 @@ import org.springframework.web.client.RestClientResponseException;
  *
  */
 @Component
-public class UserManager {
+public class LoginManager {
 
 	/* General string constants */
 	private static final String PROSEO_USERNAME_PROMPT = "Username: ";
@@ -44,7 +44,7 @@ public class UserManager {
 	private ServiceConnection backendConnector;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(UserManager.class);
+	private static Logger logger = LoggerFactory.getLogger(LoginManager.class);
 	
 	/**
 	 * Test whether the given user can connect to the Processor Manager with the given password

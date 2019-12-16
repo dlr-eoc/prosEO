@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -121,7 +123,7 @@ public class ProcessingOrder extends PersistentObject {
 	private List<Orbit> requestedOrbits = new ArrayList<>();
 	
 	/** The processing jobs belonging to this order */	
-	@OneToMany(mappedBy = "processingOrder")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "processingOrder")
 	private Set<Job> jobs = new HashSet<>();
 	
 	/**

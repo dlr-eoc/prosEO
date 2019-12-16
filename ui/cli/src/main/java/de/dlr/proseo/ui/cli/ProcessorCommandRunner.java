@@ -9,27 +9,25 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.rest.model.RestConfiguration;
+import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestTask;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.backend.UserManager;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -61,6 +59,8 @@ public class ProcessorCommandRunner {
 	private static final String PROMPT_TASK_VERSION = "Task version for %s (empty field cancels): ";
 	private static final String PROMPT_CRITICALITY_LEVEL = "Criticality level for %s (empty field cancels): ";
 	private static final String PROMPT_DOCKER_IMAGE = "Docker image (empty field cancels): ";
+	private static final String PROMPT_CONFIGURATION_VERSION = "Configuration version (empty field cancels): ";
+	private static final String PROMPT_CONFIGUREDPROCESSOR_IDENTIFIER = "Configured processor identifier (empty field cancels): ";
 	
 	private static final String URI_PATH_PROCESSORCLASSES = "/processorclasses";
 	private static final String URI_PATH_PROCESSORS = "/processors";
@@ -72,11 +72,9 @@ public class ProcessorCommandRunner {
 	private static final String CONFIGURATIONS = "configurations";
 	private static final String CONFIGUREDPROCESSORS = "configured processors";
 	
-	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
-
 	/** The user manager used by all command runners */
 	@Autowired
-	private UserManager userManager;
+	private LoginManager loginManager;
 	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
@@ -144,7 +142,7 @@ public class ProcessorCommandRunner {
 		
 		/* Set missing attributes to default values where possible */
 		if (null == restProcessorClass.getMissionCode() || 0 == restProcessorClass.getMissionCode().length()) {
-			restProcessorClass.setMissionCode(userManager.getMission());
+			restProcessorClass.setMissionCode(loginManager.getMission());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -171,16 +169,15 @@ public class ProcessorCommandRunner {
 		/* Create processor class */
 		try {
 			restProcessorClass = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_PROCESSORCLASSES, 
-					restProcessorClass, RestProcessorClass.class, userManager.getUser(), userManager.getPassword());
+					restProcessorClass, RestProcessorClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -207,8 +204,18 @@ public class ProcessorCommandRunner {
 	private void showProcessorClass(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showProcessorClass({})", (null == showCommand ? "null" : showCommand.getName()));
 		
+		/* Check command options */
+		String processorClassOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				processorClassOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_PROCESSORCLASSES + "?mission=" + userManager.getMission();
+		String requestURI = URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission();
 		
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only processor name allowed as parameter
@@ -219,16 +226,15 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					requestURI, List.class, userManager.getUser(), userManager.getPassword());
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -241,12 +247,14 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Display the processor class(es) found */
-		ObjectMapper mapper = new ObjectMapper();
-		for (Object result: resultList) {
-			RestProcessorClass restProcessorClass = mapper.convertValue(result, RestProcessorClass.class);
-			
-			// TODO Format output
-			System.out.println(restProcessorClass);
+		try {
+			CLIUtil.printObject(System.out, resultList, processorClassOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
 		}
 	}
 	
@@ -311,17 +319,16 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_PROCESSORCLASSES + "?mission=" + userManager.getMission() + "&processorName=" + updatedProcessorClass.getProcessorName(),
-					List.class, userManager.getUser(), userManager.getPassword());
+					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" + updatedProcessorClass.getProcessorName(),
+					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, updatedProcessorClass.getProcessorName());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -351,9 +358,8 @@ public class ProcessorCommandRunner {
 		try {
 			restProcessorClass = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "/" + restProcessorClass.getId(),
-					restProcessorClass, RestProcessorClass.class, userManager.getUser(), userManager.getPassword());
+					restProcessorClass, RestProcessorClass.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -363,7 +369,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -401,17 +407,16 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
-					URI_PATH_PROCESSORCLASSES + "?mission=" + userManager.getMission() + "&processorName=" + processorName, 
-					List.class, userManager.getUser(), userManager.getPassword());
+					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" + processorName, 
+					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND, processorName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -435,16 +440,15 @@ public class ProcessorCommandRunner {
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORCLASSES + "/" + restProcessorClass.getId(), 
-					userManager.getUser(), userManager.getPassword());
+					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORCLASSES, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_DELETE_FAILED, processorName, e.getMessage());
@@ -523,7 +527,7 @@ public class ProcessorCommandRunner {
 		
 		/* Set missing attributes to default values where possible */
 		if (null == restProcessor.getMissionCode() || 0 == restProcessor.getMissionCode().length()) {
-			restProcessor.setMissionCode(userManager.getMission());
+			restProcessor.setMissionCode(loginManager.getMission());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -601,7 +605,7 @@ public class ProcessorCommandRunner {
 		/* Create processor */
 		try {
 			restProcessor = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_PROCESSORS, 
-					restProcessor, RestProcessor.class, userManager.getUser(), userManager.getPassword());
+					restProcessor, RestProcessor.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -609,7 +613,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -636,8 +640,18 @@ public class ProcessorCommandRunner {
 	private void showProcessor(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showProcessor({})", (null == showCommand ? "null" : showCommand.getName()));
 		
+		/* Check command options */
+		String processorOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				processorOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_PROCESSORS + "?mission=" + userManager.getMission();
+		String requestURI = URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission();
 		
 		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
 			String paramValue = showCommand.getParameters().get(i).getValue();
@@ -654,16 +668,15 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					requestURI, List.class, userManager.getUser(), userManager.getPassword());
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
-			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_NO_PROCESSORS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -676,12 +689,14 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Display the processor class(es) found */
-		ObjectMapper mapper = new ObjectMapper();
-		for (Object result: resultList) {
-			RestProcessor restProcessor = mapper.convertValue(result, RestProcessor.class);
-			
-			// TODO Format output
-			System.out.println(restProcessor);
+		try {
+			CLIUtil.printObject(System.out, resultList, processorOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
 		}
 	}
 	
@@ -754,10 +769,10 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_PROCESSORS + "?mission=" + userManager.getMission() 
+					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission() 
 						+ "&processorName=" + updatedProcessor.getProcessorName() + "&processorVersion=" + updatedProcessor.getProcessorVersion(),
-					List.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException e) {
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -765,7 +780,7 @@ public class ProcessorCommandRunner {
 						updatedProcessor.getProcessorName(), updatedProcessor.getProcessorVersion());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -815,8 +830,8 @@ public class ProcessorCommandRunner {
 		try {
 			restProcessor = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORS + "/" + restProcessor.getId(),
-					restProcessor, RestProcessor.class, userManager.getUser(), userManager.getPassword());
-		} catch (HttpClientErrorException e) {
+					restProcessor, RestProcessor.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
@@ -826,7 +841,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -865,9 +880,9 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
-					URI_PATH_PROCESSORS + "?mission=" + userManager.getMission()
+					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission()
 						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
-					List.class, userManager.getUser(), userManager.getPassword());
+					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -875,7 +890,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -899,7 +914,7 @@ public class ProcessorCommandRunner {
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORS + "/" + restProcessor.getId(), 
-					userManager.getUser(), userManager.getPassword());
+					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -907,7 +922,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), PROCESSORS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
@@ -929,6 +944,859 @@ public class ProcessorCommandRunner {
 	}
 	
 	/**
+	 * Create a new configuration; if the input is not from a file, the user will be prompted for mandatory attributes
+	 * not given on the command line
+	 * 
+	 * @param createCommand the parsed "configuration create" command
+	 */
+	private void createConfiguration(ParsedCommand createCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguration({})", (null == createCommand ? "null" : createCommand.getName()));
+		
+		/* Check command options */
+		File configurationFile = null;
+		String configurationFileFormat = null;
+		for (ParsedOption option: createCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				configurationFile = new File(option.getValue());
+				break;
+			case "format":
+				configurationFileFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Read configuration file, if any */
+		RestConfiguration restConfiguration = null;
+		if (null == configurationFile) {
+			restConfiguration = new RestConfiguration();
+		} else {
+			try {
+				restConfiguration = CLIUtil.parseObjectFile(configurationFile, configurationFileFormat, RestConfiguration.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from configuration class file) */
+		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
+			ParsedParameter param = createCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is processor class name
+				restConfiguration.setProcessorName(param.getValue());
+			} else if (1 == i) {
+				// Second parameter is configuration version
+				restConfiguration.setConfigurationVersion(param.getValue());
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(restConfiguration, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Set missing attributes to default values where possible */
+		if (null == restConfiguration.getMissionCode() || 0 == restConfiguration.getMissionCode().length()) {
+			restConfiguration.setMissionCode(loginManager.getMission());
+		}
+		
+		/* Prompt user for missing mandatory attributes */
+		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null == restConfiguration.getProcessorName() || 0 == restConfiguration.getProcessorName().length()) {
+			System.out.print(PROMPT_PROCESSOR_NAME);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguration.setProcessorName(response);
+		}
+		if (null == restConfiguration.getConfigurationVersion() || 0 == restConfiguration.getConfigurationVersion().length()) {
+			System.out.print(PROMPT_CONFIGURATION_VERSION);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguration.setConfigurationVersion(response);
+		}
+		
+		/* Create configuration */
+		try {
+			restConfiguration = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_CONFIGURATIONS, 
+					restConfiguration, RestConfiguration.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Report success, giving newly assigned configuration ID and version */
+		String message = uiMsg(MSG_ID_CONFIGURATION_CREATED,
+				restConfiguration.getProcessorName(), restConfiguration.getConfigurationVersion(), restConfiguration.getId());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Show the configuration specified in the command parameters or options
+	 * 
+	 * @param showCommand the parsed "configuration show" command
+	 */
+	private void showConfiguration(ParsedCommand showCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> showConfiguration({})", (null == showCommand ? "null" : showCommand.getName()));
+		
+		/* Check command options */
+		String configurationOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				configurationOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Prepare request URI */
+		String requestURI = URI_PATH_CONFIGURATIONS + "?mission=" + loginManager.getMission();
+		
+		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
+			String paramValue = showCommand.getParameters().get(i).getValue();
+			if (0 == i) {
+				// First parameter is processor name
+				requestURI += "&processorName=" + paramValue;
+			} else if (1 == i) {
+				// Second parameter is configuration version
+				requestURI += "&configurationVersion=" + paramValue;
+			}
+		}
+		
+		/* Get the configuration information from the Processor Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_CONFIGURATIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Display the configuration class(es) found */
+		try {
+			CLIUtil.printObject(System.out, resultList, configurationOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+	}
+	
+	/**
+	 * Update a configuration from a configuration file or from "attribute=value" pairs (overriding any configuration file entries)
+	 * 
+	 * @param updateCommand the parsed "configuration update" command
+	 */
+	private void updateConfiguration(ParsedCommand updateCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateConfiguration({})", (null == updateCommand ? "null" : updateCommand.getName()));
+
+		/* Check command options */
+		File configurationFile = null;
+		String configurationFileFormat = null;
+		boolean isDeleteAttributes = false;
+		for (ParsedOption option: updateCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				configurationFile = new File(option.getValue());
+				break;
+			case "format":
+				configurationFileFormat = option.getValue().toUpperCase();
+				break;
+			case "delete-attributes":
+				isDeleteAttributes = true;
+				break;
+			}
+		}
+		
+		/* Read configuration file, if any */
+		RestConfiguration updatedConfiguration = null;
+		if (null == configurationFile) {
+			updatedConfiguration = new RestConfiguration();
+		} else {
+			try {
+				updatedConfiguration = CLIUtil.parseObjectFile(configurationFile, configurationFileFormat, RestConfiguration.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from configuration class file) */
+		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
+			ParsedParameter param = updateCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is processor class name
+				updatedConfiguration.setProcessorName(param.getValue());
+			} else if (1 == i) {
+				// Second parameter is configuration version
+				updatedConfiguration.setConfigurationVersion(param.getValue());;
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(updatedConfiguration, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Read original configuration from Processor Manager service */
+		if (null == updatedConfiguration.getProcessorName() || 0 == updatedConfiguration.getProcessorName().length()
+				|| null == updatedConfiguration.getConfigurationVersion() || 0 == updatedConfiguration.getConfigurationVersion().length()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_CONFIGURATION_IDENTIFIER_GIVEN));
+			return;
+		}
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGURATIONS + "?mission=" + loginManager.getMission() 
+						+ "&processorName=" + updatedConfiguration.getProcessorName() + "&configurationVersion=" + updatedConfiguration.getConfigurationVersion(),
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, 
+						updatedConfiguration.getProcessorName(), updatedConfiguration.getConfigurationVersion());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, 
+					updatedConfiguration.getProcessorName(), updatedConfiguration.getConfigurationVersion());
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestConfiguration restConfiguration = mapper.convertValue(resultList.get(0), RestConfiguration.class);
+
+		/* Compare attributes of database configuration with updated configuration */
+		// No modification of ID, version, mission code, processor class name, configuration version or configured processors allowed
+		if (null != updatedConfiguration.getDynProcParameters() && (isDeleteAttributes || !updatedConfiguration.getDynProcParameters().isEmpty())) {
+			restConfiguration.getDynProcParameters().clear();
+			restConfiguration.getDynProcParameters().addAll(updatedConfiguration.getDynProcParameters());
+		}
+		if (null != updatedConfiguration.getConfigurationFiles() && (isDeleteAttributes || !updatedConfiguration.getConfigurationFiles().isEmpty())) {
+			restConfiguration.getConfigurationFiles().clear();
+			restConfiguration.getConfigurationFiles().addAll(updatedConfiguration.getConfigurationFiles());
+		}
+		if (null != updatedConfiguration.getStaticInputFiles() && (isDeleteAttributes || !updatedConfiguration.getStaticInputFiles().isEmpty())) {
+			restConfiguration.getStaticInputFiles().clear();
+			restConfiguration.getStaticInputFiles().addAll(updatedConfiguration.getStaticInputFiles());
+		}
+		if (isDeleteAttributes || (null != updatedConfiguration.getDockerRunParameters() && 0 != updatedConfiguration.getDockerRunParameters().length())) {
+			restConfiguration.setDockerRunParameters(updatedConfiguration.getDockerRunParameters());
+		}
+		
+		/* Update configuration using Processor Manager service */
+		try {
+			restConfiguration = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGURATIONS + "/" + restConfiguration.getId(),
+					restConfiguration, RestConfiguration.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success, giving new configuration version */
+		String message = uiMsg(MSG_ID_CONFIGURATION_UPDATED, restConfiguration.getId(), restConfiguration.getVersion());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Delete the given configuration
+	 * 
+	 * @param deleteCommand the parsed "configuration delete" command
+	 */
+	private void deleteConfiguration(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfiguration({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Get processor name and configuration version from command parameters */
+		if (2 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
+			return;
+		}
+		String processorName = deleteCommand.getParameters().get(0).getValue();
+		String configurationVersion = deleteCommand.getParameters().get(1).getValue();
+		
+		/* Retrieve the configuration using Processor Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
+					URI_PATH_CONFIGURATIONS + "?mission=" + loginManager.getMission()
+						+ "&processorName=" + processorName + "&configurationVersion=" + configurationVersion, 
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND, processorName, configurationVersion);
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestConfiguration restConfiguration = mapper.convertValue(resultList.get(0), RestConfiguration.class);
+		
+		/* Delete configuration using Processor Manager service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGURATIONS + "/" + restConfiguration.getId(), 
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_CONFIGURATION_DELETE_FAILED, processorName, configurationVersion, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_CONFIGURATION_DELETED, restConfiguration.getId());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Create a new configured processor; if the input is not from a file, the user will be prompted for mandatory attributes
+	 * not given on the command line
+	 * 
+	 * @param createCommand the parsed "processor configuration create" command
+	 */
+	private void createConfiguredProcessor(ParsedCommand createCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguredProcessor({})", (null == createCommand ? "null" : createCommand.getName()));
+		
+		/* Check command options */
+		File configuredProcessorFile = null;
+		String configuredProcessorFileFormat = null;
+		for (ParsedOption option: createCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				configuredProcessorFile = new File(option.getValue());
+				break;
+			case "format":
+				configuredProcessorFileFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Read configured processor file, if any */
+		RestConfiguredProcessor restConfiguredProcessor = null;
+		if (null == configuredProcessorFile) {
+			restConfiguredProcessor = new RestConfiguredProcessor();
+		} else {
+			try {
+				restConfiguredProcessor = CLIUtil.parseObjectFile(configuredProcessorFile, configuredProcessorFileFormat, RestConfiguredProcessor.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from configured processor class file) */
+		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
+			ParsedParameter param = createCommand.getParameters().get(i);
+			switch (i) {
+			case 0:
+				// First parameter is identifier of configured processor
+				restConfiguredProcessor.setIdentifier(param.getValue());
+				break;
+			case 1:
+				// Second parameter is processor class name
+				restConfiguredProcessor.setProcessorName(param.getValue());
+				break;
+			case 2:
+				// Third parameter is processor version
+				restConfiguredProcessor.setProcessorVersion(param.getValue());
+				break;
+			case 3:
+				// Fourth parameter is configuration version
+				restConfiguredProcessor.setConfigurationVersion(param.getValue());
+				break;
+			default:
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(restConfiguredProcessor, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Set missing attributes to default values where possible */
+		if (null == restConfiguredProcessor.getMissionCode() || 0 == restConfiguredProcessor.getMissionCode().length()) {
+			restConfiguredProcessor.setMissionCode(loginManager.getMission());
+		}
+		
+		/* Prompt user for missing mandatory attributes */
+		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null == restConfiguredProcessor.getIdentifier() || 0 == restConfiguredProcessor.getIdentifier().length()) {
+			System.out.print(PROMPT_CONFIGUREDPROCESSOR_IDENTIFIER);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguredProcessor.setIdentifier(response);
+		}
+		if (null == restConfiguredProcessor.getProcessorName() || 0 == restConfiguredProcessor.getProcessorName().length()) {
+			System.out.print(PROMPT_PROCESSOR_NAME);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguredProcessor.setProcessorName(response);
+		}
+		if (null == restConfiguredProcessor.getProcessorVersion() || 0 == restConfiguredProcessor.getProcessorVersion().length()) {
+			System.out.print(PROMPT_PROCESSOR_VERSION);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguredProcessor.setProcessorVersion(response);
+		}
+		if (null == restConfiguredProcessor.getConfigurationVersion() || 0 == restConfiguredProcessor.getConfigurationVersion().length()) {
+			System.out.print(PROMPT_CONFIGURATION_VERSION);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restConfiguredProcessor.setConfigurationVersion(response);
+		}
+		
+		/* Create configured processor */
+		try {
+			restConfiguredProcessor = serviceConnection.postToService(serviceConfig.getProcessorManagerUrl(), URI_PATH_CONFIGUREDPROCESSORS, 
+					restConfiguredProcessor, RestConfiguredProcessor.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Report success, giving newly assigned configured processor ID and version */
+		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_CREATED,
+				restConfiguredProcessor.getProcessorName(), restConfiguredProcessor.getConfigurationVersion(), restConfiguredProcessor.getId());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Show the configured processor specified in the command parameters or options
+	 * 
+	 * @param showCommand the parsed "processor configuration show" command
+	 */
+	private void showConfiguredProcessor(ParsedCommand showCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> showConfiguredProcessor({})", (null == showCommand ? "null" : showCommand.getName()));
+		
+		/* Check command options */
+		String configuredProcessorOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				configuredProcessorOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Prepare request URI */
+		String requestURI = URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission();
+		
+		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
+			String paramValue = showCommand.getParameters().get(i).getValue();
+			if (0 == i) {
+				// First parameter is processor name
+				requestURI += "&processorName=" + paramValue;
+			} else if (1 == i) {
+				// Second parameter is configured processor identifier
+				requestURI += "&identifier=" + paramValue;
+			}
+		}
+		
+		/* Get the configured processor information from the Processor Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Display the configured processor class(es) found */
+		try {
+			CLIUtil.printObject(System.out, resultList, configuredProcessorOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+	}
+	
+	/**
+	 * Update a configured processor from a configured processor file or from "attribute=value" pairs
+	 * (overriding any configured processor file entries)
+	 * 
+	 * @param updateCommand the parsed "processor configuration update" command
+	 */
+	private void updateConfiguredProcessor(ParsedCommand updateCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateConfiguredProcessor({})", (null == updateCommand ? "null" : updateCommand.getName()));
+
+		/* Check command options */
+		File configuredProcessorFile = null;
+		String configuredProcessorFileFormat = null;
+		for (ParsedOption option: updateCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				configuredProcessorFile = new File(option.getValue());
+				break;
+			case "format":
+				configuredProcessorFileFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Read configured processor file, if any */
+		RestConfiguredProcessor updatedConfiguredProcessor = null;
+		if (null == configuredProcessorFile) {
+			updatedConfiguredProcessor = new RestConfiguredProcessor();
+		} else {
+			try {
+				updatedConfiguredProcessor = CLIUtil.parseObjectFile(configuredProcessorFile, configuredProcessorFileFormat, RestConfiguredProcessor.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from configured processor class file) */
+		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
+			ParsedParameter param = updateCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is processor class name
+				updatedConfiguredProcessor.setProcessorName(param.getValue());
+			} else if (1 == i) {
+				// Second parameter is configured processor identifier
+				updatedConfiguredProcessor.setIdentifier(param.getValue());;
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(updatedConfiguredProcessor, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Read original configured processor from Processor Manager service */
+		if (null == updatedConfiguredProcessor.getProcessorName() || 0 == updatedConfiguredProcessor.getProcessorName().length()
+				|| null == updatedConfiguredProcessor.getIdentifier() || 0 == updatedConfiguredProcessor.getIdentifier().length()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
+			return;
+		}
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission() 
+						+ "&processorName=" + updatedConfiguredProcessor.getProcessorName() 
+						+ "&identifier=" + updatedConfiguredProcessor.getIdentifier(),
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, 
+						updatedConfiguredProcessor.getIdentifier(), updatedConfiguredProcessor.getProcessorName());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, 
+					updatedConfiguredProcessor.getIdentifier(), updatedConfiguredProcessor.getProcessorName());
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestConfiguredProcessor restConfiguredProcessor = mapper.convertValue(resultList.get(0), RestConfiguredProcessor.class);
+
+		/* Compare attributes of database configured processor with updated configured processor */
+		// No modification of ID, version, mission code or processor class name allowed
+		if (null != updatedConfiguredProcessor.getIdentifier() && 0 != updatedConfiguredProcessor.getIdentifier().length()) {
+			restConfiguredProcessor.setIdentifier(updatedConfiguredProcessor.getIdentifier());
+		}
+		if (null != updatedConfiguredProcessor.getProcessorVersion() && 0 != updatedConfiguredProcessor.getProcessorVersion().length()) {
+			restConfiguredProcessor.setProcessorVersion(updatedConfiguredProcessor.getProcessorVersion());
+		}
+		if (null != updatedConfiguredProcessor.getConfigurationVersion() && 0 != updatedConfiguredProcessor.getConfigurationVersion().length()) {
+			restConfiguredProcessor.setConfigurationVersion(updatedConfiguredProcessor.getConfigurationVersion());
+		}
+		
+		/* Update configured processor using Processor Manager service */
+		try {
+			restConfiguredProcessor = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGUREDPROCESSORS + "/" + restConfiguredProcessor.getId(),
+					restConfiguredProcessor, RestConfiguredProcessor.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success, giving new configured processor version */
+		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_UPDATED, restConfiguredProcessor.getId(), restConfiguredProcessor.getVersion());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Delete the given configured processor
+	 * 
+	 * @param deleteCommand the parsed "processor configuration delete" command
+	 */
+	private void deleteConfiguredProcessor(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfiguredProcessor({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Get processor name and configured processor identifier from command parameters */
+		if (2 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
+			return;
+		}
+		String processorName = deleteCommand.getParameters().get(0).getValue();
+		String identifier = deleteCommand.getParameters().get(1).getValue();
+		
+		/* Retrieve the configured processor using Processor Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
+					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission()
+						+ "&processorName=" + processorName + "&identifier=" + identifier, 
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier, processorName);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier, processorName);
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestConfiguredProcessor restConfiguredProcessor = mapper.convertValue(resultList.get(0), RestConfiguredProcessor.class);
+		
+		/* Delete configured processor using Processor Manager service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+					URI_PATH_CONFIGUREDPROCESSORS + "/" + restConfiguredProcessor.getId(), 
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED, processorName, identifier, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETED, restConfiguredProcessor.getId());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
 	 * Run the given command
 	 * 
 	 * @param command the command to execute
@@ -937,7 +1805,7 @@ public class ProcessorCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeCommand({})", (null == command ? "null" : command.getName()));
 		
 		/* Check that user is logged in */
-		if (null == userManager.getUser()) {
+		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 		}
 		
@@ -986,10 +1854,10 @@ public class ProcessorCommandRunner {
 			case CMD_CONFIGURATION:
 				// Handle commands for configured processors
 				switch (subsubcommand.getName()) {
-//				case CMD_CREATE:	createConfiguredProcessor(subsubcommand); break COMMAND;
-//				case CMD_SHOW:		showConfiguredProcessor(subsubcommand); break COMMAND;
-//				case CMD_UPDATE:	updateConfiguredProcessor(subsubcommand); break COMMAND;
-//				case CMD_DELETE:	deleteConfiguredProcessors(subsubcommand); break COMMAND;
+				case CMD_CREATE:	createConfiguredProcessor(subsubcommand); break COMMAND;
+				case CMD_SHOW:		showConfiguredProcessor(subsubcommand); break COMMAND;
+				case CMD_UPDATE:	updateConfiguredProcessor(subsubcommand); break COMMAND;
+				case CMD_DELETE:	deleteConfiguredProcessor(subsubcommand); break COMMAND;
 				default:
 					System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
 							command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
@@ -1007,10 +1875,10 @@ public class ProcessorCommandRunner {
 		case CMD_CONFIGURATION:
 			// Handle commands for configurations
 			switch (subcommand.getName()) {
-//			case CMD_CREATE:	createConfiguration(subcommand); break COMMAND;
-//			case CMD_SHOW:		showConfiguration(subcommand); break COMMAND;
-//			case CMD_UPDATE:	updateConfiguration(subcommand); break COMMAND;
-//			case CMD_DELETE:	deleteConfiguration(subcommand); break COMMAND;
+			case CMD_CREATE:	createConfiguration(subcommand); break COMMAND;
+			case CMD_SHOW:		showConfiguration(subcommand); break COMMAND;
+			case CMD_UPDATE:	updateConfiguration(subcommand); break COMMAND;
+			case CMD_DELETE:	deleteConfiguration(subcommand); break COMMAND;
 			default:
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;

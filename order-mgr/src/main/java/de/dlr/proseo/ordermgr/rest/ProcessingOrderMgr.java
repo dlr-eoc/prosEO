@@ -311,7 +311,7 @@ public class ProcessingOrderMgr {
 	
 	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom, executionTimeTo);
 		List<RestOrder> result = new ArrayList<>();
 		
 		if (null == mission && null == identifier && (null == productclasses || 0 == productclasses.length) && null == executionTimeFrom && null == executionTimeTo) {

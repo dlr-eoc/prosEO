@@ -10,6 +10,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -64,6 +66,7 @@ public class ServiceConnection {
 	 * 
 	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
+	 * @param clazz the class of the return object
 	 * @param username the username for basic HTTP authentication (optional)
 	 * @param password the password for basic HTTP authentication (optional)
 	 * @return the body of the HTTP response converted into an object of the expected class
@@ -71,7 +74,7 @@ public class ServiceConnection {
 	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
 	 */
 	public <T> T getFromService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password) throws RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getFromService({}, {})", serviceUrl, requestPath);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFromService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
 		
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
@@ -106,6 +109,57 @@ public class ServiceConnection {
 		
 		// Check connection result
 		if (logger.isTraceEnabled()) logger.trace("<<< getFromService()");
+		return entity.getBody();
+	}
+	
+	/**
+	 * Calls a prosEO service at the given location with HTTP GET
+	 * 
+	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
+	 * @param requestPath the specific request path including request parameters
+	 * @param clazz the class of the return object
+	 * @param username the username for basic HTTP authentication (optional)
+	 * @param password the password for basic HTTP authentication (optional)
+	 * @return the body of the HTTP response converted into an object of the expected class
+	 * @throws RestClientException if an error (HTTP status code 4xx or 5xx) occurred in the communication to the service
+	 * @throws RuntimeException if the service returned an HTTP status different from OK (200)
+	 */
+	public <T> T putToService(String serviceUrl, String requestPath, Class<T> clazz, String username, String password) throws RestClientException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> putToService({}, {}, {}, user, password)", serviceUrl, requestPath, clazz);
+		
+		// Attempt connection to service
+		ResponseEntity<T> entity = null;
+		try {
+			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RequestEntity<Void> requestEntity = RequestEntity.put(new URI(serviceUrl + requestPath)).build();
+			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
+			entity = restTemplate.exchange(requestEntity, clazz);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
+			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
+		} catch (HttpClientErrorException.Unauthorized e) {
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			throw e;
+		} catch (RestClientException e) {
+			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+		
+		// All PUT requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
+					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+			logger.error(message);
+			throw new RuntimeException(message);
+		}
+		
+		// Check connection result
+		if (logger.isTraceEnabled()) logger.trace("<<< putToService()");
 		return entity.getBody();
 	}
 	

@@ -84,6 +84,10 @@ commands:
       subcommands:
         - name: show
           description: List all configured missions or only the given one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: missionCode
               type: string
@@ -145,6 +149,9 @@ commands:
             - name: to
               type: integer
               description: Upper bound of orbit range
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: spacecraftCode
               type: string
@@ -214,6 +221,9 @@ commands:
             - name: to
               type: datetime
               description: Upper bound of order start time
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: orderId
               type: string
@@ -279,10 +289,17 @@ commands:
               description: The order identifier
         - name: plan
           description: Plan the jobs for the named processing order (must be in status approved)
+          options:
+            - name: format
+              type: string
+              description: The output format for the resulting job list (one of { NONE, JSON, XML, YAML }; default value NONE)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
+            - name: facility
+              type: string
+              description: The processing facility, on which the order shall be run
         - name: release
           description: Release the jobs of the named processing order for processing (must be in status planned)
           parameters:
@@ -330,6 +347,10 @@ commands:
           subcommands:
             - name: show
               description: Show all processor classes for the current mission or a named one
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
                 - name: className
                   type: string
@@ -385,6 +406,10 @@ commands:
                   description: The name of the processor classes to update (mandatory if not read from file)
         - name: show
           description: Show all processor versions for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -461,6 +486,10 @@ commands:
           subcommands:
             - name: show
               description: Show all configured processor for the current mission or only the ones identified
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
                 - name: className
                   type: string
@@ -482,6 +511,10 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor
                 - name: className
                   type: string
                   optional: true
@@ -515,14 +548,10 @@ commands:
                   type: string
                   optional: true
                   description: The class name of the processor (mandatory if not read from file)
-                - name: processorVersion
+                - name: configuredProcessorIdentifier
                   type: string
                   optional: true
-                  description: The version of the processor (mandatory if not read from file)
-                - name: configurationVersion
-                  type: string
-                  optional: true
-                  description: The version of the configuration (mandatory if not read from file)
+                  description: The identifier of the configured processor
                 - name: attribute
                   type: string
                   optional: true
@@ -534,17 +563,19 @@ commands:
                 - name: className
                   type: string
                   description: The class name of the processor
-                - name: processorVersion
+                - name: configuredProcessorIdentifier
                   type: string
-                  description: The version of the processor
-                - name: configurationVersion
-                  type: string
-                  description: The version of the configuration
+                  optional: true
+                  description: The identifier of the configured processor
     - name: configuration
       description: Commands for managing configurations
       subcommands:
         - name: show
           description: Show all configurations for the current mission and processor class or a named one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -623,6 +654,10 @@ commands:
       subcommands:
         - name: show
           description: Show all product classes for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -755,6 +790,9 @@ commands:
             - name: to
               type: datetime
               description: Upper bound of sensing start time
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string

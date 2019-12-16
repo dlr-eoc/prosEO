@@ -19,6 +19,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
@@ -31,7 +32,7 @@ import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.backend.UserManager;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -74,6 +75,10 @@ public class OrderCommandRunner {
 	private static final String PROMPT_PRODUCT_CLASSES = "Product classes to deliver (comma-separated list; empty field cancels): ";
 
 	private static final String URI_PATH_ORDERS = "/orders";
+	private static final String URI_PATH_ORDER_PLAN = "/orders/plan";
+	private static final String URI_PATH_ORDER_RELEASE = "/orders/release";
+	private static final String URI_PATH_ORDER_SUSPEND = "/orders/suspend";
+	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
 	
 	private static final String ORDERS = "orders";
 	
@@ -81,7 +86,7 @@ public class OrderCommandRunner {
 
 	/** The user manager used by all command runners */
 	@Autowired
-	private UserManager userManager;
+	private LoginManager loginManager;
 	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
@@ -114,9 +119,16 @@ public class OrderCommandRunner {
 		
 		/* Retrieve the order using Order Manager service */
 		try {
-			return serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+			List<?> resultList = null;
+			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
 					URI_PATH_ORDERS + "?identifier=" + orderIdentifier,
-					RestOrder.class, userManager.getUser(), userManager.getPassword());
+					List.class, loginManager.getUser(), loginManager.getPassword());
+			if (resultList.isEmpty()) {
+				throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+			} else {
+				ObjectMapper mapper = new ObjectMapper();
+				return mapper.convertValue(resultList.get(0), RestOrder.class);
+			}
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -125,7 +137,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, orderIdentifier);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -193,7 +205,7 @@ public class OrderCommandRunner {
 		
 		/* Set missing attributes to default values where possible */
 		if (null == restOrder.getMissionCode() || 0 == restOrder.getMissionCode().length()) {
-			restOrder.setMissionCode(userManager.getMission());
+			restOrder.setMissionCode(loginManager.getMission());
 		}
 		if (null == restOrder.getOrderState() || 0 == restOrder.getOrderState().length()) {
 			restOrder.setOrderState(OrderState.INITIAL.toString());
@@ -343,7 +355,7 @@ public class OrderCommandRunner {
 		/* Create order */
 		try {
 			restOrder = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS, 
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -352,7 +364,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -378,8 +390,18 @@ public class OrderCommandRunner {
 	private void showOrder(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showOrder({})", (null == showCommand ? "null" : showCommand.getName()));
 		
+		/* Check command options */
+		String orderOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				orderOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_ORDERS + "?mission=" + userManager.getMission();
+		String requestURI = URI_PATH_ORDERS + "?mission=" + loginManager.getMission();
 		
 		/* Check whether order ID is given (overrides --from and --to options) or --from and/or --to parameters are set */
 		if (showCommand.getParameters().isEmpty()) {
@@ -398,7 +420,7 @@ public class OrderCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					requestURI, List.class, userManager.getUser(), userManager.getPassword());
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -407,7 +429,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_NO_ORDERS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -420,12 +442,14 @@ public class OrderCommandRunner {
 		}
 		
 		/* Display the order(s) found */
-		ObjectMapper mapper = new ObjectMapper();
-		for (Object result: resultList) {
-			RestOrder restOrder = mapper.convertValue(result, RestOrder.class);
-			
-			// TODO Format output
-			System.out.println(restOrder);
+		try {
+			CLIUtil.printObject(System.out, resultList, orderOutputFormat);
+		} catch (IllegalArgumentException e) {
+			System.err.println(e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
 		}
 	}
 	
@@ -491,12 +515,19 @@ public class OrderCommandRunner {
 			if (null != updatedOrder.getId() && 0 != updatedOrder.getId().longValue()) {
 				// Read order by database ID
 				restOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + updatedOrder.getId(),
-						RestOrder.class, userManager.getUser(), userManager.getPassword());
+						RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 			} else if (null != updatedOrder.getIdentifier() && 0 != updatedOrder.getIdentifier().length()) {
 				// Read order by user-defined identifier
-				restOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+				List<?> resultList = null;
+				resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
 						URI_PATH_ORDERS + "?identifier=" + updatedOrder.getIdentifier(),
-						RestOrder.class, userManager.getUser(), userManager.getPassword());
+						List.class, loginManager.getUser(), loginManager.getPassword());
+				if (resultList.isEmpty()) {
+					throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+				} else {
+					ObjectMapper mapper = new ObjectMapper();
+					restOrder =  mapper.convertValue(resultList.get(0), RestOrder.class);
+				}
 			} else {
 				// No identifying value given
 				System.err.println(uiMsg(MSG_ID_NO_IDENTIFIER_GIVEN));
@@ -510,7 +541,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -583,7 +614,7 @@ public class OrderCommandRunner {
 		/* Update order using Order Manager service */
 		try {
 			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -595,7 +626,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -636,7 +667,7 @@ public class OrderCommandRunner {
 		/* Delete order using Order Manager service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-						userManager.getUser(), userManager.getPassword());
+						loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -645,7 +676,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -687,7 +718,7 @@ public class OrderCommandRunner {
 		restOrder.setOrderState(OrderState.APPROVED.toString());
 		try {
 			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -699,7 +730,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -712,7 +743,7 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_APPROVED, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -730,21 +761,35 @@ public class OrderCommandRunner {
 		if (null == restOrder)
 			return;
 		
+		/* Check command options */
+		String orderOutputFormat = "NONE";
+		for (ParsedOption option: planCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				orderOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Get the processing facility name from the second parameter */
+		if (2 > planCommand.getParameters().size()) {
+			System.err.println(uiMsg(MSG_ID_FACILITY_MISSING));
+			return;
+		}
+		String processingFacility = planCommand.getParameters().get(1).getValue();
+		
 		/* Check whether (database) order is in state "APPROVED", otherwise planning not allowed */
 		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
-					CMD_CANCEL, restOrder.getOrderState(), OrderState.APPROVED.toString()));
+					CMD_PLAN, restOrder.getOrderState(), OrderState.APPROVED.toString()));
 			return;
 		}
 		
 		/* Plan jobs and job steps using Production Planner service */
-		// TODO
-		
-		// --- Dummy: Just advance the state ---
-		restOrder.setOrderState(OrderState.PLANNED.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+			String requestUrl = URI_PATH_ORDER_PLAN + "/" + restOrder.getId() + "?facility=" + processingFacility;
+			restOrder = serviceConnection.putToService(serviceConfig.getProductionPlannerUrl(), requestUrl,
+					RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -756,7 +801,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -768,17 +813,23 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		/* Report success and list jobs and job steps (if user wants to see them) */
+		String message = uiMsg(MSG_ID_ORDER_PLANNED, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
-		// --- END DUMMY ---
 		
-		/* Report success and list jobs and job steps (if user wants to see them) */
-
-		// TODO
-		
-		System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, planCommand.getName()));
+		if (!"NONE".equals(orderOutputFormat)) {
+			// TODO Read jobs and job steps from Production Planner (? Order Manager?)
+//			try {
+//				CLIUtil.printObject(System.out, restOrder, orderOutputFormat);
+//			} catch (IllegalArgumentException e) {
+//				System.err.println(e.getMessage());
+//				return;
+//			} catch (IOException e) {
+//				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+//				return;
+//			} 
+		}
 	}
 	
 	/**
@@ -801,14 +852,11 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Release jobs using Production Planner service */
-		// TODO
-		
-		/* Update order state to "APPROVED" using Order Manager service */
+		/* Release jobs and update order state to "RELEASED" using Production Planner service */
 		restOrder.setOrderState(OrderState.RELEASED.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_RELEASE + "/" + restOrder.getId(),
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -820,7 +868,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -833,7 +881,7 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_RELEASED, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -860,13 +908,9 @@ public class OrderCommandRunner {
 		
 		
 		/* Tell Production Planner service to suspend order processing, changing order state to "PLANNED" */
-		// TODO
-
-		// --- Dummy: Just advance the state ---
-		restOrder.setOrderState(OrderState.PLANNED.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_SUSPEND + "/" + restOrder.getId(),
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -878,7 +922,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -891,16 +935,9 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_SUSPENDED, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
-		// --- END DUMMY ---
-		
-		/* Report success */
-
-		// TODO
-		
-		System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, suspendCommand.getName()));
 	}
 	
 	/**
@@ -934,11 +971,10 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Update order state to "FAILED" using Order Manager service */
-		restOrder.setOrderState(OrderState.FAILED.toString());
+		/* Tell Production Planner to cancel the order, setting its state to "FAILED" */
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_CANCEL + "/" + restOrder.getId(),
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -950,7 +986,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -963,7 +999,7 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_CANCELLED, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -992,7 +1028,7 @@ public class OrderCommandRunner {
 		restOrder.setOrderState(OrderState.CLOSED.toString());
 		try {
 			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -1004,7 +1040,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1049,7 +1085,7 @@ public class OrderCommandRunner {
 		restOrder.setOrderState(OrderState.INITIAL.toString());
 		try {
 			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
-					restOrder, RestOrder.class, userManager.getUser(), userManager.getPassword());
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
@@ -1061,7 +1097,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, userManager.getUser(), ORDERS, userManager.getMission());
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1088,7 +1124,7 @@ public class OrderCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeCommand({})", (null == command ? "null" : command.getName()));
 		
 		/* Check that user is logged in */
-		if (null == userManager.getUser()) {
+		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 		}
 		
