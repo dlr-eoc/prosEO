@@ -17,7 +17,7 @@ logging:
 server.tomcat.accesslog.enabled: true                
 proseo:
     productionPlanner:
-        url: http://192.168.20.204:8080/proseo/planner
+        url: http://192.168.20.155:8080/proseo/planner
         user: s5p-proseo
         password: sieb37.Schlaefer
         cyclewaittime: 1000
@@ -39,14 +39,14 @@ proseo:
     s3:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://minio:9000
+      s3EndPoint: http://192.168.20.159:9000
       s3Region: eu-de
       s3DefaultBucket: proseo-data-001
       s3MaxNumberOfBuckets: 50
     alluxio:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
-      alluxioUnderFsS3BucketEndPoint: http://minio:9000
+      alluxioUnderFsS3BucketEndPoint: http://192.168.20.159:9000
       alluxioUnderFsMaxPrefixes: 500
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
     joborder:

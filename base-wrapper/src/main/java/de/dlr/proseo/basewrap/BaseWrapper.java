@@ -74,7 +74,7 @@ public class BaseWrapper {
 
 	/** Error messages */
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
-	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.01 with JobOrder file {}";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.03 with JobOrder file {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
 
@@ -893,7 +893,7 @@ public class BaseWrapper {
 		// <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
 		// queryParam status is set by wrapper
 		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
-		if(callback != null) logger.info("... planner response is {}", callback.gethttpResponse());
+		if(callback != null) logger.info("... planner response is {} ({})", callback.gethttpResponse(), callback.gethttpCode());
 		else return null;
 
 		return callback;
@@ -935,7 +935,7 @@ public class BaseWrapper {
 
 		/** STEP [4][5] Provide the JobOrder file from the invocation arguments */
 
-		logger.info(MSG_STARTING_BASE_WRAPPER, ENV_JOBORDER_FILE);
+		logger.info(MSG_STARTING_BASE_WRAPPER,  ENV_JOBORDER_FILE);
 		Boolean check = checkEnv();
 		if (!check) {
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);

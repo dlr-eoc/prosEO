@@ -56,7 +56,7 @@ public class SampleProcessor {
 	private static final String MSG_LEAVING_SAMPLE_PROCESSOR = "Leaving sample-processor with exit code {} ({})";
 	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V00.00.01 with JobOrder file {}";
 	private static final String MSG_INVALID_NUMBER_OF_ARGUMENTS = "Invalid number of invocation arguments: {} (only 1 allowed)";
-	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILES = "Invalid number of output files: {} (1 or 2 expected)";
+	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILES = "Invalid number of output files: {} (1 - 10 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES = "Invalid number of output file types: {} (exactly 1 expected)";
 	private static final String MSG_INVALID_OUTPUT_FILE_TYPE = "Invalid output file type: {}";
 	private static final String MSG_INVALID_NUMBER_OF_INPUT_FILES = "Invalid number of input files for output file type {}: {} (exactly 3 expected)";
@@ -314,12 +314,12 @@ public class SampleProcessor {
 	private boolean checkConfiguration(Document jobOrderDoc) {
 		// Get the output product type
 		NodeList outputFiles = jobOrderDoc.getElementsByTagName(JOF_TAG_OUTPUT);
-		if (1 > outputFiles.getLength() || 2 < outputFiles.getLength()) {
+		if (1 > outputFiles.getLength() || 10 < outputFiles.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_OUTPUT_FILES, outputFiles.getLength());
 			return false;
 		}
 		NodeList outputFileTypes = ((Element) outputFiles.item(0)).getElementsByTagName(JOF_TAG_FILE_TYPE);
-		if (1 != outputFileTypes.getLength()) {
+		if (outputFileTypes.getLength() < 1) {
 			logger.error(MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES, outputFileTypes.getLength());
 			return false;
 		}
@@ -352,12 +352,12 @@ public class SampleProcessor {
 	private SampleProduct readInputProduct(Document jobOrderDoc) {
 		// Determine the output file type from the Job Order Document
 		NodeList outputFiles = jobOrderDoc.getElementsByTagName(JOF_TAG_OUTPUT);
-		if (1 > outputFiles.getLength() || 2 < outputFiles.getLength()) {
+		if (1 > outputFiles.getLength() || 10 < outputFiles.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_OUTPUT_FILES, outputFiles.getLength());
 			return null;
 		}
 		NodeList outputFileTypes = ((Element) outputFiles.item(0)).getElementsByTagName(JOF_TAG_FILE_TYPE);
-		if (1 != outputFileTypes.getLength()) {
+		if (outputFileTypes.getLength() < 1) {
 			logger.error(MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES, outputFileTypes.getLength());
 			return null;
 		}
