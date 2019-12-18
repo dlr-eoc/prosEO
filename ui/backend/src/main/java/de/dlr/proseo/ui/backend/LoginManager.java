@@ -1,9 +1,11 @@
 /**
- * BackendUserManager.java
+ * LoginManager.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.ui.backend;
+
+import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Management of user login and logout (thread safe)
@@ -19,28 +22,9 @@ import org.springframework.web.client.RestClientException;
  *
  */
 @Component
-public class BackendUserManager {
+public class LoginManager {
 
-	/* Message ID constants */
-	private static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
-	private static final int MSG_ID_LOGGED_IN = 2823;
-	private static final int MSG_ID_LOGIN_FAILED = 2824;
-	private static final int MSG_ID_LOGGED_OUT = 2825;
-	private static final int MSG_ID_LOGIN_CANCELLED = 2826;
-	private static final int MSG_ID_MISSION_NOT_FOUND = 2827;
-	private static final int MSG_ID_NOT_AUTHORIZED = 2828;
-
-	/* Message string constants */
-	private static final String MSG_HTTP_CONNECTION_FAILURE = "(E%d) HTTP connection failure (cause: %s)";
-	private static final String MSG_MISSION_NOT_FOUND = "(E%d) Mission %s not found";
-	private static final String MSG_LOGIN_FAILED = "(E%d) Login for user %s failed";
-	private static final String MSG_NOT_AUTHORIZED = "(E%d) User %s not authorized for mission %s";
-
-	private static final String MSG_LOGGED_IN = "(I%d) User %s logged in";
-	private static final String MSG_LOGGED_OUT = "(I%d) User %s logged out";
-	private static final String MSG_LOGIN_CANCELLED = "(I%d) No username given, login cancelled";
-
-	/* Other string constants */
+	/* General string constants */
 	private static final String PROSEO_USERNAME_PROMPT = "Username: ";
 	private static final String PROSEO_PASSWORD_PROMPT = "Password for user %s: ";
 	
@@ -53,14 +37,14 @@ public class BackendUserManager {
 
 	/** The configuration object for the prosEO User Interface */
 	@Autowired
-	private BackendConfiguration backendConfig;
+	private ServiceConfiguration backendConfig;
 	
 	/** The connector service to the prosEO backend services prosEO */
 	@Autowired
-	private BackendConnectionService backendConnector;
+	private ServiceConnection backendConnector;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(BackendUserManager.class);
+	private static Logger logger = LoggerFactory.getLogger(LoginManager.class);
 	
 	/**
 	 * Test whether the given user can connect to the Processor Manager with the given password
@@ -78,20 +62,23 @@ public class BackendUserManager {
 		// Attempt connection to Processor Manager (as a substitute)
 		try {
 			backendConnector.getFromService(backendConfig.getProcessorManagerUrl(), "/processorclasses?mission=" + mission, Object.class, username, password);
-		} catch (HttpClientErrorException.NotFound e) {
-			String message = String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission);
-			logger.error(message);
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, mission);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
 			System.err.println(message);
 			return false;
-		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED, MSG_ID_NOT_AUTHORIZED, mission);
-			logger.error(message);
-			System.err.println(message);
-			return false;
-		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_CONNECTION_FAILURE, MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage());
-			logger.error(message, e);
-			System.err.println(message);
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage()));
 			return false;
 		}
 		
@@ -115,7 +102,7 @@ public class BackendUserManager {
 			username = new String(System.console().readLine());
 		}
 		if (null == username || "".equals(username)) {
-			System.err.println(String.format(MSG_LOGIN_CANCELLED, MSG_ID_LOGIN_CANCELLED));
+			System.err.println(uiMsg(MSG_ID_LOGIN_CANCELLED));
 		}
 		
 		// Ask for password, if not set
@@ -131,14 +118,14 @@ public class BackendUserManager {
 			this.password.set(password);
 			this.mission.set(mission);
 			// Report success
-			String message = String.format(MSG_LOGGED_IN, MSG_ID_LOGGED_IN, username);
+			String message = uiMsg(MSG_ID_LOGGED_IN, username);
 			logger.info(message);
 			System.out.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return true;
 		} else {
 			// Report failure
-			String message = String.format(MSG_LOGIN_FAILED, MSG_ID_LOGIN_FAILED, username);
+			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
 			logger.error(message);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
@@ -159,7 +146,7 @@ public class BackendUserManager {
 		password.remove();
 		mission.remove();
 		
-		String message = String.format(MSG_LOGGED_OUT, MSG_ID_LOGGED_OUT, oldUser);
+		String message = uiMsg(MSG_ID_LOGGED_OUT, oldUser);
 		logger.info(message);
 		System.out.println(message);
 		if (logger.isTraceEnabled()) logger.trace("<<< doLogout()");

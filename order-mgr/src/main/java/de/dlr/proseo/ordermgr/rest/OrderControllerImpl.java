@@ -76,7 +76,6 @@ public class OrderControllerImpl implements OrderController {
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public ResponseEntity<RestOrder> createOrder(RestOrder order) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
@@ -101,7 +100,7 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom, executionTimeTo);
 		
 		try {
 			return new ResponseEntity<>(

@@ -5,8 +5,12 @@
  */
 package de.dlr.proseo.ui.cli;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.Arrays;
@@ -14,9 +18,11 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
@@ -30,21 +36,12 @@ import java.util.List;
  */
 public class CLIUtil {
 
-	/* Message ID constants */
-	private static final int MSG_ID_INVALID_FILE_TYPE = 2990;
-	private static final int MSG_ID_INVALID_FILE_STRUCTURE = 2991;
-	private static final int MSG_ID_INVALID_FILE_SYNTAX = 2992;
-	private static final int MSG_ID_INVALID_ATTRIBUTE_NAME = 2993;
-	private static final int MSG_ID_INVALID_ATTRIBUTE_TYPE = 2994;
-	private static final int MSG_ID_REFLECTION_EXCEPTION = 2995;
-	
-	/* Message string constants */
-	private static final String MSG_INVALID_FILE_TYPE = "(E%d) Invalid order file type %s";
-	private static final String MSG_INVALID_FILE_STRUCTURE = "(E%d) %s content of order file %s invalid for order generation (cause: %s)";
-	private static final String MSG_INVALID_FILE_SYNTAX = "(E%d) Order file %s contains invalid %s content (cause: %s)";
-	private static final String MSG_INVALID_ATTRIBUTE_NAME = "(E%d) Invalid attribute name %s";
-	private static final String MSG_INVALID_ATTRIBUTE_TYPE = "(E%d) Attribute %s cannot be converted to type %s";
-	private static final String MSG_REFLECTION_EXCEPTION = "(E%d) Reflection exception setting attribute %s (cause: %s)";
+	/** YAML file format */
+	public static final String FILE_FORMAT_YAML = "YAML";
+	/** JSON file format */
+	public static final String FILE_FORMAT_JSON = "JSON";
+	/** XML file format */
+	public static final String FILE_FORMAT_XML = "XML";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
@@ -66,17 +63,17 @@ public class CLIUtil {
 		
 		ObjectMapper mapper = null;
 		switch(fileFormat.toUpperCase()) {
-		case "JSON":
+		case FILE_FORMAT_JSON:
 			mapper = new ObjectMapper();
 			break;
-		case "XML":
+		case FILE_FORMAT_XML:
 			mapper = new XmlMapper();
 			break;
-		case "YAML":
+		case FILE_FORMAT_YAML:
 			mapper = new ObjectMapper(new YAMLFactory());
 			break;
 		default:
-			String message = String.format(MSG_INVALID_FILE_TYPE, MSG_ID_INVALID_FILE_TYPE, fileFormat);
+			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
@@ -84,17 +81,60 @@ public class CLIUtil {
 		try {
 			return mapper.readValue(objectFile, clazz);
 		} catch (JsonParseException e) {
-			String message = String.format(MSG_INVALID_FILE_SYNTAX, MSG_ID_INVALID_FILE_SYNTAX,
-					objectFile.toString(), fileFormat, e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_FILE_SYNTAX, objectFile.toString(), fileFormat, e.getMessage());
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (JsonMappingException e) {
-			String message = String.format(MSG_INVALID_FILE_STRUCTURE, MSG_ID_INVALID_FILE_STRUCTURE,
-					fileFormat, objectFile.toString(), e.getMessage());
+			String message = uiMsg(MSG_ID_INVALID_FILE_STRUCTURE, fileFormat, objectFile.toString(), e.getMessage());
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
-			logger.error(e.getMessage());
+			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			throw e;
+		}
+	}
+	
+	/**
+	 * Print the given object to the given output stream according to the requested file format
+	 * @param out the output stream to print to
+	 * @param object the object to print
+	 * @param fileFormat the file format requested (one of JSON, XML, YAML)
+	 * @throws IllegalArgumentException if the file format is not one of the above, or if a formatting error occurs during printing
+	 * @throws IOException if an I/O error occurs during printing
+	 */
+	public static void printObject(PrintStream out, Object object, String fileFormat) throws IllegalArgumentException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> printObject({}, object, {})", out, object, fileFormat);
+		
+		ObjectMapper mapper = null;
+		switch(fileFormat.toUpperCase()) {
+		case FILE_FORMAT_JSON:
+			mapper = new ObjectMapper();
+			break;
+		case FILE_FORMAT_XML:
+			mapper = new XmlMapper();
+			break;
+		case FILE_FORMAT_YAML:
+			mapper = new ObjectMapper(new YAMLFactory());
+			break;
+		default:
+			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
+			logger.error(message);
+			throw new IllegalArgumentException(message);
+		}
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		
+		try {
+			out.println(mapper.writeValueAsString(object));
+		} catch (JsonGenerationException e) {
+			String message = uiMsg(MSG_ID_GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
+			logger.error(message);
+			throw new IllegalArgumentException(message, e);
+		} catch (JsonMappingException e) {
+			String message = uiMsg(MSG_ID_MAPPING_EXCEPTION, object, fileFormat, e.getMessage());
+			logger.error(message);
+			throw new IllegalArgumentException(message, e);
+		} catch (IOException e) {
+			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			throw e;
 		}
 	}
@@ -116,7 +156,7 @@ public class CLIUtil {
 		try {
 			attributeField = restObject.getClass().getDeclaredField(paramParts[0]);
 		} catch (Exception e) {
-			String message = (String.format(MSG_INVALID_ATTRIBUTE_NAME, MSG_ID_INVALID_ATTRIBUTE_NAME, paramParts[0]));
+			String message = (uiMsg(MSG_ID_INVALID_ATTRIBUTE_NAME, paramParts[0]));
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
@@ -139,14 +179,12 @@ public class CLIUtil {
 				attributeField.set(restObject, paramParts[1]);
 			} else {
 				// Attribute type not supported
-				String message = String.format(MSG_INVALID_ATTRIBUTE_TYPE, MSG_ID_INVALID_ATTRIBUTE_TYPE,
-						paramParts[0], attributeField.getType().toString());
+				String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
 				logger.error(message);
 				throw new ClassCastException(message);
 			}
 		} catch (Exception e) {
-			String message = String.format(MSG_REFLECTION_EXCEPTION, MSG_ID_REFLECTION_EXCEPTION,
-					paramParts[0], e.getMessage());
+			String message = uiMsg(MSG_ID_REFLECTION_EXCEPTION, paramParts[0], e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		}

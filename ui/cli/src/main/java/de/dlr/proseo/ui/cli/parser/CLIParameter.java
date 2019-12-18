@@ -5,18 +5,14 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 /**
  * Class representing a CLI command parameter
  * 
  * @author Dr. Thomas Bassler
  */
 public class CLIParameter {
-
-	/* Message ID constants */
-	private static final int MSG_ID_ILLEGAL_PARAMETER_TYPE = 2901;
-
-	/* Message strings */
-	private static final String MSG_ILLEGAL_PARAMETER_TYPE = "(E%d) Illegal parameter type %s, expected one of %s";
 
 	/** Parameter name */
 	private String name = "";
@@ -54,8 +50,7 @@ public class CLIParameter {
 		if (CLISyntax.allowedTypes.contains(type)) {
 			this.type = type;
 		} else {
-			throw new IllegalArgumentException(String.format(MSG_ILLEGAL_PARAMETER_TYPE,
-					MSG_ID_ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
+			throw new IllegalArgumentException(uiMsg(MSG_ID_ILLEGAL_PARAMETER_TYPE, type, CLISyntax.allowedTypes.toString()));
 		}
 	}
 	/**

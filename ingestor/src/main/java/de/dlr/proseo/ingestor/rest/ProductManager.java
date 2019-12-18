@@ -298,7 +298,7 @@ public class ProductManager {
 		modelProduct.setProductClass(modelProductClass);
 		
 		// Add component products
-		if (!product.getComponentProductIds().isEmpty()) {
+		if (null != product.getComponentProductIds() && !product.getComponentProductIds().isEmpty()) {
 			Set<ProductClass> allowedComponentClasses = new HashSet<>();
 			for (SimpleSelectionRule rule : modelProductClass.getRequiredSelectionRules()) {
 				allowedComponentClasses.add(rule.getSourceProductClass());
@@ -528,7 +528,7 @@ public class ProductManager {
 		}
 		
 		// Check for added component products
-		if (!product.getComponentProductIds().isEmpty()) {
+		if (null != product.getComponentProductIds() && !product.getComponentProductIds().isEmpty()) {
 			Set<ProductClass> allowedComponentClasses = new HashSet<>();
 			for (SimpleSelectionRule rule : modelProduct.getProductClass().getRequiredSelectionRules()) {
 				allowedComponentClasses.add(rule.getSourceProductClass());

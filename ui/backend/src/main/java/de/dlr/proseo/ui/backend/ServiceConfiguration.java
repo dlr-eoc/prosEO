@@ -1,5 +1,5 @@
 /**
- * BackendConfiguration.java
+ * ServiceConfiguration.java
  * 
  * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
-public class BackendConfiguration {
+public class ServiceConfiguration {
 	
 	/** The user name to use for prosEO component logins */
 	@Value("${proseo.user}")

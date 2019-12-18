@@ -6,11 +6,13 @@
 
 package de.dlr.proseo.ui.cli;
 
-import java.io.BufferedReader;
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import de.dlr.proseo.ui.backend.BackendUserManager;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
@@ -43,18 +45,8 @@ public class CommandLineInterface implements CommandLineRunner {
 
 	private static final String CMD_EXIT = "exit";
 	/* Message ID constants */
-	private static final int MSG_ID_SYNTAX_FILE_NOT_FOUND = 2920;
-	private static final int MSG_ID_SYNTAX_FILE_ERROR = 2921;
-	private static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
-	private static final int MSG_ID_COMMAND_NAME_NULL = 2923;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String MSG_SYNTAX_FILE_NOT_FOUND = "(E%d) Syntax file %s not found";
-	private static final String MSG_SYNTAX_FILE_ERROR = "(E%d) Parsing error in syntax file %s (cause: %s)";
-	private static final String MSG_COMMAND_LINE_PROMPT_SUPPRESSED = "(I%d) Command line prompt suppressed by proseo.cli.start parameter";
-	private static final String MSG_COMMAND_NAME_NULL = "(E%d) Command name must not be null";
-	private static final String MSG_NOT_IMPLEMENTED = "(E%d) Command %s not implemented";
 	
 	/* Other string constants */
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
@@ -79,7 +71,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/** The user manager used by all command runners */
 	@Autowired
-	private BackendUserManager backendUserMgr;
+	private LoginManager loginManager;
 	
 	/* Classes for the various top-level commands */
 	@Autowired
@@ -103,7 +95,7 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check argument
 		if (null == command) {
-			throw new NullPointerException(String.format(MSG_COMMAND_NAME_NULL, MSG_ID_COMMAND_NAME_NULL));
+			throw new NullPointerException(uiMsg(MSG_ID_COMMAND_NAME_NULL));
 		}
 		
 		// If help is requested, show help and skip execution
@@ -133,10 +125,10 @@ public class CommandLineInterface implements CommandLineRunner {
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();
 				}
-				backendUserMgr.doLogin(username, password, mission);
+				loginManager.doLogin(username, password, mission);
 				break;
 			case CMD_LOGOUT:
-				backendUserMgr.doLogout();
+				loginManager.doLogout();
 				break;
 			case CMD_HELP:
 				parser.getSyntax().printHelp(System.out);
@@ -156,7 +148,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			case CMD_ORBIT:
 			case CMD_PRODUCT_CLASS:
 			default:
-				String message = String.format(MSG_NOT_IMPLEMENTED, MSG_ID_NOT_IMPLEMENTED, command.getName());
+				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());
 				System.err.println(message);
 				break;
 			}
@@ -179,10 +171,10 @@ public class CommandLineInterface implements CommandLineRunner {
 		try {
 			parser.loadSyntax();
 		} catch (FileNotFoundException e) {
-			logger.error(String.format(MSG_SYNTAX_FILE_NOT_FOUND, MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
+			logger.error(uiMsg(MSG_ID_SYNTAX_FILE_NOT_FOUND, config.getCliSyntaxFile()));
 			throw e;
 		} catch (YAMLException e) {
-			logger.error(String.format(MSG_SYNTAX_FILE_ERROR, MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile(), e.getMessage()));
+			logger.error(uiMsg(MSG_ID_SYNTAX_FILE_ERROR, config.getCliSyntaxFile(), e.getMessage()));
 			throw e;
 		}
 		
@@ -196,18 +188,22 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// Check whether the command line prompt shall be started
 		if (!config.getCliStart()) {
-			logger.info(String.format(MSG_COMMAND_LINE_PROMPT_SUPPRESSED, MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
+			logger.info(uiMsg(MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
 			if (logger.isTraceEnabled()) logger.trace("<<< run()");
 			return;
 		}
 		
 		// If no command is given, enter command prompt loop
-		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+		LineReader userInput = LineReaderBuilder.builder().build();
 		while (true) {
-			System.out.print(PROSEO_COMMAND_PROMPT);
 			ParsedCommand command;
 			try {
-				command = parser.parse(userInput.readLine());
+				String commandLine = userInput.readLine(PROSEO_COMMAND_PROMPT);
+				if (commandLine.isBlank()) {
+					// Silently ignore empty input lines
+					continue;
+				}
+				command = parser.parse(commandLine);
 			} catch (ParseException e) {
 				System.err.println(e.getMessage());
 				continue;

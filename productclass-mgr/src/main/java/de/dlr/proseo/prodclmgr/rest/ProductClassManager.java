@@ -206,9 +206,9 @@ public class ProductClassManager {
 	}
 	
 	/**
-	 * Remove the enclosing product class from the given product class
+	 * Remove the enclosing product class from the given product class (and the product class from the enclosing class)
 	 * 
-	 * @param productClass the product class to remove the enclosing class from
+	 * @param productClass the product class to remove the enclosing class from (must not be transient)
 	 */
 	private void removeEnclosingClass(ProductClass productClass) {
 		ProductClass enclosingClass = productClass.getEnclosingClass();
@@ -220,7 +220,7 @@ public class ProductClassManager {
 	/**
 	 * Set the enclosing class of the given product class to the class with the given mission code and product type
 	 * 
-	 * @param productClass the product class to update
+	 * @param productClass the product class to update (must not be transient)
 	 * @param missionCode the mission code of the enclosing product class
 	 * @param productType the product type of the enclosing product class
 	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist
@@ -235,6 +235,39 @@ public class ProductClassManager {
 		enclosingClass.getComponentClasses().add(productClass);
 		enclosingClass = RepositoryService.getProductClassRepository().save(enclosingClass);
 		productClass.setEnclosingClass(enclosingClass);
+	}
+
+	/**
+	 * Remove the processor class from the given product class (and the product class from the processor class)
+	 * 
+	 * @param productClass
+	 */
+	private void removeProcessorClass(ProductClass productClass) {
+		ProcessorClass processorClass = productClass.getProcessorClass();
+		processorClass.getProductClasses().remove(productClass);
+		RepositoryService.getProcessorClassRepository().save(processorClass);
+		productClass.setProcessorClass(null);
+	}
+
+	/**
+	 * Set the processor class, which can generate products of the given product class
+	 * 
+	 * @param modelProductClass the product class to update (must not be transient)
+	 * @param missionCode the mission code of the processor class
+	 * @param processorName the processor (class) name
+	 * @throws IllegalArgumentException if a processor class with the given mission code and processor name does not exist
+	 */
+	private void setProcessorClass(ProductClass modelProductClass, String missionCode, String processorName)
+			throws IllegalArgumentException {
+		ProcessorClass processorClass = RepositoryService.getProcessorClassRepository()
+				.findByMissionCodeAndProcessorName(missionCode, processorName);
+		if (null == processorClass) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS,
+					processorName, missionCode));
+		}
+		processorClass.getProductClasses().add(modelProductClass);
+		processorClass = RepositoryService.getProcessorClassRepository().save(processorClass);
+		modelProductClass.setProcessorClass(processorClass);
 	}
 
     /**
@@ -353,12 +386,7 @@ public class ProductClassManager {
 		}
 		
 		if (null != productClass.getProcessorClass()) {
-			modelProductClass.setProcessorClass(RepositoryService.getProcessorClassRepository()
-					.findByMissionCodeAndProcessorName(mission.getCode(), productClass.getProcessorClass()));
-			if (null == modelProductClass.getProcessorClass()) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR_CLASS, MSG_ID_INVALID_PROCESSOR_CLASS,
-						productClass.getProcessorClass(), mission.getCode()));
-			}
+			setProcessorClass(modelProductClass, mission.getCode(), productClass.getProcessorClass());
 		}
 		
 		for (RestSimpleSelectionRule rule: productClass.getSelectionRule()) {
@@ -506,32 +534,54 @@ public class ProductClassManager {
 			productClassChanged = true;
 			modelProductClass.setMissionType(changedProductClass.getMissionType());
 		}
-		if (!modelProductClass.getDescription().equals(changedProductClass.getDescription())) {
+		if (null == modelProductClass.getDescription() && null != changedProductClass.getDescription()
+				|| null != modelProductClass.getDescription() && !modelProductClass.getDescription().equals(changedProductClass.getDescription())) {
 			productClassChanged = true;
 			modelProductClass.setDescription(changedProductClass.getDescription());
 		}
 		
+		// Check the processor class
+		if (null == productClass.getProcessorClass() || 0 == productClass.getProcessorClass().length()) {
+			if (null != modelProductClass.getProcessorClass()) {
+				// Associated processor class removed
+				productClassChanged = true;
+				removeProcessorClass(modelProductClass);
+			}
+		} else if (null == modelProductClass.getProcessorClass()) {
+			// New associated processor class added
+			productClassChanged = true;
+			setProcessorClass(modelProductClass, productClass.getMissionCode(), productClass.getProcessorClass());
+		} else if (!modelProductClass.getProcessorClass().getProcessorName().equals(productClass.getProcessorClass())) {
+			// Associated processor class changed - remove product class from old processor class
+			productClassChanged = true;
+			removeProcessorClass(modelProductClass);
+			// Add new associated processor class
+			setProcessorClass(modelProductClass, productClass.getMissionCode(), productClass.getProcessorClass());
+		}
+		
 		// Check for new component product classes
 		Set<ProductClass> newComponentClasses = new HashSet<>();
-		COMPONENT_CLASSES:
-		for (String changedComponentClass: productClass.getComponentClasses()) {
-			for (ProductClass modelComponentClass: modelProductClass.getComponentClasses()) {
-				if (modelComponentClass.getProductType().equals(changedComponentClass)) {
-					// Already present
-					newComponentClasses.add(modelComponentClass);
-					continue COMPONENT_CLASSES;
+		if (null != productClass.getComponentClasses()) {
+			COMPONENT_CLASSES:
+			for (String changedComponentClass: productClass.getComponentClasses()) {
+				for (ProductClass modelComponentClass: modelProductClass.getComponentClasses()) {
+					if (modelComponentClass.getProductType().equals(changedComponentClass)) {
+						// Already present
+						newComponentClasses.add(modelComponentClass);
+						continue COMPONENT_CLASSES;
+					}
 				}
+				// New component class
+				productClassChanged = true;
+				ProductClass newComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(productClass.getMissionCode(), changedComponentClass);
+				if (null == newComponentClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
+							changedComponentClass, productClass.getMissionCode()));
+				}
+				newComponentClass.setEnclosingClass(modelProductClass);
+				newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
+				newComponentClasses.add(newComponentClass);
 			}
-			// New component class
-			productClassChanged = true;
-			ProductClass newComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(productClass.getMissionCode(), changedComponentClass);
-			if (null == newComponentClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
-						changedComponentClass, productClass.getMissionCode()));
-			}
-			newComponentClass.setEnclosingClass(modelProductClass);
-			newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
-			newComponentClasses.add(newComponentClass);
 		}
 		// Check for removed component product classes
 		for (ProductClass modelComponentClass: modelProductClass.getComponentClasses()) {

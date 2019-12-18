@@ -46,8 +46,9 @@ public class TaskUtil {
 		restTask.setTaskVersion(modelTask.getTaskVersion());
 		restTask.setIsCritical(modelTask.getIsCritical());
 		restTask.setCriticalityLevel(Long.valueOf(modelTask.getCriticalityLevel()));
-		restTask.setNumberOfCpus(Long.valueOf(modelTask.getNumberOfCpus()));
-		
+		if (null != modelTask.getNumberOfCpus()) {
+			restTask.setNumberOfCpus(Long.valueOf(modelTask.getNumberOfCpus()));
+		}
 		for (String breakpointFileName: modelTask.getBreakpointFileNames()) {
 			restTask.getBreakpointFileNames().add(breakpointFileName);
 		}
@@ -80,8 +81,9 @@ public class TaskUtil {
 		modelTask.setTaskVersion(restTask.getTaskVersion());
 		modelTask.setIsCritical(restTask.getIsCritical());
 		modelTask.setCriticalityLevel(restTask.getCriticalityLevel().intValue());
-		modelTask.setNumberOfCpus(restTask.getNumberOfCpus().intValue());
-		
+		if (null != restTask.getNumberOfCpus()) {
+			modelTask.setNumberOfCpus(restTask.getNumberOfCpus().intValue());
+		}
 		for (String breakpointFileName: restTask.getBreakpointFileNames()) {
 			modelTask.getBreakpointFileNames().add(breakpointFileName);
 		}
