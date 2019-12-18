@@ -164,6 +164,7 @@ public class MissionControllerImpl implements MissionController {
 			});
 		} catch (TransactionException e) {
 			// TODO catch all exceptions created above
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -197,8 +198,10 @@ public class MissionControllerImpl implements MissionController {
 				return MissionUtil.toRestMission(modelMission.get());
 			});
 		} catch (NoResultException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -313,8 +316,10 @@ public class MissionControllerImpl implements MissionController {
 				return MissionUtil.toRestMission(modelMission);
 			});
 		} catch (NoResultException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -356,10 +361,13 @@ public class MissionControllerImpl implements MissionController {
 				return null;
 			});
 		} catch (NoResultException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (RuntimeException e) {
+			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 

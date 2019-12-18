@@ -12,15 +12,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.NoResultException;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.mysema.scalagen.defs;
 
@@ -56,6 +61,10 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft Code not set in the search";
 
 
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
 
@@ -88,6 +97,18 @@ public class OrbitControllerImpl implements OrbitController {
 //	}
 	
 	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
+		return responseHeaders;
+	}
+
+	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
@@ -105,10 +126,9 @@ public class OrbitControllerImpl implements OrbitController {
 		logger.error(message);
 		
 		// Create an HTTP "Warning" header
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
-		return responseHeaders;
+		return errorHeaders(message);
 	}
+	
 	/**
 	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
 	 * 
@@ -125,76 +145,82 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
 			Long orbitNumberTo, @DateTimeFormat Date starttimefrom, @DateTimeFormat Date starttimeto) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
+		
+		/* Check arguments */
+		if (null == spacecraftCode || "".equals(spacecraftCode)) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
+		}
 
-		List<RestOrbit> result = new ArrayList<>();		
-		// Find using search parameters
-		//Check if Spacecraft code isn't blank and returns orbits matching to the spacecraft code
-		if(!(("").equals(spacecraftCode))) {
-			if(0 != orbitNumberFrom && 0 != orbitNumberTo) {
-				//Gets all matching Orbits for the matching spacecraft code and Orbit number range
-				List <Orbit> matchOrbits = RepositoryService.getOrbitRepository()
-						.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
-			
-				//Return all Orbits within given orbit number range and start time range
-				if(null != starttimefrom && null != starttimeto) {
-					for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
-						logger.info("Orbit.starttime: "+orbit.getStartTime());
-						logger.info("Orbit.stoptime: "+orbit.getStopTime());
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<RestOrbit> resultList = null;
+		try {
+			resultList = transactionTemplate.execute((status) -> {
+				List<RestOrbit> result = new ArrayList<>();		
+				// Find using search parameters
+				// Returns orbits matching to the spacecraft code
+				if(null != orbitNumberFrom && 0 != orbitNumberFrom.intValue() && null != orbitNumberTo && 0 != orbitNumberTo.intValue()) {
+					//Gets all matching Orbits for the matching spacecraft code and Orbit number range
+					List <Orbit> matchOrbits = RepositoryService.getOrbitRepository()
+							.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
+				
+					//Return all Orbits within given orbit number range and start time range
+					if(null != starttimefrom && null != starttimeto) {
+						for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
+							logger.info("Orbit.starttime: "+orbit.getStartTime());
+							logger.info("Orbit.stoptime: "+orbit.getStopTime());
 
-						if (!(orbit.getStartTime().isBefore(starttimefrom.toInstant())) && 
-								!(orbit.getStopTime().isAfter(starttimeto .toInstant()))) {
-							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-							RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-							result.add(resultOrbit);						
+							if (!(orbit.getStartTime().isBefore(starttimefrom.toInstant())) && 
+									!(orbit.getStopTime().isAfter(starttimeto .toInstant()))) {
+								if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+								RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+								if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+								result.add(resultOrbit);						
+							}
 						}
 					}
-					return new ResponseEntity<>(result, HttpStatus.OK);	
-				}
-				//Return all Orbits within given orbit number range
-				for (de.dlr.proseo.model.Orbit  orbit: matchOrbits) {
-					if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-					RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-					if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-					result.add(resultOrbit);
-				}				
-				return new ResponseEntity<>(result, HttpStatus.OK);					
-			}
-			
-			//Returns all orbits matching the spacecraft code within the start time range
-			else if (null != starttimefrom && null != starttimeto) {
-				for (Orbit orbit : RepositoryService.getOrbitRepository()
-						.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, starttimefrom.toInstant(), starttimeto.toInstant())) {
-					if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-					RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-					if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-					result.add(resultOrbit);	
-
-				}
-				return new ResponseEntity<>(result, HttpStatus.OK);								
-				
-			}
-			else {
-				for(Orbit orbit : RepositoryService.getOrbitRepository().findAll()) {
-					logger.info("SPacecraft Input value: = "+ spacecraftCode);
-					logger.info("orbit spacecraft code: = "+orbit.getSpacecraft().getCode());				
-					if(spacecraftCode.equals(orbit.getSpacecraft().getCode())) {
+					//Return all Orbits within given orbit number range
+					for (de.dlr.proseo.model.Orbit  orbit: matchOrbits) {
 						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 						RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-						result.add(resultOrbit);				
-					}
+						result.add(resultOrbit);
+					}				
 				}
 				
-			}
-			
-			return new ResponseEntity<>(result, HttpStatus.OK);								
+				//Returns all orbits matching the spacecraft code within the start time range
+				else if (null != starttimefrom && null != starttimeto) {
+					for (Orbit orbit : RepositoryService.getOrbitRepository()
+							.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, starttimefrom.toInstant(), starttimeto.toInstant())) {
+						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+						RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+						result.add(resultOrbit);	
+
+					}
+				}
+				else {
+					for(Orbit orbit : RepositoryService.getOrbitRepository().findAll()) {
+						logger.info("SPacecraft Input value: = "+ spacecraftCode);
+						logger.info("orbit spacecraft code: = "+orbit.getSpacecraft().getCode());				
+						if(spacecraftCode.equals(orbit.getSpacecraft().getCode())) {
+							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
+							RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
+							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
+							result.add(resultOrbit);				
+						}
+					}
+					
+				}
+				return result;
+			});
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		//Returns HTTP_BAD REQUEST when spacecraft code is blank 
-		else 
-			return new ResponseEntity<>(
-					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(resultList, HttpStatus.OK);								
 	}
 	
 	/**
@@ -207,34 +233,46 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<List<RestOrbit>> createOrbits(@Valid List<RestOrbit> orbit) {		
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrbit({})", orbit.getClass());
 		
-		if (null == orbit) {
+		/* Check argument */
+		if (null == orbit || orbit.isEmpty()) {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
 		}
 		
-		List<Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit> ();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		List<RestOrbit> restOrbits = new ArrayList<RestOrbit> ();
-		//Insert every valid Rest orbit into the DB
-		for(RestOrbit tomodelOrbit : orbit) {
-			Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
-			
-			//Adding spacecraft object to modelOrbit
-			Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
-			modelOrbit.setSpacecraft(spacecraft);
-			
-			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
-			modelOrbits.add(modelOrbit);
-		}
-		 
-		//Return every inserted orbit 
-		for(Orbit torestOrbit : modelOrbits ) {
-			RestOrbit restOrbit = OrbitUtil.toRestOrbit(torestOrbit);
-			restOrbits.add(restOrbit);
+		List<RestOrbit> restOrbitList = null;
+		try {
+			restOrbitList = transactionTemplate.execute((status) -> {
+				List<Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit> ();
+				
+				List<RestOrbit> restOrbits = new ArrayList<RestOrbit> ();
+				//Insert every valid Rest orbit into the DB
+				for(RestOrbit tomodelOrbit : orbit) {
+					Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
+					
+					//Adding spacecraft object to modelOrbit
+					Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
+					modelOrbit.setSpacecraft(spacecraft);
+					
+					modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+					modelOrbits.add(modelOrbit);
+				}
+				 
+				//Return every inserted orbit 
+				for(Orbit torestOrbit : modelOrbits ) {
+					RestOrbit restOrbit = OrbitUtil.toRestOrbit(torestOrbit);
+					restOrbits.add(restOrbit);
+				}
+				
+				return restOrbits;
+			});
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		//return null;
-		return new ResponseEntity<>(restOrbits, HttpStatus.CREATED);
+		return new ResponseEntity<>(restOrbitList, HttpStatus.CREATED);
 	}
 
 	/**
@@ -248,17 +286,28 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<RestOrbit> getOrbitById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbitById({})", id);
 		
-		Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
-		if (modelOrbit.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		RestOrbit restOrbit = null;
+		try {
+			restOrbit = transactionTemplate.execute((status) -> {
+				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
+				
+				if (modelOrbit.isEmpty()) {
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+				}
+				
+				return OrbitUtil.toRestOrbit(modelOrbit.get());
+			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit.get()), HttpStatus.OK);
+		return new ResponseEntity<>(restOrbit, HttpStatus.OK);
 	
 	}
 
@@ -272,57 +321,65 @@ public class OrbitControllerImpl implements OrbitController {
 	 */
 	@Override
 	public ResponseEntity<RestOrbit> modifyOrbit(Long id, @Valid RestOrbit orbit) {
-		
-//		return null;
-
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
 		
-		Optional<Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
-		
-		if (optModelOrbit.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}
-		Orbit modelOrbit = optModelOrbit.get();
-		
-		// Update modified attributes
-		boolean orbitChanged = false;
-		Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
-		//Adding spacecraft object to modelOrbit
-		Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
-		changedOrbit.setSpacecraft(spacecraft);
-		
-		if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
-			orbitChanged = true;
-			modelOrbit.setOrbitNumber(changedOrbit.getOrbitNumber());
+		RestOrbit restOrbit = null;
+		try {
+			restOrbit = transactionTemplate.execute((status) -> {
+				Optional<Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
+				
+				if (optModelOrbit.isEmpty()) {
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+				}
+				Orbit modelOrbit = optModelOrbit.get();
+				
+				// Update modified attributes
+				boolean orbitChanged = false;
+				Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
+
+				//Adding spacecraft object to modelOrbit
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+				changedOrbit.setSpacecraft(spacecraft);
+				
+				if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
+					orbitChanged = true;
+					modelOrbit.setOrbitNumber(changedOrbit.getOrbitNumber());
+				}
+				
+				if (!modelOrbit.getStartTime().equals(changedOrbit.getStartTime())) {
+					orbitChanged = true;
+					modelOrbit.setStartTime(changedOrbit.getStartTime());
+				}
+				
+				if (!modelOrbit.getStopTime().equals(changedOrbit.getStopTime())) {
+					orbitChanged = true;
+					modelOrbit.setStopTime(changedOrbit.getStopTime());
+				}
+				
+				if (!modelOrbit.getSpacecraft().equals(changedOrbit.getSpacecraft())) {
+					orbitChanged = true;
+					modelOrbit.setSpacecraft(changedOrbit.getSpacecraft());
+				}
+				
+				// Save orbit only if anything was actually changed
+				if (orbitChanged)	{
+					modelOrbit.incrementVersion();
+					modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
+				}
+				
+				return OrbitUtil.toRestOrbit(modelOrbit);
+			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		if (!modelOrbit.getStartTime().equals(changedOrbit.getStartTime())) {
-			orbitChanged = true;
-			modelOrbit.setStartTime(changedOrbit.getStartTime());
-		}
-		
-		if (!modelOrbit.getStopTime().equals(changedOrbit.getStopTime())) {
-			orbitChanged = true;
-			modelOrbit.setStopTime(changedOrbit.getStopTime());
-		}
-		
-		if (!modelOrbit.getSpacecraft().equals(changedOrbit.getSpacecraft())) {
-			orbitChanged = true;
-			modelOrbit.setSpacecraft(changedOrbit.getSpacecraft());
-		}
-		
-		// Save orbit only if anything was actually changed
-		if (orbitChanged)	{
-			modelOrbit.incrementVersion();
-			modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
-		}
-		
-		return new ResponseEntity<>(OrbitUtil.toRestOrbit(modelOrbit), HttpStatus.OK);
+		return new ResponseEntity<>(restOrbit, HttpStatus.OK);
 	
 	
 	}
@@ -338,26 +395,35 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<?> deleteOrbitById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrbitById({})", id);
 		
-		// Test whether the orbit id is valid
-		Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
-		if (modelOrbit.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}		
-		// Delete the orbit
-		RepositoryService.getOrbitRepository().deleteById(id);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		try {
+			transactionTemplate.execute((status) -> {
+				// Test whether the orbit id is valid
+				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
+				if (modelOrbit.isEmpty()) {
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+				}		
+				// Delete the orbit
+				RepositoryService.getOrbitRepository().deleteById(id);
 
-		// Test whether the deletion was successful
-		modelOrbit = RepositoryService.getOrbitRepository().findById(id);
-		if (!modelOrbit.isEmpty()) {
-			String message = String.format(MSG_PREFIX + MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+				// Test whether the deletion was successful
+				modelOrbit = RepositoryService.getOrbitRepository().findById(id);
+				if (!modelOrbit.isEmpty()) {
+					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL));
+				}
+				
+				return null;
+			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (RuntimeException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
