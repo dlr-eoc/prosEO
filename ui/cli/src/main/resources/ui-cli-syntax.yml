@@ -126,6 +126,10 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
+                - name: spacecraftCode
+                  type: string
+                  optional: true
+                  description: The code of the spacecraft to remove (mandatory if not read from file)
                 - name: attribute
                   type: string
                   optional: true

@@ -79,6 +79,18 @@ public class UIMessages {
 	public static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
 	public static final int MSG_ID_COMMAND_NAME_NULL = 2923;
 	
+	// Mission CLI
+	public static final int MSG_ID_NO_MISSIONS_FOUND = 2840;
+	public static final int MSG_ID_MISSION_NOT_FOUND_BY_ID = 2841;
+	public static final int MSG_ID_MISSION_DATA_INVALID = 2842;
+	public static final int MSG_ID_MISSION_UPDATED = 2843;
+	public static final int MSG_ID_MISSION_NOT_READABLE = 2844;
+	public static final int MSG_ID_SPACECRAFT_EXISTS = 2845;
+	public static final int MSG_ID_SPACECRAFT_ADDED = 2846;
+	public static final int MSG_ID_SPACECRAFT_NOT_FOUND = 2846;
+	public static final int MSG_ID_SPACECRAFT_REMOVED = 2847;
+	public static final int MSG_ID_NO_SPACECRAFT_CODE_GIVEN = 2848;
+	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
 	public static final int MSG_ID_INVALID_SLICING_TYPE = 2931;
@@ -179,6 +191,13 @@ public class UIMessages {
 		MSG_INVALID_URL ("(E%d) Invalid request URL %s (cause: %s)", MSG_ID_INVALID_URL),
 		MSG_UNEXPECTED_STATUS ("(E%d) Unexpected HTTP status %s received", MSG_ID_UNEXPECTED_STATUS),
 		
+		// Mission CLI
+		MSG_NO_MISSIONS_FOUND ("(E%d) No missions found for given search criteria", MSG_ID_NO_MISSIONS_FOUND),
+		MSG_MISSION_NOT_READABLE ("(E%d) Mission %s not readable (cause: %s)", MSG_ID_MISSION_NOT_READABLE),
+		MSG_SPACECRAFT_EXISTS ("(E%d) Spacecraft %s exists in mission %s", MSG_ID_SPACECRAFT_EXISTS),
+		MSG_NO_SPACECRAFT_CODE_GIVEN ("(E%d) No spacecraft code given", MSG_ID_NO_SPACECRAFT_CODE_GIVEN),
+		MSG_SPACECRAFT_NOT_FOUND ("(E%d) Spacecraft %s not found in mission %s", MSG_ID_SPACECRAFT_NOT_FOUND),
+		
 		// Order CLI
 		MSG_NO_ORDERS_FOUND ("(E%d) No orders found for given search criteria", MSG_ID_NO_ORDERS_FOUND),
 		MSG_INVALID_SLICING_TYPE ("(E%d) Invalid order slicing type %s", MSG_ID_INVALID_SLICING_TYPE),
@@ -228,8 +247,8 @@ public class UIMessages {
 
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
-		MSG_INVALID_FILE_STRUCTURE ("(E%d) %s content of order file %s invalid for order generation (cause: %s)", MSG_ID_INVALID_FILE_STRUCTURE),
-		MSG_INVALID_FILE_SYNTAX ("(E%d) Order file %s contains invalid %s content (cause: %s)", MSG_ID_INVALID_FILE_SYNTAX),
+		MSG_INVALID_FILE_STRUCTURE ("(E%d) %s content of file %s invalid for object generation (cause: %s)", MSG_ID_INVALID_FILE_STRUCTURE),
+		MSG_INVALID_FILE_SYNTAX ("(E%d) File %s contains invalid %s content (cause: %s)", MSG_ID_INVALID_FILE_SYNTAX),
 		MSG_INVALID_ATTRIBUTE_NAME ("(E%d) Invalid attribute name %s", MSG_ID_INVALID_ATTRIBUTE_NAME),
 		MSG_INVALID_ATTRIBUTE_TYPE ("(E%d) Attribute %s cannot be converted to type %s", MSG_ID_INVALID_ATTRIBUTE_TYPE),
 		MSG_REFLECTION_EXCEPTION ("(E%d) Reflection exception setting attribute %s (cause: %s)", MSG_ID_REFLECTION_EXCEPTION),
@@ -266,6 +285,11 @@ public class UIMessages {
 		
 		// CLI Parser
 		MSG_SYNTAX_LOADED ("(I%d) Command line syntax loaded from syntax file %s", MSG_ID_SYNTAX_LOADED),
+		
+		// Mission CLI
+		MSG_MISSION_UPDATED ("(I%d) Mission %s updated (new version %d)", MSG_ID_MISSION_UPDATED),
+		MSG_SPACECRAFT_ADDED ("(I%d) Spacecraft %s added (database ID %d)", MSG_ID_SPACECRAFT_ADDED),
+		MSG_SPACECRAFT_REMOVED ("(I%d) Spacecraft %s removed from mission %s", MSG_ID_SPACECRAFT_REMOVED),
 		
 		// Order CLI
 		MSG_ORDER_CREATED ("(I%d) Order with identifier %s created (database ID %d)", MSG_ID_ORDER_CREATED),

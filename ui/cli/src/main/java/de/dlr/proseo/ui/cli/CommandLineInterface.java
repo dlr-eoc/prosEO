@@ -75,6 +75,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/* Classes for the various top-level commands */
 	@Autowired
+	private MissionCommandRunner missionCommandRunner;
+	@Autowired
 	private OrderCommandRunner orderCommandRunner;
 	@Autowired
 	private IngestorCommandRunner ingestorCommandRunner;
@@ -146,6 +148,8 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case CMD_MISSION:
 			case CMD_ORBIT:
+				missionCommandRunner.executeCommand(command);
+				break;
 			case CMD_PRODUCT_CLASS:
 			default:
 				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());

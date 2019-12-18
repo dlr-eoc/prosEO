@@ -37,7 +37,6 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
  * All methods assume that before invocation a syntax check of the command has been performed, so no extra checks are performed.
  * 
  * @author Dr. Thomas Bassler
- *
  */
 @Component
 public class ProcessorCommandRunner {
@@ -348,7 +347,7 @@ public class ProcessorCommandRunner {
 		ObjectMapper mapper = new ObjectMapper();
 		RestProcessorClass restProcessorClass = mapper.convertValue(resultList.get(0), RestProcessorClass.class);
 
-		/* Compare attributes of database product with updated product */
+		/* Compare attributes of database processor class with updated processor class */
 		// No modification of ID, version, mission code or processor class name allowed
 		if (!updatedProcessorClass.getProductClasses().isEmpty()) { // mandatory, must not be empty
 			restProcessorClass.setProductClasses(updatedProcessorClass.getProductClasses());
