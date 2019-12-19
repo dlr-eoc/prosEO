@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.ProductFile.StorageType;
 
 /**
  * Utility methods for product files, e. g. for conversion between prosEO model and REST model
@@ -73,6 +74,7 @@ public class ProductFileUtil {
 		modelProductFile.setProductFileName(restProductFile.getProductFileName());
 		modelProductFile.getAuxFileNames().addAll(restProductFile.getAuxFileNames());
 		modelProductFile.setFilePath(restProductFile.getFilePath());
+		modelProductFile.setStorageType(StorageType.valueOf(restProductFile.getStorageType()));
 		
 		return modelProductFile;
 	}

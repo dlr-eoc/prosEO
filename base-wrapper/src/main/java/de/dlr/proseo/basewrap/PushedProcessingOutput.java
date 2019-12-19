@@ -1,5 +1,7 @@
 package de.dlr.proseo.basewrap;
 
+import java.io.File;
+
 public class PushedProcessingOutput {
 	private long id;
 	private String fsType;
@@ -54,7 +56,46 @@ public class PushedProcessingOutput {
 		this.revision = revision;
 	}
 
+	/**
+	 * @return file name part of path
+	 */
+	public String getFileName() {
+		if (this.path == null) {
+			return "";
+		} else {
+			File productFile = new File(this.path);
+			return productFile.getName();
+		}
+	}
 	
+	/**
+	 * Add fs type to path if not exist
+	 * 
+	 * @return normed path part
+	 */
+	public String getNormedPath() {
+		if (this.path == null) {
+			return "";
+		} else {
+			File productFile = new File(this.getPath());
+			String aPath = productFile.getParent();
+			String res = aPath;
+			if (this.fsType.equalsIgnoreCase("s3")) {
+				if (aPath.startsWith("/")) {
+					res = "s3:/" + aPath;
+				} else if (!aPath.startsWith("s3://")) {
+					res = "s3://" + aPath;
+				}
+			} else if (this.fsType.equalsIgnoreCase("alluxio")) {
+				if (aPath.startsWith("/")) {
+					res = "alluxio:/" + aPath;
+				} else if (!aPath.startsWith("alluxio://")) {
+					res = "alluxio://" + aPath;
+				}
+			}
+			return res;
+		}
+	}
 
 
 }

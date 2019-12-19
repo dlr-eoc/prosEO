@@ -24,12 +24,20 @@ public class ProductControllerImpl implements ProductController {
 	public ResponseEntity<?> getObjectByProductid(String productid) {
 		// todo 
 		// look for product
-
-    	String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		if (productid != null) {
+			logger.info("GET product/" + productid);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_SUCCESS, "Simulated, to be implemented!");
+			return new ResponseEntity<>("{\n" + 
+					"  \"GET\": \"product/" + productid + "\"\n" + 
+							"}", responseHeaders, HttpStatus.OK);
+		} else {
+			String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
+			logger.error(message);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_WARNING, message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
 	}
 
 }

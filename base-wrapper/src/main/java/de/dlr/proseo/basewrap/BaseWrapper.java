@@ -74,9 +74,11 @@ public class BaseWrapper {
 
 	/** Error messages */
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
-	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.03 with JobOrder file {}";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.04 with JobOrder file {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
+	private static final String MSG_FILE_NOT_FOUND = "File {} does not exist";
+	private static final String MSG_FILE_FOUND = "File {} exists";
 
 
 	/** Logger for this class */
@@ -622,6 +624,15 @@ public class BaseWrapper {
 						if (transaction)numberOfFetchedInputs++;
 						if (!transaction) return null;
 					}
+					if (fn.getFSType().equals(FS_TYPE.POSIX.toString())) {
+						File f = new File(fn.getFileName());
+						if (f.exists()) {
+							logger.info(MSG_FILE_FOUND, fn.getFileName());
+							numberOfFetchedInputs++;
+						} else {
+							logger.info(MSG_FILE_NOT_FOUND, fn.getFileName());
+						}
+					}
 				}
 			}
 			// loop all Output & prepare dirs
@@ -665,6 +676,7 @@ public class BaseWrapper {
 			return jo;
 		}
 		else {
+			logger.info("Number of fetched/found inputs {} differs from JOF-Definition: {}", numberOfFetchedInputs, numberOfInputs);
 			s3.close();
 			return null;
 		}
@@ -777,7 +789,10 @@ public class BaseWrapper {
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
 						try {
 							ArrayList<String> transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
-							if(null == transaction) {
+							if(null != transaction) {
+								for (String s : transaction) {
+									logger.info("  ... " + s);
+								}
 								numberOfPushedOutputs++;
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
@@ -798,6 +813,10 @@ public class BaseWrapper {
 			logger.info("Uploaded {} results to prosEO storage...",numberOfPushedOutputs);
 		}
 		else {
+			logger.info("error in push, outputs {}, number of pushed outputs {}, pushed outputs size {}",
+					numberOfOutputs,
+					numberOfPushedOutputs,
+					pushedOutputs.size());
 			return null;
 		}
 
@@ -848,10 +867,10 @@ public class BaseWrapper {
 			IngestorProductFile request = new IngestorProductFile();
 			request.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
 			//request.setAuxFileNames(null); --> must be empty list, not null!
-			File productFile = new File(p.getPath());
-			request.setFilePath(productFile.getParent());
+			
+			request.setFilePath(p.getNormedPath());
 			request.setStorageType(p.getFsType());
-			request.setProductFileName(productFile.getName());
+			request.setProductFileName(p.getFileName());
 			request.setProductId(p.getId());
 			//request.setVersion(null); --> redundant
 			
@@ -870,7 +889,7 @@ public class BaseWrapper {
 				ingest.setFsType(p.getFsType());
 				ingest.setProduct_id(p.getId());
 				ingest.setIngestorHttpResponse(singleResponse.gethttpResponse());
-				ingest.setPath(p.getPath());
+				ingest.setPath(p.getNormedPath() + "/" + p.getFileName());
 				ingest.setRevision(p.getRevision());
 				ingests.add(ingest);
 			}
@@ -999,7 +1018,7 @@ public class BaseWrapper {
 		}
 		logger.info("Upload summary: listing {} Outputs of type `PushedProcessingOutput`", pushedProducts.size());
 		for (PushedProcessingOutput p : pushedProducts) {
-			logger.info("PRODUCT_ID={}, FS_TYPE={}, PATH={}, REVISION={}",p.getId(), p.getFsType(),p.getPath(),p.getRevision());
+			logger.info("PRODUCT_ID={}, FS_TYPE={}, PATH={}, REVISION={}",p.getId(), p.getFsType(),p.getNormedPath()+p.getFileName(),p.getRevision());
 		}
 
 		/** STEP [11] Register pushed products using prosEO-Ingestor REST API */

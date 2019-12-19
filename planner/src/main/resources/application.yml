@@ -27,7 +27,7 @@ proseo:
         user: none
         password: none
     ingestor:
-        url: http://192.168.20.155:8081/proseo/ingestor
+        url: http://192.168.20.155:8081/proseo/ingestor/v0.1
         user: none
         password: none
     global:

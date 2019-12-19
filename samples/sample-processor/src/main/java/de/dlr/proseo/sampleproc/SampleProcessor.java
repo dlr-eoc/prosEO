@@ -234,10 +234,10 @@ public class SampleProcessor {
 	private boolean checkL1bConfiguration(Document jobOrderDoc) {
 		// Find the static input file for processor configuration
 		NodeList inputFiles = jobOrderDoc.getElementsByTagName(JOF_TAG_INPUT);
-		if (3 != inputFiles.getLength()) {
-			logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILES, PRODUCT_TYPE_L1B, inputFiles.getLength());
-			return false;
-		}
+//		if (3 != inputFiles.getLength()) {
+//			logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILES, PRODUCT_TYPE_L1B, inputFiles.getLength());
+//			return false;
+//		}
 		String configurationFileName = null;
 		for (int i = 0; i < inputFiles.getLength(); ++i) {
 			NodeList inputFileTypes = ((Element) inputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_TYPE);
