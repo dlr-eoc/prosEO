@@ -39,7 +39,7 @@ public class RestOps {
 		Response response = null;
 		if (method == HttpMethod.POST) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("test","test"));
+					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
 			try {
 				logger.info("POST "+endPoint+endPointPath);
 				webTarget = client.target(endPoint).path(endPointPath);
@@ -54,9 +54,30 @@ public class RestOps {
 				return null;
 			}
 		}
+		if (method == HttpMethod.PUT) {
+			client = ClientBuilder.newClient()
+					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
+			try {
+				logger.info("PUT {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
+				webTarget = client
+						.target(endPoint)
+						.path(endPointPath)
+						.queryParam(queryParam, payLoad);
+				invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
+				response = invocationBuilder.put(Entity.entity(payLoad, MediaType.APPLICATION_JSON));
+				logger.info("response = " + response);
+				
+				ri.sethttpCode(response.getStatus());
+				ri.sethttpResponse(response.readEntity(String.class));
+				response.close();
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+				return null;
+			}
+		}
 		if (method == HttpMethod.PATCH) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("test","test"));
+					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
 			try {
 				logger.info("PATCH {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
 				webTarget = client
@@ -68,18 +89,18 @@ public class RestOps {
 				
 				invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
 				response = invocationBuilder.method("PATCH", Entity.entity("", MediaType.APPLICATION_JSON));
-
+				logger.info("response = " + response);
 				ri.sethttpCode(response.getStatus());
 				ri.sethttpResponse(response.readEntity(String.class));
 				response.close();
 			} catch (Exception e) {
-				logger.error(e.getMessage());
+				logger.error("exception: " + e.getMessage());
 				return null;
 			}
 		}
 		if (method == HttpMethod.GET) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("test","test"));
+					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
 			try {
 				if (queryParam == null) {
 					logger.info("GET {}{}",endPoint, endPointPath);

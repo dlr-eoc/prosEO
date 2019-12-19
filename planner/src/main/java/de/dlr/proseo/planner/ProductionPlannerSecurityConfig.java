@@ -42,8 +42,8 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 			.httpBasic()
 			.and()
 			.authorizeRequests()
-			.regexMatchers("(?i).*/processingfacilities/[^/]+/finish/.*").permitAll()
-				.anyRequest().authenticated()
+			// .regexMatchers("(?i).*/processingfacilities/[^/]+/finish/.*").permitAll()
+			.anyRequest().authenticated()
 			.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
