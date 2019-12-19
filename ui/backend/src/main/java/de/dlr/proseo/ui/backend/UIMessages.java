@@ -101,6 +101,17 @@ public class UIMessages {
 	public static final int MSG_ID_ORBIT_DELETE_FAILED = 2857;
 	public static final int MSG_ID_ORBITS_DELETED = 2858;
 	
+	// Product class CLI
+	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
+	public static final int MSG_ID_PRODUCTCLASS_CREATED = 2861;
+	public static final int MSG_ID_NO_PRODUCTCLASSES_FOUND = 2862;
+	public static final int MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN = 2863;
+	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND = 2864;
+	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID = 2865;
+	public static final int MSG_ID_PRODUCTCLASS_UPDATED = 2866;
+	public static final int MSG_ID_PRODUCTCLASS_DELETE_FAILED = 2867;
+	public static final int MSG_ID_PRODUCTCLASS_DELETED = 2868;
+	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
 	public static final int MSG_ID_INVALID_SLICING_TYPE = 2931;
@@ -226,6 +237,14 @@ public class UIMessages {
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
 		
+		// Product class CLI
+		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
+		MSG_NO_PRODUCTCLASSES_FOUND ("(E%d) No product classes found for given search criteria", MSG_ID_NO_PRODUCTCLASSES_FOUND),
+		MSG_NO_PRODCLASS_IDENTIFIER_GIVEN ("(E%d) No product class name given", MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN),
+		MSG_PRODUCTCLASS_NOT_FOUND ("(E%d) Product class %s not found", MSG_ID_PRODUCTCLASS_NOT_FOUND),
+		MSG_PRODUCTCLASS_NOT_FOUND_BY_ID ("(E%d) Product class with database ID %d not found", MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID),
+		MSG_PRODUCTCLASS_DELETE_FAILED ("(E%d) Deletion of product class %s failed (cause: %s)", MSG_ID_PRODUCTCLASS_DELETE_FAILED),
+		
 		// Ingestor/product CLI
 		MSG_NO_PRODUCTS_FOUND ("(E%d) No products found for given search criteria", MSG_ID_NO_PRODUCTS_FOUND),
 		MSG_INVALID_DATABASE_ID ("(E%d) Database ID %s not numeric", MSG_ID_INVALID_DATABASE_ID),
@@ -320,6 +339,11 @@ public class UIMessages {
 		MSG_ORDER_SUSPENDED ("(I%d) Order with identifier %s suspended (new version %d)", MSG_ID_ORDER_SUSPENDED),
 		MSG_ORDER_CANCELLED ("(I%d) Order with identifier %s cancelled (new version %d)", MSG_ID_ORDER_CANCELLED),
 		MSG_ORDER_DELETED ("(I%d) Order with identifier %s deleted", MSG_ID_ORDER_DELETED),
+		
+		// Product class CLI
+		MSG_PRODUCTCLASS_CREATED ("(I%d) Product class %s created (database ID %d)", MSG_ID_PRODUCTCLASS_CREATED),
+		MSG_PRODUCTCLASS_UPDATED ("(I%d) Product class with database ID %d updated (new version %d)", MSG_ID_PRODUCTCLASS_UPDATED),
+		MSG_PRODUCTCLASS_DELETED ("(I%d) Product class with database ID %d deleted", MSG_ID_PRODUCTCLASS_DELETED),
 		
 		// Ingestor/product CLI
 		MSG_PRODUCT_CREATED ("(I%d) Product of class %s created (database ID %d, UUID %s)", MSG_ID_PRODUCT_CREATED),

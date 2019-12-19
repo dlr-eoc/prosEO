@@ -642,17 +642,17 @@ public class ProductClassManager {
 		}
 		
 		// Test whether the product id is valid
-		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
-		if (modelProcessorClass.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND));
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		if (modelProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id));
 		}
 		
 		// Delete the processor class
-		RepositoryService.getProcessorClassRepository().deleteById(id);
+		RepositoryService.getProductClassRepository().deleteById(id);
 
 		// Test whether the deletion was successful
-		modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
-		if (!modelProcessorClass.isEmpty()) {
+		modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		if (!modelProductClass.isEmpty()) {
 			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 		}
 		

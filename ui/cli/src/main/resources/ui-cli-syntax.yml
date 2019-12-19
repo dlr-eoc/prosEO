@@ -659,7 +659,7 @@ commands:
               description: The version of the configuration to update (mandatory if not read from file)
                  
     # Commands for the Product Class Manager
-    - name: productClass
+    - name: productclass
       description: Commands for managing product classes
       subcommands:
         - name: show
@@ -705,6 +705,9 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete attributes not given in the order definition file and/or the command parameters
           parameters:
             - name: className
               type: string
