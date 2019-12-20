@@ -852,7 +852,7 @@ public class ProductclassCommandRunner {
 			/* Print a short form of all selection rules */
 			for (int i = 0; i < resultList.size(); ++i) {
 				SelectionRuleString selectionRule = mapper.convertValue(resultList.get(i), SelectionRuleString.class);
-				System.out.println(String.format("[%-2d] %s", i+1, selectionRule.getSelectionRule()));
+				System.out.println(String.format("[%2d] %s", i+1, selectionRule.getSelectionRule()));
 				System.out.println(String.format("     (Mode: %s, configured processors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
 			}
 			while (null == restSelectionRule) {
@@ -924,88 +924,68 @@ public class ProductclassCommandRunner {
 	}
 	
 	/**
-	 * Delete the given processor
+	 * Delete the given selection rule
 	 * 
-	 * @param deleteCommand the parsed "processor delete" command
+	 * @param deleteCommand the parsed "productclass rule delete" command
 	 */
-//	private void deleteProcessor(ParsedCommand deleteCommand) {
-//		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessor({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
-//
-//		/* Get processor name from command parameters */
-//		if (2 > deleteCommand.getParameters().size()) {
-//			// No identifying value given
-//			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
-//			return;
-//		}
-//		String processorName = deleteCommand.getParameters().get(0).getValue();
-//		String processorVersion = deleteCommand.getParameters().get(1).getValue();
-//		
-//		/* Retrieve the processor using Processor Manager service */
-//		List<?> resultList = null;
-//		try {
-//			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
-//					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission()
-//						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
-//					List.class, loginManager.getUser(), loginManager.getPassword());
-//		} catch (RestClientResponseException e) {
-//			String message = null;
-//			switch (e.getRawStatusCode()) {
-//			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-//				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
-//				break;
-//			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-//				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
-//				break;
-//			default:
-//				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-//			}
-//			System.err.println(message);
-//			return;
-//		} catch (Exception e) {
-//			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-//			return;
-//		}
-//		if (resultList.isEmpty()) {
-//			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
-//			logger.error(message);
-//			System.err.println(message);
-//			return;
-//		}
-//		ObjectMapper mapper = new ObjectMapper();
-//		RestProcessor restProcessor = mapper.convertValue(resultList.get(0), RestProcessor.class);
-//		
-//		/* Delete processor using Processor Manager service */
-//		try {
-//			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
-//					URI_PATH_PROCESSORS + "/" + restProcessor.getId(), 
-//					loginManager.getUser(), loginManager.getPassword());
-//		} catch (RestClientResponseException e) {
-//			String message = null;
-//			switch (e.getRawStatusCode()) {
-//			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-//				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
-//				break;
-//			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-//				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
-//				break;
-//			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-//				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
-//				break;
-//			default:
-//				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-//			}
-//			System.err.println(message);
-//			return;
-//		} catch (Exception e) {
-//			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-//			return;
-//		}
-//		
-//		/* Report success */
-//		String message = uiMsg(MSG_ID_PROCESSOR_DELETED, restProcessor.getId());
-//		logger.info(message);
-//		System.out.println(message);
-//	}
+	private void deleteSelectionRule(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionRule({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Get processor name from command parameters */
+		if (2 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			return;
+		}
+		String targetClass = deleteCommand.getParameters().get(0).getValue();
+		long ruleId = 0;
+		try {
+			ruleId = Long.parseLong(deleteCommand.getParameters().get(1).getValue());
+		} catch (NumberFormatException e1) {
+			System.err.println(uiMsg(MSG_ID_RULEID_NOT_NUMERIC, deleteCommand.getParameters().get(1).getValue()));
+			return;
+		}
+		
+		/* Retrieve the product class using Product Class Manager service */
+		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
+		if (null == restProductClass) {
+			// Already handled
+			return;
+		}
+		
+		/* Delete selection rule using ProductClass Manager service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getProductClassManagerUrl(),
+					URI_PATH_PRODUCTCLASSES + "/" + restProductClass.getId() 
+					+ URI_PATH_SELECTIONRULES + "/" + ruleId, 
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_SELECTION_RULE_DELETE_FAILED, ruleId, targetClass, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_SELECTION_RULE_DELETED, ruleId);
+		logger.info(message);
+		System.out.println(message);
+	}
 	
 	/**
 	 * Run the given command
@@ -1058,7 +1038,7 @@ public class ProductclassCommandRunner {
 			case CMD_CREATE:	createSelectionRule(subsubcommand); break;
 			case CMD_SHOW:		showSelectionRule(subsubcommand); break;
 			case CMD_UPDATE:	updateSelectionRule(subsubcommand); break;
-//			case CMD_DELETE:	deleteConfiguredProcessor(subsubcommand); break;
+			case CMD_DELETE:	deleteSelectionRule(subsubcommand); break;
 			default:
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
 						command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));

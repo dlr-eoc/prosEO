@@ -986,7 +986,7 @@ public class ProductClassManager {
 		// Find requested simple selection rule
 		SimpleSelectionRule modelRuleToDelete = null;
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
-			if (modelRule.getId() == id.longValue()) {
+			if (modelRule.getId() == ruleid.longValue()) {
 				modelRuleToDelete = modelRule;
 				break;
 			}

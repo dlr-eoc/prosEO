@@ -795,18 +795,16 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
-              description: Delete the selection rule for the given target class and configured processor (the selection 
-                           rule will be disconnected from the configured processor and deleted, if it is not connected
-                           to any other configured processor)
+              description: Delete the selection rule for the given target class
               parameters:
                 - name: targetProductClass
                   type: string
                   optional: true
                   description: The product class name of the selection rule
-                - name: configuredProcessorIdentifier
+                - name: ruleId
                   type: string
                   optional: true
-                  description: The identifier of the configured processor the selection rule is valid for
+                  description: The database ID of the selection rule to delete
                     
     # Commands for the Product Ingestor
     - name: product

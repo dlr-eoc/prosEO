@@ -119,6 +119,9 @@ public class UIMessages {
 	public static final int MSG_ID_INPUT_NOT_NUMERIC = 2874;
 	public static final int MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID = 2875;
 	public static final int MSG_ID_SELECTION_RULE_UPDATED = 2876;
+	public static final int MSG_ID_RULEID_NOT_NUMERIC = 2877;
+	public static final int MSG_ID_SELECTION_RULE_DELETE_FAILED = 2878;
+	public static final int MSG_ID_SELECTION_RULE_DELETED = 2879;
 	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
@@ -258,6 +261,8 @@ public class UIMessages {
 		MSG_NO_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
 		MSG_NO_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
 		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),
+		MSG_RULEID_NOT_NUMERIC ("(E%d) Database ID %d for selection rule not numeric", MSG_ID_RULEID_NOT_NUMERIC),
+		MSG_SELECTION_RULE_DELETE_FAILED ("(E%d) Deletion of selection rule with database ID %d from product class %s failed (cause: %s)", MSG_ID_SELECTION_RULE_DELETE_FAILED),
 		
 		// Ingestor/product CLI
 		MSG_NO_PRODUCTS_FOUND ("(E%d) No products found for given search criteria", MSG_ID_NO_PRODUCTS_FOUND),
@@ -360,6 +365,7 @@ public class UIMessages {
 		MSG_PRODUCTCLASS_DELETED ("(I%d) Product class with database ID %d deleted", MSG_ID_PRODUCTCLASS_DELETED),
 		MSG_SELECTION_RULE_CREATED ("(I%d) %d selection rules created for product class %s", MSG_ID_SELECTION_RULES_CREATED),
 		MSG_SELECTION_RULE_UPDATED ("(I%d) Selection rule with database ID %d updated (new version %d)", MSG_ID_SELECTION_RULE_UPDATED),
+		MSG_SELECTION_RULE_DELETED ("(I%d) Selection rule with database ID %d deleted", MSG_ID_SELECTION_RULE_DELETED),
 		
 		// Ingestor/product CLI
 		MSG_PRODUCT_CREATED ("(I%d) Product of class %s created (database ID %d, UUID %s)", MSG_ID_PRODUCT_CREATED),
