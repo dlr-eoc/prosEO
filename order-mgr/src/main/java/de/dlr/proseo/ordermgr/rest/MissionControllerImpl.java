@@ -44,7 +44,6 @@ public class MissionControllerImpl implements MissionController {
 	/* Message ID constants */
 	private static final int MSG_ID_MISSION_NOT_FOUND = 1001;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
-	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 
 	/* Message string constants */
 	private static final String MSG_MISSION_NOT_FOUND = "No mission found for ID %d (%d)";
@@ -69,7 +68,7 @@ public class MissionControllerImpl implements MissionController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 

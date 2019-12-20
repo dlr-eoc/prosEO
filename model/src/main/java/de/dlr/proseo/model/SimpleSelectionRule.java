@@ -21,12 +21,9 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
-
 import de.dlr.proseo.model.util.SelectionItem;
 
 /**
@@ -36,8 +33,10 @@ import de.dlr.proseo.model.util.SelectionItem;
  * @author Dr. Thomas Bassler
  */
 @Entity
-@Table(indexes = { @Index(unique = true, columnList = "target_product_class_id, source_product_class_id, mode") })
 public class SimpleSelectionRule extends PersistentObject {
+	
+	/** Default processing mode (representing any processing mode for the applicable mission) */
+	public static final String PROCESSING_MODE_ALWAYS = "ALWAYS";
 	
 	/* Error messages */
 	private static final String MSG_NO_ITEM_FOUND = "No item found or not enough time coverage for selection rule '%s' and time interval (%s, %s)";
@@ -49,7 +48,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * this is restricted by the processing modes defined for the mission, but the (self evident and default) special value "ALWAYS"
 	 * is always valid.
 	 */
-	private String mode = "ALWAYS";
+	private String mode = PROCESSING_MODE_ALWAYS;
 	
 	/**
 	 * Indicates whether the required source product is mandatory for the production of the target product

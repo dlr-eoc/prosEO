@@ -7,9 +7,15 @@ package de.dlr.proseo.ui.cli;
 
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +25,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.interfaces.rest.model.SelectionRuleString;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -44,11 +51,16 @@ public class ProductclassCommandRunner {
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
 
+	private static final String MODE_ALWAYS = "ALWAYS";
+	private static final String FORMAT_PLAIN = "PLAIN";
+	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_TYPE = "Product class name (empty field cancels): ";
 	private static final String PROMPT_MISSION_TYPE = "Mission product type (empty field cancels): ";
+	private static final String PROMPT_SELECTION_RULE = "Selection rule in Rule Language (empty field cancels, ^D terminates): ";
 
 	private static final String URI_PATH_PRODUCTCLASSES = "/productclasses";
+	private static final String URI_PATH_SELECTIONRULES = "/selectionrules";
 	
 	private static final String PRODUCTCLASSES = "product classes";
 
@@ -66,6 +78,95 @@ public class ProductclassCommandRunner {
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessorCommandRunner.class);
+
+	/**
+	 * Read several lines of text (until EOF/^D) from the console
+	 * 
+	 * @return a string containing the user input or an empty string, if an error occurred or the user cancelled the input
+	 */
+	private String readTextFromConsole() {
+		Reader consoleReader = System.console().reader();
+		StringBuilder response = new StringBuilder();
+		char[] inputBuffer = new char[200];
+		int numChars = 0;
+		try {
+			while (-1 != (numChars = consoleReader.read(inputBuffer))) {
+				response.append(inputBuffer, 0, numChars);
+			}
+		} catch (IOException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			// return string so far
+		}
+		return response.toString();
+	}
+	
+	/**
+	 * Retrieves a product class for the current mission by product type
+	 * 
+	 * @param productType the product type
+	 * @return a product class object or null, if no product class of the given type exists for the mission
+	 */
+	private RestProductClass retrieveProductClassByType(String productType) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retrieveProductClassByType({})", productType);
+		
+		/* Retrieve the product class using Product Class Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), 
+					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() + "&productType=" + productType, 
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return null;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return null;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
+			logger.error(message);
+			System.err.println(message);
+			return null;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		RestProductClass restProductClass = mapper.convertValue(resultList.get(0), RestProductClass.class);
+		return restProductClass;
+	}
+	
+	/**
+	 * Create a selection rule string from a plain text file with selection rules in Rule Language
+	 * 
+	 * @param selectionRuleFile the file name of the selection rule file
+	 * @return a SelectionRuleString object with the content of the file and default mode ALWAYS
+	 * @throws FileNotFoundException if the given file does not exist or is not a readable file
+	 * @throws IOException if a low-level I/O error occurs
+	 */
+	private SelectionRuleString readPlainSelectionRule(File selectionRuleFile) throws FileNotFoundException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> readPlainSelectionRule({})", selectionRuleFile);
+		
+		/* Read the file content into a rule string */
+		BufferedReader in = new BufferedReader(new FileReader(selectionRuleFile));
+		String ruleString = in.lines().collect(Collectors.joining());
+		in.close();
+		
+		/* Create and return a selection rule string object */
+		SelectionRuleString selectionRuleString = new SelectionRuleString();
+		selectionRuleString.setSelectionRule(ruleString);
+		selectionRuleString.setMode(MODE_ALWAYS);
+		
+		return selectionRuleString;
+	}
 
 	/**
 	 * Create a new product class; if the input is not from a file, the user will be prompted for mandatory attributes
@@ -301,37 +402,11 @@ public class ProductclassCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
 			return;
 		}
-		List<?> resultList = null;
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
-					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() + "&productType=" + updatedProductClass.getProductType(),
-					List.class, loginManager.getUser(), loginManager.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, updatedProductClass.getProductType());
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+		RestProductClass restProductClass = retrieveProductClassByType(updatedProductClass.getProductType());
+		if (null == restProductClass) {
+			// Already handled
 			return;
 		}
-		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, updatedProductClass.getProductType());
-			logger.error(message);
-			System.err.println(message);
-			return;
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		RestProductClass restProductClass = mapper.convertValue(resultList.get(0), RestProductClass.class);
 
 		/* Compare attributes of database product class with updated product class */
 		// No modification of ID, version, mission code or product class name allowed
@@ -402,37 +477,11 @@ public class ProductclassCommandRunner {
 		String productType = deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the product class using Product Class Manager service */
-		List<?> resultList = null;
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), 
-					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() + "&productType=" + productType, 
-					List.class, loginManager.getUser(), loginManager.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return;
-		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+		RestProductClass restProductClass = retrieveProductClassByType(productType);
+		if (null == restProductClass) {
+			// Already handled
 			return;
 		}
-		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
-			logger.error(message);
-			System.err.println(message);
-			return;
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		RestProductClass restProductClass = mapper.convertValue(resultList.get(0), RestProductClass.class);
 		
 		/* Delete processor class using Product Class Manager service */
 		try {
@@ -466,6 +515,497 @@ public class ProductclassCommandRunner {
 		logger.info(message);
 		System.out.println(message);
 	}
+
+	/**
+	 * Create a new set of selection rules for the given target product class; if the input is not from a file, 
+	 * the user will be prompted for mandatory attributes not given on the command line (including the rule itself, 
+	 * if PLAIN format is specified)
+	 * 
+	 * @param createCommand the parsed "productclass rule create" command
+	 */
+	@SuppressWarnings("unchecked")
+	private void createSelectionRule(ParsedCommand createCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createSelectionRule({})", (null == createCommand ? "null" : createCommand.getName()));
+		
+		/* Check command options */
+		File selectionRuleFile = null;
+		String selectionRuleFileFormat = FORMAT_PLAIN;
+		for (ParsedOption option: createCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				selectionRuleFile = new File(option.getValue());
+				break;
+			case "format":
+				selectionRuleFileFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Read selection rule file, if any */
+		List<Object> selectionRuleList = new ArrayList<>();
+		if (null == selectionRuleFile) {
+			SelectionRuleString restSelectionRule = new SelectionRuleString();
+			selectionRuleList.add(restSelectionRule);
+		} else if (FORMAT_PLAIN.equals(selectionRuleFileFormat)) {
+			try {
+				SelectionRuleString restSelectionRule = readPlainSelectionRule(selectionRuleFile);
+				selectionRuleList.add(restSelectionRule);
+			} catch (FileNotFoundException e) {
+				String message = uiMsg(MSG_ID_FILE_NOT_FOUND, selectionRuleFile);
+				logger.error(message);
+				System.err.println(message);
+				return;
+			} catch (IOException e) {
+				String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				logger.error(message);
+				System.err.println(message);
+				return;
+			}
+		} else {
+			try {
+				selectionRuleList.addAll(CLIUtil.parseObjectFile(selectionRuleFile, selectionRuleFileFormat, List.class));
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from selection rule class file) */
+		String targetClass = null;
+		List<String> attributeList = new ArrayList<>();
+		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
+			ParsedParameter param = createCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is target product class
+				targetClass = param.getValue();
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				attributeList.add(param.getValue());
+			}
+		}
+		
+		/* Read original product class from Product Manager service */
+		if (null == targetClass || 0 == targetClass.length()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			return;
+		}
+		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
+		if (null == restProductClass) {
+			// Already handled
+			return;
+		}
+		
+		/* Check input data for completeness */
+		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		ObjectMapper mapper = new ObjectMapper();
+		for (Object listObject: selectionRuleList) {
+			SelectionRuleString restSelectionRule = mapper.convertValue(listObject, SelectionRuleString.class);
+			
+			/* Set values from attribute parameters */
+			for (String attributeParam: attributeList) {
+				try {
+					CLIUtil.setAttribute(restSelectionRule, attributeParam);
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+			/* Set missing attributes to default values where possible */
+			if (null == restSelectionRule.getMode() || 0 == restSelectionRule.getMode().length()) {
+				restSelectionRule.setMode(MODE_ALWAYS);
+			}
+			
+			/* Prompt user for missing mandatory attributes */
+			if (null == restSelectionRule.getSelectionRule() || 0 == restSelectionRule.getSelectionRule().length()) {
+				System.out.println(PROMPT_SELECTION_RULE);
+				String response = readTextFromConsole();
+				if ("".equals(response)) {
+					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					return;
+				}
+				restSelectionRule.setSelectionRule(response);
+			} 
+		}
+		
+		/* Create selection rule */
+		try {
+			restProductClass = serviceConnection.postToService(serviceConfig.getProductClassManagerUrl(),
+					URI_PATH_PRODUCTCLASSES + "/" + restProductClass.getId() + URI_PATH_SELECTIONRULES, 
+					selectionRuleList, RestProductClass.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Report success */
+		String message = uiMsg(MSG_ID_SELECTION_RULES_CREATED, selectionRuleList.size(), targetClass);
+		logger.info(message);
+		System.out.println(message);
+	}
+
+	/**
+	 * Show the selection rules for the given product class
+	 * 
+	 * @param showCommand the parsed "productclass rule show" command
+	 */
+	private void showSelectionRule(ParsedCommand showCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> showSelectionRule({})", (null == showCommand ? "null" : showCommand.getName()));
+		
+		/* Check command options */
+		String selectionRuleOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				selectionRuleOutputFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Get product class name from command parameters */
+		if (showCommand.getParameters().isEmpty()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			return;
+		}
+		String targetClass = showCommand.getParameters().get(0).getValue();
+		String sourceClass = (1 < showCommand.getParameters().size() ? showCommand.getParameters().get(1).getValue() : null);
+		
+		/* Retrieve the product class using Product Class Manager service */
+		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
+		if (null == restProductClass) {
+			// Already handled
+			return;
+		}
+		
+		/* Prepare request URI */
+		String requestURI = URI_PATH_PRODUCTCLASSES + "/" + restProductClass.getId() + URI_PATH_SELECTIONRULES;
+		if (null != sourceClass) {
+			requestURI += "?sourceClass=" + sourceClass;
+		}
+		
+		/* Get the selection rule information from the Product Class Manager service */
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Display the processor class(es) found */
+		if (FORMAT_PLAIN.equals(selectionRuleOutputFormat)) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object resultObject: resultList) {
+				SelectionRuleString selectionRule = mapper.convertValue(resultObject, SelectionRuleString.class);
+				System.out.println(selectionRule.getSelectionRule());
+				System.out.println(String.format("(Mode: %s, configured processors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
+			}
+		} else {
+			try {
+				CLIUtil.printObject(System.out, resultList, selectionRuleOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+	}
+	
+	/**
+	 * Update a selection rule from a selection rule file or from "attribute=value" pairs (overriding any selection rule file entries)
+	 * 
+	 * @param updateCommand the parsed "productclass rule update" command
+	 */
+	private void updateSelectionRule(ParsedCommand updateCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateSelectionRule({})", (null == updateCommand ? "null" : updateCommand.getName()));
+
+		/* Check command options */
+		File selectionRuleFile = null;
+		String selectionRuleFileFormat = null;
+		boolean isDeleteAttributes = false;
+		for (ParsedOption option: updateCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				selectionRuleFile = new File(option.getValue());
+				break;
+			case "format":
+				selectionRuleFileFormat = option.getValue().toUpperCase();
+				break;
+			case "delete-attributes":
+				isDeleteAttributes = true;
+				break;
+			}
+		}
+		
+		/* Read processor file, if any */
+		SelectionRuleString updatedSelectionRule = null;
+		if (null == selectionRuleFile) {
+			updatedSelectionRule = new SelectionRuleString();
+		} else {
+			try {
+				updatedSelectionRule = CLIUtil.parseObjectFile(selectionRuleFile, selectionRuleFileFormat, SelectionRuleString.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from processor class file) */
+		String targetClass = null;
+		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
+			ParsedParameter param = updateCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is target product class
+				targetClass = param.getValue();
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(updatedSelectionRule, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Retrieve the product class using Product Class Manager service */
+		if (null == targetClass || 0 == targetClass.length()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			return;
+		}
+		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
+		if (null == restProductClass) {
+			// Already handled
+			return;
+		}
+		
+		/* Read original selection rule from Product Class Manager service */
+		String requestURI = URI_PATH_PRODUCTCLASSES + "/" + restProductClass.getId() + URI_PATH_SELECTIONRULES;
+		List<?> resultList = null;
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
+					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		if (resultList.isEmpty()) {
+			String message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+			logger.error(message);
+			System.err.println(message);
+			return;
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		SelectionRuleString restSelectionRule = null;
+		
+		/* If there is more than one selection rule, prompt the user for a choice */
+		if (1 == resultList.size()) {
+			restSelectionRule = mapper.convertValue(resultList.get(0), SelectionRuleString.class);
+		} else {
+			/* Print a short form of all selection rules */
+			for (int i = 0; i < resultList.size(); ++i) {
+				SelectionRuleString selectionRule = mapper.convertValue(resultList.get(i), SelectionRuleString.class);
+				System.out.println(String.format("[%-2d] %s", i+1, selectionRule.getSelectionRule()));
+				System.out.println(String.format("     (Mode: %s, configured processors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
+			}
+			while (null == restSelectionRule) {
+				System.out.print("Select rule (empty field cancels): ");
+				String response = System.console().readLine();
+				if ("".equals(response)) {
+					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+					return;
+				}
+				try {
+					Integer selectedIndex = Integer.parseInt(response);
+					if (1 > selectedIndex || resultList.size() < selectedIndex) {
+						System.err.println(uiMsg(MSG_ID_INPUT_OUT_OF_BOUNDS, selectedIndex, 1, resultList.size()));
+					} else {
+						restSelectionRule = mapper.convertValue(resultList.get(selectedIndex - 1), SelectionRuleString.class);
+					}
+				} catch (NumberFormatException e) {
+					System.err.println(uiMsg(MSG_ID_INPUT_NOT_NUMERIC, response));
+					continue;
+				}
+			}
+		}
+
+		/* Compare attributes of database selection rule with updated selection rule */
+		// No modification of ID, version and target product class allowed
+		if (null != updatedSelectionRule.getSelectionRule()) { // not null
+			restSelectionRule.setSelectionRule(updatedSelectionRule.getSelectionRule());
+		}
+		if (null != updatedSelectionRule.getMode()) { // not null
+			restSelectionRule.setMode(updatedSelectionRule.getMode());
+		}
+		if (null != updatedSelectionRule.getConfiguredProcessors() && (isDeleteAttributes || !updatedSelectionRule.getConfiguredProcessors().isEmpty())) {
+			restSelectionRule.getConfiguredProcessors().clear();
+			restSelectionRule.getConfiguredProcessors().addAll(updatedSelectionRule.getConfiguredProcessors());
+		}
+		
+		/* Update selection rule using Product Class Manager service */
+		try {
+			restSelectionRule = serviceConnection.patchToService(serviceConfig.getProductClassManagerUrl(),
+					URI_PATH_PRODUCTCLASSES + "/" + restProductClass.getId() 
+					+ URI_PATH_SELECTIONRULES + "/" + restSelectionRule.getId(),
+					restSelectionRule, SelectionRuleString.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success, giving new selection rule version */
+		String message = uiMsg(MSG_ID_SELECTION_RULE_UPDATED, restSelectionRule.getId(), restSelectionRule.getVersion());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
+	 * Delete the given processor
+	 * 
+	 * @param deleteCommand the parsed "processor delete" command
+	 */
+//	private void deleteProcessor(ParsedCommand deleteCommand) {
+//		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessor({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+//
+//		/* Get processor name from command parameters */
+//		if (2 > deleteCommand.getParameters().size()) {
+//			// No identifying value given
+//			System.err.println(uiMsg(MSG_ID_NO_PROCESSOR_IDENTIFIER_GIVEN));
+//			return;
+//		}
+//		String processorName = deleteCommand.getParameters().get(0).getValue();
+//		String processorVersion = deleteCommand.getParameters().get(1).getValue();
+//		
+//		/* Retrieve the processor using Processor Manager service */
+//		List<?> resultList = null;
+//		try {
+//			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
+//					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission()
+//						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
+//					List.class, loginManager.getUser(), loginManager.getPassword());
+//		} catch (RestClientResponseException e) {
+//			String message = null;
+//			switch (e.getRawStatusCode()) {
+//			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+//				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
+//				break;
+//			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+//				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+//				break;
+//			default:
+//				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+//			}
+//			System.err.println(message);
+//			return;
+//		} catch (Exception e) {
+//			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+//			return;
+//		}
+//		if (resultList.isEmpty()) {
+//			String message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND, processorName, processorVersion);
+//			logger.error(message);
+//			System.err.println(message);
+//			return;
+//		}
+//		ObjectMapper mapper = new ObjectMapper();
+//		RestProcessor restProcessor = mapper.convertValue(resultList.get(0), RestProcessor.class);
+//		
+//		/* Delete processor using Processor Manager service */
+//		try {
+//			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+//					URI_PATH_PROCESSORS + "/" + restProcessor.getId(), 
+//					loginManager.getUser(), loginManager.getPassword());
+//		} catch (RestClientResponseException e) {
+//			String message = null;
+//			switch (e.getRawStatusCode()) {
+//			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+//				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
+//				break;
+//			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+//				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+//				break;
+//			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+//				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
+//				break;
+//			default:
+//				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+//			}
+//			System.err.println(message);
+//			return;
+//		} catch (Exception e) {
+//			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+//			return;
+//		}
+//		
+//		/* Report success */
+//		String message = uiMsg(MSG_ID_PROCESSOR_DELETED, restProcessor.getId());
+//		logger.info(message);
+//		System.out.println(message);
+//	}
 	
 	/**
 	 * Run the given command
@@ -506,25 +1046,25 @@ public class ProductclassCommandRunner {
 		}
 		
 		/* Execute the (sub-)sub-command */
-		COMMAND:
 		switch (subcommand.getName()) {
 		// Handle commands for product classes
-		case CMD_CREATE:	createProductClass(subcommand); break COMMAND;
-		case CMD_SHOW:		showProductClass(subcommand); break COMMAND;
-		case CMD_UPDATE:	updateProductClass(subcommand); break COMMAND;
-		case CMD_DELETE:	deleteProductClass(subcommand); break COMMAND;
+		case CMD_CREATE:	createProductClass(subcommand); break;
+		case CMD_SHOW:		showProductClass(subcommand); break;
+		case CMD_UPDATE:	updateProductClass(subcommand); break;
+		case CMD_DELETE:	deleteProductClass(subcommand); break;
 		case CMD_RULE:
 			// Handle commands for selection rules
 			switch (subsubcommand.getName()) {
-//			case CMD_CREATE:	createConfiguredProcessor(subsubcommand); break COMMAND;
-//			case CMD_SHOW:		showConfiguredProcessor(subsubcommand); break COMMAND;
-//			case CMD_UPDATE:	updateConfiguredProcessor(subsubcommand); break COMMAND;
-//			case CMD_DELETE:	deleteConfiguredProcessor(subsubcommand); break COMMAND;
+			case CMD_CREATE:	createSelectionRule(subsubcommand); break;
+			case CMD_SHOW:		showSelectionRule(subsubcommand); break;
+			case CMD_UPDATE:	updateSelectionRule(subsubcommand); break;
+//			case CMD_DELETE:	deleteConfiguredProcessor(subsubcommand); break;
 			default:
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
 						command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
 				return;
 			}
+			break;
 		default:
 			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;

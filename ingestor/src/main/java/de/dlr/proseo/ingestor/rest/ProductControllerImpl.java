@@ -8,8 +8,6 @@ package de.dlr.proseo.ingestor.rest;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
-
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.validation.Valid;
@@ -52,7 +50,7 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	

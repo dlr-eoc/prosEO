@@ -43,7 +43,7 @@ public class IngestControllerImpl implements IngestController {
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_FACILITY = 2051;
 	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
 	/* Message string constants */
@@ -112,7 +112,7 @@ public class IngestControllerImpl implements IngestController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	

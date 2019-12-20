@@ -111,6 +111,14 @@ public class UIMessages {
 	public static final int MSG_ID_PRODUCTCLASS_UPDATED = 2866;
 	public static final int MSG_ID_PRODUCTCLASS_DELETE_FAILED = 2867;
 	public static final int MSG_ID_PRODUCTCLASS_DELETED = 2868;
+	public static final int MSG_ID_FILE_NOT_FOUND = 2869;
+	public static final int MSG_ID_SELECTION_RULE_DATA_INVALID = 2870;
+	public static final int MSG_ID_SELECTION_RULES_CREATED = 2871;
+	public static final int MSG_ID_NO_SELECTION_RULES_FOUND = 2872;
+	public static final int MSG_ID_INPUT_OUT_OF_BOUNDS = 2873;
+	public static final int MSG_ID_INPUT_NOT_NUMERIC = 2874;
+	public static final int MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID = 2875;
+	public static final int MSG_ID_SELECTION_RULE_UPDATED = 2876;
 	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
@@ -244,6 +252,12 @@ public class UIMessages {
 		MSG_PRODUCTCLASS_NOT_FOUND ("(E%d) Product class %s not found", MSG_ID_PRODUCTCLASS_NOT_FOUND),
 		MSG_PRODUCTCLASS_NOT_FOUND_BY_ID ("(E%d) Product class with database ID %d not found", MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID),
 		MSG_PRODUCTCLASS_DELETE_FAILED ("(E%d) Deletion of product class %s failed (cause: %s)", MSG_ID_PRODUCTCLASS_DELETE_FAILED),
+		MSG_FILE_NOT_FOUND ("(E%d) Selection rule file %s not found or not readable", MSG_ID_FILE_NOT_FOUND),
+		MSG_SELECTION_RULE_DATA_INVALID ("(E%d) Selection rule data invalid (cause: %s)", MSG_ID_SELECTION_RULE_DATA_INVALID),
+		MSG_NO_SELECTION_RULES_FOUND ("(E%d) No selection rules found for product class %s", MSG_ID_NO_SELECTION_RULES_FOUND),
+		MSG_NO_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
+		MSG_NO_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
+		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),
 		
 		// Ingestor/product CLI
 		MSG_NO_PRODUCTS_FOUND ("(E%d) No products found for given search criteria", MSG_ID_NO_PRODUCTS_FOUND),
@@ -344,6 +358,8 @@ public class UIMessages {
 		MSG_PRODUCTCLASS_CREATED ("(I%d) Product class %s created (database ID %d)", MSG_ID_PRODUCTCLASS_CREATED),
 		MSG_PRODUCTCLASS_UPDATED ("(I%d) Product class with database ID %d updated (new version %d)", MSG_ID_PRODUCTCLASS_UPDATED),
 		MSG_PRODUCTCLASS_DELETED ("(I%d) Product class with database ID %d deleted", MSG_ID_PRODUCTCLASS_DELETED),
+		MSG_SELECTION_RULE_CREATED ("(I%d) %d selection rules created for product class %s", MSG_ID_SELECTION_RULES_CREATED),
+		MSG_SELECTION_RULE_UPDATED ("(I%d) Selection rule with database ID %d updated (new version %d)", MSG_ID_SELECTION_RULE_UPDATED),
 		
 		// Ingestor/product CLI
 		MSG_PRODUCT_CREATED ("(I%d) Product of class %s created (database ID %d, UUID %s)", MSG_ID_PRODUCT_CREATED),
@@ -361,7 +377,7 @@ public class UIMessages {
 		MSG_CONFIGURATION_CREATED ("(I%d) Configuration %s with version %s created (database ID %d)", MSG_ID_CONFIGURATION_CREATED),
 		MSG_CONFIGURATION_UPDATED ("(I%d) Configuration with database ID %d updated (new version %d)", MSG_ID_CONFIGURATION_UPDATED),
 		MSG_CONFIGURATION_DELETED ("(I%d) Configuration with database ID %d deleted", MSG_ID_CONFIGURATION_DELETED),
-		MSG_CONFIGUREDPROCESSOR_CREATED ("(I%d) Configured processor %s for processor %, version and configuration version %s created (database ID %d)", MSG_ID_CONFIGUREDPROCESSOR_CREATED),
+		MSG_CONFIGUREDPROCESSOR_CREATED ("(I%d) Configured processor %s for processor %s, version %s and configuration version %s created (database ID %d)", MSG_ID_CONFIGUREDPROCESSOR_CREATED),
 		MSG_CONFIGUREDPROCESSOR_UPDATED ("(I%d) Configured processor with database ID %d updated (new version %d)", MSG_ID_CONFIGUREDPROCESSOR_UPDATED),
 		MSG_CONFIGUREDPROCESSOR_DELETED ("(I%d) Configured processor with database ID %d deleted", MSG_ID_CONFIGUREDPROCESSOR_DELETED);
 		

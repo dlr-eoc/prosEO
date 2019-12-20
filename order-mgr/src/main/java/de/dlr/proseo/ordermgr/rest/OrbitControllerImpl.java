@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,8 +26,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.mysema.scalagen.defs;
-
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -47,7 +44,7 @@ public class OrbitControllerImpl implements OrbitController {
 	/* Message ID constants */
 	private static final int MSG_ID_ORBIT_NOT_FOUND = 1005;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_ORBIT_MISSING = 1006;
 	private static final int MSG_ID_ORBIT_INCOMPLETE = 1007;
 
@@ -104,7 +101,7 @@ public class OrbitControllerImpl implements OrbitController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 

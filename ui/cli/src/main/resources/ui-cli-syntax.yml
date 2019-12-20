@@ -707,7 +707,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the order definition file and/or the command parameters
+              description: Delete attributes not given in the product class definition file and/or the command parameters
           parameters:
             - name: className
               type: string
@@ -729,14 +729,23 @@ commands:
           subcommands:
             - name: show
               description: Show all selection rules for the current mission and target product class
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { PLAIN, JSON, XML, YAML }; default value PLAIN [rule language]).
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
+                  type: string
+                  description: The product class using the selection rules
+                - name: sourceProductClass
                   type: string
                   optional: true
-                  description: The product class name of the selection rules
+                  description: The product class requested by the selection rules
             - name: create
               description: Create a new selection rule for the given target product class; 
-                           the user will be prompted for mandatory attributes not given on the command line
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If PLAIN format is specified and no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
               options:
                 - name: file
                   type: string
@@ -744,9 +753,10 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                               Note. Only PLAIN format is implemented for the time being.
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The target product class name (mandatory if not read from file)
@@ -756,8 +766,12 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: update
-              description: Update a selection rule for the given target product class; 
-                           the user will be prompted for mandatory attributes not given on the command line
+              description: Update a selection rule for the given target class and configured processor; 
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If PLAIN format is specified and no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
+                           If multiple rules exist for the target product class,
+                           the user will be prompted to select the rule to apply the update to.
               options:
                 - name: file
                   type: string
@@ -765,9 +779,13 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                               Note. Only PLAIN format is implemented for the time being.
+                - name: delete-attributes
+                  type: boolean
+                  description: Delete attributes not given in the selection rule definition file and/or the command parameters
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The target product class name (mandatory if not read from file)
@@ -781,7 +799,7 @@ commands:
                            rule will be disconnected from the configured processor and deleted, if it is not connected
                            to any other configured processor)
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The product class name of the selection rule
