@@ -1,49 +1,41 @@
 package de.dlr.proseo.ui.gui;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.amazonaws.services.s3.Headers;
 
-import android.provider.MediaStore.Audio.Media;
-
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.httpclient.HttpClientError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Service
 public class processorService {
 	private static Logger logger = LoggerFactory.getLogger(processorService.class);
+	/** The GUI configuration */
+	@Autowired
+	private GUIConfiguration config;
+
 /**
  * 
  * @param mission to get
  * @param processorName to get
  * @return list of processorClasses
  */
-	public ResponseSpec get(String mission, String processorName) {
-		String uri ="https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
+	public Mono<ClientResponse> get(String mission, String processorName) {
+		String uri = "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
 		if(null != mission && null != processorName) {
 			uri += "?mission=" + mission + "&processorName=" + processorName;
 		} else if (null != processorName) {
@@ -58,12 +50,11 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		ResponseSpec responseSpec = webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
-		return responseSpec;
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
-	public ResponseSpec getById(String id) {
-		String uri ="https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses/";
+	public Mono<ClientResponse> getById(String id) {
+		String uri = "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
 		if(null != id ) {
 			uri += id;
 		} 
@@ -74,8 +65,7 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		ResponseSpec responseSpec = webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
-		return responseSpec;
+		return webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
 	/**
@@ -96,7 +86,6 @@ public class processorService {
 		map.put("missionCode", mission);
 		map.put("processorName", processorClassName);
 		map.put("productClasses", processorClassProductClass);
-		logger.trace(">>PRODUCTCLASSES ARRAY: {}", processorClassProductClass);
 		logger.trace(">>PRODUCTCLASSES TO STRING: {}", processorClassProductClass.toString());
 		
 		logger.trace(">>PARAMETERS IN POST: {}, {}, {},", mission, processorClassName,processorClassProductClass);
@@ -122,7 +111,7 @@ public class processorService {
 		String uri ="";
 		MultiValueMap<String,String> map = new LinkedMultiValueMap<>();
 		if(null != mission  && null != processorClassName  && null != processorClassProductClass && null != id) {
-		uri += "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses/" + id;
+		uri += config.getProcessorManager() + id;
 		logger.trace("URI " + uri);
 		map.add("missionCode", mission);
 		map.add("processorName", processorClassName);
@@ -147,7 +136,7 @@ public class processorService {
 	 * @return response from query
 	 */
 	public ResponseSpec delete(String id) {
-		String uri = "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses/";
+		String uri = config.getProcessorManager();
 		if (null != id) {
 			uri += id;
 			logger.trace("URI" + uri);
@@ -169,7 +158,7 @@ public class processorService {
 	 * @return responseSpec for processors
 	 */
 	public ResponseSpec get(String mission, String processorName, String processorVersion) {
-		String uri ="http://localhost:8090/castlemock/mock/rest/project/eW2ujU/application/79M2j9/processors" ;	
+		String uri = config.getProcessorManager();	
 		if(null != mission && null != processorName && null != processorVersion) {
 			uri += "?mission=" + mission + "&processorName=" + processorName + "%processorVersion=" + processorVersion;
 		} else if (null != processorName) {
