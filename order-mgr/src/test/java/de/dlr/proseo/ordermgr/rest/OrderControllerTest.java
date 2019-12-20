@@ -505,7 +505,7 @@ public class OrderControllerTest {
 	 * Precondition: At least one orbit with a known ID is in the database 
 	 */
 	
-	@Transactional//Without this i get lazy initialization error 
+	//@Transactional//Without this i get lazy initialization error 
 	@Test
 	public final void testModifyOrder() {
 		

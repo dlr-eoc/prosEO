@@ -181,7 +181,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
-    public ResponseEntity<PlannerPod> modifyProcessingfacilities(String podname, String name, String status) {
+    public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
 			// todo check for existing pod, jobstep, ... 

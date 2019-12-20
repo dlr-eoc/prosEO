@@ -84,6 +84,10 @@ commands:
       subcommands:
         - name: show
           description: List all configured missions or only the given one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: missionCode
               type: string
@@ -122,6 +126,10 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
+                - name: spacecraftCode
+                  type: string
+                  optional: true
+                  description: The code of the spacecraft to remove (mandatory if not read from file)
                 - name: attribute
                   type: string
                   optional: true
@@ -145,12 +153,15 @@ commands:
             - name: to
               type: integer
               description: Upper bound of orbit range
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: spacecraftCode
               type: string
               description: The code of the spacecraft the orbits belong to
         - name: create
-          description: Add a set of orbits for the given spacecraft (may redefine previously existing orbits)
+          description: Add a set of orbits for the given spacecraft
           options:
             - name: file
               type: string
@@ -162,15 +173,16 @@ commands:
           parameters:
             - name: spacecraftCode
               type: string
-              description: The code of the spacecraft the orbits belong to
+              optional: true
+              description: The code of the spacecraft the orbits belong to (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
               repeatable: true
               description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
-                           overrides values given in the orbit definition file
+                           only allowed if no orbit file is given (i. e. a single orbit is created)
         - name: update
-          description: Update a set of orbits for the given spacecraft (essentially a synonym for "create")
+          description: Update a set of orbits for the given spacecraft
           options:
             - name: file
               type: string
@@ -182,13 +194,18 @@ commands:
           parameters:
             - name: spacecraftCode
               type: string
-              description: The code of the spacecraft the orbits belong to
+              optional: true
+              description: The code of the spacecraft the orbits belong to (mandatory if not read from file)
+            - name: orbitNumber
+              type: string
+              optional: true
+              description: The number of the orbit to update (mandatory if not read from file)
             - name: attribute
               type: string
               optional: true
               repeatable: true
               description: An orbit attribute to update in the form "<attribute name>=<attribute value>",
-                           overrides values given in the orbit definition file
+                           only allowed if no orbit file is given (i. e. a single orbit is updated)
         - name: delete
           description: Deletes orbits in a given orbit range
           options:
@@ -214,6 +231,9 @@ commands:
             - name: to
               type: datetime
               description: Upper bound of order start time
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: orderId
               type: string
@@ -279,10 +299,17 @@ commands:
               description: The order identifier
         - name: plan
           description: Plan the jobs for the named processing order (must be in status approved)
+          options:
+            - name: format
+              type: string
+              description: The output format for the resulting job list (one of { NONE, JSON, XML, YAML }; default value NONE)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
+            - name: facility
+              type: string
+              description: The processing facility, on which the order shall be run
         - name: release
           description: Release the jobs of the named processing order for processing (must be in status planned)
           parameters:
@@ -330,6 +357,10 @@ commands:
           subcommands:
             - name: show
               description: Show all processor classes for the current mission or a named one
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
                 - name: className
                   type: string
@@ -385,6 +416,10 @@ commands:
                   description: The name of the processor classes to update (mandatory if not read from file)
         - name: show
           description: Show all processor versions for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -461,6 +496,10 @@ commands:
           subcommands:
             - name: show
               description: Show all configured processor for the current mission or only the ones identified
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
                 - name: className
                   type: string
@@ -482,6 +521,10 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
+                - name: configuredProcessorIdentifier
+                  type: string
+                  optional: true
+                  description: The identifier of the configured processor
                 - name: className
                   type: string
                   optional: true
@@ -515,14 +558,10 @@ commands:
                   type: string
                   optional: true
                   description: The class name of the processor (mandatory if not read from file)
-                - name: processorVersion
+                - name: configuredProcessorIdentifier
                   type: string
                   optional: true
-                  description: The version of the processor (mandatory if not read from file)
-                - name: configurationVersion
-                  type: string
-                  optional: true
-                  description: The version of the configuration (mandatory if not read from file)
+                  description: The identifier of the configured processor
                 - name: attribute
                   type: string
                   optional: true
@@ -534,17 +573,19 @@ commands:
                 - name: className
                   type: string
                   description: The class name of the processor
-                - name: processorVersion
+                - name: configuredProcessorIdentifier
                   type: string
-                  description: The version of the processor
-                - name: configurationVersion
-                  type: string
-                  description: The version of the configuration
+                  optional: true
+                  description: The identifier of the configured processor
     - name: configuration
       description: Commands for managing configurations
       subcommands:
         - name: show
           description: Show all configurations for the current mission and processor class or a named one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -618,11 +659,15 @@ commands:
               description: The version of the configuration to update (mandatory if not read from file)
                  
     # Commands for the Product Class Manager
-    - name: productClass
+    - name: productclass
       description: Commands for managing product classes
       subcommands:
         - name: show
           description: Show all product classes for the current mission or only the selected ones
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string
@@ -660,6 +705,9 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete attributes not given in the product class definition file and/or the command parameters
           parameters:
             - name: className
               type: string
@@ -681,14 +729,23 @@ commands:
           subcommands:
             - name: show
               description: Show all selection rules for the current mission and target product class
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { PLAIN, JSON, XML, YAML }; default value PLAIN [rule language]).
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
+                  type: string
+                  description: The product class using the selection rules
+                - name: sourceProductClass
                   type: string
                   optional: true
-                  description: The product class name of the selection rules
+                  description: The product class requested by the selection rules
             - name: create
               description: Create a new selection rule for the given target product class; 
-                           the user will be prompted for mandatory attributes not given on the command line
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If PLAIN format is specified and no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
               options:
                 - name: file
                   type: string
@@ -696,9 +753,10 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                               Note. Only PLAIN format is implemented for the time being.
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The target product class name (mandatory if not read from file)
@@ -708,8 +766,12 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: update
-              description: Update a selection rule for the given target product class; 
-                           the user will be prompted for mandatory attributes not given on the command line
+              description: Update a selection rule for the given target class and configured processor; 
+                           the user will be prompted for mandatory attributes not given on the command line.
+                           If PLAIN format is specified and no file name is given,
+                           the user will be prompted to enter the selection rule in Rule Language.
+                           If multiple rules exist for the target product class,
+                           the user will be prompted to select the rule to apply the update to.
               options:
                 - name: file
                   type: string
@@ -717,9 +779,13 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                               Note. Only PLAIN format is implemented for the time being.
+                - name: delete-attributes
+                  type: boolean
+                  description: Delete attributes not given in the selection rule definition file and/or the command parameters
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The target product class name (mandatory if not read from file)
@@ -729,18 +795,16 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
-              description: Delete the selection rule for the given target class and configured processor (the selection 
-                           rule will be disconnected from the configured processor and deleted, if it is not connected
-                           to any other configured processor)
+              description: Delete the selection rule for the given target class
               parameters:
-                - name: targetClassName
+                - name: targetProductClass
                   type: string
                   optional: true
                   description: The product class name of the selection rule
-                - name: configuredProcessorIdentifier
+                - name: ruleId
                   type: string
                   optional: true
-                  description: The identifier of the configured processor the selection rule is valid for
+                  description: The database ID of the selection rule to delete
                     
     # Commands for the Product Ingestor
     - name: product
@@ -755,6 +819,9 @@ commands:
             - name: to
               type: datetime
               description: Upper bound of sensing start time
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
             - name: className
               type: string

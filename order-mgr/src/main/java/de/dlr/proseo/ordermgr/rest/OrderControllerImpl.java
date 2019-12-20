@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.List;
@@ -22,9 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
 import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 
 /**
@@ -37,18 +33,12 @@ import de.dlr.proseo.ordermgr.rest.model.RestOrder;
 public class OrderControllerImpl implements OrderController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_ORDER_NOT_FOUND = 1007;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-	private static final int MSG_ID_ORDER_MISSING = 1008;
+	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 
 
 	/* Message string constants */
-	private static final String MSG_ORDER_NOT_FOUND = "No order found for ID %d (%d)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "Order deletion unsuccessful for ID %d (%d)";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-ordermgr-ordercontroller ";
-	private static final String MSG_ORDER_MISSING = "(E%d) Order not set";
 
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
 	
@@ -64,7 +54,7 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	/**
@@ -100,7 +90,7 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom.toInstant(), executionTimeTo.toInstant());
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom, executionTimeTo);
 		
 		try {
 			return new ResponseEntity<>(

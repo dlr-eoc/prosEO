@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -84,7 +85,7 @@ public class Job extends PersistentObject {
 	private ProcessingFacility processingFacility;
 	
 	/** The job steps for this job */
-	@OneToMany(mappedBy = "job")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "job")
 	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**

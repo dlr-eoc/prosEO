@@ -5,17 +5,10 @@
  */
 package de.dlr.proseo.procmgr.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.Optional;
-
-import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
@@ -25,18 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.Assert;
-
-import de.dlr.proseo.model.Configuration;
-import de.dlr.proseo.model.ConfigurationInputFile;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
-import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
-import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage configuration versions.
@@ -48,7 +30,7 @@ import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 public class ConfigurationControllerImpl implements ConfigurationController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -62,26 +44,6 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	private static Logger logger = LoggerFactory.getLogger(ConfigurationControllerImpl.class);
 
 	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
-	
-	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 * 
 	 * @param message the message text
@@ -89,7 +51,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	

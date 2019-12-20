@@ -56,19 +56,16 @@ public class JobControllerImpl implements JobController {
      * 
      */
 	@Override
-    public ResponseEntity<List<RestJob>> getRestJobsByState(String state) {
+    public ResponseEntity<List<RestJob>> getJobs(String state) {
 		// todo remove test start
-
-		if (productionPlanner.getKubeConfig(null).isConnected()) {
-	    	KubeJob aJob = productionPlanner.getKubeConfig(null).createJob("test", "INFO", "INFO");
-	    	if (aJob != null) {
-	    		productionPlanner.getKubeConfig(null).deleteJob(aJob);
-	    	}
-		}
-		return null;
+		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
+		logger.error(message);
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<RestJob> getRestJobByName(String name) {
+    public ResponseEntity<RestJob> getJob(String name) {
 		// TODO Auto-generated method stub
 		String message = String.format(MSG_PREFIX + "GET not implemented (%d)", 2001);
 		logger.error(message);
@@ -77,7 +74,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<RestJob> updateJobs(String name, String facility) {
+    public ResponseEntity<RestJob> createJob(String name, String facility) {
 		// TODO Auto-generated method stub
 		if (name != null) {
 			Optional<ProcessingOrder> orderOpt = null;
@@ -135,7 +132,7 @@ public class JobControllerImpl implements JobController {
     	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override
-    public ResponseEntity<RestJob> deleteJobByName(String name) {
+    public ResponseEntity<RestJob> deleteJob(String name) {
 		// TODO Auto-generated method stub
     	boolean result = productionPlanner.getKubeConfig(null).deleteJob(name);
     	if (result) {
@@ -152,7 +149,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJob> getRestJobByResumeId(String resumeId) {
+	public ResponseEntity<RestJob> resumeJob(String resumeId) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
     	logger.error(message);
@@ -161,7 +158,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJob> getRestJobByCancelId(String cancelId){
+	public ResponseEntity<RestJob> cancelJob(String cancelId){
 		// TODO Auto-generated method stub
 
     	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
@@ -171,7 +168,7 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJob> getRestJobBySuspendId(String suspendId) {
+	public ResponseEntity<RestJob> suspendJob(String suspendId) {
 		// TODO Auto-generated method stub
     	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
     	logger.error(message);

@@ -9,6 +9,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.Arrays;
@@ -16,9 +17,11 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
@@ -32,6 +35,13 @@ import java.util.List;
  */
 public class CLIUtil {
 
+	/** YAML file format */
+	public static final String FILE_FORMAT_YAML = "YAML";
+	/** JSON file format */
+	public static final String FILE_FORMAT_JSON = "JSON";
+	/** XML file format */
+	public static final String FILE_FORMAT_XML = "XML";
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
 	
@@ -52,13 +62,13 @@ public class CLIUtil {
 		
 		ObjectMapper mapper = null;
 		switch(fileFormat.toUpperCase()) {
-		case "JSON":
+		case FILE_FORMAT_JSON:
 			mapper = new ObjectMapper();
 			break;
-		case "XML":
+		case FILE_FORMAT_XML:
 			mapper = new XmlMapper();
 			break;
-		case "YAML":
+		case FILE_FORMAT_YAML:
 			mapper = new ObjectMapper(new YAMLFactory());
 			break;
 		default:
@@ -78,7 +88,52 @@ public class CLIUtil {
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
-			logger.error(e.getMessage());
+			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			throw e;
+		}
+	}
+	
+	/**
+	 * Print the given object to the given output stream according to the requested file format
+	 * @param out the output stream to print to
+	 * @param object the object to print
+	 * @param fileFormat the file format requested (one of JSON, XML, YAML)
+	 * @throws IllegalArgumentException if the file format is not one of the above, or if a formatting error occurs during printing
+	 * @throws IOException if an I/O error occurs during printing
+	 */
+	public static void printObject(PrintStream out, Object object, String fileFormat) throws IllegalArgumentException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> printObject({}, object, {})", out, object, fileFormat);
+		
+		ObjectMapper mapper = null;
+		switch(fileFormat.toUpperCase()) {
+		case FILE_FORMAT_JSON:
+			mapper = new ObjectMapper();
+			break;
+		case FILE_FORMAT_XML:
+			mapper = new XmlMapper();
+			break;
+		case FILE_FORMAT_YAML:
+			mapper = new ObjectMapper(new YAMLFactory());
+			break;
+		default:
+			String message = uiMsg(MSG_ID_INVALID_FILE_TYPE, fileFormat);
+			logger.error(message);
+			throw new IllegalArgumentException(message);
+		}
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		
+		try {
+			out.println(mapper.writeValueAsString(object));
+		} catch (JsonGenerationException e) {
+			String message = uiMsg(MSG_ID_GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
+			logger.error(message);
+			throw new IllegalArgumentException(message, e);
+		} catch (JsonMappingException e) {
+			String message = uiMsg(MSG_ID_MAPPING_EXCEPTION, object, fileFormat, e.getMessage());
+			logger.error(message);
+			throw new IllegalArgumentException(message, e);
+		} catch (IOException e) {
+			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			throw e;
 		}
 	}

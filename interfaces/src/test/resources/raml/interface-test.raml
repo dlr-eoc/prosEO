@@ -36,6 +36,7 @@ types:
   RestProductFS: !include ../../../main/resources/raml/types/productFS.raml
   RestStorage: !include ../../../main/resources/raml/types/storage.raml
   IngestorProduct: !include ../../../main/resources/raml/types/ingestorproduct.raml
+  SelectionRuleString: !include ../../../main/resources/raml/types/selectionrulestring.raml
 
 resourceTypes:
   standard:
@@ -91,3 +92,11 @@ resourceTypes:
           body:
             application/json:
               type: IngestorProduct
+  /selectionrules:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: SelectionRuleString

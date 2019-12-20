@@ -40,11 +40,11 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 			.httpBasic()
-				.and()
+			.and()
 			.authorizeRequests()
-				.antMatchers("/processingfacilities/*/finish/*").permitAll()
-				.anyRequest().authenticated()
-				.and()
+			// .regexMatchers("(?i).*/processingfacilities/[^/]+/finish/.*").permitAll()
+			.anyRequest().authenticated()
+			.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
 
