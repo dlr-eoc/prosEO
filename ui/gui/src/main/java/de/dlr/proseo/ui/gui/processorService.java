@@ -4,6 +4,9 @@ import com.amazonaws.services.s3.Headers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.LinkedMultiValueMap;
@@ -50,7 +53,11 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).exchange();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getName(), ((UserDetails) auth.getPrincipal()).getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
 	public Mono<ClientResponse> getById(String id) {

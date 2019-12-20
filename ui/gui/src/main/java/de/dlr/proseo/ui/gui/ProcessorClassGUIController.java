@@ -1,5 +1,7 @@
 package de.dlr.proseo.ui.gui;
 
+import static de.dlr.proseo.ui.backend.UIMessages.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -143,7 +145,8 @@ public class ProcessorClassGUIController {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
 				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				//model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				model.addAttribute("errormsg", uiMsg(MSG_ID_EXCEPTION, clientResponse.statusCode().getReasonPhrase()));
 				deferredResult.setResult("processor-class-show-id :: #content");
 				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is4xxClientError()) {
