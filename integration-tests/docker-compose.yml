@@ -52,10 +52,14 @@ services:
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:2019-11-12-2-integration-rc1-${PROSEO_REVISION}
     environment:
+      - PGADMIN_ENABLE_TLS=True
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    volumes:
+      - "/etc/ssl/certs/proseo-selfsigned.crt:/certs/server.cert"
+      - "/etc/ssl/certs/proseo-selfsigned.key:/certs/server.key"
     ports:
-      - "8086:80"
+      - "8443:443"
     depends_on:
       - proseo-db
 volumes:
