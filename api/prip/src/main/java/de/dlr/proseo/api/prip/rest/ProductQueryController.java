@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.dlr.proseo.api.prip.odata.ProductEdmProvider;
+import de.dlr.proseo.api.prip.odata.ProductEntityCollectionProcessor;
 import de.dlr.proseo.api.prip.rest.model.CscProduct;
 
 /**
@@ -57,9 +58,13 @@ public class ProductQueryController {
 	/** The service URI */
 	public static final String URI = "/proseo/prip/odata";
 
-	/** The EDM provider */
+	/** The EDM provider for products */
 	@Autowired
 	private ProductEdmProvider edmProvider;
+	
+	/** The entity collection processor for products */
+	@Autowired
+	private ProductEntityCollectionProcessor entityCollectionProcessor;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryController.class);
@@ -89,7 +94,7 @@ public class ProductQueryController {
 			OData odata = OData.newInstance();
 			ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<EdmxReference>());
 			ODataHttpHandler handler = odata.createHandler(edm);
-			//		      handler.register(new ProductEntityCollectionProcessor());
+			handler.register(entityCollectionProcessor);
 
 			// let the handler do the work
 			handler.process(new HttpServletRequestWrapper(request) {
