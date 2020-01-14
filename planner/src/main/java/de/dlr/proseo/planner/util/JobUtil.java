@@ -33,10 +33,6 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				answer = true;
-				break;
-			case ON_HOLD:
-				break;
 			case RELEASED:
 				// no job step is running
 				// supend all of them
@@ -47,6 +43,7 @@ public class JobUtil {
 				RepositoryService.getJobRepository().save(job);
 				answer = true;
 				break;
+			case ON_HOLD:
 			case STARTED:
 				// try to suspend job steps not running
 				Boolean oneNotSuspended = true;

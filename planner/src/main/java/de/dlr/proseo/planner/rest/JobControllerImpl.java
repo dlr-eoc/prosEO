@@ -64,6 +64,7 @@ public class JobControllerImpl implements JobController {
      * Get production planner jobs by id
      * 
      */
+	@Transactional
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId) {
 		List<Job> jobs = this.findJobsByStateAndOrderId(state, orderId);
@@ -85,6 +86,7 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	@Transactional
 	@Override
     public ResponseEntity<RestJob> getJob(String jobId) {
 		Job job = this.findJobById(jobId);
@@ -100,6 +102,7 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	@Transactional
 	@Override
     public ResponseEntity<RestJob> createJob(String name, String facility) {
 		// TODO Auto-generated method stub
@@ -158,6 +161,7 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
     	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	@Transactional
 	@Override
     public ResponseEntity<RestJob> deleteJob(String jobId) {
 		Job job = this.findJobById(jobId);
@@ -180,6 +184,7 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
 		Job job = this.findJobById(jobId);
@@ -202,6 +207,7 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> cancelJob(String jobId){
 		Job job = this.findJobById(jobId);
@@ -224,7 +230,8 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	
+
+	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> suspendJob(String jobId) {
 		Job j = this.findJobById(jobId);
