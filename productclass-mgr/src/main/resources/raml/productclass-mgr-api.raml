@@ -29,16 +29,7 @@ types:
   RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   RestSelectionRule: RestSimpleSelectionRule[]
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
-  SelectionRuleString:
-    type: object
-    properties:
-      id?:
-        type: integer
-        format: long
-      version?: integer
-      selectionRule: string
-      mode: string
-      configuredProcessors: string[]
+  SelectionRuleString: !include ../../../../../interfaces/src/main/resources/raml/types/selectionrulestring.raml
 
 resourceTypes:
   standard:

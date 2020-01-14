@@ -21,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;

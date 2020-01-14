@@ -91,7 +91,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_MODIFIED = 2128;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2129;
 	private static final int MSG_ID_PRODUCT_CLASS_DELETED = 2130;
-	private static final int MSG_ID_SOURCE_CLASS_MISSING = 2131;
+	private static final int MSG_ID_DUPLICATE_RULE = 2131;
 	private static final int MSG_ID_SELECTION_RULE_LIST_RETRIEVED = 2132;
 	private static final int MSG_ID_SELECTION_RULE_ID_MISSING = 2133;
 	private static final int MSG_ID_SELECTION_RULE_ID_NOT_FOUND = 2134;
@@ -133,7 +133,6 @@ public class ProductClassManager {
 	private static final String MSG_PRODUCT_CLASS_ID_NOT_FOUND = "(E%d) No product class found with ID %d";
 	private static final String MSG_PRODUCT_CLASS_DATA_MISSING = "(E%d) Product class data not set";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Product class deletion unsuccessful for ID %d";
-	private static final String MSG_SOURCE_CLASS_MISSING = "(E%d) Source product class not set";
 	private static final String MSG_SELECTION_RULE_ID_MISSING = "(E%d) Selection rule ID not set";
 	private static final String MSG_SELECTION_RULE_ID_NOT_FOUND = "(E%d) Selection rule with ID %d not found for product class with ID %d";
 	private static final String MSG_SELECTION_RULE_DATA_MISSING = "(E%d) Selection rule data not set";
@@ -142,6 +141,7 @@ public class ProductClassManager {
 	private static final String MSG_CONCURRENT_RULE_UPDATE = "(E%d) The selection rule with ID %d has been modified since retrieval by the client";
 	private static final String MSG_PROCESSOR_NAME_MISSING = "(E%d) Name of configured processor not set";
 	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found in selection rule with ID %d for product class with ID %d";
+	private static final String MSG_DUPLICATE_RULE = "(E%d) Product class %s already contains selection rule for source class %s, mode %s and configured processor %s";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s, product type %s and mission type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -642,17 +642,17 @@ public class ProductClassManager {
 		}
 		
 		// Test whether the product id is valid
-		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
-		if (modelProcessorClass.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND));
+		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		if (modelProductClass.isEmpty()) {
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id));
 		}
 		
 		// Delete the processor class
-		RepositoryService.getProcessorClassRepository().deleteById(id);
+		RepositoryService.getProductClassRepository().deleteById(id);
 
 		// Test whether the deletion was successful
-		modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
-		if (!modelProcessorClass.isEmpty()) {
+		modelProductClass = RepositoryService.getProductClassRepository().findById(id);
+		if (!modelProductClass.isEmpty()) {
 			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 		}
 		
@@ -674,9 +674,6 @@ public class ProductClassManager {
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_ID_MISSING, MSG_ID_PRODUCT_CLASS_ID_MISSING));
 		}
-		if (null == sourceClass || 0 == sourceClass.length()) {
-			throw new IllegalArgumentException(logError(MSG_SOURCE_CLASS_MISSING, MSG_ID_SOURCE_CLASS_MISSING));
-		}
 		
 		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
 		
@@ -687,7 +684,8 @@ public class ProductClassManager {
 		// Find the correct simple selection rules
 		List<SelectionRuleString> result = new ArrayList<>();
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
-			if (modelRule.getSourceProductClass().getProductType().equals(sourceClass)) {
+			// Add selection rule to result, if no source class was specified, or if the source class matches
+			if (null == sourceClass || 0 == sourceClass.length() || modelRule.getSourceProductClass().getProductType().equals(sourceClass)) {
 				SelectionRuleString restRule = new SelectionRuleString();
 				restRule.setId(modelRule.getId());
 				restRule.setVersion(Long.valueOf(modelRule.getVersion()));
@@ -731,7 +729,8 @@ public class ProductClassManager {
 			if (null == processingMode || "".equals(processingMode)) {
 				throw new IllegalArgumentException(logError(MSG_PROCESSING_MODE_MISSING, MSG_ID_PROCESSING_MODE_MISSING, restRuleString.toString()));
 			}
-			if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
+			if (!SimpleSelectionRule.PROCESSING_MODE_ALWAYS.equals(processingMode) 
+					&& !productClass.getMission().getProcessingModes().contains(processingMode)) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
 						processingMode, productClass.getMission().getCode()));
 			}
@@ -756,10 +755,35 @@ public class ProductClassManager {
 						restRuleString.getSelectionRule(), e.getMessage()));
 			}
 			
-			// Complete the simple selection rules and add them to the product class
+			// Complete the simple selection rules and add them to the product class, if no rule with equivalent key values exists
 			for (SimpleSelectionRule simpleSelectionRule: selectionRule.getSimpleRules()) {
+				// Set remaining attributes
 				simpleSelectionRule.setMode(processingMode);
 				simpleSelectionRule.getApplicableConfiguredProcessors().addAll(configuredProcessors);
+				
+				// Check for duplicates
+				for (SimpleSelectionRule existingRule: productClass.getRequiredSelectionRules()) {
+					if (existingRule.getSourceProductClass().equals(simpleSelectionRule.getSourceProductClass())
+							|| existingRule.getMode().equals(simpleSelectionRule.getMode())) {
+						// Duplicate candidate - check applicable configured processors
+						if (existingRule.getApplicableConfiguredProcessors().isEmpty() || simpleSelectionRule.getApplicableConfiguredProcessors().isEmpty()) {
+							// At least one of the rules is applicable for all configured processors, so this is a duplicate
+							throw new IllegalArgumentException(logError(MSG_DUPLICATE_RULE, MSG_ID_DUPLICATE_RULE,
+									productClass.getProductType(), existingRule.getSourceProductClass().getProductType(),
+									existingRule.getMode(), "(all)"));
+						}
+						for (ConfiguredProcessor existingProcessor: existingRule.getApplicableConfiguredProcessors()) {
+							if (simpleSelectionRule.getApplicableConfiguredProcessors().contains(existingProcessor)) {
+								// Overlapping set of configured processors, so this is a duplicate
+								throw new IllegalArgumentException(logError(MSG_DUPLICATE_RULE, MSG_ID_DUPLICATE_RULE,
+										productClass.getProductType(), existingRule.getSourceProductClass().getProductType(),
+										existingRule.getMode(), existingProcessor.getIdentifier()));
+							}
+						}
+					}
+				}
+				
+				// Add new selection rule to product class
 				productClass.getRequiredSelectionRules().add(simpleSelectionRule);
 			}
 		}
@@ -853,7 +877,7 @@ public class ProductClassManager {
 		
 		// Find requested simple selection rule
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
-			if (modelRule.getId() == id.longValue()) {
+			if (modelRule.getId() == ruleid.longValue()) {
 				// Make sure we are allowed to change the selection rule (no intermediate update)
 				if (modelRule.getVersion() != selectionRuleString.getVersion().intValue()) {
 					throw new ConcurrentModificationException(logError(MSG_CONCURRENT_RULE_UPDATE, MSG_ID_CONCURRENT_RULE_UPDATE, ruleid));
@@ -962,7 +986,7 @@ public class ProductClassManager {
 		// Find requested simple selection rule
 		SimpleSelectionRule modelRuleToDelete = null;
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
-			if (modelRule.getId() == id.longValue()) {
+			if (modelRule.getId() == ruleid.longValue()) {
 				modelRuleToDelete = modelRule;
 				break;
 			}

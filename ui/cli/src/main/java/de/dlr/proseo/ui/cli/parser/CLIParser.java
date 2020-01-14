@@ -240,7 +240,7 @@ public class CLIParser {
 		if (isAttribute && !parameterString.contains("=")) {
 			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}
-		String parameterValue = (isAttribute ? parameterString.split("=")[1] : parameterString );
+		String parameterValue = (isAttribute ? parameterString.split("=", 2)[1] : parameterString ); // 2-argument split to enable empty strings as attribute value
 		if (!isTypeOK(syntaxParameter.getType(), parameterValue)) {
 			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
 		}

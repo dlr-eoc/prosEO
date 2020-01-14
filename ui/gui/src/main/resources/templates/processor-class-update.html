@@ -35,12 +35,6 @@
 <form name = "prc-cls-updt" action="/processor-class-update/patch">
 
 <div class="input-group mb-3">
-	<p class="text-left"><input type="number" th:value="${processorClassId}" placeholder="Processor-Class ID" class="form-control" id="processorClassId"></p>
-</div>
-<div class="input-group mb-3">
-	<p class="text-left"><input type="number" th:value="${processorClassVersion}" placeholder="version" class="form-control" id="processorClassVersion"></p>
-</div>
-<div class="input-group mb-3">
 	<p class="text-left"><input type="text" th:value="${processorClassmissionCode}" placeholder="missionCode" class="form-control" id="processorClassmissionCode"></p>
 </div>
 <div class="input-group mb-3">
@@ -55,36 +49,45 @@
 </form>
 </div>
 <div class="container">
-	<div id="content" name="content">
-      <table class="table">
-      	<thead class="thead-dark">
-     	 <tr>
-      		<th scope="col">ID</th>
-      		<th scope="col">version</th>
-      		<th scope="col">missionCode</th>
-      		<th scope="col">processorName</th>
-      		<th scope="col">productClasses</th>
-      	</tr>
-       </thead>
-       <tbody>
-      		<tr>
-      		<td th:text="${id}"></td>
-      		<td th:text="${version}"></td>
-      		<td th:text="${mission}"></td>
-      		<td th:text="${processorclassname}"></td>
-      		<td th:text="${productclasses}"></td>
-      	</tr>
-      	</tbody>
-     	</table>
-      	
-       </div>     
-</div>     
+  <div id="content" name="content">
+	    <table class="table" id="processorTable" name="processorTable">
+  	<thead class="thead-dark">
+ 	 <tr>
+  		<th scope="col">ID</th>
+  		<th scope="col">version</th>
+  		<th scope="col">missionCode</th>
+  		<th scope="col">processorName</th>
+  		<th scope="col">productClasses</th>
+  	</tr>
+   </thead>
+   <tbody th:unless="${procs} == null">
+  		<tr th:each="processor : ${procs}">
+  		<td th:text="${processor?.id}"></td>
+  		<td th:text="${processor?.version}"></td>
+  		<td th:text="${processor?.missionCode}"></td>
+  		<td th:text="${processor?.processorName}"></td>
+  		<td th:text="${processor?.productClasses}"></td>
+  	</tr>
+  	</tbody>
+ 	</table>
+ <div th:if="${errormsg}">
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <p th:text="${errormsg}"></p>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+  <p id="test" name="test">PARAM</p>
+  <div th:fragment="resultLists"></div>
+  </div>
+                  
+</div>      
 <script>
 function patchData() {
     var url = "/processor-class-update/patch";
     var prop = document.getElementById('test');
-    if ($("#processorClassmissionCode").val() != "" && $("#processorClassName").val() != ""   && $("#productClass").val() != "" && $("#processorClassId").val() != "" && $("#processorClassVersion").val() != "") {
-        url += "?missionCode=" + $("#processorClassmissionCode").val() + "&processorName=" + $("#processorClassName").val()  +"&productClasses=" +  $("#productClass").val() + "&id=" + $("#processorClassId").val(); ;
+    if ($("#processorClassmissionCode").val() != "" && $("#processorClassName").val() != ""   && $("#productClass").val() != "") {
+        url += "?missionCode=" + $("#processorClassmissionCode").val() + "&processorName=" + $("#processorClassName").val()  +"&productClasses=" +  $("#productClass").val();
     } else {
     	prop.innerHTML = "UNGÜLTIGE EINGABE";
     	return;

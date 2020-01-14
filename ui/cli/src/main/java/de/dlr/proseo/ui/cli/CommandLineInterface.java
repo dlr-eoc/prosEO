@@ -52,7 +52,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
 	private static final String CMD_INGEST = "ingest";
 	private static final String CMD_PRODUCT = "product";
-	private static final String CMD_PRODUCT_CLASS = "productClass";
+	private static final String CMD_PRODUCT_CLASS = "productclass";
 	private static final String CMD_CONFIGURATION = "configuration";
 	private static final String CMD_PROCESSOR = "processor";
 	private static final String CMD_ORBIT = "orbit";
@@ -75,11 +75,15 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/* Classes for the various top-level commands */
 	@Autowired
+	private MissionCommandRunner missionCommandRunner;
+	@Autowired
 	private OrderCommandRunner orderCommandRunner;
 	@Autowired
 	private IngestorCommandRunner ingestorCommandRunner;
 	@Autowired
 	private ProcessorCommandRunner processorCommandRunner;
+	@Autowired
+	private ProductclassCommandRunner productclassCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
@@ -146,7 +150,11 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case CMD_MISSION:
 			case CMD_ORBIT:
+				missionCommandRunner.executeCommand(command);
+				break;
 			case CMD_PRODUCT_CLASS:
+				productclassCommandRunner.executeCommand(command);
+				break;
 			default:
 				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());
 				System.err.println(message);

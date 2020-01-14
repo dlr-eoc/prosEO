@@ -58,24 +58,32 @@ public class BaseWrapper {
 	private static final String EXIT_TEXT_OK = "OK";
 	/** Exit code explanation for failure */
 	private static final String EXIT_TEXT_FAILURE = "FAILURE";
-
+	/** CallBack-Message for failure */
 	private static final String CALLBACK_STATUS_FAILURE = "FAILURE";
+	/** CallBack-Message for success */
 	private static final String CALLBACK_STATUS_SUCCESS = "SUCCESS";
 
-
-	/** Set path finals for container-context & Alluxio FS-Client*/
+	/** current directory of this program is used as work-dir */
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
+	/** current timestamp used for output-file prefixes*/
 	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
+	/**  auto-created path/filename of JobOrderFile within container */
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
+	/** directory-prefix of fetched input data */
 	private static final String CONTAINER_INPUTS_PATH_PREFIX = "inputs";
+	/** directory-prefix of produced output data */
 	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
+	/**ALLUXIO-read type  */
 	private static final ReadPType ALLUXIO_READ_TYPE = ReadPType.CACHE;
+	/**ALLUXIO-write type  */
 	private static final WritePType ALLUXIO_WRITE_TYPE = WritePType.CACHE_THROUGH;
-
-	/** Error messages */
+	/**End-Message  of wrapper */
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
+	/**Start-Message  of wrapper */
 	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.04 with JobOrder file {}";
+	/**Invalid Environment Variable message */
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
+	/**File not readable message */
 	private static final String MSG_FILE_NOT_READABLE = "File {} is not readable";
 	private static final String MSG_FILE_NOT_FOUND = "File {} does not exist";
 	private static final String MSG_FILE_FOUND = "File {} exists";
@@ -84,16 +92,38 @@ public class BaseWrapper {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
 
-	/** IPF_Proc valid Tags Enums */
-	enum Ipf_Proc {Task_Name,Task_Version,List_of_Inputs,List_of_Outputs}
+	/**
+	 *  Enumeration with possible FileSystem-Types.
+	 *  FS_TYPE is set within a Joborder-File at Input/Output File level 
+	 *  <ul>
+	 *  <li>{@link #S3} API-based FileStorage - object storage aka SimpleStorageService - S3</li>
+	 *  <li>{@link #POSIX} a POSIX FileSystem</li>
+	 *  <li>{@link #ALLUXIO} an in-memory/SSD backed/tiered ditributed FileSystem (aka hadoop)</li>
+	 *  </ul>
+	 */
+	enum FS_TYPE {
+		S3
+		, POSIX
+		, ALLUXIO
+	}
 
-	/** File_Name valid Attributes Enums */
-	enum File_Name {FS_TYPE}
-
-	/** File_Name Attribute FS_TYPE valid entries */
-	enum FS_TYPE {S3,POSIX, ALLUXIO}
-
-	/** ENV-VAR valid entries */
+	/** Enumeration with valid environment variable names.
+	 *  At runtime-start the BaseWrapper checks the presence and values of each variable.
+	 *  <ul>
+	 *  <li>{@link #JOBORDER_FS_TYPE} FileSystem-Type (one of FS_TYPE) of referenced JobOrder File ({@link #JOBORDER_FILE})</li>
+	 *  <li>{@link #JOBORDER_FILE} URI of valid JobOrder-File</li>
+	 *  <li>{@link #S3_ENDPOINT} S3-API Endpoint URL (<i>Set via k8s-configMap!</i>)</li>
+	 *  <li>{@link #S3_ACCESS_KEY} S3-API access key (<i>Set via k8s-configMap!</i>)</li>
+	 *  <li>{@link #S3_SECRET_ACCESS_KEY} S3-API secret access key (<i>Set via k8s-configMap!</i>)</li>
+	 *  <li>{@link #S3_STORAGE_ID_OUTPUTS} S3-Storage-ID (reference to prosEO storage-manager storages) of processed Outputs. (<i>Set via k8s-configMap!</i>) </li>
+	 *  <li>{@link #ALLUXIO_STORAGE_ID_OUTPUTS} Alluxio-Storage-ID (reference to prosEO storage-manager storages) of processed Outputs. (<i>Set via k8s-configMap!</i>)</li>
+	 *  <li>{@link #INGESTOR_ENDPOINT} public API-Endpoint URL of prosEO-Ingestor</li>
+	 *  <li>{@link #STATE_CALLBACK_ENDPOINT} public API-Endpoint URL of prosEO-Planner for submitting the final state of the wrapper-run.</li>
+	 *  <li>{@link #PROCESSOR_SHELL_COMMAND} the processor shell command to be invoked by the wrapper</li>
+	 *  <li>{@link #PROCESSING_FACILITY_NAME} name of the processing-facility this wrapper runs in.</li>
+	 *  </ul>
+	 *  
+	 */
 	enum ENV_VARS {
 		JOBORDER_FS_TYPE
 		, JOBORDER_FILE
@@ -121,299 +151,13 @@ public class BaseWrapper {
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
 
-	//#######################GETTERS-SETTERS-START#############################
-	/**
-	 * @return the logger
-	 */
-	public static Logger getLogger() {
-		return logger;
-	}
 
 	/**
-	 * @param logger the logger to set
+	 * Checks if given String is one of FS_TYPE enum
+	 * 
+	 * @param fs_type String
+	 * @return true if one of FS_TYPE enum
 	 */
-	public static void setLogger(Logger logger) {
-		BaseWrapper.logger = logger;
-	}
-
-	/**
-	 * @return the eNV_JOBORDER_FS_TYPE
-	 */
-	public String getENV_JOBORDER_FS_TYPE() {
-		return ENV_JOBORDER_FS_TYPE;
-	}
-
-	/**
-	 * @param eNV_JOBORDER_FS_TYPE the eNV_JOBORDER_FS_TYPE to set
-	 */
-	public void setENV_JOBORDER_FS_TYPE(String eNV_JOBORDER_FS_TYPE) {
-		ENV_JOBORDER_FS_TYPE = eNV_JOBORDER_FS_TYPE;
-	}
-
-	/**
-	 * @return the eNV_JOBORDER_FILE
-	 */
-	public String getENV_JOBORDER_FILE() {
-		return ENV_JOBORDER_FILE;
-	}
-
-	/**
-	 * @param eNV_JOBORDER_FILE the eNV_JOBORDER_FILE to set
-	 */
-	public void setENV_JOBORDER_FILE(String eNV_JOBORDER_FILE) {
-		ENV_JOBORDER_FILE = eNV_JOBORDER_FILE;
-	}
-
-	/**
-	 * @return the eNV_S3_ENDPOINT
-	 */
-	public String getENV_S3_ENDPOINT() {
-		return ENV_S3_ENDPOINT;
-	}
-
-	/**
-	 * @param eNV_S3_ENDPOINT the eNV_S3_ENDPOINT to set
-	 */
-	public void setENV_S3_ENDPOINT(String eNV_S3_ENDPOINT) {
-		ENV_S3_ENDPOINT = eNV_S3_ENDPOINT;
-	}
-
-	/**
-	 * @return the eNV_S3_ACCESS_KEY
-	 */
-	public String getENV_S3_ACCESS_KEY() {
-		return ENV_S3_ACCESS_KEY;
-	}
-
-	/**
-	 * @param eNV_S3_ACCESS_KEY the eNV_S3_ACCESS_KEY to set
-	 */
-	public void setENV_S3_ACCESS_KEY(String eNV_S3_ACCESS_KEY) {
-		ENV_S3_ACCESS_KEY = eNV_S3_ACCESS_KEY;
-	}
-
-	/**
-	 * @return the eNV_S3_SECRET_ACCESS_KEY
-	 */
-	public String getENV_S3_SECRET_ACCESS_KEY() {
-		return ENV_S3_SECRET_ACCESS_KEY;
-	}
-
-	/**
-	 * @param eNV_S3_SECRET_ACCESS_KEY the eNV_S3_SECRET_ACCESS_KEY to set
-	 */
-	public void setENV_S3_SECRET_ACCESS_KEY(String eNV_S3_SECRET_ACCESS_KEY) {
-		ENV_S3_SECRET_ACCESS_KEY = eNV_S3_SECRET_ACCESS_KEY;
-	}
-
-
-	/**
-	 * @return the eNV_STATE_CALLBACK_ENDPOINT
-	 */
-	public String getENV_STATE_CALLBACK_ENDPOINT() {
-		return ENV_STATE_CALLBACK_ENDPOINT;
-	}
-
-	/**
-	 * @param eNV_STATE_CALLBACK_ENDPOINT the eNV_STATE_CALLBACK_ENDPOINT to set
-	 */
-	public void setENV_STATE_CALLBACK_ENDPOINT(String eNV_STATE_CALLBACK_ENDPOINT) {
-		ENV_STATE_CALLBACK_ENDPOINT = eNV_STATE_CALLBACK_ENDPOINT;
-	}
-
-	/**
-	 * @return the eNV_PROCESSOR_SHELL_COMMAND
-	 */
-	public String getENV_PROCESSOR_SHELL_COMMAND() {
-		return ENV_PROCESSOR_SHELL_COMMAND;
-	}
-
-	/**
-	 * @param eNV_PROCESSOR_SHELL_COMMAND the eNV_PROCESSOR_SHELL_COMMAND to set
-	 */
-	public void setENV_PROCESSOR_SHELL_COMMAND(String eNV_PROCESSOR_SHELL_COMMAND) {
-		ENV_PROCESSOR_SHELL_COMMAND = eNV_PROCESSOR_SHELL_COMMAND;
-	}
-
-	/**
-	 * @return the eNV_PROCESSING_FACILITY_NAME
-	 */
-	public String getENV_PROCESSING_FACILITY_NAME() {
-		return ENV_PROCESSING_FACILITY_NAME;
-	}
-
-	/**
-	 * @param eNV_PROCESSING_FACILITY_NAME the eNV_PROCESSING_FACILITY_NAME to set
-	 */
-	public void setENV_PROCESSING_FACILITY_NAME(String eNV_PROCESSING_FACILITY_NAME) {
-		ENV_PROCESSING_FACILITY_NAME = eNV_PROCESSING_FACILITY_NAME;
-	}
-
-	/**
-	 * @return the eNV_INGESTOR_ENDPOINT
-	 */
-	public String getENV_INGESTOR_ENDPOINT() {
-		return ENV_INGESTOR_ENDPOINT;
-	}
-
-	/**
-	 * @param eNV_INGESTOR_ENDPOINT the eNV_INGESTOR_ENDPOINT to set
-	 */
-	public void setENV_INGESTOR_ENDPOINT(String eNV_INGESTOR_ENDPOINT) {
-		ENV_INGESTOR_ENDPOINT = eNV_INGESTOR_ENDPOINT;
-	}
-
-	/**
-	 * @return the exitCodeOk
-	 */
-	public static int getExitCodeOk() {
-		return EXIT_CODE_OK;
-	}
-
-	/**
-	 * @return the exitCodeFailure
-	 */
-	public static int getExitCodeFailure() {
-		return EXIT_CODE_FAILURE;
-	}
-
-	/**
-	 * @return the exitTextOk
-	 */
-	public static String getExitTextOk() {
-		return EXIT_TEXT_OK;
-	}
-
-	/**
-	 * @return the exitTextFailure
-	 */
-	public static String getExitTextFailure() {
-		return EXIT_TEXT_FAILURE;
-	}
-
-	/**
-	 * @return the callbackStatusFailure
-	 */
-	public static String getCallbackStatusFailure() {
-		return CALLBACK_STATUS_FAILURE;
-	}
-
-	/**
-	 * @return the callbackStatusSuccess
-	 */
-	public static String getCallbackStatusSuccess() {
-		return CALLBACK_STATUS_SUCCESS;
-	}
-
-	/**
-	 * @return the workingDir
-	 */
-	public static Path getWorkingDir() {
-		return WORKING_DIR;
-	}
-
-	/**
-	 * @return the wrapperTimestamp
-	 */
-	public static long getWrapperTimestamp() {
-		return WRAPPER_TIMESTAMP;
-	}
-
-	/**
-	 * @return the containerJofPath
-	 */
-	public static String getContainerJofPath() {
-		return CONTAINER_JOF_PATH;
-	}
-
-	/**
-	 * @return the containerInputsPathPrefix
-	 */
-	public static String getContainerInputsPathPrefix() {
-		return CONTAINER_INPUTS_PATH_PREFIX;
-	}
-
-	/**
-	 * @return the containerOutputsPathPrefix
-	 */
-	public static String getContainerOutputsPathPrefix() {
-		return CONTAINER_OUTPUTS_PATH_PREFIX;
-	}
-
-	/**
-	 * @return the alluxioReadType
-	 */
-	public static ReadPType getAlluxioReadType() {
-		return ALLUXIO_READ_TYPE;
-	}
-
-	/**
-	 * @return the alluxioWriteType
-	 */
-	public static WritePType getAlluxioWriteType() {
-		return ALLUXIO_WRITE_TYPE;
-	}
-
-	/**
-	 * @return the msgLeavingBaseWrapper
-	 */
-	public static String getMsgLeavingBaseWrapper() {
-		return MSG_LEAVING_BASE_WRAPPER;
-	}
-
-	/**
-	 * @return the msgStartingBaseWrapper
-	 */
-	public static String getMsgStartingBaseWrapper() {
-		return MSG_STARTING_BASE_WRAPPER;
-	}
-
-	/**
-	 * @return the msgInvalidValueOfEnvvar
-	 */
-	public static String getMsgInvalidValueOfEnvvar() {
-		return MSG_INVALID_VALUE_OF_ENVVAR;
-	}
-
-	/**
-	 * @return the msgFileNotReadable
-	 */
-	public static String getMsgFileNotReadable() {
-		return MSG_FILE_NOT_READABLE;
-	}
-
-	/**
-	 * @return the eNV_S3_STORAGE_ID_OUTPUTS
-	 */
-	public String getENV_S3_STORAGE_ID_OUTPUTS() {
-		return ENV_S3_STORAGE_ID_OUTPUTS;
-	}
-
-	/**
-	 * @param eNV_S3_STORAGE_ID_OUTPUTS the eNV_S3_STORAGE_ID_OUTPUTS to set
-	 */
-	public void setENV_S3_STORAGE_ID_OUTPUTS(String eNV_S3_STORAGE_ID_OUTPUTS) {
-		ENV_S3_STORAGE_ID_OUTPUTS = eNV_S3_STORAGE_ID_OUTPUTS;
-	}
-
-	/**
-	 * @return the eNV_ALLUXIO_STORAGE_ID_OUTPUTS
-	 */
-	public String getENV_ALLUXIO_STORAGE_ID_OUTPUTS() {
-		return ENV_ALLUXIO_STORAGE_ID_OUTPUTS;
-	}
-
-	/**
-	 * @param eNV_ALLUXIO_STORAGE_ID_OUTPUTS the eNV_ALLUXIO_STORAGE_ID_OUTPUTS to set
-	 */
-	public void setENV_ALLUXIO_STORAGE_ID_OUTPUTS(String eNV_ALLUXIO_STORAGE_ID_OUTPUTS) {
-		ENV_ALLUXIO_STORAGE_ID_OUTPUTS = eNV_ALLUXIO_STORAGE_ID_OUTPUTS;
-	}
-
-	//#######################GETTERS-SETTERS-END#############################
-
-	
-	/** Check if FS_TYPE value is valid */
 	private Boolean checkFS_TYPE(String fs_type) {
 		for (FS_TYPE c : FS_TYPE.values()) {
 			if (c.name().equals(fs_type)) {
@@ -423,7 +167,12 @@ public class BaseWrapper {
 		return false;
 	}
 
-	/** Check if Output-File/Dir - name has trailing slash */
+	/**
+	 * Checks if given String for Output-File/Dir name has trailing slash
+	 * 
+	 * @param file_name String
+	 * @return String of file_name with trailing slash
+	 */
 	private String fileNameHavingTrailingSlash(String file_name) {
 		// TODO: better pattern detection
 		file_name=file_name
@@ -437,6 +186,13 @@ public class BaseWrapper {
 		return file_name;
 	}
 
+	
+	/**
+	 * Returns values of BaseWrapper's ENV_VARS
+	 * 
+	 * @param env the ENV_VARS enum
+	 * @return ArrayList with env_vars in form of "name=value"
+	 */
 	private ArrayList<String> envList(ENV_VARS[] env){
 		ArrayList<String> list = new ArrayList<String>();
 		for (int i=0;i<ENV_VARS.values().length;i++) {
@@ -445,16 +201,25 @@ public class BaseWrapper {
 		return list;
 	}
 
+	/**
+	 * A splash-message on program-startup...
+	 * 
+	 * @return String with splsh-message
+	 */
 	private String splash() {	
 		return "\n\n{\"prosEO\" : \"A Processing System for Earth Observation Data\"}\n";
 	}
 
+	/**
+	 * Check presence and values of all required Environment Variables
+	 * @return true/false
+	 */
 	private Boolean checkEnv() {
 		logger.info("Checking {} ENV_VARS...", ENV_VARS.values().length);
 		for (String e : envList(ENV_VARS.values())) {
 			logger.info("... {}", e);
 		}
-		// check all required env-vars
+
 		if (!checkFS_TYPE(ENV_JOBORDER_FS_TYPE)) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
 			return false;
@@ -521,9 +286,9 @@ public class BaseWrapper {
 		return true;
 	}
 	/**
-	 * provide initial JobOrderFile
+	 * provide initial JobOrderFile as local File. Fetch JobOrderFile from Storage (according to FS_TYPE) and return as local file.
 	 * 
-	 * @return the JobOrder file
+	 * @return the JobOrder file as File
 	 */
 	private File provideInitialJOF() {
 		String JOFContainerPath = null;
@@ -572,7 +337,7 @@ public class BaseWrapper {
 	 * Parse the given JobOrder XML file
 	 * 
 	 * @param jobOrderFile the XML file to parse
-	 * @return
+	 * @return JobOrder Object
 	 */
 	private JobOrder parseJobOrderFile(File jobOrderFile) {
 
@@ -584,7 +349,7 @@ public class BaseWrapper {
 		return jobOrderDoc;
 	}
 	/**
-	 * Fetch remote input-data to container-workdir(based on FS_TYPE) and return valid JobOrder object for container-runtime-context.
+	 * Fetch remote input-data to container-workdir(based on FS_TYPE) and return valid JobOrder object for container-runtime-context. (=remapped file-pathes)
 	 * 
 	 * @param jo the JobOrder file to parse
 	 * @return JobOrder object valid for container-context
@@ -685,7 +450,7 @@ public class BaseWrapper {
 	/**
 	 * creates valid container-context JobOrderFile under given path
 	 * 
-	 * @param JobOrder remapped JobOrder object
+	 * @param jo JobOrder remapped JobOrder object
 	 * @param path file path of newly created JOF
 	 * @return True/False
 	 */
@@ -732,6 +497,11 @@ public class BaseWrapper {
 	}
 
 
+	/**
+	 * Check if given String can be parsed as Integer
+	 * @param strLong Integer as String 
+	 * @return true/false
+	 */
 	public static boolean isInteger(String strLong) {
 		try {
 			@SuppressWarnings("unused")
@@ -745,7 +515,7 @@ public class BaseWrapper {
 	 * Pushes processing results to prosEO storage
 	 * 
 	 * @param jo jobOrder  JobOrder-Object (valid in container context)
-	 * @return ArrayList<PushedProcessingOutput> all infos of pushed products
+	 * @return ArrayList all infos of pushed products
 	 */
 	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
@@ -850,7 +620,7 @@ public class BaseWrapper {
 	/**
 	 * Register pushed Products using prosEO-Ingestor REST API
 	 * 
-	 * @param pushedProducts ArrayList<PushedProcessingOutput>
+	 * @param pushedProducts ArrayList
 	 * @return HTTP response code of Ingestor-API
 	 */
 	private ArrayList<IngestedProcessingOutput> ingestPushedOutputs(ArrayList<PushedProcessingOutput> pushedProducts) {
@@ -907,6 +677,12 @@ public class BaseWrapper {
 	}
 
 
+	/**
+	 * triggers a Callback to ENV_STATE_CALLBACK_ENDPOINT (prosEO-Planner)
+	 * 
+	 * @param msg the callback message
+	 * @return HttpResponseInfo callback
+	 */
 	private HttpResponseInfo callBack(String msg) {
 		// ENV_STATE_CALLBACK_ENDPOINT shall look like:
 		// <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
@@ -942,7 +718,6 @@ public class BaseWrapper {
 	/**
 	 * Perform processing: check env, parse JobOrder file, fetch input files, push output files
 	 * 
-	 * @param args (not used due env-var based invocation)
 	 * @return the program exit code (OK or FAILURE)
 	 */
 	final public int run() {

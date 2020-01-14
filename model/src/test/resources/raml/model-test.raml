@@ -228,6 +228,21 @@ resourceTypes:
           type: RestProduct
           example:  !include ../../../../../model/src/main/resources/raml/examples/product.json
 
+  /productclasss:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestProductClass[]
+              example:  !include ../../../../../model/src/main/resources/raml/examples/productclass-list.json
+    put:
+      body:
+        application/json:
+          type: RestProductClass
+          example:  !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+
   /productfiles:
     type: standard
     get:

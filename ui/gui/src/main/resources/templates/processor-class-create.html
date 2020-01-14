@@ -70,11 +70,16 @@
   	</tr>
   	</tbody>
  	</table>
-  <p th:text="${errormsg}"></p>	
-  </div>
+ <div th:if="${errormsg}">
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <p th:text="${errormsg}"></p>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
   <p id="test" name="test">PARAM</p>
   <div th:fragment="resultLists"></div>
-  
+  </div>
                   
 </div>     
               

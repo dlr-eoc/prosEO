@@ -36,7 +36,7 @@ import de.dlr.proseo.prodclmgr.rest.model.SelectionRuleString;
 public class ProductClassControllerImpl implements ProductclassController {
 	
 	/* Message ID constants */
-	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -50,26 +50,6 @@ public class ProductClassControllerImpl implements ProductclassController {
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerImpl.class);
 
 	/**
-	 * Create and log a formatted error message
-	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted error message
-	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
-	}
-	
-	/**
 	 * Create an HTTP "Warning" header with the given text message
 	 * 
 	 * @param message the message text
@@ -77,7 +57,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message);
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	
