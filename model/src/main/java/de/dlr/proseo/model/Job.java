@@ -21,6 +21,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * A collection of job steps required to fulfil an order for a specific period of time (e. g. one orbit).
  * Note: As a future extension a selection by geographical area in addition to or instead of a period of time is envisioned.
@@ -28,6 +30,7 @@ import javax.persistence.OneToMany;
  * @author Dr. Thomas Bassler
  *
  */
+@Transactional
 @Entity
 public class Job extends PersistentObject {
 	

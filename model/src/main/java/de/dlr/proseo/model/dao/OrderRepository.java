@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingOrder;
 
@@ -17,6 +18,7 @@ import de.dlr.proseo.model.ProcessingOrder;
  * @author Dr. Thomas Bassler
  *
  */
+@Transactional
 @Repository
 public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 

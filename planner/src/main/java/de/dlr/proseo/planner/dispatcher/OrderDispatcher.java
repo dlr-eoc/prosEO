@@ -1,12 +1,7 @@
 package de.dlr.proseo.planner.dispatcher;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -30,11 +25,9 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 
-@Transactional
 @Service
 public class OrderDispatcher {
 	private static Logger logger = LoggerFactory.getLogger(OrderDispatcher.class);
@@ -240,6 +233,7 @@ public class OrderDispatcher {
 		return answer;
 	}
 	
+	@Transactional
 	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
 		boolean answer = true;
 		// there has to be a list of orbits

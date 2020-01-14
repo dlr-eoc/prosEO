@@ -10,6 +10,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
@@ -20,6 +21,7 @@ import de.dlr.proseo.model.JobStep.JobStepState;
  * @author melchinger
  *
  */
+@Transactional
 @Repository
 public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 

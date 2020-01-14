@@ -20,6 +20,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product
  * (modelled as ProductQuery objects). A JobStep can be executed as soon as all its ProductQuerys are satisfied.
@@ -27,6 +29,7 @@ import javax.persistence.OneToOne;
  * @author Dr. Thomas Bassler
  *
  */
+@Transactional
 @Entity
 public class JobStep extends PersistentObject {
 
