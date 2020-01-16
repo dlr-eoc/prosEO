@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,7 +40,19 @@ import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
+import de.dlr.proseo.interfaces.rest.model.RestProduct;
 
 
 /**
@@ -55,16 +68,32 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
 	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
+	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
+	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
+	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
 	private static final String MSG_URI_GENERATION_FAILED = "(E%d) URI generation from product UUID failed (cause: %s)";
+	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
+	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
+	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
+	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 
 	/** The cached OData factory object */
 	private OData odata;
 	/** The cached metadata of the OData service */
 	private ServiceMetadata serviceMetadata;
 
+	/** REST template builder */
+	@Autowired
+	private RestTemplateBuilder rtb;
+	
+	/** The configuration for the PRIP API */
+	@Autowired
+	private ProductionInterfaceConfiguration config;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityCollectionProcessor.class);
 
@@ -128,37 +157,56 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	 * @return a collection of entities representing products
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
 	 */
-	private EntityCollection queryProducts() throws URISyntaxException {
+	private EntityCollection queryProducts(String username, String password, String mission) throws URISyntaxException {
 		EntityCollection productsCollection = new EntityCollection();
 		List<Entity> productList = productsCollection.getEntities();
 
-		// add some sample product entities
-		final UUID id1 = UUID.fromString("dc3c0bd2-1586-4a41-8230-b7bd66de9a45");
-		final Entity e1 = new Entity()
-				.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, id1))
-				.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, "Notebook Basic 15"))
-				.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-						"application/octet-stream"));
-		e1.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + id1.toString() + "')"));
-		productList.add(e1);
-
-		final UUID id2 = UUID.fromString("2b5f5729-cfac-4407-8311-85140dcfc336");
-		final Entity e2 = new Entity()
-				.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, id2))
-				.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, "1UMTS PDA"))
-				.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-						"application/json"));
-		e2.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + id2.toString() + "')"));
-		productList.add(e2);
-
-		final UUID id3 = UUID.fromString("70dfbf21-77db-40ad-972c-c9afa0faf626");
-		final Entity e3 = new Entity()
-				.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, id3))
-				.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, "Ergo Screen"))
-				.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-						"text/plain"));
-		e3.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + id3.toString() + "')"));
-		productList.add(e3);
+		// Request product list from Ingestor service
+		
+		// Attempt connection to service
+		@SuppressWarnings("rawtypes")
+		ResponseEntity<List> entity = null;
+		try {
+			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			String requestUrl = config.getIngestorUrl() + "?mission=" + mission;
+			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
+			entity = restTemplate.getForEntity(requestUrl, List.class);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
+			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
+		} catch (HttpClientErrorException.Unauthorized e) {
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			throw e;
+		} catch (RestClientException e) {
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+		
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+			logger.error(message);
+			throw new RuntimeException(message);
+		}
+		
+		List<?> restProducts = entity.getBody();
+		ObjectMapper mapper = new ObjectMapper();
+		for (Object object: restProducts) {
+			RestProduct restProduct = mapper.convertValue(object, RestProduct.class);
+			Entity product = new Entity()
+					.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
+					.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, restProduct.getProductClass()))
+					.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
+							"application/octet-stream"));
+			product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + restProduct.getUuid() + "')"));
+			productList.add(product);
+		}
 
 		return productsCollection;
 	}
@@ -187,11 +235,41 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		EntityCollection entitySet;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
-				entitySet = queryProducts();
+				String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+				if (null == authHeader) {
+					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+					response.setHeader("Warning", message);
+					return;
+				}
+				String[] authParts = authHeader.split(" ");
+				if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+					response.setHeader("Warning", message);
+					return;
+				}
+				String[] missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("\\\\"); // --> regex "\\" --> matches "\"
+				if (2 != missionUserPassword.length) {
+					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+					response.setHeader("Warning", message);
+					return;
+				}
+				String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
+				entitySet = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0]);
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader("Warning", message);
+				return;
+			} catch (HttpClientErrorException e) {
+				response.setStatusCode(e.getRawStatusCode());
+				response.setHeader("Warning", e.getMessage());
+				return;
+			} catch (Exception e) {
+				response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+				response.setHeader("Warning", e.getMessage());
 				return;
 			}
 		} else {

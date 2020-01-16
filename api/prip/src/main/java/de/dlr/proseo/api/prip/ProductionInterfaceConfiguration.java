@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.api.prip;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -20,4 +21,30 @@ import org.springframework.context.annotation.Configuration;
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class ProductionInterfaceConfiguration {
 	
+	/** The URL of the prosEO Ingestor */
+	@Value("${proseo.ingestor.url}")
+	private String ingestorUrl;
+	
+	/** The URL of the prosEO Processor Manager */
+	@Value("${proseo.processorManager.url}")
+	private String processorManagerUrl;
+	
+	/**
+	 * Gets the URL of the prosEO Ingestor component
+	 * 
+	 * @return the ingestorUrl
+	 */
+	public String getIngestorUrl() {
+		return ingestorUrl;
+	}
+
+	/**
+	 * Gets the URL of the prosEO Processor Manager component
+	 * 
+	 * @return the processorManagerUrl
+	 */
+	public String getProcessorManagerUrl() {
+		return processorManagerUrl;
+	}
+
 }
