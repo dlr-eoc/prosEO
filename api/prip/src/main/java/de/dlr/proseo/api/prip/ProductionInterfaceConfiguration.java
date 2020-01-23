@@ -29,6 +29,10 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.processorManager.url}")
 	private String processorManagerUrl;
 	
+	/** The URL of some prosEO Storage Manager -- TEMPORARY FIX UNTIL Processing Facility Manager is available */
+	@Value("${proseo.storageManager.url}")
+	private String storageManagerUrl;
+	
 	/**
 	 * Gets the URL of the prosEO Ingestor component
 	 * 
@@ -45,6 +49,15 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public String getProcessorManagerUrl() {
 		return processorManagerUrl;
+	}
+
+	/**
+	 * Gets the URL of some prosEO Storage Manager component
+	 * 
+	 * @return the storageManagerUrl
+	 */
+	public String getStorageManagerUrl() {
+		return storageManagerUrl;
 	}
 
 }

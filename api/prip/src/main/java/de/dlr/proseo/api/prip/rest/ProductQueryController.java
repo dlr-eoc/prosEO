@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.dlr.proseo.api.prip.odata.ProductEdmProvider;
 import de.dlr.proseo.api.prip.odata.ProductEntityCollectionProcessor;
+import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
 import de.dlr.proseo.api.prip.rest.model.CscProduct;
 
 /**
@@ -66,6 +67,10 @@ public class ProductQueryController {
 	@Autowired
 	private ProductEntityCollectionProcessor entityCollectionProcessor;
 
+	/** The entity processor for products */
+	@Autowired
+	private ProductEntityProcessor entityProcessor;
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryController.class);
 
@@ -87,14 +92,17 @@ public class ProductQueryController {
 	 * @param request the req
 	 * @param response the Http response
 	 */
-	@RequestMapping(value = "*")
+	@RequestMapping(value = "/**")
 	protected void service(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> service({}, {})", request, response);
+		
 		try {
 			// create odata handler and configure it with CsdlEdmProvider and Processor
 			OData odata = OData.newInstance();
 			ServiceMetadata edm = odata.createServiceMetadata(edmProvider, new ArrayList<EdmxReference>());
 			ODataHttpHandler handler = odata.createHandler(edm);
 			handler.register(entityCollectionProcessor);
+			handler.register(entityProcessor);
 
 			// let the handler do the work
 			handler.process(new HttpServletRequestWrapper(request) {
@@ -108,7 +116,7 @@ public class ProductQueryController {
 				}
 			}, response);
 		} catch (RuntimeException e) {
-			logger.error("Server Error occurred in ExampleServlet", e);
+			logger.error("Server Error occurred in ProductQueryController", e);
 			throw new ServletException(e);
 		}
 	}

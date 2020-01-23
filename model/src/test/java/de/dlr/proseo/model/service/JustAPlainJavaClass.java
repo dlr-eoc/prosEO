@@ -1,5 +1,7 @@
 package de.dlr.proseo.model.service;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +18,7 @@ public class JustAPlainJavaClass {
 		
 		logger.info("Preparing test product");
 		Product product1 = new Product();
+		product1.setUuid(UUID.randomUUID());
 		product1 = products.save(product1);
 		logger.info("Created product {}", product1.getId());
 		

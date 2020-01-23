@@ -8,6 +8,8 @@ package de.dlr.proseo.model;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
+import java.util.UUID;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -104,6 +106,7 @@ public class ProductTest {
 		configuredProcessor.setProcessor(processor);
 		
 		Product product = new Product();
+		product.setUuid(UUID.randomUUID());
 		product.setProductClass(productClass);
 		product.setFileClass(TEST_FILE_CLASS);
 		product.setMode(TEST_MODE);

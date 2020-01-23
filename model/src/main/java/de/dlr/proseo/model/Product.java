@@ -54,6 +54,7 @@ public class Product extends PersistentObject {
 	/**
 	 * Universally unique product identifier (Production Interface Delivery Point Specification, sec. 3.1)
 	 */
+	@Column(nullable = false)
 	private UUID uuid;
 	
 	/** Product class this products instantiates */

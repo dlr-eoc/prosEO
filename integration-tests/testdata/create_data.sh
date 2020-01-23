@@ -495,7 +495,7 @@ curl --insecure --data @- --header "Content-Type: application/json" --user s5p-p
     "configuredProcessors": [ "PTML3 0.0.1 OPER 2019-11-04" ],
     "orbits": [],
     "requestedProductClasses": [ "PTM_L3" ],
-    "inputProductClasses": [],
+    "inputProductClasses": [ "PTM_L2A", "PTM_L2B" ],
     "outputFileClass": "TEST",
     "processingMode": "OPER"
 }

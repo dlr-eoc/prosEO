@@ -20,3 +20,5 @@ proseo:
         url: http://localhost:8082/proseo/order-mgr/v0.1
     processorManager:
         url: http://localhost:8084/proseo/processor-mgr/v0.1
+    storageManager:
+        url: https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/

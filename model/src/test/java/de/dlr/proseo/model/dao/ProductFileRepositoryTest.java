@@ -8,6 +8,7 @@ package de.dlr.proseo.model.dao;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -97,6 +98,7 @@ public class ProductFileRepositoryTest {
 		
 		Product product = new Product();
 		product.setProductClass(prodClass);
+		product.setUuid(UUID.randomUUID());
 		product = RepositoryService.getProductRepository().save(product);
 
 		ProcessingFacility facility = new ProcessingFacility();

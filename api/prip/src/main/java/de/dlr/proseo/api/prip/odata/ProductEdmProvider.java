@@ -21,6 +21,8 @@ import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
 import org.apache.olingo.commons.api.edm.provider.CsdlSchema;
 import org.apache.olingo.commons.api.ex.ODataException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -46,8 +48,13 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	// Entity Set Names
 	public static final String ES_PRODUCTS_NAME = "Products";
 
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(ProductEdmProvider.class);
+
 	@Override
 	public CsdlEntityContainer getEntityContainer() throws ODataException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getEntityContainer()");
+		
 		// create EntitySets
 		List<CsdlEntitySet> entitySets = new ArrayList<CsdlEntitySet>();
 		entitySets.add(getEntitySet(CONTAINER, ES_PRODUCTS_NAME));
@@ -62,6 +69,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 	@Override
 	public CsdlEntityContainerInfo getEntityContainerInfo(FullQualifiedName entityContainerName) throws ODataException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getEntityContainerInfo({})", entityContainerName);
+		
 		// This method is invoked when displaying the Service Document at e.g. http://localhost:8080/DemoService/DemoService.svc
 		if (entityContainerName == null || entityContainerName.equals(CONTAINER)) {
 			CsdlEntityContainerInfo entityContainerInfo = new CsdlEntityContainerInfo();
@@ -74,6 +83,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 	@Override
 	public CsdlEntitySet getEntitySet(FullQualifiedName entityContainer, String entitySetName) throws ODataException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getEntitySet({}, {})", entityContainer, entitySetName);
+		
 		if(entityContainer.equals(CONTAINER)){
 			if(entitySetName.equals(ES_PRODUCTS_NAME)){
 				CsdlEntitySet entitySet = new CsdlEntitySet();
@@ -89,6 +100,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 	@Override
 	public CsdlEntityType getEntityType(FullQualifiedName entityTypeName) throws ODataException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getEntityType({})", entityTypeName);
+		
 		// this method is called for one of the EntityTypes that are configured in the Schema
 		if(entityTypeName.equals(ET_PRODUCT_FQN)){
 
@@ -110,6 +123,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			entityType.setName(ET_PRODUCT_NAME);
 			entityType.setProperties(Arrays.asList(id, name , contentType, contentLength, creationDate, evictionDate));
 			entityType.setKey(Collections.singletonList(propertyRef));
+			entityType.setHasStream(true);
 
 			return entityType;
 		}
@@ -118,6 +132,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 	@Override
 	public List<CsdlSchema> getSchemas() throws ODataException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getSchemas()");
+		
 		// create Schema
 		CsdlSchema schema = new CsdlSchema();
 		schema.setNamespace(NAMESPACE);

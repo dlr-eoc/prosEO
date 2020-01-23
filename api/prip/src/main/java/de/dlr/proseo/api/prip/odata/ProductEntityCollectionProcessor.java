@@ -11,7 +11,11 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.apache.olingo.commons.api.data.ContextURL;
@@ -21,6 +25,7 @@ import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.EdmProperty;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
@@ -35,8 +40,17 @@ import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.UriInfo;
+import org.apache.olingo.server.api.uri.UriInfoResource;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.UriResourcePrimitiveProperty;
+import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.FilterOption;
+import org.apache.olingo.server.api.uri.queryoption.OrderByItem;
+import org.apache.olingo.server.api.uri.queryoption.OrderByOption;
+import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
+import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
+import org.apache.olingo.server.api.uri.queryoption.expression.Member;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +86,9 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
 	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
 	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
+	private static final int MSG_ID_EXCEPTION = 5007;
+	private static final int MSG_ID_PRODUCT_WITHOUT_UUID = 5008;
+	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5009;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -80,6 +97,9 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
 	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
 	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
+	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
+	private static final String MSG_PRODUCT_WITHOUT_UUID = "(W%d) Product with database ID %d has no UUID";
+	private static final String MSG_INVALID_FILTER_CONDITION = "(E%d) Invalid filter condition (cause: %s)";
 
 	/** The cached OData factory object */
 	private OData odata;
@@ -146,18 +166,114 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	 */
 	@Override
 	public void init(OData odata, ServiceMetadata serviceMetadata) {
+		if (logger.isTraceEnabled()) logger.trace(">>> init({}, {})", odata, serviceMetadata);
+		
 		this.odata = odata;
 		this.serviceMetadata = serviceMetadata;
 	}
 
 	/**
-	 * Read the requested products from the prosEO kernel components
-	 * (temporarily: hard coded examples)
+	 * Filter the given product list according to the conditions given in the filter option
 	 * 
+	 * @param productList the product list to filter
+	 * @param filterOption the filtering conditions
+	 * @throws ODataApplicationException if an error occurs during filter option evaluation
+	 */
+	private void filterProductList(List<Entity> productList, FilterOption filterOption) throws ODataApplicationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> filterProductList({}, {})", productList, filterOption);
+
+		Expression filterExpression = filterOption.getExpression();
+		
+		// Loop over all entities in the product list and remove those that do not match the filtering conditions
+		try {
+			Iterator<Entity> entityIterator = productList.iterator();
+
+			// Evaluate the expression for each entity
+			// If the expression is evaluated to "true", keep the entity otherwise remove it from
+			// the entityList
+			while (entityIterator.hasNext()) {
+				// To evaluate the the expression, create an instance of the Filter Expression
+				// Visitor and pass the current entity to the constructor
+				Entity currentEntity = entityIterator.next();
+				FilterExpressionVisitor expressionVisitor = new FilterExpressionVisitor(currentEntity);
+
+				// Evaluating the expression
+				Object visitorResult = filterExpression.accept(expressionVisitor);		
+				// The result of the filter expression must be of type Edm.Boolean
+				if(visitorResult instanceof Boolean) {
+					if(!Boolean.TRUE.equals(visitorResult)) {
+						// The expression evaluated to false (or null), so we have to remove the
+						// currentEntity from entityList
+						entityIterator.remove();
+					}
+				} else {
+					throw new ODataApplicationException("A filter expression must evaulate to type Edm.Boolean", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+				}
+			} // End while
+		} catch (ExpressionVisitException e) {
+			throw new ODataApplicationException("Exception in filter evaluation",
+					HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), Locale.ENGLISH);
+		}
+	}
+
+	/**
+	 * Sort the given product list by the given ordering criteria
+	 * 
+	 * @param productList the product list to sort
+	 * @param orderByOption the ordering criteria to apply
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void sortProductList(List<Entity> productList, OrderByOption orderByOption) {
+		if (logger.isTraceEnabled()) logger.trace(">>> sortProductList({}, {})", productList, orderByOption);
+
+		List<OrderByItem> orderItemList = orderByOption.getOrders();
+		final OrderByItem orderByItem = orderItemList.get(0); // TODO Support list of ordering items (recursive comparison function below)
+		Expression expression = orderByItem.getExpression();
+
+		if(expression instanceof Member){
+			UriInfoResource resourcePath = ((Member)expression).getResourcePath();
+			UriResource uriResource = resourcePath.getUriResourceParts().get(0);
+			if (uriResource instanceof UriResourcePrimitiveProperty) {
+				EdmProperty edmProperty = ((UriResourcePrimitiveProperty)uriResource).getProperty();
+				final String sortPropertyName = edmProperty.getName();
+
+				// do the sorting for the list of entities  
+				Collections.sort(productList, (entity1, entity2) -> {
+					int compareResult = 0;
+					if (null == entity1.getProperty(sortPropertyName)) {
+						compareResult = -1;
+					} else if (null == entity2.getProperty(sortPropertyName)) {
+						compareResult = +1;
+					} else {
+						compareResult = ((Comparable) entity1.getProperty(sortPropertyName).getValue())
+								.compareTo((Comparable) entity2.getProperty(sortPropertyName).getValue());
+					}
+
+					// if 'desc' is specified in the URI, change the order
+					if(orderByItem.isDescending()){
+						return -compareResult; // just reverse order
+					}
+
+					return compareResult;
+				});
+			}
+		}
+	}
+
+	/**
+	 * Read the requested products from the prosEO kernel components
+	 * 
+	 * @param username the username for logging in to prosEO
+	 * @param password the password for the user
+	 * @param mission the mission to login to
+	 * @param uriInfo additional URI parameters to consider in the request
 	 * @return a collection of entities representing products
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
+	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
 	 */
-	private EntityCollection queryProducts(String username, String password, String mission) throws URISyntaxException {
+	private EntityCollection queryProducts(String username, String password, String mission, UriInfo uriInfo) throws URISyntaxException, ODataApplicationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({}, ********, {})", username, mission);
+		
 		EntityCollection productsCollection = new EntityCollection();
 		List<Entity> productList = productsCollection.getEntities();
 
@@ -168,7 +284,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		ResponseEntity<List> entity = null;
 		try {
 			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
-			String requestUrl = config.getIngestorUrl() + "?mission=" + mission;
+			String requestUrl = config.getIngestorUrl() + "/products?mission=" + mission;
+			
+			// TODO Add filter conditions from $filter option, if set
+			
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -196,18 +315,48 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		}
 		
 		List<?> restProducts = entity.getBody();
+		if (logger.isDebugEnabled()) logger.debug("... products found: " + restProducts.size());
 		ObjectMapper mapper = new ObjectMapper();
 		for (Object object: restProducts) {
 			RestProduct restProduct = mapper.convertValue(object, RestProduct.class);
+			
+			// Check applicability
+			if (null == restProduct.getUuid() || restProduct.getUuid().isEmpty()) {
+				// ignore products without valid UUID
+				logger.warn(String.format(MSG_PRODUCT_WITHOUT_UUID, MSG_ID_PRODUCT_WITHOUT_UUID, restProduct.getId()));
+				continue;
+			}
+			
+			// Create output product
 			Entity product = new Entity()
 					.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
 					.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, restProduct.getProductClass()))
 					.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
 							"application/octet-stream"));
+			// TODO Add remaining properties
 			product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + restProduct.getUuid() + "')"));
 			productList.add(product);
 		}
+		
+		// Check $filter option
+		FilterOption filterOption = uriInfo.getFilterOption();
+		if (null != filterOption) {
+			filterProductList(productList, filterOption);
+		}
+		
+		// Check $orderby option
+		OrderByOption orderByOption = uriInfo.getOrderByOption();
+		if (null != orderByOption) {
+			sortProductList(productList, orderByOption);
+		}
+		
+		// Check $count option
+		CountOption countOption = uriInfo.getCountOption();
+		if (null != countOption && countOption.getValue()) {
+		    productsCollection.setCount(productList.size());
+		}
 
+		if (logger.isTraceEnabled()) logger.trace("... returning " + productsCollection.getEntities().size() + " product entries");
 		return productsCollection;
 	}
 
@@ -224,6 +373,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	@Override
 	public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, ODataLibraryException {
+		if (logger.isTraceEnabled()) logger.trace(">>> readEntityCollection({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 		
 		// 1st we have retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -257,19 +407,26 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 					return;
 				}
 				String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
-				entitySet = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0]);
+				entitySet = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0], uriInfo);
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader("Warning", message);
 				return;
+			} catch (ODataApplicationException e) {
+				String message = logError(MSG_INVALID_FILTER_CONDITION, MSG_ID_INVALID_FILTER_CONDITION, e.getMessage());
+				response.setStatusCode(e.getStatusCode());
+				response.setHeader("Warning", message);
+				return;
 			} catch (HttpClientErrorException e) {
 				response.setStatusCode(e.getRawStatusCode());
-				response.setHeader("Warning", e.getMessage());
+				response.setHeader("Warning", e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
+				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+				e.printStackTrace();
 				response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
-				response.setHeader("Warning", e.getMessage());
+				response.setHeader("Warning", message);
 				return;
 			}
 		} else {
@@ -279,6 +436,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			return;
 		}
 
+		if (logger.isDebugEnabled()) logger.debug("... preparing data for response");
+		
 		// 3rd: create a serializer based on the requested format (json)
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
@@ -295,6 +454,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		response.setContent(serializedContent);
 		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
+		
+		if (logger.isTraceEnabled()) logger.trace("<<< readEntityCollection(");
 	}
 
 }
