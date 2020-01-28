@@ -1,0 +1,13 @@
+#%RAML 1.0 DataType
+#  RestAuthority:
+    type: object
+    properties:
+      authority:
+        type: string
+        description: The authority granted for the given mission (may be restricted to a specific domain object)
+      objectClass?:
+        type: string
+        description: The class name (e. g. "de.dlr.proseo.model.Mission") of the object, for which the authority is granted
+      objectIdentifier?:
+        type: string
+        description: The identifier (e. g. "S5P") of the object, for which the authority is granted

@@ -1,0 +1,16 @@
+[
+    {
+      "id":         430459234, 
+      "sidId":      8375028347, 
+      "groupname":  "s5pusers", 
+      "authorities":
+      [
+          { 
+            "authority":        "ROLE_USER", 
+            "objectClass":      "de.dlr.proseo.model.Mission",
+            "objectIdentifier": "S5P"
+          } 
+      ]
+    }
+]
+    

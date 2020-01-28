@@ -1,0 +1,17 @@
+#%RAML 1.0 DataType
+#  RestUser:
+    type: object
+    properties:
+      sidId?:
+        type: integer
+        format: long
+        description: The persistent id of user's security ID
+      username:
+        type: string
+        description: The (unique) user name, which is valid for all missions in prosEO.
+      enabled:
+        type: boolean
+        description: Flag indicating whether the user account is enabled.
+      authorities:
+        type: RestAuthority[]
+        description: The authorities granted to this user (filtered by mission)

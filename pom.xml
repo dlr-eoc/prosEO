@@ -43,6 +43,7 @@
 		<module>storage-mgr</module>
 		<module>interfaces</module>
 		<module>api</module>
+		<module>user-mgr</module>
 	</modules>
 
 	<dependencies>

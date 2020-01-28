@@ -1,0 +1,245 @@
+#%RAML 1.0
+title: prosEO User Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/user-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestAuthority: !include ../../../../../model/src/main/resources/raml/types/authority.raml
+  RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
+  RestGroup: !include ../../../../../model/src/main/resources/raml/types/group.raml
+  RestAclObject: !include ../../../../../model/src/main/resources/raml/types/aclobject.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    patch?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/login:
+  type: standard
+  get:
+    description: Log in to the given mission (using credentials in Basic Auth header); mission may be empty for "root" user
+    displayName: login
+    queryParameters:
+      mission?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestAuthority[]
+            example: !include examples/authority-list.json
+/users:
+  type: standard
+  get:
+    description: Get users by mission
+    displayName: getUsers
+    queryParameters:
+      mission: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestUser[]
+            example: !include examples/user-list.json
+  post:
+    description: Create a new user
+    displayName: createUser
+    body:
+      application/json:
+        type: RestUser
+        example: !include examples/user.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestUser
+            example: !include examples/user.json
+  /{username}:
+    uriParameters:
+      username: string
+    get:
+      description: Get a user by user name
+      displayName: getUserByName
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestUser
+              example: !include examples/user.json
+    patch:
+      description: Update a user by user name
+      displayName: modifyUser
+      body:
+        application/json:
+          type: RestUser
+          example: !include examples/user.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestUser
+              example: !include examples/user.json
+    delete:
+      description: Delete a user by user name
+      displayName: deleteUserByName
+      responses:
+        204:
+
+/groups:
+  type: standard
+  get:
+    description: Get user groups by mission
+    displayName: getGroups
+    queryParameters:
+      mission: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestGroup[]
+            example: !include examples/group-list.json
+  post:
+    description: Create a new user group
+    displayName: createGroup
+    body:
+      application/json:
+        type: RestGroup
+        example: !include examples/group.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestGroup
+            example: !include examples/group.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a user group by ID
+      displayName: getGroupById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup
+              example: !include examples/group.json
+    patch:
+      description: Update a user group by ID
+      displayName: modifyGroup
+      body:
+        application/json:
+          type: RestGroup
+          example: !include examples/group.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup
+              example: !include examples/group.json
+    delete:
+      description: Delete a user group by ID
+      displayName: deleteGroupById
+      responses:
+        204:
+
+/aclobjects:
+  type: standard
+  get:
+    description: Get all configured ACL object identities (domain objects)
+    displayName: getAclObjects
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestAclObject[]
+            example: !include examples/aclobject-list.json
+  post:
+    description: Create a new ACL object identity
+    displayName: createAclObject
+    body:
+      application/json:
+        type: RestAclObject
+        example: !include examples/aclobject.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestAclObject
+            example: !include examples/aclobject.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get an ACL object identity by ID
+      displayName: getAclObjectById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestAclObject
+              example: !include examples/aclobject.json
+    patch:
+      description: Update an ACL object identity by ID
+      displayName: modifyAclObject
+      body:
+        application/json:
+          type: RestAclObject
+          example: !include examples/aclobject.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestAclObject
+              example: !include examples/aclobject.json
+    delete:
+      description: Delete an ACL object identity by ID
+      displayName: deleteAclObjectById
+      responses:
+        204:

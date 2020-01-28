@@ -1,0 +1,7 @@
+[
+  { 
+    "authority":        "ROLE_USER", 
+    "objectClass":      "de.dlr.proseo.model.Mission",
+    "objectIdentifier": "S5P"
+  } 
+]

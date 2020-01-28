@@ -1,0 +1,18 @@
+#%RAML 1.0 DataType
+#  RestUser:
+    type: object
+    properties:
+      id?:
+        type: integer
+        format: long
+        description: The persistent id of user group
+      sidId?:
+        type: integer
+        format: long
+        description: The persistent id of user group's security ID
+      groupname:
+        type: string
+        description: The (unique) user group name, which is valid for all missions in prosEO.
+      authorities:
+        type: RestAuthority[]
+        description: The authorities granted to this user group (filtered by mission)

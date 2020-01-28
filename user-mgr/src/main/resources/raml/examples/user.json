@@ -1,0 +1,13 @@
+{
+  "sidId":      8375028347, 
+  "username":   "johndoe", 
+  "enabled":    true,
+  "authorities":
+  [
+      { 
+        "authority":        "ROLE_USER", 
+        "objectClass":      "de.dlr.proseo.model.Mission",
+        "objectIdentifier": "S5P"
+      } 
+  ]
+}
