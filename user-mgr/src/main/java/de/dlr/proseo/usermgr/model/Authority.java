@@ -9,10 +9,7 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-import javax.persistence.Index;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import org.hibernate.annotations.Parent;
 
 /**
  * An authority (also called a "privilege") is an atomic entitlement for a user to access a prosEO method or domain object.
@@ -20,7 +17,6 @@ import javax.persistence.Table;
  * @author Dr. Thomas Bassler
  */
 @Embeddable
-@Table(indexes = {@Index(name = "ix_auth_username", columnList = "username, authority", unique = true)})
 public class Authority {
 
 	/** 
@@ -31,7 +27,7 @@ public class Authority {
 	private String authority;
 	
 	/** The user, to which the authority (privilege) was granted */
-	@ManyToOne
+	@Parent
 	private User user;
 
 	/**

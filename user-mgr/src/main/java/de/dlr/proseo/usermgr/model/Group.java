@@ -5,15 +5,18 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 
 /**
  * A group of users
@@ -33,11 +36,16 @@ public class Group {
 	private String groupName;
 	
 	/** The users belonging to this group */
-	@ManyToMany(mappedBy = "groups")
-	private Set<User> groupMembers;
+	@OneToMany
+	private Set<GroupMember> groupMembers;
 	
 	/** The authorities (privileges) members of this group are granted */
 	@ElementCollection
+	@CollectionTable(name = "group_authorities", joinColumns = {
+			@JoinColumn(
+				name = "group_id", 
+				foreignKey = @ForeignKey(name = "fk_group_authorities_group")
+		)})
 	private Set<GroupAuthority> groupAuthorities;
 
 	/**
@@ -81,7 +89,7 @@ public class Group {
 	 * 
 	 * @return a set of users
 	 */
-	public Set<User> getGroupMembers() {
+	public Set<GroupMember> getGroupMembers() {
 		return groupMembers;
 	}
 
@@ -90,7 +98,7 @@ public class Group {
 	 * 
 	 * @param groupMembers the group members to set
 	 */
-	public void setGroupMembers(Set<User> groupMembers) {
+	public void setGroupMembers(Set<GroupMember> groupMembers) {
 		this.groupMembers = groupMembers;
 	}
 
@@ -110,6 +118,21 @@ public class Group {
 	 */
 	public void setGroupAuthorities(Set<GroupAuthority> groupAuthorities) {
 		this.groupAuthorities = groupAuthorities;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(groupName);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof Group))
+			return false;
+		Group other = (Group) obj;
+		return Objects.equals(groupName, other.groupName);
 	}
 
 }

@@ -13,9 +13,11 @@ import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 
 /**
  * A prosEO user (actually the user's credentials).
@@ -46,13 +48,17 @@ public class User {
 	private Date passwordExpirationDate;
 	
 	/** The autorities (privileges) granted to this user */
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(name = "authorities", joinColumns = {
+		@JoinColumn(
+			name = "username", 
+			foreignKey = @ForeignKey(name = "fk_authorities_users")
+	)})
 	private Set<Authority> authorities;
 	
 	/** The user groups this user belongs to */
-	@ManyToMany
-	@CollectionTable(name = "group_members")
-	private Set<Group> groups;
+	@OneToMany
+	private Set<GroupMember> groupMemberships;
 	
 	/**
 	 * Gets the user name
@@ -166,21 +172,21 @@ public class User {
 	}
 
 	/**
-	 * Gets the groups this user belongs to
+	 * Gets the group memberships for this user
 	 * 
-	 * @return the user groups
+	 * @return the groupMemberships
 	 */
-	public Set<Group> getGroups() {
-		return groups;
+	public Set<GroupMember> getGroupMemberships() {
+		return groupMemberships;
 	}
 
 	/**
-	 * Sets the groups this user belongs to
+	 * Sets the group memberships for this user
 	 * 
-	 * @param groups the user groups to set
+	 * @param groupMemberships the groupMemberships to set
 	 */
-	public void setGroups(Set<Group> groups) {
-		this.groups = groups;
+	public void setGroupMemberships(Set<GroupMember> groupMemberships) {
+		this.groupMemberships = groupMemberships;
 	}
 
 	@Override
