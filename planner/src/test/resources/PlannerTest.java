@@ -5,6 +5,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.dlr.proseo.planner.ProductionPlanner;
 
@@ -17,6 +18,8 @@ import de.dlr.proseo.planner.ProductionPlanner;
  *
  */
 public class PlannerTest {
+    @Autowired
+    private ProductionPlanner productionPlanner;
 
 	/**
 	 * @throws java.lang.Exception
@@ -50,6 +53,7 @@ public class PlannerTest {
 	public void test() {
 		try {
 			ProductionPlanner.main(null);
+			productionPlanner.stopDispatcher();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

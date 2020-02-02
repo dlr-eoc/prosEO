@@ -18,6 +18,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -88,7 +89,7 @@ public class Job extends PersistentObject {
 	private ProcessingFacility processingFacility;
 	
 	/** The job steps for this job */
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "job")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "job")
 	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**

@@ -1,8 +1,12 @@
 package de.dlr.proseo.planner.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,10 +14,13 @@ import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
-@Service
+@Component
+@Transactional
 public class OrderUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
@@ -71,9 +78,15 @@ public class OrderUtil {
 				break;				
 			case PLANNED:
 				// remove jobs and jobsteps
+				List<Job> toRemove = new ArrayList<Job>();
 				for (Job job : order.getJobs()) {
-					jobUtil.delete(job);
-				}				
+					if (jobUtil.delete(job)) {
+						toRemove.add(job);
+					}
+				}
+				for (Job job : toRemove) {
+					order.getJobs().remove(job);
+				}
 				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.INITIAL);
 				RepositoryService.getOrderRepository().save(order);
 				answer = true;
@@ -147,7 +160,7 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
 	@Transactional
 	public Boolean resume(ProcessingOrder order) {
 		Boolean answer = false;
@@ -158,14 +171,43 @@ public class OrderUtil {
 			case APPROVED:
 			case PLANNED:
 				for (Job job : order.getJobs()) {
-					jobUtil.cancel(job);
+					jobUtil.resume(job);
 				}
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.FAILED);
+				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RELEASED);
 				RepositoryService.getOrderRepository().save(order);
 				answer = true;
 				break;				
 			case RELEASED:
 			case RUNNING:
+			case SUSPENDING:
+			case COMPLETED:
+			case FAILED:
+			case CLOSED:
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
+	public Boolean startOrder(ProcessingOrder order) {
+		Boolean answer = false;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+			case PLANNED:
+				break;				
+			case RELEASED:
+				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RUNNING);
+				RepositoryService.getOrderRepository().save(order);
+				answer = true;
+				break;				
+			case RUNNING:
+				answer = true;
+				break;				
 			case SUSPENDING:
 			case COMPLETED:
 			case FAILED:
@@ -252,4 +294,54 @@ public class OrderUtil {
 		}
 		return answer;
 	}
+	
+	@Transactional
+	public Boolean checkFinish(ProcessingOrder order) {
+		Boolean answer = false;	
+		// check current state for possibility to be suspended
+		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
+		if (order != null) {
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+			case PLANNED:	
+			case RELEASED:
+			case SUSPENDING:
+				break;
+			case RUNNING:
+				Boolean all = true;
+				Boolean completed = true;
+				for (Job job : order.getJobs()) {
+					switch (job.getJobState()) {
+					case COMPLETED:
+						break;
+					case FAILED:
+						completed = false;
+						break;
+					default:
+						all = false;
+						break;
+					}
+				}
+				if (all) {
+					if (completed) {
+						order.setOrderState(OrderState.COMPLETED);
+					} else {
+						order.setOrderState(OrderState.FAILED);
+					}
+					RepositoryService.getOrderRepository().save(order);
+				}
+				answer = true;
+				break;
+			case COMPLETED:
+			case FAILED:
+				answer = true;
+				break;
+			default:
+				break;
+			}	
+		}
+ 		return answer;
+	}
+
 }

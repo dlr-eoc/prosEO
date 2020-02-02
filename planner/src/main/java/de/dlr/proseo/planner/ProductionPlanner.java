@@ -15,6 +15,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -24,7 +26,9 @@ import java.util.TimeZone;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.util.JobStepUtil;
 
 /*
  * prosEO Ingestor application
@@ -41,6 +45,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	
 	private static final String MSG_PREFIX = "199 proseo-planner: ";
 	private static final String MSG_PLANNER_PROCESSING_FACILITY_CONNECTED = MSG_PREFIX + "ProcessingFacility '%s' connected to '%s'";
+	private static final String MSG_PLANNER_PROCESSING_FACILITY_WORKER_CNT = MSG_PREFIX + "%d worker nodes found";
 	private static final String MSG_PLANNER_PROCESSING_FACILITY_DISCONNECTED = MSG_PREFIX + "ProcessingFacility '%s' disconnected";
 	private static final String MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED = MSG_PREFIX + "ProcessingFacility '%s' could not be connected to '%s'";
 	
@@ -59,11 +64,15 @@ public class ProductionPlanner implements CommandLineRunner {
 	/** Planner configuration */
 	@Autowired
 	ProductionPlannerConfiguration plannerConfig;
+    @Autowired
+    private JobStepUtil jobStepUtil;
 
 	/**
 	 * Current running KubeConfigs
 	 */
 	private Map<String, KubeConfig> kubeConfigs = new HashMap<>();
+	
+	private KubeDispatcher kubeDispatcher = null;
 	
 	/**
 	 * Look for connected KubeConfig of name. 
@@ -88,7 +97,10 @@ public class ProductionPlanner implements CommandLineRunner {
 	public Collection<KubeConfig> getKubeConfigs() {
 		return kubeConfigs.values();
 	}
-	
+	@Transactional
+	public void checkForJobStepsToRun() {
+		jobStepUtil.checkForJobStepsToRun();
+	};
 	/**
 	 * Initialize and run application 
 	 * 
@@ -126,6 +138,8 @@ public class ProductionPlanner implements CommandLineRunner {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
 					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
+					logger.info(message);
+					message = String.format(MSG_PLANNER_PROCESSING_FACILITY_WORKER_CNT, kubeConfig.getWorkerCnt());
 					logger.info(message);
 				} else {
 					String message = String.format(MSG_PLANNER_PROCESSING_FACILITY_NOT_CONNECTED, pf.getName(), pf.getProcessingEngineUrl());
@@ -172,6 +186,33 @@ public class ProductionPlanner implements CommandLineRunner {
 			e.printStackTrace();
 		}
 		this.updateKubeConfigs();
+		this.startDispatcher();
 	}
 
+	
+	public void startDispatcher() {
+		if (kubeDispatcher == null || !kubeDispatcher.isAlive()) {
+			kubeDispatcher = new KubeDispatcher(this, jobStepUtil);
+			kubeDispatcher.start();
+		} else {
+			if (kubeDispatcher.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+	
+	public void stopDispatcher() {
+		if (kubeDispatcher != null && kubeDispatcher.isAlive()) {
+			kubeDispatcher.interrupt();
+			int i = 0;
+			while (kubeDispatcher.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		kubeDispatcher = null;
+	}
 }

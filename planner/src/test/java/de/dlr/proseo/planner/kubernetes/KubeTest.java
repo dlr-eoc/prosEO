@@ -64,6 +64,7 @@ public class KubeTest {
 //				productionPlanner.getKubeConfig(null).deleteJob(aJob);
 //			}
 //		}
+//		productionPlanner.stopDispatcher();
 	}
 
 }

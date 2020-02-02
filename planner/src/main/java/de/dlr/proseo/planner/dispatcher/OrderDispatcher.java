@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class OrderDispatcher {
 		boolean answer = false;
 		if (order != null) {
 			switch (order.getOrderState()) {
-			case INITIAL: {
+			case APPROVED: {
 				// order is released, publish it
 				if (!checkForValidOrder(order)) {
 					break;
@@ -487,12 +488,9 @@ public class OrderDispatcher {
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
 		Product p = new Product();
 		p.getParameters().clear();
+		p.setUuid(UUID.randomUUID());
 		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters());
 		p.setProductClass(productClass);
-		if (cp == null) {
-			String h = "help";
-			h = h + "xx";
-		}
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);
 		p.setJobStep(js);

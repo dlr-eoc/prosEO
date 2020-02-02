@@ -68,6 +68,11 @@ public class ProductionPlannerConfiguration {
 	/** Maximum cycle for K8s job finish */
 	@Value("${proseo.productionPlanner.maxcycles}")
 	private String productionPlannerMaxCycles;
+	
+	/** Wait time for K8s job finish cycle in milliseconds */
+	@Value("${proseo.productionPlanner.dispatcherwaittime}")
+	private String productionPlannerDispatcherWaitTime;
+
 
 	/**
 	 * @return the s3Url
@@ -81,6 +86,13 @@ public class ProductionPlannerConfiguration {
 	 */
 	public String getProductionPlannerCycleWaitTime() {
 		return productionPlannerCycleWaitTime;
+	}
+
+	/**
+	 * @return the productionPlannerDispatcherWaitTime
+	 */
+	public String getProductionPlannerDispatcherWaitTime() {
+		return productionPlannerDispatcherWaitTime;
 	}
 
 	/**
