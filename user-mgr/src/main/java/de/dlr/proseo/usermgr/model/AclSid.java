@@ -5,10 +5,15 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.Objects;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -34,6 +39,10 @@ public class AclSid {
 	/** The name of the principal (user, group) or authority this security identity represents. */
 	@Column(nullable = false)
 	private String sid;
+	
+	/** The ACL entries associated with this security identity */
+	@OneToMany(mappedBy = "sid", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<AclEntry> aclEntries;
 
 	/**
 	 * Gets the database id
@@ -87,6 +96,39 @@ public class AclSid {
 	 */
 	public void setSid(String sid) {
 		this.sid = sid;
+	}
+
+	/**
+	 * Gets the ACL entries associated with this security identity
+	 * 
+	 * @return the aclEntries
+	 */
+	public Set<AclEntry> getAclEntries() {
+		return aclEntries;
+	}
+
+	/**
+	 * Sets the ACL entries associated with this security identity
+	 * 
+	 * @param aclEntries the aclEntries to set
+	 */
+	public void setAclEntries(Set<AclEntry> aclEntries) {
+		this.aclEntries = aclEntries;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(principal, sid);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof AclSid))
+			return false;
+		AclSid other = (AclSid) obj;
+		return Objects.equals(principal, other.principal) && Objects.equals(sid, other.sid);
 	}
 
 }

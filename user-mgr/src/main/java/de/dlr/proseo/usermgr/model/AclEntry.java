@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -196,6 +198,21 @@ public class AclEntry {
 	 */
 	public void setAuditFailure(boolean auditFailure) {
 		this.auditFailure = auditFailure;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(aceOrder, aclObjectIdentity);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof AclEntry))
+			return false;
+		AclEntry other = (AclEntry) obj;
+		return aceOrder == other.aceOrder && Objects.equals(aclObjectIdentity, other.aclObjectIdentity);
 	}
 
 }

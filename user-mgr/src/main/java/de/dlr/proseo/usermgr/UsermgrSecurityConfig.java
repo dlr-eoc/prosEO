@@ -41,7 +41,8 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
-				.anyRequest().authenticated()
+				.antMatchers("/login").authenticated()
+				.anyRequest().hasAnyRole("ROOT", "USERMGR")
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

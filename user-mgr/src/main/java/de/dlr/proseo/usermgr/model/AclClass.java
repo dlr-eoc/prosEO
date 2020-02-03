@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -64,5 +66,20 @@ public class AclClass {
 	 */
 	public void setClassName(String className) {
 		this.className = className;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(className);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof AclClass))
+			return false;
+		AclClass other = (AclClass) obj;
+		return Objects.equals(className, other.className);
 	}
 }

@@ -5,12 +5,17 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.Objects;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -49,6 +54,10 @@ public class AclObjectIdentity {
 	
 	/** Flag indicating whether this domain object inherits ACL entries from its parent object. (? TBC) */
 	private boolean entriesInheriting;
+
+	/** The ACL entries associated with this object identity */
+	@OneToMany(mappedBy = "aclObjectIdentity", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<AclEntry> aclEntries;
 
 	/**
 	 * Gets the database id of this domain object
@@ -156,6 +165,39 @@ public class AclObjectIdentity {
 	 */
 	public void setEntriesInheriting(boolean entriesInheriting) {
 		this.entriesInheriting = entriesInheriting;
+	}
+
+	/**
+	 * Gets the ACL entries associated with this object identity
+	 * 
+	 * @return the aclEntries
+	 */
+	public Set<AclEntry> getAclEntries() {
+		return aclEntries;
+	}
+
+	/**
+	 * Sets the ACL entries associated with this object identity
+	 * 
+	 * @param aclEntries the aclEntries to set
+	 */
+	public void setAclEntries(Set<AclEntry> aclEntries) {
+		this.aclEntries = aclEntries;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(objectIdClass, objectIdIdentity);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!(obj instanceof AclObjectIdentity))
+			return false;
+		AclObjectIdentity other = (AclObjectIdentity) obj;
+		return Objects.equals(objectIdClass, other.objectIdClass) && Objects.equals(objectIdIdentity, other.objectIdIdentity);
 	}
 	
 	
