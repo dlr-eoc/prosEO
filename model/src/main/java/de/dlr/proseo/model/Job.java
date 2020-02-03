@@ -19,8 +19,10 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Dr. Thomas Bassler
  *
  */
-@Transactional
+
 @Entity
 public class Job extends PersistentObject {
 	

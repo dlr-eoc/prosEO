@@ -16,11 +16,11 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-
-import org.springframework.transaction.annotation.Transactional;
+import javax.persistence.Table;
 
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product
@@ -29,8 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Dr. Thomas Bassler
  *
  */
-@Transactional
+
 @Entity
+// @Table(indexes = { @Index(unique = false, columnList = "job_step_state") })
 public class JobStep extends PersistentObject {
 
 	/** The job this job step belongs to */
