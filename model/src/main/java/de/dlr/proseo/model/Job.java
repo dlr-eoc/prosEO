@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 
 @Entity
+@Table(indexes = { @Index(unique = false, columnList = "jobState") })
 public class Job extends PersistentObject {
 	
 	/** The processing order this job belongs to */

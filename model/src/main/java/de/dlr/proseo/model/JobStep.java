@@ -31,7 +31,7 @@ import javax.persistence.Table;
  */
 
 @Entity
-// @Table(indexes = { @Index(unique = false, columnList = "job_step_state") })
+@Table(indexes = { @Index(unique = false, columnList = "jobStepState") })
 public class JobStep extends PersistentObject {
 
 	/** The job this job step belongs to */
