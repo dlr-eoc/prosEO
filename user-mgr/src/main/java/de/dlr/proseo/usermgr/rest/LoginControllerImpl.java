@@ -27,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.usermgr.rest.model.RestAuthority;
 
 /**
@@ -39,15 +40,17 @@ public class LoginControllerImpl implements LoginController {
 	/* Message ID constants */
 	private static final int MSG_ID_MISSION_NOT_FOUND = 2700;
 	private static final int MSG_ID_USER_NOT_AUTHORIZED = 2701;
+	private static final int MSG_ID_MISSION_MISSING = 2702;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_AUTHORIZED = "(E%d) User %s has no authorities for mission %s";
 	private static final String MSG_MISSION_NOT_FOUND = "(E%d) Access control list for mission %s not found";
+	private static final String MSG_MISSION_MISSING = "(E%d) No mission given for login";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-user-mgr ";
 
 	/* Other string constants */
-	private static final String ROLE_ROOT = "ROOT";
+	private static final String ROLE_ROOT = "ROLE_ROOT";
 	
 	/** The ACL service */
 	@Autowired
@@ -85,14 +88,38 @@ public class LoginControllerImpl implements LoginController {
 			logger.trace("Found authentication: " + auth + " with username " + auth.getName() + " and password " + 
 					(((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
 		}
-		final String username = auth.getName();
-		final Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
+		String username = auth.getName();
+		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
 		
 		// Query the user management database
 		List<RestAuthority> authoritiesFound = new ArrayList<>();
 		
+		// Handle root user: No check against missions required
+		for (GrantedAuthority authority: authorities) {
+			if (logger.isTraceEnabled()) logger.trace("... checking granted authority " + authority.getAuthority());
+			if (ROLE_ROOT.equals(authority.getAuthority())) {
+				RestAuthority restAuthority = new RestAuthority();
+				restAuthority.setAuthority(authority.getAuthority());
+				authoritiesFound.add(restAuthority);
+				return new ResponseEntity<>(authoritiesFound, HttpStatus.OK);
+			}
+		}
+		
+		// Check whether mission is set
+		if (null == mission || "".equals(mission)) {
+			String message = String.format(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING);
+			logger.error(message);
+			return new ResponseEntity<>(errorHeaders(message), HttpStatus.BAD_REQUEST);
+		}
+
 		// Check whether the user is authenticated for the given mission
-		ObjectIdentity missionIdentity = new ObjectIdentityImpl(Mission.class, mission);
+		Mission modelMission = RepositoryService.getMissionRepository().findByCode(mission);
+		if (null == modelMission) {
+			String message = String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission);
+			logger.error(message);
+			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
+		}
+		ObjectIdentity missionIdentity = new ObjectIdentityImpl(Mission.class, modelMission.getId());
 		
 		Acl acl;
 		try {
@@ -106,7 +133,7 @@ public class LoginControllerImpl implements LoginController {
 		// Collect authorities for this user and mission
 		for (GrantedAuthority authority: authorities) {
 			Sid sid = new GrantedAuthoritySid(authority.getAuthority());
-			if (acl.isSidLoaded(Arrays.asList(sid)) || ROLE_ROOT.equals(authority.getAuthority())) {
+			if (acl.isSidLoaded(Arrays.asList(sid))) {
 				// Actual permissions are not of interest here!
 				RestAuthority restAuthority = new RestAuthority();
 				restAuthority.setAuthority(authority.getAuthority());
