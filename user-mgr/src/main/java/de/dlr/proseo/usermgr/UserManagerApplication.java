@@ -1,5 +1,5 @@
 /**
- * UserManager.java
+ * UserManagerApplication.java
  * 
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -23,11 +23,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableAutoConfiguration
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
-@EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
-public class UserManager {
+@EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao", "de.dlr.proseo.usermgr.dao" })
+public class UserManagerApplication {
 
 	public static void main(String[] args) throws Exception {
-		SpringApplication.run(UserManager.class, args);
+		SpringApplication.run(UserManagerApplication.class, args);
 	}
 
 }

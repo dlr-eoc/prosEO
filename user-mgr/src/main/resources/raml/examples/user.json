@@ -1,7 +1,8 @@
 {
-  "sidId":      8375028347, 
-  "username":   "johndoe", 
-  "enabled":    true,
+  "sidId":                  8375028347, 
+  "username":               "johndoe", 
+  "password":               "$2a$04$nXMQTg2ZMY6k8yDvL5jD2.lthiKrmWZpOVgyu0l7tbm.JKKzyRpQW",
+  "enabled":                true,
   "authorities":
   [
       { 
@@ -9,5 +10,7 @@
         "objectClass":      "de.dlr.proseo.model.Mission",
         "objectIdentifier": "S5P"
       } 
-  ]
+  ],
+  "expirationDate":         "2021-12-31",
+  "passwordExpirationDate": "2020-05-04"
 }

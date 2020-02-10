@@ -47,7 +47,7 @@ public class User {
 	@Column(nullable = false)
 	private Date passwordExpirationDate;
 	
-	/** The autorities (privileges) granted to this user */
+	/** The authorities (privileges) granted to this user */
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "authorities", joinColumns = {
 		@JoinColumn(

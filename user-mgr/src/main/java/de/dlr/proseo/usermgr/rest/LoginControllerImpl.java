@@ -1,5 +1,7 @@
 /**
  * LoginControllerImpl.java
+ * 
+ * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.usermgr.rest;
 
@@ -31,8 +33,9 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.usermgr.rest.model.RestAuthority;
 
 /**
- * @author thomas
- *
+ * Spring MVC controller for the prosEO User Manager; implements the login service.
+ * 
+ * @author Dr. Thomas Bassler
  */
 @Component
 public class LoginControllerImpl implements LoginController {

@@ -9,9 +9,18 @@
       username:
         type: string
         description: The (unique) user name, which is valid for all missions in prosEO.
+      password:
+        type: string
+        description: The user password (BCrypt-encrypted string)
       enabled:
         type: boolean
         description: Flag indicating whether the user account is enabled.
       authorities:
         type: RestAuthority[]
         description: The authorities granted to this user (filtered by mission)
+      expirationDate?:
+        type: date-only
+        description: The expiration date for the user account (default never)
+      passwordExpirationDate?:
+        type: date-only
+        description: The expiration date for the password (default never)

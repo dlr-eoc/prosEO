@@ -211,35 +211,13 @@ resourceTypes:
           application/json:
             type: RestAclObject
             example: !include examples/aclobject.json
-  /{id}:
-    uriParameters:
-      id:
+  delete:
+    description: Delete an ACL object identity by identifier
+    displayName: deleteAclObjectById
+    queryParameters:
+      class: string
+      identifier:
         type: integer
         format: long
-    get:
-      description: Get an ACL object identity by ID
-      displayName: getAclObjectById
-      responses:
-        200:
-          body:
-            application/json:
-              type: RestAclObject
-              example: !include examples/aclobject.json
-    patch:
-      description: Update an ACL object identity by ID
-      displayName: modifyAclObject
-      body:
-        application/json:
-          type: RestAclObject
-          example: !include examples/aclobject.json
-      responses:
-        200:
-          body:
-            application/json:
-              type: RestAclObject
-              example: !include examples/aclobject.json
-    delete:
-      description: Delete an ACL object identity by ID
-      displayName: deleteAclObjectById
-      responses:
-        204:
+    responses:
+      204:
