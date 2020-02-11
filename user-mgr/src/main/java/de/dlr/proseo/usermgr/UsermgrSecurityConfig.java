@@ -88,8 +88,11 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean 
 	public JdbcMutableAclService aclService() { 
-		return new JdbcMutableAclService(
-				dataSource, lookupStrategy(), aclCache()); 
+		JdbcMutableAclService aclService = new JdbcMutableAclService(
+				dataSource, lookupStrategy(), aclCache());
+		aclService.setClassIdentityQuery("select currval(pg_get_serial_sequence('acl_class', 'id'))");
+		aclService.setSidIdentityQuery("select currval(pg_get_serial_sequence('acl_sid', 'id'))");
+		return aclService;
 	}
 	@Bean
 	public AclAuthorizationStrategy aclAuthorizationStrategy() {

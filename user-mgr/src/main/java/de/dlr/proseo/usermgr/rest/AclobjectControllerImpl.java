@@ -27,6 +27,8 @@ import org.springframework.security.acls.model.MutableAclService;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.acls.model.ObjectIdentity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -51,6 +53,7 @@ public class AclobjectControllerImpl implements AclobjectController {
 	private static final int MSG_ID_ACLOBJECT_CREATED = 2714;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2715;
 	private static final int MSG_ID_ACLOBJECT_DELETED = 2716;
+	private static final int MSG_ID_ACLOBJECT_ID_INVALID = 2717;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_AUTHORIZED = "(E%d) User %s has no authorities for mission %s";
@@ -60,6 +63,7 @@ public class AclobjectControllerImpl implements AclobjectController {
 	private static final String MSG_NO_ACLS_FOUND = "(E%d) No mission ACLs found in database";
 	private static final String MSG_ACLOBJECT_EXISTS = "(E%d) ACL object identity of class %s with ID %s already exists";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) ACL object identity deletion unsuccessful for class %s and ID %s";
+	private static final String MSG_ACLOBJECT_ID_INVALID = "(E%d) Invalid ID %s for ACL object identity";
 
 	private static final String MSG_ACLOBJECT_LIST_RETRIEVED = "(I%d) ACL object identities retrieved";
 	private static final String MSG_ACLOBJECT_CREATED = "(I%d) ACL object identity of class %s with ID %s created";
@@ -74,6 +78,10 @@ public class AclobjectControllerImpl implements AclobjectController {
 	/** The ACL service */
 	@Autowired
 	MutableAclService aclService;
+
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(LoginControllerImpl.class);
@@ -184,10 +192,21 @@ public class AclobjectControllerImpl implements AclobjectController {
 	public ResponseEntity<RestAclObject> createAclObject(@Valid RestAclObject restAclObject) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createAclObject({})", restAclObject.getObjectIdentifier());
 		
-		ObjectIdentity objectIdentity = new ObjectIdentityImpl(restAclObject.getObjectClass(), Long.parseLong(restAclObject.getObjectIdentifier()));
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+
+		final ObjectIdentity objectIdentity;
+		try {
+			objectIdentity = new ObjectIdentityImpl(restAclObject.getObjectClass(), Long.parseLong(restAclObject.getObjectIdentifier()));
+		} catch (NumberFormatException e1) {
+			return new ResponseEntity<>(errorHeaders(logError(
+					MSG_ACLOBJECT_ID_INVALID, MSG_ID_ACLOBJECT_ID_INVALID, restAclObject.getObjectClass(), restAclObject.getObjectIdentifier())), HttpStatus.BAD_REQUEST);
+		}
 		
 		try {
-			aclService.createAcl(objectIdentity);
+			int dummy = transactionTemplate.execute((status) -> {
+				aclService.createAcl(objectIdentity);
+				return 0;
+			});
 		} catch (AlreadyExistsException e) {
 			return new ResponseEntity<>(errorHeaders(logError(
 					MSG_ACLOBJECT_EXISTS, MSG_ID_ACLOBJECT_EXISTS, restAclObject.getObjectClass(), restAclObject.getObjectIdentifier())), HttpStatus.BAD_REQUEST);

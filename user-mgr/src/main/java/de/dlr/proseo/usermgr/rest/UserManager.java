@@ -213,13 +213,13 @@ public class UserManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> conditionallyCreateSid({})", restAuthority.getAuthority());
 
 		// Create ACL security identity, if it does not exist
-		AclSid sid = aclSidRepository.findBySid(restAuthority.getAuthority());
-		if (null == sid) {
-			sid = new AclSid();
-			sid.setPrincipal(false);
-			sid.setSid(restAuthority.getAuthority());
-			aclSidRepository.save(sid);
-		}
+//		AclSid sid = aclSidRepository.findBySid(restAuthority.getAuthority());
+//		if (null == sid) {
+//			sid = new AclSid();
+//			sid.setPrincipal(false);
+//			sid.setSid(restAuthority.getAuthority());
+//			aclSidRepository.save(sid);
+//		}
 		
 		// Authorize for all operations on the given object identity (if any)
 		if (Mission.class.getCanonicalName().equals(restAuthority.getObjectClass())) {
@@ -230,7 +230,7 @@ public class UserManager {
 			ObjectIdentity objectIdentity = new ObjectIdentityImpl(Mission.class, modelMission.getId());
 
 			MutableAcl acl = (MutableAcl) aclService.readAclById(objectIdentity);
-			Sid authoritySid = new GrantedAuthoritySid(sid.getSid());
+			Sid authoritySid = new GrantedAuthoritySid(restAuthority.getAuthority());
 			acl.insertAce(acl.getEntries().size(), BasePermission.ADMINISTRATION, authoritySid, true);
 			aclService.updateAcl(acl);
 		}

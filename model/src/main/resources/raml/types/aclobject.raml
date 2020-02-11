@@ -1,18 +1,18 @@
 #%RAML 1.0 DataType
-#  RestAuthority:
+#  RestAclObject:
     type: object
     properties:
       id?:
         type: integer
         format: long
         description: The persistent id of ACL object identity
-      objectClass?:
+      objectClass:
         type: string
         description: The class name (e. g. "de.dlr.proseo.model.Mission") of the object
-      objectIdentifier?:
+      objectIdentifier:
         type: string
         description: The identifier (e. g. "S5P") of the object
-      ownerSid:
+      ownerSid?:
         type: integer
         format: long
         description: The persistent id of the security identity, which owns the ACL object

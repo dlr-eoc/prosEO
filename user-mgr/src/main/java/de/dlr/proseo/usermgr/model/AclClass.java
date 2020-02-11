@@ -26,6 +26,7 @@ public class AclClass {
 	/** Database generated ID for this ACL class. */
 	@Id
 	@GeneratedValue
+	@Column(columnDefinition = "BIGSERIAL")
 	private long id;
 	
 	/** The Java class name. */

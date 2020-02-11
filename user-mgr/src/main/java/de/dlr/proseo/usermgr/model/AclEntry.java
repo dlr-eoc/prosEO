@@ -28,6 +28,7 @@ public class AclEntry {
 	/** Database generated unique ID for this ACL entry. */
 	@Id
 	@GeneratedValue
+	@Column(columnDefinition = "BIGSERIAL")
 	private long id;
 	
 	/** The ACL domain object referenced by this ACL entry */

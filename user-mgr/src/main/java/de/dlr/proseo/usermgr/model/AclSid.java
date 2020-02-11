@@ -30,6 +30,7 @@ public class AclSid {
 	/** Database generated unique identifier of the security identity. */
 	@Id
 	@GeneratedValue
+	@Column(columnDefinition = "BIGSERIAL")
 	private long id;
 	
 	/** Flag indicating whether the security identity is a user (principal) or an authority. */

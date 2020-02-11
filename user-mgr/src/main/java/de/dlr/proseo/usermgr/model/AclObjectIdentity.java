@@ -31,6 +31,7 @@ public class AclObjectIdentity {
 	/** Database generated unique ID for this ACL object identity. */
 	@Id
 	@GeneratedValue
+	@Column(columnDefinition = "BIGSERIAL")
 	private long id;
 	
 	/** The class this domain object belongs to */
