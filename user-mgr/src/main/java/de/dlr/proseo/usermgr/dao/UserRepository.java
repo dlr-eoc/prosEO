@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.dlr.proseo.usermgr.model.User;
 
 /**
- * Data Access Object for the ProcessingOrder class
+ * Data Access Object for the User class
  * 
  * @author Dr. Thomas Bassler
  *
@@ -30,6 +30,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	 * @return the unique processing user identified by the given user name
 	 */
 	public User findByUsername(String username);
+	
+	/**
+	 * Get all users for the given mission
+	 * 
+	 * @param missionCode the code of the mission
+	 * @return a list of users with user names starting with the mission code
+	 */
+	@Query("select u from users u where u.username like concat(?1, '-%')")
+	public List<User> findByMissionCode(String missionCode);
 	
 	/**
 	 * Get all user accounts whose expiration date is reached before the given limit date

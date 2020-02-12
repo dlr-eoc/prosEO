@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.usermgr.rest.model.RestGroup;
+import de.dlr.proseo.usermgr.rest.model.RestUser;
 
 /**
  * Spring MVC controller for the prosEO User Manager; implements the services required to manage user groups.
@@ -139,9 +140,9 @@ public class GroupControllerImpl implements GroupController {
 	 * @param id the ID of the group to update
 	 * @param restGroup a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the user after modification or 
-	 * 		   HTTP status "NOT_FOUND" and an error message, if no user with the given ID exists, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no user group with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
-	 *         HTTP status "CONFLICT"and an error message, if the user has been modified since retrieval by the client
+	 *         HTTP status "CONFLICT" and an error message, if the user has been modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestGroup> modifyGroup(Long id, RestGroup restGroup) {
@@ -155,6 +156,68 @@ public class GroupControllerImpl implements GroupController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
+	}
+
+	/**
+	 * Get all members of the given user group
+	 * 
+	 * @param id the ID of the user group
+	 * @return HTTP status "OK" and a list of Json objects representing users, which are members of the given group or
+	 *         HTTP status "NOT_FOUND" and an error message, if the group has no members
+	 */
+	@Override
+	public ResponseEntity<List<RestUser>> getGroupMembers(Long id) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getGroupMembers({})", id);
+		
+		try {
+			return new ResponseEntity<>(groupManager.getGroupMembers(id), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
+	}
+
+	/**
+	 * Add a member to the given user group
+	 * 
+	 * @param id the ID of the group to update
+	 * @param username the name of the user to add
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the list of users after addition or 
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no user group with the given ID or no user with the given name exists, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid
+	 */
+	@Override
+	public ResponseEntity<List<RestUser>> addGroupMember(Long id, String username) {
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyGroup({}, {})", id, username);
+		
+		try {
+			return new ResponseEntity<>(groupManager.addGroupMember(id, username), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Delete a member from the given user group
+	 * 
+	 * @param id the group ID
+	 * @param username the name of the user to remove
+	 * @return HTTP status "OK" and a response containing a Json object corresponding to the list of users after removal or 
+	 *         HTTP status "NOT_FOUND", if the group did not exist, or
+	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 */
+	@Override
+	public ResponseEntity<List<RestUser>> removeGroupMember(Long id, String username) {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeGroupMember({}, {})", id, username);
+		
+		try {
+			return new ResponseEntity<>(groupManager.removeGroupMember(id, username), HttpStatus.OK);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
 

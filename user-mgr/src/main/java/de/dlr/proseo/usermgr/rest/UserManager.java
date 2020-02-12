@@ -22,29 +22,15 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.acls.domain.GrantedAuthoritySid;
-import org.springframework.security.acls.domain.ObjectIdentityImpl;
-import org.springframework.security.acls.domain.PrincipalSid;
-import org.springframework.security.acls.model.AccessControlEntry;
-import org.springframework.security.acls.model.Acl;
-import org.springframework.security.acls.model.MutableAcl;
-import org.springframework.security.acls.model.MutableAclService;
-import org.springframework.security.acls.model.NotFoundException;
-import org.springframework.security.acls.model.ObjectIdentity;
-import org.springframework.security.acls.model.Sid;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.usermgr.dao.AclSidRepository;
 import de.dlr.proseo.usermgr.dao.UserRepository;
-import de.dlr.proseo.usermgr.model.AclSid;
 import de.dlr.proseo.usermgr.model.Authority;
 import de.dlr.proseo.usermgr.model.GroupAuthority;
 import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
-import de.dlr.proseo.usermgr.rest.model.RestAuthority;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
 /**
@@ -71,8 +57,6 @@ public class UserManager {
 	private static final int MSG_ID_USER_DELETED = 2762;
 	private static final int MSG_ID_DELETE_FAILURE = 2764;
 	private static final int MSG_ID_MISSION_MISSING = 2765;
-	private static final int MSG_ID_MISSION_NOT_FOUND = 2766;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_FOUND = "(E%d) No user found for mission %s";
@@ -83,11 +67,9 @@ public class UserManager {
 	private static final String MSG_DELETE_FAILURE = "(E%d) Deletion failed for user %s (cause: %s)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for user %s";
 	private static final String MSG_MISSION_MISSING = "(E%d) Mission not set";
-	private static final String MSG_MISSION_NOT_FOUND = "(E%d) Mission %s not found";
-
 	private static final String MSG_USER_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_USER_RETRIEVED = "(I%d) User %s retrieved";
-	private static final String MSG_USER_CREATED = "(I%d) User %s created with security identity ID %d";
+	private static final String MSG_USER_CREATED = "(I%d) User %s created";
 	private static final String MSG_USER_MODIFIED = "(I%d) User %s modified";
 	private static final String MSG_USER_NOT_MODIFIED = "(I%d) User %s not modified (no changes)";
 	private static final String MSG_USER_DELETED = "(I%d) User %s deleted";
@@ -95,12 +77,6 @@ public class UserManager {
 	/** Repository for User objects */
 	@Autowired
 	UserRepository userRepository;
-	/** Repository for ACL security identity objects */
-	@Autowired
-	AclSidRepository aclSidRepository;
-	/** The ACL service */
-	@Autowired
-	MutableAclService aclService;
 	
 	/** JPA entity manager */
 	@PersistenceContext
@@ -150,12 +126,12 @@ public class UserManager {
 	}
 	
 	/**
-	 * Convert a user from REST format to the prosEO data model format
+	 * Convert a user from REST format to the prosEO data model format (including directly assigned authorities)
 	 * 
 	 * @param restUser the REST user to convert
 	 * @return the converted model user
 	 */
-	private User toModelUser(RestUser restUser) {
+	/* package */ static User toModelUser(RestUser restUser) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelUser({})", (null == restUser ? "MISSING" : restUser.getUsername()));
 		
 		User modelUser = new User();
@@ -172,18 +148,23 @@ public class UserManager {
 		} else {
 			modelUser.setPasswordExpirationDate(restUser.getPasswordExpirationDate());
 		}
+		for (String restAuthority: restUser.getAuthorities()) {
+			Authority modelAuthority = new Authority();
+			modelAuthority.setAuthority(restAuthority);
+			modelAuthority.setUser(modelUser);
+			modelUser.getAuthorities().add(modelAuthority);
+		}
 		
 		return modelUser;
 	}
 	
 	/**
-	 * Convert a user from prosEO data model format to REST format (without authorities)
+	 * Convert a user from prosEO data model format to REST format (including directly assigned authorities)
 	 * 
 	 * @param modelUser the model user to convert
-	 * @param sid the ACL security identity representing this user (optional)
 	 * @return the converted REST user
 	 */
-	private RestUser toRestUser(User modelUser, AclSid sid) {
+	/* package */ static RestUser toRestUser(User modelUser) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestUser({})", (null == modelUser ? "MISSING" : modelUser.getUsername()));
 		
 		RestUser restUser = new RestUser();
@@ -196,65 +177,13 @@ public class UserManager {
 		if (null != modelUser.getPasswordExpirationDate()) {
 			restUser.setPasswordExpirationDate(modelUser.getPasswordExpirationDate());
 		}
-		if (null != sid) {
-			restUser.setSidId(sid.getId());
+		for (Authority modelAuthority: modelUser.getAuthorities()) {
+			restUser.getAuthorities().add(modelAuthority.getAuthority());
 		}
 		
 		return restUser;
 	}
 	
-	/**
-	 * Create an ACL security identity (SID), if none exists yet for the given authority,
-	 * and authorize it for the object identity given in the authority
-	 * 
-	 * @param restAuthority the authority, for which a SID shall be generated
-	 */
-	private void conditionallyCreateSid(RestAuthority restAuthority) {
-		if (logger.isTraceEnabled()) logger.trace(">>> conditionallyCreateSid({})", restAuthority.getAuthority());
-
-		// Create ACL security identity, if it does not exist
-//		AclSid sid = aclSidRepository.findBySid(restAuthority.getAuthority());
-//		if (null == sid) {
-//			sid = new AclSid();
-//			sid.setPrincipal(false);
-//			sid.setSid(restAuthority.getAuthority());
-//			aclSidRepository.save(sid);
-//		}
-		
-		// Authorize for all operations on the given object identity (if any)
-		if (Mission.class.getCanonicalName().equals(restAuthority.getObjectClass())) {
-			Mission modelMission = RepositoryService.getMissionRepository().findByCode(restAuthority.getObjectIdentifier());
-			if (null == modelMission) {
-				throw new IllegalArgumentException(logError(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, restAuthority.getObjectIdentifier()));
-			}
-			ObjectIdentity objectIdentity = new ObjectIdentityImpl(Mission.class, modelMission.getId());
-
-			MutableAcl acl = (MutableAcl) aclService.readAclById(objectIdentity);
-			Sid authoritySid = new GrantedAuthoritySid(restAuthority.getAuthority());
-			acl.insertAce(acl.getEntries().size(), BasePermission.ADMINISTRATION, authoritySid, true);
-			aclService.updateAcl(acl);
-		}
-	}
-
-	/**
-	 * Delete the ACL security identity (SID) for the given authority, if no other user exists with this authority
-	 * 
-	 * @param authority the authority to (conditionally) delete
-	 */
-	private void deleteOrphanedSid(Authority authority) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrphanedSid({})", authority.getAuthority());
-
-		List<User> userList = userRepository.findByAuthority(authority.getAuthority());
-		if (1 < userList.size() || 1 == userList.size() && !authority.getUser().equals(userList.get(0))) {
-			// Other users left with this authority
-			return;
-		}
-		
-		AclSid sid = aclSidRepository.findBySid(authority.getAuthority());
-		if (null != sid) {
-			aclSidRepository.delete(sid);
-		}
-	}
 	/**
 	 * Create a user (optionally with direct authorities)
 	 * 
@@ -274,31 +203,11 @@ public class UserManager {
 		}
 		
 		// Create user
-		User modelUser = toModelUser(restUser);
+		User modelUser = userRepository.save(toModelUser(restUser));
 		
-		modelUser = userRepository.save(modelUser);
+		logInfo(MSG_USER_CREATED, MSG_ID_USER_CREATED, modelUser.getUsername());
 		
-		for (RestAuthority restAuthority: restUser.getAuthorities()) {
-			// Create new authority
-			Authority authority = new Authority();
-			authority.setAuthority(restAuthority.getAuthority());
-			authority.setUser(modelUser);
-			modelUser.getAuthorities().add(authority);
-			
-			// Create ACL security identity for new authority
-			conditionallyCreateSid(restAuthority);
-		}
-		
-		// Create ACL security identity for user
-		AclSid sid = new AclSid();
-		sid.setPrincipal(true);
-		sid.setSid(modelUser.getUsername());
-		
-		sid = aclSidRepository.save(sid);
-		
-		logInfo(MSG_USER_CREATED, MSG_ID_USER_CREATED, modelUser.getUsername(), sid.getId());
-		
-		return toRestUser(modelUser, sid);
+		return toRestUser(modelUser);
 	}
 
 	/**
@@ -316,59 +225,10 @@ public class UserManager {
 			throw new IllegalArgumentException(logError(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING));
 		}
 		
-		// Get the ACL object identity for the mission
-		Mission modelMission = RepositoryService.getMissionRepository().findByCode(mission);
-		if (null == modelMission) {
-			throw new IllegalArgumentException(logError(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission));
-		}
-		ObjectIdentity missionIdentity = new ObjectIdentityImpl(Mission.class, modelMission.getId());
-		
 		// Collect all users connected to the ACL entries of the mission (either directly or indirectly)
 		List<RestUser> result = new ArrayList<>();
-		for (User modelUser: userRepository.findAll()) {
-			List<Sid> sids = new ArrayList<>();
-			sids.add(new PrincipalSid(modelUser.getUsername()));
-			
-			// Create sids for all directly granted authorities
-			for (Authority authority: modelUser.getAuthorities()) {
-				sids.add(new GrantedAuthoritySid(authority.getAuthority()));
-			}
-			
-			// Create sids for all authorities granted indirectly via a group
-			for (GroupMember member: modelUser.getGroupMemberships()) {
-				for (GroupAuthority authority: member.getGroup().getGroupAuthorities()) {
-					sids.add(new GrantedAuthoritySid(authority.getAuthority()));
-				}
-			}
-		
-			// Find the ACL entries for this mission
-			Acl acl = null;
-			try {
-				acl = aclService.readAclById(missionIdentity, sids);
-			} catch (NotFoundException e) {
-				// No authorities for this user
-				continue;
-			}
-			if (acl.getEntries().isEmpty()) {
-				// ACL loaded, but no ACL entries for the given sids
-				continue;
-			}
-			
-			// OK, this user has some authorization(s) for the given mission
-			RestUser restUser = toRestUser(modelUser, null);
-			
-			for (AccessControlEntry entry: acl.getEntries()) {
-				Sid entrySid = entry.getSid();
-				if (entrySid instanceof GrantedAuthoritySid) {
-					RestAuthority restAuthority = new RestAuthority();
-					restAuthority.setAuthority(((GrantedAuthoritySid) entrySid).getGrantedAuthority());
-					restAuthority.setObjectClass(Mission.class.getCanonicalName());
-					restAuthority.setObjectIdentifier(missionIdentity.getIdentifier().toString());
-					restUser.getAuthorities().add(restAuthority);
-				}
-			}
-
-			result.add(restUser);
+		for (User modelUser: userRepository.findByMissionCode(mission)) {
+			result.add(toRestUser(modelUser));
 		}
 
 		if (result.isEmpty()) {
@@ -401,18 +261,9 @@ public class UserManager {
 			throw new NoResultException(logError(MSG_USERNAME_NOT_FOUND, MSG_ID_USERNAME_NOT_FOUND, username));
 		}
 		
-		RestUser restUser = toRestUser(modelUser, null);
-		
-		// Add authorities granted directly
-		for (Authority modelAuthority: modelUser.getAuthorities()) {
-			RestAuthority restAuthority = new RestAuthority();
-			restAuthority.setAuthority(modelAuthority.getAuthority());
-			restUser.getAuthorities().add(restAuthority);
-		}
-		
 		logInfo(MSG_USER_RETRIEVED, MSG_ID_USER_RETRIEVED, username);
 		
-		return restUser;
+		return toRestUser(modelUser);
 	}
 
 	/**
@@ -434,15 +285,6 @@ public class UserManager {
 		
 		if (null == modelUser) {
 			throw new NoResultException(logError(MSG_USERNAME_NOT_FOUND, MSG_ID_USERNAME_NOT_FOUND, username));
-		}
-		
-		// Delete the ACL security identities for the user and their authorities
-		AclSid sid = aclSidRepository.findBySid(username);
-		if (null != sid) {
-			aclSidRepository.delete(sid);
-		}
-		for (Authority authority: modelUser.getAuthorities()) {
-			deleteOrphanedSid(authority);
 		}
 		
 		// Delete the user
@@ -516,8 +358,8 @@ public class UserManager {
 		Set<Authority> newAuthorities = new HashSet<>();
 		for (Authority modelAuthority: modelUser.getAuthorities()) {
 			boolean authorityChanged = true;
-			for (RestAuthority restAuthority: restUser.getAuthorities()) {
-				if (modelAuthority.getAuthority().equals(restAuthority.getAuthority())) {
+			for (String restAuthority: restUser.getAuthorities()) {
+				if (modelAuthority.getAuthority().equals(restAuthority)) {
 					// Unchanged authority
 					newAuthorities.add(modelAuthority);
 					authorityChanged = false;
@@ -526,14 +368,13 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was revoked
-				deleteOrphanedSid(modelAuthority);
 				userChanged = true;
 			}
 		}
-		for (RestAuthority restAuthority: restUser.getAuthorities()) {
+		for (String restAuthority: restUser.getAuthorities()) {
 			boolean authorityChanged = true;
 			for (Authority modelAuthority: modelUser.getAuthorities()) {
-				if (modelAuthority.getAuthority().equals(restAuthority.getAuthority())) {
+				if (modelAuthority.getAuthority().equals(restAuthority)) {
 					// Unchanged authority
 					authorityChanged = false;
 					break;
@@ -543,12 +384,9 @@ public class UserManager {
 				// This authority was added
 				userChanged = true;
 				Authority newAuthority = new Authority();
-				newAuthority.setAuthority(restAuthority.getAuthority());
+				newAuthority.setAuthority(restAuthority);
 				newAuthority.setUser(modelUser);
 				newAuthorities.add(newAuthority);
-				
-				// Create ACL security identity for new authority
-				conditionallyCreateSid(restAuthority);
 			}
 		}
 		modelUser.setAuthorities(newAuthorities);
@@ -562,16 +400,7 @@ public class UserManager {
 		}
 		
 		// Return the changed user
-		restUser = toRestUser(modelUser, null);
-		
-		// Add authorities granted directly
-		for (Authority modelAuthority: modelUser.getAuthorities()) {
-			RestAuthority restAuthority = new RestAuthority();
-			restAuthority.setAuthority(modelAuthority.getAuthority());
-			restUser.getAuthorities().add(restAuthority);
-		}
-		
-		return restUser;
+		return toRestUser(modelUser);
 	}
 
 }

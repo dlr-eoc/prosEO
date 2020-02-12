@@ -6,13 +6,9 @@
         type: integer
         format: long
         description: The persistent id of user group
-      sidId?:
-        type: integer
-        format: long
-        description: The persistent id of user group's security ID
       groupname:
         type: string
-        description: The (unique) user group name, which is valid for all missions in prosEO.
+        description: The (unique) name of the group, consisting of the mission code, a hyphen ("-") and the actual group name
       authorities:
-        type: RestAuthority[]
+        type: string[]
         description: The authorities granted to this user group (filtered by mission)

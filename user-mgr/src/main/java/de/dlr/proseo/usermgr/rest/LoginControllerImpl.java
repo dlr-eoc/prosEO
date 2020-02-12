@@ -16,13 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.acls.domain.GrantedAuthoritySid;
-import org.springframework.security.acls.domain.ObjectIdentityImpl;
-import org.springframework.security.acls.model.Acl;
-import org.springframework.security.acls.model.AclService;
-import org.springframework.security.acls.model.NotFoundException;
-import org.springframework.security.acls.model.ObjectIdentity;
-import org.springframework.security.acls.model.Sid;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,7 +23,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.usermgr.rest.model.RestAuthority;
 
 /**
  * Spring MVC controller for the prosEO User Manager; implements the login service.
@@ -55,10 +47,6 @@ public class LoginControllerImpl implements LoginController {
 	/* Other string constants */
 	private static final String ROLE_ROOT = "ROLE_ROOT";
 	
-	/** The ACL service */
-	@Autowired
-	AclService aclService;
-
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(LoginControllerImpl.class);
 
@@ -78,10 +66,10 @@ public class LoginControllerImpl implements LoginController {
 	 * Let a user log in to a specific mission (the user is retrieved from the basic authentication information)
 	 * 
 	 * @param mission the code of the mission to log in to
-	 * @return a list of authorities the user holds for this mission
+	 * @return a list of authorities the user holds for this mission (directly or indirectly)
 	 */
 	@Override
-	public ResponseEntity<List<RestAuthority>> login(String mission) {
+	public ResponseEntity<List<String>> login(String mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> login({})", mission);
 		
 		// Get the user requesting authentication
@@ -92,67 +80,36 @@ public class LoginControllerImpl implements LoginController {
 					(((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
 		}
 		String username = auth.getName();
-		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
+		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();  // TODO Where do the group authorities come from?
 		
 		// Query the user management database
-		List<RestAuthority> authoritiesFound = new ArrayList<>();
+		List<String> authoritiesFound = new ArrayList<>();
 		
-		// Handle root user: No check against missions required
+		// Collect authorities and handle root user: No check against missions required
+		boolean isRootUser = false;
 		for (GrantedAuthority authority: authorities) {
 			if (logger.isTraceEnabled()) logger.trace("... checking granted authority " + authority.getAuthority());
+			authoritiesFound.add(authority.getAuthority());
 			if (ROLE_ROOT.equals(authority.getAuthority())) {
-				RestAuthority restAuthority = new RestAuthority();
-				restAuthority.setAuthority(authority.getAuthority());
-				authoritiesFound.add(restAuthority);
-				return new ResponseEntity<>(authoritiesFound, HttpStatus.OK);
+				isRootUser = true;
 			}
 		}
 		
 		// Check whether mission is set
-		if (null == mission || "".equals(mission)) {
+		if (!isRootUser && (null == mission || "".equals(mission))) {
 			String message = String.format(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING);
 			logger.error(message);
 			return new ResponseEntity<>(errorHeaders(message), HttpStatus.BAD_REQUEST);
 		}
-
-		// Check whether the user is authenticated for the given mission
-		Mission modelMission = RepositoryService.getMissionRepository().findByCode(mission);
-		if (null == modelMission) {
-			String message = String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
-		}
-		ObjectIdentity missionIdentity = new ObjectIdentityImpl(Mission.class, modelMission.getId());
 		
-		Acl acl;
-		try {
-			acl = aclService.readAclById(missionIdentity);
-		} catch (NotFoundException e) {
-			String message = String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, mission);
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
-		}
-		
-		// Collect authorities for this user and mission
-		for (GrantedAuthority authority: authorities) {
-			Sid sid = new GrantedAuthoritySid(authority.getAuthority());
-			if (acl.isSidLoaded(Arrays.asList(sid))) {
-				// Actual permissions are not of interest here!
-				RestAuthority restAuthority = new RestAuthority();
-				restAuthority.setAuthority(authority.getAuthority());
-				restAuthority.setObjectClass(Mission.class.getCanonicalName());
-				restAuthority.setObjectIdentifier(mission);
-				authoritiesFound.add(restAuthority);
-			}
-		}
-		
-		if (authorities.isEmpty()) {
+		// Check whether user is authorized for this mission
+		if (isRootUser || username.startsWith(mission + "-")) {
+			return new ResponseEntity<>(authoritiesFound, HttpStatus.OK);
+		} else {
 			String message = String.format(MSG_USER_NOT_AUTHORIZED, MSG_ID_USER_NOT_AUTHORIZED, username, mission);
 			logger.error(message);
 			return new ResponseEntity<>(errorHeaders(message), HttpStatus.UNAUTHORIZED);
 		}
-		
-		return new ResponseEntity<>(authoritiesFound, HttpStatus.OK);
 	}
 
 }

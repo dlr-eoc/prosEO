@@ -27,8 +27,6 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  RestAclObject: !include ../../../../../model/src/main/resources/raml/types/aclobject.raml
-  RestAuthority: !include ../../../../../model/src/main/resources/raml/types/authority.raml
   RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
   RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
@@ -278,12 +276,4 @@ resourceTypes:
           body:
             application/json:
               type: RestGroup
-  /aclobjects:
-    type: standard
-    get:
-      responses:
-        200:
-          body:
-            application/json:
-              type: RestAclObject
 

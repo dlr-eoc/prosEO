@@ -1,17 +1,9 @@
 [
     {
-      "sidId":                  8375028347, 
-      "username":               "johndoe", 
+      "username":               "S5P\\johndoe", 
       "password":               "$2a$04$nXMQTg2ZMY6k8yDvL5jD2.lthiKrmWZpOVgyu0l7tbm.JKKzyRpQW",
       "enabled":                true,
-      "authorities":
-      [
-          { 
-            "authority":        "ROLE_USER", 
-            "objectClass":      "de.dlr.proseo.model.Mission",
-            "objectIdentifier": "S5P"
-          } 
-      ]
+      "authorities":            [ "ROLE_USER" ]
     }
 ]
     

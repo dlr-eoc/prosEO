@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -31,13 +32,16 @@ public class Group {
 	@GeneratedValue
 	private long id;
 	
-	/** The name of the group. */
+	/** 
+	 * The (unique) name of the group, consisting of the mission code, a hyphen ("-") and the actual group name 
+	 * (which may be used across missions to denote equivalent functional groups). 
+	 */
 	@Column(nullable = false, unique = true)
 	private String groupName;
 	
 	/** The users belonging to this group */
 	@OneToMany
-	private Set<GroupMember> groupMembers;
+	private Set<GroupMember> groupMembers = new HashSet<>();
 	
 	/** The authorities (privileges) members of this group are granted */
 	@ElementCollection
@@ -46,7 +50,7 @@ public class Group {
 				name = "group_id", 
 				foreignKey = @ForeignKey(name = "fk_group_authorities_group")
 		)})
-	private Set<GroupAuthority> groupAuthorities;
+	private Set<GroupAuthority> groupAuthorities = new HashSet<>();
 
 	/**
 	 * Gets the group ID

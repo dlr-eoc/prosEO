@@ -6,6 +6,7 @@
 package de.dlr.proseo.usermgr.model;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,7 +28,10 @@ import javax.persistence.OneToMany;
 @Entity(name = "users")
 public class User {
 
-	/** The (unique) user name, which is valid for all missions in prosEO. */
+	/** 
+	 * The (unique) user name, consisting of the mission code, a hyphen ("-") and the actual user name 
+	 * (which is intended to be used across missions). 
+	 */
 	@Id
 	private String username;
 	
@@ -54,11 +58,11 @@ public class User {
 			name = "username", 
 			foreignKey = @ForeignKey(name = "fk_authorities_users")
 	)})
-	private Set<Authority> authorities;
+	private Set<Authority> authorities = new HashSet<>();
 	
 	/** The user groups this user belongs to */
 	@OneToMany
-	private Set<GroupMember> groupMemberships;
+	private Set<GroupMember> groupMemberships = new HashSet<>();
 	
 	/**
 	 * Gets the user name

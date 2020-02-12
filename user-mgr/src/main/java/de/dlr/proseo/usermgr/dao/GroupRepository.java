@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import de.dlr.proseo.usermgr.model.Group;
 
 /**
- * Data Access Object for the ProcessingOrder class
+ * Data Access Object for the Group class
  * 
  * @author Dr. Thomas Bassler
  *
@@ -29,6 +29,15 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 	 * @return the unique processing group identified by the given group name
 	 */
 	public Group findByGroupName(String groupName);
+	
+	/**
+	 * Get all user groups for the given mission
+	 * 
+	 * @param missionCode the code of the mission
+	 * @return a list of user groups with group names starting with the mission code
+	 */
+	@Query("select g from groups g where g.groupName like concat(?1, '-%')")
+	public List<Group> findByMissionCode(String missionCode);
 	
 	/**
 	 * Get all user groups having the given authority (as directly assigned authority)

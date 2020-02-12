@@ -24,10 +24,8 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  RestAuthority: !include ../../../../../model/src/main/resources/raml/types/authority.raml
   RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
   RestGroup: !include ../../../../../model/src/main/resources/raml/types/group.raml
-  RestAclObject: !include ../../../../../model/src/main/resources/raml/types/aclobject.raml
 
 resourceTypes:
   standard:
@@ -69,8 +67,8 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: RestAuthority[]
-            example: !include examples/authority-list.json
+            type: string[]
+            description: A list of authorities granted to the user for the given mission
 /users:
   type: standard
   get:
@@ -186,38 +184,39 @@ resourceTypes:
       displayName: deleteGroupById
       responses:
         204:
-
-/aclobjects:
-  type: standard
-  get:
-    description: Get all configured ACL object identities (domain objects)
-    displayName: getAclObjects
-    responses:
-      200:
-        body:
-          application/json:
-            type: RestAclObject[]
-            example: !include examples/aclobject-list.json
-  post:
-    description: Create a new ACL object identity
-    displayName: createAclObject
-    body:
-      application/json:
-        type: RestAclObject
-        example: !include examples/aclobject.json
-    responses:
-      201:
-        body:
-          application/json:
-            type: RestAclObject
-            example: !include examples/aclobject.json
-  delete:
-    description: Delete an ACL object identity by identifier
-    displayName: deleteAclObjectById
-    queryParameters:
-      class: string
-      identifier:
-        type: integer
-        format: long
-    responses:
-      204:
+    /members:
+      get:
+        description: Get all users in this group
+        displayName: getGroupMembers
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestUser[]
+                description: The list of users in this group        
+      post:
+        description: Add a user to the user group
+        displayName: addGroupMember
+        queryParameters:
+          username:
+            type: string
+            description: The name of the user to add
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestUser[]
+                description: The list of users in this group (after addition)
+      delete:
+        description: Remove a user from the user group
+        displayName: removeGroupMember
+        queryParameters:
+          username:
+            type: string
+            description: The name of the user to remove
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestUser[]
+                description: The list of users in this group (after removal)
