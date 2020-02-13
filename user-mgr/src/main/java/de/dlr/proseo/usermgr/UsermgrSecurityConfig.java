@@ -16,6 +16,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -59,17 +61,35 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
 	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder, DataSource dataSource) throws Exception {
-		logger.info("Initializing authentication from datasource " + dataSource);
+	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
+		logger.info("Initializing authentication from user details service ");
 
-		builder.jdbcAuthentication()
-		.dataSource(dataSource);
+		builder.userDetailsService(userDetailsService());
 
 	}
 
+	/**
+	 * Provides the default password encoder for prosEO (BCrypt)
+	 * 
+	 * @return a BCryptPasswordEncoder
+	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 	}
 
+	/**
+	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
+	 * 
+	 * @return a JdbcDaoImpl object
+	 */
+	@Bean
+	public UserDetailsService userDetailsService() {
+		logger.info("Initializing user details service from datasource " + dataSource);
+
+		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
+		jdbcDaoImpl.setDataSource(dataSource);
+		jdbcDaoImpl.setEnableGroups(true);
+		return jdbcDaoImpl;
+	}
 }
