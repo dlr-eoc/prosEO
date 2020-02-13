@@ -116,7 +116,9 @@ public class CommandLineInterface implements CommandLineRunner {
 		// Evaluate command
 		if (CLIParser.TOP_LEVEL_COMMAND_NAME.equals(command.getName())) {
 			// Handle top-level "proseo" command
-			// TODO Handle --version option
+			// Handle --version option
+			Package classPackage = getClass().getPackage();
+			System.out.println(classPackage.getImplementationTitle() + " (v" + classPackage.getImplementationVersion() + ")");
 		} else {
 			// Hand command down to appropriate command executor class
 			switch (command.getName()) {
@@ -217,7 +219,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				continue;
 			}
 			if (logger.isTraceEnabled()) logger.trace("... received command '{}'", (null == command ? "null" : command.getName()));
-			if (CMD_EXIT.equals(command.getName())) {
+			if (CMD_EXIT.equals(command.getName()) && !command.isHelpRequested()) {
 				break;
 			}
 			executeCommand(command);

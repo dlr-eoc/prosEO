@@ -3,8 +3,8 @@ title: prosEO UI Command Line Interface Syntax
 # command line program and to be returned as online help for the user.
 version: v0.1
 description: |
-  Commands can be invoked on the shell command line following the name of the prosEO executable (e. g. "proseo")
-  and at least one whitespace character.
+  Commands can be entered after the "prosEO>" command prompt. They can also be invoked on the shell command line 
+  following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
   
   Commands may have subcommands, which precede all options and parameters.
   
@@ -22,7 +22,7 @@ description: |
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DDTHH:MM:SS").
   
   So the general syntax is:
-  ["proseo"] command [subcommand...] [option...] [parameter...]
+  command [subcommand...] [option...] [parameter...]
 
 globalOptions:
     - name: help
@@ -61,7 +61,7 @@ commands:
       
     # Authentication:
     - name: login
-      description: Log in to a mission in prosEO. A login is required prior to executing any other command except "mission show".
+      description: Log in to a mission in prosEO. All valid commands except for "mission show" require prior login.
       options:
         - name: user
           type: string

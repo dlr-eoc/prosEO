@@ -28,6 +28,10 @@ public class ServiceConfiguration {
 	@Value("${proseo.password}")
 	private String proseoPassword;
 
+	/** The URL of the prosEO User Manager */
+	@Value("${proseo.userManager.url}")
+	private String userManagerUrl;
+	
 	/** The URL of the prosEO Production Planner */
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlannerUrl;
@@ -64,6 +68,15 @@ public class ServiceConfiguration {
 	 */
 	public String getProseoPassword() {
 		return proseoPassword;
+	}
+
+	/**
+	 * Gets the URL of the prosEO User Manager component
+	 * 
+	 * @return the userManagerUrl
+	 */
+	public String getUserManagerUrl() {
+		return userManagerUrl;
 	}
 
 	/**

@@ -39,6 +39,12 @@ services:
       - "8085:8080"
     depends_on:
       - proseo-db
+  proseo-user-mgr:
+    image: ${REGISTRY_URL}/proseo-user-mgr:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
+    ports:
+      - "8086:8080"
+    depends_on:
+      - proseo-db
   proseo-gui:
     image: ${REGISTRY_URL}/proseo-ui-gui:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
     ports:
@@ -56,8 +62,8 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
     volumes:
-      - "/etc/ssl/certs/proseo-selfsigned.crt:/certs/server.cert"
-      - "/etc/ssl/certs/proseo-selfsigned.key:/certs/server.key"
+      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt:/certs/server.cert"
+      - "./proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key:/certs/server.key"
     ports:
       - "8443:443"
     depends_on:
