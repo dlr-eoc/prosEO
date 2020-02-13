@@ -54,6 +54,17 @@ resourceTypes:
           application/json:
             type: RestOrder[]
             example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
+  /approve:
+    /{id}:
+      patch:
+        description: Approve processing order of id 
+        displayName: approveOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
   /plan:
     /{id}:
       put:
@@ -72,6 +83,17 @@ resourceTypes:
       patch:
         description: Release processing order of id 
         displayName: releaseOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /reset:
+    /{id}:
+      patch:
+        description: Reset processing order of id 
+        displayName: resetOrder
         responses:
           200:
             body:
@@ -108,6 +130,10 @@ resourceTypes:
     displayName: getJobs
     queryParameters:
       state?: string
+      orderid?: 
+        type: integer
+        format: long
+        description: The persistent id of the processing order
     responses:
       200:
         body:

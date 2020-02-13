@@ -1,17 +1,25 @@
 package de.dlr.proseo.planner.kubernetes;
 
-import de.dlr.proseo.planner.ProductionPlanner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.util.UtilService;
+
+
+// @Transactional
 public class KubeJobFinish extends Thread {
 
 	private String jobName;
 	private KubeJob kubeJob;
 	
 	public KubeJobFinish(KubeJob aJob, String aJobName) {
+		super(aJobName);
 		kubeJob = aJob;
 		jobName = aJobName;
 	}
-	
+
+	// @Transactional
     public void run() {
     	if (kubeJob != null && jobName != null && !jobName.isEmpty()) {
     		boolean found = false;
@@ -37,6 +45,7 @@ public class KubeJobFinish extends Thread {
     	          }
     			
     		}
+    		UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig());
     	}
     }    	
 }

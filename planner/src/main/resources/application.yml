@@ -22,6 +22,7 @@ proseo:
         password: sieb37.Schlaefer
         cyclewaittime: 1000
         maxcycles: 50
+        dispatcherwaittime: 100000
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none

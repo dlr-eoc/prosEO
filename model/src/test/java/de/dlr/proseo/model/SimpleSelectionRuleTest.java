@@ -33,7 +33,7 @@ import de.dlr.proseo.model.util.SelectionRule;
 public class SimpleSelectionRuleTest {
 	
 	/** Required date format for JPQL and SQL queries */
-    private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss").withZone(ZoneId.of("UTC"));
+    private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/* Static test data */
 	private static final String TEST_MISSION_CODE = "S5P";

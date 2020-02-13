@@ -17,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
@@ -28,6 +31,9 @@ import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 import de.dlr.proseo.planner.rest.JobControllerImpl;
 import de.dlr.proseo.planner.rest.model.PodKube;
+import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.JobUtil;
+import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.Copy;
 import io.kubernetes.client.models.V1Job;
@@ -50,6 +56,7 @@ import io.kubernetes.client.models.V1PodList;
 public class KubeJob {
 	
 	private static Logger logger = LoggerFactory.getLogger(KubeJob.class);
+	
 	/**
 	 * The job id of DB
 	 */
@@ -255,6 +262,7 @@ public class KubeJob {
 	 * @param aKubeConfig The processing facility
 	 * @return The kube job
 	 */
+	@Transactional
 	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) {	
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
@@ -374,9 +382,10 @@ public class KubeJob {
 					if (!js.isEmpty()) {
 						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 						searchPod();
-
+						UtilService.getJobStepUtil().startJobStep(jobStep);
 						jobStep.setJobStepState(JobStepState.RUNNING);	
 						RepositoryService.getJobStepRepository().save(jobStep);
+						jobStep.getJob().setJobState(JobState.STARTED);
 						logger.info("Job " + kubeConfig.getId() + "/" + jobName + " created");
 					}
 				} catch (ApiException e1) {
@@ -400,6 +409,13 @@ public class KubeJob {
 		}
 	}	
 	
+	/**
+	 * @return the kubeConfig
+	 */
+	public KubeConfig getKubeConfig() {
+		return kubeConfig;
+	}
+
 	/**
 	 * Search pod for job and set podName
 	 */
@@ -495,6 +511,8 @@ public class KubeJob {
 			toFini.start();
 		}
 	}	
+	
+	@Transactional
 	public boolean getFinishInfo(String aJobName) {
 		boolean success = false;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
@@ -567,6 +585,7 @@ public class KubeJob {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
+					UtilService.getJobUtil().checkFinish(js.get().getJob());
 					Optional<JobStep> jsa = RepositoryService.getJobStepRepository().findById(jobStepId);
 					if (jsa.isPresent()) {
 						jsa.get();
