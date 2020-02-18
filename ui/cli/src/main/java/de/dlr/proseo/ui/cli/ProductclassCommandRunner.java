@@ -179,7 +179,7 @@ public class ProductclassCommandRunner {
 		
 		/* Check command options */
 		File productClassFile = null;
-		String productClassFileFormat = null;
+		String productClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -350,7 +350,7 @@ public class ProductclassCommandRunner {
 
 		/* Check command options */
 		File productClassFile = null;
-		String productClassFileFormat = null;
+		String productClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -529,7 +529,7 @@ public class ProductclassCommandRunner {
 		
 		/* Check command options */
 		File selectionRuleFile = null;
-		String selectionRuleFileFormat = FORMAT_PLAIN;
+		String selectionRuleFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -667,7 +667,7 @@ public class ProductclassCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> showSelectionRule({})", (null == showCommand ? "null" : showCommand.getName()));
 		
 		/* Check command options */
-		String selectionRuleOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		String selectionRuleOutputFormat = FORMAT_PLAIN;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
 			case "format":
@@ -753,7 +753,7 @@ public class ProductclassCommandRunner {
 
 		/* Check command options */
 		File selectionRuleFile = null;
-		String selectionRuleFileFormat = null;
+		String selectionRuleFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -769,10 +769,24 @@ public class ProductclassCommandRunner {
 			}
 		}
 		
-		/* Read processor file, if any */
+		/* Read selection rule file, if any */
 		SelectionRuleString updatedSelectionRule = null;
 		if (null == selectionRuleFile) {
 			updatedSelectionRule = new SelectionRuleString();
+		} else if (FORMAT_PLAIN.equals(selectionRuleFileFormat)) {
+			try {
+				updatedSelectionRule = readPlainSelectionRule(selectionRuleFile);
+			} catch (FileNotFoundException e) {
+				String message = uiMsg(MSG_ID_FILE_NOT_FOUND, selectionRuleFile);
+				logger.error(message);
+				System.err.println(message);
+				return;
+			} catch (IOException e) {
+				String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				logger.error(message);
+				System.err.println(message);
+				return;
+			}
 		} else {
 			try {
 				updatedSelectionRule = CLIUtil.parseObjectFile(selectionRuleFile, selectionRuleFileFormat, SelectionRuleString.class);
@@ -998,6 +1012,7 @@ public class ProductclassCommandRunner {
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			return;
 		}
 		
 		/* Check argument */
@@ -1008,22 +1023,30 @@ public class ProductclassCommandRunner {
 		
 		/* Make sure a subcommand is given */
 		ParsedCommand subcommand = command.getSubcommand();
-		if (null == subcommand 
-				|| (CMD_RULE.equals(subcommand.getName())
-						&& null == subcommand.getSubcommand())) {
+
+		if (null == subcommand) {
 			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
-		ParsedCommand subsubcommand = subcommand.getSubcommand();
-		
+
 		/* Check for subcommand help request */
-		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
-			subsubcommand.getSyntaxCommand().printHelp(System.out);
-			return;
-		} else if (subcommand.isHelpRequested()) {
+		if (subcommand.isHelpRequested()) {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
+				
+		/* Make sure a sub-subcommand is given for "rule" */
+		ParsedCommand subsubcommand = subcommand.getSubcommand();
+		if (CMD_RULE.equals(subcommand.getName()) && null == subcommand.getSubcommand()) {
+			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			return;
+		}
+
+		/* Check for sub-subcommand help request */
+		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
+			subsubcommand.getSyntaxCommand().printHelp(System.out);
+			return;
+		} 
 		
 		/* Execute the (sub-)sub-command */
 		switch (subcommand.getName()) {

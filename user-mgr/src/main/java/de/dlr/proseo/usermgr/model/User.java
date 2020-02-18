@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.usermgr.model;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
@@ -41,15 +43,15 @@ public class User {
 	
 	/** Flag indicating whether the user account is enabled. */
 	@Column(nullable = false)
-	private Boolean enabled;
+	private Boolean enabled = true;
 	
-	/** The expiration date for the user account */
+	/** The expiration date for the user account (default never) */
 	@Column(nullable = false)
-	private Date expirationDate;
+	private Date expirationDate = Date.from(Instant.now().plus(100, ChronoUnit.YEARS));
 	
-	/** The expiration date of the password */
+	/** The expiration date of the password (default never) */
 	@Column(nullable = false)
-	private Date passwordExpirationDate;
+	private Date passwordExpirationDate = Date.from(Instant.now().plus(100, ChronoUnit.YEARS));
 	
 	/** The authorities (privileges) granted to this user */
 	@ElementCollection(fetch = FetchType.EAGER)

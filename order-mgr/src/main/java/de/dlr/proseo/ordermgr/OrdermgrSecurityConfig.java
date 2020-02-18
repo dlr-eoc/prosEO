@@ -12,10 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -26,6 +29,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
+
+	/** Datasource as configured in the application properties */
+	@Autowired
+	private DataSource dataSource;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrdermgrSecurityConfig.class);
@@ -41,6 +48,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
 				.anyRequest().authenticated()
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
@@ -70,4 +78,18 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 	}
 
+	/**
+	 * Provides the default user details service for prosEO (based on the standard data model for users and groups)
+	 * 
+	 * @return a JdbcDaoImpl object
+	 */
+	@Bean
+	public UserDetailsService userDetailsService() {
+		logger.info("Initializing user details service from datasource " + dataSource);
+
+		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
+		jdbcDaoImpl.setDataSource(dataSource);
+		jdbcDaoImpl.setEnableGroups(true);
+		return jdbcDaoImpl;
+	}
 }

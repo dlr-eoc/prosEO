@@ -46,7 +46,7 @@ public class MissionCommandRunner {
 	/* General string constants */
 	public static final String CMD_MISSION = "mission";
 	private static final String CMD_SPACECRAFT = "spacecraft";
-	private static final String CMD_ORBIT = "orbit";
+	public static final String CMD_ORBIT = "orbit";
 	private static final String CMD_SHOW = "show";
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
@@ -218,7 +218,7 @@ public class MissionCommandRunner {
 
 		/* Check command options */
 		File missionFile = null;
-		String missionFileFormat = null;
+		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -317,7 +317,7 @@ public class MissionCommandRunner {
 		
 		/* Check command options */
 		File processorFile = null;
-		String processorFileFormat = null;
+		String processorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: addCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -522,7 +522,7 @@ public class MissionCommandRunner {
 		
 		/* Check command options */
 		File orbitFile = null;
-		String orbitFileFormat = null;
+		String orbitFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -735,7 +735,7 @@ public class MissionCommandRunner {
 
 		/* Check command options */
 		File orbitFile = null;
-		String orbitFileFormat = null;
+		String orbitFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -1007,7 +1007,12 @@ public class MissionCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			if (CMD_MISSION.equals(command.getName()) && null != command.getSubcommand() && CMD_SHOW.equals(command.getSubcommand().getName()) ) {
+				// OK, "mission show" allowed without login
+			} else {
+				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+				return;
+			}
 		}
 		
 		/* Check argument */
@@ -1018,21 +1023,30 @@ public class MissionCommandRunner {
 		
 		/* Make sure a subcommand is given */
 		ParsedCommand subcommand = command.getSubcommand();
-		if (null == subcommand 
-				|| (CMD_SPACECRAFT.equals(subcommand.getName()) && null == subcommand.getSubcommand())) {
+
+		if (null == subcommand) {
 			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
-		ParsedCommand subsubcommand = subcommand.getSubcommand();
-		
+
 		/* Check for subcommand help request */
-		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
-			subsubcommand.getSyntaxCommand().printHelp(System.out);
-			return;
-		} else if (subcommand.isHelpRequested()) {
+		if (subcommand.isHelpRequested()) {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
+				
+		/* Make sure a sub-subcommand is given for "spacecraft" */
+		ParsedCommand subsubcommand = subcommand.getSubcommand();
+		if (CMD_SPACECRAFT.equals(subcommand.getName()) && null == subcommand.getSubcommand()) {
+			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			return;
+		}
+
+		/* Check for sub-subcommand help request */
+		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
+			subsubcommand.getSyntaxCommand().printHelp(System.out);
+			return;
+		} 
 		
 		/* Execute the (sub-)sub-command */
 		COMMAND:

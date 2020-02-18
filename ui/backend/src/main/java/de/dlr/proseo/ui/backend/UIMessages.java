@@ -40,7 +40,7 @@ public class UIMessages {
 	public static final int MSG_ID_INVALID_URL = 2814;
 	public static final int MSG_ID_UNEXPECTED_STATUS = 2815;
 	
-	// User Manager
+	// Login Manager
 	public static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
 	public static final int MSG_ID_LOGGED_IN = 2821;
 	public static final int MSG_ID_LOGIN_FAILED = 2822;
@@ -78,6 +78,7 @@ public class UIMessages {
 	public static final int MSG_ID_SYNTAX_FILE_ERROR = 2921;
 	public static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
 	public static final int MSG_ID_COMMAND_NAME_NULL = 2923;
+	public static final int MSG_ID_PASSWORD_MISSING = 2924;
 	
 	// Mission CLI
 	public static final int MSG_ID_NO_MISSIONS_FOUND = 2840;
@@ -193,6 +194,12 @@ public class UIMessages {
 	public static final int MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID = 2896;
 	public static final int MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED = 2897;
 	public static final int MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND = 2898;
+	
+	// User/group CLI
+	public static final int MSG_ID_USER_DATA_INVALID = 2700;
+	public static final int MSG_ID_USER_CREATED = 2701;
+	public static final int MSG_ID_NO_USERS_FOUND = 2702;
+	public static final int MSG_ID_USER_NOT_FOUND_BY_NAME = 2703;
 
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
@@ -209,7 +216,7 @@ public class UIMessages {
 		MSG_INVALID_TIME ("(E%d) Time format %s not parseable", MSG_ID_INVALID_TIME),
 		MSG_NOT_IMPLEMENTED ("(E%d) Command %s not implemented", MSG_ID_NOT_IMPLEMENTED),
 
-		// User Manager
+		// Login Manager
 		MSG_HTTP_CONNECTION_FAILURE ("(E%d) HTTP connection failure (cause: %s)", MSG_ID_HTTP_CONNECTION_FAILURE),
 		MSG_MISSION_NOT_FOUND ("(E%d) Mission %s not found", MSG_ID_MISSION_NOT_FOUND),
 		MSG_LOGIN_FAILED ("(E%d) Login for user %s failed", MSG_ID_LOGIN_FAILED),
@@ -300,6 +307,11 @@ public class UIMessages {
 		MSG_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID ("(E%d) Configured processor with database ID %d not found", MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID),
 		MSG_CONFIGUREDPROCESSOR_DELETE_FAILED ("(E%d) Deletion of configured processor %s for processor %, version and configuration version %s failed (cause: %s)", MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED),
 
+		// User/group CLI
+		MSG_USER_DATA_INVALID ("(E%d) User account data invalid (cause: %s)", MSG_ID_USER_DATA_INVALID),
+		MSG_NO_USERS_FOUND ("(E%d) No user accounts found for mission %s", MSG_ID_NO_USERS_FOUND),
+		MSG_USER_NOT_FOUND_BY_NAME ("(E%d) User account %s not found for mission %s", MSG_ID_USER_NOT_FOUND_BY_NAME),
+		
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
 		MSG_INVALID_FILE_STRUCTURE ("(E%d) %s content of file %s invalid for object generation (cause: %s)", MSG_ID_INVALID_FILE_STRUCTURE),
@@ -328,12 +340,13 @@ public class UIMessages {
 		MSG_SYNTAX_FILE_ERROR ("(E%d) Parsing error in syntax file %s (cause: %s)", MSG_ID_SYNTAX_FILE_ERROR),
 		MSG_COMMAND_LINE_PROMPT_SUPPRESSED ("(I%d) Command line prompt suppressed by proseo.cli.start parameter", MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED),
 		MSG_COMMAND_NAME_NULL ("(E%d) Command name must not be null", MSG_ID_COMMAND_NAME_NULL),
+		MSG_PASSWORD_MISSING ("(E%d) No password given for user %s", MSG_ID_PASSWORD_MISSING),
 		
 		/* --- Info messages -- */
 		// General
 		MSG_OPERATION_CANCELLED ("(I%d) Operation cancelled", MSG_ID_OPERATION_CANCELLED),
 		
-		// User Manager
+		// Login Manager
 		MSG_LOGGED_IN ("(I%d) User %s logged in", MSG_ID_LOGGED_IN),
 		MSG_LOGGED_OUT ("(I%d) User %s logged out", MSG_ID_LOGGED_OUT),
 		MSG_LOGIN_CANCELLED ("(I%d) No username given, login cancelled", MSG_ID_LOGIN_CANCELLED),
@@ -372,6 +385,9 @@ public class UIMessages {
 		MSG_PRODUCT_UPDATED ("(I%d) Product with database ID %d updated (new version %d)", MSG_ID_PRODUCT_UPDATED),
 		MSG_PRODUCT_DELETED ("(I%d) Product with database ID %d deleted", MSG_ID_PRODUCT_DELETED),
 		MSG_PRODUCTS_INGESTED ("(I%d) %d products ingested to processing facility %s", MSG_ID_PRODUCTS_INGESTED),
+
+		// User/group CLI
+		MSG_USER_CREATED ("(I%d) User account %s created", MSG_ID_USER_CREATED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),

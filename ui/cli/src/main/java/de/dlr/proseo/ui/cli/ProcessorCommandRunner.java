@@ -44,7 +44,7 @@ public class ProcessorCommandRunner {
 	/* General string constants */
 	public static final String CMD_PROCESSOR = "processor";
 	private static final String CMD_CLASS = "class";
-	private static final String CMD_CONFIGURATION = "configuration";
+	public static final String CMD_CONFIGURATION = "configuration";
 	private static final String CMD_SHOW = "show";
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
@@ -97,7 +97,7 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		File processorClassFile = null;
-		String processorClassFileFormat = null;
+		String processorClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -267,7 +267,7 @@ public class ProcessorCommandRunner {
 
 		/* Check command options */
 		File processorClassFile = null;
-		String processorClassFileFormat = null;
+		String processorClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -479,7 +479,7 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		File processorFile = null;
-		String processorFileFormat = null;
+		String processorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -709,7 +709,7 @@ public class ProcessorCommandRunner {
 
 		/* Check command options */
 		File processorFile = null;
-		String processorFileFormat = null;
+		String processorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -953,7 +953,7 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		File configurationFile = null;
-		String configurationFileFormat = null;
+		String configurationFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -1132,7 +1132,7 @@ public class ProcessorCommandRunner {
 
 		/* Check command options */
 		File configurationFile = null;
-		String configurationFileFormat = null;
+		String configurationFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -1369,7 +1369,7 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		File configuredProcessorFile = null;
-		String configuredProcessorFileFormat = null;
+		String configuredProcessorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -1578,7 +1578,7 @@ public class ProcessorCommandRunner {
 
 		/* Check command options */
 		File configuredProcessorFile = null;
-		String configuredProcessorFileFormat = null;
+		String configuredProcessorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -1806,6 +1806,7 @@ public class ProcessorCommandRunner {
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			return;
 		}
 		
 		/* Check argument */
@@ -1813,25 +1814,34 @@ public class ProcessorCommandRunner {
 			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
-		
+
 		/* Make sure a subcommand is given */
 		ParsedCommand subcommand = command.getSubcommand();
-		if (null == subcommand 
-				|| ((CMD_CLASS.equals(subcommand.getName()) || CMD_CONFIGURATION.equals(subcommand.getName()))
-						&& null == subcommand.getSubcommand())) {
+
+		if (null == subcommand) {
 			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
-		ParsedCommand subsubcommand = subcommand.getSubcommand();
-		
+
 		/* Check for subcommand help request */
-		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
-			subsubcommand.getSyntaxCommand().printHelp(System.out);
-			return;
-		} else if (subcommand.isHelpRequested()) {
+		if (subcommand.isHelpRequested()) {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
+				
+		/* Make sure a sub-subcommand is given for "class" and "configuration" */
+		ParsedCommand subsubcommand = subcommand.getSubcommand();
+		if ((CMD_CLASS.equals(subcommand.getName()) || CMD_CONFIGURATION.equals(subcommand.getName()))
+				&& null == subcommand.getSubcommand()) {
+			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			return;
+		}
+
+		/* Check for sub-subcommand help request */
+		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
+			subsubcommand.getSyntaxCommand().printHelp(System.out);
+			return;
+		} 
 		
 		/* Execute the (sub-)sub-command */
 		COMMAND:

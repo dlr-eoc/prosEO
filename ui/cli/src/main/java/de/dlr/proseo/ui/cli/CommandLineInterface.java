@@ -10,6 +10,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.FileNotFoundException;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -50,13 +52,6 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/* Other string constants */
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
-	private static final String CMD_INGEST = "ingest";
-	private static final String CMD_PRODUCT = "product";
-	private static final String CMD_PRODUCT_CLASS = "productclass";
-	private static final String CMD_CONFIGURATION = "configuration";
-	private static final String CMD_PROCESSOR = "processor";
-	private static final String CMD_ORBIT = "orbit";
-	private static final String CMD_MISSION = "mission";
 	private static final String CMD_HELP = "help";
 	private static final String CMD_LOGOUT = "logout";
 	private static final String CMD_LOGIN = "login";
@@ -84,9 +79,59 @@ public class CommandLineInterface implements CommandLineRunner {
 	private ProcessorCommandRunner processorCommandRunner;
 	@Autowired
 	private ProductclassCommandRunner productclassCommandRunner;
+	@Autowired
+	private UserCommandRunner userCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
+	
+	/**
+	 * Check the program invocation arguments (-u/--user, -p/--password, -m/--mission) and remove them from the command line
+	 * 
+	 * @param args the program invocation arguments
+	 * @return a list of strings containing:
+	 *   <ol>
+	 *     <li>the prosEO command after removal of the invocation arguments</li>
+	 *     <li>the username</li>
+	 *     <li>the user's password</li>
+	 *     <li>the mission to execute the command for</li>
+	 *  </ol>
+	 */
+	private List<String> checkArguments(String[] args) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkArguments({}, out username, out password, out mission)", Arrays.toString(args));
+		
+		StringBuilder commandBuilder = new StringBuilder();
+		String username = null;
+		String password = null;
+		String mission = null;
+		
+		for (String arg: args) {
+			if (arg.startsWith("-u")) {
+				// Short form user argument
+				username = arg.substring(2);
+			} else if (arg.startsWith("--user=")) {
+				// Long form user argument
+				username = arg.substring(7);
+			} else if (arg.startsWith("-p")) {
+				// Short form password argument
+				password = arg.substring(2);
+			} else if (arg.startsWith("--password=")) {
+				// Long form password argument
+				password = arg.substring(11);
+			} else if (arg.startsWith("-m")) {
+				// Short form mission argument
+				mission = arg.substring(2);
+			} else if (arg.startsWith("--mission=")) {
+				// Long form mission argument
+				mission = arg.substring(10);
+			} else {
+				// Part of prosEO command line
+				commandBuilder.append(' ').append(arg);
+			}
+		}
+		
+		return Arrays.asList(commandBuilder.toString(), username, password, mission);
+	}
 	
 	/**
 	 * Execute the given command (may result in just evaluating the top-level options; "exit" is handled in main command loop)
@@ -142,20 +187,24 @@ public class CommandLineInterface implements CommandLineRunner {
 			case OrderCommandRunner.CMD_ORDER:
 				orderCommandRunner.executeCommand(command);
 				break;
-			case CMD_PRODUCT:
-			case CMD_INGEST:
+			case IngestorCommandRunner.CMD_PRODUCT:
+			case IngestorCommandRunner.CMD_INGEST:
 				ingestorCommandRunner.executeCommand(command);
 				break;
-			case CMD_PROCESSOR:
-			case CMD_CONFIGURATION:
+			case ProcessorCommandRunner.CMD_PROCESSOR:
+			case ProcessorCommandRunner.CMD_CONFIGURATION:
 				processorCommandRunner.executeCommand(command);
 				break;
-			case CMD_MISSION:
-			case CMD_ORBIT:
+			case MissionCommandRunner.CMD_MISSION:
+			case MissionCommandRunner.CMD_ORBIT:
 				missionCommandRunner.executeCommand(command);
 				break;
-			case CMD_PRODUCT_CLASS:
+			case ProductclassCommandRunner.CMD_PRODUCTCLASS:
 				productclassCommandRunner.executeCommand(command);
+				break;
+			case UserCommandRunner.CMD_USER:
+			case UserCommandRunner.CMD_GROUP:
+				userCommandRunner.executeCommand(command);
 				break;
 			default:
 				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());
@@ -190,8 +239,28 @@ public class CommandLineInterface implements CommandLineRunner {
 		
 		// If command is given, execute it and terminate
 		if (0 < args.length) {
-			// TODO Handle command line parameters for login!!
-			executeCommand(parser.parse(String.join(" ", args)));
+			// Handle command line parameters for login!
+			List<String> proseoCommand = checkArguments(args);
+			
+			// Log in to prosEO, if a username was given
+			String username = proseoCommand.get(1);
+			String password = proseoCommand.get(2);
+			String mission = proseoCommand.get(3);
+			if (null != username) {
+				if (null == password || password.isBlank()) {
+					String message = uiMsg(MSG_ID_PASSWORD_MISSING, username);
+					logger.error(message);
+					System.err.println(message);
+					return;
+				}
+				if (!loginManager.doLogin(username, password, mission)) {
+					// Already logged
+					return;
+				}
+			}
+			
+			// Run the command (for the logged in user, if any)
+			executeCommand(parser.parse(proseoCommand.get(0)));
 			if (logger.isTraceEnabled()) logger.trace("<<< run()");
 			return;
 		};

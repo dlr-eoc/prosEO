@@ -29,7 +29,7 @@ import org.springframework.web.client.RestClientResponseException;
 public class LoginManager {
 
 	/* General string constants */
-	private static final String PROSEO_USERNAME_PROMPT = "Username: ";
+	private static final String PROSEO_USERNAME_PROMPT = "Username (empty field cancels): ";
 	private static final String PROSEO_PASSWORD_PROMPT = "Password for user %s: ";
 	
 	/** The logged in user (as used for authentication, i. e. including mission prefix) */
@@ -57,7 +57,7 @@ public class LoginManager {
 	 * 
 	 * @param username the username to login with (including mission prefix)
 	 * @param password the password to login with
-	 * @param mission the mission to log in to
+	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
 	 * @return a list of strings denoting authorities granted to the user for the given mission (may be empty)
 	 */
 	private List<String> login(String username, String password, String mission) {
@@ -66,7 +66,8 @@ public class LoginManager {
 		// Attempt connection to Processor Manager (as a substitute)
 		List<String> authorities = new ArrayList<>();
 		try {
-			for (Object authority: backendConnector.getFromService(backendConfig.getUserManagerUrl(), "/login?mission=" + mission, 
+			for (Object authority: backendConnector.getFromService(backendConfig.getUserManagerUrl(),
+					"/login" + (null == mission ? "" : "?mission=" + mission), 
 					List.class, username, password)) {
 				if (authority instanceof String) {
 					authorities.add((String) authority);
@@ -96,7 +97,7 @@ public class LoginManager {
 	 * 
 	 * @param username the user name for login (without mission prefix; optional, will be requested from standard input, if not set)
 	 * @param password the password for login (optional, will be requested from standard input, if not set)
-	 * @param mission the mission to log in to
+	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
 	 * @return true, if the login was successful, false otherwise
 	 */
 	public boolean doLogin(String username, String password, String mission) {
@@ -109,6 +110,7 @@ public class LoginManager {
 		}
 		if (null == username || "".equals(username)) {
 			System.err.println(uiMsg(MSG_ID_LOGIN_CANCELLED));
+			return false;
 		}
 		
 		// Ask for password, if not set
@@ -117,8 +119,8 @@ public class LoginManager {
 			password = new String(System.console().readPassword());
 		}
 		
-		// Test connection to some backend service
-		String missionUsername = mission + "-" + username;
+		// Login to prosEO via the User Manager Service
+		String missionUsername = (null == mission ? "" : mission + "-") + username;
 		List<String> grantedAuthorities = login(missionUsername, password, mission);
 		if (grantedAuthorities.isEmpty()) {
 			// Report failure

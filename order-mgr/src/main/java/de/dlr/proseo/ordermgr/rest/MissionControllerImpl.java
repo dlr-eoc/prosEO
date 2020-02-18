@@ -43,14 +43,15 @@ public class MissionControllerImpl implements MissionController {
 
 	/* Message ID constants */
 	private static final int MSG_ID_MISSION_NOT_FOUND = 1001;
+	private static final int MSG_ID_NO_MISSIONS_FOUND = 1002;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 1004;
 
 	/* Message string constants */
-	private static final String MSG_MISSION_NOT_FOUND = "No mission found for ID %d (%d)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "Mission deletion unsuccessful for ID %d (%d)";
+	private static final String MSG_NO_MISSIONS_FOUND = "(E%d) No missions found";
+	private static final String MSG_MISSION_NOT_FOUND = "(E%d) No mission found for ID %d";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Mission deletion unsuccessful for ID %d";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
-	private static final String MSG_MISSIONS_NOT_FOUND = "No missions found";
 
 
 	/** Transaction manager for transaction control */
@@ -81,25 +82,36 @@ public class MissionControllerImpl implements MissionController {
 	public ResponseEntity<List<RestMission>> getMissions() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
 
-		List<RestMission> result = new ArrayList<>();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
-		List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
+		List<RestMission> result = null;
+		try {
+			result = transactionTemplate.execute((status) -> {
+				List<RestMission> resultList = new ArrayList<>();
 
-		if(modelMissions.isEmpty()) {
-			String message = String.format(HTTP_HEADER_WARNING +": " +  MSG_MISSIONS_NOT_FOUND +" "+  MSG_ID_MISSION_NOT_FOUND);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			logger.info(message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);			
+				List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
+
+				if(modelMissions.isEmpty()) {
+					throw new NoResultException(String.format(MSG_NO_MISSIONS_FOUND, MSG_ID_NO_MISSIONS_FOUND));
+				}
+
+				// Simple case: no search criteria set
+				for (Mission  mission: modelMissions) {
+					if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
+					RestMission resultMission = MissionUtil.toRestMission(mission);
+					if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
+					resultList.add(resultMission);
+				}
+				
+				return resultList;
+			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-		// Simple case: no search criteria set
-		for (Mission  mission: modelMissions) {
-			if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
-			RestMission resultMission = MissionUtil.toRestMission(mission);
-			if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
-			result.add(resultMission);
-		}		
 
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
@@ -191,7 +203,7 @@ public class MissionControllerImpl implements MissionController {
 				Optional<Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 
 				if (modelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_PREFIX + MSG_MISSION_NOT_FOUND, id, MSG_ID_MISSION_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
 				}
 
 				return MissionUtil.toRestMission(modelMission.get());
@@ -228,7 +240,7 @@ public class MissionControllerImpl implements MissionController {
 				Optional<Mission> optModelMission = RepositoryService.getMissionRepository().findById(id);
 
 				if (optModelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, id, MSG_ID_MISSION_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
 				}
 				Mission modelMission = optModelMission.get();
 
@@ -345,7 +357,7 @@ public class MissionControllerImpl implements MissionController {
 				// Test whether the mission id is valid
 				Optional<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 				if (modelMission.isEmpty()) {
-					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, id, MSG_ID_MISSION_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
 				}
 
 				// Delete the mission
@@ -354,7 +366,7 @@ public class MissionControllerImpl implements MissionController {
 				// Test whether the deletion was successful
 				modelMission = RepositoryService.getMissionRepository().findById(id);
 				if (!modelMission.isEmpty()) {
-					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL));
+					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 				}
 
 				return null;

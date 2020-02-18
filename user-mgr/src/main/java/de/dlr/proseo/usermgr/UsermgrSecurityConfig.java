@@ -1,7 +1,7 @@
 /**
  * UsermgrSecurityConfig.java
  * 
- * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * (c) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
 package de.dlr.proseo.usermgr;
 
@@ -23,14 +23,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * Security configuration for prosEO UserManager module
  * 
- * @author Ranjitha Vignesh
+ * @author Dr. Thomas Bassler
  */
 @Configuration
 @EnableWebSecurity
 public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
+	/** Datasource as configured in the application properties */
 	@Autowired
-	DataSource dataSource;
+	private DataSource dataSource;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(UsermgrSecurityConfig.class);
@@ -46,9 +47,8 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		.httpBasic()
 		.and()
 		.authorizeRequests()
-//		.antMatchers("/login").authenticated()
-//		.anyRequest().hasAnyRole("ROOT", "USERMGR")
-		.anyRequest().authenticated()
+			.antMatchers("/**/login").authenticated()
+			.anyRequest().hasAnyRole("ROOT", "USERMGR")
 		.and()
 		.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

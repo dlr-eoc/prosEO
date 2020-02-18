@@ -88,8 +88,9 @@ public class CLIUtil {
 			logger.error(message);
 			throw new IllegalArgumentException(message, e);
 		} catch (IOException e) {
-			logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			throw e;
+			String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			logger.error(message);
+			throw new IOException(message, e);
 		}
 	}
 	
