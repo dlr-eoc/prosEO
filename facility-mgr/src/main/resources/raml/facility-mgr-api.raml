@@ -1,0 +1,116 @@
+#%RAML 1.0
+title: prosEO Facility Manager REST Services API
+version: v0.1
+protocols: [ HTTPS ] 
+baseUri: /proseo/facility-mgr/{version}
+mediaType: application/json
+
+securitySchemes:
+  basicAuth:
+    description: Each request must contain the headers necessary for
+                 basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: Used to send the Base64-encoded "username:password"
+                       credentials
+          type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to access
+            the content provided by the requested URL.
+
+types:
+  RestFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:          
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    patch?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+              
+/facilities:
+  type: standard
+  get:
+    description: Get processing facilities by mission and facility name
+    displayName: getFacilities
+    queryParameters:
+      mission?: string
+      name?: string
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestFacility[]
+            example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
+  post:
+    description: Create a new processing facility
+    displayName: createFacility
+    body:
+      application/json:
+        type: RestFacility
+        example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestFacility
+            example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+  /{id}:
+    uriParameters:
+      id:
+        type: integer
+        format: long
+    get:
+      description: Get a processing facility by ID
+      displayName: getFacilityById
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestFacility
+              example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+    patch:
+      description: Update a processing order by ID
+      displayName: modifyFacility
+      body:
+        application/json:
+          type: RestFacility
+          example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestFacility
+              example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
+    delete:
+      description: Delete a processing facility by ID
+      displayName: deleteFacilityById
+      responses:
+        204:
