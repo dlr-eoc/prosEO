@@ -185,6 +185,27 @@
                     </excludes>
                 </configuration>
             </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>rest-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>rest</classifier>
+                            <includes>
+                                <include>de/dlr/proseo/model/rest/**</include>
+                                <include>de/dlr/proseo/model/enums/**</include>
+                                <include>de/dlr/proseo/model/util/OrbitTimeFormatter.class</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 </project>

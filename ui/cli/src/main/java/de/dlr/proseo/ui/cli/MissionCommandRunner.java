@@ -23,10 +23,10 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -599,7 +599,7 @@ public class MissionCommandRunner {
 					return;
 				}
 				try {
-					restOrbit.setStartTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrbit.setStartTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
@@ -612,7 +612,7 @@ public class MissionCommandRunner {
 					return;
 				}
 				try {
-					restOrbit.setStopTime(Orbit.orbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrbit.setStopTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}

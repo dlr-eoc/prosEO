@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix="proseo")
-@EntityScan(basePackages = "de.dlr.proseo.model")
 public class ServiceConfiguration {
 	
 	/** The user name to use for prosEO component logins */

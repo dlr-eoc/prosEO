@@ -26,8 +26,8 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;

@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix="proseo")
-@EntityScan(basePackages = "de.dlr.proseo.model")
 public class CLIConfiguration {
 	
 	/** The file path for the prosEO CLI syntax file */

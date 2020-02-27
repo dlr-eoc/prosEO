@@ -42,7 +42,6 @@ import de.dlr.proseo.ui.cli.parser.ParsedOption;
 @EnableAutoConfiguration
 @EnableConfigurationProperties
 @ComponentScan(basePackages={"de.dlr.proseo"})
-@EnableJpaRepositories(basePackages = { "de.dlr.proseo.model.dao" })
 public class CommandLineInterface implements CommandLineRunner {
 
 	private static final String CMD_EXIT = "exit";
