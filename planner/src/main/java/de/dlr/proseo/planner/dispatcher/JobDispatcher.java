@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.planner.dispatcher;
 
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -14,6 +12,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,6 +44,7 @@ import de.dlr.proseo.interfaces.rest.model.RestJoborder;
  * @author melchinger
  *
  */
+
 public class JobDispatcher {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobDispatcher.class);
@@ -52,7 +52,7 @@ public class JobDispatcher {
 	
 	private JobOrder jobOrder;
 	
-	
+
 	/**
 	 * 
 	 */

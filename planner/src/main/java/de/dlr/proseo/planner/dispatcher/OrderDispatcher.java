@@ -1,15 +1,11 @@
 package de.dlr.proseo.planner.dispatcher;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +26,9 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 
-@Transactional
 @Service
 public class OrderDispatcher {
 	private static Logger logger = LoggerFactory.getLogger(OrderDispatcher.class);
@@ -47,7 +41,7 @@ public class OrderDispatcher {
 		boolean answer = false;
 		if (order != null) {
 			switch (order.getOrderState()) {
-			case INITIAL: {
+			case APPROVED: {
 				// order is released, publish it
 				if (!checkForValidOrder(order)) {
 					break;
@@ -240,6 +234,7 @@ public class OrderDispatcher {
 		return answer;
 	}
 	
+	@Transactional
 	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
 		boolean answer = true;
 		// there has to be a list of orbits
@@ -493,12 +488,9 @@ public class OrderDispatcher {
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
 		Product p = new Product();
 		p.getParameters().clear();
+		p.setUuid(UUID.randomUUID());
 		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters());
 		p.setProductClass(productClass);
-		if (cp == null) {
-			String h = "help";
-			h = h + "xx";
-		}
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);
 		p.setJobStep(js);

@@ -82,7 +82,7 @@ public class ProcessorControllerImpl implements ProcessorController {
 	 * @param processorName the name of the processor (class)
 	 * @param processorVersion the processor version
 	 * @return HTTP status "OK" and a list of Json objects representing processors satisfying the search criteria or
-	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 *         HTTP status "NOT_FOUND" and an error message, if no processors matching the search criteria were found
 	 */
 	@Override
 	public ResponseEntity<List<RestProcessor>> getProcessors(String mission, String processorName, String processorVersion) {

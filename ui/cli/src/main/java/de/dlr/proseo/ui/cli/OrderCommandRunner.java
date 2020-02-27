@@ -161,7 +161,7 @@ public class OrderCommandRunner {
 		
 		/* Check command options */
 		File orderFile = null;
-		String orderFileFormat = null;
+		String orderFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -463,7 +463,7 @@ public class OrderCommandRunner {
 		
 		/* Check command options */
 		File orderFile = null;
-		String orderFileFormat = null;
+		String orderFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -1126,6 +1126,7 @@ public class OrderCommandRunner {
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			return;
 		}
 		
 		/* Check argument */

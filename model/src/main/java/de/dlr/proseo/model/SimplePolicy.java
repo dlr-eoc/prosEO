@@ -73,7 +73,7 @@ public class SimplePolicy extends PersistentObject {
 
 	/** The date format for OQL queries [OBSOLETE IN prosEO CONTEXT] */
     private static final DateTimeFormatter DATEFORMAT_PL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
-    private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss").withZone(ZoneId.of("UTC"));
+    private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/** The static class logger */
 	private static final Logger logger = LoggerFactory.getLogger(SelectionRule.class);

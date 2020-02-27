@@ -110,13 +110,21 @@ public class CLICommand {
 		}
 		
 		out.println("Positional parameters:");
-		for (CLIParameter parameter: parameters) {
-			out.println(String.format("    %-16s  %s", parameter.getName(), parameter.getDescription().replace('\n', ' ')));
+		if (parameters.isEmpty()) {
+			out.println("    -- none --");
+		} else {
+			for (CLIParameter parameter: parameters) {
+				out.println(String.format("    %-16s  %s", parameter.getName(), parameter.getDescription().replace('\n', ' ')));
+			}
 		}
 		
 		out.println("Subcommands:");
-		for (CLICommand subcommand: subcommands) {
-			out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+		if (subcommands.isEmpty()) {
+			out.println("    -- none --");
+		} else {
+			for (CLICommand subcommand: subcommands) {
+				out.println(String.format("    %-16s  %s", subcommand.getName(), subcommand.getDescription().replace('\n', ' ')));
+			}
 		}
 	}
 	

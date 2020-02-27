@@ -18,8 +18,13 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A collection of job steps required to fulfil an order for a specific period of time (e. g. one orbit).
@@ -28,7 +33,9 @@ import javax.persistence.OneToMany;
  * @author Dr. Thomas Bassler
  *
  */
+
 @Entity
+@Table(indexes = { @Index(unique = false, columnList = "jobState") })
 public class Job extends PersistentObject {
 	
 	/** The processing order this job belongs to */
@@ -85,7 +92,7 @@ public class Job extends PersistentObject {
 	private ProcessingFacility processingFacility;
 	
 	/** The job steps for this job */
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "job")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "job")
 	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**

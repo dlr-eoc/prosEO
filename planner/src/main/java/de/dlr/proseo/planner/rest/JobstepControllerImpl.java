@@ -1,7 +1,6 @@
 package de.dlr.proseo.planner.rest;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,16 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.JobDispatcher;
-import de.dlr.proseo.planner.dispatcher.JobStepDispatcher;
-import de.dlr.proseo.planner.rest.model.RestJob;
 import de.dlr.proseo.planner.rest.model.RestJobStep;
+import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.rest.model.Status;
-import de.dlr.proseo.planner.rest.model.StderrLogLevel;
-import de.dlr.proseo.planner.rest.model.StdoutLogLevel;
+import de.dlr.proseo.planner.util.JobStepUtil;
 
 
 
@@ -45,7 +39,7 @@ public class JobstepControllerImpl implements JobstepController {
     @Autowired
     private ProductionPlanner productionPlanner;
     @Autowired
-    private JobStepDispatcher jobStepDispatcher;
+    private JobStepUtil jobStepUtil;
     
     /**
      * Get production planner jobsteps by status
@@ -59,7 +53,7 @@ public class JobstepControllerImpl implements JobstepController {
 		
 		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
 		Iterable<JobStep> it;
-		jobStepDispatcher.searchForJobStepsToRun(null);
+		jobStepUtil.searchForJobStepsToRun(null);
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
 		} else {
@@ -67,7 +61,7 @@ public class JobstepControllerImpl implements JobstepController {
 			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);
 		}
 		for (JobStep js : it) {
-			RestJobStep pjs = createAndCopyToRestJobStep(js);
+			RestJobStep pjs = RestUtil.createRestJobStep(js);
 			list.add(pjs);			
 		}
 		HttpHeaders responseHeaders = new HttpHeaders();
@@ -81,24 +75,13 @@ public class JobstepControllerImpl implements JobstepController {
      */
 	@Override
 	@Transactional
-    public ResponseEntity<RestJobStep> getJobStep(String name) {
-		Long id = null;
-		if (name.matches("[0-9]+")) {
-			id = Long.valueOf(name);
-		} else if (name.startsWith(ProductionPlanner.jobNamePrefix)) {
-			id = Long.valueOf(name.substring(ProductionPlanner.jobNamePrefix.length()));
-		}
-		if (id != null) {
-			Optional<JobStep> jso = RepositoryService.getJobStepRepository().findById(id);
-			if (jso.isPresent()) {
-				JobStep js = jso.get();
-				
-				RestJobStep pjs = createAndCopyToRestJobStep(js);
-				
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			} 
+	public ResponseEntity<RestJobStep> getJobStep(String name) {
+		JobStep js = this.findJobStepByNameOrId(name);
+		if (js != null) {
+			RestJobStep pjs = RestUtil.createRestJobStep(js);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+			return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 		}
     	String message = String.format(MSG_PREFIX + "JobStep element '%s' not found", 2001, name);
     	logger.error(message);
@@ -145,67 +128,96 @@ public class JobstepControllerImpl implements JobstepController {
 	}
 	
 
-	private RestJobStep createAndCopyToRestJobStep(JobStep js) {
-		RestJobStep pjs = new RestJobStep();
-		if (js != null) {
-			pjs = new RestJobStep();
-			pjs.setId(Long.valueOf(js.getId()));
-			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
-			if (js.getJobStepState() != null) {
-				pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
-			}
-			pjs.setVersion((long) js.getVersion());
-			pjs.setProcessingMode(js.getProcessingMode());
-			if (js.getProcessingStartTime() != null) { 
-				pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
-			}
-			if (js.getProcessingCompletionTime() != null) { 
-				pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
-			}
-			pjs.setProcessingStdOut(js.getProcessingStdOut());
-			pjs.setProcessingStdErr(js.getProcessingStdErr());
-			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
-			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
-			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());
-			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
-				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
-			}
-			for (ProductQuery pq : js.getInputProductQueries()) {
-				String pt = pq.getRequestedProductClass().getProductType();
-				if (!pjs.getInputProductClasses().contains(pt)) {
-					pjs.getInputProductClasses().add(pt);
-				}
-			}
-		} 
-		return pjs;
-	}
 	@Override 
 	public ResponseEntity<RestJobStep> resumeJobStep(String resumeId) {
-		// TODO Auto-generated method stub
-    	String message = String.format(MSG_PREFIX + "Resume not implemented (%d)", 2001);
-    	logger.error(message);
+		JobStep js = this.findJobStepByNameOrId(resumeId);
+		if (js != null) {
+			if (jobStepUtil.resume(js)) {
+				// canceled
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep resumed");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep already resumed");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			}
+		}
+		String message = String.format(MSG_PREFIX + "JobStep with name or id %s does not exist (%d)", resumeId, 2001);
+		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
-	public ResponseEntity<RestJobStep> cancelJobStep(String cancelId){
-		// TODO Auto-generated method stub
-
-    	String message = String.format(MSG_PREFIX + "Cancel not implemented (%d)", 2001);
-    	logger.error(message);
+	public ResponseEntity<RestJobStep> cancelJobStep(String cancelId) {
+		JobStep js = this.findJobStepByNameOrId(cancelId);
+		if (js != null) {
+			if (jobStepUtil.cancel(js)) {
+				// canceled
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep canceled");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep already running or at end");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			}
+		}
+		String message = String.format(MSG_PREFIX + "JobStep with name or id %s does not exist (%d)", cancelId, 2001);
+		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
 	public ResponseEntity<RestJobStep> suspendJobStep(String suspendId) {
-		// TODO Auto-generated method stub
-    	String message = String.format(MSG_PREFIX + "Suspend not implemented (%d)", 2001);
-    	logger.error(message);
+		JobStep js = this.findJobStepByNameOrId(suspendId);
+		if (js != null) {
+			if (jobStepUtil.suspend(js)) {
+				// suspended
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep suspended");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(HTTP_HEADER_SUCCESS, "JobStep already running or at end");
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			}
+		}
+		String message = String.format(MSG_PREFIX + "JobStep with name or id %s does not exist (%d)", suspendId, 2001);
+		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(HTTP_HEADER_WARNING, message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+		
+	private JobStep findJobStepByNameOrId(String nameOrId) {
+		JobStep js = null;
+		Long id = null;
+		if (nameOrId != null) {
+			if (nameOrId.matches("[0-9]+")) {
+				id = Long.valueOf(nameOrId);
+			} else if (nameOrId.startsWith(ProductionPlanner.jobNamePrefix)) {
+				id = Long.valueOf(nameOrId.substring(ProductionPlanner.jobNamePrefix.length()));
+			}
+			if (id != null) {
+				Optional<JobStep> jso = RepositoryService.getJobStepRepository().findById(id);
+				if (jso.isPresent()) {
+					js = jso.get();
+				}
+			}
+		}
+		return js;
 	}
 
 }

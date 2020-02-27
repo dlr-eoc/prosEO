@@ -20,6 +20,16 @@ prosEO test integration
 ```
 
 ## start a local docker-compose stack
+First a certificate for running pgadmin needs to be created in `proseo-components/proseo-pgadmin/certs`:
+```sh
+[sudo] openssl req -x509 -newkey rsa:4096 -keyout proseo-components/proseo-pgadmin/certs/proseo-selfsigned.key -out proseo-components/proseo-pgadmin/certs/proseo-selfsigned.crt -days 9999 -nodes
+```
+For the pgadmin-container run:
+```sh
+export PGADMIN_EMAIL=some.custom@email.address
+export PGADMIN_PASSWORD=some-pw
+```
+Then the containers can be started:
 ```sh
 ./run_local_control_stack.sh <registry-url>
 ```
@@ -33,6 +43,7 @@ the docker-compose config could be deployed to a public ssl-enabled webserver. T
   - order-mgr
   - processor-mgr
   - productclass-mgr
+  - user-mgr
   - ui-gui
   - pgadmin
 - ssh to your public webserver (note: a valid domain & a valid ssl-cert are recommended)
@@ -41,11 +52,6 @@ the docker-compose config could be deployed to a public ssl-enabled webserver. T
   - inside the server-tag insert the following line:
 ```sh
 include /opt/integration-tests/prosEO/integration-tests/controlCmp.conf;
-```
-- for the pgadmin-container run:
-```sh
-export PGADMIN_EMAIL=some.custom@email.address
-export PGADMIN_PASSWORD=some-pw
 ```
 - stop running compose stack using `stop_local_control_stack.sh`
 - from /opt/integration-tests/prosEO/integration-tests run the script `run_local_control_stack.sh`

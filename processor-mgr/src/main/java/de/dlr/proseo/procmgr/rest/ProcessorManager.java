@@ -392,7 +392,7 @@ public class ProcessorManager {
 			throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND));
 		}
 		
-		// Delete the processor class
+		// Delete the processor
 		try {
 			RepositoryService.getProcessorRepository().deleteById(id);
 		} catch (Exception e) {

@@ -22,6 +22,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -123,7 +124,7 @@ public class ProcessingOrder extends PersistentObject {
 	private List<Orbit> requestedOrbits = new ArrayList<>();
 	
 	/** The processing jobs belonging to this order */	
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "processingOrder")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "processingOrder")
 	private Set<Job> jobs = new HashSet<>();
 	
 	/**

@@ -30,6 +30,7 @@ types:
   RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
   RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestGroup: !include ../../../../../model/src/main/resources/raml/types/group.raml
   RestJob: !include ../../../../../model/src/main/resources/raml/types/job.raml
   RestJobStep: !include ../../../../../model/src/main/resources/raml/types/jobstep.raml
   RestMission: !include ../../../../../model/src/main/resources/raml/types/mission.raml
@@ -48,6 +49,7 @@ types:
   RestSimpleSelectionRule: !include ../../../../../model/src/main/resources/raml/types/simpleselectionrule.raml
   RestSpacecraft: !include ../../../../../model/src/main/resources/raml/types/spacecraft.raml
   RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
+  RestUser: !include ../../../../../model/src/main/resources/raml/types/user.raml
 
 resourceTypes:
   standard:
@@ -257,4 +259,21 @@ resourceTypes:
         application/json:
           type: RestProductFile
           example:  !include ../../../../../model/src/main/resources/raml/examples/productfile.json
+
+  /users:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestUser
+  /groups:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestGroup
 

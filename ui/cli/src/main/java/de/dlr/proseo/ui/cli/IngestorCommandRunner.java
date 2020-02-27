@@ -88,7 +88,7 @@ public class IngestorCommandRunner {
 		
 		/* Check command options */
 		File productFile = null;
-		String productFileFormat = null;
+		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -316,7 +316,7 @@ public class IngestorCommandRunner {
 
 		/* Check command options */
 		File productFile = null;
-		String productFileFormat = null;
+		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
@@ -524,7 +524,7 @@ public class IngestorCommandRunner {
 
 		/* Check command options */
 		File productFile = null;
-		String productFileFormat = null;
+		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -595,6 +595,7 @@ public class IngestorCommandRunner {
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			return;
 		}
 		
 		/* Check argument */

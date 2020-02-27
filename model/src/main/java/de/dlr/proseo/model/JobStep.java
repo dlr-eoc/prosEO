@@ -16,9 +16,11 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 /**
  * A single processor execution to produce a defined output product based on a defined set of required input product
@@ -27,7 +29,9 @@ import javax.persistence.OneToOne;
  * @author Dr. Thomas Bassler
  *
  */
+
 @Entity
+@Table(indexes = { @Index(unique = false, columnList = "jobStepState") })
 public class JobStep extends PersistentObject {
 
 	/** The job this job step belongs to */

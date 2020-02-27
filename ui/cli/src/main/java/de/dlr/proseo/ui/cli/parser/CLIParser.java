@@ -280,6 +280,10 @@ public class CLIParser {
 		int parameterPosition = 0;
 		
 		for (String token: commandTokens) {
+			if (token.isBlank()) {
+				// Ignore multiple white space resulting in empty or blank tokens
+				continue;
+			}
 			if (token.startsWith("-")) {
 				// Handle token as option
 				if (parameterFound) {
