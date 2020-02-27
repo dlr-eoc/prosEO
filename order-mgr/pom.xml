@@ -132,7 +132,7 @@
 					<configuration>
 						<excludes>	
 							<exclude>**/OrbitControllerTest</exclude>
-							<exclude>**/MissionControllerTest</exclude>
+							<exclude>**/OrderControllerTest</exclude>
 													
 						</excludes>
 					</configuration>

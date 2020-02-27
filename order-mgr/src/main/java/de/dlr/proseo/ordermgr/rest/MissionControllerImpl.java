@@ -80,26 +80,38 @@ public class MissionControllerImpl implements MissionController {
 	@Override
 	public ResponseEntity<List<RestMission>> getMissions() {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		List<RestMission> result = new ArrayList<>();
+		try {
+			transactionTemplate.execute((status) ->{
+				List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
 
-		List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
+				if(modelMissions.isEmpty()) {
+					String message = String.format(HTTP_HEADER_WARNING +": " +  MSG_MISSIONS_NOT_FOUND +" "+  MSG_ID_MISSION_NOT_FOUND);
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(HTTP_HEADER_WARNING, message);
+					logger.info(message);
+					return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);			
+				}
 
-		if(modelMissions.isEmpty()) {
-			String message = String.format(HTTP_HEADER_WARNING +": " +  MSG_MISSIONS_NOT_FOUND +" "+  MSG_ID_MISSION_NOT_FOUND);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			logger.info(message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);			
+				// Simple case: no search criteria set
+				for (Mission  mission: modelMissions) {
+					if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
+					RestMission resultMission = MissionUtil.toRestMission(mission);
+					if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
+					result.add(resultMission);
+				}
+				return result;		
+				
+			});
+				
+		}catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-		// Simple case: no search criteria set
-		for (Mission  mission: modelMissions) {
-			if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
-			RestMission resultMission = MissionUtil.toRestMission(mission);
-			if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
-			result.add(resultMission);
-		}		
+		
 
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
