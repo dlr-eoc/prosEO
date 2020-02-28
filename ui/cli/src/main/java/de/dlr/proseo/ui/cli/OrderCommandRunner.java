@@ -538,7 +538,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
+				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, updatedOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());

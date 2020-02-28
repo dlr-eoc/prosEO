@@ -27,7 +27,7 @@ description: |
 globalOptions:
     - name: help
       type: boolean
-      description: Show help information for the current command level (top level commands, when called from the shell command line)
+      description: Show help information for the current command/subcommand level (top level commands, when called from the shell command line)
       shortForm: h
 
 options:
@@ -219,7 +219,10 @@ commands:
               type: string
               description: The code of the spacecraft the orbits belong to
     - name: order
-      description: Commands for managing processing orders
+      description: Commands for managing processing orders; some commands can only be issued, if the order is in the correct status.
+                   Order status sequence is Initial - Approved - Planned - Released - Running - Completed/Failed - Closed.
+                   Additionally an order may be in status "Suspending" after issuing a "suspend" command, until all running
+                   job steps are finished.
       subcommands:
         - name: show
           description: Lists orders, optionally restricted to a given time range or a specific processing order
@@ -239,7 +242,7 @@ commands:
               optional: true
               description: The order identifier (overrides --from and --to options)
         - name: create
-          description: Create a new processing order; if the input is not from a file,
+          description: Create a new processing order (in status Initial); if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
           options:
             - name: file
@@ -261,7 +264,7 @@ commands:
               description: An order attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the order definition file
         - name: update
-          description: Update a processing order (only allowed in status initial)
+          description: Update a processing order (only allowed in status Initial)
           options:
             - name: file
               type: string
@@ -284,20 +287,14 @@ commands:
               repeatable: true
               description: An order attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the order definition file
-        - name: delete
-          description: Delete the named processing order (only allowed in status closed)
-          parameters:
-            - name: orderId
-              type: string
-              description: The order identifier
         - name: approve
-          description: Approve the named processing order for planning (must be in status initial)
+          description: Approve the named processing order for planning (must be in status Initial, new status is Approved)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: plan
-          description: Plan the jobs for the named processing order (must be in status approved)
+          description: Plan the jobs for the named processing order (must be in status Approved, new status is Planned)
           options:
             - name: format
               type: string
@@ -309,39 +306,51 @@ commands:
             - name: facility
               type: string
               description: The processing facility, on which the order shall be run
+        - name: reset
+          description: Reset the named processing order to initial state (must be in status Approved or Planned,
+                       new status is Initial)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
         - name: release
-          description: Release the jobs of the named processing order for processing (must be in status planned)
+          description: Release the jobs of the named processing order for processing (must be in status Planned,
+                       new status is Released; order status will change to Running, when execution of the first job step starts;
+                       when all job steps are finished, the status will change again to Completed, if all job steps finished
+                       successfully, or Failed, if at least one job step failed)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: suspend
-          description: Suspend starting of further jobs for the named processing order (order reverts to status planned)
+          description: Suspend starting of further jobs for the named processing order (must be in status Released or Running, 
+                       new status is Suspending, then Planned, when all running job steps are finished)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: resume
-          description: Resume starting of jobs for the named processing order after suspend
+          description: Resume starting of jobs for the named processing order after suspend (order must be in status Planned,
+                       new status is Released [actually the same command as "release"])
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: cancel
-          description: Cancel the named processing order (remaining jobs are not executed, order state changes to failed;
-              order must be in status planned, i. e. not yet released or suspended)
+          description: Cancel the named processing order (remaining jobs are not executed, order state changes to Failed;
+              order must be in status Planned, i. e. it may be necessary to issue a "suspend" command first)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
         - name: close
-          description: Close the named processing order (if it is completed or failed)
+          description: Close the named processing order (must be in status Completed or Failed, new status is Closed)
           parameters:
             - name: orderId
               type: string
               description: The order identifier
-        - name: reset
-          description: Reset the named processing order to initial state (if it is approved or planned)
+        - name: delete
+          description: Delete the named processing order (only allowed in status Closed)
           parameters:
             - name: orderId
               type: string

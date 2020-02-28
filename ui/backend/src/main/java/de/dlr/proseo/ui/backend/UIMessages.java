@@ -79,6 +79,8 @@ public class UIMessages {
 	public static final int MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED = 2922;
 	public static final int MSG_ID_COMMAND_NAME_NULL = 2923;
 	public static final int MSG_ID_PASSWORD_MISSING = 2924;
+	public static final int MSG_ID_UNCAUGHT_EXCEPTION = 2925;
+	public static final int MSG_ID_USER_INTERRUPT = 2926;
 	
 	// Mission CLI
 	public static final int MSG_ID_NO_MISSIONS_FOUND = 2840;
@@ -274,7 +276,7 @@ public class UIMessages {
 		// Ingestor/product CLI
 		MSG_NO_PRODUCTS_FOUND ("(E%d) No products found for given search criteria", MSG_ID_NO_PRODUCTS_FOUND),
 		MSG_INVALID_DATABASE_ID ("(E%d) Database ID %s not numeric", MSG_ID_INVALID_DATABASE_ID),
-		MSG_NO_PRODUCT_DBID_GIVEN ("(E%d) No product database ID given", MSG_ID_NO_IDENTIFIER_GIVEN),
+		MSG_NO_PRODUCT_DBID_GIVEN ("(E%d) No product database ID given", MSG_ID_NO_PRODUCT_DBID_GIVEN),
 		MSG_PRODUCT_NOT_FOUND ("(E%d) Product with database ID %d not found", MSG_ID_PRODUCT_NOT_FOUND),
 		MSG_INGESTION_FILE_MISSING ("(E%d) No file for product ingestion given", MSG_ID_INGESTION_FILE_MISSING),
 		MSG_PROCESSING_FACILITY_MISSING ("(E%d) No processing facility to ingest to given", MSG_ID_PROCESSING_FACILITY_MISSING),
@@ -341,6 +343,8 @@ public class UIMessages {
 		MSG_COMMAND_LINE_PROMPT_SUPPRESSED ("(I%d) Command line prompt suppressed by proseo.cli.start parameter", MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED),
 		MSG_COMMAND_NAME_NULL ("(E%d) Command name must not be null", MSG_ID_COMMAND_NAME_NULL),
 		MSG_PASSWORD_MISSING ("(E%d) No password given for user %s", MSG_ID_PASSWORD_MISSING),
+		MSG_UNCAUGHT_EXCEPTION ("(E%d) prosEO Command Line Interface terminated by exception: %s", MSG_ID_UNCAUGHT_EXCEPTION),
+		MSG_USER_INTERRUPT("(E%d) prosEO Command Line Interface exiting due to user interrupt", MSG_ID_USER_INTERRUPT),
 		
 		/* --- Info messages -- */
 		// General

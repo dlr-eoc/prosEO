@@ -5,9 +5,7 @@
  */
 package de.dlr.proseo.ui.cli.parser;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +17,11 @@ import java.util.List;
  */
 public class CLICommand {
 
+	/** Message indicating that a parameter is optional */
+	private static final String MSG_OPTIONAL = "(optional) ";
+	/** Message indicating that a parameter is mandatory */
+	private static final String MSG_MANDATORY = "(mandatory) ";
+	
 	/** Command name */
 	private String name = "";
 	/** Command description (help text) */
@@ -114,7 +117,10 @@ public class CLICommand {
 			out.println("    -- none --");
 		} else {
 			for (CLIParameter parameter: parameters) {
-				out.println(String.format("    %-16s  %s", parameter.getName(), parameter.getDescription().replace('\n', ' ')));
+				out.println(String.format("    %-16s  %s%s",
+						parameter.getName(),
+						(parameter.getOptional() ? MSG_OPTIONAL : MSG_MANDATORY),
+						parameter.getDescription().replace('\n', ' ')));
 			}
 		}
 		

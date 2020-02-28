@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -276,7 +276,15 @@ public class CommandLineInterface implements CommandLineRunner {
 		while (true) {
 			ParsedCommand command;
 			try {
-				String commandLine = userInput.readLine(PROSEO_COMMAND_PROMPT);
+				String commandLine;
+				try {
+					commandLine = userInput.readLine(PROSEO_COMMAND_PROMPT);
+				} catch (UserInterruptException e) {
+					String message = uiMsg(MSG_ID_USER_INTERRUPT);
+					logger.error(message);
+					System.err.println(message);
+					return;
+				}
 				if (commandLine.isBlank()) {
 					// Silently ignore empty input lines
 					continue;
@@ -306,7 +314,9 @@ public class CommandLineInterface implements CommandLineRunner {
 			SpringApplication.run(CommandLineInterface.class, args);
 			System.exit(0);
 		} catch (Exception e) {
-			System.err.println("prosEO Command Line Interface terminated by exception!");
+			String message = uiMsg(MSG_ID_UNCAUGHT_EXCEPTION, e.getMessage());
+			logger.error(message, e);
+			System.err.println(message);
 			System.exit(1);
 		}
 	}
