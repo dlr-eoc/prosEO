@@ -124,7 +124,7 @@ public class ProcessingOrder extends PersistentObject {
 	private List<Orbit> requestedOrbits = new ArrayList<>();
 	
 	/** The processing jobs belonging to this order */	
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "processingOrder")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "processingOrder")
 	private Set<Job> jobs = new HashSet<>();
 	
 	/**
