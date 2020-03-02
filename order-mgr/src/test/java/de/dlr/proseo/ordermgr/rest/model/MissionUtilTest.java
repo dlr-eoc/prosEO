@@ -39,7 +39,7 @@ public class MissionUtilTest {
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerTest.class);
 	
 	/**
-	 * Create a product from a data array
+	 * Create a mission from a data array
 	 * 
 	 * @param testData an array of Strings representing the mission to create
 	 * @return a Mission with its attributes set to the input data
