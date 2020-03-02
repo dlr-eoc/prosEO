@@ -1,6 +1,7 @@
 /**
  * ProductionPlannerConfiguration.java
  * 
+ * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner;
 
@@ -13,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuration class for the prosEO ProductionPlanner component
  * 
- * @author melchinger
+ * @author Ernst Melchinger
  *
  */
 @Configuration

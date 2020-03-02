@@ -1,5 +1,7 @@
 /**
  * KubeConfig.java
+ * 
+ * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner.kubernetes;
 
@@ -12,9 +14,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
@@ -36,9 +40,10 @@ import io.kubernetes.client.util.Config;
 /**
  * Represents the connection to a Kubernetes API 
  * 
- * @author melchinger
+ * @author Ernst Melchinger
  *
  */
+@Component
 public class KubeConfig {
 
 	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
@@ -86,6 +91,9 @@ public class KubeConfig {
 	 * 
 	 * @param pf the ProcessingFacility
 	 */
+
+	public KubeConfig () {
+	}
 
 	public KubeConfig (ProcessingFacility pf) {
 		id = pf.getName();
@@ -334,7 +342,7 @@ public class KubeConfig {
 		} catch (ApiException e) {
 			if (e.getCode() == 404) {
 				// do nothing
-				logger.info("Job " + name + " not found, is it already finished?");
+				logger.warn(Messages.KUBECONFIG_JOB_NOT_FOUND.formatWithPrefix(name));
 				return null;			
 			} else {
 				e. printStackTrace();

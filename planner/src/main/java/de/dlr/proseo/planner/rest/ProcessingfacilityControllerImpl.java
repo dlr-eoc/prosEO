@@ -1,3 +1,8 @@
+/**
+ * ProcessingfacilityControllerImpl.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.rest;
 
 
@@ -14,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.RestJobStep;
 import de.dlr.proseo.planner.rest.model.PlannerPod;
@@ -26,15 +32,17 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.models.V1Job;
 import io.kubernetes.client.models.V1JobList;
-
+/**
+ * Spring MVC controller for the prosEO planner; implements the services required to handle
+ * processing facilities.
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 @Component
 public class ProcessingfacilityControllerImpl implements ProcessingfacilityController{
-
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_HEADER_SUCCESS = "Success";
-	private static final String MSG_PREFIX = "199 proseo-planner ";
 	
-	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(ProcessingfacilityController.class);
 
 	/** The Production Planner instance */
     @Autowired
@@ -59,14 +67,14 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getStorageManagerUrl()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(l, responseHeaders, HttpStatus.OK);
 		}
-		String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+    	String message = Messages.FACILITY_NOT_DEFINED.formatWithPrefix();
+    	logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
     /**
@@ -86,96 +94,16 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					aKubeConfig.getProcessingEngineUrl(),
 					aKubeConfig.getStorageManagerUrl());
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
 		} else {
-			String message = String.format(MSG_PREFIX + "Processing Facility %s not found (%d)", name, 2000);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
+	    	logger.error(message);
+	    	HttpHeaders responseHeaders = new HttpHeaders();
+	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		}
 	}
-
-    /**
-     * Get pods on processing facility
-     * 
-     */
-	@Override
-    public  ResponseEntity<List<PlannerPod>> getPlannerPodsByName(String name) {
-		return getPlannerPods(null, name);
-	}
-	/**
-	 * Get pods on processing facility
-	 * 
-	 */
-	@Override
-	public  ResponseEntity<List<PlannerPod>> getPlannerPods(String status, String name) {
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
-			if (aKubeConfig.getId().equalsIgnoreCase(name)) {
-				// todo handle name
-				if (aKubeConfig.isConnected()) {			 
-					V1JobList list = aKubeConfig.getJobList();
-					List<PlannerPod> jobList = new ArrayList<PlannerPod>();
-					if (list != null) {
-						for (V1Job item : list.getItems()) {
-							
-							PodKube pk = new PodKube(item);
-							if (pk != null) {
-								if (status == null || pk.hasStatus(status)) {
-									jobList.add(pk);
-								}
-							}
-						}
-						HttpHeaders responseHeaders = new HttpHeaders();
-						responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-						return new ResponseEntity<>(jobList, responseHeaders, HttpStatus.OK);
-					}
-				}
-			} else {
-		    	String message = String.format(MSG_PREFIX + "Processing Facility %s not found (%d)", name, 2000);
-		    	logger.error(message);
-		    	HttpHeaders responseHeaders = new HttpHeaders();
-		    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-		    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}			
-		} 
-		String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
-
-    /**
-     * Delete completed pods on processing facility
-     * 
-     */
-	@Override
-    public ResponseEntity<?> deletePod(String status, String name) {
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
-			if (aKubeConfig.isConnected()) {	
-				aKubeConfig.deletePodsStatus(status);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
-			} else {
-				String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-		}
-    	String message = String.format(MSG_PREFIX + "Processing Facility %s not found (%d)", name, 2000);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
-
     /**
      * Pod of name has finished with state
      * 
@@ -198,106 +126,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			
 			
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_SUCCESS, "");
+			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), "");
 			return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
 		}
-		String message = String.format(MSG_PREFIX + "Processing facility is not connected)", 2000);
+		String message = String.format("Processing facility is not connected)", 2000);
 		logger.error(message);
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, message);
+		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
-
-    /**
-     * Get jobstep/pod for test purpose
-     * 
-     */
-	public ResponseEntity<PlannerPod> getPlannerPod(String podname, String name) {
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
-			V1Job aJob = aKubeConfig.getV1Job(podname);
-			if (aJob != null) {
-				PodKube aPlan = new PodKube(aJob);
-				KubeJob kj = aKubeConfig.getKubeJob(aPlan.getName());
-				if (kj != null) {
-					ArrayList<String> podNames = kj.getPodNames();
-					String cn = kj.getContainerName();
-					if (cn != null && !podNames.isEmpty()) {
-						try {
-							String log = aKubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), aKubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
-							aPlan.setLog(log);
-						} catch (ApiException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-							return null;
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-							return null;
-						}
-					}
-				}
-			    
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
-			} else {
-		    	String message = String.format(MSG_PREFIX + "Not found (%d)", 2001);
-		    	logger.error(message);
-		    	HttpHeaders responseHeaders = new HttpHeaders();
-		    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-		    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-		}
-    	String message = String.format(MSG_PREFIX + "Processing facility not connected (%d)", 2001);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
-    
-    /**
-     * Create jobstep/pod for test purpose
-     * 
-     */
-	@Override
-	public ResponseEntity<RestJobStep> updateProcessingfacilities(String podname, String name,
-		        @Valid
-		        StdoutLogLevel stdoutLogLevel,
-		        @Valid
-		        StderrLogLevel stderrLogLevel) {
-		// TODO "updateProcessingFacility" is not a good name for jobstep/pod creation
-		KubeConfig kc = productionPlanner.getKubeConfig(name);
-		if (kc != null) {
-			String outLogLevel = null;
-			String errLogLevel = null;
-			if (stdoutLogLevel != null) {
-				outLogLevel = stdoutLogLevel.name();
-			}
-			if (stderrLogLevel != null) {
-				errLogLevel = stderrLogLevel.name();
-			}
-			KubeJob aJob = kc.createJob(podname, outLogLevel, errLogLevel);
-			if (aJob != null) {
-				RestJobStep aPlan = new RestJobStep();
-				aPlan.setId(aJob.getJobId()); // TODO This is not plausible! The job step ID probably is not equal to the job ID!
-				aPlan.setName(aJob.getJobName());
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "");
-				return new ResponseEntity<>(aPlan, responseHeaders, HttpStatus.OK);
-			} else {
-				String message = String.format(MSG_PREFIX + "Could not create job step on processing facility %s (%d)", name, 2001);
-				logger.error(message);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_WARNING, message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			} 
-		} else {
-			String message = String.format(MSG_PREFIX + "Processing facility %s not connected (%d)", name, 2001);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}
 	}
 }

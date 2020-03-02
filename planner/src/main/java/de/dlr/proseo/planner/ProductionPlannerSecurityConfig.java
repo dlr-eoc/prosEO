@@ -1,7 +1,7 @@
 /**
  * ProductionPlannerSecurityConfig.java
  * 
- * (c) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner;
 
@@ -20,9 +20,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * Security configuration for prosEO Processor Manager module
+ * Security configuration for prosEO Planner module
  * 
- * @author Dr. Thomas Bassler
+ * @author Ernst Melchinger
  */
 @Configuration
 @EnableWebSecurity
@@ -57,7 +57,7 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 	 */
 	@Autowired
 	public void initialize(AuthenticationManagerBuilder builder, DataSource dataSource) throws Exception {
-		logger.info("Initializing authentication from datasource " + dataSource);
+		logger.info(Messages.PLANNER_AUTH_DATASOURCE.formatWithPrefix(dataSource.toString()));
 
 		builder.jdbcAuthentication()
 			.dataSource(dataSource);

@@ -1,3 +1,8 @@
+/**
+ * ProductControllerImpl.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.rest;
 
 import org.slf4j.Logger;
@@ -6,7 +11,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
+/**
+ * Spring MVC controller for the prosEO planner; implements the services required to handle products.
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 @Component
 public class ProductControllerImpl implements ProductController {
 

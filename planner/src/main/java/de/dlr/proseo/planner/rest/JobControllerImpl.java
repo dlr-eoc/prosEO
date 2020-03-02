@@ -1,5 +1,7 @@
 /**
  * JobControllerImpl.java
+ * 
+ * © 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.planner.rest;
 
@@ -21,6 +23,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -32,17 +35,14 @@ import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;
 
 /**
- * Spring MVC controller for the prosEO Production Planner; TODO
- *
- * @author NN
+ * Spring MVC controller for the prosEO planner; implements the services required to plan
+ * and handle jobs.
+ * 
+ * @author Ernst Melchinger
  *
  */
 @Component
 public class JobControllerImpl implements JobController {
-
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_HEADER_SUCCESS = "Success";
-	private static final String MSG_PREFIX = "199 proseo-planner ";
 	
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 	
@@ -77,15 +77,16 @@ public class JobControllerImpl implements JobController {
 				}
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_SUCCESS, "Job deleted");
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(restJobs, responseHeaders, HttpStatus.OK);
 		}
-		String message = String.format(MSG_PREFIX + "Jobs with id %s does not exist (%d)", orderId, 2001);
+		String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.formatWithPrefix(String.valueOf(orderId));
 		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
 	@Transactional
 	@Override
     public ResponseEntity<RestJob> getJob(String jobId) {
@@ -93,141 +94,63 @@ public class JobControllerImpl implements JobController {
 		if (job != null) {
 			RestJob rj = RestUtil.createRestJob(job);
 			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_SUCCESS, "Job found");
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
 		}
-		String message = String.format(MSG_PREFIX + "Job with id %s does not exist (%d)", jobId, 2001);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
 		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	@Transactional
-	@Override
-    public ResponseEntity<RestJob> createJob(String name, String facility) {
-		// TODO Auto-generated method stub
-		if (name != null) {
-			Optional<ProcessingOrder> orderOpt = null;
-			ProcessingOrder order = null;
-			try {
-				Long id = Long.valueOf(name);
-				orderOpt = RepositoryService.getOrderRepository().findById(id);
-				if (orderOpt.isPresent()) {
-					order = orderOpt.get();
-				}
-			} catch (NumberFormatException nfe) {
-				// use name as identifier
-			}
-			if (order == null) {
-				order = RepositoryService.getOrderRepository().findByIdentifier(name);
-			}
-			if (order != null) {
-				ProcessingFacility pf = null;
-				if (facility != null) {
-					KubeConfig kc = productionPlanner.getKubeConfig(facility);
-					if (kc != null) {
-						pf = kc.getProcessingFacility();
-					}
-				}
-				if (pf == null) {
-					productionPlanner.getKubeConfig("Lerchenhof").getProcessingFacility();
-				}
-				if (orderDispatcher.publishOrder(order, pf)) {
-					jobStepUtil.searchForJobStepsToRun(pf);
-					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' created (%d)", order.getIdentifier(), 2000);
-					logger.error(message);
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(HTTP_HEADER_WARNING, message);
-					return new ResponseEntity<>(responseHeaders, HttpStatus.CREATED);
-				} else {
-					String message = String.format(MSG_PREFIX + "CREATE jobs for order '%s' not created (%d)", order.getIdentifier(), 2000);
-					logger.error(message);
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(HTTP_HEADER_WARNING, message);
-					return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-				}
-			}
-		} else {
-			String message = String.format(MSG_PREFIX + "CREATE order '%s' not found (%d)", name, 2000);
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(HTTP_HEADER_WARNING, message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-		}
-		
-    	String message = String.format(MSG_PREFIX + "CREATE parameter name missing (%d)", 2001);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
-	@Transactional
-	@Override
-    public ResponseEntity<RestJob> deleteJob(String jobId) {
-		Job job = this.findJobById(jobId);
-		if (job != null) {
-			if (jobUtil.delete(job)) {
-				RestJob rj = RestUtil.createRestJob(job);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job deleted");
-				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
-			} else {
-				RestJob rj = RestUtil.createRestJob(job);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job could not be deleted");
-				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.NOT_MODIFIED);
-			}
-		}
-		String message = String.format(MSG_PREFIX + "Job with id %s does not exist (%d)", jobId, 2001);
-		logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-	}
+
 	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
 		Job job = this.findJobById(jobId);
 		if (job != null) {
-			if (jobUtil.resume(job)) {
+			Messages msg = jobUtil.resume(job);
+			if (msg.isTrue()) {
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job resumed");
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
 			} else {
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job could not be resumed");
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
-		String message = String.format(MSG_PREFIX + "Job with id %s does not exist (%d)", jobId, 2001);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
 		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
 	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> cancelJob(String jobId){
 		Job job = this.findJobById(jobId);
 		if (job != null) {
-			if (jobUtil.cancel(job)) {
+			Messages msg = jobUtil.cancel(job);
+			if (msg.isTrue()) {
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job canceled");
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
 			} else {
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job could not be canceled");
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
-		String message = String.format(MSG_PREFIX + "Job with id %s does not exist (%d)", jobId, 2001);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
 		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
@@ -236,22 +159,23 @@ public class JobControllerImpl implements JobController {
 	public ResponseEntity<RestJob> suspendJob(String jobId) {
 		Job j = this.findJobById(jobId);
 		if (j != null) {
-			if (jobUtil.suspend(j)) {
+			Messages msg = jobUtil.suspend(j);
+			if (msg.isTrue()) {
 				RestJob pj = RestUtil.createRestJob(j);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job suspended");
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(pj, responseHeaders, HttpStatus.OK);
 			} else {
 				RestJob pj = RestUtil.createRestJob(j);
 				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(HTTP_HEADER_SUCCESS, "Job already running or at end");
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobId));
 				return new ResponseEntity<>(pj, responseHeaders, HttpStatus.OK);
 			}
 		}
-		String message = String.format(MSG_PREFIX + "Job with id %s does not exist (%d)", jobId, 2001);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
 		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(HTTP_HEADER_WARNING, message);
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 

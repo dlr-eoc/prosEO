@@ -1,41 +1,41 @@
+/**
+ * KubeDispatcher.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.dispatcher;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.kubernetes.KubeJob;
-import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.UtilService;
 
-@Component
+/**
+ * Dispatcher to look for runnable job steps
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 @Transactional
 public class KubeDispatcher extends Thread {
 
 	private static Logger logger = LoggerFactory.getLogger(KubeDispatcher.class);
 	
     private ProductionPlanner productionPlanner;
-    
-    private JobStepUtil jobStepUtil;
+    private boolean runOnce;
+    private KubeConfig kubeConfig;
 
-
-	public KubeDispatcher(ProductionPlanner p, JobStepUtil jsu) {
-		super("KubeDispatcher");
+	public KubeDispatcher(ProductionPlanner p, KubeConfig kc) {
+		super((kc != null && p == null) ? "KubeDispatcherRunOnce" : "KubeDispatcher");
+		this.setDaemon(true);
 		productionPlanner = p;
-		jobStepUtil = jsu;
+		kubeConfig = kc;
+		runOnce = (kc != null && p == null);
 	}
 	
 	@Transactional
@@ -46,18 +46,34 @@ public class KubeDispatcher extends Thread {
     	} catch (NumberFormatException e) {
     		wait = 100000;
     	}
-    	while (!this.isInterrupted()) {
-			// look for job steps to run
-			logger.info("KubeDispatcher cycle");
-			productionPlanner.checkForJobStepsToRun();
-    		try {
-    			sleep(wait);
+    	if (runOnce) {
+    		if (kubeConfig != null) {
+    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig);
+    		} else {
+    			logger.warn(Messages.KUBEDISPATCHER_CONFIG_NOT_SET.formatWithPrefix());
     		}
-    		catch(InterruptedException e) {
-    			logger.info("KubeDispatcher interrupt");
-    			this.interrupt();
+    	} else {
+    		if (productionPlanner != null) {
+    			if (wait <= 0) {
+					logger.info(Messages.KUBEDISPATCHER_RUN_ONCE.formatWithPrefix());
+					productionPlanner.checkForJobStepsToRun();
+    			} else {
+    				while (!this.isInterrupted()) {
+    					// look for job steps to run
+    					logger.info(Messages.KUBEDISPATCHER_CYCLE.formatWithPrefix());
+    					productionPlanner.checkForJobStepsToRun();
+    					try {
+    						sleep(wait);
+    					}
+    					catch(InterruptedException e) {
+    						logger.info(Messages.KUBEDISPATCHER_INTERRUPT.formatWithPrefix());
+    						this.interrupt();
+    					}
+    				}
+    			}
+    		} else {
+    			logger.warn(Messages.KUBEDISPATCHER_PLANNER_NOT_SET.formatWithPrefix());
     		}
-
     	}
     }   
 

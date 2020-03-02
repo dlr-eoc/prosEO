@@ -1,13 +1,24 @@
+/**
+ * KubeJobFinish.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.kubernetes;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.planner.ProductionPlanner;
+import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.util.UtilService;
 
+/**
+ * Wait for finished Kubernetes job
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 
-// @Transactional
 public class KubeJobFinish extends Thread {
 
 	private String jobName;
@@ -37,15 +48,15 @@ public class KubeJobFinish extends Thread {
     			maxCycles = 50;
     		}
     		while (!found && i < maxCycles) {
-    	        try {
-    	            sleep(wait);
-    	        	found = kubeJob.getFinishInfo(jobName);
-    	          }
-    	          catch(InterruptedException e) {
-    	          }
-    			
+    			try {
+    				sleep(wait);
+    				found = kubeJob.getFinishInfo(jobName);
+    			}
+    			catch(InterruptedException e) {
+    			}
     		}
-    		UtilService.getJobStepUtil().checkForJobStepsToRun(kubeJob.getKubeConfig());
+    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig());
+    		kd .start();
     	}
     }    	
 }

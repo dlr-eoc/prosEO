@@ -20,9 +20,11 @@ proseo:
         url: http://192.168.20.155:8080/proseo/planner
         user: s5p-proseo
         password: sieb37.Schlaefer
-        cyclewaittime: 1000
         maxcycles: 50
-        dispatcherwaittime: 100000
+        # time in milliseconds
+        cyclewaittime: 1000
+        # run once if <= 0 (at startup)
+        dispatcherwaittime: 0
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none
