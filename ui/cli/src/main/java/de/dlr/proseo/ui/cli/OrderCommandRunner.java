@@ -657,10 +657,11 @@ public class OrderCommandRunner {
 		if (null == restOrder)
 			return;
 		
-		/* Check whether (database) order is in state "CLOSED", otherwise no user updates allowed */
-		if (!OrderState.CLOSED.toString().equals(restOrder.getOrderState())) {
+		/* Check whether (database) order is in state "INITIAL" or "CLOSED", otherwise no user updates allowed */
+		if (!OrderState.INITIAL.toString().equals(restOrder.getOrderState()) 
+				&& !OrderState.CLOSED.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
-					CMD_DELETE, restOrder.getOrderState(), OrderState.CLOSED.toString()));
+					CMD_DELETE, restOrder.getOrderState(), OrderState.INITIAL.toString() + " or " + OrderState.CLOSED.toString()));
 			return;
 		}
 		

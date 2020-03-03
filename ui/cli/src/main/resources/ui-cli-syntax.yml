@@ -34,7 +34,7 @@ options:
     - name: version
       type: boolean
       description: Show the prosEO CLI version and exit (only for call from shell command line)
-      shortForm: v
+      shortForm: V
     - name: user
       type: string
       description: The user name for login to prosEO.
@@ -350,7 +350,7 @@ commands:
               type: string
               description: The order identifier
         - name: delete
-          description: Delete the named processing order (only allowed in status Closed)
+          description: Delete the named processing order (only allowed in status Initial or Closed)
           parameters:
             - name: orderId
               type: string
@@ -907,6 +907,15 @@ commands:
       subcommands:
         - name: show
           description: Show user accounts for the current mission
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user details, otherwise show usernames only (setting username parameter
+                           implies verbose)
+              shortForm: v
           parameters:
             - name: userName
               type: string
@@ -932,6 +941,7 @@ commands:
               optional: true
               repeatable: true
               description: A user attribute to set in the form "<attribute name>=<attribute value>"
+                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
         - name: update
           description: Update the given user account;
                        the user will be prompted for mandatory attributes not given on the command line
@@ -956,6 +966,7 @@ commands:
               optional: true
               repeatable: true
               description: A user account attribute to set in the form "<attribute name>=<attribute value>"
+                           (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
         - name: delete
           description: Delete the user account with the given name
           parameters:
@@ -982,7 +993,7 @@ commands:
                        (not recommended, use of group authorities recommended)
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to grant authorities to
                            (without mission prefix; mandatory if not read from file)
@@ -995,7 +1006,7 @@ commands:
           description: Revoke authorities for the current mission from the user (directly granted authorities only)
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to revoke authorities from
                            (without mission prefix; mandatory if not read from file)
@@ -1010,6 +1021,15 @@ commands:
       subcommands:
         - name: show
           description: Show user groups for the current mission
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user group details, otherwise show group names only (setting group name parameter
+                           implies verbose)ds
+              shortForm: v
           parameters:
             - name: groupName
               type: string
@@ -1063,7 +1083,7 @@ commands:
           description: Delete the group account with the given name
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to delete (without mission prefix)
         - name: grant
@@ -1082,7 +1102,7 @@ commands:
           description: Revoke authorities for the current mission from the user group
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: false
               description: The name of the user group to revoke authorities from (without mission prefix)
             - name: authority

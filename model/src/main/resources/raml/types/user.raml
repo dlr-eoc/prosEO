@@ -5,9 +5,9 @@
       username:
         type: string
         description: The (unique) user name, consisting of the mission code, a hyphen ("-") and the actual cross-mission user name
-      password:
+      password?:
         type: string
-        description: The user password (BCrypt-encrypted string)
+        description: The user password (BCrypt-encrypted string; not required for updates)
       enabled:
         type: boolean
         description: Flag indicating whether the user account is enabled.

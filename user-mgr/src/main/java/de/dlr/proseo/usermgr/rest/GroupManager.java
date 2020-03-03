@@ -225,13 +225,14 @@ public class GroupManager {
 	}
 
 	/**
-	 * Get user groups by mission
+	 * Get user groups by mission and optionally by group name
 	 * 
 	 * @param mission the mission code
+	 * @param groupName the group name (optional)
 	 * @return a list of Json objects representing the user groups authorized for the given mission
 	 * @throws NoResultException
 	 */
-	public List<RestGroup> getGroups(String mission) throws NoResultException {
+	public List<RestGroup> getGroups(String mission, String groupName) throws NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({})", mission);
 		
 		// Check parameter
@@ -241,10 +242,13 @@ public class GroupManager {
 		
 		// Collect all user groups for the mission
 		List<RestGroup> result = new ArrayList<>();
-		for (Group modelGroup: groupRepository.findByMissionCode(mission)) {
-			result.add(toRestGroup(modelGroup));
+		if (null == groupName) {
+			for (Group modelGroup : groupRepository.findByMissionCode(mission)) {
+				result.add(toRestGroup(modelGroup));
+			} 
+		} else {
+			result.add(toRestGroup(groupRepository.findByGroupName(groupName)));
 		}
-
 		if (result.isEmpty()) {
 			throw new NoResultException(logError(MSG_GROUP_NOT_FOUND, MSG_ID_GROUP_NOT_FOUND, mission));
 		}

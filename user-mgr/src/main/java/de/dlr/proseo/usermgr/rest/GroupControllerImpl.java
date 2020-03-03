@@ -57,16 +57,17 @@ public class GroupControllerImpl implements GroupController {
 	/**
 	 * Get user groups by mission
 	 * 
-	 * @param mission the mission code
+	 * @param mission the mission code and optionally by group name
+	 * @param groupName the group name (optional)
 	 * @return HTTP status "OK" and a list of Json objects representing groups authorized for the given mission or
 	 *         HTTP status "NOT_FOUND" and an error message, if no groups matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestGroup>> getGroups(String mission) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({})", mission);
+	public ResponseEntity<List<RestGroup>> getGroups(String mission, String groupName) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
 		
 		try {
-			return new ResponseEntity<>(groupManager.getGroups(mission), HttpStatus.OK);
+			return new ResponseEntity<>(groupManager.getGroups(mission, groupName), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}

@@ -129,10 +129,11 @@ resourceTypes:
 /groups:
   type: standard
   get:
-    description: Get user groups by mission
+    description: Get user groups by mission and optionally by name
     displayName: getGroups
     queryParameters:
       mission: string
+      groupName?: string
     responses:
       200:
         body:

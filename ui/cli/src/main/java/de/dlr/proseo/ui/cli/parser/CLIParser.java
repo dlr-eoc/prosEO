@@ -242,7 +242,7 @@ public class CLIParser {
 		}
 		String parameterValue = (isAttribute ? parameterString.split("=", 2)[1] : parameterString ); // 2-argument split to enable empty strings as attribute value
 		if (!isTypeOK(syntaxParameter.getType(), parameterValue)) {
-			throw new ParseException(uiMsg(MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED, parameterPosition, syntaxCommand.getName()), 0);
+			throw new ParseException(uiMsg(MSG_ID_PARAMETER_TYPE_MISMATCH, syntaxParameter.getType(), parameterPosition, syntaxCommand.getName()), 0);
 		}
 		
 		// Prepare and return parsed parameter

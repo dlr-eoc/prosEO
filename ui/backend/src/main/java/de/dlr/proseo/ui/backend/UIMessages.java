@@ -72,6 +72,7 @@ public class UIMessages {
 	public static final int MSG_ID_ILLEGAL_COMMAND = 2916;
 	public static final int MSG_ID_ILLEGAL_SUBCOMMAND = 2917;
 	public static final int MSG_ID_PARAMETER_MISSING = 2918;
+	public static final int MSG_ID_PARAMETER_TYPE_MISMATCH = 2919;
 	
 	// CLI Main
 	public static final int MSG_ID_SYNTAX_FILE_NOT_FOUND = 2920;
@@ -202,6 +203,22 @@ public class UIMessages {
 	public static final int MSG_ID_USER_CREATED = 2701;
 	public static final int MSG_ID_NO_USERS_FOUND = 2702;
 	public static final int MSG_ID_USER_NOT_FOUND_BY_NAME = 2703;
+	public static final int MSG_ID_PASSWORD_MISMATCH = 2704;
+	public static final int MSG_ID_NO_USERNAME_GIVEN = 2705;
+	public static final int MSG_ID_USER_UPDATED = 2705;
+	public static final int MSG_ID_USER_DELETE_FAILED = 2706;
+	public static final int MSG_ID_USER_DELETED = 2707;
+	public static final int MSG_ID_USER_ENABLED = 2708;
+	public static final int MSG_ID_USER_DISABLED = 2709;
+	public static final int MSG_ID_AUTHORITIES_GRANTED = 2711;
+	public static final int MSG_ID_AUTHORITIES_REVOKED = 2712;
+	public static final int MSG_ID_NO_AUTHORITIES_GIVEN = 2713;
+	public static final int MSG_ID_NO_GROUPNAME_GIVEN = 2714;
+	public static final int MSG_ID_GROUP_NOT_FOUND_BY_ID = 2715;
+	public static final int MSG_ID_GROUP_DATA_INVALID = 2716;
+	public static final int MSG_ID_GROUP_CREATED = 2717;
+	public static final int MSG_ID_NO_GROUPS_FOUND = 2718;
+	public static final int MSG_ID_GROUP_NOT_FOUND_BY_NAME = 2719;
 
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
@@ -313,6 +330,15 @@ public class UIMessages {
 		MSG_USER_DATA_INVALID ("(E%d) User account data invalid (cause: %s)", MSG_ID_USER_DATA_INVALID),
 		MSG_NO_USERS_FOUND ("(E%d) No user accounts found for mission %s", MSG_ID_NO_USERS_FOUND),
 		MSG_USER_NOT_FOUND_BY_NAME ("(E%d) User account %s not found for mission %s", MSG_ID_USER_NOT_FOUND_BY_NAME),
+		MSG_PASSWORD_MISMATCH ("(E%d) Passwords do not match", MSG_ID_PASSWORD_MISMATCH),
+		MSG_NO_USERNAME_GIVEN ("(E%d) No username given", MSG_ID_NO_USERNAME_GIVEN),
+		MSG_USER_DELETE_FAILED ("(E%d) Deletion of user account %s failed (cause: %s)", MSG_ID_USER_DELETE_FAILED),
+		MSG_NO_AUTHORITIES_GIVEN ("(E%d) No authorities given in command", MSG_ID_NO_AUTHORITIES_GIVEN),
+		MSG_NO_GROUPNAME_GIVEN ("(E%d) No group name given", MSG_ID_NO_GROUPNAME_GIVEN),
+		MSG_GROUP_NOT_FOUND_BY_ID ("(E%d) Group with database ID %d not found", MSG_ID_GROUP_NOT_FOUND_BY_ID),
+		MSG_GROUP_DATA_INVALID ("(E%d) User group data invalid (cause: %s)", MSG_ID_GROUP_DATA_INVALID),
+		MSG_NO_GROUPS_FOUND ("(E%d) No user groups found for mission %s", MSG_ID_NO_GROUPS_FOUND),
+		MSG_GROUP_NOT_FOUND_BY_NAME ("(E%d) User group %s not found for mission %s", MSG_ID_GROUP_NOT_FOUND_BY_NAME),
 		
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
@@ -333,6 +359,7 @@ public class UIMessages {
 		MSG_ILLEGAL_OPTION_VALUE ("(E%d) Illegal option value %s for option %s of type %s", MSG_ID_ILLEGAL_OPTION_VALUE),
 		MSG_TOO_MANY_PARAMETERS ("(E%d) Too many parameters for command %s", MSG_ID_TOO_MANY_PARAMETERS),
 		MSG_ATTRIBUTE_PARAMETER_EXPECTED ("(E%d) Parameter of format '<attribute name>=<attribute value>' expected at position %d for command %s", MSG_ID_ATTRIBUTE_PARAMETER_EXPECTED),
+		MSG_PARAMETER_TYPE_MISMATCH ("(E%d) Parameter of type %s expected at position %d for command %s", MSG_ID_PARAMETER_TYPE_MISMATCH),
 		MSG_ILLEGAL_COMMAND ("(E%d) Illegal command %s", MSG_ID_ILLEGAL_COMMAND),
 		MSG_ILLEGAL_SUBCOMMAND ("(E%d) Illegal subcommand %s", MSG_ID_ILLEGAL_SUBCOMMAND),
 		MSG_PARAMETER_MISSING ("(E%d) Required parameter %s not found for command %s", MSG_ID_PARAMETER_MISSING),
@@ -392,6 +419,12 @@ public class UIMessages {
 
 		// User/group CLI
 		MSG_USER_CREATED ("(I%d) User account %s created", MSG_ID_USER_CREATED),
+		MSG_USER_UPDATED ("(I%d) User account %s updated", MSG_ID_USER_UPDATED),
+		MSG_USER_DELETED ("(I%d) User account %s deleted", MSG_ID_USER_DELETED),
+		MSG_USER_ENABLED ("(I%d) User account %s enabled", MSG_ID_USER_ENABLED),
+		MSG_USER_DISABLED ("(I%d) User account %s disabled", MSG_ID_USER_DISABLED),
+		MSG_AUTHORITIES_GRANTED ("(I%d) Authorities %s granted to user %s", MSG_ID_AUTHORITIES_GRANTED),
+		MSG_AUTHORITIES_REVOKED ("(I%d) Authorities %s revoked from user %s", MSG_ID_AUTHORITIES_REVOKED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),
