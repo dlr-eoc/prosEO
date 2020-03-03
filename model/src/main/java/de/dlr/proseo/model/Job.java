@@ -92,7 +92,7 @@ public class Job extends PersistentObject {
 	private ProcessingFacility processingFacility;
 	
 	/** The job steps for this job */
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, mappedBy = "job")
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "job")
 	private Set<JobStep> jobSteps = new HashSet<>();
 	
 	/**

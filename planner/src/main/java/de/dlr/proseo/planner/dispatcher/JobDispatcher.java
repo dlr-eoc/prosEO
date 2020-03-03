@@ -41,7 +41,7 @@ import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
  * 
- * @author melchinger
+ * @author Ernst Melchinger
  *
  */
 
@@ -54,10 +54,9 @@ public class JobDispatcher {
 	
 
 	/**
-	 * 
+	 * Create a job dispatcher.
 	 */
 	public JobDispatcher() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public JobOrder createJobOrder(JobStep jobStep) {
@@ -139,7 +138,7 @@ public class JobDispatcher {
 					}
 					// dynamic input files calculated by input products
 					for (ProductQuery pq : jobStep.getOutputProduct().getSatisfiedProductQueries()) {
-						for (Product p : pq.getSatisfyingProducts()) {
+						for (Product p : pq.getNewestSatisfyingProducts()) {
 							for (ProductFile pf : p.getProductFile()) {
 								InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
 								sio.getFileNames().add(new IpfFileName(pf.getProductFilePathName(), pf.getStorageType().name()));

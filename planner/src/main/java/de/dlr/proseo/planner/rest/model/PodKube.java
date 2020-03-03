@@ -1,7 +1,17 @@
+/**
+ * PodKube.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.rest.model;
 
 import io.kubernetes.client.models.V1Job;
-
+/**
+ * Handle a Kubernetes pod/job
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 public class PodKube extends PlannerPod {
 
 	public PodKube(V1Job job) {

@@ -544,6 +544,20 @@ public class SampleProcessor {
 			return EXIT_CODE_FAILURE;
 		}
 		
+		// do something like process
+		// wait ...
+		try {			
+			int i = ((int)(9.0 * Math.random())) + 1;
+			while (i > 0) {
+				logger.info("... wait " + ((i) * 10) + " seconds ...");
+				Thread.sleep(10000);
+				i--;
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// Process input product to output product
 		ok = processOutputProduct(inputProduct, jobOrderDoc);
 		if (!ok) {

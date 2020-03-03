@@ -129,4 +129,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 */
 	public Product findByUuid(UUID uuid);
 
+	@Query("select p from Product p where p.productClass.id = ?1 and p.configuredProcessor.id = ?2" 
+			+ " and p.sensingStartTime = ?3 and p.sensingStopTime = ?4")
+	public List<Product> findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
+			long productClassId, long configuredProcessorId, Instant sensingStartTime, Instant sensingStopTime);
+
 }
