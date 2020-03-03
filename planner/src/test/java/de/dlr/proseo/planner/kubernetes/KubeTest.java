@@ -17,14 +17,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.dao.JobStepRepository;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 //@DirtiesContext
-//@Transactional
+@Transactional
 @AutoConfigureTestEntityManager
 public class KubeTest {
 
@@ -52,6 +54,9 @@ public class KubeTest {
 
 	@Test
 	public void test() {
+//		Mission m = RepositoryService.getMissionRepository().findByCode("PTM");
+//		String pft = m.getProductFileTemplate();
+//		RepositoryService.getMissionRepository().save(m);
 //		JobStep js = new JobStep();
 //		js.setProcessingMode("nix"); 
 //		jobSteps.save(js);

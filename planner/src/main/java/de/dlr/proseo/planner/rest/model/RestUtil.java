@@ -1,3 +1,8 @@
+/**
+ * RestUtil.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.rest.model;
 
 import java.util.ArrayList;
@@ -18,7 +23,12 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.planner.ProductionPlanner;
-
+/**
+ * Build REST objects
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 @Component
 public class RestUtil {
 
@@ -174,8 +184,13 @@ public class RestUtil {
 			if (js.getProcessingCompletionTime() != null) { 
 				pjs.setProcessingCompletionTime(Date.from(js.getProcessingCompletionTime()));
 			}
-			pjs.setProcessingStdOut(js.getProcessingStdOut());
-			pjs.setProcessingStdErr(js.getProcessingStdErr());
+
+			if (js.getProcessingStdOut() != null) {
+				pjs.setProcessingStdOut(js.getProcessingStdOut());
+			}
+			if (js.getProcessingStdErr() != null) {
+				pjs.setProcessingStdErr(js.getProcessingStdErr());
+			}
 			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
 			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));
 			pjs.setJobId(js.getJob() == null ? null : js.getJob().getId());

@@ -1,8 +1,19 @@
+/**
+ * UtilService.java
+ * 
+ * © 2019 Prophos Informatik GmbH
+ */
 package de.dlr.proseo.planner.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service to retrieve the util objects
+ * 
+ * @author Ernst Melchinger
+ *
+ */
 @Service
 public class UtilService {
     private static UtilService theUtilService;
