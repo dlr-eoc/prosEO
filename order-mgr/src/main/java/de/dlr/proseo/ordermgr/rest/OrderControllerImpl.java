@@ -42,7 +42,7 @@ public class OrderControllerImpl implements OrderController {
 
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
 	
-	/** The product manager */
+	/** The processing order manager */
 	@Autowired
 	private ProcessingOrderMgr procOrderManager;
 	
@@ -61,7 +61,7 @@ public class OrderControllerImpl implements OrderController {
 	 * Create a order from the given Json object 
 	 * 
 	 * @param order the Json object to create the order from
-	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the product after persistence
+	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the order after persistence
 	 *             (with ID and version for all contained objects) or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
@@ -77,7 +77,7 @@ public class OrderControllerImpl implements OrderController {
 		}	
 	}
 	/**
-	 * List of all order filtered by mission, identifier, productClasses, starttime range
+	 * List of all orders filtered by mission, identifier, productClasses, starttime range
 	 * 
 	 * @param mission the mission code
 	 * @param identifier the unique order identifier string

@@ -127,7 +127,7 @@ public class MissionUtilTest {
 
 		logger.info("Test copy model to REST OK");
 		
-		// Copy a product from REST to model
+		// Copy a mission from REST to model
 		Mission copiedModelMission = MissionUtil.toModelMission(restMission);
 //		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
 		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
