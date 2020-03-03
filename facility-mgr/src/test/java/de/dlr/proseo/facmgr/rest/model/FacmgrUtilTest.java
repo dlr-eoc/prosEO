@@ -1,5 +1,6 @@
 package de.dlr.proseo.facmgr.rest.model;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.After;
@@ -21,7 +22,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 
 public class FacmgrUtilTest {
 	
-	/* Test Missions */
+	/* Test facility */
 	private static String[][] testFacilityData = {
 			// id, version, name, desc,processingEngineUrl, storageMangerUrl
 			{ "0", "0", "TestFacility 1", "Processing Facility 1", "https://www.prosEO-ProcFac1.de/kubernetes","https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0"},
@@ -42,13 +43,13 @@ public class FacmgrUtilTest {
 		de.dlr.proseo.model.ProcessingFacility testFacility = new de.dlr.proseo.model.ProcessingFacility();
 
 		testFacility.setId(Long.parseLong(testData[0]));
-		testFacility.setName(testData[3]);
-		testFacility.setDescription(testData[4]);
-		testFacility.setProcessingEngineUrl(testData[5]);
-		testFacility.setStorageManagerUrl(testData[6]);
+		testFacility.setName(testData[2]);
+		testFacility.setDescription(testData[3]);
+		testFacility.setProcessingEngineUrl(testData[4]);
+		testFacility.setStorageManagerUrl(testData[5]);
 
 		
-		logger.info("Created test mission {}", testFacility.getId());
+		logger.info("Created test facility {}", testFacility.getId());
 		return testFacility;
 	}
 	/**
@@ -84,9 +85,35 @@ public class FacmgrUtilTest {
 		// Create an empty facility
 		ProcessingFacility modelFacility = new ProcessingFacility();
 		RestFacility restFacility = FacmgrUtil.toRestFacility(modelFacility);
-		assertNull("Unexpected name for new mission: ",  restFacility.getName());
-		assertNull("Unexpected code for new mission: ", restFacility.getDescription());
-		logger.info("Test copy empty mission OK");
+		assertNull("Unexpected name for new facility: ",  restFacility.getName());
+		assertNull("Unexpected description for new facility: ", restFacility.getDescription());
+		assertNull("Unexpected Processing ENgine Url for new facility: ", restFacility.getProcessingEngineUrl());
+		assertNull("Unexpected Storage Manager Url for new facility: ", restFacility.getStorageManagerUrl());
+
+		logger.info("Test copy empty facility OK");
+		
+		
+		// Copy a facility from model to REST
+		modelFacility = createFacility(testFacilityData[0]);
+		restFacility = FacmgrUtil.toRestFacility(modelFacility);
+		assertEquals("Unexpected ID: ", modelFacility.getId(), restFacility.getId().longValue());
+		assertEquals("Unexpected facility description: ", modelFacility.getDescription(),restFacility.getDescription());
+		assertEquals("Unexpected facility name: ", modelFacility.getName(),restFacility.getName());
+		assertEquals("Unexpected  Processing ENgine Url: ", modelFacility.getProcessingEngineUrl(),restFacility.getProcessingEngineUrl());
+		assertEquals("Unexpected  Storage Manager Url: ", modelFacility.getStorageManagerUrl(),restFacility.getStorageManagerUrl());
+
+		logger.info("Test copy model to REST OK");
+		
+		// Copy a facility from REST to model
+		ProcessingFacility copiedModelFacility = FacmgrUtil.toModelFacility(restFacility);
+		assertEquals("Description not preserved: ", modelFacility.getDescription(), copiedModelFacility.getDescription());
+		assertEquals("Name not preserved: ", modelFacility.getName(), copiedModelFacility.getName());
+		assertEquals("Processing ENgine Url not preserved: ", modelFacility.getProcessingEngineUrl(),copiedModelFacility.getProcessingEngineUrl());
+		assertEquals("Storage Manager Url not preserved: ", modelFacility.getStorageManagerUrl(),copiedModelFacility.getStorageManagerUrl());
+
+		logger.info("Test copy REST to model OK");
+
+				
 		
 	}
 
