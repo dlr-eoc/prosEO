@@ -108,7 +108,6 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	public ResponseEntity<RestOrder> getOrderById(Long id) {
-		// TODO Auto-generated method stub
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
 		try {
 			return new ResponseEntity<>(procOrderManager.getOrderById(id), HttpStatus.OK);
