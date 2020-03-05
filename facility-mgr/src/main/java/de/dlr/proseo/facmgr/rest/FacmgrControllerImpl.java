@@ -1,6 +1,11 @@
 package de.dlr.proseo.facmgr.rest;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
 import de.dlr.proseo.facmgr.rest.model.RestFacility;
 
 
@@ -29,7 +33,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	
 	/** The processing facility manager */
 	@Autowired
-	private FacilityManager procFacilityManager;
+	private FacmgrManager procFacilityManager;
 	
 	/**
 	 * Create an HTTP "Warning" header with the given text message
@@ -54,7 +58,7 @@ public class FacmgrControllerImpl implements FacilityController{
 
 	@Override
 	public ResponseEntity<RestFacility> createFacility(RestFacility facility) {	
-		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == facility ? "MISSING" : facility.getName()));
+		if (logger.isTraceEnabled()) logger.trace(">>> createFacility({})", (null == facility ? "MISSING" : facility.getName()));
 		
 		try {
 			return new ResponseEntity<>(procFacilityManager.createFacility(facility), HttpStatus.CREATED);
@@ -70,9 +74,14 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * @return a response entity with either a list of facilities and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestFacility>> getFacilities(String mission, String name) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<List<RestFacility>> getFacilities(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getFacilitys( {})",  name);
+		
+		try {
+			return new ResponseEntity<>(procFacilityManager.getFacility(name), HttpStatus.OK);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
 	}
 	/**
 	 * Find the facility with the given ID
@@ -83,8 +92,15 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 	@Override
 	public ResponseEntity<RestFacility> getFacilityById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> getFacilityById({})", id);
+		try {
+			return new ResponseEntity<>(procFacilityManager.getFacilityById(id), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		}
+		
 	}
 	/**
 	 * Delete a facility by ID
@@ -95,8 +111,17 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 	@Override
 	public ResponseEntity<?> deleteFacilityById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteFacilityById({})", id);
+
+		try {
+			procFacilityManager.deleteFacilityById(id);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (RuntimeException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
 	}
 	/**
 	 * Update the facility with the given ID with the attribute values of the given Json object. 
@@ -108,8 +133,18 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 	@Override
 	public ResponseEntity<RestFacility> modifyFacility(Long id, RestFacility restFacility) {
-		// TODO Auto-generated method stub
-		return null;
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
+		try {
+			RestFacility changedOrder = procFacilityManager.modifyFacility(id, restFacility);
+			HttpStatus httpStatus = (restFacility.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedOrder, httpStatus);
+		} catch (EntityNotFoundException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (ConcurrentModificationException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		}
 	}
 
 }
