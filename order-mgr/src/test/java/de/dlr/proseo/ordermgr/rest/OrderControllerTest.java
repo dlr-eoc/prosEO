@@ -15,9 +15,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManagerFactory;
 
-import org.assertj.core.util.Sets;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -41,13 +38,10 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -62,7 +56,6 @@ import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
 import de.dlr.proseo.ordermgr.rest.model.RestOrder;
-import net.bytebuddy.asm.Advice.This;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
