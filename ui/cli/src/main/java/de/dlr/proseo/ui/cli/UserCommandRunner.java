@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.rest.model.RestGroup;
@@ -143,7 +146,7 @@ public class UserCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyUser({})", (null == restUser ? "null" : restUser.getUsername()));
 		
 		try {
-			restUser = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
+			restUser = serviceConnection.patchToService(serviceConfig.getUserManagerUrl(),
 					URI_PATH_USERS + "/" + restUser.getUsername(),
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -229,7 +232,7 @@ public class UserCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyGroup({})", (null == restGroup ? "null" : restGroup.getGroupname()));
 		
 		try {
-			restGroup = serviceConnection.patchToService(serviceConfig.getProcessorManagerUrl(),
+			restGroup = serviceConnection.patchToService(serviceConfig.getUserManagerUrl(),
 					URI_PATH_GROUPS + "/" + restGroup.getId(),
 					restGroup, RestGroup.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -268,6 +271,7 @@ public class UserCommandRunner {
 		/* Check command options */
 		File userAccountFile = null;
 		String userAccountFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		String missionCode = loginManager.getMission();
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":
@@ -275,6 +279,14 @@ public class UserCommandRunner {
 				break;
 			case "format":
 				userAccountFileFormat = option.getValue().toUpperCase();
+				break;
+			case "mission":
+				if (null == missionCode) {
+					missionCode = option.getValue().toUpperCase();
+				} else {
+					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, missionCode));
+					return;
+				}
 				break;
 			}
 		}
@@ -297,7 +309,7 @@ public class UserCommandRunner {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is user account name
-				restUser.setUsername(param.getValue());
+				restUser.setUsername((null == missionCode ? "" : missionCode + "-") + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -324,7 +336,7 @@ public class UserCommandRunner {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
-			restUser.setUsername(loginManager.getMission() + "-" + response);
+			restUser.setUsername((null == missionCode ? "" : missionCode + "-") + response);
 		}
 		while (null == restUser.getPassword() || restUser.getPassword().isEmpty()) {
 			System.out.print(PROMPT_PASSWORD);
@@ -333,7 +345,7 @@ public class UserCommandRunner {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
-			System.out.println(PROMPT_PASSWORD_REPEAT);
+			System.out.print(PROMPT_PASSWORD_REPEAT);
 			String response2 = new String(System.console().readPassword());
 			if (!response.equals(response2)) {
 				System.out.println(uiMsg(MSG_ID_PASSWORD_MISMATCH));
@@ -344,6 +356,14 @@ public class UserCommandRunner {
 		
 		/* Create user account */
 		try {
+			if (logger.isTraceEnabled()) {
+				try {
+					logger.trace("... creating user from REST data: " + (new ObjectMapper()).writeValueAsString(restUser));
+				} catch (JsonProcessingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			restUser = serviceConnection.postToService(serviceConfig.getUserManagerUrl(), URI_PATH_USERS, 
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -448,8 +468,8 @@ public class UserCommandRunner {
 		} else {
 			// Must be a list of users
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
-				if (resultObject instanceof RestUser) {
-					System.out.println(((RestUser) resultObject).getUsername());
+				if (resultObject instanceof Map) {
+					System.out.println(((Map<String, String>) resultObject).get("username"));
 				}
 			}
 		}
@@ -571,13 +591,28 @@ public class UserCommandRunner {
 	private void deleteUser(ParsedCommand deleteCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteUser({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
+		/* Check command options */
+		String missionCode = loginManager.getMission();
+		for (ParsedOption option: deleteCommand.getOptions()) {
+			switch(option.getName()) {
+			case "mission":
+				if (null == missionCode) {
+					missionCode = option.getValue().toUpperCase();
+				} else {
+					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, missionCode));
+					return;
+				}
+				break;
+			}
+		}
+		
 		/* Get username from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = loginManager.getMission() + "-" + deleteCommand.getParameters().get(0).getValue();
+		String username = (null == missionCode ? "" : missionCode + "-") + deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the user using User Manager service */
 		List<?> resultList = null;
@@ -772,7 +807,7 @@ public class UserCommandRunner {
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_AUTHORITIES_GRANTED, String.join(", ", (CharSequence[]) authorities.toArray()), restUser.getUsername());
+		String message = uiMsg(MSG_ID_AUTHORITIES_GRANTED, Arrays.toString(authorities.toArray()), restUser.getUsername());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -822,7 +857,7 @@ public class UserCommandRunner {
 		}
 		
 		/* Report success */
-		String message = uiMsg(MSG_ID_AUTHORITIES_REVOKED, String.join(", ", (CharSequence[]) authorities.toArray()), restUser.getUsername());
+		String message = uiMsg(MSG_ID_AUTHORITIES_REVOKED, Arrays.toString(authorities.toArray()), restUser.getUsername());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -895,7 +930,7 @@ public class UserCommandRunner {
 		
 		/* Create user group */
 		try {
-			restGroup = serviceConnection.postToService(serviceConfig.getUserManagerUrl(), URI_PATH_USERS, 
+			restGroup = serviceConnection.postToService(serviceConfig.getUserManagerUrl(), URI_PATH_GROUPS, 
 					restGroup, RestGroup.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -999,8 +1034,8 @@ public class UserCommandRunner {
 		} else {
 			// Must be a list of users
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
-				if (resultObject instanceof RestGroup) {
-					System.out.println(((RestGroup) resultObject).getGroupname());
+				if (resultObject instanceof Map) {
+					System.out.println(((Map<String, String>) resultObject).get("groupname"));
 				}
 			}
 		}

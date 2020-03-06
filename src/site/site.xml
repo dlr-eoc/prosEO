@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="prosEO"
+    xmlns="http://maven.apache.org/DECORATION/1.6.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 http://maven.apache.org/xsd/decoration-1.6.0.xsd">
+    <bannerLeft>
+        <name>prosEO</name>
+        <src>/images/icon_prosEO.svg</src>
+        <height>128px</height>
+        <href>https://github.com/dlr-eoc/prosEO</href>
+    </bannerLeft>
+    <version position="right"/>
+    <publishDate position="right"/>
+    <body>
+        <menu ref="reports" />
+        <menu ref="modules" />
+        <menu ref="parent" />
+    </body>
+</project>

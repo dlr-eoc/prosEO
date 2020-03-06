@@ -1,6 +1,6 @@
 [
     {
-      "username":               "S5P\\johndoe", 
+      "username":               "S5P-johndoe", 
       "password":               "$2a$04$nXMQTg2ZMY6k8yDvL5jD2.lthiKrmWZpOVgyu0l7tbm.JKKzyRpQW",
       "enabled":                true,
       "authorities":            [ "ROLE_USER" ]

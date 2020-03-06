@@ -233,7 +233,7 @@ public class GroupManager {
 	 * @throws NoResultException
 	 */
 	public List<RestGroup> getGroups(String mission, String groupName) throws NoResultException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({})", mission);
+		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
 		
 		// Check parameter
 		if (null == mission || "".equals(mission)) {
@@ -247,7 +247,10 @@ public class GroupManager {
 				result.add(toRestGroup(modelGroup));
 			} 
 		} else {
-			result.add(toRestGroup(groupRepository.findByGroupName(groupName)));
+			Group modelGroup = groupRepository.findByGroupName(groupName);
+			if (null != modelGroup) {
+				result.add(toRestGroup(modelGroup));
+			}
 		}
 		if (result.isEmpty()) {
 			throw new NoResultException(logError(MSG_GROUP_NOT_FOUND, MSG_ID_GROUP_NOT_FOUND, mission));

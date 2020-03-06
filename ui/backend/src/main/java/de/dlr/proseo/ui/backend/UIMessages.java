@@ -219,6 +219,9 @@ public class UIMessages {
 	public static final int MSG_ID_GROUP_CREATED = 2717;
 	public static final int MSG_ID_NO_GROUPS_FOUND = 2718;
 	public static final int MSG_ID_GROUP_NOT_FOUND_BY_NAME = 2719;
+	public static final int MSG_ID_MISSION_ALREADY_SET = 2720;
+	public static final int MSG_ID_GROUP_UPDATED = 2721;
+	public static final int MSG_ID_GROUP_DELETED = 2722;
 
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
@@ -339,6 +342,7 @@ public class UIMessages {
 		MSG_GROUP_DATA_INVALID ("(E%d) User group data invalid (cause: %s)", MSG_ID_GROUP_DATA_INVALID),
 		MSG_NO_GROUPS_FOUND ("(E%d) No user groups found for mission %s", MSG_ID_NO_GROUPS_FOUND),
 		MSG_GROUP_NOT_FOUND_BY_NAME ("(E%d) User group %s not found for mission %s", MSG_ID_GROUP_NOT_FOUND_BY_NAME),
+		MSG_MISSION_ALREADY_SET ("(E%d) Already logged in to mission %s, use of '--mission' option not allowed", MSG_ID_MISSION_ALREADY_SET),
 		
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
@@ -425,6 +429,9 @@ public class UIMessages {
 		MSG_USER_DISABLED ("(I%d) User account %s disabled", MSG_ID_USER_DISABLED),
 		MSG_AUTHORITIES_GRANTED ("(I%d) Authorities %s granted to user %s", MSG_ID_AUTHORITIES_GRANTED),
 		MSG_AUTHORITIES_REVOKED ("(I%d) Authorities %s revoked from user %s", MSG_ID_AUTHORITIES_REVOKED),
+		MSG_GROUP_CREATED ("(I%d) User group %s created", MSG_ID_GROUP_CREATED),
+		MSG_GROUP_UPDATED ("(I%d) User group %s updated", MSG_ID_GROUP_UPDATED),
+		MSG_GROUP_DELETED ("(I%d) User group %s deleted", MSG_ID_GROUP_DELETED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),

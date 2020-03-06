@@ -131,6 +131,36 @@
 				</executions>
 			</plugin>
 
+			<!-- Create HTML documentation from RAML files -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>generate-html-query</id>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>raml2html</executable>
+							<commandlineArgs>-i ${raml-path-query} -o src/site/resources/${project.artifactId}-query.html</commandlineArgs>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-html-download</id>
+						<phase>package</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>raml2html</executable>
+							<commandlineArgs>-i ${raml-path-download} -o src/site/resources/${project.artifactId}-download.html</commandlineArgs>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!-- Build Docker image -->
 			<plugin>
 				<groupId>io.fabric8</groupId>

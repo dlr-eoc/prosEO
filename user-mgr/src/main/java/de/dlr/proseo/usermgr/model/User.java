@@ -21,6 +21,11 @@ import javax.persistence.ForeignKey;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.Transient;
+
+import org.springframework.data.domain.Persistable;
 
 /**
  * A prosEO user (actually the user's credentials).
@@ -28,7 +33,7 @@ import javax.persistence.OneToMany;
  * @author Dr. Thomas Bassler
  */
 @Entity(name = "users")
-public class User {
+public class User implements Persistable<String> {
 
 	/** 
 	 * The (unique) user name, consisting of the mission code, a hyphen ("-") and the actual user name 
@@ -45,13 +50,13 @@ public class User {
 	@Column(nullable = false)
 	private Boolean enabled = true;
 	
-	/** The expiration date for the user account (default never) */
+	/** The expiration date for the user account (default [almost] never) */
 	@Column(nullable = false)
-	private Date expirationDate = Date.from(Instant.now().plus(100, ChronoUnit.YEARS));
+	private Date expirationDate = Date.from(Instant.now().plus(36500, ChronoUnit.DAYS));
 	
-	/** The expiration date of the password (default never) */
+	/** The expiration date of the password (default [almost] never) */
 	@Column(nullable = false)
-	private Date passwordExpirationDate = Date.from(Instant.now().plus(100, ChronoUnit.YEARS));
+	private Date passwordExpirationDate = Date.from(Instant.now().plus(36500, ChronoUnit.DAYS));
 	
 	/** The authorities (privileges) granted to this user */
 	@ElementCollection(fetch = FetchType.EAGER)
@@ -65,6 +70,10 @@ public class User {
 	/** The user groups this user belongs to */
 	@OneToMany
 	private Set<GroupMember> groupMemberships = new HashSet<>();
+	
+	/** Flag indicating whether this instance has been loaded already */
+	@Transient
+	private boolean isNew = true; 
 	
 	/**
 	 * Gets the user name
@@ -208,5 +217,26 @@ public class User {
 			return false;
 		User other = (User) obj;
 		return Objects.equals(username, other.username);
+	}
+
+	@Override
+	public String getId() {
+		return username;
+	}
+
+	@Override
+	public boolean isNew() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	/**
+	 * Switch "isNew" flag to indicate an existing entity after a repository call to save(…) or an instance creation
+	 * by the persistence provider. (cf. https://docs.spring.io/spring-data/jpa/docs/2.2.5.RELEASE/reference/html/#reference)
+	 */
+	@PrePersist 
+	@PostLoad
+	void markNotNew() {
+		this.isNew = false;
 	}
 }

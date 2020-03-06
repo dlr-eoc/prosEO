@@ -21,7 +21,7 @@ import de.dlr.proseo.usermgr.model.User;
  *
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, String> {
 
 	/**
 	 * Get the user with the given user name

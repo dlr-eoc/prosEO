@@ -931,6 +931,11 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: mission
+              type: string
+              description: The mission to create the user for (only valid if not yet logged in into a mission;
+                           basically intended for creating a single user with "ROLE_USERMGR" for a new mission)
+              shortForm: m
           parameters:
             - name: userName
               type: string
@@ -969,6 +974,12 @@ commands:
                            (if a password is specified here, it must be unencrypted, while in the file it must be encrypted)
         - name: delete
           description: Delete the user account with the given name
+          options:
+            - name: mission
+              type: string
+              description: The mission to delete the user from (only valid if not yet logged in into a mission;
+                           basically intended for removing the last user with "ROLE_USERMGR" from a mission before deletion)
+              shortForm: m
           parameters:
             - name: userName
               type: integer

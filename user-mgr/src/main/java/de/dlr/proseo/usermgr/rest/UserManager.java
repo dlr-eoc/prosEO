@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.usermgr.dao.UserRepository;
@@ -138,14 +141,10 @@ public class UserManager {
 		modelUser.setUsername(restUser.getUsername());
 		modelUser.setPassword(restUser.getPassword());
 		modelUser.setEnabled(restUser.getEnabled());
-		if (null == restUser.getExpirationDate()) {
-			modelUser.setExpirationDate(Date.from(Instant.MAX));
-		} else {
+		if (null != restUser.getExpirationDate()) {
 			modelUser.setExpirationDate(restUser.getExpirationDate());
 		}
-		if (null == restUser.getPasswordExpirationDate()) {
-			modelUser.setPasswordExpirationDate(Date.from(Instant.MAX));
-		} else {
+		if (null != restUser.getPasswordExpirationDate()) {
 			modelUser.setPasswordExpirationDate(restUser.getPasswordExpirationDate());
 		}
 		for (String restAuthority: restUser.getAuthorities()) {
@@ -155,6 +154,7 @@ public class UserManager {
 			modelUser.getAuthorities().add(modelAuthority);
 		}
 		
+		if (logger.isTraceEnabled()) logger.trace("<<< toModelUser()");
 		return modelUser;
 	}
 	
@@ -203,6 +203,14 @@ public class UserManager {
 		}
 		
 		// Create user
+		if (logger.isTraceEnabled()) {
+			try {
+				logger.trace("... creating user from REST data: " + (new ObjectMapper()).writeValueAsString(restUser));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		User modelUser = userRepository.save(toModelUser(restUser));
 		
 		logInfo(MSG_USER_CREATED, MSG_ID_USER_CREATED, modelUser.getUsername());

@@ -8,7 +8,7 @@
 	</parent>
 
 	<artifactId>facility-mgr</artifactId>
-	<name>facility-mgr</name>
+	<name>prosEO Facility Manager</name>
 	<description>prosEO Facility Manager - manage processing facilities for prosEO</description>
 
 	<url>https://github.com/dlr-eoc/prosEO/order-mgr</url>
@@ -102,6 +102,24 @@
 					</execution>
 				</executions>
 			</plugin>
+
+            <!-- Create HTML documentation from RAML files -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>raml2html</executable>
+                    <commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
+                </configuration>
+            </plugin>
 
 			<!-- Build Docker image -->
 			<plugin>
