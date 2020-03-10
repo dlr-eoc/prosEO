@@ -126,6 +126,7 @@
 							<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 							<failOnError>false</failOnError>
 							<quiet>true</quiet>
+                            <sourceFileExcludes>target/generated-raml-mvc/**/*.java</sourceFileExcludes><!-- Not honoured??? TODO -->
 						</configuration>
 					</reportSet>
 				</reportSets>

@@ -28,8 +28,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.rest.model.RestGroup;
-import de.dlr.proseo.model.rest.model.RestProcessor;
-import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestUser;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -52,6 +50,7 @@ public class UserCommandRunner {
 	public static final String CMD_GROUP = "group";
 	private static final String CMD_ADD = "add";
 	private static final String CMD_REMOVE = "remove";
+	private static final String CMD_MEMBERS = "members";
 	private static final String CMD_GRANT = "grant";
 	private static final String CMD_REVOKE = "revoke";
 	private static final String CMD_ENABLE = "enable";
@@ -242,7 +241,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
@@ -304,7 +303,7 @@ public class UserCommandRunner {
 			}
 		}
 		
-		/* Check command parameters (overriding values from processor class file) */
+		/* Check command parameters (overriding values from user file) */
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
@@ -518,7 +517,7 @@ public class UserCommandRunner {
 		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
-				// First parameter is processor class name
+				// First parameter is username
 				updatedUser.setUsername(loginManager.getMission() + "-" + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
@@ -615,41 +614,11 @@ public class UserCommandRunner {
 		String username = (null == missionCode ? "" : missionCode + "-") + deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the user using User Manager service */
-		List<?> resultList = null;
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
-					URI_PATH_USERS + "/" + username, 
-					List.class, loginManager.getUser(), loginManager.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return;
-		} catch (Exception e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
-		}
-		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username);
-			logger.error(message);
-			System.err.println(message);
-			return;
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		RestUser restUser = mapper.convertValue(resultList.get(0), RestUser.class);
+		RestUser restUser = readUser(username);
 		
 		/* Delete user using User Manager service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+			serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
 					URI_PATH_USERS + "/" + restUser.getUsername(), 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -898,12 +867,12 @@ public class UserCommandRunner {
 			}
 		}
 		
-		/* Check command parameters (overriding values from processor class file) */
+		/* Check command parameters (overriding values from group file) */
 		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is user group name
-				restGroup.setGroupname(param.getValue());
+				restGroup.setGroupname(loginManager.getMission() + "-" + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -1032,7 +1001,7 @@ public class UserCommandRunner {
 				return;
 			}
 		} else {
-			// Must be a list of users
+			// Must be a list of groups as map
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
 				if (resultObject instanceof Map) {
 					System.out.println(((Map<String, String>) resultObject).get("groupname"));
@@ -1041,35 +1010,484 @@ public class UserCommandRunner {
 		}
 	}
 
-	private void updateGroup(ParsedCommand command) {
-		// TODO Auto-generated method stub
+	/**
+	 * Update a group from a group file or from "attribute=value" pairs (overriding any group file entries)
+	 * 
+	 * @param updateCommand the parsed "group update" command
+	 */
+	private void updateGroup(ParsedCommand updateCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateGroup({})", (null == updateCommand ? "null" : updateCommand.getName()));
 		
+		/* Check command options */
+		File groupFile = null;
+		String groupFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		boolean isDeleteAttributes = false;
+		for (ParsedOption option: updateCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				groupFile = new File(option.getValue());
+				break;
+			case "format":
+				groupFileFormat = option.getValue().toUpperCase();
+				break;
+			case "delete-attributes":
+				isDeleteAttributes = true;
+				break;
+			}
+		}
+		
+		/* Read group file, if any */
+		RestGroup updatedGroup = null;
+		if (null == groupFile) {
+			updatedGroup = new RestGroup();
+		} else {
+			try {
+				updatedGroup = CLIUtil.parseObjectFile(groupFile, groupFileFormat, RestGroup.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from group file) */
+		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
+			ParsedParameter param = updateCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is group name
+				updatedGroup.setGroupname(loginManager.getMission() + "-" + param.getValue());
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(updatedGroup, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(updatedGroup.getGroupname());
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+
+		/* Compare attributes of database user with updated user */
+		// No modification of username allowed
+		if (null != updatedGroup.getAuthorities() && (isDeleteAttributes || !updatedGroup.getAuthorities().isEmpty())) {
+			restGroup.getAuthorities().clear();
+			restGroup.getAuthorities().addAll(updatedGroup.getAuthorities());
+		}
+		
+		/* Update user using User Manager service */
+		restGroup = modifyGroup(restGroup);
+		if (null == restGroup) {
+			// Error handled by called method;
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_GROUP_UPDATED, restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
 
-	private void deleteGroup(ParsedCommand command) {
-		// TODO Auto-generated method stub
+	/**
+	 * Delete the given group from the current mission
+	 * 
+	 * @param deleteCommand the parsed "group delete" command
+	 */
+	private void deleteGroup(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteGroup({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Get group name from command parameters */
+		if (1 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + deleteCommand.getParameters().get(0).getValue();
 		
+		/* Retrieve the group using User Manager service */
+		RestGroup restGroup = readGroup(groupname);
+		
+		/* Delete user using User Manager service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
+					URI_PATH_GROUPS + "/" + restGroup.getId(), 
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_GROUP_DELETE_FAILED, groupname, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_GROUP_DELETED, restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
 
+	/**
+	 * Add the named user(s) to the user group
+	 * 
+	 * @param command the "group add" command
+	 */
 	private void addUser(ParsedCommand command) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> addUser({})", (null == command ? "null" : command.getName()));
+
+		/* Get group name from command parameters */
+		if (1 > command.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
 		
+		/* Get user name(s) from command parameters */
+		List<String> usernames = new ArrayList<>();
+		for (int i = 1; i < command.getParameters().size(); ++i) {
+			usernames.add(loginManager.getMission() + "-" + command.getParameters().get(i).getValue());
+		}
+		if (usernames.isEmpty()) {
+			// No users to add given
+			System.err.println(uiMsg(MSG_ID_NO_USERS_GIVEN));
+			return;
+		}
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(groupname);
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Check that the users exist and add each one to the group's list of members */
+		for (String username: usernames) {
+			RestUser restUser = readUser(username);
+			if (null == restUser) {
+				// Invalid user name (at least for the selected mission)
+				System.err.println(uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username, loginManager.getMission()));
+				continue;
+			}
+			
+			/* Add user to group using User Manager service */
+			try {
+				serviceConnection.postToService(serviceConfig.getUserManagerUrl(),
+						URI_PATH_GROUPS + "/" + restGroup.getId() + "/members?username=" + username,
+						restGroup, List.class, loginManager.getUser(), loginManager.getPassword());
+			} catch (RestClientResponseException e) {
+				String message = null;
+				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_FOUND:
+					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+					break;
+				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+					break;
+				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+					break;
+				default:
+					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				}
+				System.err.println(message);
+				return;
+			} catch (RuntimeException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_USERS_ADDED, Arrays.toString(usernames.toArray()), restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
 
+	/**
+	 * Remove the named user(s) to the user group
+	 * 
+	 * @param command the "group remove" command
+	 */
 	private void removeUser(ParsedCommand command) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> removeUser({})", (null == command ? "null" : command.getName()));
+
+		/* Get group name from command parameters */
+		if (1 > command.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
 		
+		/* Get user name(s) from command parameters */
+		List<String> usernames = new ArrayList<>();
+		for (int i = 1; i < command.getParameters().size(); ++i) {
+			usernames.add(loginManager.getMission() + "-" + command.getParameters().get(i).getValue());
+		}
+		if (usernames.isEmpty()) {
+			// No users to add given
+			System.err.println(uiMsg(MSG_ID_NO_USERS_GIVEN));
+			return;
+		}
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(groupname);
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Check that the users exist and remove each one from the group's list of members */
+		for (String username: usernames) {
+			RestUser restUser = readUser(username);
+			if (null == restUser) {
+				// Invalid user name (at least for the selected mission)
+				System.err.println(uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username, loginManager.getMission()));
+				continue;
+			}
+			
+			/* Remove user from group using User Manager service */
+			try {
+				serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
+						URI_PATH_GROUPS + "/" + restGroup.getId() + "/members?username=" + username,
+						loginManager.getUser(), loginManager.getPassword());
+			} catch (RestClientResponseException e) {
+				String message = null;
+				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_FOUND:
+					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
+					break;
+				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+					break;
+				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+					break;
+				default:
+					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				}
+				System.err.println(message);
+				return;
+			} catch (RuntimeException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_USERS_REMOVED, Arrays.toString(usernames.toArray()), restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
 
+	/**
+	 * Show all members of the given group
+	 * 
+	 * @param command the "group members" command
+	 */
+	private void showGroupMembers(ParsedCommand command) {
+		if (logger.isTraceEnabled()) logger.trace(">>> revokeGroupAuthority({})", (null == command ? "null" : command.getName()));
+		
+		/* Check command options */
+		String userAccountOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
+		for (ParsedOption option: command.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				userAccountOutputFormat = option.getValue().toUpperCase();
+				break;
+			case "verbose":
+				isVerbose = true;
+				break;
+			}
+		}
+		
+		/* Get group name from command parameters */
+		if (1 > command.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(groupname);
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Read the users for the given group */
+		Object result = null;
+		
+		/* Get the user account information from the User Manager service */
+		try {
+			result = serviceConnection.getFromService(serviceConfig.getUserManagerUrl(),
+					URI_PATH_GROUPS + "/" + restGroup.getId() + "/members",
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_USERS_FOUND_IN_GROUP, groupname);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Display the user account(s) found */
+		if (isVerbose) {
+			try {
+				CLIUtil.printObject(System.out, result, userAccountOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		} else {
+			// Must be a list of users
+			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
+				if (resultObject instanceof Map) {
+					System.out.println(((Map<String, String>) resultObject).get("username"));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Grant the given authorities to the given user group for the current mission
+	 *
+	 * @param command the "group grant" command
+	 */
 	private void grantGroupAuthority(ParsedCommand command) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> grantGroupAuthority({})", (null == command ? "null" : command.getName()));
+
+		/* Get group name from command parameters */
+		if (1 > command.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
 		
+		/* Get granted authorities from command parameters */
+		List<String> authorities = new ArrayList<>();
+		for (int i = 1; i < command.getParameters().size(); ++i) {
+			authorities.add(command.getParameters().get(i).getValue());
+		}
+		if (authorities.isEmpty()) {
+			// No authorities to grant given
+			System.err.println(uiMsg(MSG_ID_NO_AUTHORITIES_GIVEN));
+			return;
+		}
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(groupname);
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Add the given authorities */
+		for (String authority: authorities) {
+			if (!restGroup.getAuthorities().contains(authority)) {
+				restGroup.getAuthorities().add(authority);
+			}
+		}
+
+		/* Update group using User Manager service */
+		restGroup = modifyGroup(restGroup);
+		if (null == restGroup) {
+			// Error handled by called method;
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_GROUP_AUTHORITIES_GRANTED, Arrays.toString(authorities.toArray()), restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
 
+	/**
+	 * Revoke the given authorities from the given group for the current mission
+	 *
+	 * @param command the "group revoke" command
+	 */
 	private void revokeGroupAuthority(ParsedCommand command) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) logger.trace(">>> revokeGroupAuthority({})", (null == command ? "null" : command.getName()));
+
+		/* Get group name from command parameters */
+		if (1 > command.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
+			return;
+		}
+		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
 		
+		/* Get granted authorities from command parameters */
+		List<String> authorities = new ArrayList<>();
+		for (int i = 1; i < command.getParameters().size(); ++i) {
+			authorities.add(command.getParameters().get(i).getValue());
+		}
+		if (authorities.isEmpty()) {
+			// No authorities to grant given
+			System.err.println(uiMsg(MSG_ID_NO_AUTHORITIES_GIVEN));
+			return;
+		}
+		
+		/* Read original group from User service */
+		RestGroup restGroup = readGroup(groupname);
+		if (null == restGroup) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Remove the given authorities */
+		restGroup.getAuthorities().removeAll(authorities);
+
+		/* Update group using User Manager service */
+		restGroup = modifyGroup(restGroup);
+		if (null == restGroup) {
+			// Error handled by called method;
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_GROUP_AUTHORITIES_REVOKED, Arrays.toString(authorities.toArray()), restGroup.getGroupname());
+		logger.info(message);
+		System.out.println(message);
 	}
+	
 	/**
 	 * Run the given command
 	 * 
@@ -1124,12 +1542,13 @@ public class UserCommandRunner {
 			switch (subcommand.getName()) {
 			case CMD_CREATE:	createGroup(subcommand); break COMMAND;
 			case CMD_SHOW:		showGroup(subcommand); break COMMAND;
-//			case CMD_UPDATE:	updateGroup(subcommand); break COMMAND;
-//			case CMD_DELETE:	deleteGroup(subcommand); break COMMAND;
-//			case CMD_ADD:		addUser(subcommand); break COMMAND;
-//			case CMD_REMOVE:	removeUser(subcommand); break COMMAND;
-//			case CMD_GRANT:		grantGroupAuthority(subcommand); break COMMAND;
-//			case CMD_REVOKE:	revokeGroupAuthority(subcommand); break COMMAND;
+			case CMD_UPDATE:	updateGroup(subcommand); break COMMAND;
+			case CMD_DELETE:	deleteGroup(subcommand); break COMMAND;
+			case CMD_ADD:		addUser(subcommand); break COMMAND;
+			case CMD_REMOVE:	removeUser(subcommand); break COMMAND;
+			case CMD_MEMBERS:	showGroupMembers(subcommand); break COMMAND;
+			case CMD_GRANT:		grantGroupAuthority(subcommand); break COMMAND;
+			case CMD_REVOKE:	revokeGroupAuthority(subcommand); break COMMAND;
 			default:
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;

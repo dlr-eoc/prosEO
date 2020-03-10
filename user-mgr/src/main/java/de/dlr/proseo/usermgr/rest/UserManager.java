@@ -223,7 +223,7 @@ public class UserManager {
 	 * 
 	 * @param mission the mission code
 	 * @return a list of Json objects representing the users authorized for the given mission
-	 * @throws NoResultException
+	 * @throws NoResultException if no user is found for the given mission
 	 */
 	public List<RestUser> getUsers(String mission) throws NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getUsers({})", mission);
@@ -297,6 +297,8 @@ public class UserManager {
 		
 		// Delete the user
 		try {
+			modelUser.getAuthorities().clear();
+			userRepository.save(modelUser);
 			userRepository.delete(modelUser);
 		} catch (Exception e) {
 			throw new RuntimeException(logError(MSG_DELETE_FAILURE, MSG_ID_DELETE_FAILURE, username, e.getMessage()));

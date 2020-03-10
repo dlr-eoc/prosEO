@@ -57,7 +57,6 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * Initialize the users, passwords and roles for the User Manager from the prosEO database
 	 * 
 	 * @param builder to manage authentications
-	 * @param dataSource the data source configured for the User Manager
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
 	@Autowired

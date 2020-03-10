@@ -104,7 +104,7 @@ public class ParsedCommand {
 	
 	@Override
 	public String toString() {
-		return "CLICommand [\n  name=" + name + ",\n  subcommand=" + subcommand + ",\n  subcommands=" + subcommand + ",\n  options=" + options
+		return "CLICommand [\n  name=" + name + ",\n  subcommand=" + subcommand + ",\n  options=" + options
 				+ ",\n  parameters=" + parameters + "\n]";
 	}
 

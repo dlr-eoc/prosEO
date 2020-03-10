@@ -310,6 +310,8 @@ public class GroupManager {
 		
 		// Delete the user group
 		try {
+			modelGroup.get().getGroupAuthorities().clear();
+			groupRepository.save(modelGroup.get());
 			groupRepository.delete(modelGroup.get());
 		} catch (Exception e) {
 			throw new RuntimeException(logError(MSG_DELETE_FAILURE, MSG_ID_DELETE_FAILURE, id, e.getMessage()));
@@ -507,11 +509,10 @@ public class GroupManager {
 	 * 
 	 * @param id the group ID
 	 * @param username the name of the user to remove
-	 * @return a Json object corresponding to the list of users after removal
 	 * @throws EntityNotFoundException if the group did not exist
 	 * @throws RuntimeException if the deletion was unsuccessful
 	 */
-	public List<RestUser> removeGroupMember(Long id, String username) throws EntityNotFoundException, RuntimeException {
+	public void removeGroupMember(Long id, String username) throws EntityNotFoundException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> removeGroupMember({}, {})", id, username);
 		
 		// Check parameter
@@ -543,18 +544,7 @@ public class GroupManager {
 			}
 		}
 		
-		// Create a list of all remaining users in the group
-		List<RestUser> result = new ArrayList<>();
-		for (GroupMember member: modelGroup.getGroupMembers()) {
-			if (username.equals(member.getUser().getUsername())) {
-				throw new RuntimeException(logError(MSG_MEMBER_REMOVAL_UNSUCCESSFUL, MSG_ID_MEMBER_REMOVAL_UNSUCCESSFUL, username, id));
-			}
-			result.add(UserManager.toRestUser(member.getUser()));
-		}
-		
 		logInfo(MSG_GROUP_MEMBER_REMOVED, MSG_ID_GROUP_MEMBER_REMOVED, username, id);
-		
-		return result;
 	}
 
 }

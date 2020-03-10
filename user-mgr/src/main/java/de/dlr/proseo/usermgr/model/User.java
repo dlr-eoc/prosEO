@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -68,7 +69,7 @@ public class User implements Persistable<String> {
 	private Set<Authority> authorities = new HashSet<>();
 	
 	/** The user groups this user belongs to */
-	@OneToMany
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<GroupMember> groupMemberships = new HashSet<>();
 	
 	/** Flag indicating whether this instance has been loaded already */

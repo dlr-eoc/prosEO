@@ -1039,7 +1039,7 @@ commands:
             - name: verbose
               type: boolean
               description: If set, give user group details, otherwise show group names only (setting group name parameter
-                           implies verbose)ds
+                           implies verbose)
               shortForm: v
           parameters:
             - name: groupName
@@ -1082,7 +1082,7 @@ commands:
               description: Delete attributes not given in the user group definition file and/or the command parameters
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: true
               description: The name of the user group to update (without mission prefix; mandatory if not read from file)
             - name: attribute
@@ -1096,12 +1096,12 @@ commands:
             - name: groupName
               type: string
               optional: false
-              description: The name of the user account to delete (without mission prefix)
+              description: The name of the user group to delete (without mission prefix)
         - name: grant
           description: Grant authorities for the current mission to the user group
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: false
               description: The name of the user group to grant authorities to (without mission prefix)
             - name: authority
@@ -1121,12 +1121,28 @@ commands:
               optional: false
               repeatable: true
               description: An authority to revoke (multiple authorities allowed)
+        - name: members
+          description: List the user accounts of a user group (for the current mission only, users may have different
+                       group associations in different missions)
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give user details, otherwise show user names only
+              shortForm: v
+          parameters:
+            - name: groupName
+              type: string
+              optional: false
+              description: The name of the user group to list the users for (without mission prefix)
         - name: add
           description: Add user accounts to the user group (for the current mission only, users may have different
                        group associations in different missions)
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: false
               description: The name of the user group to add users to (without mission prefix)
             - name: userName
@@ -1138,7 +1154,7 @@ commands:
           description: Remove user accounts from the user group (for the current mission only)
           parameters:
             - name: groupName
-              type: integer
+              type: string
               optional: false
               description: The name of the user group to remove users from (without mission prefix)
             - name: userName

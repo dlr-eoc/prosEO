@@ -192,7 +192,7 @@ public class GroupControllerImpl implements GroupController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyGroup({}, {})", id, username);
 		
 		try {
-			return new ResponseEntity<>(groupManager.addGroupMember(id, username), HttpStatus.OK);
+			return new ResponseEntity<>(groupManager.addGroupMember(id, username), HttpStatus.CREATED);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
@@ -214,7 +214,8 @@ public class GroupControllerImpl implements GroupController {
 		if (logger.isTraceEnabled()) logger.trace(">>> removeGroupMember({}, {})", id, username);
 		
 		try {
-			return new ResponseEntity<>(groupManager.removeGroupMember(id, username), HttpStatus.OK);
+			groupManager.removeGroupMember(id, username);
+			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (RuntimeException e) {

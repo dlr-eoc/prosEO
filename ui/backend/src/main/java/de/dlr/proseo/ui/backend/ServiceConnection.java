@@ -63,6 +63,7 @@ public class ServiceConnection {
 	/**
 	 * Calls a prosEO service at the given location with HTTP GET
 	 * 
+	 * @param <T> the class of the REST object to return
 	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
 	 * @param clazz the class of the return object
@@ -112,8 +113,9 @@ public class ServiceConnection {
 	}
 	
 	/**
-	 * Calls a prosEO service at the given location with HTTP GET
+	 * Calls a prosEO service at the given location with HTTP PUT
 	 * 
+	 * @param <T> the class of the REST object to use as PUT data
 	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
 	 * @param clazz the class of the return object
@@ -165,6 +167,7 @@ public class ServiceConnection {
 	/**
 	 * Calls a prosEO service at the given location with HTTP Post
 	 * 
+	 * @param <T> the class of the REST object to use as POST data
 	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
 	 * @param restObject the object to post to the service
@@ -218,6 +221,7 @@ public class ServiceConnection {
 	/**
 	 * Calls a prosEO service at the given location with HTTP Patch
 	 * 
+	 * @param <T> the class of the REST object to use as PATCH data
 	 * @param serviceUrl the base URL of the service (protocol, hostname, port, base URI)
 	 * @param requestPath the specific request path including request parameters
 	 * @param restObject the object to patch to the service
@@ -308,7 +312,6 @@ public class ServiceConnection {
 	 * @param requestPath the specific request path including request parameters
 	 * @param username the username for basic HTTP authentication (optional)
 	 * @param password the password for basic HTTP authentication (optional)
-	 * @return the body of the HTTP response converted into an object of the expected class
 	 * @throws RestClientException if an error (HTTP status code 304, 4xx or 5xx) occurred in the communication to the service
 	 */
 	public void deleteFromService(String serviceUrl, String requestPath, String username, String password) throws RestClientException {

@@ -222,6 +222,13 @@ public class UIMessages {
 	public static final int MSG_ID_MISSION_ALREADY_SET = 2720;
 	public static final int MSG_ID_GROUP_UPDATED = 2721;
 	public static final int MSG_ID_GROUP_DELETED = 2722;
+	public static final int MSG_ID_GROUP_DELETE_FAILED = 2723;
+	public static final int MSG_ID_GROUP_AUTHORITIES_GRANTED = 2724;
+	public static final int MSG_ID_GROUP_AUTHORITIES_REVOKED = 2725;
+	public static final int MSG_ID_NO_USERS_GIVEN = 2726;
+	public static final int MSG_ID_USERS_ADDED = 2727;
+	public static final int MSG_ID_USERS_REMOVED = 2728;
+	public static final int MSG_ID_NO_USERS_FOUND_IN_GROUP = 2729;
 
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
@@ -343,6 +350,9 @@ public class UIMessages {
 		MSG_NO_GROUPS_FOUND ("(E%d) No user groups found for mission %s", MSG_ID_NO_GROUPS_FOUND),
 		MSG_GROUP_NOT_FOUND_BY_NAME ("(E%d) User group %s not found for mission %s", MSG_ID_GROUP_NOT_FOUND_BY_NAME),
 		MSG_MISSION_ALREADY_SET ("(E%d) Already logged in to mission %s, use of '--mission' option not allowed", MSG_ID_MISSION_ALREADY_SET),
+		MSG_GROUP_DELETE_FAILED ("(E%d) Deletion of user group %s failed (cause: %s)", MSG_ID_GROUP_DELETE_FAILED),
+		MSG_NO_USERS_GIVEN ("(E%d) No users given in command", MSG_ID_NO_USERS_GIVEN),
+		MSG_NO_USERS_FOUND_IN_GROUP ("(E%d) No user accounts found for user group %s", MSG_ID_NO_USERS_FOUND_IN_GROUP),
 		
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
@@ -432,6 +442,10 @@ public class UIMessages {
 		MSG_GROUP_CREATED ("(I%d) User group %s created", MSG_ID_GROUP_CREATED),
 		MSG_GROUP_UPDATED ("(I%d) User group %s updated", MSG_ID_GROUP_UPDATED),
 		MSG_GROUP_DELETED ("(I%d) User group %s deleted", MSG_ID_GROUP_DELETED),
+		MSG_GROUP_AUTHORITIES_GRANTED ("(I%d) Authorities %s granted to group %s", MSG_ID_GROUP_AUTHORITIES_GRANTED),
+		MSG_GROUP_AUTHORITIES_REVOKED ("(I%d) Authorities %s revoked from group %s", MSG_ID_GROUP_AUTHORITIES_REVOKED),
+		MSG_USERS_ADDED ("(I%d) Users %s added to group %s", MSG_ID_USERS_ADDED),
+		MSG_USERS_REMOVED ("(I%d) Users %s removed from group %s", MSG_ID_USERS_REMOVED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),
@@ -477,6 +491,10 @@ public class UIMessages {
 	
 	/**
 	 * Retrieve a message string by message ID (as a template for String.format())
+	 * 
+	 * @param messageId the ID of the message to return
+	 * @param messageParameters an arbitrary number of parameters for the message template
+	 * @return a fully formatted message
 	 */
 	public static String uiMsg(int messageId, Object... messageParameters) {
 		if (logger.isTraceEnabled()) logger.trace(">>> uiMsg({}, {})", messageId, messageParameters);

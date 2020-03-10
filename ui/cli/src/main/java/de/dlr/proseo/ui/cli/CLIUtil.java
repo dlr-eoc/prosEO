@@ -141,7 +141,7 @@ public class CLIUtil {
 	
 	/**
 	 * Set an object attribute from an "attribute=value" parameter using reflection. Supported attribute types are
-	 * String, Date, Long and List<String>.
+	 * String, Date, Long and List&lt;String&gt;.
 	 * 
 	 * @param restObject the object to set the attribute in
 	 * @param attributeParameter a string of the form "attribute=value", where "value" may be a comma-separated string list
