@@ -92,6 +92,27 @@ commands:
               type: string
               optional: true
               description: The code of the mission to list
+        - name: create
+          description: Create a new earth observation mission in prosEO
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the mission definitions from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: missionCode
+              type: string
+              optional: true
+              description: The code of the mission (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A mission attribute to update in the form "<attribute name>=<attribute value>",
+                           overrides values given in the mission definition file
         - name: update
           description: Update the mission attributes; if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
@@ -963,7 +984,7 @@ commands:
               description: Delete attributes not given in the user account definition file and/or the command parameters
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: true
               description: The name of the user account to update (without mission prefix; mandatory if not read from file)
             - name: attribute
@@ -982,21 +1003,21 @@ commands:
               shortForm: m
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to delete (without mission prefix)
         - name: enable
           description: Enable the user account with the given name
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to enable (without mission prefix)
         - name: disable
           description: Disable the user account with the given name
           parameters:
             - name: userName
-              type: integer
+              type: string
               optional: false
               description: The name of the user account to disable (without mission prefix)
         - name: grant

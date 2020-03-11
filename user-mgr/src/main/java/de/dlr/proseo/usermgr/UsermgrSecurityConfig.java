@@ -17,8 +17,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import de.dlr.proseo.usermgr.rest.model.RestUser;
+import de.dlr.proseo.usermgr.rest.UserManager;
 
 /**
  * Security configuration for prosEO UserManager module
@@ -32,6 +40,18 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	/** Datasource as configured in the application properties */
 	@Autowired
 	private DataSource dataSource;
+	
+	/** The User Manager configuration */
+	@Autowired
+	private UsermgrConfiguration config;
+
+	/** The user manager */
+	@Autowired
+	private UserManager userManager;
+
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(UsermgrSecurityConfig.class);
@@ -64,7 +84,6 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		logger.info("Initializing authentication from user details service ");
 
 		builder.userDetailsService(userDetailsService());
-
 	}
 
 	/**
@@ -89,6 +108,29 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
+		
+		// Make sure one initial user exists
+		try {
+			jdbcDaoImpl.loadUserByUsername("sysadm");
+		} catch (UsernameNotFoundException e) {
+			logger.info("Creating bootstrap user");
+			RestUser restUser = new RestUser();
+			restUser.setUsername(config.getDefaultUserName());
+			restUser.setPassword(passwordEncoder().encode(config.getDefaultUserPassword()));
+			restUser.setEnabled(true);
+			restUser.getAuthorities().add("ROLE_ROOT");
+			final RestUser transactionalRestUser = restUser;
+			
+			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+			try {
+				restUser = transactionTemplate.execute((status) -> {
+					return userManager.createUser(transactionalRestUser);
+				});
+			} catch (Exception e1) {
+				logger.error("Creation of bootstrap user failed (cause: " + e1.getMessage() + ")", e1);
+			}
+		}
+		
 		return jdbcDaoImpl;
 	}
 }

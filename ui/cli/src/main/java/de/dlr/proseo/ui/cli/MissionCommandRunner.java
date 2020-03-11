@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -55,6 +57,8 @@ public class MissionCommandRunner {
 	private static final String CMD_REMOVE = "remove";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
+	private static final String PROMPT_MISSION_NAME = "Mission name (empty field cancels): ";
+	private static final String PROMPT_FILE_TEMPLATE = "Product file name template (empty field cancels): ";
 	private static final String PROMPT_SPACECRAFT_CODE = "Spacecraft code (empty field cancels): ";
 	private static final String PROMPT_SPACECRAFT_NAME = "Spacecraft name (empty field cancels): ";
 	private static final String PROMPT_ORBIT_NUMBER = "Orbit number (empty field cancels): ";
@@ -118,6 +122,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
 				break;
 			default:
@@ -133,6 +138,111 @@ public class MissionCommandRunner {
 			e.printStackTrace(System.err);
 			return null;
 		}
+	}
+
+	/**
+	 * Create a new earth observation mission in prosEO; if the input is not from a file, the user will be prompted for mandatory 
+	 * attributes not given on the command line
+	 * 
+	 * @param createCommand the parsed "mission create" command
+	 */
+	private void createMission(ParsedCommand createCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", (null == createCommand ? "null" : createCommand.getName()));
+		
+		/* Check command options */
+		File missionFile = null;
+		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		for (ParsedOption option: createCommand.getOptions()) {
+			switch(option.getName()) {
+			case "file":
+				missionFile = new File(option.getValue());
+				break;
+			case "format":
+				missionFileFormat = option.getValue().toUpperCase();
+				break;
+			}
+		}
+		
+		/* Read mission file, if any */
+		RestMission restMission = null;
+		if (null == missionFile) {
+			restMission = new RestMission();
+		} else {
+			try {
+				restMission = CLIUtil.parseObjectFile(missionFile, missionFileFormat, RestMission.class);
+			} catch (IllegalArgumentException | IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			}
+		}
+		
+		/* Check command parameters (overriding values from mission file) */
+		for (int i = 0; i < createCommand.getParameters().size(); ++i) {
+			ParsedParameter param = createCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is mission code
+				restMission.setCode(param.getValue());
+			} else {
+				// Remaining parameters are "attribute=value" parameters
+				try {
+					CLIUtil.setAttribute(restMission, param.getValue());
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					return;
+				}
+			}
+		}
+		
+		/* Prompt user for missing mandatory attributes */
+		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null == restMission.getName() || restMission.getName().isBlank()) {
+			System.out.print(PROMPT_MISSION_NAME);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restMission.setName(response);
+		}
+		if (null == restMission.getProductFileTemplate() || restMission.getProductFileTemplate().isBlank()) {
+			System.out.print(PROMPT_FILE_TEMPLATE);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restMission.setProductFileTemplate(response);
+		}
+		
+		/* Create mission */
+		try {
+			restMission = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), URI_PATH_MISSIONS, 
+					restMission, RestMission.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+
+		/* Report success, giving newly assigned processor class ID */
+		String message = uiMsg(MSG_ID_MISSION_CREATED,
+				restMission.getCode(), restMission.getId());
+		logger.info(message);
+		System.out.println(message);
 	}
 	
 	/**
@@ -184,6 +294,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
 				break;
 			default:
@@ -288,6 +399,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
 				break;
 			default:
@@ -413,6 +525,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
 				break;
 			default:
@@ -492,6 +605,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
 				break;
 			default:
@@ -631,6 +745,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
 				break;
 			default:
@@ -700,6 +815,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_NO_ORBITS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
 				break;
 			default:
@@ -835,6 +951,7 @@ public class MissionCommandRunner {
 							updatedOrbit.getOrbitNumber(), updatedOrbit.getSpacecraftCode());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
 					break;
 				default:
@@ -874,6 +991,7 @@ public class MissionCommandRunner {
 					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
 					break;
 				default:
@@ -943,6 +1061,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_NO_ORBITS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
 				break;
 			default:
@@ -1064,6 +1183,7 @@ public class MissionCommandRunner {
 					return;
 				}
 			// Handle commands for processors
+			case CMD_CREATE:	createMission(subcommand); break COMMAND;
 			case CMD_SHOW:		showMission(subcommand); break COMMAND;
 			case CMD_UPDATE:	updateMission(subcommand); break COMMAND;
 			default:

@@ -219,6 +219,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
@@ -282,6 +283,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_NO_PRODUCTS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
@@ -385,6 +387,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
@@ -444,6 +447,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
@@ -496,6 +500,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:
@@ -566,6 +571,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
 				break;
 			default:

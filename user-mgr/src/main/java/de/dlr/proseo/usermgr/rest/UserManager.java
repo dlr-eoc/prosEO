@@ -203,14 +203,6 @@ public class UserManager {
 		}
 		
 		// Create user
-		if (logger.isTraceEnabled()) {
-			try {
-				logger.trace("... creating user from REST data: " + (new ObjectMapper()).writeValueAsString(restUser));
-			} catch (JsonProcessingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 		User modelUser = userRepository.save(toModelUser(restUser));
 		
 		logInfo(MSG_USER_CREATED, MSG_ID_USER_CREATED, modelUser.getUsername());

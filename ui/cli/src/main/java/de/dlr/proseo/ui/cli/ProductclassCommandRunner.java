@@ -122,6 +122,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND, productType);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -259,6 +260,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCTCLASS_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -316,6 +318,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -442,6 +445,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -495,6 +499,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
@@ -640,6 +645,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -710,6 +716,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -839,6 +846,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -919,6 +927,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			default:
@@ -980,6 +989,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, ruleId);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTCLASSES, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:

@@ -137,6 +137,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, orderIdentifier);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -364,6 +365,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -429,6 +431,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_NO_ORDERS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -541,6 +544,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, updatedOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -626,6 +630,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -677,6 +682,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -731,6 +737,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -802,6 +809,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -869,6 +877,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -923,6 +932,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -987,6 +997,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -1041,6 +1052,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:
@@ -1098,6 +1110,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
 				break;
 			default:

@@ -104,6 +104,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORBITS_UPDATED = 2856;
 	public static final int MSG_ID_ORBIT_DELETE_FAILED = 2857;
 	public static final int MSG_ID_ORBITS_DELETED = 2858;
+	public static final int MSG_ID_MISSION_CREATED = 2859;
 	
 	// Product class CLI
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
@@ -400,6 +401,7 @@ public class UIMessages {
 		MSG_SYNTAX_LOADED ("(I%d) Command line syntax loaded from syntax file %s", MSG_ID_SYNTAX_LOADED),
 		
 		// Mission CLI
+		MSG_MISSION_CREATED ("(I%d) Mission %s created (database ID %d)", MSG_ID_MISSION_CREATED),
 		MSG_MISSION_UPDATED ("(I%d) Mission %s updated (new version %d)", MSG_ID_MISSION_UPDATED),
 		MSG_SPACECRAFT_ADDED ("(I%d) Spacecraft %s added (database ID %d)", MSG_ID_SPACECRAFT_ADDED),
 		MSG_SPACECRAFT_REMOVED ("(I%d) Spacecraft %s removed from mission %s", MSG_ID_SPACECRAFT_REMOVED),

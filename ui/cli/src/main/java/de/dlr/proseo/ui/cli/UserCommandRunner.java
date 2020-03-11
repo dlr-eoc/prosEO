@@ -120,6 +120,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 				break;
 			default:
@@ -158,6 +159,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 				break;
 			default:
@@ -200,6 +202,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_NAME, groupName,  loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 				break;
 			default:
@@ -244,6 +247,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 				break;
 			default:
@@ -372,6 +376,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 				break;
 			default:
@@ -430,6 +435,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_NO_USERS_FOUND, loginManager.getMission());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 					break;
 				default:
@@ -628,6 +634,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, restUser.getUsername());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
@@ -908,6 +915,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 				break;
 			default:
@@ -966,6 +974,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_NO_GROUPS_FOUND, loginManager.getMission());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
 					break;
 				default:
@@ -1124,6 +1133,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
@@ -1203,6 +1213,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 					break;
 				default:
@@ -1280,6 +1291,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
 					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 					break;
 				default:
@@ -1351,6 +1363,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_NO_USERS_FOUND_IN_GROUP, groupname);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
 				break;
 			default:
