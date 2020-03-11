@@ -1,23 +1,15 @@
 spring:
-#    jpa:
-#        database-platform: org.hibernate.dialect.PostgreSQLDialect
-#        hibernate.ddl-auto: update
-#    datasource:
-#        url: jdbc:postgresql://proseo-db:5432/proseo
-#        username: postgres
-#        password: sequel09Master
     main:
         web-application-type: NONE
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
     file: proseo-ui-cli.log
 proseo:
-    user: NONE
-    password: NONE
+    cli:
+        syntaxfile: ui-cli-syntax.yml
+
     userManager:
         url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     ingestor:
@@ -30,5 +22,3 @@ proseo:
         url: http://proseo-processor-mgr:8080/proseo/processor-mgr/v0.1
     productClassManager:
         url: http://proseo-productclass-mgr:8080/proseo/productclass-mgr/v0.1
-    cli:
-        syntaxfile: ui-cli-syntax.yml
