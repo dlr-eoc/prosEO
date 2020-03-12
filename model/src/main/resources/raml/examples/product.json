@@ -6,6 +6,7 @@
     "productClass": "AAI",
     "fileClass": "TEST",
     "mode": "OFFL",
+    "productQuality": "EXPERIMENTAL",
     "sensingStartTime": "2018-06-13T09:23:45.396521",
     "sensingStopTime": "2018-06-13T10:53:45.396521",
     "generationTime": "2019-10-05T10:12:39.000000",

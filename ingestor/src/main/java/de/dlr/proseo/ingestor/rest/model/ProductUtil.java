@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Utility methods for products, e. g. for conversion between prosEO model and REST model
@@ -92,16 +93,13 @@ public class ProductUtil {
 		restProduct.setFileClass(modelProduct.getFileClass());
 		restProduct.setMode(modelProduct.getMode());
 		if (null != modelProduct.getSensingStartTime()) {
-			restProduct.setSensingStartTime(
-					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()));
+			restProduct.setSensingStartTime(OrbitTimeFormatter.format(modelProduct.getSensingStartTime()));
 		}
 		if (null != modelProduct.getSensingStopTime()) {
-			restProduct.setSensingStopTime(
-					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()));
+			restProduct.setSensingStopTime(OrbitTimeFormatter.format(modelProduct.getSensingStopTime()));
 		}
 		if (null != modelProduct.getGenerationTime()) {
-			restProduct.setGenerationTime(
-					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelProduct.getGenerationTime()));
+			restProduct.setGenerationTime(OrbitTimeFormatter.format(modelProduct.getGenerationTime()));
 		}
 		for (Product componentProduct: modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
@@ -171,19 +169,19 @@ public class ProductUtil {
 		modelProduct.setMode(restProduct.getMode());
 		try {
 			modelProduct.setSensingStartTime(
-					Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStartTime())));
+					Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStartTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_START_TIME, MSG_ID_INVALID_SENSING_START_TIME,
 					restProduct.getSensingStartTime()));
 		}
 		try {
-			modelProduct.setSensingStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getSensingStopTime())));
+			modelProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStopTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_STOP_TIME, MSG_ID_INVALID_SENSING_STOP_TIME,
 					restProduct.getSensingStartTime()));
 		}
 		try {
-			modelProduct.setGenerationTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(restProduct.getGenerationTime())));
+			modelProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
 					restProduct.getGenerationTime()));

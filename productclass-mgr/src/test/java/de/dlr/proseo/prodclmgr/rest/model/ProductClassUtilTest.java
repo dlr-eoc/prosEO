@@ -51,8 +51,7 @@ public class ProductClassUtilTest {
 	private static final String TEST_PARAMETER_KEY = "revision";
 	private static final String TEST_MODE = "OFFL";
 	private static final String TEST_PRODUCT_CLASS_DESCRIPTION = "Suomi NPP cloud cover";
-	private static final String TEST_MISSION_TYPE = "L2__NPP___";
-	private static final String TEST_PRODUCT_TYPE = "NPP";
+	private static final String TEST_PRODUCT_TYPE = "L2__NPP___";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassUtilTest.class);
@@ -104,7 +103,6 @@ public class ProductClassUtilTest {
 		}
 		productClass.setMission(mission);
 		productClass.setProductType(TEST_PRODUCT_TYPE);
-		productClass.setMissionType(TEST_MISSION_TYPE);
 		productClass.setDescription(TEST_PRODUCT_CLASS_DESCRIPTION);
 		productClass.setProcessorClass(processorClass);
 		productClass.setEnclosingClass(enclosingProductClass);
@@ -190,7 +188,6 @@ public class ProductClassUtilTest {
 		restProductClass.setVersion(Long.valueOf(TEST_PRODUCT_CLASS_VERSION));
 		restProductClass.setMissionCode(TEST_MISSION_CODE);
 		restProductClass.setProductType(TEST_PRODUCT_TYPE);
-		restProductClass.setMissionType(TEST_MISSION_TYPE);
 		restProductClass.setTypeDescription(TEST_PRODUCT_CLASS_DESCRIPTION);
 		
 		// Copy to model product class

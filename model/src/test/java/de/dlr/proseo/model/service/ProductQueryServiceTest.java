@@ -31,13 +31,13 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -56,13 +56,11 @@ public class ProductQueryServiceTest {
 
 	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
-	private static final String TEST_TARGET_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_TARGET_MISSION_TYPE = "L2__FRESCO_";
-	private static final String TEST_SOURCE_PRODUCT_TYPE = "L1B";
-	private static final String TEST_SOURCE_MISSION_TYPE = "L1B________";
+	private static final String TEST_TARGET_PRODUCT_TYPE = "L2__FRESCO_";
+	private static final String TEST_SOURCE_PRODUCT_TYPE = "L1B________";
 	private static final String TEST_MODE = "OFFL";
-	private static final String TEST_SELECTION_RULE = "FOR L1B/revision:1,mode:OFFL SELECT ValIntersect(0, 0)";
-	private static final String TEST_SELECTION_RULE_MINCOVER = "FOR L1B SELECT ValIntersect(0, 0) MINCOVER(70)";
+	private static final String TEST_SELECTION_RULE = "FOR L1B________/revision:1,mode:OFFL SELECT ValIntersect(0, 0)";
+	private static final String TEST_SELECTION_RULE_MINCOVER = "FOR L1B________ SELECT ValIntersect(0, 0) MINCOVER(70)";
 	private static final Instant TEST_START_TIME_EARLY = Instant.parse("2009-08-29T23:00:00Z");
 	private static final Instant TEST_STOP_TIME_EARLY = Instant.parse("2009-08-30T01:00:00Z");
 	private static final Instant TEST_START_TIME_LATE = Instant.parse("2009-08-30T01:00:00Z");
@@ -128,9 +126,9 @@ public class ProductQueryServiceTest {
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
 		testProduct.setUuid(UUID.randomUUID());
 		testProduct.setMode(testData[4]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[5])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
+		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[5])));
+		testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));
+		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
 		ProductFile testProductFile = new ProductFile();
@@ -165,7 +163,6 @@ public class ProductQueryServiceTest {
 			targetProdClass = new ProductClass();
 			targetProdClass.setMission(mission);
 			targetProdClass.setProductType(TEST_TARGET_PRODUCT_TYPE);
-			targetProdClass.setMissionType(TEST_TARGET_MISSION_TYPE);
 			targetProdClass = RepositoryService.getProductClassRepository().save(targetProdClass);
 			mission.getProductClasses().add(targetProdClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);
@@ -178,7 +175,6 @@ public class ProductQueryServiceTest {
 			sourceProdClass = new ProductClass();
 			sourceProdClass.setMission(mission);
 			sourceProdClass.setProductType(TEST_SOURCE_PRODUCT_TYPE);
-			sourceProdClass.setMissionType(TEST_SOURCE_MISSION_TYPE);
 			sourceProdClass = RepositoryService.getProductClassRepository().save(sourceProdClass);
 			mission.getProductClasses().add(sourceProdClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);

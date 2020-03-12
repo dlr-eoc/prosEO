@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.ingestor.rest.ProductControllerTest;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.Parameter.ParameterType;
 
 /**
@@ -68,9 +68,9 @@ public class ProductUtilTest {
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
 		testProduct.setFileClass(testData[4]);
 		testProduct.setMode(testData[5]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
+		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct.setUuid(UUID.fromString(testData[10]));
@@ -128,11 +128,11 @@ public class ProductUtilTest {
 				restProduct.getProductClass());
 		assertEquals("Unexpected file class: ", modelProduct.getFileClass(), restProduct.getFileClass());
 		assertEquals("Unexpected mode: ", modelProduct.getMode(), restProduct.getMode());
-		assertEquals("Unexpected sensing start: ", Orbit.orbitTimeFormatter.format(modelProduct.getSensingStartTime()),
+		assertEquals("Unexpected sensing start: ", OrbitTimeFormatter.format(modelProduct.getSensingStartTime()),
 				restProduct.getSensingStartTime());
-		assertEquals("Unexpected sensing stop: ", Orbit.orbitTimeFormatter.format(modelProduct.getSensingStopTime()),
+		assertEquals("Unexpected sensing stop: ", OrbitTimeFormatter.format(modelProduct.getSensingStopTime()),
 				restProduct.getSensingStopTime());
-		assertEquals("Unexpected product generation: ", Orbit.orbitTimeFormatter.format(modelProduct.getGenerationTime()),
+		assertEquals("Unexpected product generation: ", OrbitTimeFormatter.format(modelProduct.getGenerationTime()),
 				restProduct.getGenerationTime());
 		assertEquals("Unexpected number of parameters", modelProduct.getParameters().size(), restProduct.getParameters().size());
 		for (int i = 0; i < modelProduct.getParameters().size(); ++i) {

@@ -15,9 +15,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManagerFactory;
 
-import org.assertj.core.util.Sets;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -41,28 +38,25 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Spacecraft;
-import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
 import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
 import de.dlr.proseo.ordermgr.rest.model.RestOrder;
-import net.bytebuddy.asm.Advice.This;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -182,7 +176,7 @@ public class OrderControllerTest {
 			//Adding processing order parameters
 			testOrder.setMission(RepositoryService.getMissionRepository().findByCode(testMission[0][2]));
 			testOrder.setId(Long.parseLong(testData[0]));
-			testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[2])));
+			testOrder.setExecutionTime(Instant.from(OrbitTimeFormatter.parse(testData[2])));
 			testOrder.setIdentifier(testData[3]);
 			testOrder.setOrderState(OrderState.valueOf(testData[4]));
 			testOrder.setProcessingMode(testData[5]);
@@ -194,8 +188,8 @@ public class OrderControllerTest {
 				testOrder.setSliceDuration(Duration.parse(testData[6]));
 			}
 			testOrder.setSliceOverlap(Duration.ZERO);
-			testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
-			testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[10])));
+			testOrder.setStartTime(Instant.from(OrbitTimeFormatter.parse(testData[9])));
+			testOrder.setStopTime(Instant.from(OrbitTimeFormatter.parse(testData[10])));
 			
 			for (int i = 0; i < testFilterConditions.length; ++i) {
 				Parameter filterCondition = new Parameter();

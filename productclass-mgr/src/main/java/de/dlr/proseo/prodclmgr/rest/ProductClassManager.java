@@ -530,10 +530,6 @@ public class ProductClassManager {
 			productClassChanged = true;
 			modelProductClass.setProductType(changedProductClass.getProductType());
 		}
-		if (!modelProductClass.getMissionType().equals(changedProductClass.getMissionType())) {
-			productClassChanged = true;
-			modelProductClass.setMissionType(changedProductClass.getMissionType());
-		}
 		if (null == modelProductClass.getDescription() && null != changedProductClass.getDescription()
 				|| null != modelProductClass.getDescription() && !modelProductClass.getDescription().equals(changedProductClass.getDescription())) {
 			productClassChanged = true;

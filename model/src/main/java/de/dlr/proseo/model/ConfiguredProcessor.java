@@ -6,6 +6,8 @@
 package de.dlr.proseo.model;
 
 import java.util.Objects;
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
@@ -19,7 +21,10 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "identifier"))
+@Table(indexes = {
+	@Index(unique = true, columnList = "identifier"),
+	@Index(unique = true, columnList = "uuid")
+})
 public class ConfiguredProcessor extends PersistentObject {
 
 	/** 
@@ -27,6 +32,11 @@ public class ConfiguredProcessor extends PersistentObject {
 	 * the version information of the associated Processor and Configuration objects)
 	 */
 	private String identifier;
+	
+	/**
+	 * A universally unique identifier (UUID) for this configured processor to identify it as "workflow" on ESA's ODPRIP API.
+	 */
+	private UUID uuid;
 	
 	/** The processor version */
 	@ManyToOne
@@ -52,6 +62,24 @@ public class ConfiguredProcessor extends PersistentObject {
 	 */
 	public void setIdentifier(String identifier) {
 		this.identifier = identifier;
+	}
+
+	/**
+	 * Gets the universally unique identifier (UUID) of this processor configuration
+	 * 
+	 * @return the UUID
+	 */
+	public UUID getUuid() {
+		return uuid;
+	}
+
+	/**
+	 * Sets the universally unique identifier (UUID) of this processor configuration
+	 * 
+	 * @param uuid the UUID to set
+	 */
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
 	}
 
 	/**

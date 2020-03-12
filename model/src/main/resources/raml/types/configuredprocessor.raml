@@ -12,6 +12,10 @@
       identifier:
         type: string
         description: User-defined identifier for this processor configuration
+      uuid?:
+        type: string
+        description: Universally unique identifier for this processor configuration ("workflow" in ESA terminology)
+        pattern: ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$
       missionCode:
         type: string
         description: The mission code (e. g. S5P)

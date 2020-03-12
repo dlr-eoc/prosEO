@@ -33,6 +33,7 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Unit test cases for ProductRepository
@@ -49,9 +50,8 @@ public class ProductRepositoryTest {
 	private static final String TEST_CODE = "$ABC$";
 	private static final String TEST_SC_CODE = "$XYZ$";
 	private static final int TEST_ORBIT_NUMBER = 47111174;
-	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
-	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
-	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
+	private static final Instant TEST_START_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final String TEST_PRODUCT_TYPE = "$L2__FRESCO_$";
 	private static final UUID TEST_UUID = UUID.randomUUID();
 	
 	/** A logger for this class */
@@ -106,7 +106,6 @@ public class ProductRepositoryTest {
 
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
 		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 		mission.getProductClasses().add(prodClass);
@@ -131,13 +130,6 @@ public class ProductRepositoryTest {
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndOrbitNumberBetween completed");
 		
-		// Test findByMissionCodeAndMissionTypeAndOrbitNumberBetween
-		products = RepositoryService.getProductRepository().findByMissionCodeAndMissionTypeAndOrbitNumberBetween(
-				TEST_CODE, TEST_MISSION_TYPE, TEST_ORBIT_NUMBER, TEST_ORBIT_NUMBER + 1);
-		assertFalse("Find by mission code, product type and orbit failed for Product", products.isEmpty());
-		
-		logger.info("OK: Test for findByMissionCodeAndMissionTypeAndOrbitNumberBetween completed");
-		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeBetween
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeBetween(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
@@ -145,26 +137,12 @@ public class ProductRepositoryTest {
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeBetween completed");
 		
-		// Test findByMissionCodeAndMissionTypeAndSensingStartTimeBetween
-		products = RepositoryService.getProductRepository().findByMissionCodeAndMissionTypeAndSensingStartTimeBetween(
-				TEST_CODE, TEST_MISSION_TYPE, TEST_START_TIME, TEST_START_TIME.plusSeconds(200));
-		assertFalse("Find by mission code, mission type and start time failed for Product", products.isEmpty());
-		
-		logger.info("OK: Test for findByMissionCodeAndMissionTypeAndSensingStartTimeBetween completed");
-		
 		// Test findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater (testing intersection)
 		products = RepositoryService.getProductRepository().findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater(
 				TEST_CODE, TEST_PRODUCT_TYPE, TEST_START_TIME.plusSeconds(1000), TEST_START_TIME.minusSeconds(200));
 		assertFalse("Find by mission code, product type and start/stop time failed for Product", products.isEmpty());
 		
 		logger.info("OK: Test for findByMissionCodeAndProductTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
-		
-		// Test findByMissionCodeAndMissionTypeAndSensingStartTimeLessAndSensingStopTimeGreater (testing coverage)
-		products = RepositoryService.getProductRepository().findByMissionCodeAndMissionTypeAndSensingStartTimeLessAndSensingStopTimeGreater(
-				TEST_CODE, TEST_MISSION_TYPE, TEST_START_TIME.plusSeconds(200), TEST_START_TIME.plusSeconds(600));
-		assertFalse("Find by mission code, mission type and start/stop time failed for Product", products.isEmpty());
-		
-		logger.info("OK: Test for findByMissionCodeAndMissionTypeAndSensingStartTimeLessAndSensingStopTimeGreater completed");
 		
 		// Test findByUuid
 		product = RepositoryService.getProductRepository().findByUuid(TEST_UUID);

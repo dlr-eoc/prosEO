@@ -44,7 +44,6 @@ public class ProductClassUtil {
 			restProductClass.setMissionCode(modelProductClass.getMission().getCode());
 		}
 		restProductClass.setProductType(modelProductClass.getProductType());
-		restProductClass.setMissionType(modelProductClass.getMissionType());
 		restProductClass.setTypeDescription(modelProductClass.getDescription());
 		if (null != modelProductClass.getEnclosingClass()) {
 			restProductClass.setEnclosingClass(modelProductClass.getEnclosingClass().getProductType());
@@ -113,7 +112,6 @@ public class ProductClassUtil {
 		}
 		
 		modelProductClass.setProductType(restProductClass.getProductType());
-		modelProductClass.setMissionType(restProductClass.getMissionType());
 		modelProductClass.setDescription(restProductClass.getTypeDescription());
 		
 		return modelProductClass;

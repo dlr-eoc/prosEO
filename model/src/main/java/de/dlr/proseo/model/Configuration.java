@@ -14,8 +14,12 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+
+import de.dlr.proseo.model.enums.ProductQuality;
 
 /**
  * A specific processor configuration, tied to a specific ConfiguredProcessor object. It mainly consists of a set of configuration
@@ -48,6 +52,10 @@ public class Configuration extends PersistentObject {
 	@ElementCollection
 	private Map<String, Parameter> dynProcParameters = new HashMap<>();
 	
+	/** Indicates the suitability for general use of products generated with this configuration */
+	@Enumerated(EnumType.STRING)
+	private ProductQuality productQuality = ProductQuality.NOMINAL;
+	
 	/** The configuration files for this configuration */
 	@ElementCollection
 	private Set<ConfigurationFile> configurationFiles = new HashSet<>();
@@ -59,7 +67,8 @@ public class Configuration extends PersistentObject {
 	private Set<ConfigurationInputFile> staticInputFiles = new HashSet<>();
 
 	/** Specific parameter for "docker run" valid for this configuration */
-	private String dockerRunParameters;
+	@ElementCollection
+	private Map<String, String> dockerRunParameters = new HashMap<>();
 
 	/**
 	 * Gets the associated processor class
@@ -134,6 +143,24 @@ public class Configuration extends PersistentObject {
 	}
 
 	/**
+	 * Gets the product quality expected with this configuration
+	 * 
+	 * @return the product quality
+	 */
+	public ProductQuality getProductQuality() {
+		return productQuality;
+	}
+
+	/**
+	 * Sets the product quality expected with this configuration
+	 * 
+	 * @param productQuality the product quality to set
+	 */
+	public void setProductQuality(ProductQuality productQuality) {
+		this.productQuality = productQuality;
+	}
+
+	/**
 	 * Gets the configuration files
 	 * 
 	 * @return the configurationFiles
@@ -174,7 +201,7 @@ public class Configuration extends PersistentObject {
 	 * 
 	 * @return the dockerRunParameters
 	 */
-	public String getDockerRunParameters() {
+	public Map<String, String> getDockerRunParameters() {
 		return dockerRunParameters;
 	}
 
@@ -183,7 +210,7 @@ public class Configuration extends PersistentObject {
 	 * 
 	 * @param dockerRunParameters the dockerRunParameters to set
 	 */
-	public void setDockerRunParameters(String dockerRunParameters) {
+	public void setDockerRunParameters(Map<String, String> dockerRunParameters) {
 		this.dockerRunParameters = dockerRunParameters;
 	}
 	

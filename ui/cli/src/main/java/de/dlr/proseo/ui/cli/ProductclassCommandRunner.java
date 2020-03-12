@@ -239,15 +239,6 @@ public class ProductclassCommandRunner {
 			}
 			restProductClass.setProductType(response);
 		}
-		if (null == restProductClass.getMissionType() || restProductClass.getMissionType().isEmpty()) {
-			System.out.print(PROMPT_MISSION_TYPE);
-			String response = System.console().readLine();
-			if ("".equals(response)) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
-				return;
-			}
-			restProductClass.setMissionType(response);
-		}
 		
 		/* Create product class */
 		try {
@@ -413,9 +404,6 @@ public class ProductclassCommandRunner {
 
 		/* Compare attributes of database product class with updated product class */
 		// No modification of ID, version, mission code or product class name allowed
-		if (null != updatedProductClass.getMissionType() && 0 != updatedProductClass.getMissionType().length()) { // mandatory, must not be empty
-			restProductClass.setMissionType(updatedProductClass.getMissionType());
-		}
 		if (isDeleteAttributes || (null != updatedProductClass.getTypeDescription() && 0 != updatedProductClass.getTypeDescription().length())) {
 			restProductClass.setTypeDescription(updatedProductClass.getTypeDescription());
 		}

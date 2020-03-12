@@ -64,14 +64,12 @@ public class ProductClassControllerTest {
 
 	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
-	private static final String TEST_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_PRODUCT_TYPE = "L2__FRESCO_";
 	private static final String TEST_PARAM_VALUE = "01";
 	private static final String TEST_PARAM_TYPE = "STRING";
 	private static final String TEST_PARAM_KEY = "revision";
 	private static final String TEST_MODE = "OFFL";
-	private static final String TEST_NEW_MISSION_TYPE = "$L2__AAI___$";
-	private static final String TEST_NEW_PRODUCT_TYPE = "$AAI$";
+	private static final String TEST_NEW_PRODUCT_TYPE = "$L2__AAI___$";
 	private static final String TEST_SELECTION_RULE =
 			"FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":" + TEST_PARAM_VALUE + 
 			" SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
@@ -151,7 +149,6 @@ public class ProductClassControllerTest {
 			prodClass = new ProductClass();
 			prodClass.setMission(mission);
 			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
 			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 			//mission.getProductClasses().add(prodClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);
@@ -162,7 +159,6 @@ public class ProductClassControllerTest {
 		RestProductClass restProductClass = new RestProductClass();
 		restProductClass.setMissionCode(TEST_CODE);
 		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setMissionType(TEST_NEW_MISSION_TYPE);
 		// TODO We could add a configured processor here, if one was created beforehand
 		
 		// Create a REST selection rule for the new product class
@@ -288,7 +284,6 @@ public class ProductClassControllerTest {
 			prodClass = new ProductClass();
 			prodClass.setMission(mission);
 			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
 			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 			//mission.getProductClasses().add(prodClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);
@@ -299,7 +294,6 @@ public class ProductClassControllerTest {
 		RestProductClass restProductClass = new RestProductClass();
 		restProductClass.setMissionCode(TEST_CODE);
 		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setMissionType(TEST_NEW_MISSION_TYPE);
 		// TODO We could add a configured processor here, if one was created beforehand
 		
 		// Make sure the new class does not yet exist

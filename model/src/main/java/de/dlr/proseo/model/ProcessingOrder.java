@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -29,6 +30,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
+
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of
  * ConfiguredProcessors. An order may have properties like a product quality indicator (test vs operational), specific product
@@ -39,7 +43,11 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = { @Index(unique = true, columnList = "identifier"), @Index(unique = false, columnList = "execution_time") })
+@Table(indexes = {
+	@Index(unique = true, columnList = "identifier"),
+	@Index(unique = true, columnList = "uuid"),
+	@Index(unique = false, columnList = "execution_time") 
+})
 public class ProcessingOrder extends PersistentObject {
 
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
@@ -49,7 +57,12 @@ public class ProcessingOrder extends PersistentObject {
 	private Mission mission;
 	
 	/** User-defined order identifier */
+	@Column(nullable = false)
 	private String identifier;
+	
+	/** The universally unique identifier (UUID) for this order */
+	@Column(nullable = false)
+	private UUID uuid;
 	
 	/** State of the processing order */
 	@Enumerated(EnumType.STRING)
@@ -90,6 +103,9 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private Duration sliceOverlap = Duration.ZERO;
 	
+	/** Indicates whether the granularity of the final product(s) shall be propagated to the generation of intermediate products */
+	private Boolean propagateSlicing = false;
+	
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
 	@ElementCollection
@@ -128,45 +144,6 @@ public class ProcessingOrder extends PersistentObject {
 	private Set<Job> jobs = new HashSet<>();
 	
 	/**
-	 * Possible states for a processing order; recommended state transitions:
-	 * <ol>
-	 *
-	 * <li>INITIAL -&gt; APPROVED: Customer approved order parameters and/or committed budget
-	 * <li>APPROVED -&gt; PLANNED: Jobs for the processing order have been generated</li>
-	 * <li>PLANNED -&gt; RELEASED: The order is released for running as planned</li>
-	 * <li>RELEASED -&gt; RUNNING: The first jobs have started, further jobs can be started</li>
-	 * <li>RUNNING -&gt; SUSPENDING: Order execution halted, no further jobs will be started (started jobs will be completed, if they are not halted themselves)</li>
-	 * <li>SUSPENDING -&gt; PLANNED: All jobs for the order are either completed or halted (after suspending the order)</li>
-	 * <li>RUNNING -&gt; COMPLETED: All jobs have been completed successfully</li>
-	 * <li>RUNNING -&gt; FAILED: All jobs have been completed, but at least one of them failed</li>
-	 * <li>PLANNED -&gt; FAILED: The order was cancelled by the operator</li>
-	 * <li>COMPLETED/FAILED -&gt;; CLOSED: Delivery/failure has been acknowledged by customer and/or order fee has been paid</li>
-	 * </ol>
-	 * 
-	 * Deprecated: Use de.dlr.proseo.model.enums.OrderState instead
-	 */
-	@Deprecated
-	public enum OrderState { INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED };
-	
-	/**
-	 * Possible methods for partitioning the order time period into individual job time periods for product generation:
-	 * <ul>
-	 * <li>ORBIT: Create jobs by orbit (preferably a list of orbits is then given for the order, if no such lists exists, generate
-	 *            jobs orbit-wise so that the time interval is fully covered, i. e. with the first orbit starting no later
-	 *            than the beginning of the time interval and the last orbit ending no earlier than the end of the time interval;
-	 *            jobs will be linked to their respective orbits)</li>
-	 * <li>CALENDAR_DAY: Create jobs by calendar day (in such a way that the first job starts no later than the beginning of
-	 *            the order time interval and the last job ends no earlier than the end of the time interval)</li>
-	 * <li>TIME_SLICE: Create jobs in fixed time slices, starting with the start time of the order time interval and ending
-	 *            no earlier than the end of the time interval</li>
-	 * </ul>
-	 * 
-	 * Deprecated: Use de.dlr.proseo.model.enums.OrderSlicingType instead
-	 */
-	@Deprecated
-	public enum OrderSlicingType { ORBIT, CALENDAR_DAY, TIME_SLICE };
-
-	/**
 	 * Gets the owning mission
 	 * 
 	 * @return the mission
@@ -200,6 +177,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setIdentifier(String identifier) {
 		this.identifier = identifier;
+	}
+
+	/**
+	 * Gets the universally unique identifier (UUID)
+	 * 
+	 * @return the UUID
+	 */
+	public UUID getUuid() {
+		return uuid;
+	}
+
+	/**
+	 * Sets the universally unique identifier (UUID)
+	 * 
+	 * @param uuid the UUID to set
+	 */
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
 	}
 
 	/**
@@ -339,6 +334,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setSliceOverlap(Duration sliceOverlap) {
 		this.sliceOverlap = sliceOverlap;
+	}
+
+	/**
+	 * Indicates whether end product slices shall be propagated to intermediate products
+	 * 
+	 * @return true, if slicing is to be propagated, false otherwise
+	 */
+	public Boolean getPropagateSlicing() {
+		return propagateSlicing;
+	}
+
+	/**
+	 * Sets whether end product slices shall be propagated to intermediate products
+	 * 
+	 * @param propagateSlicing true, if slicing is to be propagated, false otherwise
+	 */
+	public void setPropagateSlicing(Boolean propagateSlicing) {
+		this.propagateSlicing = propagateSlicing;
 	}
 
 	/**

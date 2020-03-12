@@ -3,12 +3,14 @@
         "name": "PF1",
         "description": "Processing Facility 1",
         "processingEngineUrl": "https://www.prosEO-ProcFac1.de/kubernetes",
-        "storageManagerUrl": "https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0"
+        "storageManagerUrl": "https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0",
+        "defaultStorageType": "S3"
     },
     {
         "name": "PF2",
         "description": "Processing Facility 2",
         "processingEngineUrl": "https://www.prosEO-ProcFac2.de/kubernetes",
-        "storageManagerUrl": "https://www.prosEO-ProcFac2.de/proseo/storage-mgr/v1.1"
+        "storageManagerUrl": "https://www.prosEO-ProcFac2.de/proseo/storage-mgr/v1.1",
+        "defaultStorageType": "S3"
     }
 ]

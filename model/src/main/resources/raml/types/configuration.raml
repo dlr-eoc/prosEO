@@ -21,6 +21,9 @@
       dynProcParameters:
         type: RestParameter[]
         description: Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator
+      productQuality?:
+        type: string
+        description: Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)
       configurationFiles:
         type: array
         description: The configuration files for this configuration
@@ -35,6 +38,6 @@
       configuredProcessors:
         type: string[]
         description: The names for the processor configurations this processor version is valid for
-      dockerRunParameters?:
-        type: string
+      dockerRunParameters:
+        type: RestStringParameter[]
         description: Specific parameter for "docker run" valid for this configuration

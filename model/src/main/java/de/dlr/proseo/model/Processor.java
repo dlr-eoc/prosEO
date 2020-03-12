@@ -6,13 +6,16 @@
 package de.dlr.proseo.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
@@ -74,7 +77,8 @@ public class Processor extends PersistentObject {
 	private String dockerImage;
 	
 	/** Parameters to add to the "docker run" command */
-	private String dockerRunParameters;
+	@ElementCollection
+	private Map<String, String> dockerRunParameters = new HashMap<>();
 	
 	/**
 	 * Gets the processor class
@@ -261,7 +265,7 @@ public class Processor extends PersistentObject {
 	 * 
 	 * @return the "docker run" parameters
 	 */
-	public String getDockerRunParameters() {
+	public Map<String, String> getDockerRunParameters() {
 		return dockerRunParameters;
 	}
 
@@ -270,7 +274,7 @@ public class Processor extends PersistentObject {
 	 * 
 	 * @param dockerRunParameters the "docker run" parameters to set
 	 */
-	public void setDockerRunParameters(String dockerRunParameters) {
+	public void setDockerRunParameters(Map<String, String> dockerRunParameters) {
 		this.dockerRunParameters = dockerRunParameters;
 	}
 

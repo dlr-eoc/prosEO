@@ -30,15 +30,6 @@ import javax.persistence.Table;
 @Table(indexes = { @Index(unique = true, columnList = "spacecraft_id, orbit_number"), @Index(unique = false, columnList = "start_time") })
 public class Orbit extends PersistentObject {
 	
-	/** 
-	 * Master time format for orbit times (ISO-formatted UTC-STS timestamps with microsecond fraction and without time zone)
-	 * 
-	 * Deprecated: Use de.dlr.proseo.model.util.OrbitTimeFormatter instead
-	 */
-	@Deprecated
-	public static final DateTimeFormatter orbitTimeFormatter =
-			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
-
 	/** The spacecraft this orbit belongs to */
 	@ManyToOne
 	private Spacecraft spacecraft;

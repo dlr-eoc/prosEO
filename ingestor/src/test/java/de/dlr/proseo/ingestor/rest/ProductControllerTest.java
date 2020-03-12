@@ -41,18 +41,17 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
-import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Test class for the REST API of ProductControllerImpl
@@ -73,14 +72,12 @@ public class ProductControllerTest {
 	
 	/* Test products */
 	private static final String TEST_CODE = "S5P";
-	private static final String TEST_PRODUCT_TYPE = "L1B";
-	private static final String TEST_MISSION_TYPE = "L1B_______";
+	private static final String TEST_PRODUCT_TYPE = "L1B_______";
 	private static final String TEST_FILE_CLASS = "OPER";
 	private static final String TEST_MODE = "NRTI";
 	private static final String TEST_MODE_2 = "OFFL";
 	private static final String TEST_ALT_CODE = "TDM";
-	private static final String TEST_ALT_PRODUCT_TYPE = "DEM";
-	private static final String TEST_ALT_MISSION_TYPE = "TDM.DEM.DEM";
+	private static final String TEST_ALT_PRODUCT_TYPE = "TDM.DEM.DEM";
 	private static String[][] testProductData = {
 		// id, version, mission code, product class, file class, mode, sensing start, sensing stop, generation, revision (parameter)
 		{ "0", "1", TEST_CODE, TEST_PRODUCT_TYPE, TEST_FILE_CLASS, TEST_MODE, "2019-08-29T22:49:21.074395", "2019-08-30T00:19:33.946628", "2019-10-05T10:12:39.000000", "01" },
@@ -159,9 +156,9 @@ public class ProductControllerTest {
 		testProduct.setUuid(UUID.randomUUID());
 		testProduct.setFileClass(testData[4]);
 		testProduct.setMode(testData[5]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
+		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
@@ -258,7 +255,6 @@ public class ProductControllerTest {
 					prodClass = new ProductClass();
 					prodClass.setMission(mission);
 					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass.setMissionType(TEST_MISSION_TYPE);
 					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 					//mission.getProductClasses().add(prodClass);
 					//mission = RepositoryService.getMissionRepository().save(mission);
@@ -279,7 +275,6 @@ public class ProductControllerTest {
 					altProdClass = new ProductClass();
 					altProdClass.setMission(altMission);
 					altProdClass.setProductType(TEST_ALT_PRODUCT_TYPE);
-					altProdClass.setMissionType(TEST_ALT_MISSION_TYPE);
 					altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
 					//altMission.getProductClasses().add(altProdClass);
 					//altMission = RepositoryService.getMissionRepository().save(altMission);
@@ -327,11 +322,11 @@ public class ProductControllerTest {
 					assertEquals("Wrong product class for test product " + i, testProduct.getProductClass().getProductType(), product.getProductClass());
 					assertEquals("Wrong mode for test product " + i, testProduct.getMode(), product.getMode());
 					assertEquals("Wrong start time for test product " + i,
-							testProduct.getSensingStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStartTime())));
+							testProduct.getSensingStartTime(), Instant.from(OrbitTimeFormatter.parse((String) product.getSensingStartTime())));
 					assertEquals("Wrong stop time for test product " + i,
-							testProduct.getSensingStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getSensingStopTime())));
+							testProduct.getSensingStopTime(), Instant.from(OrbitTimeFormatter.parse((String) product.getSensingStopTime())));
 					assertEquals("Wrong generation time for test product " + i,
-							testProduct.getGenerationTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) product.getGenerationTime())));
+							testProduct.getGenerationTime(), Instant.from(OrbitTimeFormatter.parse((String) product.getGenerationTime())));
 				}
 			}
 		}
@@ -384,7 +379,6 @@ public class ProductControllerTest {
 					prodClass = new ProductClass();
 					prodClass.setMission(mission);
 					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass.setMissionType(TEST_MISSION_TYPE);
 					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 					//mission.getProductClasses().add(prodClass);
 					//mission = RepositoryService.getMissionRepository().save(mission);
@@ -472,7 +466,6 @@ public class ProductControllerTest {
 					prodClass = new ProductClass();
 					prodClass.setMission(mission);
 					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass.setMissionType(TEST_MISSION_TYPE);
 					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 					//mission.getProductClasses().add(prodClass);
 					//mission = RepositoryService.getMissionRepository().save(mission);
@@ -493,7 +486,6 @@ public class ProductControllerTest {
 					altProdClass = new ProductClass();
 					altProdClass.setMission(altMission);
 					altProdClass.setProductType(TEST_PRODUCT_TYPE);
-					altProdClass.setMissionType(TEST_MISSION_TYPE);
 					altProdClass = RepositoryService.getProductClassRepository().save(altProdClass);
 					//altMission.getProductClasses().add(altProdClass);
 					//altMission = RepositoryService.getMissionRepository().save(altMission);
@@ -560,7 +552,6 @@ public class ProductControllerTest {
 					prodClass = new ProductClass();
 					prodClass.setMission(mission);
 					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass.setMissionType(TEST_MISSION_TYPE);
 					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 					//mission.getProductClasses().add(prodClass);
 					//mission = RepositoryService.getMissionRepository().save(mission);

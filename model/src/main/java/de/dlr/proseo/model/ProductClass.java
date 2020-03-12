@@ -5,16 +5,22 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProductVisibility;
 
 /**
  * A class of products pertaining to a specific Mission, e. g. the L2_O3 products of Sentinel-5P. A ProductClass can describe
@@ -26,26 +32,34 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = { 
-		@Index(unique = true, columnList = "mission_id, product_type"), 
-		@Index(unique = true, columnList = "mission_id, mission_type") })
+@Table(indexes = @Index(unique = true, columnList = "mission_id, product_type"))
 public class ProductClass extends PersistentObject {
 
 	/** The mission this product class belongs to */
 	@ManyToOne
 	private Mission mission;
 	
-	/** The product type, as it shall be known in the processing system (product class identifier; e. g. CLOUD);
-	 * unique within a mission */
+	/** The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission */
 	@Column(name = "product_type")
 	private String productType;
 	
-	/** The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission */
-	@Column(name = "mission_type")
-	private String missionType;
-	
 	/** A short description of the product type to display as informational text on the user interface */
 	private String description;
+	
+	/** Visibility of products of this class to external users (internally all products are visible at all times) */
+	@Enumerated(EnumType.STRING)
+	private ProductVisibility visibility;
+	
+	/** 
+	 * A default slicing method to apply for the generation of products of this type. This allows for the generation of products
+	 * of varying validity interval lengths with a single order.  If it is not set, then the slicing type given for the order or
+	 * (if this is an intermediate product) for the products further down in the processing chain will be applied.
+	 */
+	@Enumerated(EnumType.STRING)
+	private OrderSlicingType defaultSlicingType;
+	
+	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */
+	private Duration defaultSliceDuration;
 	
 	/** The selection rules describing the required input files to generate this product class */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "targetProductClass")
@@ -105,24 +119,6 @@ public class ProductClass extends PersistentObject {
 	}
 	
 	/**
-	 * Gets the product class type as defined by the mission
-	 * 
-	 * @return the missionType
-	 */
-	public String getMissionType() {
-		return missionType;
-	}
-	
-	/**
-	 * Sets the product class type as defined by the mission
-	 * 
-	 * @param missionType the missionType to set
-	 */
-	public void setMissionType(String missionType) {
-		this.missionType = missionType;
-	}
-	
-	/**
 	 * Gets the product class description
 	 * 
 	 * @return the description
@@ -140,6 +136,60 @@ public class ProductClass extends PersistentObject {
 		this.description = description;
 	}
 	
+	/**
+	 * Gets the product visibility to external users
+	 * 
+	 * @return the visibility
+	 */
+	public ProductVisibility getVisibility() {
+		return visibility;
+	}
+
+	/**
+	 * Gets the product visibility to external users
+	 * 
+	 * @param visibility the visibility to set
+	 */
+	public void setVisibility(ProductVisibility visibility) {
+		this.visibility = visibility;
+	}
+
+	/**
+	 * Gets the default slicing type to apply in orders
+	 * 
+	 * @return the default slicing type
+	 */
+	public OrderSlicingType getDefaultSlicingType() {
+		return defaultSlicingType;
+	}
+
+	/**
+	 * Sets the default slicing type to apply in orders
+	 * 
+	 * @param defaultSlicingType the default slicing type to set
+	 */
+	public void setDefaultSlicingType(OrderSlicingType defaultSlicingType) {
+		this.defaultSlicingType = defaultSlicingType;
+	}
+
+	/**
+	 * Gets the default slice duration (if the default slicing type is TIME_SLICE)
+	 * 
+	 * @return the default slice duration
+	 */
+	public Duration getDefaultSliceDuration() {
+		return defaultSliceDuration;
+	}
+
+	/**
+	 * Sets the default slice duration (if the default slicing type is TIME_SLICE)
+	 * 
+	 * @param defaultSliceDuration the default slice duration to set
+	 */
+	public void setDefaultSliceDuration(Duration defaultSliceDuration) {
+		this.defaultSliceDuration = defaultSliceDuration;
+	}
+
 	/**
 	 * Gets the set of required selection rules
 	 * 
@@ -264,7 +314,7 @@ public class ProductClass extends PersistentObject {
 	@Override
 	public String toString() {
 		return "ProductClass [mission=" + (null == mission ? "null" : mission.getCode()) 
-				+ ", productType=" + productType + ", missionType=" + missionType + ", description=" + description 
+				+ ", productType=" + productType + ", description=" + description 
 				+ ", processorClass=" + (null == processorClass ? "null" : processorClass.getProcessorName()) + "]";
 	}
 	

@@ -43,8 +43,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class ProductQueryRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
-	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
-	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
+	private static final String TEST_PRODUCT_TYPE = "$L2__FRESCO_$";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryRepositoryTest.class);
@@ -85,7 +84,6 @@ public class ProductQueryRepositoryTest {
 		
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
 		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 		
