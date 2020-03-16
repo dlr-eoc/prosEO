@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.EntityManagerFactory;
 
@@ -178,6 +179,7 @@ public class OrderControllerTest {
 			testOrder.setId(Long.parseLong(testData[0]));
 			testOrder.setExecutionTime(Instant.from(OrbitTimeFormatter.parse(testData[2])));
 			testOrder.setIdentifier(testData[3]);
+			testOrder.setUuid(UUID.randomUUID());
 			testOrder.setOrderState(OrderState.valueOf(testData[4]));
 			testOrder.setProcessingMode(testData[5]);
 			testOrder.setSlicingType(OrderSlicingType.valueOf(testData[7]));
@@ -661,6 +663,7 @@ public class OrderControllerTest {
 				
 
 		RestTemplate restTemplate = rtb.basicAuthentication(config.getUserName(), config.getUserPassword()).build();
+		if (logger.isTraceEnabled()) logger.trace("... with user = " + config.getUserName() + " and pwd = " + config.getUserPassword());
 		try {
 			@SuppressWarnings("rawtypes")
 			ResponseEntity<List> entity = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, requestEntity, List.class);

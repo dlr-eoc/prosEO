@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -53,7 +54,8 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ORDER_MODIFIED = 1011;
 	private static final int MSG_ID_ORDER_NOT_MODIFIED = 1012;
 	private static final int MSG_ID_ORDER_CREATED = 1013;
-
+	private static final int MSG_ID_DUPLICATE_ORDER_UUID = 1014;
+	
 
 	/* Message string constants */
 	private static final String MSG_ORDER_NOT_FOUND = "(E%d) No order found for ID %d";
@@ -65,6 +67,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_NOT_MODIFIED = "(I%d) Order with id %d not modified (no changes)";
 	private static final String MSG_ORDER_MODIFIED = "(I%d) Order with id %d modified";
 	private static final String MSG_ORDER_CREATED = "(I%d) Order with identifier %s created for mission %s";
+	private static final String MSG_DUPLICATE_ORDER_UUID = "(E%d) Duplicate order UUID %s";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -126,6 +129,16 @@ public class ProcessingOrderMgr {
 		}
 		
 		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
+		// Make sure order has a UUID
+		if (null == modelOrder.getUuid()) {
+			modelOrder.setUuid(UUID.randomUUID());
+		} else {
+			// Test if given UUID is not yet in use
+			if (null != RepositoryService.getOrderRepository().findByUuid(modelOrder.getUuid())) {
+				throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_UUID, MSG_ID_DUPLICATE_ORDER_UUID, 
+						modelOrder.getUuid()));
+			}
+		}
 		
 		//Find the  mission for the mission code given in the rest Order
 		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());

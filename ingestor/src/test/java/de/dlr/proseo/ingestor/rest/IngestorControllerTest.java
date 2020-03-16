@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -166,6 +167,7 @@ public class IngestorControllerTest {
 				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
+		testProduct.setUuid(UUID.randomUUID());
 		testProduct.setFileClass(testData[4]);
 		testProduct.setMode(testData[5]);
 		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));

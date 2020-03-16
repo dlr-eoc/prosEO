@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -55,6 +56,7 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_DELETED = 2358;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2359;
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2360;
+	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2361;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -73,6 +75,7 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_CONFIGURED_PROCESSOR_MODIFIED = "(I%d) Configured processor with id %d modified";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_MODIFIED = "(I%d) Configured processor with id %d not modified (no changes)";
 	private static final String MSG_CONFIGURED_PROCESSOR_DELETED = "(I%d) Configured processor with id %d deleted";
+	private static final String MSG_DUPLICATE_CONFPROC_UUID = "(E%d) Duplicate configured processor UUID %s";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -128,13 +131,14 @@ public class ConfiguredProcessorManager {
 	 * @param processorName the processor name
 	 * @param processorVersion the processor version
 	 * @param configurationVersion the configuration version
+	 * @param uuid the UUID of the configured processor
 	 * @return a list of Json objects representing configured processors satisfying the search criteria
 	 * @throws NoResultException if no configured processors matching the given search criteria could be found
 	 */
 	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, String processorName,
-			String processorVersion, String configurationVersion) throws NoResultException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {})", 
-				mission, processorName, processorVersion, configurationVersion);
+			String processorVersion, String configurationVersion, String uuid) throws NoResultException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {})", 
+				mission, processorName, processorVersion, configurationVersion, uuid);
 		
 		List<RestConfiguredProcessor> result = new ArrayList<>();
 		
@@ -151,6 +155,9 @@ public class ConfiguredProcessorManager {
 		if (null != configurationVersion) {
 			jpqlQuery += " and configuration.configurationVersion = :configurationVersion";
 		}
+		if (null != uuid) {
+			jpqlQuery += " and configuration.uuid = :uuid";
+		}
 		Query query = em.createQuery(jpqlQuery);
 		if (null != mission) {
 			query.setParameter("missionCode", mission);
@@ -163,6 +170,9 @@ public class ConfiguredProcessorManager {
 		}
 		if (null != configurationVersion) {
 			query.setParameter("configurationVersion", configurationVersion);
+		}
+		if (null != uuid) {
+			query.setParameter("uuid", uuid);
 		}
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ConfiguredProcessor) {
@@ -193,7 +203,17 @@ public class ConfiguredProcessorManager {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_MISSING, MSG_ID_CONFIGURED_PROCESSOR_MISSING));
 		}
 		
-		de.dlr.proseo.model.ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
+		ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
+		// Make sure configured processor has a UUID
+		if (null == modelConfiguredProcessor.getUuid()) {
+			modelConfiguredProcessor.setUuid(UUID.randomUUID());
+		} else {
+			// Test if given UUID is not yet in use
+			if (null != RepositoryService.getConfiguredProcessorRepository().findByUuid(modelConfiguredProcessor.getUuid())) {
+				throw new IllegalArgumentException(logError(MSG_DUPLICATE_CONFPROC_UUID, MSG_ID_DUPLICATE_CONFPROC_UUID, 
+						modelConfiguredProcessor.getUuid()));
+			}
+		}
 		
 		modelConfiguredProcessor.setProcessor(RepositoryService.getProcessorRepository()
 				.findByMissionCodeAndProcessorNameAndProcessorVersion(

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -92,6 +93,9 @@ public class ProductUtil {
 		}
 		restProduct.setFileClass(modelProduct.getFileClass());
 		restProduct.setMode(modelProduct.getMode());
+		if (null != modelProduct.getProductQuality()) {
+			restProduct.setProductQuality(modelProduct.getProductQuality().toString());
+		}
 		if (null != modelProduct.getSensingStartTime()) {
 			restProduct.setSensingStartTime(OrbitTimeFormatter.format(modelProduct.getSensingStartTime()));
 		}
@@ -167,6 +171,9 @@ public class ProductUtil {
 		}
 		modelProduct.setFileClass(restProduct.getFileClass());
 		modelProduct.setMode(restProduct.getMode());
+		if (null != restProduct.getProductQuality()) {
+			modelProduct.setProductQuality(ProductQuality.valueOf(restProduct.getProductQuality()));
+		}
 		try {
 			modelProduct.setSensingStartTime(
 					Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStartTime())));

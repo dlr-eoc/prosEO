@@ -82,7 +82,7 @@ public class ProductQueryServiceTest {
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryServiceTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -90,21 +90,21 @@ public class ProductQueryServiceTest {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
@@ -114,7 +114,7 @@ public class ProductQueryServiceTest {
 	 * Create a product from a data array
 	 * 
 	 * @param testData an array of Strings representing the product to create
-	 * @param facility TODO
+	 * @param facility the processing facility to search the product file in
 	 * @return a Product with its attributes set to the input data
 	 */
 	private Product createProduct(String[] testData, ProcessingFacility facility) {

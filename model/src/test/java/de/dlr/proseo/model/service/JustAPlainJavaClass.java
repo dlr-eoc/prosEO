@@ -1,3 +1,8 @@
+/**
+ * JustAPlainJavaClass.java
+ * 
+ * (C) 2019 Dr. Bassler & Co. Managementberatung GmbH
+ */
 package de.dlr.proseo.model.service;
 
 import java.util.UUID;
@@ -9,6 +14,12 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.RepositoryService;
 
+/**
+ * Plain Java class (no annotations) to check accessibility of repositories from any point in the code
+ * 
+ * @author Dr. Thomas Bassler
+ *
+ */
 public class JustAPlainJavaClass {
 
 	private static Logger logger = LoggerFactory.getLogger(JustAPlainJavaClass.class);

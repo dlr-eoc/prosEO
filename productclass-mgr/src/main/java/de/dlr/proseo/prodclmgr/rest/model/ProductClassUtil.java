@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.prodclmgr.rest.model;
 
+import java.time.Duration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,8 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProductVisibility;
 
 /**
  * Utility methods for product classes, e. g. for conversion between prosEO model and REST model
@@ -45,6 +49,15 @@ public class ProductClassUtil {
 		}
 		restProductClass.setProductType(modelProductClass.getProductType());
 		restProductClass.setTypeDescription(modelProductClass.getDescription());
+		if (null != modelProductClass.getVisibility()) {
+			restProductClass.setVisibility(modelProductClass.getVisibility().toString());
+		}
+		if (null != modelProductClass.getDefaultSlicingType()) {
+			restProductClass.setVisibility(modelProductClass.getDefaultSlicingType().toString());
+		}
+		if (null != modelProductClass.getDefaultSliceDuration()) {
+			restProductClass.setDefaultSliceDuration(modelProductClass.getDefaultSliceDuration().getSeconds());
+		}
 		if (null != modelProductClass.getEnclosingClass()) {
 			restProductClass.setEnclosingClass(modelProductClass.getEnclosingClass().getProductType());
 		}
@@ -113,6 +126,15 @@ public class ProductClassUtil {
 		
 		modelProductClass.setProductType(restProductClass.getProductType());
 		modelProductClass.setDescription(restProductClass.getTypeDescription());
+		if (null != restProductClass.getVisibility()) {
+			modelProductClass.setVisibility(ProductVisibility.valueOf(restProductClass.getVisibility()));
+		}
+		if (null != restProductClass.getDefaultSlicingType()) {
+			modelProductClass.setDefaultSlicingType(OrderSlicingType.valueOf(restProductClass.getDefaultSlicingType()));
+		}
+		if (null != restProductClass.getDefaultSliceDuration()) {
+			modelProductClass.setDefaultSliceDuration(Duration.ofSeconds(restProductClass.getDefaultSliceDuration()));
+		}
 		
 		return modelProductClass;
 	}

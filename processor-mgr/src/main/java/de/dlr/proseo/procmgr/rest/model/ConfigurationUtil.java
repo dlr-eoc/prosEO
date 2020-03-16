@@ -6,6 +6,7 @@
 package de.dlr.proseo.procmgr.rest.model;
 
 import java.util.ArrayList;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,6 @@ public class ConfigurationUtil {
 		restConfiguration.setMissionCode(modelConfiguration.getProcessorClass().getMission().getCode());
 		restConfiguration.setProcessorName(modelConfiguration.getProcessorClass().getProcessorName());
 		restConfiguration.setConfigurationVersion(modelConfiguration.getConfigurationVersion());
-		restConfiguration.setDockerRunParameters(modelConfiguration.getDockerRunParameters());
 		
 		for (ConfiguredProcessor configuredProcessor: modelConfiguration.getConfiguredProcessors()) {
 			restConfiguration.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
@@ -70,6 +70,11 @@ public class ConfigurationUtil {
 				new RestConfigurationInputFile(
 						staticInputFile.getId(), Long.valueOf(staticInputFile.getVersion()), staticInputFile.getFileType(), 
 						staticInputFile.getFileNameType(), new ArrayList<>(staticInputFile.getFileNames())));
+		}
+		
+		for (Entry<String, String> dockerRunParam: modelConfiguration.getDockerRunParameters().entrySet()) {
+			restConfiguration.getDockerRunParameters().add(
+				new RestStringParameter(dockerRunParam.getKey(), dockerRunParam.getValue()));
 		}
 		
 		return restConfiguration;
@@ -99,7 +104,6 @@ public class ConfigurationUtil {
 			} 
 		}
 		modelConfiguration.setConfigurationVersion(restConfiguration.getConfigurationVersion());
-		modelConfiguration.setDockerRunParameters(restConfiguration.getDockerRunParameters());
 		
 		for (de.dlr.proseo.procmgr.rest.model.Object configurationFile: restConfiguration.getConfigurationFiles()) {
 			ConfigurationFile modelConfigurationFile = new ConfigurationFile();
@@ -112,6 +116,10 @@ public class ConfigurationUtil {
 			Parameter modelDynProcParam = new Parameter();
 			modelDynProcParam.init(ParameterType.valueOf(restDynProcParam.getParameterType()), restDynProcParam.getParameterValue());
 			modelConfiguration.getDynProcParameters().put(restDynProcParam.getKey(), modelDynProcParam);
+		}
+		
+		for (RestStringParameter restDockerParam: restConfiguration.getDockerRunParameters()) {
+			modelConfiguration.getDockerRunParameters().put(restDockerParam.getKey(), restDockerParam.getValue());
 		}
 		
 		return modelConfiguration;

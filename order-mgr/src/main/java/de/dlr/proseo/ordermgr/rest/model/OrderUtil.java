@@ -6,13 +6,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
 public class OrderUtil {
@@ -44,6 +46,9 @@ public class OrderUtil {
 		if (null != processingOrder.getIdentifier()) {
 			restOrder.setIdentifier(processingOrder.getIdentifier());
 		}	
+		if (null != processingOrder.getUuid()) {
+			restOrder.setUuid(processingOrder.getUuid().toString());
+		}	
 		if (null != processingOrder.getOrderState()) {
 			restOrder.setOrderState(processingOrder.getOrderState().toString());
 		}
@@ -67,6 +72,9 @@ public class OrderUtil {
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
+		}
+		if (null != processingOrder.getPropagateSlicing()) {
+			restOrder.setPropagateSlicing(processingOrder.getPropagateSlicing());
 		}
 
 		if (null != processingOrder.getFilterConditions()) {
@@ -147,7 +155,6 @@ public class OrderUtil {
 	 * @return a (roughly) equivalent model order
 	 * @throws IllegalArgumentException if the REST order violates syntax rules for date, enum or numeric values
 	 */
-	@SuppressWarnings("unchecked")
 	public static ProcessingOrder toModelOrder(RestOrder restOrder) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrder({})", (null == restOrder ? "MISSING" : restOrder.getId()));
@@ -161,6 +168,9 @@ public class OrderUtil {
 			} 
 		}
 		processingOrder.setIdentifier(restOrder.getIdentifier());
+		if (null != restOrder.getUuid()) {
+			processingOrder.setUuid(UUID.fromString(restOrder.getUuid()));
+		}
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
 

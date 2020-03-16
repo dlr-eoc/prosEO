@@ -50,33 +50,36 @@ public class OrderRepositoryTest {
 	private static Logger logger = LoggerFactory.getLogger(OrderRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		ProcessingOrder order = new ProcessingOrder();
@@ -90,6 +93,12 @@ public class OrderRepositoryTest {
 		assertNotNull("Find by identifier failed for ProcessingOrder", order);
 		
 		logger.info("OK: Test for findByIdentifier completed");
+		
+		// Test findByUuid
+		order = RepositoryService.getOrderRepository().findByUuid(order.getUuid());
+		assertNotNull("Find by UUID failed for ProcessingOrder", order);
+		
+		logger.info("OK: Test for findByUuid completed");
 		
 		// Test findByExecutionTimeBetween
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByExecutionTimeBetween(

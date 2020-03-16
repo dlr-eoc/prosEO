@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
+import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +49,6 @@ public class ProcessorUtil {
 		restProcessor.setMaxTime(Long.valueOf(modelProcessor.getMaxTime()));
 		restProcessor.setSensingTimeFlag(modelProcessor.getSensingTimeFlag());
 		restProcessor.setDockerImage(modelProcessor.getDockerImage());
-		restProcessor.setDockerRunParameters(modelProcessor.getDockerRunParameters());
 		
 		for (ConfiguredProcessor configuredProcessor: modelProcessor.getConfiguredProcessors()) {
 			restProcessor.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
@@ -55,6 +56,11 @@ public class ProcessorUtil {
 		
 		for (Task task: modelProcessor.getTasks()) {
 			restProcessor.getTasks().add(TaskUtil.toRestTask(task));
+		}
+		
+		for (Entry<String, String> dockerRunParam: modelProcessor.getDockerRunParameters().entrySet()) {
+			restProcessor.getDockerRunParameters().add(
+				new RestStringParameter(dockerRunParam.getKey(), dockerRunParam.getValue()));
 		}
 		
 		return restProcessor;
@@ -87,7 +93,10 @@ public class ProcessorUtil {
 		modelProcessor.setMaxTime(restProcessor.getMaxTime().intValue());
 		modelProcessor.setSensingTimeFlag(restProcessor.getSensingTimeFlag());
 		modelProcessor.setDockerImage(restProcessor.getDockerImage());
-		modelProcessor.setDockerRunParameters(restProcessor.getDockerRunParameters());
+		
+		for (RestStringParameter restDockerParam: restProcessor.getDockerRunParameters()) {
+			modelProcessor.getDockerRunParameters().put(restDockerParam.getKey(), restDockerParam.getValue());
+		}
 		
 		return modelProcessor;
 	}

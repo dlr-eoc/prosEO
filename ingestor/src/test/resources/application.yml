@@ -24,8 +24,8 @@ proseo:
         password: none
         defaultStorageType: S3
     user:
-        name: s5p-proseo
-        password: sieb37.Schlaefer
+        name: user
+        password: password
     testinput:
         directory: src/test/resources/IDA_test
         files:

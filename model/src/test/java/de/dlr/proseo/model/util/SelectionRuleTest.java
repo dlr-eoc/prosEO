@@ -93,7 +93,7 @@ public class SelectionRuleTest {
 	 * In practice, Instant treats the leap second as the previous second, and Date treats it as the next second.
 	 * None of the two actually honours it.
 	 * 
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -122,14 +122,14 @@ public class SelectionRuleTest {
 	}
 
 //	/**
-//	 * @throws java.lang.Exception
+//	 * @throws java.lang.Exception if an error occurs
 //	 */
 //	@AfterClass
 //	public static void tearDownAfterClass() throws Exception {
 //	}
 //
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
@@ -148,7 +148,7 @@ public class SelectionRuleTest {
 	}
 
 //	/**
-//	 * @throws java.lang.Exception
+//	 * @throws java.lang.Exception if an error occurs
 //	 */
 //	@After
 //	public void tearDown() throws Exception {
@@ -609,7 +609,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#selectItems(Collection)}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#selectItems(String, Collection, Instant, Instant)}.
 	 */
 	@Test
 	public final void testSelectItems() {
@@ -829,7 +829,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#hasPolicyFor()}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#hasPolicyFor(String)}.
 	 */
 	@Test
 	public final void testHasPolicyFor() {
@@ -850,7 +850,7 @@ public class SelectionRuleTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#asPlQueryCondition()}.
+	 * Test method for {@link de.dlr.proseo.model.util.SelectionRule#asPlQueryCondition(Instant, Instant)}.
 	 */
 	@Test
 	public final void testAsPlQueryCondition() {

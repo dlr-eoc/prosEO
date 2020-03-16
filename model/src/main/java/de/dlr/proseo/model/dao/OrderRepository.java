@@ -5,6 +5,7 @@ package de.dlr.proseo.model.dao;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -29,6 +30,14 @@ public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 	 * @return the unique processing order identified by the given identifier
 	 */
 	public ProcessingOrder findByIdentifier(String identifier);
+	
+	/**
+	 * Get the processing order with the given UUID
+	 * 
+	 * @param uuid the UUID of the processing order
+	 * @return the unique processing order identified by the given UUID
+	 */
+	public ProcessingOrder findByUuid(UUID uuid);
 	
 	/**
 	 * Get all processing orders scheduled for execution within the given time range

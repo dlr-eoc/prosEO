@@ -10,22 +10,37 @@ import org.junit.Test;
 
 public class JobOrderTest {
 
+	/**
+	 * @throws Exception if an error occurs
+	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
+	/**
+	 * @throws Exception if an error occurs
+	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
+	/**
+	 * @throws Exception if an error occurs
+	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
+	/**
+	 * @throws Exception if an error occurs
+	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test creating and reading XML job order files
+	 */
 	@Test
 	public void test() {
 		JobOrder jo = new JobOrder(null);

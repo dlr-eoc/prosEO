@@ -25,6 +25,7 @@ securitySchemes:
 
 types:
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestStringParameter: !include ../../../../../model/src/main/resources/raml/types/stringparameter.raml
   RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
   RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
   RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
@@ -253,6 +254,7 @@ resourceTypes:
       processorName?: string
       processorVersion?: string
       configurationVersion?: string
+      uuid?: string
     responses:
       200:
         body:

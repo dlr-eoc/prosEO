@@ -63,18 +63,19 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param processorName the processor name
 	 * @param processorVersion the processor version
 	 * @param configurationVersion the configuration version
+	 * @param uuid the UUID of the configured processor
 	 * @return HTTP status "OK" and a list of Json objects representing configured processors satisfying the search criteria or
 	 *         HTTP status "NOT_FOUND" and an error message, if no configured processors matching the search criteria were found
 	 */
 	@Override
 	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String processorName,
-			String processorVersion, String configurationVersion) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {})", 
-				mission, processorName, processorVersion, configurationVersion);
+			String processorVersion, String configurationVersion, String uuid) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {})", 
+				mission, processorName, processorVersion, configurationVersion, uuid);
 		
 		try {
 			return new ResponseEntity<>(
-					configuredProcessorManager.getConfiguredProcessors(mission, processorName, processorVersion, configurationVersion),
+					configuredProcessorManager.getConfiguredProcessors(mission, processorName, processorVersion, configurationVersion, uuid),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

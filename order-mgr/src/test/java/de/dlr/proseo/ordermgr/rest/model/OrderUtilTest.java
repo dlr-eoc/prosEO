@@ -3,6 +3,8 @@ package de.dlr.proseo.ordermgr.rest.model;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
+import java.util.UUID;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -12,7 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * @author Ranjitha Vignesh
@@ -61,13 +64,14 @@ public class OrderUtilTest {
 		//Adding processing order parameters
 		ProcessingOrder testOrder = new ProcessingOrder();
 		testOrder.setId(Long.parseLong(testData[7]));
-		testOrder.setExecutionTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[9])));
+		testOrder.setExecutionTime(Instant.from(OrbitTimeFormatter.parse(testData[9])));
 		testOrder.setIdentifier(testData[10]);
+		testOrder.setUuid(UUID.randomUUID());
 		testOrder.setOrderState(OrderState.valueOf(testData[11]));
 		testOrder.setProcessingMode(testData[10]);
 
-		testOrder.setStartTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[13])));
-		testOrder.setStopTime(Instant.from(de.dlr.proseo.model.Orbit.orbitTimeFormatter.parse(testData[14])));
+		testOrder.setStartTime(Instant.from(OrbitTimeFormatter.parse(testData[13])));
+		testOrder.setStopTime(Instant.from(OrbitTimeFormatter.parse(testData[14])));
 		testOrder.setMission(testMission);
 		
 		logger.info("Created test order {}", testOrder.getId());
@@ -119,6 +123,7 @@ public class OrderUtilTest {
 		assertEquals("Unexpected ID: ", modelOrder.getId(), restOrder.getId().longValue());
 		assertEquals("Unexpected Mission code: ", modelOrder.getMission().getCode(), restOrder.getMissionCode());
 		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), restOrder.getIdentifier());
+		assertEquals("Unexpected UUID: ", modelOrder.getUuid().toString(), restOrder.getUuid());
 		assertEquals("Unexpected order state: ", modelOrder.getOrderState().toString(), restOrder.getOrderState().toString());
 		logger.info("model execution time: "+modelOrder.getExecutionTime());
 		logger.info("rest execution time: "+restOrder.getExecutionTime().toInstant());
@@ -140,6 +145,7 @@ public class OrderUtilTest {
 		ProcessingOrder copiedModelOrder = OrderUtil.toModelOrder(restOrder);
 		assertEquals("ID not preserved: ", modelOrder.getId(), copiedModelOrder.getId());
 		assertEquals("Unexpected Identifier: ", modelOrder.getIdentifier(), copiedModelOrder.getIdentifier());
+		assertEquals("Unexpected UUID: ", modelOrder.getUuid(), copiedModelOrder.getUuid());
 		assertEquals("Unexpected order state: ", modelOrder.getOrderState(), copiedModelOrder.getOrderState());
 		assertEquals("Unexpected execution time: ",modelOrder.getExecutionTime(), copiedModelOrder.getExecutionTime());
 		assertEquals("Unexpected start time: ", modelOrder.getStartTime(), copiedModelOrder.getStartTime());
