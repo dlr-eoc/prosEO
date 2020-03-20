@@ -151,8 +151,8 @@ public class ServiceConnection {
 			throw new RuntimeException(e);
 		}
 		
-		// All PUT requests should return HTTP status OK
-		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+		// All PUT requests should return HTTP status OK (for updates) or CREATED (for newly created items)
+		if (!HttpStatus.OK.equals(entity.getStatusCode()) && !HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
 					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
 			logger.error(message);
