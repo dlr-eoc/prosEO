@@ -146,6 +146,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_RELEASED = 2944;
 	public static final int MSG_ID_ORDER_SUSPENDED = 2945;
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
+	public static final int MSG_ID_ORDER_RESET = 2947;
 
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
@@ -417,6 +418,7 @@ public class UIMessages {
 		MSG_ORDER_RELEASED ("(I%d) Order with identifier %s released (new version %d)", MSG_ID_ORDER_RELEASED),
 		MSG_ORDER_SUSPENDED ("(I%d) Order with identifier %s suspended (new version %d)", MSG_ID_ORDER_SUSPENDED),
 		MSG_ORDER_CANCELLED ("(I%d) Order with identifier %s cancelled (new version %d)", MSG_ID_ORDER_CANCELLED),
+		MSG_ORDER_RESET ("(I%d) Order with identifier %s reset (new version %d)", MSG_ID_ORDER_RESET),
 		MSG_ORDER_DELETED ("(I%d) Order with identifier %s deleted", MSG_ID_ORDER_DELETED),
 		
 		// Product class CLI
