@@ -79,6 +79,7 @@ public class OrderCommandRunner {
 	private static final String URI_PATH_ORDER_RELEASE = "/orders/release";
 	private static final String URI_PATH_ORDER_SUSPEND = "/orders/suspend";
 	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
+	private static final String URI_PATH_ORDER_RESET = "/orders/reset";
 	
 	private static final String ORDERS = "orders";
 	
@@ -1074,7 +1075,7 @@ public class OrderCommandRunner {
 	/**
 	 * Reset the named processing order
 	 * 
-	 * @param resetCommand the parsed "order close" command
+	 * @param resetCommand the parsed "order reset" command
 	 */
 	private void resetOrder(ParsedCommand resetCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> resetOrder({})", (null == resetCommand ? "null" : resetCommand.getName()));
@@ -1091,13 +1092,10 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Remove all existing jobs and job steps */
-		// TODO
-		
-		/* Update order state to "INITIAL" using Order Manager service */
+		/* Tell Production Planner to reset the order to "INITIAL" state, and to remove all existing jobs and job steps */
 		restOrder.setOrderState(OrderState.INITIAL.toString());
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_RESET + "/" + restOrder.getId(),
 					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -1124,7 +1122,7 @@ public class OrderCommandRunner {
 		}
 		
 		/* Report success, giving new order version */
-		String message = uiMsg(MSG_ID_ORDER_UPDATED, restOrder.getIdentifier(), restOrder.getVersion());
+		String message = uiMsg(MSG_ID_ORDER_RESET, restOrder.getIdentifier(), restOrder.getVersion());
 		logger.info(message);
 		System.out.println(message);
 	}
