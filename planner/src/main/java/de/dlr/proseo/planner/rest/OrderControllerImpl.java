@@ -175,6 +175,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
 		if (releaseId != null && facility != null) {
 			ProcessingOrder order = findOrder(releaseId);
