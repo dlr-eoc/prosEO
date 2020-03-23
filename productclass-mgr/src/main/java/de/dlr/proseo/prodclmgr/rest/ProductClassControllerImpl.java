@@ -62,20 +62,19 @@ public class ProductClassControllerImpl implements ProductclassController {
 	}
 	
     /**
-     * Get product classes by mission, product type or mission type
+     * Get product classes, optionally filtered by mission and/or product type
      * 
      * @param mission the mission code
      * @param productType the prosEO product type (if set, missionType should not be set)
-     * @param missionType the mission-defined product type (if set, productType should not be set)
-	 * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
+     * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
 	 *         HTTP status "NOT_FOUND" and an error message, if no product classes matching the search criteria were found
      */
 	@Override
-	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String productType, String missionType) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType, missionType);
+	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String productType) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		try {
-			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, missionType), HttpStatus.OK);
+			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}

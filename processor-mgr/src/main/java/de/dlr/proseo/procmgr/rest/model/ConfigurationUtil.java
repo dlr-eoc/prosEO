@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
@@ -48,6 +49,9 @@ public class ConfigurationUtil {
 		restConfiguration.setMissionCode(modelConfiguration.getProcessorClass().getMission().getCode());
 		restConfiguration.setProcessorName(modelConfiguration.getProcessorClass().getProcessorName());
 		restConfiguration.setConfigurationVersion(modelConfiguration.getConfigurationVersion());
+		if (null != modelConfiguration.getProductQuality()) {
+			restConfiguration.setProductQuality(modelConfiguration.getProductQuality().toString());
+		}
 		
 		for (ConfiguredProcessor configuredProcessor: modelConfiguration.getConfiguredProcessors()) {
 			restConfiguration.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
@@ -104,6 +108,9 @@ public class ConfigurationUtil {
 			} 
 		}
 		modelConfiguration.setConfigurationVersion(restConfiguration.getConfigurationVersion());
+		if (null != restConfiguration.getProductQuality()) {
+			modelConfiguration.setProductQuality(ProductQuality.valueOf(restConfiguration.getProductQuality()));
+		}
 		
 		for (de.dlr.proseo.procmgr.rest.model.Object configurationFile: restConfiguration.getConfigurationFiles()) {
 			ConfigurationFile modelConfigurationFile = new ConfigurationFile();

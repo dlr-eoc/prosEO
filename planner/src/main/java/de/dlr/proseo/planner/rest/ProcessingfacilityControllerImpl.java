@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.interfaces.rest.model.StorageType;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.RestJobStep;
@@ -64,7 +65,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getId(),
 						kc.getDescription(),
 						kc.getProcessingEngineUrl(),
-						kc.getStorageManagerUrl()));
+						kc.getStorageManagerUrl(),
+						StorageType.S_3.toString()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
@@ -92,7 +94,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					aKubeConfig.getId(),
 					aKubeConfig.getDescription(),
 					aKubeConfig.getProcessingEngineUrl(),
-					aKubeConfig.getStorageManagerUrl());
+					aKubeConfig.getStorageManagerUrl(),
+					StorageType.S_3.toString());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);

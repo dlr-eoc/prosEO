@@ -14,6 +14,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,8 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.interfaces.rest.model.SelectionRuleString;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -56,13 +59,13 @@ public class ProductclassCommandRunner {
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_TYPE = "Product class name (empty field cancels): ";
-	private static final String PROMPT_MISSION_TYPE = "Mission product type (empty field cancels): ";
 	private static final String PROMPT_SELECTION_RULE = "Selection rule in Rule Language (empty field cancels, ^D terminates): ";
 
 	private static final String URI_PATH_PRODUCTCLASSES = "/productclasses";
 	private static final String URI_PATH_SELECTIONRULES = "/selectionrules";
 	
 	private static final String PRODUCTCLASSES = "product classes";
+	private static final char[] PROMPT_VISIBILITY = null;
 
 	/** The user manager used by all command runners */
 	@Autowired
@@ -239,6 +242,22 @@ public class ProductclassCommandRunner {
 			}
 			restProductClass.setProductType(response);
 		}
+		// Get product class visibility
+		while (!Arrays.asList(ProductVisibility.INTERNAL.toString(), ProductVisibility.RESTRICTED.toString(), 
+				ProductVisibility.PUBLIC.toString()).contains(restProductClass.getVisibility())) {
+			System.out.print(PROMPT_VISIBILITY);
+			String response = System.console().readLine().toUpperCase();
+			switch (response) {
+			case "I":	restProductClass.setVisibility(ProductVisibility.INTERNAL.toString()); break;
+			case "R":	restProductClass.setVisibility(ProductVisibility.RESTRICTED.toString()); break;
+			case "P":	restProductClass.setVisibility(ProductVisibility.PUBLIC.toString()); break;
+			case "":
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			default:
+				System.err.println(uiMsg(MSG_ID_INVALID_VISIBILITY, response));
+			}
+		}
 		
 		/* Create product class */
 		try {
@@ -406,6 +425,19 @@ public class ProductclassCommandRunner {
 		// No modification of ID, version, mission code or product class name allowed
 		if (isDeleteAttributes || (null != updatedProductClass.getTypeDescription() && 0 != updatedProductClass.getTypeDescription().length())) {
 			restProductClass.setTypeDescription(updatedProductClass.getTypeDescription());
+		}
+		if (null != updatedProductClass.getVisibility() && !updatedProductClass.getVisibility().isBlank()) {
+			restProductClass.setVisibility(updatedProductClass.getVisibility());
+		}
+		if (isDeleteAttributes || (null != updatedProductClass.getDefaultSlicingType() && !updatedProductClass.getDefaultSlicingType().isBlank())) {
+			restProductClass.setDefaultSlicingType(updatedProductClass.getDefaultSlicingType());
+		}
+		if (OrderSlicingType.TIME_SLICE.toString().equals(restProductClass.getDefaultSlicingType())) {
+			if (null != updatedProductClass.getDefaultSliceDuration()) {
+				restProductClass.setDefaultSliceDuration(updatedProductClass.getDefaultSliceDuration());
+			}
+		} else {
+			restProductClass.setDefaultSliceDuration(null);
 		}
 		if (isDeleteAttributes || (null != updatedProductClass.getComponentClasses() && !updatedProductClass.getComponentClasses().isEmpty())) {
 			restProductClass.getComponentClasses().clear();

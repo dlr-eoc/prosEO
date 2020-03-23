@@ -174,6 +174,9 @@ public class CLIUtil {
 			} else if (Instant.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Instant of the form "yyyy-MM-dd'T'HH:mm:ss"
 				attributeField.set(restObject, Instant.parse(paramParts[1] + "Z")); // no timezone expected
+			} else if (Boolean.class.isAssignableFrom(attributeField.getType())) {
+				// Parse attribute value as Boolean (true/false)
+				attributeField.set(restObject, Boolean.parseBoolean(paramParts[1]));
 			} else if (String.class.isAssignableFrom(attributeField.getType())) {
 				// Use attribute value as is
 				attributeField.set(restObject, paramParts[1]);

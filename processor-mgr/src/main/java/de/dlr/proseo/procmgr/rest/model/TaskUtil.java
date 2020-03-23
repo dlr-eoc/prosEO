@@ -8,9 +8,6 @@ package de.dlr.proseo.procmgr.rest.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.ProcessorClass;
-import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Task;
 
 /**
@@ -45,7 +42,9 @@ public class TaskUtil {
 		restTask.setTaskName(modelTask.getTaskName());
 		restTask.setTaskVersion(modelTask.getTaskVersion());
 		restTask.setIsCritical(modelTask.getIsCritical());
-		restTask.setCriticalityLevel(Long.valueOf(modelTask.getCriticalityLevel()));
+		if (null != modelTask.getCriticalityLevel()) {
+			restTask.setCriticalityLevel(Long.valueOf(modelTask.getCriticalityLevel()));
+		}
 		if (null != modelTask.getNumberOfCpus()) {
 			restTask.setNumberOfCpus(Long.valueOf(modelTask.getNumberOfCpus()));
 		}
@@ -80,7 +79,9 @@ public class TaskUtil {
 		modelTask.setTaskName(restTask.getTaskName());
 		modelTask.setTaskVersion(restTask.getTaskVersion());
 		modelTask.setIsCritical(restTask.getIsCritical());
-		modelTask.setCriticalityLevel(restTask.getCriticalityLevel().intValue());
+		if (null != restTask.getCriticalityLevel()) {
+			modelTask.setCriticalityLevel(restTask.getCriticalityLevel().intValue());
+		}
 		if (null != restTask.getNumberOfCpus()) {
 			modelTask.setNumberOfCpus(restTask.getNumberOfCpus().intValue());
 		}

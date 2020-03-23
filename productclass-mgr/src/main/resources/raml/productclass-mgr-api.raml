@@ -63,11 +63,10 @@ resourceTypes:
 /productclasses:
   type: standard
   get:
-    description: Get product classes by mission, product type or mission type
+    description: Get product classes, optionally filtered by mission and/or product type
     queryParameters:
       mission?: string
       productType?: string
-      missionType?: string
     responses:
       200:
         body:

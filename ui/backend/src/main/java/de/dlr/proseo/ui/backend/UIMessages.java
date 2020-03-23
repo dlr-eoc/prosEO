@@ -127,6 +127,7 @@ public class UIMessages {
 	public static final int MSG_ID_RULEID_NOT_NUMERIC = 2877;
 	public static final int MSG_ID_SELECTION_RULE_DELETE_FAILED = 2878;
 	public static final int MSG_ID_SELECTION_RULE_DELETED = 2879;
+	public static final int MSG_ID_INVALID_VISIBILITY = 2880;
 	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
@@ -301,6 +302,7 @@ public class UIMessages {
 		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),
 		MSG_RULEID_NOT_NUMERIC ("(E%d) Database ID %d for selection rule not numeric", MSG_ID_RULEID_NOT_NUMERIC),
 		MSG_SELECTION_RULE_DELETE_FAILED ("(E%d) Deletion of selection rule with database ID %d from product class %s failed (cause: %s)", MSG_ID_SELECTION_RULE_DELETE_FAILED),
+		MSG_INVALID_VISIBILITY ("(E%d) Invalid product visibility %s", MSG_ID_INVALID_VISIBILITY),
 		
 		// Ingestor/product CLI
 		MSG_NO_PRODUCTS_FOUND ("(E%d) No products found for given search criteria", MSG_ID_NO_PRODUCTS_FOUND),
@@ -334,9 +336,9 @@ public class UIMessages {
 		MSG_CONFIGUREDPROCESSOR_DATA_INVALID ("(E%d) Configuration data invalid (cause: %s)", MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID),
 		MSG_NO_CONFIGUREDPROCESSORS_FOUND ("(E%d) No processors found for given search criteria", MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND),
 		MSG_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN ("(E%d) No configured processor identifier given", MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN),
-		MSG_CONFIGUREDPROCESSOR_NOT_FOUND ("(E%d) Configured processor %s for processor % not found", MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND),
+		MSG_CONFIGUREDPROCESSOR_NOT_FOUND ("(E%d) Configured processor %s not found", MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND),
 		MSG_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID ("(E%d) Configured processor with database ID %d not found", MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID),
-		MSG_CONFIGUREDPROCESSOR_DELETE_FAILED ("(E%d) Deletion of configured processor %s for processor %, version and configuration version %s failed (cause: %s)", MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED),
+		MSG_CONFIGUREDPROCESSOR_DELETE_FAILED ("(E%d) Deletion of configured processor %s failed (cause: %s)", MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED),
 
 		// User/group CLI
 		MSG_USER_DATA_INVALID ("(E%d) User account data invalid (cause: %s)", MSG_ID_USER_DATA_INVALID),

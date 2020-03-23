@@ -110,16 +110,19 @@ public class OrderUtil {
 			}
 			
 		}
+		if(null != processingOrder.getOutputFileClass()) {
+			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
+		}
+		if(null != processingOrder.getProcessingMode()) {
+			restOrder.setProcessingMode(processingOrder.getProcessingMode());
+		}
+		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
 
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
 				restOrder.getConfiguredProcessors().add(toAddProcessor.getIdentifier());
 			}
 		}	
-		
-		if(null != processingOrder.getOutputFileClass()) {
-			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
-		}
 		
 		//The orbit range should be altered to accommodate more ranges than just everything in between min and max
 		if (null != processingOrder.getRequestedOrbits()) {
@@ -212,6 +215,10 @@ public class OrderUtil {
 			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
 
 		}
+		if (null != restOrder.getPropagateSlicing()) {
+			processingOrder.setPropagateSlicing(restOrder.getPropagateSlicing());
+
+		}
 		
 		//The following section needs to be verified
 		for (RestParameter restParam : restOrder.getFilterConditions()) {
@@ -224,6 +231,13 @@ public class OrderUtil {
 			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
 			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
 			processingOrder.getOutputParameters().put(restParam.getKey(), modelParam);
+		}
+		
+		if (null != restOrder.getOutputFileClass()) {
+			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
+		}
+		if (null != restOrder.getProcessingMode()) {
+			processingOrder.setProcessingMode(restOrder.getProcessingMode());
 		}
 		
 		

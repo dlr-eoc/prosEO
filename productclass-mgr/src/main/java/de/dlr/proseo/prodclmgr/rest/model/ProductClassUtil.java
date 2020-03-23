@@ -53,7 +53,7 @@ public class ProductClassUtil {
 			restProductClass.setVisibility(modelProductClass.getVisibility().toString());
 		}
 		if (null != modelProductClass.getDefaultSlicingType()) {
-			restProductClass.setVisibility(modelProductClass.getDefaultSlicingType().toString());
+			restProductClass.setDefaultSlicingType(modelProductClass.getDefaultSlicingType().toString());
 		}
 		if (null != modelProductClass.getDefaultSliceDuration()) {
 			restProductClass.setDefaultSliceDuration(modelProductClass.getDefaultSliceDuration().getSeconds());

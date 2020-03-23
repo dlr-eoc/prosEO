@@ -118,7 +118,7 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String, java.lang.String)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String)}.
 	 */
 	@Test
 	public final void testGetRestProductClass() {

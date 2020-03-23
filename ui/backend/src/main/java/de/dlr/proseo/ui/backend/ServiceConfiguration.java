@@ -18,14 +18,6 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix="proseo")
 public class ServiceConfiguration {
 	
-	/** The user name to use for prosEO component logins */
-	@Value("${proseo.user}")
-	private String proseoUser;
-
-	/** The password to use for prosEO component logins */
-	@Value("${proseo.password}")
-	private String proseoPassword;
-
 	/** The URL of the prosEO User Manager */
 	@Value("${proseo.userManager.url}")
 	private String userManagerUrl;
@@ -50,24 +42,6 @@ public class ServiceConfiguration {
 	@Value("${proseo.productClassManager.url}")
 	private String productClassManagerUrl;
 	
-	/**
-	 * Gets the user for prosEO component logins
-	 * 
-	 * @return the prosEO user
-	 */
-	public String getProseoUser() {
-		return proseoUser;
-	}
-
-	/**
-	 * Gets the password for prosEO component logins
-	 * 
-	 * @return the prosEO password
-	 */
-	public String getProseoPassword() {
-		return proseoPassword;
-	}
-
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 

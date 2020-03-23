@@ -112,7 +112,7 @@ public class ProductClassManager {
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with ID %d not found";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
-	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s, product type %s and mission type %s";
+	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s and product type %s";
 	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
 	private static final String MSG_RULE_STRING_MISSING = "(E%d) Selection rule missing in selection rule string %s";
@@ -143,7 +143,7 @@ public class ProductClassManager {
 	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found in selection rule with ID %d for product class with ID %d";
 	private static final String MSG_DUPLICATE_RULE = "(E%d) Product class %s already contains selection rule for source class %s, mode %s and configured processor %s";
 
-	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s, product type %s and mission type %s retrieved";
+	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
 	private static final String MSG_SELECTION_RULES_CREATED = "(I%d) %d selection rules added to product class of type %s in mission %s";
 	private static final String MSG_PRODUCT_CLASS_RETRIEVED = "(I%d) Product class with ID %d retrieved";
@@ -271,16 +271,15 @@ public class ProductClassManager {
 	}
 
     /**
-     * Get product classes by mission, product type or mission type
+     * Get product classes, optionally filtered by mission and/or product type
      * 
      * @param mission the mission code
-     * @param productType the prosEO product type (if set, missionType should not be set)
-     * @param missionType the mission-defined product type (if set, productType should not be set)
+     * @param productType the prosEO product type
      * @return a list of product classes conforming to the search criteria
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
      */
-	public List<RestProductClass> getRestProductClass(String mission, String productType, String missionType) throws NoResultException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType, missionType);
+	public List<RestProductClass> getRestProductClass(String mission, String productType) throws NoResultException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		List<RestProductClass> result = new ArrayList<>();
 		
@@ -291,13 +290,6 @@ public class ProductClassManager {
 						productType, mission));
 			}
 			result.add(ProductClassUtil.toRestProductClass(productClass));
-		} else if (null != mission && null != missionType) {
-			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndMissionType(mission, missionType);
-			if (null == productClass) {
-				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, 
-						missionType, mission));
-			}
-			result.add(ProductClassUtil.toRestProductClass(productClass));
 		} else {
 			String jpqlQuery = "select pc from ProductClass pc where 1 = 1";
 			if (null != mission) {
@@ -306,18 +298,12 @@ public class ProductClassManager {
 			if (null != productType) {
 				jpqlQuery += " and productType = :productType";
 			}
-			if (null != missionType) {
-				jpqlQuery += " and missionType = :missionType";
-			}
 			Query query = em.createQuery(jpqlQuery);
 			if (null != mission) {
 				query.setParameter("missionCode", mission);
 			}
 			if (null != productType) {
 				query.setParameter("productType", productType);
-			}
-			if (null != missionType) {
-				query.setParameter("missionType", missionType);
 			}
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
@@ -326,10 +312,10 @@ public class ProductClassManager {
 			}
 			if (result.isEmpty()) {
 				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, 
-						mission, productType, missionType));
+						mission, productType));
 			}
 		}
-		logInfo(MSG_PRODUCT_CLASS_LIST_RETRIEVED, MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED, mission, productType, missionType);
+		logInfo(MSG_PRODUCT_CLASS_LIST_RETRIEVED, MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED, mission, productType);
 		
 		return result;
 	}
@@ -534,6 +520,21 @@ public class ProductClassManager {
 				|| null != modelProductClass.getDescription() && !modelProductClass.getDescription().equals(changedProductClass.getDescription())) {
 			productClassChanged = true;
 			modelProductClass.setDescription(changedProductClass.getDescription());
+		}
+		if (null == modelProductClass.getVisibility() && null != changedProductClass.getVisibility()
+				|| null != modelProductClass.getVisibility() && !modelProductClass.getVisibility().equals(changedProductClass.getVisibility())) {
+			productClassChanged = true;
+			modelProductClass.setVisibility(changedProductClass.getVisibility());
+		}
+		if (null == modelProductClass.getDefaultSlicingType() && null != changedProductClass.getDefaultSlicingType()
+				|| null != modelProductClass.getDefaultSlicingType() && !modelProductClass.getDefaultSlicingType().equals(changedProductClass.getDefaultSlicingType())) {
+			productClassChanged = true;
+			modelProductClass.setDefaultSlicingType(changedProductClass.getDefaultSlicingType());
+		}
+		if (null == modelProductClass.getDefaultSliceDuration() && null != changedProductClass.getDefaultSliceDuration()
+				|| null != modelProductClass.getDefaultSliceDuration() && !modelProductClass.getDefaultSliceDuration().equals(changedProductClass.getDefaultSliceDuration())) {
+			productClassChanged = true;
+			modelProductClass.setDefaultSliceDuration(changedProductClass.getDefaultSliceDuration());
 		}
 		
 		// Check the processor class
