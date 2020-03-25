@@ -31,7 +31,7 @@ public class RestOps {
 	 * @param method the HTTP method (defaults to POST)
 	 * @return ArrayList holding HTTP return code & response as String
 	 */
-	public static HttpResponseInfo restApiCall(String endPoint, String endPointPath, String payLoad, @Nullable String queryParam, HttpMethod method) {
+	public static HttpResponseInfo restApiCall(String user, String pw, String endPoint, String endPointPath, String payLoad, @Nullable String queryParam, HttpMethod method) {
 		HttpResponseInfo ri = new HttpResponseInfo();
 		Client client = null;
 		WebTarget webTarget = null;
@@ -39,9 +39,9 @@ public class RestOps {
 		Response response = null;
 		if (method == HttpMethod.POST) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
+					.register(new RestAuth(user,pw));
 			try {
-				logger.info("POST "+endPoint+endPointPath);
+				logger.info("POST "+endPoint+endPointPath + ", user " + user);
 				webTarget = client.target(endPoint).path(endPointPath);
 				invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
 				response = invocationBuilder.post(Entity.entity(payLoad, MediaType.APPLICATION_JSON));
@@ -56,9 +56,9 @@ public class RestOps {
 		}
 		if (method == HttpMethod.PUT) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
+					.register(new RestAuth(user,pw));
 			try {
-				logger.info("PUT {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
+				logger.info("PUT {}{}?{}={}, user {}",endPoint, endPointPath, queryParam, payLoad, user);
 				webTarget = client
 						.target(endPoint)
 						.path(endPointPath)
@@ -77,9 +77,9 @@ public class RestOps {
 		}
 		if (method == HttpMethod.PATCH) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
+					.register(new RestAuth(user,pw));
 			try {
-				logger.info("PATCH {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
+				logger.info("PATCH {}{}?{}={}, user {}",endPoint, endPointPath, queryParam, payLoad, user);
 				webTarget = client
 						.target(endPoint)
 						.path(endPointPath)
@@ -100,15 +100,15 @@ public class RestOps {
 		}
 		if (method == HttpMethod.GET) {
 			client = ClientBuilder.newClient()
-					.register(new RestAuth("s5p-proseo","sieb37.Schlaefer"));
+					.register(new RestAuth(user,pw));
 			try {
 				if (queryParam == null) {
-					logger.info("GET {}{}",endPoint, endPointPath);
+					logger.info("GET {}{}, user {}",endPoint, endPointPath, user);
 					webTarget = client
 							.target(endPoint)
 							.path(endPointPath);
 				} else {
-					logger.info("GET {}{}?{}={}",endPoint, endPointPath, queryParam, payLoad);
+					logger.info("GET {}{}?{}={}, user {}",endPoint, endPointPath, queryParam, payLoad, user);
 					webTarget = client
 							.target(endPoint)
 							.path(endPointPath)

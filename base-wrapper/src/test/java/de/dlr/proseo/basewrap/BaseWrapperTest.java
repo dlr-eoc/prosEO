@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.basewrap.BaseWrapper;
+import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
+import de.dlr.proseo.basewrap.rest.RestOps;
 
 /**
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
@@ -126,6 +128,11 @@ public class BaseWrapperTest {
 	 */
 	@Test
 	public final void testRun1() {
+		
+//		HttpResponseInfo callback = RestOps.restApiCall("wrapper", "ingest&plan", "http://192.168.20.155:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob2111", "", "FAILURE", "status", RestOps.HttpMethod.PATCH);
+//		logger.info(callback.toString());
+//		callback = RestOps.restApiCall("PTM-melchinger", "ernst", "http://192.168.20.155:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob2111", "", "FAILURE", "status", RestOps.HttpMethod.PATCH);
+//		logger.info(callback.toString());
 		
 		// Hashmap holding env-vars
 		Map<String,String> envmap = new HashMap<>();
