@@ -86,6 +86,7 @@ public class FacmgrControllerTest {
 	private ProcessingFacility createFacility(String[] testData) {	
 		logger.info("... creating facility ");
 		
+		
 		ProcessingFacility testFacility = new ProcessingFacility();
 		if (null != RepositoryService.getFacilityRepository().findByName(testData[2])) {
 			logger.info("Found test facility {}", testFacility.getId());
@@ -148,6 +149,7 @@ public class FacmgrControllerTest {
 		
 		List<ProcessingFacility> testFacilities = new ArrayList<ProcessingFacility>() ;
 		
+		
 		// Create an order in the database
 		ProcessingFacility facilityToCreate = createFacility(testFacilityData[0]);
 		testFacilities.add(facilityToCreate);
@@ -194,7 +196,7 @@ public class FacmgrControllerTest {
 	 * Test: Delete a facility by ID
 	 * Precondition: A facility in the database
 	 */
-//	@Test
+	@Test
 	public final void deleteFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
