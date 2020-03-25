@@ -255,8 +255,12 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, newProduct.getId());
+			String ppUser = ingestorConfig.getProductionPlannerUser();
+			if (newProduct.getMissionCode() != null) {
+				ppUser = newProduct.getMissionCode() + "-" + ppUser;
+			}
 			restTemplate = rtb.basicAuthentication(
-					ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
+					ppUser, ingestorConfig.getProductionPlannerPassword()).build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
