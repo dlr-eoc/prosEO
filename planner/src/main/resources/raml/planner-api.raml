@@ -64,6 +64,11 @@ resourceTypes:
             application/json:
               type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    delete:
+      description: Delete processing order of id 
+      displayName: deleteOrder
+      responses:
+        204:
   /approve:
     /{id}:
       patch:

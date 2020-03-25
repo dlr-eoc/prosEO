@@ -27,6 +27,7 @@ public enum Messages {
 	ORDER_SUSPENDED					(true, "Processing order '%s' is suspended (%d)"), 
 	ORDER_CANCELED					(true, "Processing order '%s' is canceled (%d)"), 
 	ORDER_RESET						(true, "Processing order '%s' is reset (%d)"), 
+	ORDER_DELETED					(true, "Processing order '%s' deleted (%d)"), 
 	ORDER_CLOSED					(true, "Processing order '%s' is closed (%d)"), 
 	ORDER_HASTOBE_APPROVED			(false, "Processing order '%s' has to be approved (%d)"), 
 	ORDER_ALREADY_APPROVED			(false, "Processing order '%s' already approved (%d)"), 

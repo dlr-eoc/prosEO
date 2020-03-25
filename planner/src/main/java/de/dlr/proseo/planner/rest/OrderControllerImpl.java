@@ -95,6 +95,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> getOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -114,6 +115,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> approveOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -141,10 +143,11 @@ public class OrderControllerImpl implements OrderController {
 
 	
 	/**
-	 * Approve prcessing order of id
+	 * Reset prcessing order of id
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> resetOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -155,6 +158,37 @@ public class OrderControllerImpl implements OrderController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+			}
+		}
+		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
+		logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
+	
+	/**
+	 * Delete prcessing order of id
+	 * 
+	 */
+	@Override
+	@Transactional
+	public ResponseEntity<RestOrder> deleteOrder(String orderId) {
+		ProcessingOrder order = this.findOrder(orderId);
+		if (order != null) {
+			Messages msg = orderUtil.delete(order);
+			if (msg.isTrue()) {
+				// deleted
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
 			} else {
 				// already running or at end, could not suspend
 				RestOrder ro = RestUtil.createRestOrder(order);
@@ -242,6 +276,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -274,6 +309,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> cancelOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -306,6 +342,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> closeOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -338,6 +375,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> suspendOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {

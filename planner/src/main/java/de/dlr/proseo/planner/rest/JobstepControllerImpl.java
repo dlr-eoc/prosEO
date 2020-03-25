@@ -113,6 +113,7 @@ public class JobstepControllerImpl implements JobstepController {
 	}
 
 	@Override 
+	@Transactional
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
@@ -138,6 +139,7 @@ public class JobstepControllerImpl implements JobstepController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
+	@Transactional
 	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
@@ -163,6 +165,7 @@ public class JobstepControllerImpl implements JobstepController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	@Override 
+	@Transactional
 	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
@@ -187,7 +190,8 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-		
+
+	@Transactional
 	private JobStep findJobStepByNameOrId(String nameOrId) {
 		JobStep js = null;
 		Long id = null;

@@ -162,8 +162,46 @@ public class JobStepUtil {
 		}
 		return answer;
 	}
+	
 	@Transactional
 	public Boolean delete(JobStep js) {
+		Boolean answer = false;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case INITIAL:
+			case READY:
+			case WAITING_INPUT:
+				if (js.getOutputProduct() != null) {
+					deleteProduct(js.getOutputProduct());	
+					js.setOutputProduct(null);
+				};
+			case RUNNING:
+			case COMPLETED:
+			case FAILED:
+				if (js.getOutputProduct() != null) {
+					js.getOutputProduct().setJobStep(null);
+				}
+				for (ProductQuery pq : js.getInputProductQueries()) {
+					for (Product p : pq.getSatisfyingProducts()) {
+						p.getSatisfiedProductQueries().clear();
+					}
+					pq.getSatisfyingProducts().clear();
+					RepositoryService.getProductQueryRepository().delete(pq);
+				}
+				js.getInputProductQueries().clear();
+				// RepositoryService.getJobStepRepository().delete(js);
+				answer = true;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
+	public Boolean deleteForced(JobStep js) {
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {

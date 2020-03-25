@@ -4,23 +4,31 @@ spring:
         hibernate.ddl-auto: update
         open-in-view: false
     datasource:
-        url: jdbc:postgresql://localhost:5432/proseo
+        url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: sequel09Master
-    packagesToScan: de.dlr.proseo.model
-
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
-server.tomcat.accesslog.enabled: true                
+        de.dlr.proseo: TRACE
 proseo:
+    defaultuser.name: sysadm
+    defaultuser.password: sysadm
+    wrapper:
+        user: wrapper
+        password: ingest&plan
+    userManager:
+        url: http://localhost:8086/proseo/user-mgr/v0.1
+    orderManager:
+        url: http://localhost:8082/proseo/order-mgr/v0.1
+    processorManager:
+        url: http://localhost:8084/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://localhost:8085/proseo/productclass-mgr/v0.1
     productionPlanner:
-        url: http://192.168.20.155:8080/proseo/planner
-        user: s5p-proseo
-        password: sieb37.Schlaefer
+        url: http://192.168.20.155:8080/proseo/planner/v0.1
+        user: wrapper
+        password: ingest&plan
         maxcycles: 50
         # time in milliseconds
         cyclewaittime: 1000
@@ -28,12 +36,12 @@ proseo:
         dispatcherwaittime: 0
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
-        user: none
-        password: none
+        user: wrapper
+        password: ingest&plan
     ingestor:
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1
-        user: none
-        password: none
+        user: wrapper
+        password: ingest&plan
     global:
       storageIdPrefix: proseo
     procFacility:

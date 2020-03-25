@@ -234,6 +234,42 @@ public class JobUtil {
 	}
 
 	@Transactional
+	public Boolean deleteForced(Job job) {
+		Boolean answer = false;
+		// check current state for possibility to be suspended
+		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
+		if (job != null) {
+			switch (job.getJobState()) {
+			case INITIAL:
+			case RELEASED:
+			case ON_HOLD:
+			case COMPLETED:
+			case FAILED:
+				List<JobStep> toRem = new ArrayList<JobStep>();
+				for (JobStep js : job.getJobSteps()) {
+					if (UtilService.getJobStepUtil().deleteForced(js)) {
+						toRem.add(js);
+					} else {
+						js.setJob(null);
+					}
+				}
+				for (JobStep js : toRem) {
+					job.getJobSteps().remove(js);
+					RepositoryService.getJobStepRepository().delete(js);
+				}
+				job.setProcessingOrder(null);
+				job.getOutputParameters().clear();
+				answer = true;
+				break;
+			case STARTED:
+			default:
+				break;
+			}
+		}
+ 		return answer;
+	}
+
+	@Transactional
 	public Boolean checkFinish(Job job) {
 		Boolean answer = false;	
 		// check current state for possibility to be suspended

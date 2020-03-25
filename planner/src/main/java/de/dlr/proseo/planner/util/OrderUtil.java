@@ -93,7 +93,6 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-
 	@Transactional
 	public Messages reset(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -148,6 +147,58 @@ public class OrderUtil {
 				break;
 			case CLOSED:
 				answer = Messages.ORDER_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+	
+	@Transactional
+	public Messages delete(ProcessingOrder order) {
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+				// jobs are in initial state, no change
+				RepositoryService.getOrderRepository().delete(order);
+				answer = Messages.ORDER_DELETED;
+				break;				
+			case PLANNED:
+			case COMPLETED:
+			case FAILED:
+			case CLOSED:
+				// remove jobs and jobsteps
+				HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
+				for (Job job : order.getJobs()) {
+					if (jobUtil.deleteForced(job)) {
+						toRemove.put(job.getId(), job);
+					}
+				}
+				List<Job> existingJobs = new ArrayList<Job>();
+				existingJobs.addAll(order.getJobs());
+				order.getJobs().clear();
+				for (Job job : existingJobs) {
+					if (toRemove.get(job.getId()) == null) {
+						order.getJobs().add(job);
+					} else {
+						RepositoryService.getJobRepository().delete(job);
+					}
+				}
+				RepositoryService.getOrderRepository().delete(order);
+				answer = Messages.ORDER_DELETED;
+				break;	
+			case RELEASED:
+				answer = Messages.ORDER_ALREADY_RELEASED;
+				break;
+			case RUNNING:
+				answer = Messages.ORDER_ALREADY_RUNNING;
+				break;
+			case SUSPENDING:
+				answer = Messages.ORDER_ALREADY_SUSPENDING;
 				break;
 			default:
 				break;

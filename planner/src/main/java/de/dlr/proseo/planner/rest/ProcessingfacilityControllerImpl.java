@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -53,6 +54,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
+	@Transactional
     public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities() {
 		productionPlanner.updateKubeConfigs();
 		if (productionPlanner.getKubeConfigs() != null) {
@@ -82,6 +84,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
+	@Transactional
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
 		// todo handle name
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
@@ -109,6 +112,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
      * 
      */
 	@Override
+	@Transactional
     public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
