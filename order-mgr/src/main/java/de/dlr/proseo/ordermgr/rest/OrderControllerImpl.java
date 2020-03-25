@@ -21,7 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.ordermgr.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.OrderController;
+import de.dlr.proseo.model.rest.model.RestOrder;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage processing orders
@@ -108,7 +109,6 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	public ResponseEntity<RestOrder> getOrderById(Long id) {
-		// TODO Auto-generated method stub
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
 		try {
 			return new ResponseEntity<>(procOrderManager.getOrderById(id), HttpStatus.OK);

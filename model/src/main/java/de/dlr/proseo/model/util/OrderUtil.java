@@ -1,9 +1,10 @@
-package de.dlr.proseo.ordermgr.rest.model;
+package de.dlr.proseo.model.util;
 
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -12,14 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestOrbitQuery;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
+
 public class OrderUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
+	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
 	
 	/**
 	 * Convert a prosEO model ProcessingOrder into a REST Order
@@ -129,21 +135,27 @@ public class OrderUtil {
 			
 			List<RestOrbitQuery> orbitQueries = new ArrayList<RestOrbitQuery>();
 			
-			//Get all the orbit numbers for the requested Orbits 
-			List<Long> orbNumber = new ArrayList<Long>();
-			for (de.dlr.proseo.model.Orbit orbit : processingOrder.getRequestedOrbits()) {
-				orbNumber.add(orbit.getOrbitNumber().longValue());			
-			}
+			// Sort orbits by orbit number
+			List<Orbit> sortedOrbits = new ArrayList<>();
+			sortedOrbits.addAll(processingOrder.getRequestedOrbits());
+			Collections.sort(sortedOrbits, (o1, o2) -> {
+				return o1.getOrbitNumber().compareTo(o2.getOrbitNumber());
+			});
 			
-			for (de.dlr.proseo.model.Orbit orbit : processingOrder.getRequestedOrbits()) {
-				RestOrbitQuery orbitQuery = new RestOrbitQuery();
-				orbitQuery.setSpacecraftCode(orbit.getSpacecraft().getCode());
-				//Set the range for OrbitNumbers assuming the smallest as OrbitNumberFrom and the highest as OrbitNumberTo
-				orbitQuery.setOrbitNumberFrom(Collections.min(orbNumber));
-				orbitQuery.setOrbitNumberTo(Collections.max(orbNumber));
-
-				orbitQueries.add(orbitQuery);
+			// Loop over all orbits, and create one RestOrbitQuery for each continuous range of orbit numbers
+			Integer lastOrbitNumber = Integer.MIN_VALUE;
+			RestOrbitQuery currentOrbitQuery = null;
+			for (Orbit orbit: sortedOrbits) {
+				if (orbit.getOrbitNumber() > lastOrbitNumber + 1) {
+					currentOrbitQuery = new RestOrbitQuery();
+					currentOrbitQuery.setSpacecraftCode(orbit.getSpacecraft().getCode());
+					currentOrbitQuery.setOrbitNumberFrom(Long.valueOf(orbit.getOrbitNumber()));
+					orbitQueries.add(currentOrbitQuery);
+				}
+				currentOrbitQuery.setOrbitNumberTo(Long.valueOf(orbit.getOrbitNumber()));
+				lastOrbitNumber = orbit.getOrbitNumber();
 			}
+
 			restOrder.setOrbits(orbitQueries);
 		}
 		

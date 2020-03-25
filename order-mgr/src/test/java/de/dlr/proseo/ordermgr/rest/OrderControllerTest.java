@@ -54,10 +54,10 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
-import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
-import de.dlr.proseo.ordermgr.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestOrder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)

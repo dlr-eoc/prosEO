@@ -33,7 +33,7 @@ import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
 import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.ordermgr.rest.model.RestMission;
+import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)

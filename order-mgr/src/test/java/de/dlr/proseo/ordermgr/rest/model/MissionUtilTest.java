@@ -16,8 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import de.dlr.proseo.ordermgr.rest.model.RestMission;
-import de.dlr.proseo.ordermgr.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.ordermgr.rest.MissionControllerTest;
 

@@ -23,6 +23,8 @@ description: |
   
   So the general syntax is:
   command [subcommand...] [option...] [parameter...]
+  
+  Caution: Typing ^C (Control-C) terminates the Command Line Interface immediately.
 
 globalOptions:
     - name: help

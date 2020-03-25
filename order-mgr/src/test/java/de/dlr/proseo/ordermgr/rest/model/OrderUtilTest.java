@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.OrderUtil;
 
 /**
  * @author Ranjitha Vignesh

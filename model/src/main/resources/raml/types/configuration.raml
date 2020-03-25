@@ -25,13 +25,8 @@
         type: string
         description: Indicates the suitability for general use of products generated with this configuration (NOMINAL, EXPERIMENTAL, TEST; default NOMINAL)
       configurationFiles:
-        type: array
+        type: RestConfigurationFile[]
         description: The configuration files for this configuration
-        items:
-          type: object
-          properties:
-            fileVersion: string
-            fileName: string
       staticInputFiles:
         type: RestConfigurationInputFile[]
         description: Static input files for inclusion in generated Job Order Files

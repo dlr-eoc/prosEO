@@ -66,7 +66,7 @@ public class ConfigurationUtil {
 		
 		for (ConfigurationFile configurationFile: modelConfiguration.getConfigurationFiles()) {
 			restConfiguration.getConfigurationFiles().add(
-				new de.dlr.proseo.procmgr.rest.model.Object(configurationFile.getFileVersion(), configurationFile.getFileName()));
+				new RestConfigurationFile(configurationFile.getFileVersion(), configurationFile.getFileName()));
 		}
 		
 		for (ConfigurationInputFile staticInputFile: modelConfiguration.getStaticInputFiles()) {
@@ -112,7 +112,7 @@ public class ConfigurationUtil {
 			modelConfiguration.setProductQuality(ProductQuality.valueOf(restConfiguration.getProductQuality()));
 		}
 		
-		for (de.dlr.proseo.procmgr.rest.model.Object configurationFile: restConfiguration.getConfigurationFiles()) {
+		for (RestConfigurationFile configurationFile: restConfiguration.getConfigurationFiles()) {
 			ConfigurationFile modelConfigurationFile = new ConfigurationFile();
 			modelConfigurationFile.setFileName(configurationFile.getFileName());
 			modelConfigurationFile.setFileVersion(configurationFile.getFileVersion());

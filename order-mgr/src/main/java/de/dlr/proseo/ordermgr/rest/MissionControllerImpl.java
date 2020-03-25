@@ -25,8 +25,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import de.dlr.proseo.ordermgr.rest.model.RestMission;
-import de.dlr.proseo.ordermgr.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.rest.MissionController;
+import de.dlr.proseo.model.rest.model.RestMission;
+import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Spacecraft;

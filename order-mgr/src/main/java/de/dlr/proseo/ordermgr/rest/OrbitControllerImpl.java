@@ -29,7 +29,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.OrbitController;
+import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 /**

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 public class OrbitUtil {

@@ -23,16 +23,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbitQuery;
-import de.dlr.proseo.ordermgr.rest.model.RestOrder;
+import de.dlr.proseo.model.util.OrderUtil;
+import de.dlr.proseo.model.rest.model.RestOrbitQuery;
+import de.dlr.proseo.model.rest.model.RestOrder;
 
 
 /**
@@ -56,12 +53,12 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ORDER_NOT_MODIFIED = 1012;
 	private static final int MSG_ID_ORDER_CREATED = 1013;
 	private static final int MSG_ID_DUPLICATE_ORDER_UUID = 1014;
-	private static final int MSG_ID_INVALID_REQUESTED_CLASS = 1014;
-	private static final int MSG_ID_INVALID_INPUT_CLASS = 1014;
-	private static final int MSG_ID_INVALID_FILE_CLASS = 1014;
-	private static final int MSG_ID_INVALID_PROCESSING_MODE = 1014;
-	private static final int MSG_ID_INVALID_CONFIGURED_PROCESSOR = 1014;
-	private static final int MSG_ID_INVALID_ORBIT_RANGE = 1014;
+	private static final int MSG_ID_INVALID_REQUESTED_CLASS = 1015;
+	private static final int MSG_ID_INVALID_INPUT_CLASS = 1016;
+	private static final int MSG_ID_INVALID_FILE_CLASS = 1017;
+	private static final int MSG_ID_INVALID_PROCESSING_MODE = 1018;
+	private static final int MSG_ID_INVALID_CONFIGURED_PROCESSOR = 1019;
+	private static final int MSG_ID_INVALID_ORBIT_RANGE = 1020;
 	
 
 	/* Message string constants */

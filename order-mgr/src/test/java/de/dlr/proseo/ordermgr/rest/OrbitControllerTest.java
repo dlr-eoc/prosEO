@@ -41,7 +41,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)

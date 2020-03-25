@@ -15,7 +15,6 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.ordermgr.rest.MissionControllerTest;
 
 /**
  * @author Ranjitha Vignesh
