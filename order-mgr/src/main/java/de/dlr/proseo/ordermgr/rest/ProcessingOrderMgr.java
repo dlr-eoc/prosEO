@@ -207,8 +207,6 @@ public class ProcessingOrderMgr {
 		}
 		// Delete the order
 		RepositoryService.getOrderRepository().deleteById(id);
-
-		// Test whether the deletion was successful
 		// Test whether the deletion was successful
 		modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (!modelOrder.isEmpty()) {
@@ -245,15 +243,13 @@ public class ProcessingOrderMgr {
 	}
 	
 	/**
-	 * Update the product with the given ID with the attribute values of the given Json object. This method will NOT modify
-	 * associated product files.
-	 * 
+	 * Update the order with the given ID with the attribute values of the given Json object. 	 * 
 	 * @param id the ID of the product to update
-	 * @param product a Json object containing the modified (and unmodified) attributes
+	 * @param order a Json object containing the modified (and unmodified) attributes
 	 * @return a Json object corresponding to the product after modification (with ID and version for all contained objects)
 	 * @throws EntityNotFoundException if no product with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
-	 * @throws ConcurrentModificationException if the product has been modified since retrieval by the client
+	 * @throws ConcurrentModificationException if the order has been modified since retrieval by the client
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
 	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {

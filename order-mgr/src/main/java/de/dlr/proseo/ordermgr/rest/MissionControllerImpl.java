@@ -222,8 +222,8 @@ public class MissionControllerImpl implements MissionController {
 
 	/**
 	 * Update the mission with the given ID with the attribute values of the given Json object. 
-	 * @param id the ID of the product to update
-	 * @param product a Json object containing the modified (and unmodified) attributes
+	 * @param id the ID of the mission to update
+	 * @param mission a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing a Json object corresponding to the mission after modification (with ID and version for all 
 	 * 		   contained objects) and HTTP status "OK" or an error message and
 	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
@@ -344,7 +344,7 @@ public class MissionControllerImpl implements MissionController {
 	 * Delete a mission by ID
 	 * 
 	 * @param the ID of the mission to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the product did not
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the mission did not
 	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override

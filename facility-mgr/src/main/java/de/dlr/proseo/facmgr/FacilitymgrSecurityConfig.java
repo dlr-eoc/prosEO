@@ -66,6 +66,9 @@ public class FacilitymgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		builder.jdbcAuthentication()
 			.dataSource(dataSource);
+		
+//	    builder.jdbcAuthentication()
+//      .dataSource(dataSource).withUser("user").password(passwordEncoder().encode("password")).roles("USER");
 	}
 
 	@Bean

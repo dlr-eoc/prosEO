@@ -38,7 +38,7 @@ public class MissionUtilTest {
 	private static Logger logger = LoggerFactory.getLogger(MissionControllerTest.class);
 	
 	/**
-	 * Create a product from a data array
+	 * Create a mission from a data array
 	 * 
 	 * @param testData an array of Strings representing the mission to create
 	 * @return a Mission with its attributes set to the input data
@@ -126,7 +126,7 @@ public class MissionUtilTest {
 
 		logger.info("Test copy model to REST OK");
 		
-		// Copy a product from REST to model
+		// Copy a mission from REST to model
 		Mission copiedModelMission = MissionUtil.toModelMission(restMission);
 //		assertEquals("ID not preserved: ", modelmission.getId(), copiedModelMission.getId());
 		assertEquals("Code not preserved: ", modelmission.getCode(), copiedModelMission.getCode());
