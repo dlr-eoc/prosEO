@@ -64,11 +64,11 @@ public class FacilitymgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	public void initialize(AuthenticationManagerBuilder builder, DataSource dataSource) throws Exception {
 		logger.info("Initializing authentication from datasource " + dataSource);
 
-//		builder.jdbcAuthentication()
-//			.dataSource(dataSource);
+		builder.jdbcAuthentication()
+			.dataSource(dataSource);
 		
-	    builder.jdbcAuthentication()
-      .dataSource(dataSource).withUser("user").password(passwordEncoder().encode("password")).roles("USER");
+//	    builder.jdbcAuthentication()
+//      .dataSource(dataSource).withUser("user").password(passwordEncoder().encode("password")).roles("USER");
 	}
 
 	@Bean

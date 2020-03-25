@@ -1,6 +1,7 @@
 package de.dlr.proseo.facmgr.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +25,13 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.facmgr.FacilityManager;
 import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
+import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestFacility;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -132,7 +135,58 @@ public class FacmgrControllerTest {
 		}
 	}
 	
-	
+	/**
+	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.createFacility(RestFacility)}.
+	 * 
+	 * Test: Create a new facility
+	 */
+	@Transactional
+	@Test
+	public final void testCreateFacility() {
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<ProcessingFacility> testFacilities = new ArrayList<ProcessingFacility>() ;
+		
+		// Create an order in the database
+		ProcessingFacility facilityToCreate = createFacility(testFacilityData[0]);
+		testFacilities.add(facilityToCreate);
+		RestFacility restFacility = null;
+		try {
+			restFacility = FacmgrUtil.toRestFacility(facilityToCreate);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		String testUrl = "http://localhost:" + this.port + FACILITY_BASE_URI + "/facilities";
+		logger.info("Testing URL {} / POST", testUrl);
+		
+		ResponseEntity<RestFacility> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restFacility, RestFacility.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
+		restFacility = postEntity.getBody();
+
+		assertNotEquals("Id should not be 0 (zero): ", 0L, restFacility.getId().longValue());
+
+		// Test that the mission exists
+		testUrl += "/" + restFacility.getId();
+		ResponseEntity<RestFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestFacility.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
+
+		// Clean up database
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestFacilities(testFacilities);
+				return null;
+			}
+		});
+
+		logger.info("Test OK: Create order");		
+	}	
+
 	
 	/**
 	 * Test method for { @link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.deleteFacilityById(Long))}.
@@ -140,11 +194,9 @@ public class FacmgrControllerTest {
 	 * Test: Delete a facility by ID
 	 * Precondition: A facility in the database
 	 */
-	@Test
+//	@Test
 	public final void deleteFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
-		logger.info ("Coming here");
-
 		
 		List<ProcessingFacility> testFacilities = transactionTemplate.execute(new TransactionCallback<>() {
 			@Override
