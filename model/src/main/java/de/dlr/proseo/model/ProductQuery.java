@@ -279,20 +279,22 @@ public class ProductQuery extends PersistentObject {
 	public List<Product> getNewestSatisfyingProducts() {
 		HashMap<Instant, HashMap<Instant, Product>> newestProducts = new HashMap<Instant, HashMap<Instant, Product>>();
 		for (Product p : satisfyingProducts) {
-			if (newestProducts.get(p.getSensingStartTime()) == null) {
-				HashMap<Instant, Product> stopMap = new HashMap<Instant, Product>();
-				stopMap.put(p.getSensingStopTime(), p);
-				newestProducts.put(p.getSensingStartTime(), stopMap);
-			} else {
-				Product product = newestProducts.get(p.getSensingStartTime()).get(p.getSensingStopTime());
-				if (   product != null) {
-					if (product.getGenerationTime() != null 	
-					   && p.getGenerationTime() != null 
-					   && p.getGenerationTime().isAfter(product.getGenerationTime())) {
-						newestProducts.get(p.getSensingStartTime()).replace(p.getSensingStartTime(), p);
-					}
+			if (p.getProductFile() != null && !p.getProductFile().isEmpty()) {
+				if (newestProducts.get(p.getSensingStartTime()) == null) {
+					HashMap<Instant, Product> stopMap = new HashMap<Instant, Product>();
+					stopMap.put(p.getSensingStopTime(), p);
+					newestProducts.put(p.getSensingStartTime(), stopMap);
 				} else {
-					newestProducts.get(p.getSensingStartTime()).put(p.getSensingStopTime(), p);
+					Product product = newestProducts.get(p.getSensingStartTime()).get(p.getSensingStopTime());
+					if (   product != null) {
+						if (product.getGenerationTime() != null 	
+								&& p.getGenerationTime() != null 
+								&& p.getGenerationTime().isAfter(product.getGenerationTime())) {
+							newestProducts.get(p.getSensingStartTime()).replace(p.getSensingStartTime(), p);
+						}
+					} else {
+						newestProducts.get(p.getSensingStartTime()).put(p.getSensingStopTime(), p);
+					}
 				}
 			}
 		}

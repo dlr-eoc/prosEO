@@ -143,10 +143,12 @@ public class ProductQueryService {
 		for (Object selectedItem: selectedItems) {
 			if (selectedItem instanceof Product) {
 				Product product = (Product) selectedItem;
-				if (productQuery.testFilterConditions(product)) {
-					selectedProducts.add(product);
-				} else {
-					if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
+				if (product.getProductFile() != null && !product.getProductFile().isEmpty()) {
+					if (productQuery.testFilterConditions(product)) {
+						selectedProducts.add(product);
+					} else {
+						if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
+					}
 				}
 			}
 		}
