@@ -93,7 +93,7 @@ public class FacmgrControllerTest {
 			return testFacility = RepositoryService.getFacilityRepository().findByName(testData[2]);	
 		}
 		else{
-			testFacility.setId(Long.parseLong(testData[0]));
+			//testFacility.setId(Long.parseLong(testData[0]));
 			testFacility.setName(testData[2]);
 			testFacility.setDescription(testData[3]);
 			testFacility.setProcessingEngineUrl(testData[4]);
