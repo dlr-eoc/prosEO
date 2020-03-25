@@ -275,6 +275,7 @@ public class UserCommandRunner {
 		File userAccountFile = null;
 		String userAccountFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		String missionCode = loginManager.getMission();
+		String password = null;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
 			case "file":

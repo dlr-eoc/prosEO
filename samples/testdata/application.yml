@@ -1,0 +1,54 @@
+spring:
+    main:
+        web-application-type: NONE
+logging:
+    level:
+        root: INFO
+        org.apache.http: DEBUG
+        de.dlr.proseo: TRACE
+    file: proseo-ui-cli.log
+proseo:
+    cli:
+        syntaxfile: ui-cli-syntax.yml
+    
+    # Configuration for Validation Test Environment at DLR
+#    userManager:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/user-mgr/v0.1
+#    ingestor:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/ingestor/v0.1
+#    orderManager:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/order-mgr/v0.1
+#    productionPlanner:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/planner/v0.1
+#    processorManager:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1
+#    productClassManager:
+#        url: https://proseo-registry.eoc.dlr.de/proseo/productclass-mgr/v0.1
+        
+    # Configuration for Integration Test Environment
+#    userManager:
+#        url: https://proseo.proseo-bcm.de/proseo/user-mgr/v0.1
+#    ingestor:
+#        url: https://proseo.proseo-bcm.de/proseo/ingestor/v0.1
+#    orderManager:
+#        url: https://proseo.proseo-bcm.de/proseo/order-mgr/v0.1
+#    productionPlanner:
+#        url: https://proseo.proseo-bcm.de/proseo/planner/v0.1
+#    processorManager:
+#        url: https://proseo.proseo-bcm.de/proseo/processor-mgr/v0.1
+#    productClassManager:
+#        url: https://proseo.proseo-bcm.de/proseo/productclass-mgr/v0.1
+
+    # Configuration for local deployment
+    userManager:
+        url: http://localhost:8086/proseo/user-mgr/v0.1
+    ingestor:
+        url: http://localhost:8081/proseo/ingestor/v0.1
+    orderManager:
+        url: http://localhost:8082/proseo/order-mgr/v0.1
+    productionPlanner:
+        url: http://localhost:8083/proseo/planner/v0.1
+    processorManager:
+        url: http://localhost:8084/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://localhost:8085/proseo/productclass-mgr/v0.1
