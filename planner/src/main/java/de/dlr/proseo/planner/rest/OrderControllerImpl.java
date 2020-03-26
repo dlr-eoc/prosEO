@@ -400,6 +400,38 @@ public class OrderControllerImpl implements OrderController {
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
+	/**
+	 * Retry prcessing order of id
+	 * 
+	 */
+	@Override
+	@Transactional
+	public ResponseEntity<RestOrder> retryOrder(String orderId) {
+		ProcessingOrder order = this.findOrder(orderId);
+		if (order != null) {
+			Messages msg = orderUtil.retry(order);
+			if (msg.isTrue()) {
+				// canceled
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+			}
+		}
+		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
+		logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
 
 	@Transactional
 	private ProcessingOrder findOrder(String orderId) {

@@ -261,10 +261,15 @@ public class OrderUtil {
 				break;
 			case APPROVED:
 				if (orderDispatcher.publishOrder(order, procFacility)) {
-					jobStepUtil.searchForJobStepsToRun(procFacility);
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+					if (order.getJobs().isEmpty()) {
+						order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.COMPLETED);
+						answer = Messages.ORDER_COMPLETED;
+					} else {
+						jobStepUtil.searchForJobStepsToRun(procFacility);
+						order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+						answer = Messages.ORDER_PLANNED;
+					}
 					RepositoryService.getOrderRepository().save(order);
-					answer = Messages.ORDER_PLANNED;
 				}
 				break;	
 			case PLANNED:	
@@ -311,9 +316,14 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					jobUtil.resume(job);
 				}
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RELEASED);
+				if (order.getJobs().isEmpty()) {
+					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.COMPLETED);
+					answer = Messages.ORDER_COMPLETED;
+				} else {
+					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RELEASED);
+					answer = Messages.ORDER_RELEASED;
+				}
 				RepositoryService.getOrderRepository().save(order);
-				answer = Messages.ORDER_RELEASED;
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -406,6 +416,7 @@ public class OrderUtil {
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
 			case RUNNING:
+			case SUSPENDING:
 				Boolean oneNotSuspended = true;
 				for (Job job : order.getJobs()) {
 					oneNotSuspended = jobUtil.suspend(job).isTrue() & oneNotSuspended;
@@ -419,15 +430,56 @@ public class OrderUtil {
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
-				break;			
-			case SUSPENDING:
-				answer = Messages.ORDER_SUSPENDED;
-				break;
+				break;	
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
 				answer = Messages.ORDER_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.ORDER_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
+	public Messages retry(ProcessingOrder order) {
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+			case PLANNED:	
+			case RELEASED:
+			case RUNNING:
+			case SUSPENDING:
+			case COMPLETED:
+				answer = Messages.ORDER_COULD_NOT_RETRY;
+				break;
+			case FAILED:
+				Boolean all = true;
+				for (Job job : order.getJobs()) {
+					jobUtil.retry(job);
+				}
+				for (Job job : order.getJobs()) {
+					if (job.getJobState() != de.dlr.proseo.model.Job.JobState.INITIAL) {
+						all = false;
+						break;
+					}
+				}
+				if (all) {
+					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+					RepositoryService.getOrderRepository().save(order);
+					answer = Messages.ORDER_RETRIED;
+				} else {
+					answer = Messages.ORDER_COULD_NOT_RETRY;
+				}
 				break;
 			case CLOSED:
 				answer = Messages.ORDER_ALREADY_CLOSED;

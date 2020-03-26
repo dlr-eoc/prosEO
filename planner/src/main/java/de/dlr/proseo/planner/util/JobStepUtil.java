@@ -140,6 +140,31 @@ public class JobStepUtil {
 	}
 
 	@Transactional
+	public Messages retry(JobStep js) {
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case INITIAL:
+			case READY:
+			case RUNNING:
+			case COMPLETED:
+				answer = Messages.JOBSTEP_COULD_NOT_RETRY;
+				break;
+			case WAITING_INPUT:
+			case FAILED:
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				RepositoryService.getJobStepRepository().save(js);
+				answer = Messages.JOBSTEP_RETRIED;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
 	public Boolean checkFinish(JobStep js) {
 		Boolean answer = false;
 		// check current state for possibility to be suspended
@@ -176,7 +201,6 @@ public class JobStepUtil {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
 				};
-			case RUNNING:
 			case COMPLETED:
 			case FAILED:
 				if (js.getOutputProduct() != null) {
@@ -192,6 +216,8 @@ public class JobStepUtil {
 				js.getInputProductQueries().clear();
 				// RepositoryService.getJobStepRepository().delete(js);
 				answer = true;
+				break;
+			case RUNNING:
 				break;
 			default:
 				break;

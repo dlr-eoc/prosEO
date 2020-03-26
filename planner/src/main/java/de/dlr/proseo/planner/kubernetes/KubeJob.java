@@ -244,8 +244,8 @@ public class KubeJob {
 			jobName = aJob.getMetadata().getName();
 			if (jobName.startsWith(ProductionPlanner.jobNamePrefix)) {
 				try {
-				jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
-				containerName = ProductionPlanner.jobContainerPrefix + jobId;
+					jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
+					containerName = ProductionPlanner.jobContainerPrefix + jobId;
 				} catch (NumberFormatException e) {
 					e.printStackTrace();
 					return null;
@@ -513,10 +513,6 @@ public class KubeJob {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
-					Optional<JobStep> jsa = RepositoryService.getJobStepRepository().findById(jobStepId);
-					if (jsa.isPresent()) {
-						jsa.get();
-					}
 				}
 			}
 			KubeJobFinish toFini = new KubeJobFinish(this, jobname);

@@ -27,6 +27,7 @@ import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.rest.model.StderrLogLevel;
 import de.dlr.proseo.planner.rest.model.StdoutLogLevel;
+import de.dlr.proseo.planner.util.UtilService;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
@@ -89,6 +90,36 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		// todo handle name
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
+			RestProcessingFacility pf = new RestProcessingFacility(
+					null,
+					null,
+					aKubeConfig.getId(),
+					aKubeConfig.getDescription(),
+					aKubeConfig.getProcessingEngineUrl(),
+					aKubeConfig.getStorageManagerUrl());
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
+			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
+		} else {
+	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
+	    	logger.error(message);
+	    	HttpHeaders responseHeaders = new HttpHeaders();
+	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
+	}
+    /**
+     * Get production planner processingfacilitiy by name
+     * 
+     */
+	@Override
+	@Transactional
+	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
+		// todo handle name
+		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
+		if (aKubeConfig != null) {
+			aKubeConfig.sync();
+			UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig);
 			RestProcessingFacility pf = new RestProcessingFacility(
 					null,
 					null,
