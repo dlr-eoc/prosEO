@@ -155,15 +155,6 @@ public class ProcessorCommandRunner {
 			}
 			restProcessorClass.setProcessorName(response);
 		}
-		if (null == restProcessorClass.getProductClasses() || restProcessorClass.getProductClasses().isEmpty()) {
-			System.out.print(PROMPT_PRODUCT_CLASSES);
-			String response = System.console().readLine();
-			if ("".equals(response)) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
-				return;
-			}
-			restProcessorClass.setProductClasses(Arrays.asList(response.split(",")));
-		}
 		
 		/* Create processor class */
 		try {

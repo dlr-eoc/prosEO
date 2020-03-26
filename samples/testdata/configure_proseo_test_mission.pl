@@ -160,13 +160,13 @@ my @configured_processors = (
     	configurationVersion => 'OPER_2020-03-25' 
     },
     {
-        identifier => 'PTML2_0.1.0_OPER 2020-03-25',
+        identifier => 'PTML2_0.1.0_OPER_2020-03-25',
         processorName => 'PTML2',
         processorVersion => '0.1.0',
         configurationVersion => 'OPER_2020-03-25' 
     },
     {
-        identifier => 'PTML3_0.1.0_OPER 2020-03-25',
+        identifier => 'PTML3_0.1.0_OPER_2020-03-25',
         processorName => 'PTML3',
         processorVersion => '0.1.0',
         configurationVersion => 'OPER_2020-03-25' 
@@ -202,7 +202,7 @@ $product_processor_class{'L1B_______'} = 'PTML1B';
 $selection_rules{'L1B_______'} = '
     FOR L0________ SELECT ValIntersect(0, 0);
     FOR AUX_IERS_B SELECT LatestValIntersect(60 D, 60 D)';
-$applicable_processors{'L1B'} = [ 'PTML1B_0.1.0_OPER_2020-03-25' ];
+$applicable_processors{'L1B_______'} = [ 'PTML1B_0.1.0_OPER_2020-03-25' ];
 
 # Selection rules for PTM L2
 # Expected time coverage of the L2 products is on orbit (same as for the L1B product)
@@ -289,6 +289,7 @@ print $cli_script 'user create --mission=' . $mission->{code} . ' ' . $USERMGR_U
 print $cli_script 'login --user=' . $USERMGR_USER . ' --password=' . $USERMGR_PWD . ' PTM' . "\n";
 print $cli_script 'user create ' . $USER_USER . ' password=' . $USER_PWD . "\n";
 print $cli_script 'group create ' . $USER_GROUP . ' authorities=' . $USER_AUTHORITIES . "\n";
+print $cli_script 'group add ' . $USER_GROUP . ' ' . $USER_USER . "\n";
 
 # Perform the remaining configuration steps as regular user
 print $cli_script 'login --user=' . $USER_USER . ' --password=' . $USER_PWD . ' PTM' . "\n";
@@ -465,7 +466,14 @@ foreach my $product_class ( @class_key_sequence ) {
     print $cli_script 'productclass create --file=' . $filename . "\n";
 
 	if ($selection_rules{$product_class}) {
-		print $cli_script 'productclass rule create ' . $product_types{$product_class}
+	    $filename = $mission->{code} . '_' . $product_types{$product_class} . '_rule.txt';
+	    $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
+
+        print $fh $selection_rules{$product_class} . "\n";
+        $fh->close();
+
+		print $cli_script 'productclass rule create --file=' . $filename . ' --format=PLAIN '
+		    . $product_types{$product_class}
 		    . ' mode=' . $defaults->{selection_rule_mode} 
             . ' configuredProcessors=';
         my $innerfirst = 1;
@@ -479,7 +487,6 @@ foreach my $product_class ( @class_key_sequence ) {
             print $cli_script $selrule_processor;
         }
         print $cli_script "\n";
-        print $cli_script ( $selection_rules{$product_class} =~ s/\R//gr ) . "\n"; # Selection rule prompt
 	}
 }
 print $cli_script "exit\n";

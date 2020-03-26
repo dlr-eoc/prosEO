@@ -217,7 +217,7 @@ public class ConfigurationManager {
 		}
 		
 		for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
-			if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType())) {
+			if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType().toLowerCase())) {
 				throw new IllegalArgumentException(logError(MSG_FILENAME_TYPE_INVALID, MSG_ID_FILENAME_TYPE_INVALID,
 						staticInputFile.getFileNameType()));
 			}

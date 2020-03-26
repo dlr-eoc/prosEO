@@ -133,7 +133,6 @@ public class ProductClassUtilTest {
 		assertEquals("Unexpected version:", TEST_PRODUCT_CLASS_VERSION, restProductClass.getVersion().intValue());
 		assertEquals("Unexpected mission code:", TEST_MISSION_CODE, restProductClass.getMissionCode());
 		assertEquals("Unexpected product type:", TEST_PRODUCT_TYPE, restProductClass.getProductType());
-		assertEquals("Unexpected mission type:", TEST_MISSION_TYPE, restProductClass.getMissionType());
 		assertEquals("Unexpected description:", TEST_PRODUCT_CLASS_DESCRIPTION, restProductClass.getTypeDescription());
 		assertEquals("Unexpected processor class:", TEST_PROCESSOR_NAME, restProductClass.getProcessorClass());
 		assertEquals("Unexpected enclosing type:", TEST_ENCLOSING_PRODUCT_TYPE, restProductClass.getEnclosingClass());
@@ -199,7 +198,6 @@ public class ProductClassUtilTest {
 		assertEquals("Unexpected id:", TEST_PRODUCT_CLASS_ID, productClass.getId());
 		assertEquals("Unexpected version:", TEST_PRODUCT_CLASS_VERSION, productClass.getVersion());
 		assertEquals("Unexpected product type:", TEST_PRODUCT_TYPE, productClass.getProductType());
-		assertEquals("Unexpected mission type:", TEST_MISSION_TYPE, productClass.getMissionType());
 		assertEquals("Unexpected description:", TEST_PRODUCT_CLASS_DESCRIPTION, productClass.getDescription());
 		
 		logger.info("Test copy REST to model OK");

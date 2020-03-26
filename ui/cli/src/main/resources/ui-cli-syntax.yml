@@ -24,7 +24,10 @@ description: |
   So the general syntax is:
   command [subcommand...] [option...] [parameter...]
   
-  Caution: Typing ^C (Control-C) terminates the Command Line Interface immediately.
+  Caution 1: Typing ^C (Control-C) terminates the Command Line Interface immediately.
+  Caution 2: When run in non-interactive mode (e. g. with input redirection) prompts for missing mandatory attributes do not work.
+             In this case mandatory attributes must be specified on the command line or in an input file.
+             (Exception: Selection rules can be read from input redirection.)
 
 globalOptions:
     - name: help

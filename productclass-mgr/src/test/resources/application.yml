@@ -15,5 +15,5 @@ logging:
                 proseo: TRACE
 proseo:
     user:
-        name: s5p-proseo
-        password: sieb37.Schlaefer
+        name: sysadm
+        password: sysadm

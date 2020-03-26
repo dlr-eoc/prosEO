@@ -51,12 +51,12 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING = 2356;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND = 2357;
 	private static final int MSG_ID_CONFIGURATION_INVALID = 2358;
-	private static final int MSG_ID_CONFIGURED_PROCESSOR_MODIFIED = 2356;
-	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_MODIFIED = 2357;
-	private static final int MSG_ID_CONFIGURED_PROCESSOR_DELETED = 2358;
-	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2359;
-	private static final int MSG_ID_CONCURRENT_UPDATE = 2360;
-	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2361;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_MODIFIED = 2359;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_MODIFIED = 2360;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_DELETED = 2361;
+	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2362;
+	private static final int MSG_ID_CONCURRENT_UPDATE = 2363;
+	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2364;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -243,7 +243,7 @@ public class ConfiguredProcessorManager {
 		if (null == modelConfiguredProcessor.getConfiguration()) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_INVALID, MSG_ID_CONFIGURATION_INVALID,
 					configuredProcessor.getProcessorName(),
-					configuredProcessor.getProcessorVersion(),
+					configuredProcessor.getConfigurationVersion(),
 					configuredProcessor.getMissionCode()));
 		}
 		

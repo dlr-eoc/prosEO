@@ -761,7 +761,7 @@ public class ProductClassManager {
 				// Check for duplicates
 				for (SimpleSelectionRule existingRule: productClass.getRequiredSelectionRules()) {
 					if (existingRule.getSourceProductClass().equals(simpleSelectionRule.getSourceProductClass())
-							|| existingRule.getMode().equals(simpleSelectionRule.getMode())) {
+							&& existingRule.getMode().equals(simpleSelectionRule.getMode())) {
 						// Duplicate candidate - check applicable configured processors
 						if (existingRule.getApplicableConfiguredProcessors().isEmpty() || simpleSelectionRule.getApplicableConfiguredProcessors().isEmpty()) {
 							// At least one of the rules is applicable for all configured processors, so this is a duplicate

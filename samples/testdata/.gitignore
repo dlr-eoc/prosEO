@@ -1,4 +1,5 @@
 /*.json
-/cli_script.txt
+/*.txt
 /application.yml
 /*.log
+/stop_brain.sh
