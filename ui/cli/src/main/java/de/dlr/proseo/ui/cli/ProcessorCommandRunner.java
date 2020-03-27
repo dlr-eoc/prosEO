@@ -9,7 +9,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,9 +24,9 @@ import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessor;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestTask;
+import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -53,7 +52,6 @@ public class ProcessorCommandRunner {
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PROCESSOR_NAME = "Processor name (empty field cancels): ";
 	private static final String PROMPT_PROCESSOR_VERSION = "Processor version (empty field cancels): ";
-	private static final String PROMPT_PRODUCT_CLASSES = "Processible product classes (comma-separated list; empty field cancels): ";
 	private static final String PROMPT_TASKS = "Task names (comma-separated list; empty field cancels): ";
 	private static final String PROMPT_TASK_VERSION = "Task version for %s (empty field cancels): ";
 	private static final String PROMPT_CRITICALITY_LEVEL = "Criticality level for %s (empty field cancels): ";

@@ -24,3 +24,5 @@ proseo:
         url: http://localhost:8084/proseo/processor-mgr/v0.1
     productClassManager:
         url: http://localhost:8085/proseo/productclass-mgr/v0.1
+    facilityManager:
+        url: https://localhost:8087/proseo/facility-mgr/v0.1

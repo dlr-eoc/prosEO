@@ -56,7 +56,7 @@ public class FacmgrUtil {
 	 * @throws IllegalArgumentException if the REST facility violates syntax rules for date, enum or numeric values
 	 */
 	public static ProcessingFacility toModelFacility(RestFacility restFacility) {
-		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
 		
 		if (null == restFacility)
 			return null;

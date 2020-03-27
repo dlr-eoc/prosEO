@@ -7,11 +7,11 @@
 		<version>0.1.0</version>
 	</parent>
 
-	<artifactId>facility-mgr</artifactId>
+	<artifactId>proseo-facility-mgr</artifactId>
 	<name>prosEO Facility Manager</name>
 	<description>prosEO Facility Manager - manage processing facilities for prosEO</description>
 
-	<url>https://github.com/dlr-eoc/prosEO/order-mgr</url>
+	<url>https://github.com/dlr-eoc/prosEO/facility-mgr</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
@@ -143,17 +143,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>**/OrbitControllerTest</exclude>
-						<exclude>**/MissionControllerTest</exclude>
-
-					</excludes>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -364,14 +364,6 @@ public class UserCommandRunner {
 		
 		/* Create user account */
 		try {
-			if (logger.isTraceEnabled()) {
-				try {
-					logger.trace("... creating user from REST data: " + (new ObjectMapper()).writeValueAsString(restUser));
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
 			restUser = serviceConnection.postToService(serviceConfig.getUserManagerUrl(), URI_PATH_USERS, 
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -405,6 +397,7 @@ public class UserCommandRunner {
 	 * 
 	 * @param showCommand the parsed "user show" command
 	 */
+	@SuppressWarnings("rawtypes")
 	private void showUser(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showUser({})", (null == showCommand ? "null" : showCommand));
 		
@@ -479,7 +472,7 @@ public class UserCommandRunner {
 			// Must be a list of users
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
 				if (resultObject instanceof Map) {
-					System.out.println(((Map<String, String>) resultObject).get("username"));
+					System.out.println(((Map) resultObject).get("username"));
 				}
 			}
 		}
@@ -944,6 +937,7 @@ public class UserCommandRunner {
 	 * 
 	 * @param showCommand the parsed "group show" command
 	 */
+	@SuppressWarnings("rawtypes")
 	private void showGroup(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showUser({})", (null == showCommand ? "null" : showCommand));
 		
@@ -1018,7 +1012,7 @@ public class UserCommandRunner {
 			// Must be a list of groups as map
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
 				if (resultObject instanceof Map) {
-					System.out.println(((Map<String, String>) resultObject).get("groupname"));
+					System.out.println(((Map) resultObject).get("groupname"));
 				}
 			}
 		}
@@ -1321,6 +1315,7 @@ public class UserCommandRunner {
 	 * 
 	 * @param command the "group members" command
 	 */
+	@SuppressWarnings("rawtypes")
 	private void showGroupMembers(ParsedCommand command) {
 		if (logger.isTraceEnabled()) logger.trace(">>> revokeGroupAuthority({})", (null == command ? "null" : command.getName()));
 		
@@ -1396,7 +1391,7 @@ public class UserCommandRunner {
 			// Must be a list of users
 			for (Object resultObject: (new ObjectMapper()).convertValue(result, List.class)) {
 				if (resultObject instanceof Map) {
-					System.out.println(((Map<String, String>) resultObject).get("username"));
+					System.out.println(((Map) resultObject).get("username"));
 				}
 			}
 		}

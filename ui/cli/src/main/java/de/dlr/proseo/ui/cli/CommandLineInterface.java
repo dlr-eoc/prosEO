@@ -80,6 +80,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	private ProductclassCommandRunner productclassCommandRunner;
 	@Autowired
 	private UserCommandRunner userCommandRunner;
+	@Autowired
+	private FacilityCommandRunner facilityCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
@@ -204,6 +206,9 @@ public class CommandLineInterface implements CommandLineRunner {
 			case UserCommandRunner.CMD_USER:
 			case UserCommandRunner.CMD_GROUP:
 				userCommandRunner.executeCommand(command);
+				break;
+			case FacilityCommandRunner.CMD_FACILITY:
+				facilityCommandRunner.executeCommand(command);
 				break;
 			default:
 				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());

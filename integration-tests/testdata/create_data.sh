@@ -12,7 +12,7 @@
 #
 
 # Create a new CLI command script
-CLI_SCRIPT=cli_script.txt
+CLI_SCRIPT=cli_data_script.txt
 echo "" >$CLI_SCRIPT
  
 # Create empty subdirectory for test data

@@ -42,6 +42,10 @@ public class ServiceConfiguration {
 	@Value("${proseo.productClassManager.url}")
 	private String productClassManagerUrl;
 	
+	/** The URL of the prosEO Facility Manager */
+	@Value("${proseo.facilityManager.url}")
+	private String facilityManagerUrl;
+	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -94,6 +98,15 @@ public class ServiceConfiguration {
 	 */
 	public String getProductClassManagerUrl() {
 		return productClassManagerUrl;
+	}
+
+	/**
+	 * Gets the URL of the prosEO Facility Manager component
+	 * 
+	 * @return the facilityManagerUrl
+	 */
+	public String getFacilityManagerUrl() {
+		return facilityManagerUrl;
 	}
 
 }
