@@ -453,6 +453,10 @@ public class ProductManager {
 			if (logger.isTraceEnabled()) logger.trace("Changing mode from {} to {}", modelProduct.getMode(), changedProduct.getMode());
 			modelProduct.setMode(changedProduct.getMode());
 		}
+		if (!modelProduct.getProductQuality().equals(changedProduct.getProductQuality())) {
+			productChanged = true;
+			modelProduct.setProductQuality(changedProduct.getProductQuality());
+		}
 		if (!modelProduct.getSensingStartTime().equals(changedProduct.getSensingStartTime())) {
 			productChanged = true;
 			modelProduct.setSensingStartTime(changedProduct.getSensingStartTime());

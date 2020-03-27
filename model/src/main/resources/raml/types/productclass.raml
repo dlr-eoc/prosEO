@@ -14,13 +14,19 @@
         description: The mission code (e. g. S5P)
       productType:
         type: string
-        description: The product type, as it shall be known in the processing system (e. g. CLOUD); unique within a mission
-      missionType:
-        type: string
         description: The product type as it is agreed in the mission specification documents (e. g. L2_CLOUD___); unique within a mission
       typeDescription?:
         type: string
         description: A short description of the product type to display as informational text on the user interface
+      visibility:
+        type: string
+        description: Visibility of products of this class to external users (INTERNAL, RESTRICTED, PUBLIC)
+      defaultSlicingType?:
+        type: string
+        description: Default slicing method to apply for the generation of products of this type (ORBIT, CALENDAR_DAY, TIME_SLICE)
+      defaultSliceDuration?:
+        type: integer
+        description: Duration of a slice in seconds (only if defaultSlicingType == "TIME_SLICE")
       componentClasses?:
         type: string[]
         description: Set of component product classes

@@ -34,6 +34,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
+import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.prodclmgr.ProductClassManagerApplication;
 import de.dlr.proseo.prodclmgr.ProductClassSecurityConfig;
@@ -64,17 +65,17 @@ public class ProductClassControllerTest {
 
 	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
-	private static final String TEST_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_PRODUCT_TYPE = "L2__FRESCO_";
 	private static final String TEST_PARAM_VALUE = "01";
 	private static final String TEST_PARAM_TYPE = "STRING";
 	private static final String TEST_PARAM_KEY = "revision";
 	private static final String TEST_MODE = "OFFL";
-	private static final String TEST_NEW_MISSION_TYPE = "$L2__AAI___$";
-	private static final String TEST_NEW_PRODUCT_TYPE = "$AAI$";
+	private static final String TEST_NEW_PRODUCT_TYPE = "$L2__AAI___$";
 	private static final String TEST_SELECTION_RULE =
 			"FOR " + TEST_PRODUCT_TYPE + "/" + TEST_PARAM_KEY + ":" + TEST_PARAM_VALUE + 
 			" SELECT LatestValIntersect(180 M, 180 M) OR LatestValidity OPTIONAL";
+
+	private static final ProductVisibility TEST_VISIBILITY = ProductVisibility.PUBLIC;
 	
 	/** Test configuration */
 	@Autowired
@@ -120,7 +121,7 @@ public class ProductClassControllerTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String, java.lang.String)}.
+	 * Test method for {@link de.dlr.proseo.prodclmgr.rest.ProductClassControllerImpl#getRestProductClass(java.lang.String, java.lang.String)}.
 	 */
 	@Test
 	public final void testGetRestProductClass() {
@@ -151,7 +152,6 @@ public class ProductClassControllerTest {
 			prodClass = new ProductClass();
 			prodClass.setMission(mission);
 			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
 			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 			//mission.getProductClasses().add(prodClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);
@@ -162,7 +162,7 @@ public class ProductClassControllerTest {
 		RestProductClass restProductClass = new RestProductClass();
 		restProductClass.setMissionCode(TEST_CODE);
 		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setMissionType(TEST_NEW_MISSION_TYPE);
+		restProductClass.setVisibility(TEST_VISIBILITY.toString());
 		// TODO We could add a configured processor here, if one was created beforehand
 		
 		// Create a REST selection rule for the new product class
@@ -201,7 +201,6 @@ public class ProductClassControllerTest {
 		assertNotEquals("Database ID should be set: ", 0L, responseProductClass.getId().longValue());
 		assertEquals("Unexpected mission code: ", restProductClass.getMissionCode(), responseProductClass.getMissionCode());
 		assertEquals("Unexpected product type: ", restProductClass.getProductType(), responseProductClass.getProductType());
-		assertEquals("Unexpected mission type: ", restProductClass.getMissionType(), responseProductClass.getMissionType());
 		assertNotNull("List of selection rules missing", responseProductClass.getSelectionRule());
 		assertEquals("Unexpected number of selection rules: ", restProductClass.getSelectionRule().size(), responseProductClass.getSelectionRule().size());
 		RestSimpleSelectionRule responseSelectionRule = responseProductClass.getSelectionRule().get(0);
@@ -288,7 +287,7 @@ public class ProductClassControllerTest {
 			prodClass = new ProductClass();
 			prodClass.setMission(mission);
 			prodClass.setProductType(TEST_PRODUCT_TYPE);
-			prodClass.setMissionType(TEST_MISSION_TYPE);
+			prodClass.setVisibility(TEST_VISIBILITY);
 			prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 			//mission.getProductClasses().add(prodClass);
 			//mission = RepositoryService.getMissionRepository().save(mission);
@@ -299,7 +298,7 @@ public class ProductClassControllerTest {
 		RestProductClass restProductClass = new RestProductClass();
 		restProductClass.setMissionCode(TEST_CODE);
 		restProductClass.setProductType(TEST_NEW_PRODUCT_TYPE);
-		restProductClass.setMissionType(TEST_NEW_MISSION_TYPE);
+		restProductClass.setVisibility(TEST_VISIBILITY.toString());
 		// TODO We could add a configured processor here, if one was created beforehand
 		
 		// Make sure the new class does not yet exist

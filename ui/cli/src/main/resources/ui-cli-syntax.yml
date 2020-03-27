@@ -23,6 +23,11 @@ description: |
   
   So the general syntax is:
   command [subcommand...] [option...] [parameter...]
+  
+  Caution 1: Typing ^C (Control-C) terminates the Command Line Interface immediately.
+  Caution 2: When run in non-interactive mode (e. g. with input redirection) prompts for missing mandatory attributes do not work.
+             In this case mandatory attributes must be specified on the command line or in an input file.
+             (Exception: Selection rules can be read from input redirection.)
 
 globalOptions:
     - name: help
@@ -530,10 +535,6 @@ commands:
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
-                - name: className
-                  type: string
-                  optional: true
-                  description: The class name of the processor
                 - name: configuredProcessorIdentifier
                   type: string
                   optional: true
@@ -583,14 +584,10 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
-                - name: className
-                  type: string
-                  optional: true
-                  description: The class name of the processor (mandatory if not read from file)
                 - name: configuredProcessorIdentifier
                   type: string
                   optional: true
-                  description: The identifier of the configured processor
+                  description: The identifier of the configured processor (mandatory if not read from file)
                 - name: attribute
                   type: string
                   optional: true
@@ -599,9 +596,6 @@ commands:
             - name: delete
               description: Delete a configured processor
               parameters:
-                - name: className
-                  type: string
-                  description: The class name of the configured processor to delete
                 - name: configuredProcessorIdentifier
                   type: string
                   description: The identifier of the configured processor to delete

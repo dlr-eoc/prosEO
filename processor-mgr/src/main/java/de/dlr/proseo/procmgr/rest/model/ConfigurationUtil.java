@@ -6,6 +6,7 @@
 package de.dlr.proseo.procmgr.rest.model;
 
 import java.util.ArrayList;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
@@ -47,7 +49,9 @@ public class ConfigurationUtil {
 		restConfiguration.setMissionCode(modelConfiguration.getProcessorClass().getMission().getCode());
 		restConfiguration.setProcessorName(modelConfiguration.getProcessorClass().getProcessorName());
 		restConfiguration.setConfigurationVersion(modelConfiguration.getConfigurationVersion());
-		restConfiguration.setDockerRunParameters(modelConfiguration.getDockerRunParameters());
+		if (null != modelConfiguration.getProductQuality()) {
+			restConfiguration.setProductQuality(modelConfiguration.getProductQuality().toString());
+		}
 		
 		for (ConfiguredProcessor configuredProcessor: modelConfiguration.getConfiguredProcessors()) {
 			restConfiguration.getConfiguredProcessors().add(configuredProcessor.getIdentifier());
@@ -62,7 +66,7 @@ public class ConfigurationUtil {
 		
 		for (ConfigurationFile configurationFile: modelConfiguration.getConfigurationFiles()) {
 			restConfiguration.getConfigurationFiles().add(
-				new de.dlr.proseo.procmgr.rest.model.Object(configurationFile.getFileVersion(), configurationFile.getFileName()));
+				new RestConfigurationFile(configurationFile.getFileVersion(), configurationFile.getFileName()));
 		}
 		
 		for (ConfigurationInputFile staticInputFile: modelConfiguration.getStaticInputFiles()) {
@@ -70,6 +74,11 @@ public class ConfigurationUtil {
 				new RestConfigurationInputFile(
 						staticInputFile.getId(), Long.valueOf(staticInputFile.getVersion()), staticInputFile.getFileType(), 
 						staticInputFile.getFileNameType(), new ArrayList<>(staticInputFile.getFileNames())));
+		}
+		
+		for (Entry<String, String> dockerRunParam: modelConfiguration.getDockerRunParameters().entrySet()) {
+			restConfiguration.getDockerRunParameters().add(
+				new RestStringParameter(dockerRunParam.getKey(), dockerRunParam.getValue()));
 		}
 		
 		return restConfiguration;
@@ -99,9 +108,11 @@ public class ConfigurationUtil {
 			} 
 		}
 		modelConfiguration.setConfigurationVersion(restConfiguration.getConfigurationVersion());
-		modelConfiguration.setDockerRunParameters(restConfiguration.getDockerRunParameters());
+		if (null != restConfiguration.getProductQuality()) {
+			modelConfiguration.setProductQuality(ProductQuality.valueOf(restConfiguration.getProductQuality()));
+		}
 		
-		for (de.dlr.proseo.procmgr.rest.model.Object configurationFile: restConfiguration.getConfigurationFiles()) {
+		for (RestConfigurationFile configurationFile: restConfiguration.getConfigurationFiles()) {
 			ConfigurationFile modelConfigurationFile = new ConfigurationFile();
 			modelConfigurationFile.setFileName(configurationFile.getFileName());
 			modelConfigurationFile.setFileVersion(configurationFile.getFileVersion());
@@ -112,6 +123,10 @@ public class ConfigurationUtil {
 			Parameter modelDynProcParam = new Parameter();
 			modelDynProcParam.init(ParameterType.valueOf(restDynProcParam.getParameterType()), restDynProcParam.getParameterValue());
 			modelConfiguration.getDynProcParameters().put(restDynProcParam.getKey(), modelDynProcParam);
+		}
+		
+		for (RestStringParameter restDockerParam: restConfiguration.getDockerRunParameters()) {
+			modelConfiguration.getDockerRunParameters().put(restDockerParam.getKey(), restDockerParam.getValue());
 		}
 		
 		return modelConfiguration;

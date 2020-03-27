@@ -38,9 +38,10 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ordermgr.OrderManager;
 import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -125,8 +126,8 @@ public class OrbitControllerTest {
 		else{
 			//Adding orbit parameters
 			testOrbit.setOrbitNumber(Integer.valueOf(testData[9]));
-			testOrbit.setStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[10])));
-			testOrbit.setStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[11])));
+			testOrbit.setStartTime(Instant.from(OrbitTimeFormatter.parse(testData[10])));
+			testOrbit.setStopTime(Instant.from(OrbitTimeFormatter.parse(testData[11])));
 			testOrbit.setSpacecraft(testSpacecraft);
 
 			testOrbit = RepositoryService.getOrbitRepository().save(testOrbit);
@@ -286,7 +287,7 @@ public class OrbitControllerTest {
 		Orbit orbitToModify = testOrbits.get(0);
 		
 		// Update a orbit attribute
-		orbitToModify.setStartTime(Instant.from(Orbit.orbitTimeFormatter.parse("2010-08-29T22:49:21.074395")));
+		orbitToModify.setStartTime(Instant.from(OrbitTimeFormatter.parse("2010-08-29T22:49:21.074395")));
 		//orbitToModify.setOrbitNumber(Integer.valueOf("144"));
 		
 		RestOrbit restOrbit = OrbitUtil.toRestOrbit(orbitToModify);		
@@ -301,8 +302,8 @@ public class OrbitControllerTest {
 		ResponseEntity<RestOrbit> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, RestOrbit.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		assertEquals("Wrong Start time: ", Orbit.orbitTimeFormatter.format(orbitToModify.getStartTime()), getEntity.getBody().getStartTime());
-		assertEquals("Wrong Stop time: ", Orbit.orbitTimeFormatter.format(orbitToModify.getStopTime()), getEntity.getBody().getStopTime());
+		assertEquals("Wrong Start time: ", OrbitTimeFormatter.format(orbitToModify.getStartTime()), getEntity.getBody().getStartTime());
+		assertEquals("Wrong Stop time: ", OrbitTimeFormatter.format(orbitToModify.getStopTime()), getEntity.getBody().getStopTime());
 		assertEquals("Wrong orbit number: ", Long.valueOf(orbitToModify.getOrbitNumber()), getEntity.getBody().getOrbitNumber());
 
 		// Clean up database
@@ -361,9 +362,9 @@ public class OrbitControllerTest {
 						orbitFound[i] = true;
 						assertEquals("Wrong orbitnumber for test orbit " + i, testOrbit.getOrbitNumber(), orbit.get("orbitNumber"));
 						assertEquals("Wrong start time for test orbit " + i,
-								testOrbit.getStartTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("startTime"))));
+								testOrbit.getStartTime(), Instant.from(OrbitTimeFormatter.parse((String) orbit.get("startTime"))));
 						assertEquals("Wrong stop time for test orbit " + i,
-								testOrbit.getStopTime(), Instant.from(Orbit.orbitTimeFormatter.parse((String) orbit.get("stopTime"))));
+								testOrbit.getStopTime(), Instant.from(OrbitTimeFormatter.parse((String) orbit.get("stopTime"))));
 						assertEquals("Wrong spacecraft id for test orbit " + i,
 								testOrbit.getSpacecraft().getCode(),orbit.get("spacecraftCode"));
 					}

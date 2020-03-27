@@ -26,7 +26,7 @@
 		<module.version>0.1.0-SNAPSHOT</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
-		<raml-base-package>de.dlr.proseo.planner.rest</raml-base-package>
+    <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
 	</properties>
 
 	<dependencies>

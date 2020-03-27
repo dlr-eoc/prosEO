@@ -7,6 +7,8 @@ package de.dlr.proseo.model.dao;
 
 import static org.junit.Assert.*;
 
+import java.util.UUID;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -43,37 +45,41 @@ public class ConfiguredProcessorRepositoryTest {
 	private static Logger logger = LoggerFactory.getLogger(ConfiguredProcessorRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		ConfiguredProcessor confProc = new ConfiguredProcessor();
 		confProc.setIdentifier(TEST_IDENTIFIER);
+		confProc.setUuid(UUID.randomUUID());
 		RepositoryService.getConfiguredProcessorRepository().save(confProc);
 		
 		// Test findByIdentifier
@@ -81,6 +87,12 @@ public class ConfiguredProcessorRepositoryTest {
 		assertNotNull("Find by identifier failed for ConfiguredProcessor", confProc);
 		
 		logger.info("OK: Test for findByIdentifier completed");
+		
+		// Test findByUuid
+		confProc = RepositoryService.getConfiguredProcessorRepository().findByUuid(confProc.getUuid());
+		assertNotNull("Find by UUID failed for ConfiguredProcessor", confProc);
+		
+		logger.info("OK: Test for findByUuid completed");
 		
 	}
 

@@ -7,7 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.Spacecraft;
+import de.dlr.proseo.model.rest.model.RestOrbit;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 public class OrbitUtil {
 	/** A logger for this class */
@@ -42,12 +43,10 @@ public class OrbitUtil {
 		restOrbit.setMissionCode(modelOrbit.getSpacecraft().getMission().getCode());
 
 		if (null != modelOrbit.getStartTime()) {
-			restOrbit.setStartTime(
-					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelOrbit.getStartTime()));
+			restOrbit.setStartTime(OrbitTimeFormatter.format(modelOrbit.getStartTime()));
 		}
 		if (null != modelOrbit.getStopTime()) {
-			restOrbit.setStopTime(
-					de.dlr.proseo.model.Orbit.orbitTimeFormatter.format(modelOrbit.getStopTime()));
+			restOrbit.setStopTime(OrbitTimeFormatter.format(modelOrbit.getStopTime()));
 		}
 		
 		return restOrbit;
@@ -76,13 +75,13 @@ public class OrbitUtil {
 		
 		try {
 			modelOrbit.setStartTime(
-					Instant.from(Orbit.orbitTimeFormatter.parse(restOrbit.getStartTime())));
+					Instant.from(OrbitTimeFormatter.parse(restOrbit.getStartTime())));
 			
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrbit.getStartTime()));
 		}
 		try {
-			modelOrbit.setStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(restOrbit.getStopTime())));
+			modelOrbit.setStopTime(Instant.from(OrbitTimeFormatter.parse(restOrbit.getStopTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrbit.getStartTime()));
 		}

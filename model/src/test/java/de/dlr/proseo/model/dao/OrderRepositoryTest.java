@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -25,10 +26,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Unit test cases for ProductRepository
@@ -43,43 +44,47 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class OrderRepositoryTest {
 
 	private static final String TEST_IDENTIFIER = "$Order 4711$";
-	private static final Instant TEST_EXECUTION_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.000000")); // Timestamp without fraction of seconds!
+	private static final Instant TEST_EXECUTION_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.000000")); // Timestamp without fraction of seconds!
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrderRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		ProcessingOrder order = new ProcessingOrder();
 		order.setIdentifier(TEST_IDENTIFIER);
+		order.setUuid(UUID.randomUUID());
 		order.setExecutionTime(TEST_EXECUTION_TIME);
 		RepositoryService.getOrderRepository().save(order);
 		
@@ -88,6 +93,12 @@ public class OrderRepositoryTest {
 		assertNotNull("Find by identifier failed for ProcessingOrder", order);
 		
 		logger.info("OK: Test for findByIdentifier completed");
+		
+		// Test findByUuid
+		order = RepositoryService.getOrderRepository().findByUuid(order.getUuid());
+		assertNotNull("Find by UUID failed for ProcessingOrder", order);
+		
+		logger.info("OK: Test for findByUuid completed");
 		
 		// Test findByExecutionTimeBetween
 		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByExecutionTimeBetween(

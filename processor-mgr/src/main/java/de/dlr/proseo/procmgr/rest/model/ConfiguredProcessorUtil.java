@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.procmgr.rest.model;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,9 @@ public class ConfiguredProcessorUtil {
 		restConfiguredProcessor.setProcessorVersion(modelConfiguredProcessor.getProcessor().getProcessorVersion());
 		restConfiguredProcessor.setConfigurationVersion(modelConfiguredProcessor.getConfiguration().getConfigurationVersion());
 		restConfiguredProcessor.setIdentifier(modelConfiguredProcessor.getIdentifier());
-		
+		if (null != modelConfiguredProcessor.getUuid()) {
+			restConfiguredProcessor.setUuid(modelConfiguredProcessor.getUuid().toString());
+		}
 		return restConfiguredProcessor;
 	}
 	
@@ -66,7 +70,10 @@ public class ConfiguredProcessorUtil {
 				modelConfiguredProcessor.incrementVersion();
 			} 
 		}
-		modelConfiguredProcessor.setIdentifier(restConfiguredProcessor.getIdentifier());;
+		modelConfiguredProcessor.setIdentifier(restConfiguredProcessor.getIdentifier());
+		if (null != restConfiguredProcessor.getUuid()) {
+			modelConfiguredProcessor.setUuid(UUID.fromString(restConfiguredProcessor.getUuid()));
+		}
 		
 		return modelConfiguredProcessor;
 	}

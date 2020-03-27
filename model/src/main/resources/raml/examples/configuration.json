@@ -16,6 +16,7 @@
             "parameterValue": "null"
         }
     ],
+    "productQuality": "EXPERIMENTAL",
     "configurationFiles": [
         {
             "fileVersion": "1.0",
@@ -30,5 +31,10 @@
         }
     ],
     "configuredProcessors":  [ "KNMI L2 01.03.01 2018-10-27", "KNMI L2 01.03.02 2019-03-30" ],
-    "dockerRunParameters": "-v /my/source/directory:/container/target/directory"
+    "dockerRunParameters": [ 
+        { 
+            "key": "-v",
+            "value": "/my/source/directory:/container/target/directory"
+        }
+    ]
 }

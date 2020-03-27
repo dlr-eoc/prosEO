@@ -12,19 +12,16 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.hibernate.mapping.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -65,7 +62,7 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
 				}
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.FAILED);
+				order.setOrderState(OrderState.FAILED);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
@@ -93,6 +90,7 @@ public class OrderUtil {
 		}
 		return answer;
 	}
+
 	@Transactional
 	public Messages reset(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -104,7 +102,7 @@ public class OrderUtil {
 				break;
 			case APPROVED:
 				// jobs are in initial state, no change
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.INITIAL);
+				order.setOrderState(OrderState.INITIAL);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;				
@@ -126,7 +124,7 @@ public class OrderUtil {
 						RepositoryService.getJobRepository().delete(job);
 					}
 				}
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.INITIAL);
+				order.setOrderState(OrderState.INITIAL);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;	
@@ -215,7 +213,7 @@ public class OrderUtil {
 			switch (order.getOrderState()) {
 			case INITIAL:
 				// jobs are in initial state, no change
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.APPROVED);
+				order.setOrderState(OrderState.APPROVED);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_APPROVED;
 				break;			
@@ -262,11 +260,11 @@ public class OrderUtil {
 			case APPROVED:
 				if (orderDispatcher.publishOrder(order, procFacility)) {
 					if (order.getJobs().isEmpty()) {
-						order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.COMPLETED);
+						order.setOrderState(OrderState.COMPLETED);
 						answer = Messages.ORDER_COMPLETED;
 					} else {
 						jobStepUtil.searchForJobStepsToRun(procFacility);
-						order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;
 					}
 					RepositoryService.getOrderRepository().save(order);
@@ -317,10 +315,10 @@ public class OrderUtil {
 					jobUtil.resume(job);
 				}
 				if (order.getJobs().isEmpty()) {
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.COMPLETED);
+					order.setOrderState(OrderState.COMPLETED);
 					answer = Messages.ORDER_COMPLETED;
 				} else {
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RELEASED);
+					order.setOrderState(OrderState.RELEASED);
 					answer = Messages.ORDER_RELEASED;
 				}
 				RepositoryService.getOrderRepository().save(order);
@@ -366,7 +364,7 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_RELEASED;
 				break;				
 			case RELEASED:
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.RUNNING);
+				order.setOrderState(OrderState.RUNNING);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RELEASED;
 				break;				
@@ -411,7 +409,7 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					jobUtil.suspend(job);
 				}
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+				order.setOrderState(OrderState.PLANNED);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
@@ -422,11 +420,11 @@ public class OrderUtil {
 					oneNotSuspended = jobUtil.suspend(job).isTrue() & oneNotSuspended;
 				}
 				if (oneNotSuspended) {
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.SUSPENDING);
+					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
 				} else {
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
@@ -468,13 +466,13 @@ public class OrderUtil {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
-					if (job.getJobState() != de.dlr.proseo.model.Job.JobState.INITIAL) {
+					if (job.getJobState() != JobState.INITIAL) {
 						all = false;
 						break;
 					}
 				}
 				if (all) {
-					order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.PLANNED);
+					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_RETRIED;
 				} else {
@@ -508,7 +506,7 @@ public class OrderUtil {
 			case COMPLETED:
 			case FAILED:
 				// job steps are completed/failed
-				order.setOrderState(de.dlr.proseo.model.ProcessingOrder.OrderState.CLOSED);
+				order.setOrderState(OrderState.CLOSED);
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CLOSED;
 				break;			

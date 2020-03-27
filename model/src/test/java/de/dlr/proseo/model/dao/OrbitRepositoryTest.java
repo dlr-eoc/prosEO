@@ -29,6 +29,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Unit test cases for OrbitRepository
@@ -44,39 +45,42 @@ public class OrbitRepositoryTest {
 
 	private static final String TEST_SC_CODE = "$XYZ$";
 	private static final int TEST_ORBIT_NUMBER = 47122174;
-	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final Instant TEST_START_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		Spacecraft spacecraft = new Spacecraft();

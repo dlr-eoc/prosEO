@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
-import de.dlr.proseo.ordermgr.rest.MissionControllerTest;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * @author Ranjitha Vignesh
@@ -60,8 +60,8 @@ public class OrbitUtilTest {
 
 		//Adding orbit parameters
 		testOrbit.setOrbitNumber(Integer.valueOf(testData[10]));
-		testOrbit.setStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[11])));
-		testOrbit.setStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[12])));
+		testOrbit.setStartTime(Instant.from(OrbitTimeFormatter.parse(testData[11])));
+		testOrbit.setStopTime(Instant.from(OrbitTimeFormatter.parse(testData[12])));
 		testOrbit.setSpacecraft(testSpacecraft);
 
 		logger.info("Created test orbit {}", testOrbit.getId());
@@ -112,9 +112,9 @@ public class OrbitUtilTest {
 		assertEquals("Unexpected ID: ", modelorbit.getId(), restOrbit.getId().longValue());
 		assertEquals("Unexpected orbit number: ", Long.valueOf(modelorbit.getOrbitNumber()),restOrbit.getOrbitNumber());
 		//assertEquals("Unexpected Spacecrafts: ", modelorbit.getSpacecraft().getCode(),restOrbit.getSpacecraftCode());
-		assertEquals("Unexpected start time: ", Orbit.orbitTimeFormatter.format(modelorbit.getStartTime()),
+		assertEquals("Unexpected start time: ", OrbitTimeFormatter.format(modelorbit.getStartTime()),
 				restOrbit.getStartTime());
-		assertEquals("Unexpected stop time: ", Orbit.orbitTimeFormatter.format(modelorbit.getStopTime()),
+		assertEquals("Unexpected stop time: ", OrbitTimeFormatter.format(modelorbit.getStopTime()),
 				restOrbit.getStopTime());
 
 		logger.info("Test copy model to REST OK");

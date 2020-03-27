@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.model.rest.ProductController;
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle products.
  * 

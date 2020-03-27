@@ -43,6 +43,6 @@
       dockerImage:
         type: string
         description: The name of the docker image (without registry address)
-      dockerRunParameters?:
-        type: string
+      dockerRunParameters:
+        type: RestStringParameter[]
         description: Parameters to add to the "docker run" command

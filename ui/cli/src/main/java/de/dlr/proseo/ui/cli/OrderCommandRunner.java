@@ -410,9 +410,9 @@ public class OrderCommandRunner {
 		if (showCommand.getParameters().isEmpty()) {
 			for (ParsedOption option: showCommand.getOptions()) {
 				if ("from".equals(option.getName())) {
-					requestURI += "&executionTimeFrom=" + formatter.format(Instant.parse(option.getValue()));
+					requestURI += "&executionTimeFrom=" + formatter.format(Instant.parse(option.getValue() + "Z")); // no timezone expected
 				} else if ("to".equals(option.getName())) {
-					requestURI += "&executionTimeTo=" + formatter.format(Instant.parse(option.getValue()));
+					requestURI += "&executionTimeTo=" + formatter.format(Instant.parse(option.getValue() + "Z")); // no timezone expected
 				}
 			}
 		} else {
@@ -589,6 +589,9 @@ public class OrderCommandRunner {
 		}
 		if (null != updatedOrder.getSliceOverlap()) { // mandatory
 			restOrder.setSliceOverlap(updatedOrder.getSliceOverlap());
+		}
+		if (isDeleteAttributes || null != updatedOrder.getPropagateSlicing()) {
+			restOrder.setPropagateSlicing(updatedOrder.getPropagateSlicing());
 		}
 		if (isDeleteAttributes || !updatedOrder.getFilterConditions().isEmpty()) {
 			restOrder.setFilterConditions(updatedOrder.getFilterConditions());

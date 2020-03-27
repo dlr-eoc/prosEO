@@ -57,24 +57,27 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	}
 	
 	/**
-	 * Get configured processors by mission, processor name, processor version and configuration version
+	 * Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
 	 * 
 	 * @param mission the mission code
+	 * @param identifier the identifier for the configured processor
 	 * @param processorName the processor name
 	 * @param processorVersion the processor version
 	 * @param configurationVersion the configuration version
+	 * @param uuid the UUID of the configured processor
 	 * @return HTTP status "OK" and a list of Json objects representing configured processors satisfying the search criteria or
 	 *         HTTP status "NOT_FOUND" and an error message, if no configured processors matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String processorName,
-			String processorVersion, String configurationVersion) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {})", 
-				mission, processorName, processorVersion, configurationVersion);
+	public ResponseEntity<List<RestConfiguredProcessor>> getConfiguredProcessors(String mission, String identifier,
+			String processorName, String processorVersion, String configurationVersion, String uuid) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", 
+				mission, identifier, processorName, processorVersion, configurationVersion, uuid);
 		
 		try {
 			return new ResponseEntity<>(
-					configuredProcessorManager.getConfiguredProcessors(mission, processorName, processorVersion, configurationVersion),
+					configuredProcessorManager.getConfiguredProcessors(mission, identifier, processorName, 
+							processorVersion, configurationVersion, uuid),
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

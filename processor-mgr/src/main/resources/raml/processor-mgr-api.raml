@@ -25,10 +25,12 @@ securitySchemes:
 
 types:
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
+  RestStringParameter: !include ../../../../../model/src/main/resources/raml/types/stringparameter.raml
   RestProcessor: !include ../../../../../model/src/main/resources/raml/types/processor.raml
   RestProcessorClass: !include ../../../../../model/src/main/resources/raml/types/processorclass.raml
   RestTask: !include ../../../../../model/src/main/resources/raml/types/task.raml
   RestConfiguration: !include ../../../../../model/src/main/resources/raml/types/configuration.raml
+  RestConfigurationFile: !include ../../../../../model/src/main/resources/raml/types/configurationfile.raml
   RestConfigurationInputFile: !include ../../../../../model/src/main/resources/raml/types/configurationinputfile.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
 
@@ -246,13 +248,15 @@ resourceTypes:
 /configuredprocessors:
   type: standard
   get:
-    description: Get configured processors by mission, processor name, processor version and configuration version
+    description: Get configured processors, filtered by mission, identifier, processor name, processor version and/or configuration version
     displayName: getConfiguredProcessors
     queryParameters:
       mission?: string
+      identifier?: string
       processorName?: string
       processorVersion?: string
       configurationVersion?: string
+      uuid?: string
     responses:
       200:
         body:

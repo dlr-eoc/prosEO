@@ -155,15 +155,6 @@ public class ProcessorCommandRunner {
 			}
 			restProcessorClass.setProcessorName(response);
 		}
-		if (null == restProcessorClass.getProductClasses() || restProcessorClass.getProductClasses().isEmpty()) {
-			System.out.print(PROMPT_PRODUCT_CLASSES);
-			String response = System.console().readLine();
-			if ("".equals(response)) {
-				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
-				return;
-			}
-			restProcessorClass.setProductClasses(Arrays.asList(response.split(",")));
-		}
 		
 		/* Create processor class */
 		try {
@@ -829,7 +820,7 @@ public class ProcessorCommandRunner {
 		if (null != updatedProcessor.getDockerImage()) { // not null
 			restProcessor.setDockerImage(updatedProcessor.getDockerImage());
 		}
-		if (isDeleteAttributes || (null != updatedProcessor.getDockerRunParameters() && 0 != updatedProcessor.getDockerRunParameters().length())) {
+		if (isDeleteAttributes || (null != updatedProcessor.getDockerRunParameters() && !updatedProcessor.getDockerRunParameters().isEmpty())) {
 			restProcessor.setDockerRunParameters(updatedProcessor.getDockerRunParameters());
 		}
 		
@@ -1242,6 +1233,9 @@ public class ProcessorCommandRunner {
 			restConfiguration.getDynProcParameters().clear();
 			restConfiguration.getDynProcParameters().addAll(updatedConfiguration.getDynProcParameters());
 		}
+		if (isDeleteAttributes || (null != updatedConfiguration.getProductQuality() && !updatedConfiguration.getProductQuality().isBlank())) {
+			restConfiguration.setProductQuality(updatedConfiguration.getProductQuality());
+		}
 		if (null != updatedConfiguration.getConfigurationFiles() && (isDeleteAttributes || !updatedConfiguration.getConfigurationFiles().isEmpty())) {
 			restConfiguration.getConfigurationFiles().clear();
 			restConfiguration.getConfigurationFiles().addAll(updatedConfiguration.getConfigurationFiles());
@@ -1250,7 +1244,7 @@ public class ProcessorCommandRunner {
 			restConfiguration.getStaticInputFiles().clear();
 			restConfiguration.getStaticInputFiles().addAll(updatedConfiguration.getStaticInputFiles());
 		}
-		if (isDeleteAttributes || (null != updatedConfiguration.getDockerRunParameters() && 0 != updatedConfiguration.getDockerRunParameters().length())) {
+		if (isDeleteAttributes || (null != updatedConfiguration.getDockerRunParameters() && !updatedConfiguration.getDockerRunParameters().isEmpty())) {
 			restConfiguration.setDockerRunParameters(updatedConfiguration.getDockerRunParameters());
 		}
 		
@@ -1510,7 +1504,11 @@ public class ProcessorCommandRunner {
 
 		/* Report success, giving newly assigned configured processor ID and version */
 		String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_CREATED,
-				restConfiguredProcessor.getProcessorName(), restConfiguredProcessor.getConfigurationVersion(), restConfiguredProcessor.getId());
+				restConfiguredProcessor.getIdentifier(),
+				restConfiguredProcessor.getProcessorName(),
+				restConfiguredProcessor.getProcessorVersion(),
+				restConfiguredProcessor.getConfigurationVersion(),
+				restConfiguredProcessor.getId());
 		logger.info(message);
 		System.out.println(message);
 	}
@@ -1539,10 +1537,7 @@ public class ProcessorCommandRunner {
 		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
-				// First parameter is processor name
-				requestURI += "&processorName=" + paramValue;
-			} else if (1 == i) {
-				// Second parameter is configured processor identifier
+				// First parameter is configured processor identifier
 				requestURI += "&identifier=" + paramValue;
 			}
 		}
@@ -1624,10 +1619,7 @@ public class ProcessorCommandRunner {
 		for (int i = 0; i < updateCommand.getParameters().size(); ++i) {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
-				// First parameter is processor class name
-				updatedConfiguredProcessor.setProcessorName(param.getValue());
-			} else if (1 == i) {
-				// Second parameter is configured processor identifier
+				// First parameter is configured processor identifier
 				updatedConfiguredProcessor.setIdentifier(param.getValue());;
 			} else {
 				// Remaining parameters are "attribute=value" parameters
@@ -1651,7 +1643,6 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission() 
-						+ "&processorName=" + updatedConfiguredProcessor.getProcessorName() 
 						+ "&identifier=" + updatedConfiguredProcessor.getIdentifier(),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
@@ -1738,27 +1729,26 @@ public class ProcessorCommandRunner {
 	private void deleteConfiguredProcessor(ParsedCommand deleteCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfiguredProcessor({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
-		/* Get processor name and configured processor identifier from command parameters */
-		if (2 > deleteCommand.getParameters().size()) {
+		/* Get configured processor identifier from command parameters */
+		if (1 > deleteCommand.getParameters().size()) {
 			// No identifying value given
 			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
 			return;
 		}
-		String processorName = deleteCommand.getParameters().get(0).getValue();
-		String identifier = deleteCommand.getParameters().get(1).getValue();
+		String identifier = deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the configured processor using Processor Manager service */
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
 					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission()
-						+ "&processorName=" + processorName + "&identifier=" + identifier, 
+						+ "&identifier=" + identifier, 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier, processorName);
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1774,7 +1764,7 @@ public class ProcessorCommandRunner {
 			return;
 		}
 		if (resultList.isEmpty()) {
-			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier, processorName);
+			String message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND, identifier);
 			logger.error(message);
 			System.err.println(message);
 			return;
@@ -1797,7 +1787,7 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED, processorName, identifier, e.getMessage());
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED, identifier, e.getMessage());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
@@ -21,16 +22,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.ordermgr.rest.model.OrderUtil;
-import de.dlr.proseo.ordermgr.rest.model.RestOrbitQuery;
-import de.dlr.proseo.ordermgr.rest.model.RestOrder;
+import de.dlr.proseo.model.util.OrderUtil;
+import de.dlr.proseo.model.rest.model.RestOrbitQuery;
+import de.dlr.proseo.model.rest.model.RestOrder;
 
 
 /**
@@ -53,7 +52,14 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ORDER_MODIFIED = 1011;
 	private static final int MSG_ID_ORDER_NOT_MODIFIED = 1012;
 	private static final int MSG_ID_ORDER_CREATED = 1013;
-
+	private static final int MSG_ID_DUPLICATE_ORDER_UUID = 1014;
+	private static final int MSG_ID_INVALID_REQUESTED_CLASS = 1015;
+	private static final int MSG_ID_INVALID_INPUT_CLASS = 1016;
+	private static final int MSG_ID_INVALID_FILE_CLASS = 1017;
+	private static final int MSG_ID_INVALID_PROCESSING_MODE = 1018;
+	private static final int MSG_ID_INVALID_CONFIGURED_PROCESSOR = 1019;
+	private static final int MSG_ID_INVALID_ORBIT_RANGE = 1020;
+	
 
 	/* Message string constants */
 	private static final String MSG_ORDER_NOT_FOUND = "(E%d) No order found for ID %d";
@@ -65,6 +71,13 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_NOT_MODIFIED = "(I%d) Order with id %d not modified (no changes)";
 	private static final String MSG_ORDER_MODIFIED = "(I%d) Order with id %d modified";
 	private static final String MSG_ORDER_CREATED = "(I%d) Order with identifier %s created for mission %s";
+	private static final String MSG_DUPLICATE_ORDER_UUID = "(E%d) Duplicate order UUID %s";
+	private static final String MSG_INVALID_REQUESTED_CLASS = "(E%d) Requested product class %s is not defined for mission %s";
+	private static final String MSG_INVALID_INPUT_CLASS = "(E%d) Input product class %s is not defined for mission %s";
+	private static final String MSG_INVALID_FILE_CLASS = "(E%d) Output file class %s is not defined for mission %s";
+	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s is not defined for mission %s";
+	private static final String MSG_INVALID_CONFIGURED_PROCESSOR = "(E%d) Configured processor %s not found";
+	private static final String MSG_INVALID_ORBIT_RANGE = "(E%d) No orbits defined between orbit number %d and %d for spacecraft %s";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -126,6 +139,16 @@ public class ProcessingOrderMgr {
 		}
 		
 		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
+		// Make sure order has a UUID
+		if (null == modelOrder.getUuid()) {
+			modelOrder.setUuid(UUID.randomUUID());
+		} else {
+			// Test if given UUID is not yet in use
+			if (null != RepositoryService.getOrderRepository().findByUuid(modelOrder.getUuid())) {
+				throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_UUID, MSG_ID_DUPLICATE_ORDER_UUID, 
+						modelOrder.getUuid()));
+			}
+		}
 		
 		//Find the  mission for the mission code given in the rest Order
 		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
@@ -184,8 +207,6 @@ public class ProcessingOrderMgr {
 		}
 		// Delete the order
 		RepositoryService.getOrderRepository().deleteById(id);
-
-		// Test whether the deletion was successful
 		// Test whether the deletion was successful
 		modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (!modelOrder.isEmpty()) {
@@ -222,15 +243,13 @@ public class ProcessingOrderMgr {
 	}
 	
 	/**
-	 * Update the product with the given ID with the attribute values of the given Json object. This method will NOT modify
-	 * associated product files.
-	 * 
+	 * Update the order with the given ID with the attribute values of the given Json object. 	 * 
 	 * @param id the ID of the product to update
-	 * @param product a Json object containing the modified (and unmodified) attributes
+	 * @param order a Json object containing the modified (and unmodified) attributes
 	 * @return a Json object corresponding to the product after modification (with ID and version for all contained objects)
 	 * @throws EntityNotFoundException if no product with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
-	 * @throws ConcurrentModificationException if the product has been modified since retrieval by the client
+	 * @throws ConcurrentModificationException if the order has been modified since retrieval by the client
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
 	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
@@ -253,11 +272,7 @@ public class ProcessingOrderMgr {
 		
 		logger.info("Model order missioncode: "+modelOrder.getMission().getCode());
 		
-		if (!modelOrder.getMission().equals(changedOrder.getMission())) {
-			orderChanged = true;
-			Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
-			modelOrder.setMission(mission);
-		}
+		// Mission code and UUID cannot be changed
 		
 		if (!modelOrder.getIdentifier().equals(changedOrder.getIdentifier())) {
 			orderChanged = true;
@@ -267,6 +282,36 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setOrderState(changedOrder.getOrderState());
 		}
+		if (null == modelOrder.getExecutionTime() && null != changedOrder.getExecutionTime()
+				|| null != modelOrder.getExecutionTime() && !modelOrder.getOrderState().equals(changedOrder.getOrderState())) {
+			orderChanged = true;
+			modelOrder.setExecutionTime(changedOrder.getExecutionTime());
+		}
+		if (!modelOrder.getStartTime().equals(changedOrder.getStartTime())) {
+			orderChanged = true;
+			modelOrder.setStartTime(changedOrder.getStartTime());
+		}
+		if (!modelOrder.getStopTime().equals(changedOrder.getStopTime())) {
+			orderChanged = true;
+			modelOrder.setStopTime(changedOrder.getStopTime());
+		}
+		if (!modelOrder.getSlicingType().equals(changedOrder.getSlicingType())) {
+			orderChanged = true;
+			modelOrder.setSlicingType(changedOrder.getSlicingType());
+		}
+		if (null == modelOrder.getSliceDuration() && null != changedOrder.getSliceDuration()
+				|| null != modelOrder.getSliceDuration() && !modelOrder.getSliceDuration().equals(changedOrder.getSliceDuration())) {
+			orderChanged = true;
+			modelOrder.setSliceDuration(changedOrder.getSliceDuration());
+		}
+		if (!modelOrder.getSliceOverlap().equals(changedOrder.getSliceOverlap())) {
+			orderChanged = true;
+			modelOrder.setSliceOverlap(changedOrder.getSliceOverlap());
+		}
+		if (!modelOrder.getPropagateSlicing().equals(changedOrder.getPropagateSlicing())) {
+			orderChanged = true;
+			modelOrder.setPropagateSlicing(changedOrder.getPropagateSlicing());
+		}
 		if (!modelOrder.getFilterConditions().equals(changedOrder.getFilterConditions())) {
 			orderChanged = true;
 			modelOrder.setFilterConditions(changedOrder.getFilterConditions());
@@ -275,19 +320,160 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setOutputParameters(changedOrder.getOutputParameters());
 		}
-		if (!modelOrder.getRequestedProductClasses().equals(changedOrder.getRequestedProductClasses())) {
-			orderChanged = true;
-			modelOrder.setRequestedProductClasses(changedOrder.getRequestedProductClasses());
+		
+		// Check for new requested product classes
+		Set<ProductClass> newRequestedProductClasses = new HashSet<>();
+		if (null != order.getRequestedProductClasses()) {
+			REQUESTED_CLASSES:
+			for (String requestedProductClass: order.getRequestedProductClasses()) {
+				for (ProductClass modelRequestedClass: modelOrder.getRequestedProductClasses()) {
+					if (modelRequestedClass.getProductType().equals(requestedProductClass)) {
+						// Already present
+						newRequestedProductClasses.add(modelRequestedClass);
+						continue REQUESTED_CLASSES;
+					}
+				}
+				// New component class
+				orderChanged = true;
+				ProductClass newRequestedClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(order.getMissionCode(), requestedProductClass);
+				if (null == newRequestedClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS,
+							requestedProductClass, order.getMissionCode()));
+				}
+				newRequestedProductClasses.add(newRequestedClass);
+			}
+		}
+		// Check for removed requested product classes
+		for (ProductClass modelRequestedClass: modelOrder.getRequestedProductClasses()) {
+			if (!newRequestedProductClasses.contains(modelRequestedClass)) {
+				// Component class removed
+				orderChanged = true;
+			}
+		}
+		
+		// Check for new input product classes
+		Set<ProductClass> newInputProductClasses = new HashSet<>();
+		if (null != order.getInputProductClasses()) {
+			INPUT_CLASSES:
+			for (String inputProductClass: order.getInputProductClasses()) {
+				for (ProductClass modelInputClass: modelOrder.getInputProductClasses()) {
+					if (modelInputClass.getProductType().equals(inputProductClass)) {
+						// Already present
+						newInputProductClasses.add(modelInputClass);
+						continue INPUT_CLASSES;
+					}
+				}
+				// New component class
+				orderChanged = true;
+				ProductClass newInputClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(order.getMissionCode(), inputProductClass);
+				if (null == newInputClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+							inputProductClass, order.getMissionCode()));
+				}
+				newInputProductClasses.add(newInputClass);
+			}
+		}
+		// Check for removed requested product classes
+		for (ProductClass modelInputClass: modelOrder.getInputProductClasses()) {
+			if (!newInputProductClasses.contains(modelInputClass)) {
+				// Component class removed
+				orderChanged = true;
+			}
 		}
 
+		if (!modelOrder.getOutputFileClass().equals(changedOrder.getOutputFileClass())) {
+			if (!modelOrder.getMission().getFileClasses().contains(changedOrder.getOutputFileClass())) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_FILE_CLASS, MSG_ID_INVALID_FILE_CLASS,
+						changedOrder.getOutputFileClass(), order.getMissionCode()));
+			}
+			orderChanged = true;
+			modelOrder.setOutputFileClass(changedOrder.getOutputFileClass());
+		}		
 		if (!modelOrder.getProcessingMode().equals(changedOrder.getProcessingMode())) {
+			if (!modelOrder.getMission().getProcessingModes().contains(changedOrder.getProcessingMode())) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+						changedOrder.getProcessingMode(), order.getMissionCode()));
+			}
 			orderChanged = true;
 			modelOrder.setProcessingMode(changedOrder.getProcessingMode());
-		}		
+		}
+		
+		// Check for new configured processors
+		Set<ConfiguredProcessor> newConfiguredProcessors = new HashSet<>();
+		if (null != order.getConfiguredProcessors()) {
+			CONFIGURED_PROCESSORS:
+			for (String changedConfiguredProcessor: order.getConfiguredProcessors()) {
+				for (ConfiguredProcessor modelConfiguredProcessor: modelOrder.getRequestedConfiguredProcessors()) {
+					if (modelConfiguredProcessor.getIdentifier().equals(changedConfiguredProcessor)) {
+						// Already present
+						newConfiguredProcessors.add(modelConfiguredProcessor);
+						continue CONFIGURED_PROCESSORS;
+					}
+				}
+				// New component class
+				orderChanged = true;
+				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedConfiguredProcessor);
+				if (null == newConfiguredProcessor) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
+							changedConfiguredProcessor));
+				}
+				newConfiguredProcessors.add(newConfiguredProcessor);
+			}
+		}
+		// Check for removed configured processors
+		for (ConfiguredProcessor modelConfiguredProcessor: modelOrder.getRequestedConfiguredProcessors()) {
+			if (!newConfiguredProcessors.contains(modelConfiguredProcessor)) {
+				// Component class removed
+				orderChanged = true;
+			}
+		}
+		
+		// Check for new requested orbits
+		List<Orbit> newRequestedOrbits = new ArrayList<>();
+		if (null != order.getOrbits()) {
+			for (RestOrbitQuery changedOrbitQuery: order.getOrbits()) {
+				List<Orbit> changedRequestedOrbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+						changedOrbitQuery.getSpacecraftCode(),
+						changedOrbitQuery.getOrbitNumberFrom().intValue(),
+						changedOrbitQuery.getOrbitNumberTo().intValue());
+				if (changedRequestedOrbits.isEmpty()) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_ORBIT_RANGE, MSG_ID_INVALID_ORBIT_RANGE,
+							changedOrbitQuery.getOrbitNumberFrom(),
+							changedOrbitQuery.getOrbitNumberTo(),
+							changedOrbitQuery.getSpacecraftCode()));
+				}
+				for (Orbit changedRequestedOrbit: changedRequestedOrbits) {
+					if (!modelOrder.getRequestedOrbits().contains(changedRequestedOrbit)) {
+						// New orbit
+						orderChanged = true;
+					}
+					newRequestedOrbits.add(changedRequestedOrbit);
+				}
+			}
+		}
+		// Check for removed requested orbits
+		for (Orbit modelRequestedOrbit: modelOrder.getRequestedOrbits()) {
+			if (!newRequestedOrbits.contains(modelRequestedOrbit)) {
+				// Orbit removed
+				orderChanged = true;
+			}
+		}
 		
 		// Save order only if anything was actually changed
 		if (orderChanged)	{
 			modelOrder.incrementVersion();
+			
+			// Update the lists and sets
+			modelOrder.getRequestedProductClasses().clear();
+			modelOrder.getRequestedProductClasses().addAll(newRequestedProductClasses);
+			modelOrder.getInputProductClasses().clear();
+			modelOrder.getInputProductClasses().addAll(newInputProductClasses);
+			modelOrder.getRequestedConfiguredProcessors().clear();
+			modelOrder.getRequestedConfiguredProcessors().addAll(newConfiguredProcessors);
+			modelOrder.getRequestedOrbits().clear();
+			modelOrder.getRequestedOrbits().addAll(newRequestedOrbits);
+			
+			// Persist the modified order
 			modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
 			logInfo(MSG_ORDER_MODIFIED, MSG_ID_ORDER_MODIFIED, id);
 		} else {

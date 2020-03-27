@@ -173,21 +173,23 @@ public class SimpleSelectionRuleTest {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleSelectionRuleTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * Create the necessary reference objects
+	 * 
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
@@ -205,7 +207,7 @@ public class SimpleSelectionRuleTest {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {

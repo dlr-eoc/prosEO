@@ -1,1 +1,5 @@
-/configure_proseo_test_mission.generated.sh
+/*.json
+/*.txt
+/application.yml
+/*.log
+/stop_brain.sh

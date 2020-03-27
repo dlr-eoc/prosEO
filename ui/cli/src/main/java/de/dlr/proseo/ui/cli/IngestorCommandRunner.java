@@ -408,6 +408,9 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getMode()) {
 			restProduct.setMode(updatedProduct.getMode());
 		}
+		if (isDeleteAttributes || null != updatedProduct.getProductQuality()) {
+			restProduct.setProductQuality(updatedProduct.getProductQuality());
+		}
 		if (isDeleteAttributes || null != updatedProduct.getSensingStartTime()) {
 			restProduct.setSensingStartTime(updatedProduct.getSensingStartTime());
 		}

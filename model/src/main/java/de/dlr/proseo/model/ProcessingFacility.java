@@ -6,9 +6,15 @@
 package de.dlr.proseo.model;
 
 import java.util.Objects;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.Table;
+
+import de.dlr.proseo.model.ProductFile.StorageType;
 
 /**
  * A processing facility for running prosEO jobs and storing prosEO product files,  e. g. at a cloud service provider.
@@ -21,6 +27,7 @@ import javax.persistence.Table;
 public class ProcessingFacility extends PersistentObject {
 
 	/** The facility name (unique key) */
+	@Column(nullable = false)
 	private String name;
 	
 	/** A short description of the processing facility */
@@ -32,6 +39,10 @@ public class ProcessingFacility extends PersistentObject {
 	/** The URL to access this facility's storage manager */
 	private String storageManagerUrl;
 
+	/** The default storage type (S3, POSIX, ...) to use in this facility. */
+	@Enumerated(EnumType.STRING)
+	private StorageType defaultStorageType;
+	
 	/**
 	 * Gets the name of the processing facility
 	 * @return the name
@@ -98,6 +109,24 @@ public class ProcessingFacility extends PersistentObject {
 	 */
 	public void setStorageManagerUrl(String storageManagerUrl) {
 		this.storageManagerUrl = storageManagerUrl;
+	}
+
+	/**
+	 * Gets the default storage type of the facility
+	 * 
+	 * @return the default storage type
+	 */
+	public StorageType getDefaultStorageType() {
+		return defaultStorageType;
+	}
+
+	/**
+	 * Sets the default storage type of the facility
+	 * 
+	 * @param defaultStorageType the default storage type to set
+	 */
+	public void setDefaultStorageType(StorageType defaultStorageType) {
+		this.defaultStorageType = defaultStorageType;
 	}
 
 	@Override

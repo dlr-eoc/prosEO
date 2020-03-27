@@ -1,2 +1,2 @@
-FROM postgres:11.5
+FROM postgres:11
 #ADD init.sql /docker-entrypoint-initdb.d/init.sql

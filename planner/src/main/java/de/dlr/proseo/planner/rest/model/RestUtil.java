@@ -22,6 +22,16 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
+import de.dlr.proseo.model.rest.model.JobState;
+import de.dlr.proseo.model.rest.model.JobStepState;
+import de.dlr.proseo.model.rest.model.RestJob;
+import de.dlr.proseo.model.rest.model.RestJobStep;
+import de.dlr.proseo.model.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.rest.model.StderrLogLevel;
+import de.dlr.proseo.model.rest.model.StdoutLogLevel;
+import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.planner.ProductionPlanner;
 /**
  * Build REST objects
@@ -36,79 +46,12 @@ public class RestUtil {
 	public static RestOrder createRestOrder(ProcessingOrder order) {
 		RestOrder ro = new RestOrder();
 		if (order != null) {
-			List<String> configuredProcessors = new ArrayList<String>();
-			if (order.getRequestedConfiguredProcessors() != null) {
-				for (ConfiguredProcessor cp : order.getRequestedConfiguredProcessors()) {
-					configuredProcessors.add(cp.getIdentifier());
-				}
-			}
-			ro.setConfiguredProcessors(configuredProcessors);
-			if (order.getExecutionTime() != null) {
-				ro.setExecutionTime(Date.from(order.getExecutionTime()));
-			}
-			ro.setFilterConditions(RestUtil.createRestParameterList(order.getFilterConditions()));
-			ro.setId(Long.valueOf(order.getId()));
-			ro.setIdentifier(order.getIdentifier());
-			List<String> inputProductClasses = new ArrayList<String>();
-			if (order.getInputProductClasses() != null) {
-				for (ProductClass cp : order.getInputProductClasses()) {
-					configuredProcessors.add(cp.getProductType());
-				}
-			}
-			ro.setInputProductClasses(inputProductClasses);
-			if (order.getMission() != null) {
-				ro.setMissionCode(order.getMission().getCode());
-			}
-			ro.setOrderState(order.getOrderState().toString());
-			ro.setOutputFileClass(order.getOutputFileClass());
-			ro.setOutputParameters(RestUtil.createRestParameterList(order.getOutputParameters()));
-			ro.setProcessingMode(order.getProcessingMode());
-			if (order.getSliceDuration() != null) {
-			ro.setSliceDuration(order.getSliceDuration().toMillis());
-			}
-			if (order.getSliceOverlap() != null) {
-				ro.setSliceOverlap(order.getSliceOverlap().toMillis());
-			}
-			if (order.getSlicingType() != null) {
-				ro.setSlicingType(order.getSlicingType().toString());
-			}
-			if (order.getStartTime() != null) {
-				ro.setStartTime(Date.from(order.getStartTime()));
-			}
-			if (order.getStopTime() != null) {
-				ro.setStopTime(Date.from(order.getStopTime()));
-			}
-			ro.setVersion(Long.valueOf(order.getVersion()));
-			List<String> requestedProductClasses = new ArrayList<String>();
-			if (order.getRequestedProductClasses() != null) {
-				for (ProductClass cp : order.getRequestedProductClasses()) {
-					requestedProductClasses.add(cp.getProductType());
-				}
-			}
-			ro.setRequestedProductClasses(requestedProductClasses);
-			
-			ro.setOrbits(RestUtil.createRestOrbitQueries(order.getRequestedOrbits()));
+			ro = OrderUtil.toRestOrder(order);
 		}
 		return ro;
 	}
-	
-	public static List<RestOrbitQuery> createRestOrbitQueries(List<Orbit> orbits) {
-		List<RestOrbitQuery> restOrbits = new ArrayList<RestOrbitQuery>();
-		if (orbits != null) {
-			List<Long> orbNumber = new ArrayList<Long>();
-			for (Orbit orbit : orbits) {
-				orbNumber.add(orbit.getOrbitNumber().longValue());			
-			}
-			for (Orbit o : orbits) {
-				RestOrbitQuery ro = new RestOrbitQuery();
-				ro.setSpacecraftCode(o.getSpacecraft().getCode());
-				ro.setOrbitNumberFrom(Collections.min(orbNumber));
-				ro.setOrbitNumberTo(Collections.max(orbNumber));
-				restOrbits.add(ro);
-			}
-		}
-		return restOrbits;
-	}
+
+
 @Transactional
 	public static RestJob createRestJob(Job job) {
 		RestJob rj = new RestJob();
@@ -174,7 +117,7 @@ public class RestUtil {
 			pjs.setId(Long.valueOf(js.getId()));
 			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
 			if (js.getJobStepState() != null) {
-				pjs.setJobStepState(de.dlr.proseo.planner.rest.model.JobStepState.valueOf(js.getJobStepState().toString()));
+				pjs.setJobStepState(JobStepState.valueOf(js.getJobStepState().toString()));
 			}
 			pjs.setVersion((long) js.getVersion());
 			pjs.setProcessingMode(js.getProcessingMode());

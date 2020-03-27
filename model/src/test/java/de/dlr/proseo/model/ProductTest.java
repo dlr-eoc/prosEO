@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ProductQuality;
 
 /**
  * Tests the Product class (except for getter and setter methods)
@@ -29,26 +30,26 @@ public class ProductTest {
 	
 	/* Test data */
 	private final String TEST_MISSION_CODE = "S5P";
-	private final String TEST_PRODUCT_TYPE = "NPP";
-	private final String TEST_MISSION_TYPE = "L2__NPP___";
+	private final String TEST_PRODUCT_TYPE = "L2__NPP___";
 	private final Instant TEST_START_TIME = Instant.parse("2019-10-24T22:09:01.234567Z");
 	private final Instant TEST_STOP_TIME = Instant.parse("2019-10-24T23:39:12.345678Z");
 	private final Instant TEST_GENERATION_TIME = Instant.parse("2019-10-25T00:01:02Z");
 	private final String TEST_FILE_CLASS = "RPRO";
 	private final String TEST_MODE = "OFFL";
+	private static final ProductQuality TEST_QUALITY = ProductQuality.TEST;
 	private final String TEST_PROCESSOR_VERSION = "01.02.03";
 	private final String TEST_COLLECTION_NUMBER = "99";
 	private final Integer TEST_ORBIT_NUMBER = 5432;
 	private final String TEST_FILENAME_TEMPLATE =
-			"S5P_${fileClass}_${productClass.missionType}_" +
+			"S5P_${fileClass}_${productClass.productType}_" +
 			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStartTime)}_" +
 			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStopTime)}_" +
 			"${(new java.text.DecimalFormat(\"00000\")).format(orbit.orbitNumber)}_" +
 			"${parameters.get(\"copernicusCollection\").getParameterValue()}_" +
 			"${configuredProcessor.processor.processorVersion.replaceAll(\"\\.\", \"\")}_" +
 			"${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc";
-	private final String TEST_SIMPLE_TEMPLATE = "S5P_${fileClass}_${productClass.missionType}";
-	private final String TEST_EXPRESSION_ONLY_TEMPLATE = "${productClass.mission.code}${productClass.missionType}${fileClass}${mode}";
+	private final String TEST_SIMPLE_TEMPLATE = "S5P_${fileClass}_${productClass.productType}";
+	private final String TEST_EXPRESSION_ONLY_TEMPLATE = "${productClass.mission.code}${productClass.productType}${fileClass}${mode}";
 	
 	private final String EXPECTED_FILENAME = "S5P_RPRO_L2__NPP____20191024T220901_20191024T233912_05432_99_010203_20191025T000102.nc";
 	private final String EXPECTED_SIMPLENAME = "S5P_RPRO_L2__NPP___";
@@ -59,33 +60,36 @@ public class ProductTest {
 	
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 	
+	/**
+	 * Test the resolution of the product file name template
+	 */
 	@Test
 	public final void testGenerateFilename() {
 		Mission mission = new Mission();
@@ -94,7 +98,6 @@ public class ProductTest {
 		ProductClass productClass = new ProductClass();
 		productClass.setMission(mission);
 		productClass.setProductType(TEST_PRODUCT_TYPE);
-		productClass.setMissionType(TEST_MISSION_TYPE);
 		
 		Orbit orbit = new Orbit();
 		orbit.setOrbitNumber(TEST_ORBIT_NUMBER);
@@ -110,6 +113,7 @@ public class ProductTest {
 		product.setProductClass(productClass);
 		product.setFileClass(TEST_FILE_CLASS);
 		product.setMode(TEST_MODE);
+		product.setProductQuality(TEST_QUALITY);
 		product.setSensingStartTime(TEST_START_TIME);
 		product.setSensingStopTime(TEST_STOP_TIME);
 		product.setGenerationTime(TEST_GENERATION_TIME);

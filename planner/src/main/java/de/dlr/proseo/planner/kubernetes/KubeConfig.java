@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.ApiClient;

@@ -171,7 +171,7 @@ public class JobDispatcher {
 			sio.getFileNames().add(new IpfFileName(p.generateFilename(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
 //			sio.getFileNames().add(new IpfFileName("s3:/proseo-data-001/output/" + jobStep.getId() + "/" + p.generateFilename(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
 		} else {
-			sio.getFileNames().add(new IpfFileName(p.getProductClass().getMissionType(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
+			sio.getFileNames().add(new IpfFileName(p.getProductClass().getProductType(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
 		}
 		proc.getListOfOutputs().add(sio);
 		for (Product sp : p.getComponentProducts()) {

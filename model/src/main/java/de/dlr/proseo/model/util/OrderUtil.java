@@ -1,23 +1,31 @@
-package de.dlr.proseo.ordermgr.rest.model;
+package de.dlr.proseo.model.util;
 
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProcessingOrder.OrderSlicingType;
-import de.dlr.proseo.model.ProcessingOrder.OrderState;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestOrbitQuery;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
+
 public class OrderUtil {
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrbitUtil.class);
+	private static Logger logger = LoggerFactory.getLogger(OrderUtil.class);
 	
 	/**
 	 * Convert a prosEO model ProcessingOrder into a REST Order
@@ -44,6 +52,9 @@ public class OrderUtil {
 		if (null != processingOrder.getIdentifier()) {
 			restOrder.setIdentifier(processingOrder.getIdentifier());
 		}	
+		if (null != processingOrder.getUuid()) {
+			restOrder.setUuid(processingOrder.getUuid().toString());
+		}	
 		if (null != processingOrder.getOrderState()) {
 			restOrder.setOrderState(processingOrder.getOrderState().toString());
 		}
@@ -67,6 +78,9 @@ public class OrderUtil {
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
+		}
+		if (null != processingOrder.getPropagateSlicing()) {
+			restOrder.setPropagateSlicing(processingOrder.getPropagateSlicing());
 		}
 
 		if (null != processingOrder.getFilterConditions()) {
@@ -102,6 +116,13 @@ public class OrderUtil {
 			}
 			
 		}
+		if(null != processingOrder.getOutputFileClass()) {
+			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
+		}
+		if(null != processingOrder.getProcessingMode()) {
+			restOrder.setProcessingMode(processingOrder.getProcessingMode());
+		}
+		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
 
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
@@ -109,30 +130,32 @@ public class OrderUtil {
 			}
 		}	
 		
-		if(null != processingOrder.getOutputFileClass()) {
-			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
-		}
-		
 		//The orbit range should be altered to accommodate more ranges than just everything in between min and max
 		if (null != processingOrder.getRequestedOrbits()) {
 			
 			List<RestOrbitQuery> orbitQueries = new ArrayList<RestOrbitQuery>();
 			
-			//Get all the orbit numbers for the requested Orbits 
-			List<Long> orbNumber = new ArrayList<Long>();
-			for (de.dlr.proseo.model.Orbit orbit : processingOrder.getRequestedOrbits()) {
-				orbNumber.add(orbit.getOrbitNumber().longValue());			
-			}
+			// Sort orbits by orbit number
+			List<Orbit> sortedOrbits = new ArrayList<>();
+			sortedOrbits.addAll(processingOrder.getRequestedOrbits());
+			Collections.sort(sortedOrbits, (o1, o2) -> {
+				return o1.getOrbitNumber().compareTo(o2.getOrbitNumber());
+			});
 			
-			for (de.dlr.proseo.model.Orbit orbit : processingOrder.getRequestedOrbits()) {
-				RestOrbitQuery orbitQuery = new RestOrbitQuery();
-				orbitQuery.setSpacecraftCode(orbit.getSpacecraft().getCode());
-				//Set the range for OrbitNumbers assuming the smallest as OrbitNumberFrom and the highest as OrbitNumberTo
-				orbitQuery.setOrbitNumberFrom(Collections.min(orbNumber));
-				orbitQuery.setOrbitNumberTo(Collections.max(orbNumber));
-
-				orbitQueries.add(orbitQuery);
+			// Loop over all orbits, and create one RestOrbitQuery for each continuous range of orbit numbers
+			Integer lastOrbitNumber = Integer.MIN_VALUE;
+			RestOrbitQuery currentOrbitQuery = null;
+			for (Orbit orbit: sortedOrbits) {
+				if (orbit.getOrbitNumber() > lastOrbitNumber + 1) {
+					currentOrbitQuery = new RestOrbitQuery();
+					currentOrbitQuery.setSpacecraftCode(orbit.getSpacecraft().getCode());
+					currentOrbitQuery.setOrbitNumberFrom(Long.valueOf(orbit.getOrbitNumber()));
+					orbitQueries.add(currentOrbitQuery);
+				}
+				currentOrbitQuery.setOrbitNumberTo(Long.valueOf(orbit.getOrbitNumber()));
+				lastOrbitNumber = orbit.getOrbitNumber();
 			}
+
 			restOrder.setOrbits(orbitQueries);
 		}
 		
@@ -147,7 +170,6 @@ public class OrderUtil {
 	 * @return a (roughly) equivalent model order
 	 * @throws IllegalArgumentException if the REST order violates syntax rules for date, enum or numeric values
 	 */
-	@SuppressWarnings("unchecked")
 	public static ProcessingOrder toModelOrder(RestOrder restOrder) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrder({})", (null == restOrder ? "MISSING" : restOrder.getId()));
@@ -161,6 +183,9 @@ public class OrderUtil {
 			} 
 		}
 		processingOrder.setIdentifier(restOrder.getIdentifier());
+		if (null != restOrder.getUuid()) {
+			processingOrder.setUuid(UUID.fromString(restOrder.getUuid()));
+		}
 		processingOrder.setOrderState(OrderState.valueOf(restOrder.getOrderState()));
 		processingOrder.setProcessingMode(restOrder.getProcessingMode());
 
@@ -202,6 +227,10 @@ public class OrderUtil {
 			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
 
 		}
+		if (null != restOrder.getPropagateSlicing()) {
+			processingOrder.setPropagateSlicing(restOrder.getPropagateSlicing());
+
+		}
 		
 		//The following section needs to be verified
 		for (RestParameter restParam : restOrder.getFilterConditions()) {
@@ -214,6 +243,13 @@ public class OrderUtil {
 			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
 			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
 			processingOrder.getOutputParameters().put(restParam.getKey(), modelParam);
+		}
+		
+		if (null != restOrder.getOutputFileClass()) {
+			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
+		}
+		if (null != restOrder.getProcessingMode()) {
+			processingOrder.setProcessingMode(restOrder.getProcessingMode());
 		}
 		
 		

@@ -61,7 +61,6 @@ resourceTypes:
     description: Get processing facilities by mission and facility name
     displayName: getFacilities
     queryParameters:
-      mission?: string
       name?: string
     responses:
       200:
@@ -97,7 +96,7 @@ resourceTypes:
               type: RestFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     patch:
-      description: Update a processing order by ID
+      description: Update a processing facility by ID
       displayName: modifyFacility
       body:
         application/json:

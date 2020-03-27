@@ -316,6 +316,11 @@ public class UserCommandRunner {
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
+					// Handle special case: Password is unencrypted on command line
+					if (param.getValue().startsWith("password=")) {
+						// Due to parsing guaranteed to be "password=value"
+						param.setValue("password=" + passwordEncoder.encode(param.getValue().split("=")[1]));
+					}
 					CLIUtil.setAttribute(restUser, param.getValue());
 				} catch (Exception e) {
 					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));

@@ -42,40 +42,42 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class ProductClassRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
-	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
-	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
+	private static final String TEST_PRODUCT_TYPE = "$L2__FRESCO_$";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductClassRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		Mission mission = new Mission();
@@ -84,7 +86,6 @@ public class ProductClassRepositoryTest {
 		
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
 		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 		
@@ -104,24 +105,11 @@ public class ProductClassRepositoryTest {
 		
 		logger.info("OK: Test for findByProductType completed");
 		
-		// Test findByMissionType
-		prodClasses = RepositoryService.getProductClassRepository().findByMissionType(TEST_MISSION_TYPE);
-		assertFalse("Find by mission type failed for ProductClass", prodClasses.isEmpty());
-		
-		logger.info("OK: Test for findByMissionType completed");
-		
 		// Test findByMissionCodeAndProductType
 		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(TEST_CODE, TEST_PRODUCT_TYPE);
 		assertNotNull("Find by mission code and product type failed for ProcessingOrder", prodClass);
 		
-		logger.info("OK: Test for findByMissionCodeAndProductType completed");
-		
-		// Test findByMissionCodeAndMissionType
-		prodClass = RepositoryService.getProductClassRepository().findByMissionCodeAndMissionType(TEST_CODE, TEST_MISSION_TYPE);
-		assertNotNull("Find by mission code and mission type failed for ProcessingOrder", prodClass);
-		
-		logger.info("OK: Test for findByMissionCodeAndMissionType completed");
-		
+		logger.info("OK: Test for findByMissionCodeAndProductType completed");		
 	}
 
 }

@@ -217,7 +217,7 @@ public class ConfigurationManager {
 		}
 		
 		for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {
-			if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType())) {
+			if (!ALLOWED_FILENAME_TYPES.contains(staticInputFile.getFileNameType().toLowerCase())) {
 				throw new IllegalArgumentException(logError(MSG_FILENAME_TYPE_INVALID, MSG_ID_FILENAME_TYPE_INVALID,
 						staticInputFile.getFileNameType()));
 			}
@@ -307,6 +307,10 @@ public class ConfigurationManager {
 			configurationChanged = true;
 			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
 		}
+		if (!modelConfiguration.getProductQuality().equals(changedConfiguration.getProductQuality())) {
+			configurationChanged = true;
+			modelConfiguration.setProductQuality(changedConfiguration.getProductQuality());
+		}
 		if (null == modelConfiguration.getDockerRunParameters() && null != changedConfiguration.getDockerRunParameters()
 				|| null != modelConfiguration.getDockerRunParameters() && !modelConfiguration.getDockerRunParameters().equals(changedConfiguration.getDockerRunParameters())) {
 			configurationChanged = true;
@@ -390,9 +394,12 @@ public class ConfigurationManager {
 		// Save configuration only if anything was actually changed
 		if (configurationChanged) {
 			modelConfiguration.incrementVersion();
-			modelConfiguration.setDynProcParameters(newParameters);
-			modelConfiguration.setConfigurationFiles(newFiles);
-			modelConfiguration.setStaticInputFiles(newInputFiles);
+			modelConfiguration.getDynProcParameters().clear();
+			modelConfiguration.getDynProcParameters().putAll(newParameters);
+			modelConfiguration.getConfigurationFiles().clear();
+			modelConfiguration.getConfigurationFiles().addAll(newFiles);
+			modelConfiguration.getStaticInputFiles().clear();;
+			modelConfiguration.getStaticInputFiles().addAll(newInputFiles);
 			modelConfiguration = RepositoryService.getConfigurationRepository().save(modelConfiguration);
 			logInfo(MSG_CONFIGURATION_MODIFIED, MSG_ID_CONFIGURATION_MODIFIED, id);
 		} else {

@@ -43,40 +43,42 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class ProductQueryRepositoryTest {
 
 	private static final String TEST_CODE = "$ABC$";
-	private static final String TEST_PRODUCT_TYPE = "$FRESCO$";
-	private static final String TEST_MISSION_TYPE = "$L2__FRESCO_$";
+	private static final String TEST_PRODUCT_TYPE = "$L2__FRESCO_$";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryRepositoryTest.class);
 	
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if an error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
+	/**
+	 * Test the additional repository methods
+	 */
 	@Test
 	public final void test() {
 		Mission mission = new Mission();
@@ -85,7 +87,6 @@ public class ProductQueryRepositoryTest {
 		
 		ProductClass prodClass = new ProductClass();
 		prodClass.setMission(mission);
-		prodClass.setMissionType(TEST_MISSION_TYPE);
 		prodClass.setProductType(TEST_PRODUCT_TYPE);
 		prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 		

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -31,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +44,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
-import de.dlr.proseo.ingestor.IngestorSecurityConfig;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
@@ -58,6 +57,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Test class for the REST API of IngestorControllerImpl
@@ -76,15 +76,14 @@ public class IngestorControllerTest {
 	
 	/* Various static test data */
 	private static final String TEST_CODE = "ABC";
-	private static final String TEST_PRODUCT_TYPE = "FRESCO";
-	private static final String TEST_MISSION_TYPE = "L2__FRESCO_";
+	private static final String TEST_PRODUCT_TYPE = "L2__FRESCO_";
 	private static final String TEST_NAME = "Test Facility";
 	private static final String TEST_STORAGE_SYSTEM = "src/test/resources/IDA_test";
 //	private static final String TEST_PRODUCT_PATH_1 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__CLOUD__20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_PRODUCT_PATH_2 = "L2/2018/07/21/03982/OFFL/S5P_OFFL_L2__FRESCO_20180721T000328_20180721T000828_03982_01_010100_20180721T010233.nc";
 	private static final String TEST_SC_CODE = "XYZ";
 	private static final int TEST_ORBIT_NUMBER = 4712;
-	private static final Instant TEST_START_TIME = Instant.from(Orbit.orbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
+	private static final Instant TEST_START_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
 	private static final String TEST_STOP_TIME_TEXT = "2018-07-21T00:08:28.000123";
 	private static final String TEST_START_TIME_TEXT = "2018-07-21T00:03:28.000456";
 	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000789";
@@ -168,11 +167,12 @@ public class IngestorControllerTest {
 				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
 
 		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
+		testProduct.setUuid(UUID.randomUUID());
 		testProduct.setFileClass(testData[4]);
 		testProduct.setMode(testData[5]);
-		testProduct.setSensingStartTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[6])));
-		testProduct.setSensingStopTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[7])));
-		testProduct.setGenerationTime(Instant.from(Orbit.orbitTimeFormatter.parse(testData[8])));
+		testProduct.setSensingStartTime(Instant.from(OrbitTimeFormatter.parse(testData[6])));
+		testProduct.setSensingStopTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
+		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[8])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[9])));
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
@@ -238,7 +238,6 @@ public class IngestorControllerTest {
 					prodClass = new ProductClass();
 					prodClass.setMission(mission);
 					prodClass.setProductType(TEST_PRODUCT_TYPE);
-					prodClass.setMissionType(TEST_MISSION_TYPE);
 					prodClass = RepositoryService.getProductClassRepository().save(prodClass);
 					//mission.getProductClasses().add(prodClass);
 					//mission = RepositoryService.getMissionRepository().save(mission);

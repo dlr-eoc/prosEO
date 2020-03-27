@@ -19,6 +19,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -58,24 +59,23 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 	 * Initialize the users, passwords and roles for the Ordermgr from the prosEO database
 	 * 
 	 * @param builder to manage authentications
-	 * @param dataSource the data source configured for the Ordermgr
 	 * @throws Exception if anything goes wrong with JDBC authentication
 	 */
 	@Autowired
-	public void initialize(AuthenticationManagerBuilder builder, DataSource dataSource) throws Exception {
-		logger.info("Initializing authentication from datasource " + dataSource);
+	public void initialize(AuthenticationManagerBuilder builder) throws Exception {
+		logger.info("Initializing authentication from user details service ");
 
-		builder.jdbcAuthentication()
-			.dataSource(dataSource);
-		
-//	    builder.jdbcAuthentication()
-//            .dataSource(dataSource).withUser("user").password(passwordEncoder().encode("password")).roles("USER");
-		
+		builder.userDetailsService(userDetailsService());
 	}
 
+	/**
+	 * Provides the default password encoder for prosEO (BCrypt)
+	 * 
+	 * @return a BCryptPasswordEncoder
+	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-	    return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+	    return new BCryptPasswordEncoder();
 	}
 
 	/**
@@ -90,6 +90,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		JdbcDaoImpl jdbcDaoImpl = new JdbcDaoImpl();
 		jdbcDaoImpl.setDataSource(dataSource);
 		jdbcDaoImpl.setEnableGroups(true);
+		
 		return jdbcDaoImpl;
 	}
 }
