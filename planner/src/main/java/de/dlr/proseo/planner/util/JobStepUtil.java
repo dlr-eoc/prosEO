@@ -140,6 +140,31 @@ public class JobStepUtil {
 	}
 
 	@Transactional
+	public Messages retry(JobStep js) {
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case INITIAL:
+			case READY:
+			case RUNNING:
+			case COMPLETED:
+				answer = Messages.JOBSTEP_COULD_NOT_RETRY;
+				break;
+			case WAITING_INPUT:
+			case FAILED:
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				RepositoryService.getJobStepRepository().save(js);
+				answer = Messages.JOBSTEP_RETRIED;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
 	public Boolean checkFinish(JobStep js) {
 		Boolean answer = false;
 		// check current state for possibility to be suspended
@@ -162,8 +187,47 @@ public class JobStepUtil {
 		}
 		return answer;
 	}
+	
 	@Transactional
 	public Boolean delete(JobStep js) {
+		Boolean answer = false;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case INITIAL:
+			case READY:
+			case WAITING_INPUT:
+				if (js.getOutputProduct() != null) {
+					deleteProduct(js.getOutputProduct());	
+					js.setOutputProduct(null);
+				};
+			case COMPLETED:
+			case FAILED:
+				if (js.getOutputProduct() != null) {
+					js.getOutputProduct().setJobStep(null);
+				}
+				for (ProductQuery pq : js.getInputProductQueries()) {
+					for (Product p : pq.getSatisfyingProducts()) {
+						p.getSatisfiedProductQueries().clear();
+					}
+					pq.getSatisfyingProducts().clear();
+					RepositoryService.getProductQueryRepository().delete(pq);
+				}
+				js.getInputProductQueries().clear();
+				// RepositoryService.getJobStepRepository().delete(js);
+				answer = true;
+				break;
+			case RUNNING:
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
+	public Boolean deleteForced(JobStep js) {
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {

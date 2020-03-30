@@ -244,8 +244,8 @@ public class KubeJob {
 			jobName = aJob.getMetadata().getName();
 			if (jobName.startsWith(ProductionPlanner.jobNamePrefix)) {
 				try {
-				jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
-				containerName = ProductionPlanner.jobContainerPrefix + jobId;
+					jobId = Long.valueOf(jobName.substring(ProductionPlanner.jobNamePrefix.length()));
+					containerName = ProductionPlanner.jobContainerPrefix + jobId;
 				} catch (NumberFormatException e) {
 					e.printStackTrace();
 					return null;
@@ -294,6 +294,10 @@ public class KubeJob {
 					// todo Exception
 					return null;
 				}
+				// wrapper user and PW
+				String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
+				String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
+				
 				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
 				// Use Java style Map (as opposed to Scala's Map class)
 				
@@ -324,12 +328,8 @@ public class KubeJob {
 						.withValue(jobOrder.getFsType())
 						.endEnv()
 						.addNewEnv()
-						.withName("INGESTOR_ENDPOINT")
-						.withValue("")
-						.endEnv()
-						.addNewEnv()
 						.withName("STATE_CALLBACK_ENDPOINT")
-						.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/v0.1/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
+						.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
 						.endEnv()
 						.addNewEnv()
 						.withName("S3_ENDPOINT")
@@ -358,6 +358,14 @@ public class KubeJob {
 						.addNewEnv()
 						.withName("PROCESSING_FACILITY_NAME")
 						.withValue(kubeConfig.getId())
+						.endEnv()
+						.addNewEnv()
+						.withName("PROSEO_USER")
+						.withValue(wrapUser)
+						.endEnv()
+						.addNewEnv()
+						.withName("PROSEO_PW")
+						.withValue(ProductionPlanner.config.getWrapperPassword())
 						.endEnv()
 						.addNewVolumeMount()
 						.withName("ramdisk")
@@ -505,10 +513,6 @@ public class KubeJob {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
-					Optional<JobStep> jsa = RepositoryService.getJobStepRepository().findById(jobStepId);
-					if (jsa.isPresent()) {
-						jsa.get();
-					}
 				}
 			}
 			KubeJobFinish toFini = new KubeJobFinish(this, jobname);

@@ -26,13 +26,13 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlannerUrl;
 	
-	/** The user name to use for prosEO Production Planner logins */
-	@Value("${proseo.productionPlanner.user}")
-	private String productionPlannerUser;
+	/** The user name to use for Production Planner/Ingestor logins by wrapper */
+	@Value("${proseo.wrapper.user}")
+	private String wrapperUser;
 
-	/** The password to use for prosEO Production Planner logins */
-	@Value("${proseo.productionPlanner.password}")
-	private String productionPlannerPassword;
+	/** The password to use for prosEO Production Planner/Ingestor logins by wrapper */
+	@Value("${proseo.wrapper.password}")
+	private String wrapperPassword;
 
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
@@ -115,10 +115,10 @@ public class ProductionPlannerConfiguration {
 	/**
 	 * Gets the user for production planner logins
 	 * 
-	 * @return the productionPlannerUser
+	 * @return the wrapperUser
 	 */
-	public String getProductionPlannerUser() {
-		return productionPlannerUser;
+	public String getWrapperUser() {
+		return wrapperUser;
 	}
 
 	/**
@@ -126,8 +126,8 @@ public class ProductionPlannerConfiguration {
 	 * 
 	 * @return the productionPlannerPassword
 	 */
-	public String getProductionPlannerPassword() {
-		return productionPlannerPassword;
+	public String getWrapperPassword() {
+		return wrapperPassword;
 	}
 
 	/**

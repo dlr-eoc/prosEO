@@ -20,16 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.rest.JobController;
+import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.rest.JobController;
-import de.dlr.proseo.planner.rest.model.RestJob;
-import de.dlr.proseo.planner.rest.model.RestOrder;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;

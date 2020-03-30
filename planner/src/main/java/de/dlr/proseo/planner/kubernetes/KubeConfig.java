@@ -10,6 +10,7 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -18,8 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.rest.model.PlannerPod;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.ApiClient;
@@ -172,34 +173,15 @@ public class KubeConfig {
 				apiV1 = null;
 				batchApiV1 = null;
 				return false;
-			} else {
-				V1JobList list = null;
-				try {									
-					// allow more response time and enhance time out 
-					client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
-					client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
-					client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
+			} else {								
+				// allow more response time and enhance time out 
+				client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
+				client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
+				client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
 
-					// rebuild runtime data 
-					list = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
-					for (V1Job aJob : list.getItems()) {
-						KubeJob kj = new KubeJob();
-						kj = kj.rebuild(this, aJob);
-						if (kj != null) {
-							kubeJobList.put(kj.getJobName(), kj);
-						}
-					}
-					// get node info
-					getNodeInfo();
-				} catch (ApiException e) {
-					// message handled in caller
-					if (e.getCause() == null || e.getCause().getClass() != ConnectException.class) {
-						e.printStackTrace();
-					}
-					apiV1 = null;
-					batchApiV1 = null;
-					return false;
-				}
+				// get node info
+				getNodeInfo();
+				sync();
 			}
 			return true;
 		}
@@ -219,7 +201,55 @@ public class KubeConfig {
 	public boolean couldJobRun() {
 		return (kubeJobList.size() < (getWorkerCnt() + nodesDelta));
 	}
-	
+
+	public void sync() {
+		// rebuild runtime data 
+		V1JobList k8sJobList = null;
+		try {
+			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+		} catch (ApiException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+		// update kubeJob list
+		Map<String, V1Job> kJobs = new HashMap<String, V1Job>();
+		for (V1Job aJob : k8sJobList.getItems()) {
+			String kName = aJob.getMetadata().getName();
+			kJobs.put(kName, aJob);
+			if (getKubeJob(kName) == null) {
+				if (!kubeJobList.containsKey(aJob.getMetadata().getName())) {
+					KubeJob kj = new KubeJob();
+					kj = kj.rebuild(this, aJob);
+					if (kj != null) {
+						kubeJobList.put(kj.getJobName(), kj);
+					}
+				}
+			}
+		}
+		// now are all existing Kubernetes jobs synchronized with KubeJob list.
+		// walk through KubeJob list and remove elements without existing Kubernetes job
+		List<KubeJob> kjList = new ArrayList<KubeJob>();
+		kjList.addAll(kubeJobList.values());
+		for (KubeJob kj : kjList) {
+			if (!kJobs.containsKey(kj.getJobName())) {
+				kubeJobList.remove(kj.getJobName());
+			}
+		}
+		// Look wheather Kubernetes job is running or has already finished without message event to Planner
+		// Walk through Kubernetes job list (to manipulate KubeJob list)
+		for (V1Job aJob : k8sJobList.getItems()) {
+			String kName = aJob.getMetadata().getName();
+			KubeJob kj = kubeJobList.get(kName);
+			if (kj != null) {
+				if (kj.getFinishInfo(kName)) {
+					
+				}
+			}
+			
+		}
+		
+	}
 	/**
 	 * Retrieve all pods of cluster
 	 * 

@@ -64,6 +64,11 @@ resourceTypes:
             application/json:
               type: RestOrder
               example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+    delete:
+      description: Delete processing order of id 
+      displayName: deleteOrder
+      responses:
+        204:
   /approve:
     /{id}:
       patch:
@@ -115,6 +120,17 @@ resourceTypes:
       patch:
         description: Cancel processing order of id 
         displayName: cancelOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /retry:
+    /{id}:
+      patch:
+        description: Retry processing order of id 
+        displayName: retryOrder
         responses:
           200:
             body:
@@ -294,6 +310,17 @@ resourceTypes:
               body:
                 application/json:
                   type: PlannerPod
+  /synchronize:
+    /{name}:
+      get:
+        description: Update and get running and connected processing facilities
+        displayName: synchronizeFacility
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestProcessingFacility
+                example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
 /product:
   /{productid}:
     get:

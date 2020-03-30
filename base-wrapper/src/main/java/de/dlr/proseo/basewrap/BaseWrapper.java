@@ -80,7 +80,7 @@ public class BaseWrapper {
 	/**End-Message  of wrapper */
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
 	/**Start-Message  of wrapper */
-	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.04 with JobOrder file {}";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.05 with JobOrder file {}";
 	/**Invalid Environment Variable message */
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	/**File not readable message */
@@ -136,6 +136,8 @@ public class BaseWrapper {
 		, STATE_CALLBACK_ENDPOINT
 		, PROCESSOR_SHELL_COMMAND
 		, PROCESSING_FACILITY_NAME
+		, PROSEO_USER
+		, PROSEO_PW
 	}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
@@ -150,6 +152,8 @@ public class BaseWrapper {
 	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
+	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
 
 
 	/**
@@ -279,6 +283,14 @@ public class BaseWrapper {
 		}
 		if(ENV_INGESTOR_ENDPOINT==null || ENV_INGESTOR_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.INGESTOR_ENDPOINT);
+			return false;
+		}
+		if(ENV_PROSEO_USER==null || ENV_PROSEO_USER.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROSEO_USER);
+			return false;
+		}
+		if(ENV_PROSEO_PW==null || ENV_PROSEO_PW.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.PROSEO_PW);
 			return false;
 		}
 		logger.info("ENV_VARS looking good...");
@@ -651,7 +663,7 @@ public class BaseWrapper {
 			} catch (JsonProcessingException e) {
 				logger.error(e.getMessage());
 			} 
-			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
+			HttpResponseInfo singleResponse = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_INGESTOR_ENDPOINT, ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
 
 			if (singleResponse != null && singleResponse.gethttpCode()==201) {
 				logger.info("... ingestor response is  {}",singleResponse.gethttpResponse());
@@ -687,7 +699,7 @@ public class BaseWrapper {
 		// ENV_STATE_CALLBACK_ENDPOINT shall look like:
 		// <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
 		// queryParam status is set by wrapper
-		HttpResponseInfo callback = RestOps.restApiCall(ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
+		HttpResponseInfo callback = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
 		if(callback != null) logger.info("... planner response is {} ({})", callback.gethttpResponse(), callback.gethttpCode());
 		else return null;
 

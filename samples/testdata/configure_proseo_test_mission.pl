@@ -13,7 +13,7 @@ use strict;
 use Getopt::Long qw(:config pass_through);
 use File::Glob qw(:bsd_glob);
 use FileHandle;
-use XML::Twig;
+# use XML::Twig;
 
 #
 # -- Default values (same for all objects)

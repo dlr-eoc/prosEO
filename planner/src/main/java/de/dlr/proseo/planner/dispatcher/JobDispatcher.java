@@ -193,7 +193,7 @@ public class JobDispatcher {
 		if (storageManagerUrl != null && jobOrder != null) {
 			try {
 				RestTemplate restTemplate = new RestTemplate();
-				String restUrl = "/proseo/storage-mgr/v0.1/joborders";
+				String restUrl = "/joborders";
 				String b64String = jobOrder.buildBase64String(true);
 				RestJoborder jo = new RestJoborder();
 				jo.setJobOrderStringBase64(b64String);

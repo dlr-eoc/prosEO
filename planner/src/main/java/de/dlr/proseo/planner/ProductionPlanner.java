@@ -81,6 +81,34 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	private KubeDispatcher kubeDispatcher = null;
 	
+	
+	/**
+	 * password cache for orders (used to set user/pw in wrapper call)
+	 */
+	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
+	
+	public Map<String, String> getAuth(Long orderId) {
+		return orderPwCache.get(orderId);
+	}
+	
+	public void updateAuth(Long orderId, String user, String pw) {
+		if (orderPwCache.containsKey(orderId)) {
+			Map<String, String> aMap = orderPwCache.get(orderId);
+			if (aMap.containsKey(user)) {
+				if (!aMap.get(user).equals(pw)) {
+					aMap.replace(user, pw);
+				}
+			} else {
+				aMap.remove(user);
+				aMap.put(user, pw);
+			}
+		} else {
+			Map<String, String> aMap = new HashMap<>();
+			aMap.put(user, pw);
+			orderPwCache.put(orderId, aMap);
+		}
+	}
+	
 	/**
 	 * Look for connected KubeConfig of name. 
 	 * 

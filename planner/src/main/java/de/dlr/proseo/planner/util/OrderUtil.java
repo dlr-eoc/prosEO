@@ -12,16 +12,13 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.hibernate.mapping.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
@@ -157,6 +154,58 @@ public class OrderUtil {
 	}
 	
 	@Transactional
+	public Messages delete(ProcessingOrder order) {
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+				// jobs are in initial state, no change
+				RepositoryService.getOrderRepository().delete(order);
+				answer = Messages.ORDER_DELETED;
+				break;				
+			case PLANNED:
+			case COMPLETED:
+			case FAILED:
+			case CLOSED:
+				// remove jobs and jobsteps
+				HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
+				for (Job job : order.getJobs()) {
+					if (jobUtil.deleteForced(job)) {
+						toRemove.put(job.getId(), job);
+					}
+				}
+				List<Job> existingJobs = new ArrayList<Job>();
+				existingJobs.addAll(order.getJobs());
+				order.getJobs().clear();
+				for (Job job : existingJobs) {
+					if (toRemove.get(job.getId()) == null) {
+						order.getJobs().add(job);
+					} else {
+						RepositoryService.getJobRepository().delete(job);
+					}
+				}
+				RepositoryService.getOrderRepository().delete(order);
+				answer = Messages.ORDER_DELETED;
+				break;	
+			case RELEASED:
+				answer = Messages.ORDER_ALREADY_RELEASED;
+				break;
+			case RUNNING:
+				answer = Messages.ORDER_ALREADY_RUNNING;
+				break;
+			case SUSPENDING:
+				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+	
+	@Transactional
 	public Messages approve(ProcessingOrder order) {
 		Messages answer = Messages.ORDER_ALREADY_APPROVED;
 		if (order != null) {
@@ -210,10 +259,15 @@ public class OrderUtil {
 				break;
 			case APPROVED:
 				if (orderDispatcher.publishOrder(order, procFacility)) {
-					jobStepUtil.searchForJobStepsToRun(procFacility);
-					order.setOrderState(OrderState.PLANNED);
+					if (order.getJobs().isEmpty()) {
+						order.setOrderState(OrderState.COMPLETED);
+						answer = Messages.ORDER_COMPLETED;
+					} else {
+						jobStepUtil.searchForJobStepsToRun(procFacility);
+						order.setOrderState(OrderState.PLANNED);
+						answer = Messages.ORDER_PLANNED;
+					}
 					RepositoryService.getOrderRepository().save(order);
-					answer = Messages.ORDER_PLANNED;
 				}
 				break;	
 			case PLANNED:	
@@ -260,9 +314,14 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					jobUtil.resume(job);
 				}
-				order.setOrderState(OrderState.RELEASED);
+				if (order.getJobs().isEmpty()) {
+					order.setOrderState(OrderState.COMPLETED);
+					answer = Messages.ORDER_COMPLETED;
+				} else {
+					order.setOrderState(OrderState.RELEASED);
+					answer = Messages.ORDER_RELEASED;
+				}
 				RepositoryService.getOrderRepository().save(order);
-				answer = Messages.ORDER_RELEASED;
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -355,6 +414,7 @@ public class OrderUtil {
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
 			case RUNNING:
+			case SUSPENDING:
 				Boolean oneNotSuspended = true;
 				for (Job job : order.getJobs()) {
 					oneNotSuspended = jobUtil.suspend(job).isTrue() & oneNotSuspended;
@@ -368,15 +428,56 @@ public class OrderUtil {
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
-				break;			
-			case SUSPENDING:
-				answer = Messages.ORDER_SUSPENDED;
-				break;
+				break;	
 			case COMPLETED:
 				answer = Messages.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
 				answer = Messages.ORDER_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.ORDER_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+		}
+		return answer;
+	}
+
+	@Transactional
+	public Messages retry(ProcessingOrder order) {
+		Messages answer = Messages.FALSE;
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+			case APPROVED:
+			case PLANNED:	
+			case RELEASED:
+			case RUNNING:
+			case SUSPENDING:
+			case COMPLETED:
+				answer = Messages.ORDER_COULD_NOT_RETRY;
+				break;
+			case FAILED:
+				Boolean all = true;
+				for (Job job : order.getJobs()) {
+					jobUtil.retry(job);
+				}
+				for (Job job : order.getJobs()) {
+					if (job.getJobState() != JobState.INITIAL) {
+						all = false;
+						break;
+					}
+				}
+				if (all) {
+					order.setOrderState(OrderState.PLANNED);
+					RepositoryService.getOrderRepository().save(order);
+					answer = Messages.ORDER_RETRIED;
+				} else {
+					answer = Messages.ORDER_COULD_NOT_RETRY;
+				}
 				break;
 			case CLOSED:
 				answer = Messages.ORDER_ALREADY_CLOSED;

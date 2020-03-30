@@ -6,27 +6,18 @@
 package de.dlr.proseo.planner.rest;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Optional;
 
-import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.planner.rest.model.RestJobStep;
-import de.dlr.proseo.planner.rest.model.RestOrbitQuery;
-import de.dlr.proseo.planner.rest.model.RestOrder;
-import de.dlr.proseo.planner.rest.model.RestParameter;
+import de.dlr.proseo.model.rest.OrderController;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;
@@ -95,6 +86,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> getOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -114,6 +106,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> approveOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -141,10 +134,11 @@ public class OrderControllerImpl implements OrderController {
 
 	
 	/**
-	 * Approve prcessing order of id
+	 * Reset prcessing order of id
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> resetOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -155,6 +149,37 @@ public class OrderControllerImpl implements OrderController {
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+			}
+		}
+		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
+		logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
+	
+	/**
+	 * Delete prcessing order of id
+	 * 
+	 */
+	@Override
+	@Transactional
+	public ResponseEntity<RestOrder> deleteOrder(String orderId) {
+		ProcessingOrder order = this.findOrder(orderId);
+		if (order != null) {
+			Messages msg = orderUtil.delete(order);
+			if (msg.isTrue()) {
+				// deleted
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
 			} else {
 				// already running or at end, could not suspend
 				RestOrder ro = RestUtil.createRestOrder(order);
@@ -242,6 +267,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -274,6 +300,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> cancelOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -306,6 +333,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> closeOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -338,6 +366,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 */
 	@Override
+	@Transactional
 	public ResponseEntity<RestOrder> suspendOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
@@ -362,6 +391,38 @@ public class OrderControllerImpl implements OrderController {
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
+	/**
+	 * Retry prcessing order of id
+	 * 
+	 */
+	@Override
+	@Transactional
+	public ResponseEntity<RestOrder> retryOrder(String orderId) {
+		ProcessingOrder order = this.findOrder(orderId);
+		if (order != null) {
+			Messages msg = orderUtil.retry(order);
+			if (msg.isTrue()) {
+				// canceled
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+			}
+		}
+		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
+		logger.error(message);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+
 
 	@Transactional
 	private ProcessingOrder findOrder(String orderId) {
