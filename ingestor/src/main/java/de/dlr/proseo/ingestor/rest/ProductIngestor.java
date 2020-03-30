@@ -188,9 +188,9 @@ public class ProductIngestor {
 		Map<String, Object> postData = new HashMap<>();
 		postData.put("productId", String.valueOf(newProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
-		filePaths.add(ingestorProduct.getMountPoint() + File.separator + ingestorProduct.getFilePath() + File.separator + ingestorProduct.getProductFileName());
+		filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + ingestorProduct.getProductFileName());
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
-			filePaths.add(ingestorProduct.getMountPoint() + File.separator + ingestorProduct.getFilePath() + File.separator + auxFile);
+			filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
