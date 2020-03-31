@@ -270,6 +270,7 @@ commands:
         - name: create
           description: Create a new processing order (in status Initial); if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
+                       (when prompted for orbits, orbit ranges may be given, e. g. "3000-3003,3005,3009-3011")
           options:
             - name: file
               type: string
@@ -324,7 +325,9 @@ commands:
           options:
             - name: format
               type: string
-              description: The output format for the resulting job list (one of { NONE, JSON, XML, YAML }; default value NONE)
+              description: The output format for the resulting job list (one of { NONE, PLAIN, JSON, XML, YAML }; default value PLAIN),
+                           NONE suppresses result output, PLAIN format gives job and job step identifiers only, the other
+                           formats give full output of all planned jobs and job steps (may be very verbose!)
           parameters:
             - name: orderId
               type: string

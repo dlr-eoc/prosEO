@@ -57,6 +57,7 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2362;
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2363;
 	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2364;
+	private static final int MSG_ID_DUPLICATE_CONFPROC_ID = 2365;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -68,6 +69,8 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_CONFIGURATION_INVALID = "(E%d) Configuration %s with version %s invalid for mission %s";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion of configured processor unsuccessful for ID %d";
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configured processor with ID %d has been modified since retrieval by the client";
+	private static final String MSG_DUPLICATE_CONFPROC_UUID = "(E%d) Duplicate configured processor UUID %s";
+	private static final String MSG_DUPLICATE_CONFPROC_ID = "(E%d) Duplicate configured processor identifier %s";
 
 	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, identifier %s, processor name %s, processor version %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -75,7 +78,6 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_CONFIGURED_PROCESSOR_MODIFIED = "(I%d) Configured processor with id %d modified";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_MODIFIED = "(I%d) Configured processor with id %d not modified (no changes)";
 	private static final String MSG_CONFIGURED_PROCESSOR_DELETED = "(I%d) Configured processor with id %d deleted";
-	private static final String MSG_DUPLICATE_CONFPROC_UUID = "(E%d) Duplicate configured processor UUID %s";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -223,6 +225,12 @@ public class ConfiguredProcessorManager {
 			}
 		}
 		
+		// Make sure a configured processor with the same identifier does not yet exist for the mission
+		if (null != RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor.getIdentifier())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_CONFPROC_ID, MSG_ID_DUPLICATE_CONFPROC_ID,
+					configuredProcessor.getIdentifier()));
+		}
+
 		modelConfiguredProcessor.setProcessor(RepositoryService.getProcessorRepository()
 				.findByMissionCodeAndProcessorNameAndProcessorVersion(
 						configuredProcessor.getMissionCode(),
@@ -288,7 +296,7 @@ public class ConfiguredProcessorManager {
 	 * Update a configured processor by ID
 	 * 
 	 * @param id the ID of the configured processor to update
-	 * @param processorClass a Json object containing the modified (and unmodified) attributes
+	 * @param configuredProcessor a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing a Json object corresponding to the configured processor after modification (with ID and version for all 
 	 * 		   contained objects)
 	 * @throws EntityNotFoundException if no configured processor with the given ID exists
@@ -375,7 +383,7 @@ public class ConfiguredProcessorManager {
 	/**
 	 * Delete a configured processor by ID
 	 * 
-	 * @param the ID of the configured processor to delete
+	 * @param id the ID of the configured processor to delete
 	 * @throws EntityNotFoundException if the configured processor to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */

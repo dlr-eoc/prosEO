@@ -2,6 +2,7 @@ package de.dlr.proseo.ordermgr.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
@@ -59,6 +61,10 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_INVALID_PROCESSING_MODE = 1018;
 	private static final int MSG_ID_INVALID_CONFIGURED_PROCESSOR = 1019;
 	private static final int MSG_ID_INVALID_ORBIT_RANGE = 1020;
+	private static final int MSG_ID_ORDER_IDENTIFIER_MISSING = 1021;
+	private static final int MSG_ID_DUPLICATE_ORDER_IDENTIFIER = 1022;
+	private static final int MSG_ID_ORDER_TIME_INTERVAL_MISSING = 1023;
+	private static final int MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING = 1024;
 	
 
 	/* Message string constants */
@@ -71,13 +77,17 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_NOT_MODIFIED = "(I%d) Order with id %d not modified (no changes)";
 	private static final String MSG_ORDER_MODIFIED = "(I%d) Order with id %d modified";
 	private static final String MSG_ORDER_CREATED = "(I%d) Order with identifier %s created for mission %s";
-	private static final String MSG_DUPLICATE_ORDER_UUID = "(E%d) Duplicate order UUID %s";
+	private static final String MSG_DUPLICATE_ORDER_UUID = "(E%d) Order UUID %s already exists";
 	private static final String MSG_INVALID_REQUESTED_CLASS = "(E%d) Requested product class %s is not defined for mission %s";
 	private static final String MSG_INVALID_INPUT_CLASS = "(E%d) Input product class %s is not defined for mission %s";
 	private static final String MSG_INVALID_FILE_CLASS = "(E%d) Output file class %s is not defined for mission %s";
 	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s is not defined for mission %s";
 	private static final String MSG_INVALID_CONFIGURED_PROCESSOR = "(E%d) Configured processor %s not found";
 	private static final String MSG_INVALID_ORBIT_RANGE = "(E%d) No orbits defined between orbit number %d and %d for spacecraft %s";
+	private static final String MSG_ORDER_IDENTIFIER_MISSING = "(E%d) Order identifier not set";
+	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists";
+	private static final String MSG_ORDER_TIME_INTERVAL_MISSING = "(E%d) Time interval (orbit or time range) missing for order %s";
+	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -150,23 +160,63 @@ public class ProcessingOrderMgr {
 			}
 		}
 		
+		// Make sure order has a non-blank identifier, which is not yet in use
+		if (null == modelOrder.getIdentifier() || modelOrder.getIdentifier().isBlank()) {
+			throw new IllegalArgumentException(logError(MSG_ORDER_IDENTIFIER_MISSING, MSG_ID_ORDER_IDENTIFIER_MISSING));
+		}
+		if (null != RepositoryService.getOrderRepository().findByIdentifier(modelOrder.getIdentifier())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, modelOrder.getIdentifier()));
+		}
+		
+		// No matter what the given order state was, orders are always created in state INITIAL
+		modelOrder.setOrderState(OrderState.INITIAL);
+		
 		//Find the  mission for the mission code given in the rest Order
 		de.dlr.proseo.model.Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
 		modelOrder.setMission(mission);	
 		
-		modelOrder.getRequestedOrbits().clear();
-		for(RestOrbitQuery orbitQuery : order.getOrbits()) {
-			List<Orbit> orbit = RepositoryService.getOrbitRepository().
-									findBySpacecraftCodeAndOrbitNumberBetween(orbitQuery.getSpacecraftCode(), orbitQuery.getOrbitNumberFrom().intValue(), orbitQuery.getOrbitNumberTo().intValue());
-			modelOrder.getRequestedOrbits().addAll(orbit);
+		// Identify the order time interval, either by orbit range queries if given, or by start and stop time
+		if (order.getOrbits().isEmpty()) {
+			if (null == modelOrder.getStartTime() || null == modelOrder.getStopTime()) {
+				throw new IllegalArgumentException(logError(MSG_ORDER_TIME_INTERVAL_MISSING, MSG_ID_ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
+			}
+		} else {
+			// Find all requested orbit ranges
+			modelOrder.getRequestedOrbits().clear();
+			for (RestOrbitQuery orbitQuery : order.getOrbits()) {
+				List<Orbit> orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+						orbitQuery.getSpacecraftCode(),
+						orbitQuery.getOrbitNumberFrom().intValue(),
+						orbitQuery.getOrbitNumberTo().intValue());
+				if (orbit.isEmpty()) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_ORBIT_RANGE, MSG_ID_INVALID_ORBIT_RANGE,
+							orbitQuery.getOrbitNumberFrom(),
+							orbitQuery.getOrbitNumberTo(),
+							orbitQuery.getSpacecraftCode()));
+				}
+				modelOrder.getRequestedOrbits().addAll(orbit);
+			}
+			// Set start and stop time from requested orbits
+			Orbit minOrbit = Collections.min(modelOrder.getRequestedOrbits(),
+					(o1, o2) -> { return o1.getStartTime().compareTo(o2.getStartTime()); });
+			Orbit maxOrbit = Collections.max(modelOrder.getRequestedOrbits(),
+					(o1, o2) -> { return o1.getStopTime().compareTo(o2.getStopTime()); });
+			modelOrder.setStartTime(minOrbit.getStartTime());
+			modelOrder.setStopTime(maxOrbit.getStopTime());
 		}
 		
-		modelOrder.getRequestedProductClasses().clear();
-		for (String prodClass : order.getRequestedProductClasses()) {
-			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-				modelOrder.getRequestedProductClasses().add(product);
-			}
+		// Make sure requested product classes are set (mandatory)
+		if (order.getRequestedProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, modelOrder.getIdentifier()));
+		} else {
+			modelOrder.getRequestedProductClasses().clear();
+			for (String prodClass : order.getRequestedProductClasses()) {
+				for (ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
+					modelOrder.getRequestedProductClasses().add(product);
+				}
+			} 
 		}
+		
 		modelOrder.getInputProductClasses().clear();
 		for (String prodClass : order.getInputProductClasses()) {
 			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {

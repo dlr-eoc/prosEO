@@ -241,7 +241,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			throw e;
 		}
 		
-		// If command is given, execute it and terminate
+		// Processe command line arguments: Log in and optionally execute command and terminate
 		if (0 < args.length) {
 			// Handle command line parameters for login!
 			List<String> proseoCommand = checkArguments(args);
@@ -263,10 +263,13 @@ public class CommandLineInterface implements CommandLineRunner {
 				}
 			}
 			
-			// Run the command (for the logged in user, if any)
-			executeCommand(parser.parse(proseoCommand.get(0)));
-			if (logger.isTraceEnabled()) logger.trace("<<< run()");
-			return;
+			// If command is given, execute it and terminate
+			if (!proseoCommand.get(0).isBlank()) {
+				executeCommand(parser.parse(proseoCommand.get(0)));
+				if (logger.isTraceEnabled())
+					logger.trace("<<< run()");
+				return;
+			}
 		};
 		
 		// Check whether the command line prompt shall be started

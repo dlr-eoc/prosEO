@@ -26,59 +26,59 @@ rm *
 # separated by vertical bars
 # L0 products are in 45 min slices, starting with orbit 3000
 cat >PTM_L0_20191104090000_20191104094500_20191104120000.RAW <<EOF
-1234567|L0|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
+1234567|L0________|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104094500_20191104103000_20191104120100.RAW <<EOF
-1234567|L0|2019-11-04T09:45:00Z|2019-11-04T10:30:00Z|2019-11-04T12:01:00Z|1
+1234567|L0________|2019-11-04T09:45:00Z|2019-11-04T10:30:00Z|2019-11-04T12:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104103000_20191104111500_20191104120200.RAW <<EOF
-1234567|L0|2019-11-04T10:30:00Z|2019-11-04T11:15:00Z|2019-11-04T12:02:00Z|1
+1234567|L0________|2019-11-04T10:30:00Z|2019-11-04T11:15:00Z|2019-11-04T12:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104111500_20191104120000_20191104120300.RAW <<EOF
-1234567|L0|2019-11-04T11:15:00Z|2019-11-04T12:00:00Z|2019-11-04T12:03:00Z|1
+1234567|L0________|2019-11-04T11:15:00Z|2019-11-04T12:00:00Z|2019-11-04T12:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104120000_20191104124500_20191104150000.RAW <<EOF
-1234567|L0|2019-11-04T12:00:00Z|2019-11-04T12:45:00Z|2019-11-04T15:00:00Z|1
+1234567|L0________|2019-11-04T12:00:00Z|2019-11-04T12:45:00Z|2019-11-04T15:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104124500_20191104133000_20191104150100.RAW <<EOF
-1234567|L0|2019-11-04T12:45:00Z|2019-11-04T13:30:00Z|2019-11-04T15:01:00Z|1
+1234567|L0________|2019-11-04T12:45:00Z|2019-11-04T13:30:00Z|2019-11-04T15:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104133000_20191104141500_20191104150200.RAW <<EOF
-1234567|L0|2019-11-04T13:30:00Z|2019-11-04T14:15:00Z|2019-11-04T15:02:00Z|1
+1234567|L0________|2019-11-04T13:30:00Z|2019-11-04T14:15:00Z|2019-11-04T15:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104141500_20191104150000_20191104150300.RAW <<EOF
-1234567|L0|2019-11-04T14:15:00Z|2019-11-04T15:00:00Z|2019-11-04T15:03:00Z|1
+1234567|L0________|2019-11-04T14:15:00Z|2019-11-04T15:00:00Z|2019-11-04T15:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104150000_20191104154500_20191104180000.RAW <<EOF
-1234567|L0|2019-11-04T15:00:00Z|2019-11-04T15:45:00Z|2019-11-04T18:00:00Z|1
+1234567|L0________|2019-11-04T15:00:00Z|2019-11-04T15:45:00Z|2019-11-04T18:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104154500_20191104163000_20191104180100.RAW <<EOF
-1234567|L0|2019-11-04T15:45:00Z|2019-11-04T16:30:00Z|2019-11-04T18:01:00Z|1
+1234567|L0________|2019-11-04T15:45:00Z|2019-11-04T16:30:00Z|2019-11-04T18:01:00Z|1
 EOF
 
 cat >PTM_L0_20191104163000_20191104171500_20191104180200.RAW <<EOF
-1234567|L0|2019-11-04T16:30:00Z|2019-11-04T17:15:00Z|2019-11-04T18:02:00Z|1
+1234567|L0________|2019-11-04T16:30:00Z|2019-11-04T17:15:00Z|2019-11-04T18:02:00Z|1
 EOF
 
 cat >PTM_L0_20191104171500_20191104180000_20191104180300.RAW <<EOF
-1234567|L0|2019-11-04T17:15:00Z|2019-11-04T18:00:00Z|2019-11-04T18:03:00Z|1
+1234567|L0________|2019-11-04T17:15:00Z|2019-11-04T18:00:00Z|2019-11-04T18:03:00Z|1
 EOF
 
 cat >PTM_L0_20191104180000_20191104184500_20191104210000.RAW <<EOF
-1234567|L0|2019-11-04T18:00:00Z|2019-11-04T18:45:00Z|2019-11-04T21:00:00Z|1
+1234567|L0________|2019-11-04T18:00:00Z|2019-11-04T18:45:00Z|2019-11-04T21:00:00Z|1
 EOF
 
 cat >PTM_L0_20191104184500_20191104193000_20191104210100.RAW <<EOF
-1234567|L0|2019-11-04T18:45:00Z|2019-11-04T19:30:00Z|2019-11-04T21:01:00Z|1
+1234567|L0________|2019-11-04T18:45:00Z|2019-11-04T19:30:00Z|2019-11-04T21:01:00Z|1
 EOF
 
 cd -
@@ -100,7 +100,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
 [
     {
         "missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -122,7 +122,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -144,7 +144,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -166,7 +166,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -188,7 +188,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -210,7 +210,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -232,7 +232,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -254,7 +254,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -276,7 +276,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -298,7 +298,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -320,7 +320,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -342,7 +342,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -364,7 +364,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -386,7 +386,7 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
     },
     {
 		"missionCode": "PTM",
-        "productClass": "L0",
+        "productClass": "L0________",
         "fileClass": "OPER",
         "mode": "OPER",
         "productQuality": "TEST",
@@ -464,7 +464,7 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML2 0.0.1 OPER 2019-11-04" ],
+    "configuredProcessors": [ "PTML2_0.1.0_OPER_2020-03-25" ],
     "orbits": [
         { "spacecraftCode": "PTS", "orbitNumberFrom": 3000, "orbitNumberTo": 3002 }
     ],
@@ -512,7 +512,7 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
             "parameterValue": "77"
         }
     ],
-    "configuredProcessors": [ "PTML3 0.0.1 OPER 2019-11-04" ],
+    "configuredProcessors": [ "PTML3_0.1.0_OPER_2020-03-25" ],
     "orbits": [],
     "requestedProductClasses": [ "PTM_L3" ],
     "inputProductClasses": [ "PTM_L2A", "PTM_L2B" ],

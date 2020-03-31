@@ -128,7 +128,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * Update a configured processor by ID
 	 * 
 	 * @param id the ID of the configured processor to update
-	 * @param processorClass a Json object containing the modified (and unmodified) attributes
+	 * @param configuredProcessor a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configured processor after modification
 	 *             (with ID and version for all contained objects) or 
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configured processor with the given ID exists, or
@@ -153,7 +153,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	/**
 	 * Delete a configured processor by ID
 	 * 
-	 * @param the ID of the configured processor to delete
+	 * @param id the ID of the configured processor to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the configured processor did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful

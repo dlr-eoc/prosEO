@@ -148,6 +148,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_SUSPENDED = 2945;
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
 	public static final int MSG_ID_ORDER_RESET = 2947;
+	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
 
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
@@ -298,6 +299,7 @@ public class UIMessages {
 		MSG_NO_IDENTIFIER_GIVEN ("(E%d) No order identifier or database ID given", MSG_ID_NO_IDENTIFIER_GIVEN),
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
+		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
 		
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),

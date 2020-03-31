@@ -13,8 +13,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -80,8 +84,12 @@ public class OrderCommandRunner {
 	private static final String URI_PATH_ORDER_SUSPEND = "/orders/suspend";
 	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
 	private static final String URI_PATH_ORDER_RESET = "/orders/reset";
+	private static final String URI_PATH_JOBS = "/jobs";
 	
 	private static final String ORDERS = "orders";
+	private static final String JOBS = "jobs";
+	private static final String FORMAT_NONE = "NONE";
+	private static final String FORMAT_PLAIN = "PLAIN";
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
@@ -288,7 +296,7 @@ public class OrderCommandRunner {
 				}
 			} 
 		}
-		// For ORBIT orders get list of orbits (comma-separated, no ranges) TODO add ranges
+		// For ORBIT orders get list of orbits (comma-separated with ranges, e. g. "3000-3003,3005,3009-3011")
 		if (OrderSlicingType.ORBIT.toString().equals(restOrder.getSlicingType())) {
 			ORBITS:
 			while (restOrder.getOrbits().isEmpty()) {
@@ -305,20 +313,25 @@ public class OrderCommandRunner {
 					return;
 				}
 				String[] orbits = orbitList.split(",");
-				Long[] orbitNumbers = new Long[orbits.length];
 				for (int i = 0; i < orbits.length; ++i) {
+					Long orbitNumberFrom, orbitNumberTo;
 					try {
-						orbitNumbers[i] = Long.parseLong(orbits[i]);
+						if (orbits[i].contains("-")) {
+							String[] orbitBoundaries = orbits[i].split("-");
+							orbitNumberFrom = Long.parseLong(orbitBoundaries[0]);
+							orbitNumberTo = Long.parseLong(orbitBoundaries[1]);
+						} else {
+							orbitNumberFrom = Long.parseLong(orbits[i]);
+							orbitNumberTo = orbitNumberFrom;
+						}
 					} catch (NumberFormatException e) {
 						System.err.println(uiMsg(MSG_ID_INVALID_ORBIT_NUMBER, orbits[i]));
 						continue ORBITS;
 					}
-				}
-				for (Long orbitNumber: orbitNumbers) {
 					RestOrbitQuery query = new RestOrbitQuery();
 					query.setSpacecraftCode(spacecraft);
-					query.setOrbitNumberFrom(orbitNumber);
-					query.setOrbitNumberTo(orbitNumber);
+					query.setOrbitNumberFrom(orbitNumberFrom);
+					query.setOrbitNumberTo(orbitNumberTo);
 					restOrder.getOrbits().add(query);
 				}
 			}
@@ -612,10 +625,10 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || !updatedOrder.getInputProductClasses().isEmpty()) {
 			restOrder.setInputProductClasses(updatedOrder.getInputProductClasses());
 		}
-		if (isDeleteAttributes || null != updatedOrder.getOutputFileClass()) { // mandatory? TODO
+		if (null != updatedOrder.getOutputFileClass()) { // mandatory
 			restOrder.setOutputFileClass(updatedOrder.getOutputFileClass());
 		}
-		if (isDeleteAttributes || null != updatedOrder.getProcessingMode()) { // mandatory? TODO
+		if (null != updatedOrder.getProcessingMode()) { // mandatory
 			restOrder.setProcessingMode(updatedOrder.getProcessingMode());
 		}
 		
@@ -674,9 +687,9 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Delete order using Order Manager service */
+		/* Delete order using Production Planner service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getOrderManagerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
+			serviceConnection.deleteFromService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDERS + "/" + restOrder.getId(),
 						loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -774,7 +787,7 @@ public class OrderCommandRunner {
 			return;
 		
 		/* Check command options */
-		String orderOutputFormat = "NONE";
+		String orderOutputFormat = FORMAT_PLAIN;
 		for (ParsedOption option: planCommand.getOptions()) {
 			switch(option.getName()) {
 			case "format":
@@ -831,18 +844,73 @@ public class OrderCommandRunner {
 		logger.info(message);
 		System.out.println(message);
 		
-		if (!"NONE".equals(orderOutputFormat)) {
-			// TODO Read jobs and job steps from Production Planner (? Order Manager?)
-//			try {
-//				CLIUtil.printObject(System.out, restOrder, orderOutputFormat);
-//			} catch (IllegalArgumentException e) {
-//				System.err.println(e.getMessage());
-//				return;
-//			} catch (IOException e) {
-//				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-//				return;
-//			} 
+		if (FORMAT_NONE.equals(orderOutputFormat)) {
+			return;
+		} 
+		
+		// Read jobs and job steps from Production Planner
+		List<?> jobList = null;
+		try {
+			String requestUrl = URI_PATH_JOBS + "/?orderid=" + restOrder.getId();
+			jobList = serviceConnection.getFromService(serviceConfig.getProductionPlannerUrl(), requestUrl,
+					List.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_ORDER_JOBS_NOT_FOUND, restOrder.getIdentifier());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
 		}
+		
+		// Return the job list
+		if (FORMAT_PLAIN.equals(orderOutputFormat)) {
+			int i = 1;
+			for (Object listObject: jobList) {
+				if (listObject instanceof Map) {
+					Map<?, ?> jobMap = (Map<?, ?>) listObject;
+					System.out.println(String.format("(%5d) %s-%s %s", i, jobMap.get("orderIdentifier"),
+							jobMap.get("id").toString(),
+							(null == jobMap.get("orbit") ? "" : "(" + jobMap.get("orbit").toString() + ")")));
+					if (jobMap.get("jobSteps") instanceof Collection) {
+						for (Object stepListObject: (Collection<?>) jobMap.get("jobSteps")) {
+							if (stepListObject instanceof Map) {
+								Map<?, ?> jobStepMap = (Map<?, ?>) stepListObject;
+								System.out.println(String.format("%7s ... %s -> %s", " ", 
+										(null == jobStepMap.get("name") ? jobStepMap.get("id").toString() : jobStepMap.get("name")),
+										jobStepMap.get("outputProductClass")));
+							}
+						}
+					}
+					++i;
+				}
+			}
+		} else {
+			try {
+				CLIUtil.printObject(System.out, jobList, orderOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} 
 	}
 	
 	/**
@@ -914,7 +982,8 @@ public class OrderCommandRunner {
 			return;
 		
 		/* Check whether (database) order is in state "RUNNING", otherwise suspending not allowed */
-		if (!OrderState.RUNNING.toString().equals(restOrder.getOrderState())) {
+		if (!OrderState.RELEASED.toString().equals(restOrder.getOrderState())
+				&& !OrderState.RUNNING.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
 					CMD_CANCEL, restOrder.getOrderState(), OrderState.RUNNING.toString()));
 			return;

@@ -25,8 +25,6 @@ import javax.ws.rs.ServerErrorException;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,6 +104,8 @@ public class ProductClassManager {
 	private static final int MSG_ID_PROCESSOR_ADDED = 2143;
 	private static final int MSG_ID_PROCESSOR_NOT_FOUND = 2144;
 	private static final int MSG_ID_PROCESSOR_REMOVED = 2145;
+	private static final int MSG_ID_PRODUCT_CLASS_HAS_PROCESSOR = 2146;
+	private static final int MSG_ID_PRODUCT_CLASS_HAS_PRODUCTS = 2147;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -142,6 +142,8 @@ public class ProductClassManager {
 	private static final String MSG_PROCESSOR_NAME_MISSING = "(E%d) Name of configured processor not set";
 	private static final String MSG_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found in selection rule with ID %d for product class with ID %d";
 	private static final String MSG_DUPLICATE_RULE = "(E%d) Product class %s already contains selection rule for source class %s, mode %s and configured processor %s";
+	private static final String MSG_PRODUCT_CLASS_HAS_PROCESSOR = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it is referenced by a processor class";
+	private static final String MSG_PRODUCT_CLASS_HAS_PRODUCTS = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it has products";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -344,16 +346,15 @@ public class ProductClassManager {
 		}
 		modelProductClass.setMission(mission);
 		
-		// Try to save the product class, make sure product class does not yet exist
-		try {
-			modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
-		} catch (DataIntegrityViolationException e) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS, productClass.getProductType(), productClass.getMissionCode()));
-		} catch (DataAccessException e) {
-			throw new ServerErrorException(logError(MSG_PRODUCT_CLASS_SAVE_FAILED, MSG_ID_PRODUCT_CLASS_SAVE_FAILED, 
-							productClass.getProductType(), productClass.getMissionCode(), e.getClass().toString() + ": " + e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR.value());
+		// Make sure a configured processor with the same identifier does not yet exist for the mission
+		if (null != RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+				productClass.getMissionCode(), productClass.getProductType())) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS,
+					productClass.getProductType(), productClass.getMissionCode()));
 		}
+
+		// Create a persistent product class for reference in other objects
+		modelProductClass = RepositoryService.getProductClassRepository().save(modelProductClass);
 		
 		// Add further attributes to product class
 		if (null != productClass.getEnclosingClass()) {
@@ -629,7 +630,7 @@ public class ProductClassManager {
      * @param id the database ID of the product class to delete
      * @throws EntityNotFoundException if the processor to delete does not exist in the database
      * @throws RuntimeException if the deletion was not performed as expected
-     * @throws IllegalArgumentException if the product class ID was not given
+     * @throws IllegalArgumentException if the product class ID was not given, or if dependent objects exist
      */
 	public void deleteProductclassById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
@@ -642,6 +643,25 @@ public class ProductClassManager {
 		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
 		if (modelProductClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id));
+		}
+		
+		// Test whether processor classes reference this product class
+		if (null != modelProductClass.get().getProcessorClass()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_HAS_PROCESSOR, MSG_ID_PRODUCT_CLASS_HAS_PROCESSOR,
+					modelProductClass.get().getMission().getCode(),
+					modelProductClass.get().getProductType()));
+		}
+		// Test whether there are products for this class
+		String jpqlQuery = "select p from Product p where productClass.mission.code = :missionCode"
+				+ " and productClass.productType = :productType";
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", modelProductClass.get().getMission().getCode());
+		query.setParameter("productType", modelProductClass.get().getProductType());
+		
+		if (!query.getResultList().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_HAS_PRODUCTS, MSG_ID_PRODUCT_CLASS_HAS_PRODUCTS,
+					modelProductClass.get().getMission().getCode(),
+					modelProductClass.get().getProductType()));
 		}
 		
 		// Delete the processor class

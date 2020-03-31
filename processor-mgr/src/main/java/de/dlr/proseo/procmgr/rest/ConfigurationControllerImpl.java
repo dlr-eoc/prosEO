@@ -121,7 +121,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * Update a configuration by ID
 	 * 
 	 * @param id the ID of the configuration to update
-	 * @param processorClass a Json object containing the modified (and unmodified) attributes
+	 * @param configuration a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification
 	 *             (with ID and version for all contained objects) or 
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists, or
@@ -146,10 +146,11 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	/**
 	 * Delete a configuration by ID
 	 * 
-	 * @param the ID of the configuration to delete
+	 * @param id the ID of the configuration to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the configuration did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given, or if dependent objects exist
 	 */
 	@Override
 	public ResponseEntity<?> deleteConfigurationById(Long id) {
@@ -160,6 +161,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
