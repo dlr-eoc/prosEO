@@ -22,7 +22,6 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.usermgr.dao.GroupMemberRepository;
@@ -64,10 +63,11 @@ public class GroupManager {
 	private static final int MSG_ID_GROUP_EMPTY = 2788;
 	private static final int MSG_ID_GROUP_MEMBERS_RETRIEVED = 2789;
 	private static final int MSG_ID_GROUP_MEMBER_ADDED = 2790;
-	private static final int MSG_ID_MEMBER_REMOVAL_UNSUCCESSFUL = 2791;
+//	private static final int MSG_ID_FREE = 2791;
 	private static final int MSG_ID_GROUP_MEMBER_REMOVED = 2792;
 	private static final int MSG_ID_USERNAME_MISSING = 2756;
 	private static final int MSG_ID_USERNAME_NOT_FOUND = 2757;
+	private static final int MSG_ID_DUPLICATE_GROUP = 2758;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -84,7 +84,7 @@ public class GroupManager {
 	private static final String MSG_GROUP_EMPTY = "(E%d) Group with ID %d has no members";
 	private static final String MSG_USERNAME_MISSING = "(E%d) User name not set";
 	private static final String MSG_USERNAME_NOT_FOUND = "(E%d) User %s not found";
-	private static final String MSG_MEMBER_REMOVAL_UNSUCCESSFUL = "(E%d) Removal of member %s unsuccessful for user group with ID %d";
+	private static final String MSG_DUPLICATE_GROUP = "(E%d) Duplicate user group %s";
 	
 	private static final String MSG_GROUP_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_GROUP_RETRIEVED = "(I%d) User group %s retrieved";
@@ -216,6 +216,11 @@ public class GroupManager {
 			throw new IllegalArgumentException(logError(MSG_GROUPNAME_MISSING, MSG_ID_GROUPNAME_MISSING));
 		}
 		
+		// Make sure the group does not exist already
+		if (null != groupRepository.findByGroupName(restGroup.getGroupname())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_GROUP, MSG_ID_DUPLICATE_GROUP, restGroup.getGroupname()));
+		}
+		
 		// Create user group
 		Group modelGroup = groupRepository.save(toModelGroup(restGroup));
 		
@@ -230,7 +235,7 @@ public class GroupManager {
 	 * @param mission the mission code
 	 * @param groupName the group name (optional)
 	 * @return a list of Json objects representing the user groups authorized for the given mission
-	 * @throws NoResultException
+	 * @throws NoResultException if no groups matching the search criteria can be found
 	 */
 	public List<RestGroup> getGroups(String mission, String groupName) throws NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);

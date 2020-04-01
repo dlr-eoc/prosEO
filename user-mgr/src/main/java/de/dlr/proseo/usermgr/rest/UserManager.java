@@ -5,10 +5,9 @@
  */
 package de.dlr.proseo.usermgr.rest;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,17 +21,12 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
-import de.dlr.proseo.usermgr.model.GroupAuthority;
-import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -60,6 +54,7 @@ public class UserManager {
 	private static final int MSG_ID_USER_DELETED = 2762;
 	private static final int MSG_ID_DELETE_FAILURE = 2764;
 	private static final int MSG_ID_MISSION_MISSING = 2765;
+	private static final int MSG_ID_DUPLICATE_USER = 2766;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_FOUND = "(E%d) No user found for mission %s";
@@ -70,12 +65,17 @@ public class UserManager {
 	private static final String MSG_DELETE_FAILURE = "(E%d) Deletion failed for user %s (cause: %s)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for user %s";
 	private static final String MSG_MISSION_MISSING = "(E%d) Mission not set";
+	private static final String MSG_DUPLICATE_USER = "(E%d) Duplicate user %s";
+	
 	private static final String MSG_USER_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_USER_RETRIEVED = "(I%d) User %s retrieved";
 	private static final String MSG_USER_CREATED = "(I%d) User %s created";
 	private static final String MSG_USER_MODIFIED = "(I%d) User %s modified";
 	private static final String MSG_USER_NOT_MODIFIED = "(I%d) User %s not modified (no changes)";
 	private static final String MSG_USER_DELETED = "(I%d) User %s deleted";
+
+	/* Other string constants */
+	private static final String ROLE_ROOT = "ROLE_ROOT";
 
 	/** Repository for User objects */
 	@Autowired
@@ -202,6 +202,11 @@ public class UserManager {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
+		// Make sure user does not exist already
+		if (null != userRepository.findByUsername(restUser.getUsername())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_USER, MSG_ID_DUPLICATE_USER, restUser.getUsername()));
+		}
+		
 		// Create user
 		User modelUser = userRepository.save(toModelUser(restUser));
 		
@@ -220,21 +225,38 @@ public class UserManager {
 	public List<RestUser> getUsers(String mission) throws NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getUsers({})", mission);
 		
+		// Check whether principal has ROOT role
+		boolean isRootUser = false;
+		Collection<? extends GrantedAuthority> authorities = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+		for (GrantedAuthority authority: authorities) {
+			if (logger.isTraceEnabled()) logger.trace("... checking granted authority " + authority.getAuthority());
+			if (ROLE_ROOT.equals(authority.getAuthority())) {
+				isRootUser = true;
+			}
+		}
+		
 		// Check parameter
-		if (null == mission || "".equals(mission)) {
+		if (!isRootUser && (null == mission || mission.isBlank())) {
 			throw new IllegalArgumentException(logError(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING));
 		}
 		
-		// Collect all users connected to the ACL entries of the mission (either directly or indirectly)
-		List<RestUser> result = new ArrayList<>();
-		for (User modelUser: userRepository.findByMissionCode(mission)) {
-			result.add(toRestUser(modelUser));
+		// Collect all users whose user name starts with the mission code (or all users, if a root user starts the request without a mission)
+		List<User> userList = null;
+		if (isRootUser && (null == mission || mission.isBlank())) {
+			userList = userRepository.findAll();
+		} else {
+			userList = userRepository.findByMissionCode(mission);
 		}
 
-		if (result.isEmpty()) {
+		if (userList.isEmpty()) {
 			throw new NoResultException(logError(MSG_USER_NOT_FOUND, MSG_ID_USER_NOT_FOUND, mission));
 		}
 		
+		List<RestUser> result = new ArrayList<>();
+		for (User modelUser: userList) {
+			result.add(toRestUser(modelUser));
+		}
+
 		logInfo(MSG_USER_LIST_RETRIEVED, MSG_ID_USER_LIST_RETRIEVED, mission);
 		
 		return result;

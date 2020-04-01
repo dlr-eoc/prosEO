@@ -62,6 +62,10 @@ commands:
     - name: help
       description: Show the prosEO Command Line Interface help information (this page; for subcommand help, type "<subcommand> --help")
       
+    # Clear the terminal screen
+    - name: clear
+      description: Clear the terminal screen (but not the scrollback buffer)
+      
     # Authentication:
     - name: login
       description: Log in to a mission in prosEO. All valid commands except for "mission show" require prior login.

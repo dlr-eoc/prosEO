@@ -6,13 +6,11 @@
 package de.dlr.proseo.usermgr.rest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +19,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Spring MVC controller for the prosEO User Manager; implements the login service.
@@ -33,13 +29,11 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class LoginControllerImpl implements LoginController {
 
 	/* Message ID constants */
-	private static final int MSG_ID_MISSION_NOT_FOUND = 2700;
 	private static final int MSG_ID_USER_NOT_AUTHORIZED = 2701;
 	private static final int MSG_ID_MISSION_MISSING = 2702;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_AUTHORIZED = "(E%d) User %s has no authorities for mission %s";
-	private static final String MSG_MISSION_NOT_FOUND = "(E%d) Access control list for mission %s not found";
 	private static final String MSG_MISSION_MISSING = "(E%d) No mission given for login";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-user-mgr ";

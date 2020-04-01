@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.backend;
 
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_OR_FACILITY_NOT_FOUND;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -82,6 +84,8 @@ public class UIMessages {
 	public static final int MSG_ID_PASSWORD_MISSING = 2924;
 	public static final int MSG_ID_UNCAUGHT_EXCEPTION = 2925;
 	public static final int MSG_ID_USER_INTERRUPT = 2926;
+	public static final int MSG_ID_END_OF_FILE = 2927;
+	public static final int MSG_ID_CLI_TERMINATED = 2928;
 	
 	// Mission CLI
 	public static final int MSG_ID_NO_MISSIONS_FOUND = 2840;
@@ -149,6 +153,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
 	public static final int MSG_ID_ORDER_RESET = 2947;
 	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
+	public static final int MSG_ID_ORDER_OR_FACILITY_NOT_FOUND = 2949;
 
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
@@ -300,6 +305,7 @@ public class UIMessages {
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
 		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
+		MSG_ID_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_NOT_FOUND),
 		
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
@@ -425,6 +431,10 @@ public class UIMessages {
 		
 		// CLI Parser
 		MSG_SYNTAX_LOADED ("(I%d) Command line syntax loaded from syntax file %s", MSG_ID_SYNTAX_LOADED),
+
+		// CLI Main
+		MSG_END_OF_FILE("(I%d) End of input reached, prosEO Command Line Interface terminates", MSG_ID_END_OF_FILE),
+		MSG_CLI_TERMINATED("(I%d) 'exit' command received, prosEO Command Line Interface terminates", MSG_ID_CLI_TERMINATED),
 		
 		// Mission CLI
 		MSG_MISSION_CREATED ("(I%d) Mission %s created (database ID %d)", MSG_ID_MISSION_CREATED),

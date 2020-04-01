@@ -279,7 +279,7 @@ public class CLISyntax {
 	    
 	    // Return parsed syntax object
 	    logger.info(uiMsg(MSG_ID_SYNTAX_LOADED, syntaxFileName));
-		if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
+		//if (logger.isDebugEnabled()) logger.debug("Syntax definition: " + inputSyntax);
 		
 		return inputSyntax;
 	}
