@@ -8,6 +8,9 @@ package de.dlr.proseo.ui.cli.parser;
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.StreamTokenizer;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +65,34 @@ public class CLIParser {
 	 */
 	public CLISyntax getSyntax() {
 		return syntax;
+	}
+
+	/**
+	 * Create and initialize a stream tokenizer for CLI commands
+	 * 
+	 * @param commandString the string the tokenizer shall work on
+	 * @return a tokenizer initialized to the CLI syntax
+	 */
+	private StreamTokenizer initTokenizer(String commandString) {
+		if (logger.isTraceEnabled()) logger.trace(">>> initTokenizer({})", commandString);
+		
+		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(commandString));
+		tokenizer.resetSyntax();
+		
+		// Make everything except white space, single and double quotes a word character
+		tokenizer.wordChars(0x21, 0x21); // '!'
+		tokenizer.wordChars(0x23, 0x26); // '#', '$', '%', '&'
+		tokenizer.wordChars(0x28, 0x7e); // all digits and characters, remaining special characters
+		tokenizer.wordChars(0xa0, 0xff); // all characters with diacritical marks, more special characters
+		
+		// Make everything up to and including ' ' (0x20) white space
+		tokenizer.whitespaceChars(0x00, 0x20);
+		
+		// Make single and double quotes string quote characters
+		tokenizer.quoteChar('\'');
+		tokenizer.quoteChar('"');
+		
+		return tokenizer;
 	}
 
 	/**
@@ -263,15 +294,16 @@ public class CLIParser {
 	 * @param commandString the command string to parse
 	 * @return a command structure for execution
 	 * @throws ParseException if an error is detected in the command syntax
+	 * @throws IOException if an I/O error occurs during input tokenizing
 	 */
-	public ParsedCommand parse(String commandString) throws ParseException {
+	public ParsedCommand parse(String commandString) throws ParseException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parse({})", commandString);
 
 		ParsedCommand command = new ParsedCommand();
 		command.setName(TOP_LEVEL_COMMAND_NAME);
 		
 		// Split command string into separate tokens
-		String[] commandTokens = commandString.split(" ");
+		StreamTokenizer tokenizer = initTokenizer(commandString);
 		
 		// Analyze command structure
 		ParsedCommand currentCommand = command;
@@ -280,7 +312,9 @@ public class CLIParser {
 		boolean parameterFound = false;
 		int parameterPosition = 0;
 		
-		for (String token: commandTokens) {
+		while (StreamTokenizer.TT_EOF != tokenizer.nextToken()) {
+			if (logger.isTraceEnabled()) logger.trace("... found token " + tokenizer.toString());
+			String token = tokenizer.sval;
 			if (token.isBlank()) {
 				// Ignore multiple white space resulting in empty or blank tokens
 				continue;

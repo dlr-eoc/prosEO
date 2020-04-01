@@ -19,6 +19,8 @@ description: |
   Attribute values may be comma-separated string lists, but they cannot represent attributes of more complex types. To set
   complex object attributes use the "--file" option and pass a Json, XML or Yaml file.
   
+  Options and parameters containing blanks and/or quotes must be quoted, e. g. "-ovalue with blanks" or 'My "quoted" parameter'.
+  
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DDTHH:MM:SS").
   
   So the general syntax is:
