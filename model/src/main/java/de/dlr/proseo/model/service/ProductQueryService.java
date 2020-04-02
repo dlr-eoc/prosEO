@@ -149,6 +149,8 @@ public class ProductQueryService {
 					} else {
 						if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
 					}
+				} else {
+					logger.info(product.toString() + ": product files are empty");
 				}
 			}
 		}
