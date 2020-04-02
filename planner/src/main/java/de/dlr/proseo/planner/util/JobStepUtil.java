@@ -201,14 +201,12 @@ public class JobStepUtil {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
 				};
+				// fall through intended
 			case COMPLETED:
 			case FAILED:
-				if (js.getOutputProduct() != null) {
-					js.getOutputProduct().setJobStep(null);
-				}
 				for (ProductQuery pq : js.getInputProductQueries()) {
-					for (Product p : pq.getSatisfyingProducts()) {
-						p.getSatisfiedProductQueries().clear();
+					for (Product p : pq.getSatisfyingProducts()) {						
+						p.getSatisfiedProductQueries().remove(pq);
 					}
 					pq.getSatisfyingProducts().clear();
 					RepositoryService.getProductQueryRepository().delete(pq);
