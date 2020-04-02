@@ -185,7 +185,8 @@ public class CLIParser {
 			}
 		}
 		if (null == currentSyntaxOption) {
-			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION, optionString, syntaxCommand.getName()), 0);
+			throw new ParseException(uiMsg(MSG_ID_ILLEGAL_OPTION, optionString, 
+					(null == syntaxCommand ? TOP_LEVEL_COMMAND_NAME : syntaxCommand.getName())), 0);
 		}
 
 		// Check the type conformity of the option value

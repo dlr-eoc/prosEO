@@ -80,6 +80,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	private ProductclassCommandRunner productclassCommandRunner;
 	@Autowired
 	private UserCommandRunner userCommandRunner;
+	@Autowired
+	private FacilityCommandRunner facilityCommandRunner;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
@@ -205,6 +207,9 @@ public class CommandLineInterface implements CommandLineRunner {
 			case UserCommandRunner.CMD_GROUP:
 				userCommandRunner.executeCommand(command);
 				break;
+			case FacilityCommandRunner.CMD_FACILITY:
+				facilityCommandRunner.executeCommand(command);
+				break;
 			default:
 				String message = uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName());
 				System.err.println(message);
@@ -236,7 +241,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			throw e;
 		}
 		
-		// If command is given, execute it and terminate
+		// Processe command line arguments: Log in and optionally execute command and terminate
 		if (0 < args.length) {
 			// Handle command line parameters for login!
 			List<String> proseoCommand = checkArguments(args);
@@ -258,10 +263,13 @@ public class CommandLineInterface implements CommandLineRunner {
 				}
 			}
 			
-			// Run the command (for the logged in user, if any)
-			executeCommand(parser.parse(proseoCommand.get(0)));
-			if (logger.isTraceEnabled()) logger.trace("<<< run()");
-			return;
+			// If command is given, execute it and terminate
+			if (!proseoCommand.get(0).isBlank()) {
+				executeCommand(parser.parse(proseoCommand.get(0)));
+				if (logger.isTraceEnabled())
+					logger.trace("<<< run()");
+				return;
+			}
 		};
 		
 		// Check whether the command line prompt shall be started

@@ -57,6 +57,8 @@ public class ProcessorManager {
 	private static final int MSG_ID_PROCESSOR_DELETED = 2262;
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2263;
 	private static final int MSG_ID_DELETE_FAILURE = 2264;
+	private static final int MSG_ID_DUPLICATE_PROCESSOR = 2265;
+	private static final int MSG_ID_PROCESSOR_HAS_CONFIG = 2266;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -69,6 +71,8 @@ public class ProcessorManager {
 	private static final String MSG_DELETE_FAILURE = "(E%d) Processor deletion failed for ID %d (cause: %s)";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Processor deletion unsuccessful for ID %d";
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
+	private static final String MSG_DUPLICATE_PROCESSOR = "(E%d) Duplicate processor for mission %s, processor name %s and processor version %s";
+	private static final String MSG_PROCESSOR_HAS_CONFIG = "(E%d) Processor for mission %s with processor name %s and processor version %s cannot be deleted, because it has configured processors";
 
 	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
 	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
@@ -139,6 +143,15 @@ public class ProcessorManager {
 		}
 		
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);
+		
+		// Make sure a processor with the same processor class name and processor version does not yet exist
+		if (null != RepositoryService.getProcessorRepository().findByMissionCodeAndProcessorNameAndProcessorVersion(
+				processor.getMissionCode(), processor.getProcessorName(), processor.getProcessorVersion())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_PROCESSOR, MSG_ID_DUPLICATE_PROCESSOR,
+					processor.getMissionCode(),
+					processor.getProcessorName(),
+					processor.getProcessorVersion()));
+		}
 		
 		modelProcessor.setProcessorClass(RepositoryService.getProcessorClassRepository()
 				.findByMissionCodeAndProcessorName(processor.getMissionCode(), processor.getProcessorName()));
@@ -362,7 +375,8 @@ public class ProcessorManager {
 		// Save processor only if anything was actually changed
 		if (processorChanged)	{
 			modelProcessor.incrementVersion();
-			modelProcessor.setTasks(newTasks);;
+			modelProcessor.getTasks().clear();
+			modelProcessor.getTasks().addAll(newTasks);
 			modelProcessor = RepositoryService.getProcessorRepository().save(modelProcessor);
 			logInfo(MSG_PROCESSOR_MODIFIED, MSG_ID_PROCESSOR_MODIFIED, id);
 		} else {
@@ -375,11 +389,12 @@ public class ProcessorManager {
 	/**
 	 * Delete a processor by ID
 	 * 
-	 * @param the ID of the processor to delete
+	 * @param id the ID of the processor to delete
 	 * @throws EntityNotFoundException if the processor to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
+	 * @throws IllegalArgumentException if the ID of the processor to delete was not given, or if dependent objects exist
 	 */
-	public void deleteProcessorById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteProcessorById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -389,8 +404,22 @@ public class ProcessorManager {
 		// Test whether the product id is valid
 		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		if (modelProcessor.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND));
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND,
+					modelProcessor.get().getProcessorClass().getMission().getCode(),
+					modelProcessor.get().getProcessorClass().getProcessorName(),
+					modelProcessor.get().getProcessorVersion()));
 		}
+		
+		// Check whether there are configured processors for this processor
+		if (!modelProcessor.get().getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_HAS_CONFIG, MSG_ID_PROCESSOR_HAS_CONFIG,
+					modelProcessor.get().getProcessorClass().getMission().getCode(),
+					modelProcessor.get().getProcessorClass().getProcessorName(),
+					modelProcessor.get().getProcessorVersion()));
+		}
+		
+		// Remove the processor from the processor class
+		modelProcessor.get().getProcessorClass().getProcessors().remove(modelProcessor.get());
 		
 		// Delete the processor
 		try {

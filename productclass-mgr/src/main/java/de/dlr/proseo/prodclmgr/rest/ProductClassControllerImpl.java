@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.prodclmgr.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
@@ -155,7 +153,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product class did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
-	 *         HTTP status "BAD_REQUEST", if the product class ID was not given
+	 *         HTTP status "BAD_REQUEST", if the product class ID was not given, or if dependent objects exist
      */
 	@Override
 	public ResponseEntity<?> deleteProductclassById(Long id) {

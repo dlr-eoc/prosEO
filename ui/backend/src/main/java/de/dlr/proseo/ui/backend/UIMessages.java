@@ -148,6 +148,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_SUSPENDED = 2945;
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
 	public static final int MSG_ID_ORDER_RESET = 2947;
+	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
 
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
@@ -233,6 +234,18 @@ public class UIMessages {
 	public static final int MSG_ID_USERS_REMOVED = 2728;
 	public static final int MSG_ID_NO_USERS_FOUND_IN_GROUP = 2729;
 
+	// Facility CLI
+	public static final int MSG_ID_NO_FACILITIES_FOUND = 2740;
+	public static final int MSG_ID_FACILITY_NOT_FOUND = 2741;
+	public static final int MSG_ID_FACILITY_NOT_FOUND_BY_ID = 2742;
+	public static final int MSG_ID_FACILITY_DATA_INVALID = 2743;
+	public static final int MSG_ID_FACILITY_UPDATED = 2744;
+	public static final int MSG_ID_FACILITY_NOT_READABLE = 2745;
+	public static final int MSG_ID_FACILITY_CREATED = 2746;
+	public static final int MSG_ID_FACILITY_DELETED = 2747;
+	public static final int MSG_ID_NO_FACILITY_NAME_GIVEN = 2748;
+	public static final int MSG_ID_FACILITY_DELETE_FAILED = 2749;
+	
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
 	
@@ -286,6 +299,7 @@ public class UIMessages {
 		MSG_NO_IDENTIFIER_GIVEN ("(E%d) No order identifier or database ID given", MSG_ID_NO_IDENTIFIER_GIVEN),
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
+		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
 		
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
@@ -357,6 +371,15 @@ public class UIMessages {
 		MSG_GROUP_DELETE_FAILED ("(E%d) Deletion of user group %s failed (cause: %s)", MSG_ID_GROUP_DELETE_FAILED),
 		MSG_NO_USERS_GIVEN ("(E%d) No users given in command", MSG_ID_NO_USERS_GIVEN),
 		MSG_NO_USERS_FOUND_IN_GROUP ("(E%d) No user accounts found for user group %s", MSG_ID_NO_USERS_FOUND_IN_GROUP),
+
+		// Facility CLI
+		MSG_NO_FACILITIES_FOUND ("(E%d) No processing facilities found", MSG_ID_NO_FACILITIES_FOUND),
+		MSG_FACILITY_NOT_FOUND ("(E%d) Processing facility %s not found", MSG_ID_FACILITY_NOT_FOUND),
+		MSG_FACILITY_NOT_FOUND_BY_ID ("(E%d) Processing facility with database ID %d not found", MSG_ID_FACILITY_NOT_FOUND_BY_ID),
+		MSG_FACILITY_NOT_READABLE ("(E%d) Processing facility %s not readable (cause: %s)", MSG_ID_FACILITY_NOT_READABLE),
+		MSG_FACILITY_DATA_INVALID ("(E%d) Processing facility data invalid (cause: %s)", MSG_ID_FACILITY_DATA_INVALID),
+		MSG_NO_FACILITY_NAME_GIVEN ("(E%d) No processing facility name given", MSG_ID_NO_FACILITY_NAME_GIVEN),
+		MSG_FACILITY_DELETE_FAILED ("(E%d) Deletion of processing facility %s failed (cause: %s)", MSG_ID_FACILITY_DELETE_FAILED),
 		
 		// CLIUtil
 		MSG_INVALID_FILE_TYPE ("(E%d) Invalid file format %s", MSG_ID_INVALID_FILE_TYPE),
@@ -452,6 +475,11 @@ public class UIMessages {
 		MSG_GROUP_AUTHORITIES_REVOKED ("(I%d) Authorities %s revoked from group %s", MSG_ID_GROUP_AUTHORITIES_REVOKED),
 		MSG_USERS_ADDED ("(I%d) Users %s added to group %s", MSG_ID_USERS_ADDED),
 		MSG_USERS_REMOVED ("(I%d) Users %s removed from group %s", MSG_ID_USERS_REMOVED),
+		
+		// Facility CLI
+		MSG_FACILITY_CREATED ("(I%d) Processing facility %s created (database ID %d)", MSG_ID_FACILITY_CREATED),
+		MSG_FACILITY_UPDATED ("(I%d) Processing facility %s updated (database ID %d)", MSG_ID_FACILITY_UPDATED),
+		MSG_FACILITY_DELETED ("(I%d) Processing facility %s deleted (database ID %d)", MSG_ID_FACILITY_DELETED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),

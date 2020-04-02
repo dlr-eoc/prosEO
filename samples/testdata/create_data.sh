@@ -89,10 +89,11 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 
 # Upload test data to S3 storage on test cluster
 # Requires "aws" (aws-cli) as a local S3 client, correctly configured with access key id and secret
-aws s3 sync $TEST_DATA_DIR s3://proseo-s5p-main/integration-test/testdata/ --endpoint-url https://obs.eu-de.otc.t-systems.com
+# aws s3 sync $TEST_DATA_DIR s3://<bucket> --endpoint-url https://<provider-url>
 
 # Create a processing facility
-echo "facility create telekom-otc description=Telekom_OTC defaultStorageType=S3 processingEngineUrl=https://proseo-k8s-gate.de/ storageManagerUrl=https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
+# echo "facility create <facility-name> description=<facility-description> defaultStorageType=S3 processingEngineUrl=https://<facility-url>/ storageManagerUrl=https://<facility-url>/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
+echo "facility create localhost description=Local_Facility defaultStorageType=POSIX processingEngineUrl=https://localhost/ storageManagerUrl=https://localhost/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
 
 # Ingest test data into prosEO
 echo "ingest --file=$TEST_DATA_DIR/ingest_products.json telekom-otc" >>$CLI_SCRIPT

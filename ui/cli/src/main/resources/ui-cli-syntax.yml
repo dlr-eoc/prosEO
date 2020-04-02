@@ -270,6 +270,7 @@ commands:
         - name: create
           description: Create a new processing order (in status Initial); if the input is not from a file,
                        the user will be prompted for mandatory attributes not given on the command line
+                       (when prompted for orbits, orbit ranges may be given, e. g. "3000-3003,3005,3009-3011")
           options:
             - name: file
               type: string
@@ -324,7 +325,9 @@ commands:
           options:
             - name: format
               type: string
-              description: The output format for the resulting job list (one of { NONE, JSON, XML, YAML }; default value NONE)
+              description: The output format for the resulting job list (one of { NONE, PLAIN, JSON, XML, YAML }; default value PLAIN),
+                           NONE suppresses result output, PLAIN format gives job and job step identifiers only, the other
+                           formats give full output of all planned jobs and job steps (may be very verbose!)
           parameters:
             - name: orderId
               type: string
@@ -1178,5 +1181,75 @@ commands:
               repeatable: true
               description: The name of a user account to add (without mission prefix; multiple user names allowed)
 
-# TODO Add processing facilities!
+    # Commands for the Facility Manager
+    - name: facility
+      description: Commands for managing processing facilities
+      subcommands:
+        - name: show
+          description: Show all processing facilities or a specific one
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give facility details, otherwise show facility names only (setting facilityName parameter
+                           implies verbose)
+              shortForm: v
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the processing facility to show
+        - name: create
+          description: Create a new processing facility; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processing facility definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the facility to create (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A facility attribute to set in the form "<attribute name>=<attribute value>"
+        - name: update
+          description: Update a processing facility; 
+                       the user will be prompted for mandatory attributes not given on the command line
+          options:
+            - name: file
+              type: string
+              description: Path to file to read the processing facility definition from
+              shortForm: f
+            - name: format
+              type: string
+              description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete attributes not given in the processing facility definition file and/or the command parameters
+          parameters:
+            - name: facilityName
+              type: string
+              optional: true
+              description: The name of the facility to update (mandatory if not read from file)
+            - name: attribute
+              type: string
+              optional: true
+              repeatable: true
+              description: A facility attribute to set in the form "<attribute name>=<attribute value>"
+        - name: delete
+          description: Delete the processing facility with the given name
+          parameters:
+            - name: facilityName
+              type: string
+              description: The name of the facility to delete
           

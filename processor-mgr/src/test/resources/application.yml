@@ -2,18 +2,16 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
+        open-in-view: false
     datasource:
         url: jdbc:postgresql://localhost:5432/proseo
         username: postgres
         password: sequel09Master
-    packagesToScan: de.dlr.proseo.model
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
 proseo:
     user:
-        name: s5p-proseo
-        password: sieb37.Schlaefer
+        name: sysadm
+        password: sysadm

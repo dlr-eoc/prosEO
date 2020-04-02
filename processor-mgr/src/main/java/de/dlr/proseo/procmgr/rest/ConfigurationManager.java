@@ -63,6 +63,8 @@ public class ConfigurationManager {
 	private static final int MSG_ID_CONFIGURATION_DELETED = 2313;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2314;
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2315;
+	private static final int MSG_ID_DUPLICATE_CONFIGURATION = 2316;
+	private static final int MSG_ID_CONFIGURATION_HAS_PROC = 2317;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -76,6 +78,8 @@ public class ConfigurationManager {
 	private static final String MSG_INPUT_FILE_ID_NOT_FOUND = "(E%d) No static input file found with ID %d";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Configuration deletion unsuccessful for ID %d";
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configuration with ID %d has been modified since retrieval by the client";
+	private static final String MSG_DUPLICATE_CONFIGURATION = "(E%d) Duplicate configuration for mission %s with processor name %s and configuration version %s";
+	private static final String MSG_CONFIGURATION_HAS_PROC = "(E%d) Configuration for mission %s with processor name %s and configuration version %s cannot be deleted, because it has configured processors";
 
 	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -208,6 +212,15 @@ public class ConfigurationManager {
 		}
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
+		
+		// Make sure a configuration with the same processor class name and configuration version does not yet exist
+		if (null != RepositoryService.getConfigurationRepository().findByMissionCodeAndProcessorNameAndConfigurationVersion(
+				configuration.getMissionCode(), configuration.getProcessorName(), configuration.getConfigurationVersion())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_CONFIGURATION, MSG_ID_DUPLICATE_CONFIGURATION,
+					configuration.getMissionCode(),
+					configuration.getProcessorName(),
+					configuration.getConfigurationVersion()));
+		}
 		
 		modelConfiguration.setProcessorClass(RepositoryService.getProcessorClassRepository()
 				.findByMissionCodeAndProcessorName(configuration.getMissionCode(), configuration.getProcessorName()));
@@ -398,7 +411,7 @@ public class ConfigurationManager {
 			modelConfiguration.getDynProcParameters().putAll(newParameters);
 			modelConfiguration.getConfigurationFiles().clear();
 			modelConfiguration.getConfigurationFiles().addAll(newFiles);
-			modelConfiguration.getStaticInputFiles().clear();;
+			modelConfiguration.getStaticInputFiles().clear();
 			modelConfiguration.getStaticInputFiles().addAll(newInputFiles);
 			modelConfiguration = RepositoryService.getConfigurationRepository().save(modelConfiguration);
 			logInfo(MSG_CONFIGURATION_MODIFIED, MSG_ID_CONFIGURATION_MODIFIED, id);
@@ -412,11 +425,12 @@ public class ConfigurationManager {
 	/**
 	 * Delete a configuration by ID
 	 * 
-	 * @param the ID of the configuration to delete
+	 * @param id the ID of the configuration to delete
 	 * @throws EntityNotFoundException if the configuration to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
+	 * @throws IllegalArgumentException if the ID of the processor class to delete was not given, or if dependent objects exist
 	 */
-	public void deleteConfigurationById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteConfigurationById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfigurationById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -426,10 +440,21 @@ public class ConfigurationManager {
 		// Test whether the product id is valid
 		Optional<Configuration> modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
 		if (modelConfiguration.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND));
+			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND,
+					modelConfiguration.get().getProcessorClass().getMission().getCode(),
+					modelConfiguration.get().getProcessorClass().getProcessorName(),
+					modelConfiguration.get().getConfigurationVersion()));
 		}
 		
-		// Delete the processor class
+		// Check whether there are configured processors for this configuration
+		if (!modelConfiguration.get().getConfiguredProcessors().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_HAS_PROC, MSG_ID_CONFIGURATION_HAS_PROC,
+					modelConfiguration.get().getProcessorClass().getMission().getCode(),
+					modelConfiguration.get().getProcessorClass().getProcessorName(),
+					modelConfiguration.get().getConfigurationVersion()));
+		}
+		
+		// Delete the configuration
 		RepositoryService.getConfigurationRepository().deleteById(id);
 
 		// Test whether the deletion was successful

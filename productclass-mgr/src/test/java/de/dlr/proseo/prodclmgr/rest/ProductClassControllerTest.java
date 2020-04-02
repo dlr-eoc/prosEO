@@ -93,28 +93,28 @@ public class ProductClassControllerTest {
 	private static Logger logger = LoggerFactory.getLogger(ProductClassControllerTest.class);
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if any error occurs
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if any error occurs
 	 */
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if any error occurs
 	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
 	/**
-	 * @throws java.lang.Exception
+	 * @throws java.lang.Exception if any error occurs
 	 */
 	@After
 	public void tearDown() throws Exception {

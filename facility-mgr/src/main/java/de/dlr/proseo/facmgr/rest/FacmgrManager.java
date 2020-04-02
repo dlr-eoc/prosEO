@@ -53,7 +53,7 @@ public class FacmgrManager {
 	private static final String MSG_FACILITY_RETRIEVED = "(I%d) Facility with ID %s retrieved";
 	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
 	private static final String MSG_FACILITY_MODIFIED = "(I%d) Facility with id %d modified";
-	private static final String MSG_FACILITY_CREATED = "(I%d) Facility with identifier %s created for mission %s";
+	private static final String MSG_FACILITY_CREATED = "(I%d) Facility with identifier %s created";
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
