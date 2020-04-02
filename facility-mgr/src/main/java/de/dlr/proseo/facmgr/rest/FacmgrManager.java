@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestFacility;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 
 
@@ -135,6 +135,22 @@ public class FacmgrManager {
 
 				result.add(resultFacility);
 			}
+		}else {
+			// Find using search parameters
+			String jpqlQuery = "select p from ProcessingFacility p where 1 = 1";
+			if (null != name) {
+				jpqlQuery += " and p.name = :name";
+			}
+			Query query = em.createQuery(jpqlQuery);
+			if (null != name) {
+				query.setParameter("name", name);
+			}
+			for (Object resultObject: query.getResultList()) {
+				if (resultObject instanceof ProcessingFacility) {
+					result.add(FacmgrUtil.toRestFacility((ProcessingFacility) resultObject));
+				}
+			}
+
 		}
 		
 		return result;

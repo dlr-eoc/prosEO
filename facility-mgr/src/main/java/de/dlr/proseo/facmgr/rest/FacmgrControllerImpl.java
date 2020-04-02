@@ -75,7 +75,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 	@Override
 	public ResponseEntity<List<RestFacility>> getFacilities(String name) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getFacilitys( {})",  name);
+		if (logger.isTraceEnabled()) logger.trace(">>> getFacilities( {})",  name);
 		
 		try {
 			return new ResponseEntity<>(procFacilityManager.getFacility(name), HttpStatus.OK);

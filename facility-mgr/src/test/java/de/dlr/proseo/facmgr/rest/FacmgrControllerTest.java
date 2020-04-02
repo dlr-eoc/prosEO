@@ -2,6 +2,7 @@ package de.dlr.proseo.facmgr.rest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,11 +41,7 @@ import de.dlr.proseo.facmgr.FacilityManager;
 import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestFacility;
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProcessingOrder;
-import de.dlr.proseo.model.Spacecraft;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -330,9 +327,9 @@ public class FacmgrControllerTest {
 
 		
 		// Build URI and Query parameters
-		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(testUrl);
+		UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(testUrl)
 				// Add query parameter
-				//.queryParam("mission", "ABCe");
+				.queryParam("name", "TestFacility 1");
 
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", builder.buildAndExpand().toUri(), config.getUserName(), config.getUserPassword());
 				
@@ -391,4 +388,69 @@ public class FacmgrControllerTest {
 		logger.info("Test OK: Get Orders");
 	
 	}
+	/**
+	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.modifyFacility(Long, RestFacility)}.
+	 * 
+	 * Test: Modify a Facility by ID
+	 * Precondition: At least one facility with a known ID is in the database
+	 */
+	
+	@Test
+	public final void testModifyOrder() {
+		
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<ProcessingFacility> testFacilities = transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public List<ProcessingFacility> doInTransaction(TransactionStatus status) {
+				
+				List<ProcessingFacility> facilities = new ArrayList<ProcessingFacility>();
+				for (int i = 0; i < testFacilityData.length; ++i) {
+					ProcessingFacility facilitiy = RepositoryService.getFacilityRepository().findByName(testFacilityData[i][2]);
+					if (facilitiy == null)
+						facilities.add(createFacility(testFacilityData[i]));
+					else
+						facilities.add(facilitiy);
+				}
+				return facilities;
+			}
+		});
+			
+		// Update  order attribute/s
+		ProcessingFacility facilitytoModify = testFacilities.get(0);
+		facilitytoModify.setName("Modified_Name");		
+		
+		RestFacility restFacility = FacmgrUtil.toRestFacility(facilitytoModify);		
+
+		String testUrl = "http://localhost:" + this.port  + FACILITY_BASE_URI + "/facilities/" + facilitytoModify.getId();
+		logger.info("Testing URL {} / PATCH : {}", testUrl, restFacility.toString());
+
+		restFacility = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.patchForObject(testUrl, restFacility, RestFacility.class);
+		assertNotNull("Modified facility not set", restFacility);
+
+		// Test that the order attribute was changed as expected
+		ResponseEntity<RestFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestFacility.class);
+		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
+		assertEquals("Wrong Name: ", facilitytoModify.getName(), getEntity.getBody().getName());
+		assertEquals("Wrong Description: ", facilitytoModify.getDescription(), getEntity.getBody().getDescription());
+		assertEquals("Wrong Processing Engine URL: ", facilitytoModify.getProcessingEngineUrl(), getEntity.getBody().getProcessingEngineUrl());
+		
+		assertEquals("Wrong Storage URL: ",  facilitytoModify.getStorageManagerUrl(), getEntity.getBody().getStorageManagerUrl());
+			
+		// Clean up database
+		transactionTemplate.execute(new TransactionCallback<>() {
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				deleteTestFacilities(testFacilities);
+				return null;
+			}
+		});
+
+		logger.info("Test OK: Modify facility");
+	}
+
+
+
 }
