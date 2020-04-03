@@ -414,9 +414,14 @@ public class StorageControllerImpl implements StorageController {
 								pref, 
 								false
 								);
-						transferSumP.addAll(transferP);
+						if (transferP != null) {
+							transferSumP.addAll(transferP);
+						}
 					}
-					if (transferSumP.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					if (transferSumP.size()==0) {	
+						logger.error("No file transfered");
+						return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 					response.setProductId(restProductFS.getProductId());
 					response.setTargetStorageId(cfg.getS3DefaultBucket());
 					response.setRegistered(true);
