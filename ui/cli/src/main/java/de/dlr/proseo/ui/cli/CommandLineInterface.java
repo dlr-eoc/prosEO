@@ -77,6 +77,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	@Autowired
 	private OrderCommandRunner orderCommandRunner;
 	@Autowired
+	private JobCommandRunner jobCommandRunner;
+	@Autowired
 	private IngestorCommandRunner ingestorCommandRunner;
 	@Autowired
 	private ProcessorCommandRunner processorCommandRunner;
@@ -194,6 +196,9 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case OrderCommandRunner.CMD_ORDER:
 				orderCommandRunner.executeCommand(command);
+				break;
+			case JobCommandRunner.CMD_JOB:
+				jobCommandRunner.executeCommand(command);
 				break;
 			case IngestorCommandRunner.CMD_PRODUCT:
 			case IngestorCommandRunner.CMD_INGEST:

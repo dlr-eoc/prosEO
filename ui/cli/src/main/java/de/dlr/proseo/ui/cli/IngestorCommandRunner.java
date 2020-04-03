@@ -642,6 +642,9 @@ public class IngestorCommandRunner {
 		case CMD_SHOW:		showProduct(subcommand); break;
 		case CMD_UPDATE:	updateProduct(subcommand); break;
 		case CMD_DELETE:	deleteProduct(subcommand); break;
+		default:
+			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+			return;
 		}
 	}
 }

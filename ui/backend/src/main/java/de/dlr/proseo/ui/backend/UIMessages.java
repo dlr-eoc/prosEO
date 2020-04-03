@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ui.backend;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_OR_FACILITY_NOT_FOUND;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -154,7 +152,29 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_RESET = 2947;
 	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
 	public static final int MSG_ID_ORDER_OR_FACILITY_NOT_FOUND = 2949;
+	public static final int MSG_ID_RETRYING_ORDER = 2759;
 
+	// Job/job step CLI
+	public static final int MSG_ID_NO_JOBS_FOUND = 2760;
+	public static final int MSG_ID_INVALID_JOB_STATE = 2761;
+	public static final int MSG_ID_INVALID_JOB_STATE_VALUE = 2762;
+	public static final int MSG_ID_NO_JOB_DBID_GIVEN = 2763;
+	public static final int MSG_ID_JOB_NOT_FOUND = 2764;
+	public static final int MSG_ID_JOB_DATA_INVALID = 2765;
+	public static final int MSG_ID_JOB_SUSPENDED = 2766;
+	public static final int MSG_ID_JOB_RESUMED = 2767;
+	public static final int MSG_ID_JOB_CANCELLED = 2768;
+	public static final int MSG_ID_RETRYING_JOB = 2769;
+	public static final int MSG_ID_INVALID_JOBSTEP_STATE = 2770;
+	public static final int MSG_ID_INVALID_JOBSTEP_STATE_VALUE = 2771;
+	public static final int MSG_ID_NO_JOBSTEP_DBID_GIVEN = 2772;
+	public static final int MSG_ID_JOBSTEP_NOT_FOUND = 2773;
+	public static final int MSG_ID_JOBSTEP_DATA_INVALID = 2774;
+	public static final int MSG_ID_JOBSTEP_SUSPENDED = 2775;
+	public static final int MSG_ID_JOBSTEP_RESUMED = 2776;
+	public static final int MSG_ID_JOBSTEP_CANCELLED = 2777;
+	public static final int MSG_ID_RETRYING_JOBSTEP = 2778;
+	
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
 	public static final int MSG_ID_PRODUCT_CREATED = 2951;
@@ -307,6 +327,19 @@ public class UIMessages {
 		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
 		MSG_ID_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_NOT_FOUND),
 		
+		// Job and job step CLI
+		MSG_NO_JOBS_FOUND ("(E%d) No jobs found for given search criteria", MSG_ID_NO_JOBS_FOUND),
+		MSG_INVALID_JOB_STATE ("(E%d) Operation %s not allowed for job state %s (must be %s)", MSG_ID_INVALID_JOB_STATE),
+		MSG_INVALID_JOB_STATE_VALUE ("(E%d) Invalid job state %s", MSG_ID_INVALID_JOB_STATE_VALUE),
+		MSG_NO_JOB_DBID_GIVEN ("(E%d) No job database ID given", MSG_ID_NO_JOB_DBID_GIVEN),
+		MSG_JOB_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOB_NOT_FOUND),
+		MSG_JOB_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOB_DATA_INVALID),
+		MSG_INVALID_JOBSTEP_STATE ("(E%d) Operation %s not allowed for job state %s (must be %s)", MSG_ID_INVALID_JOBSTEP_STATE),
+		MSG_INVALID_JOBSTEP_STATE_VALUE ("(E%d) Invalid job state %s", MSG_ID_INVALID_JOBSTEP_STATE_VALUE),
+		MSG_NO_JOBSTEP_DBID_GIVEN ("(E%d) No job database ID given", MSG_ID_NO_JOBSTEP_DBID_GIVEN),
+		MSG_JOBSTEP_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOBSTEP_NOT_FOUND),
+		MSG_JOBSTEP_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOBSTEP_DATA_INVALID),
+		
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
 		MSG_NO_PRODUCTCLASSES_FOUND ("(E%d) No product classes found for given search criteria", MSG_ID_NO_PRODUCTCLASSES_FOUND),
@@ -455,6 +488,17 @@ public class UIMessages {
 		MSG_ORDER_CANCELLED ("(I%d) Order with identifier %s cancelled (new version %d)", MSG_ID_ORDER_CANCELLED),
 		MSG_ORDER_RESET ("(I%d) Order with identifier %s reset (new version %d)", MSG_ID_ORDER_RESET),
 		MSG_ORDER_DELETED ("(I%d) Order with identifier %s deleted", MSG_ID_ORDER_DELETED),
+		MSG_RETRYING_ORDER ("(I%d) Retrying order with identifier %s (new version %d)", MSG_ID_RETRYING_ORDER),
+		
+		// Job and job step CLI
+		MSG_JOB_SUSPENDED ("(I%d) Job with database ID %s suspended (new version %d)", MSG_ID_JOB_SUSPENDED),
+		MSG_JOB_RESUMED ("(I%d) Job with database ID %s resumed (new version %d)", MSG_ID_JOB_RESUMED),
+		MSG_JOB_CANCELLED ("(I%d) Job with database ID %s cancelled (new version %d)", MSG_ID_JOB_CANCELLED),
+		MSG_RETRYING_JOB ("(I%d) Retrying job with database ID %s (new version %d)", MSG_ID_RETRYING_JOB),
+		MSG_JOBSTEP_SUSPENDED ("(I%d) Job step with database ID %s suspended (new version %d)", MSG_ID_JOBSTEP_SUSPENDED),
+		MSG_JOBSTEP_RESUMED ("(I%d) Job step with database ID %s resumed (new version %d)", MSG_ID_JOBSTEP_RESUMED),
+		MSG_JOBSTEP_CANCELLED ("(I%d) Job step with database ID %s cancelled (new version %d)", MSG_ID_JOBSTEP_CANCELLED),
+		MSG_RETRYING_JOBSTEP ("(I%d) Retrying job step with database ID %s (new version %d)", MSG_ID_RETRYING_JOBSTEP),
 		
 		// Product class CLI
 		MSG_PRODUCTCLASS_CREATED ("(I%d) Product class %s created (database ID %d)", MSG_ID_PRODUCTCLASS_CREATED),
