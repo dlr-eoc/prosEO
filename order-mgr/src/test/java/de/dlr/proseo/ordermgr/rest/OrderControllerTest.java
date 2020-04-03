@@ -643,7 +643,7 @@ public class OrderControllerTest {
 		});
 		
 		
-		// Get products using different selection criteria (also combined)
+		// Get orders using different selection criteria (also combined)
 		String testUrl = "http://localhost:" + this.port + ORDER_BASE_URI + "/orders";
 		HttpHeaders headers = new HttpHeaders();
 
@@ -680,7 +680,7 @@ public class OrderControllerTest {
 			for (Map<String, Object> order: body) {
 				// Check, if any of the test orders was returned
 				long orderId = (Integer) order.get("id");
-				logger.info("... found product with ID {}", orderId);
+				logger.info("... found order with ID {}", orderId);
 				for (int i = 0; i < testOrders.size(); ++i) {
 					ProcessingOrder testOrder = testOrders.get(i);
 					if (orderId == testOrder.getId()) {
@@ -691,14 +691,14 @@ public class OrderControllerTest {
 					}
 				}
 			}
-			boolean[] expectedOrbitFound = new boolean[body.size()];
-			Arrays.fill(expectedOrbitFound, true);
+			boolean[] expectedOrderFound = new boolean[body.size()];
+			Arrays.fill(expectedOrderFound, true);
 			int actualLength = 0;
 			for(int i=0;i<orderFound.length;i++) {
 				if(orderFound[i])
 					actualLength++;			
 			}
-			assertEquals(expectedOrbitFound.length, actualLength);
+			assertEquals(expectedOrderFound.length, actualLength);
 		}  catch (Exception e) {	
 			e.printStackTrace();
 		}
