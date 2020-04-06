@@ -150,7 +150,7 @@ public class FacmgrControllerTest {
 	 * Test: Create a new facility
 	 */
 	@Transactional
-//	@Test
+	@Test
 	public final void testCreateFacility() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -295,7 +295,13 @@ public class FacmgrControllerTest {
 		logger.info("Test OK: Test Get Facility By ID");
 	}
 	
-	@Test
+	/**
+	 * Test method for {@link de.dlr.proseo.facmgr.rest.FacmgrControllerImpl.getFacilities()}.
+	 * 
+	 * Test: List of all facilities
+	 * 
+	 */
+//	@Test
 	public final void getFacilities() {
 
 
@@ -395,7 +401,7 @@ public class FacmgrControllerTest {
 	 * Precondition: At least one facility with a known ID is in the database
 	 */
 	
-	@Test
+//	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
