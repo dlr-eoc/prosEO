@@ -976,6 +976,16 @@ public class OrderCommandRunner {
 	private void suspendOrder(ParsedCommand suspendCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendOrder({})", (null == suspendCommand ? "null" : suspendCommand.getName()));
 		
+		/* Check command options */
+		boolean isForcing = false;
+		for (ParsedOption option: suspendCommand.getOptions()) {
+			switch(option.getName()) {
+			case "force":
+				isForcing = true;
+				break;
+			}
+		}
+		
 		/* Get order ID from command parameters and retrieve the order using Order Manager service */
 		RestOrder restOrder = retrieveOrderByIdentifierParameter(suspendCommand);
 		if (null == restOrder)
@@ -992,7 +1002,8 @@ public class OrderCommandRunner {
 		
 		/* Tell Production Planner service to suspend order processing, changing order state to "PLANNED" */
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_SUSPEND + "/" + restOrder.getId(),
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_ORDER_SUSPEND + "/" + restOrder.getId() + (isForcing ? "?force=true" : ""),
 					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());

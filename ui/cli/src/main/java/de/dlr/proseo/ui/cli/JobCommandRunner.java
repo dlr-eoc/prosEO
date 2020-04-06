@@ -331,6 +331,16 @@ public class JobCommandRunner {
 	private void suspendJob(ParsedCommand suspendCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendJob({})", (null == suspendCommand ? "null" : suspendCommand.getName()));
 		
+		/* Check command options */
+		boolean isForcing = false;
+		for (ParsedOption option: suspendCommand.getOptions()) {
+			switch(option.getName()) {
+			case "force":
+				isForcing = true;
+				break;
+			}
+		}
+		
 		/* Get job ID from command parameters and retrieve the job using Production Planner service */
 		RestJob restJob = retrieveJobByIdParameter(suspendCommand);
 		if (null == restJob)
@@ -347,7 +357,8 @@ public class JobCommandRunner {
 		
 		/* Tell Production Planner service to suspend job, changing job to "INITIAL" */
 		try {
-			restJob = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_JOB_SUSPEND + "/" + restJob.getId(),
+			restJob = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_JOB_SUSPEND + "/" + restJob.getId() + (isForcing ? "?force=true" : ""),
 					restJob, RestJob.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -609,21 +620,34 @@ public class JobCommandRunner {
 	private void suspendJobStep(ParsedCommand suspendCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendJob({})", (null == suspendCommand ? "null" : suspendCommand.getName()));
 		
+		/* Check command options */
+		boolean isForcing = false;
+		for (ParsedOption option: suspendCommand.getOptions()) {
+			switch(option.getName()) {
+			case "force":
+				isForcing = true;
+				break;
+			}
+		}
+
 		/* Get job step ID from command parameters and retrieve the job using Production Planner service */
 		RestJobStep restJobStep = retrieveJobStepByIdParameter(suspendCommand);
 		if (null == restJobStep)
 			return;
 		
 		/* Check whether (database) job step is in state "READY", otherwise suspending not allowed */
-		if (!JobStepState.READY.equals(restJobStep.getJobStepState())) {
+		if (!JobStepState.READY.equals(restJobStep.getJobStepState())
+				&& !JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
-					CMD_SUSPEND, restJobStep.getJobStepState(), JobStepState.READY.toString()));
+					CMD_SUSPEND, restJobStep.getJobStepState(),
+					JobStepState.READY.toString() + " or " + JobStepState.RUNNING.toString()));
 			return;
 		}
 		
 		/* Tell Production Planner service to suspend job step, changing job step state to "INITIAL" */
 		try {
-			restJobStep = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_JOBSTEP_SUSPEND + "/" + restJobStep.getId(),
+			restJobStep = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_JOBSTEP_SUSPEND + "/" + restJobStep.getId() + (isForcing ? "?force=true" : ""),
 					restJobStep, RestJobStep.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());

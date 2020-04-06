@@ -360,6 +360,11 @@ commands:
         - name: suspend
           description: Suspend starting of further jobs for the named processing order (must be in status Released or Running, 
                        new status is Suspending, then Planned, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
           parameters:
             - name: orderId
               type: string
@@ -426,6 +431,11 @@ commands:
         - name: suspend
           description: Suspend starting of further job steps for the named job (must be in status Released or Started, 
                        new status is On Hold, then Initial, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
           parameters:
             - name: jobId
               type: integer
@@ -474,7 +484,12 @@ commands:
                   optional: true
                   description: The job step state (one of { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED })
             - name: suspend
-              description: Suspend the named job step (must be in status Ready)
+              description: Suspend the named job step (must be in status Ready or Running)
+              options:
+                - name: force
+                  type: boolean
+                  shortForm: F
+                  description: Force the suspend by immediately terminating the job step, if it is already running
               parameters:
                 - name: jobStepId
                   type: integer

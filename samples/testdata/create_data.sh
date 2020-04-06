@@ -93,7 +93,7 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 
 # Create a processing facility
 # echo "facility create <facility-name> description=<facility-description> defaultStorageType=S3 processingEngineUrl=https://<facility-url>/ storageManagerUrl=https://<facility-url>/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
-echo "facility create localhost description=Local_Facility defaultStorageType=POSIX processingEngineUrl=https://localhost/ storageManagerUrl=https://localhost/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
+echo "facility create localhost description=Docker_Desktop_Minikube defaultStorageType=POSIX processingEngineUrl=https://kubernetes.docker.internal:6443/ storageManagerUrl=https://kubernetes.docker.internal:6443/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
 
 # Ingest test data into prosEO
 echo "ingest --file=$TEST_DATA_DIR/ingest_products.json telekom-otc" >>$CLI_SCRIPT

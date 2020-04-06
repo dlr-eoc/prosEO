@@ -325,7 +325,7 @@ public class UIMessages {
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
 		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
-		MSG_ID_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_NOT_FOUND),
+		MSG_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_OR_FACILITY_NOT_FOUND),
 		
 		// Job and job step CLI
 		MSG_NO_JOBS_FOUND ("(E%d) No jobs found for given search criteria", MSG_ID_NO_JOBS_FOUND),
