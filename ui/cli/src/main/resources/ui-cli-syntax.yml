@@ -19,6 +19,8 @@ description: |
   Attribute values may be comma-separated string lists, but they cannot represent attributes of more complex types. To set
   complex object attributes use the "--file" option and pass a Json, XML or Yaml file.
   
+  Options and parameters containing blanks and/or quotes must be quoted, e. g. "-ovalue with blanks" or 'My "quoted" parameter'.
+  
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DDTHH:MM:SS").
   
   So the general syntax is:
@@ -61,6 +63,10 @@ commands:
     # Show the help text (same as "proseo --help")
     - name: help
       description: Show the prosEO Command Line Interface help information (this page; for subcommand help, type "<subcommand> --help")
+      
+    # Clear the terminal screen
+    - name: clear
+      description: Clear the terminal screen (but not the scrollback buffer)
       
     # Authentication:
     - name: login
@@ -354,6 +360,11 @@ commands:
         - name: suspend
           description: Suspend starting of further jobs for the named processing order (must be in status Released or Running, 
                        new status is Suspending, then Planned, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
           parameters:
             - name: orderId
               type: string
@@ -372,6 +383,13 @@ commands:
             - name: orderId
               type: string
               description: The order identifier
+        - name: retry
+          description: Retry the named processing order (failed job steps and jobs are set to status Initial, the order itself
+              is set to status Planned, order must be in status Failed)
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
         - name: close
           description: Close the named processing order (must be in status Completed or Failed, new status is Closed)
           parameters:
@@ -384,6 +402,118 @@ commands:
             - name: orderId
               type: string
               description: The order identifier
+
+    # Commands for the Production Planner
+    - name: job
+      description: Commands for managing jobs; some commands can only be issued, if the job is in the correct status.
+                   Job status sequence is Initial - Released - Started - Completed/Failed.
+                   Additionally a job may be in status "On Hold" after issuing a "suspend" command, until all running
+                   job steps are finished.
+      subcommands:
+        - name: show
+          description: Lists jobs for an order, optionally restricted to a specific job state
+          options:
+            - name: format
+              type: string
+              description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give job details including job steps, otherwise show only job database ID, start/stop times and state
+              shortForm: v
+          parameters:
+            - name: orderId
+              type: string
+              description: The order identifier
+            - name: jobState
+              type: string
+              optional: true
+              description: The job state (one of { INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED })
+        - name: suspend
+          description: Suspend starting of further job steps for the named job (must be in status Released or Started, 
+                       new status is On Hold, then Initial, when all running job steps are finished)
+          options:
+            - name: force
+              type: boolean
+              shortForm: F
+              description: Force the suspend by immediately terminating all running job steps
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: resume
+          description: Resume starting of job steps for the named job after suspend (job must be in status Initial,
+                       new status is Released)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: cancel
+          description: Cancel the named job (remaining job steps are not executed, job state changes to Failed;
+              job must be in status Initial, i. e. it may be necessary to issue a "suspend" command first)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: retry
+          description: Retry the named job (failed job steps and the job itself are set to status
+              Initial, job must be in status Failed)
+          parameters:
+            - name: jobId
+              type: integer
+              description: The persistent database ID of the job
+        - name: step
+          description: Commands for managing job steps; some commands can only be issued, if the job step is in the correct status.
+                       Job step status sequence is Initial - [Waiting Input -] Ready - Running - Completed/Failed.
+          subcommands:
+            - name: show
+              description: Lists job steps for a job, optionally restricted to a specific job step state
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give job step details, otherwise show only job step database ID, output product class and state
+                  shortForm: v
+              parameters:
+                - name: jobId
+                  type: integer
+                  description: The persistent database ID of the job
+                - name: jobStepState
+                  type: string
+                  optional: true
+                  description: The job step state (one of { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED })
+            - name: suspend
+              description: Suspend the named job step (must be in status Ready or Running)
+              options:
+                - name: force
+                  type: boolean
+                  shortForm: F
+                  description: Force the suspend by immediately terminating the job step, if it is already running
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: resume
+              description: Resume a previously suspended job step (job step must be in status Initial,
+                           new status is Waiting Input or Ready)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: cancel
+              description: Cancel the named job step (job step state changes to Failed;
+                  job step must be in status Initial or Running, i. e. it may be necessary to issue a "suspend" command first)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
+            - name: retry
+              description: Retry the named job step (job step state changes to Initial, job step must be in status Failed)
+              parameters:
+                - name: jobStepId
+                  type: integer
+                  description: The persistent database ID of the job step
 
     # Commands for the Processor Manager
     - name: processor

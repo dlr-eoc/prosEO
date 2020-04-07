@@ -72,10 +72,10 @@ resourceTypes:
 /users:
   type: standard
   get:
-    description: Get users by mission
+    description: Get users by mission (may be null, if root user sends request)
     displayName: getUsers
     queryParameters:
-      mission: string
+      mission?: string
     responses:
       200:
         body:

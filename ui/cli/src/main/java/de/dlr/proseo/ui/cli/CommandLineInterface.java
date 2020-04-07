@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -51,9 +52,12 @@ public class CommandLineInterface implements CommandLineRunner {
 	
 	/* Other string constants */
 	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
+	private static final String CMD_CLEAR = "clear";
 	private static final String CMD_HELP = "help";
 	private static final String CMD_LOGOUT = "logout";
 	private static final String CMD_LOGIN = "login";
+
+	private static final String CLEAR_SCREEN_SEQUENCE = "\033[H\033[J"; // ANSI command sequence to clear the screen
 	
 	/** The configuration object for the prosEO CLI */
 	@Autowired
@@ -73,6 +77,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	@Autowired
 	private OrderCommandRunner orderCommandRunner;
 	@Autowired
+	private JobCommandRunner jobCommandRunner;
+	@Autowired
 	private IngestorCommandRunner ingestorCommandRunner;
 	@Autowired
 	private ProcessorCommandRunner processorCommandRunner;
@@ -84,7 +90,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	private FacilityCommandRunner facilityCommandRunner;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(CLIParser.class);
+	private static Logger logger = LoggerFactory.getLogger(CommandLineInterface.class);
 	
 	/**
 	 * Check the program invocation arguments (-u/--user, -p/--password, -m/--mission) and remove them from the command line
@@ -185,8 +191,14 @@ public class CommandLineInterface implements CommandLineRunner {
 			case CMD_HELP:
 				parser.getSyntax().printHelp(System.out);
 				break;
+			case CMD_CLEAR:
+				System.out.print(CLEAR_SCREEN_SEQUENCE);
+				break;
 			case OrderCommandRunner.CMD_ORDER:
 				orderCommandRunner.executeCommand(command);
+				break;
+			case JobCommandRunner.CMD_JOB:
+				jobCommandRunner.executeCommand(command);
 				break;
 			case IngestorCommandRunner.CMD_PRODUCT:
 			case IngestorCommandRunner.CMD_INGEST:
@@ -241,7 +253,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			throw e;
 		}
 		
-		// Processe command line arguments: Log in and optionally execute command and terminate
+		// Process command line arguments: Log in and optionally execute command and terminate
 		if (0 < args.length) {
 			// Handle command line parameters for login!
 			List<String> proseoCommand = checkArguments(args);
@@ -265,14 +277,21 @@ public class CommandLineInterface implements CommandLineRunner {
 			
 			// If command is given, execute it and terminate
 			if (!proseoCommand.get(0).isBlank()) {
-				executeCommand(parser.parse(proseoCommand.get(0)));
+				ParsedCommand command = null;
+				try {
+					command = parser.parse(proseoCommand.get(0));
+				} catch (ParseException e) {
+					System.err.println(e.getMessage());
+					return;
+				}
+				executeCommand(command);
 				if (logger.isTraceEnabled())
 					logger.trace("<<< run()");
 				return;
 			}
 		};
 		
-		// Check whether the command line prompt shall be started
+		// Check whether the command line prompt shall be started (only required for unit tests)
 		if (!config.getCliStart()) {
 			logger.info(uiMsg(MSG_ID_COMMAND_LINE_PROMPT_SUPPRESSED));
 			if (logger.isTraceEnabled()) logger.trace("<<< run()");
@@ -291,7 +310,12 @@ public class CommandLineInterface implements CommandLineRunner {
 					String message = uiMsg(MSG_ID_USER_INTERRUPT);
 					logger.error(message);
 					System.err.println(message);
-					return;
+					break;
+				} catch (EndOfFileException e) {
+					// End of file reached for redirected input
+					logger.info(uiMsg(MSG_ID_END_OF_FILE));
+					// No logging to standard output
+					break;
 				}
 				if (commandLine.isBlank()) {
 					// Silently ignore empty input lines
@@ -304,6 +328,9 @@ public class CommandLineInterface implements CommandLineRunner {
 			}
 			if (logger.isTraceEnabled()) logger.trace("... received command '{}'", (null == command ? "null" : command.getName()));
 			if (CMD_EXIT.equals(command.getName()) && !command.isHelpRequested()) {
+				// Terminate CLI execution
+				logger.info(uiMsg(MSG_ID_CLI_TERMINATED));
+				// No logging to standard output
 				break;
 			}
 			executeCommand(command);

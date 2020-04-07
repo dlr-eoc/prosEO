@@ -55,7 +55,7 @@ my $mission = {
 	fileClasses => [ 'TEST', 'OPER' ],
 	processingModes => [ 'OPER' ],
 	productFileTemplate =>
-            'PTM_${fileClass}_${productClass.missionType}_' .
+            'PTM_${fileClass}_${productClass.productType}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStartTime)}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStopTime)}_' .
             '${(new java.text.DecimalFormat(\\"00000\\")).format(orbit.orbitNumber)}_' .
@@ -66,12 +66,12 @@ my $mission = {
 };
 my $spacecraft = { code => 'PTS', name => 'prosEO Test Satellite' };
 my @orbits = (
-    { orbitNumber => 3000, startTime => '2020-03-25T09:00:00.200000', stopTime => '2020-03-25T10:41:10.300000' },
-    { orbitNumber => 3001, startTime => '2020-03-25T10:41:10.300000', stopTime => '2020-03-25T12:22:20.400000' },
-    { orbitNumber => 3002, startTime => '2020-03-25T12:22:20.400000', stopTime => '2020-03-25T14:03:30.500000' },
-    { orbitNumber => 3003, startTime => '2020-03-25T14:03:30.500000', stopTime => '2020-03-25T15:44:40.600000' },
-    { orbitNumber => 3004, startTime => '2020-03-25T15:44:40.600000', stopTime => '2020-03-25T17:25:50.700000' },
-    { orbitNumber => 3005, startTime => '2020-03-25T17:25:50.700000', stopTime => '2020-03-25T19:07:00.800000' }
+    { orbitNumber => 3000, startTime => '2019-11-04T09:00:00.200000', stopTime => '2019-11-04T10:41:10.300000' },
+    { orbitNumber => 3001, startTime => '2019-11-04T10:41:10.300000', stopTime => '2019-11-04T12:22:20.400000' },
+    { orbitNumber => 3002, startTime => '2019-11-04T12:22:20.400000', stopTime => '2019-11-04T14:03:30.500000' },
+    { orbitNumber => 3003, startTime => '2019-11-04T14:03:30.500000', stopTime => '2019-11-04T15:44:40.600000' },
+    { orbitNumber => 3004, startTime => '2019-11-04T15:44:40.600000', stopTime => '2019-11-04T17:25:50.700000' },
+    { orbitNumber => 3005, startTime => '2019-11-04T17:25:50.700000', stopTime => '2019-11-04T19:07:00.800000' }
 );
 
 #

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrbit;
-import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.LoginManager;

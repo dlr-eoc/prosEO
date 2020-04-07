@@ -24,7 +24,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.rest.model.RestGroup;
@@ -420,8 +419,9 @@ public class UserCommandRunner {
 		Object result = null;
 		
 		if (showCommand.getParameters().isEmpty()) {
-			requestURI += "?mission=" + loginManager.getMission();
-
+			if (null != loginManager.getMission()) {
+				requestURI += "?mission=" + loginManager.getMission();
+			}
 			/* Get the user account information from the User Manager service */
 			try {
 				result = serviceConnection.getFromService(serviceConfig.getUserManagerUrl(),

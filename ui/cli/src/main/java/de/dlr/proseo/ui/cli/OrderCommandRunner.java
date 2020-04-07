@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
-import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -63,6 +61,7 @@ public class OrderCommandRunner {
 	private static final String CMD_SUSPEND = "suspend";
 	private static final String CMD_RESUME = "resume";
 	private static final String CMD_CANCEL = "cancel";
+	private static final String CMD_RETRY = "retry";
 	private static final String CMD_CLOSE = "close";
 	private static final String CMD_RESET = "reset";
 
@@ -83,6 +82,7 @@ public class OrderCommandRunner {
 	private static final String URI_PATH_ORDER_RELEASE = "/orders/release";
 	private static final String URI_PATH_ORDER_SUSPEND = "/orders/suspend";
 	private static final String URI_PATH_ORDER_CANCEL = "/orders/cancel";
+	private static final String URI_PATH_ORDER_RETRY = "/orders/retry";
 	private static final String URI_PATH_ORDER_RESET = "/orders/reset";
 	private static final String URI_PATH_JOBS = "/jobs";
 	
@@ -719,7 +719,7 @@ public class OrderCommandRunner {
 	}
 	
 	/**
-	 * Release the named processing order
+	 * Approve the named processing order
 	 * 
 	 * @param approveCommand the parsed "order approve" command
 	 */
@@ -820,7 +820,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
+				message = uiMsg(MSG_ID_ORDER_OR_FACILITY_NOT_FOUND, restOrder.getIdentifier(), processingFacility);
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
@@ -976,23 +976,34 @@ public class OrderCommandRunner {
 	private void suspendOrder(ParsedCommand suspendCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> suspendOrder({})", (null == suspendCommand ? "null" : suspendCommand.getName()));
 		
+		/* Check command options */
+		boolean isForcing = false;
+		for (ParsedOption option: suspendCommand.getOptions()) {
+			switch(option.getName()) {
+			case "force":
+				isForcing = true;
+				break;
+			}
+		}
+		
 		/* Get order ID from command parameters and retrieve the order using Order Manager service */
 		RestOrder restOrder = retrieveOrderByIdentifierParameter(suspendCommand);
 		if (null == restOrder)
 			return;
 		
-		/* Check whether (database) order is in state "RUNNING", otherwise suspending not allowed */
+		/* Check whether (database) order is in state "RELEASED" or "RUNNING", otherwise suspending not allowed */
 		if (!OrderState.RELEASED.toString().equals(restOrder.getOrderState())
 				&& !OrderState.RUNNING.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
-					CMD_CANCEL, restOrder.getOrderState(), OrderState.RUNNING.toString()));
+					CMD_SUSPEND, restOrder.getOrderState(), OrderState.RELEASED.toString() + " or " + OrderState.RUNNING.toString()));
 			return;
 		}
 		
 		
 		/* Tell Production Planner service to suspend order processing, changing order state to "PLANNED" */
 		try {
-			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_SUSPEND + "/" + restOrder.getId(),
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(),
+					URI_PATH_ORDER_SUSPEND + "/" + restOrder.getId() + (isForcing ? "?force=true" : ""),
 					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
@@ -1090,6 +1101,60 @@ public class OrderCommandRunner {
 	}
 	
 	/**
+	 * Retry the named processing order
+	 * 
+	 * @param retryCommand the parsed "order retry" command
+	 */
+	private void retryOrder(ParsedCommand retryCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retryOrder({})", (null == retryCommand ? "null" : retryCommand.getName()));
+		
+		/* Get order ID from command parameters and retrieve the order using Order Manager service */
+		RestOrder restOrder = retrieveOrderByIdentifierParameter(retryCommand);
+		if (null == restOrder)
+			return;
+		
+		/* Check whether (database) order is in state "FAILED", otherwise retry not allowed */
+		if (!OrderState.FAILED.toString().equals(restOrder.getOrderState())) {
+			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
+					CMD_RETRY, restOrder.getOrderState(), OrderState.FAILED.toString()));
+			return;
+		}
+		
+		/* Tell Production Planner to retry the order, setting its state to "PLANNED" */
+		try {
+			restOrder = serviceConnection.patchToService(serviceConfig.getProductionPlannerUrl(), URI_PATH_ORDER_RETRY + "/" + restOrder.getId(),
+					restOrder, RestOrder.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
+				break;
+			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORDERS, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success, giving new order version */
+		String message = uiMsg(MSG_ID_RETRYING_ORDER, restOrder.getIdentifier(), restOrder.getVersion());
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
 	 * Close the named processing order
 	 * 
 	 * @param closeCommand the parsed "order close" command
@@ -1160,7 +1225,7 @@ public class OrderCommandRunner {
 		/* Check whether (database) order is in state "APPROVED" or "PLANNED", otherwise reset not allowed */
 		if (!OrderState.APPROVED.toString().equals(restOrder.getOrderState()) && !OrderState.PLANNED.toString().equals(restOrder.getOrderState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_ORDER_STATE,
-					CMD_CLOSE, restOrder.getOrderState(), OrderState.APPROVED.toString() + ", " + OrderState.PLANNED.toString()));
+					CMD_RESET, restOrder.getOrderState(), OrderState.APPROVED.toString() + ", " + OrderState.PLANNED.toString()));
 			return;
 		}
 		
@@ -1244,8 +1309,12 @@ public class OrderCommandRunner {
 		case CMD_SUSPEND:	suspendOrder(subcommand); break;
 		case CMD_RESUME:	resumeOrder(subcommand); break;
 		case CMD_CANCEL:	cancelOrder(subcommand); break;
+		case CMD_RETRY:		retryOrder(subcommand); break;
 		case CMD_CLOSE:		closeOrder(subcommand); break;
 		case CMD_RESET:		resetOrder(subcommand); break;
+		default:
+			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
+			return;
 		}
 	}
 }
