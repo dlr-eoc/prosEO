@@ -54,7 +54,7 @@ public class SampleProcessor {
 	
 	// Error messages
 	private static final String MSG_LEAVING_SAMPLE_PROCESSOR = "Leaving sample-processor with exit code {} ({})";
-	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V00.00.01 with JobOrder file {}";
+	private static final String MSG_STARTING_SAMPLE_PROCESSOR = "Starting sample-processor V00.00.02 with JobOrder file {}";
 	private static final String MSG_INVALID_NUMBER_OF_ARGUMENTS = "Invalid number of invocation arguments: {} (only 1 allowed)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILES = "Invalid number of output files: {} (1 - 10 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES = "Invalid number of output file types: {} (exactly 1 expected)";
@@ -97,8 +97,8 @@ public class SampleProcessor {
 	// Allowed product types and requested input
 	private static final String STATIC_INPUT_CONFIG = "processing_configuration";
 	private static final String DYNAMIC_INPUT_AUX = "AUX_IERS_B";
-	private static final String PRODUCT_TYPE_L0 = "L0";
-	private static final String PRODUCT_TYPE_L1B = "L1B";
+	private static final String PRODUCT_TYPE_L0 = "L0________";
+	private static final String PRODUCT_TYPE_L1B = "L1B_______";
 	private static final String PRODUCT_TYPE_L1B_1 = "L1B_PART1";
 	private static final String PRODUCT_TYPE_L1B_2 = "L1B_PART2";
 	private static final String PRODUCT_TYPE_L2A = "PTM_L2A";

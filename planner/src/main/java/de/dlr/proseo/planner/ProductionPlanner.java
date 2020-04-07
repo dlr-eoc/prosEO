@@ -196,6 +196,40 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 	}
+	public void updateKubeConfig(String facilityName) {
+		boolean found = false;
+		KubeConfig kubeConfig = null;
+			
+		ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName); 
+		if (pf != null) {
+			kubeConfig = getKubeConfig(pf.getName());
+			if (kubeConfig != null) {
+				if (kubeConfig.connect()) {
+					found = true;
+				} else {
+					// error
+					kubeConfigs.remove(pf.getName().toLowerCase());
+
+					String message = Messages.PLANNER_FACILITY_DISCONNECTED.formatWithPrefix(pf.getName());
+					logger.error(message);
+				}
+			}
+			if (kubeConfig == null) {
+				kubeConfig = new KubeConfig(pf);
+				if (kubeConfig != null && kubeConfig.connect()) {
+					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+					found = true;
+					String message = Messages.PLANNER_FACILITY_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
+					logger.info(message);
+					message = Messages.PLANNER_FACILITY_WORKER_CNT.formatWithPrefix(String.valueOf(kubeConfig.getWorkerCnt()));
+					logger.info(message);
+				} else {
+					String message = Messages.PLANNER_FACILITY_NOT_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
+					logger.error(message);
+				}
+			}
+		}
+	}
 	
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])

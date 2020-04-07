@@ -251,7 +251,7 @@ public class OrderUtil {
 	@Transactional
 	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
 		Messages answer = Messages.FALSE;
-		if (order != null) {
+		if (order != null && procFacility != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -267,7 +267,12 @@ public class OrderUtil {
 						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;
 					}
-					RepositoryService.getOrderRepository().save(order);
+					order = RepositoryService.getOrderRepository().saveAndFlush(order);
+					if (order.getOrderState() == OrderState.PLANNED) {
+						for (Job job : order.getJobs()) {
+							jobUtil.setInitialAfterPlan(job);
+						}
+					}
 				}
 				break;	
 			case PLANNED:	
@@ -415,11 +420,11 @@ public class OrderUtil {
 				break;			
 			case RUNNING:
 			case SUSPENDING:
-				Boolean oneNotSuspended = true;
+				Boolean allSuspended = true;
 				for (Job job : order.getJobs()) {
-					oneNotSuspended = jobUtil.suspend(job).isTrue() & oneNotSuspended;
+					allSuspended = jobUtil.suspend(job).isTrue() & allSuspended;
 				}
-				if (oneNotSuspended) {
+				if (!allSuspended) {
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
@@ -466,7 +471,7 @@ public class OrderUtil {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
-					if (job.getJobState() != JobState.INITIAL) {
+					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
 						break;
 					}

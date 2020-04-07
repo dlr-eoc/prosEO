@@ -203,6 +203,7 @@ public class OrderControllerImpl implements OrderController {
 	@Transactional
 	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
 		if (releaseId != null && facility != null) {
+			productionPlanner.updateKubeConfig(facility);
 			ProcessingOrder order = findOrder(releaseId);
 			ProcessingFacility pf = null;
 			KubeConfig kc = productionPlanner.getKubeConfig(facility);

@@ -117,6 +117,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
 		// todo handle name
+		productionPlanner.updateKubeConfig(name);
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
 		if (aKubeConfig != null) {
 			aKubeConfig.sync();

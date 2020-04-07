@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -98,10 +99,10 @@ public class JobStepUtil {
 				answer = Messages.JOBSTEP_ALREADY_RUNNING;
 				break;
 			case COMPLETED:
-				answer = Messages.JOBSTEP_ALREADY_COMPLETED;
+				answer = Messages.JOBSTEP_COMPLETED;
 				break;
 			case FAILED:
-				answer = Messages.JOBSTEP_ALREADY_FAILED;
+				answer = Messages.JOBSTEP_FAILED;
 				break;
 			default:
 				break;
@@ -204,6 +205,9 @@ public class JobStepUtil {
 				// fall through intended
 			case COMPLETED:
 			case FAILED:
+				if (js.getOutputProduct() != null) {
+					js.getOutputProduct().setJobStep(null);
+				}
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					for (Product p : pq.getSatisfyingProducts()) {						
 						p.getSatisfiedProductQueries().remove(pq);
@@ -378,11 +382,6 @@ public class JobStepUtil {
 	@Transactional
     public void checkForJobStepsToRun(KubeConfig kc) {
 		if (productionPlanner != null) {
-
-			Mission m = RepositoryService.getMissionRepository().findByCode("PTM");
-			String pft = m.getProductFileTemplate();
-//            m.setProductFileTemplate("PTM_${fileClass}_${productClass.missionType}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStartTime)}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(sensingStopTime)}_${(new java.text.DecimalFormat(\"00000\")).format(null == orbit ? 0 : orbit.orbitNumber)}_${parameters.get(\"copernicusCollection\").getParameterValue()}_${configuredProcessor.processor.processorVersion.replaceAll(\"\\.\", \"\")}_${T(java.time.format.DateTimeFormatter).ofPattern(\"uuuuMMdd'T'HHmmss\").withZone(T(java.time.ZoneId).of(\"UTC\")).format(generationTime)}.nc");
-			RepositoryService.getMissionRepository().save(m);
 			if (kc != null) {
 				List<JobStepState> states = new ArrayList<JobStepState>();
 				states.add(JobStepState.READY);
@@ -403,4 +402,21 @@ public class JobStepUtil {
 			}
 		}
     }
+	
+	@Transactional
+	public void setInitialAfterPlan(JobStep jobStep) {
+		if (jobStep != null) {
+			switch (jobStep.getJobStepState()) {
+			case INITIAL:
+				break;
+			case WAITING_INPUT:
+			case READY:
+				jobStep.setJobStepState(JobStepState.INITIAL);
+				RepositoryService.getJobStepRepository().save(jobStep);
+				break;
+			default:
+				break;
+			}
+		}		
+	}
 }

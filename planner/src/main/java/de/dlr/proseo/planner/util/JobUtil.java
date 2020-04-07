@@ -52,7 +52,7 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				answer = Messages.JOB_HASTOBE_RELEASED;
+				answer = Messages.JOB_INITIAL;
 				break;
 			case RELEASED:
 				// no job step is running
@@ -74,11 +74,11 @@ public class JobUtil {
 				if (allSuspended) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_HOLD;
+					answer = Messages.JOB_SUSPENDED;
 				} else {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
 					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_SUSPENDED;
+					answer = Messages.JOB_HOLD;
 				}
 				break;
 			case COMPLETED:
@@ -116,7 +116,8 @@ public class JobUtil {
 				}
 				Boolean all = true;
 				for (JobStep js : job.getJobSteps()) {
-					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.INITIAL) {
+					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
+						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
 						break;
 					}
@@ -357,6 +358,23 @@ public class JobUtil {
 			}	
 		}
  		return answer;
+	}
+	
+	@Transactional
+	public void setInitialAfterPlan(Job job) {
+		if (job != null) {
+			switch (job.getJobState()) {
+			case INITIAL:
+				for (JobStep js : job.getJobSteps()) {
+					UtilService.getJobStepUtil().setInitialAfterPlan(js);
+				}
+				job.setJobState(JobState.INITIAL);
+				RepositoryService.getJobRepository().save(job);
+				break;
+			default:
+				break;
+			}
+		}		
 	}
 
 }

@@ -4,7 +4,6 @@ public class IngestedProcessingOutput {
 	private long product_id;
 	private String fsType;
 	private String path;
-	private long revision;
 	private String ingestorHttpResponse;
 	/**
 	 * @return the product_id
@@ -41,18 +40,6 @@ public class IngestedProcessingOutput {
 	 */
 	public void setPath(String path) {
 		this.path = path;
-	}
-	/**
-	 * @return the revision
-	 */
-	public long getRevision() {
-		return revision;
-	}
-	/**
-	 * @param revision the revision to set
-	 */
-	public void setRevision(long revision) {
-		this.revision = revision;
 	}
 	/**
 	 * @return the ingestorHttpResponse

@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -38,6 +37,7 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
@@ -225,7 +225,12 @@ public class ProductIngestor {
 		}
 		de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
 		newProductFile.setProcessingFacility(facility);
-		newProductFile.setFilePath((new File(responseFilePaths.get(0))).getParent());
+		String s = responseFilePaths.get(0);
+		int last = s.lastIndexOf('/');
+		if (last > 0) {
+			s = s.substring(0, last);
+		}
+		newProductFile.setFilePath(s);
 		newProductFile.setProductFileName(ingestorProduct.getProductFileName());
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
 			newProductFile.getAuxFileNames().add(auxFile);
@@ -354,8 +359,21 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, modelProduct.getId());
+			String user = "";
+			JobStep js = modelProduct.getJobStep();
+			Product p = modelProduct;
+			while (js == null && p.getEnclosingProduct() != null) {
+				p = p.getEnclosingProduct();
+				js = p.getJobStep();
+			}
+			if (js != null) {
+				String missionCode = js.getJob().getProcessingOrder().getMission().getCode();
+				user = missionCode + "-" + ingestorConfig.getProductionPlannerUser();
+			} else {
+				user = ingestorConfig.getProductionPlannerUser();
+			}
 			RestTemplate restTemplate = rtb.basicAuthentication(
-					ingestorConfig.getProductionPlannerUser(), ingestorConfig.getProductionPlannerPassword()).build();
+					user, ingestorConfig.getProductionPlannerPassword()).build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
