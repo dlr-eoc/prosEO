@@ -3,6 +3,7 @@ package de.dlr.proseo.facmgr.rest.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductFile.StorageType;
 
 
 public class FacmgrUtil {
@@ -16,13 +17,13 @@ public class FacmgrUtil {
 	 * @return an equivalent REST processingFacility or null, if no model ProcessingFacility was given
 	 */
 
-	public static RestFacility toRestFacility(ProcessingFacility modelFacility) {
+	public static RestProcessingFacility toRestFacility(ProcessingFacility modelFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == modelFacility ? "MISSING" : modelFacility.getId()));
 		
 		if (null == modelFacility)
 			return null;
 		
-		RestFacility restFacility = new RestFacility();
+		RestProcessingFacility restFacility = new RestProcessingFacility();
 		
 		restFacility.setId(modelFacility.getId());
 		restFacility.setVersion(Long.valueOf(modelFacility.getVersion()));
@@ -44,6 +45,10 @@ public class FacmgrUtil {
 
 		}	
 		
+		if (null != modelFacility.getDefaultStorageType()) {
+			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
+		}
+		
 		return restFacility;
 		
 	}
@@ -55,7 +60,7 @@ public class FacmgrUtil {
 	 * @return a (roughly) equivalent model Processing Facility
 	 * @throws IllegalArgumentException if the REST facility violates syntax rules for date, enum or numeric values
 	 */
-	public static ProcessingFacility toModelFacility(RestFacility restFacility) {
+	public static ProcessingFacility toModelFacility(RestProcessingFacility restFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
 		
 		if (null == restFacility)
@@ -86,6 +91,10 @@ public class FacmgrUtil {
 			modelFacility.setStorageManagerUrl(restFacility.getStorageManagerUrl());
 
 		}	
+		
+		if (null != restFacility.getDefaultStorageType()) {		
+			modelFacility.setDefaultStorageType(StorageType.valueOf(restFacility.getDefaultStorageType()));
+		}		
 		
 		return modelFacility;
 		

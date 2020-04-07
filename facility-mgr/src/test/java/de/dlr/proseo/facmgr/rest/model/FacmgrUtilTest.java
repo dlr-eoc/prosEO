@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.service.RepositoryService;
 
 
 
@@ -25,9 +27,9 @@ public class FacmgrUtilTest {
 	/* Test facility */
 	private static String[][] testFacilityData = {
 			// id, version, name, desc,processingEngineUrl, storageMangerUrl
-			{ "0", "0", "TestFacility 1", "Processing Facility 1", "https://www.prosEO-ProcFac1.de/kubernetes","https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0"},
-			{ "11", "11", "TestFacility 2", "Processing Facility 2", "https://www.prosEO-ProcFac2.de/kubernetes","https://www.prosEO-ProcFac2.de/proseo/storage-mgr/v1.0"},
-			{ "12", "12", "TestFacility 3", "Processing Facility 3", "https://www.prosEO-ProcFac3.de/kubernetes","https://www.prosEO-ProcFac3.de/proseo/storage-mgr/v1.0"}
+			{ "0", "0", "TestFacility 1", "Processing Facility 1", "https://www.prosEO-ProcFac1.de/kubernetes","https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0", "S3"},
+			{ "11", "11", "TestFacility 2", "Processing Facility 2", "https://www.prosEO-ProcFac2.de/kubernetes","https://www.prosEO-ProcFac2.de/proseo/storage-mgr/v1.0", "POSIX"},
+			{ "12", "12", "TestFacility 3", "Processing Facility 3", "https://www.prosEO-ProcFac3.de/kubernetes","https://www.prosEO-ProcFac3.de/proseo/storage-mgr/v1.0", "OTHER"}
 		};
 
 	/** A logger for this class */
@@ -47,7 +49,7 @@ public class FacmgrUtilTest {
 		testFacility.setDescription(testData[3]);
 		testFacility.setProcessingEngineUrl(testData[4]);
 		testFacility.setStorageManagerUrl(testData[5]);
-
+		testFacility.setDefaultStorageType(StorageType.valueOf(testData[6]));
 		
 		logger.info("Created test facility {}", testFacility.getId());
 		return testFacility;
@@ -84,11 +86,12 @@ public class FacmgrUtilTest {
 	public final void test() {
 		// Create an empty facility
 		ProcessingFacility modelFacility = new ProcessingFacility();
-		RestFacility restFacility = FacmgrUtil.toRestFacility(modelFacility);
+		RestProcessingFacility restFacility = FacmgrUtil.toRestFacility(modelFacility);
 		assertNull("Unexpected name for new facility: ",  restFacility.getName());
 		assertNull("Unexpected description for new facility: ", restFacility.getDescription());
 		assertNull("Unexpected Processing ENgine Url for new facility: ", restFacility.getProcessingEngineUrl());
 		assertNull("Unexpected Storage Manager Url for new facility: ", restFacility.getStorageManagerUrl());
+		assertNull("Unexpected Default Storage Type for new facility: ", restFacility.getDefaultStorageType());
 
 		logger.info("Test copy empty facility OK");
 		
@@ -101,6 +104,7 @@ public class FacmgrUtilTest {
 		assertEquals("Unexpected facility name: ", modelFacility.getName(),restFacility.getName());
 		assertEquals("Unexpected  Processing ENgine Url: ", modelFacility.getProcessingEngineUrl(),restFacility.getProcessingEngineUrl());
 		assertEquals("Unexpected  Storage Manager Url: ", modelFacility.getStorageManagerUrl(),restFacility.getStorageManagerUrl());
+		assertEquals("Unexpected  Default Storage Type: ", modelFacility.getDefaultStorageType().toString(),restFacility.getDefaultStorageType());
 
 		logger.info("Test copy model to REST OK");
 		
@@ -110,6 +114,7 @@ public class FacmgrUtilTest {
 		assertEquals("Name not preserved: ", modelFacility.getName(), copiedModelFacility.getName());
 		assertEquals("Processing ENgine Url not preserved: ", modelFacility.getProcessingEngineUrl(),copiedModelFacility.getProcessingEngineUrl());
 		assertEquals("Storage Manager Url not preserved: ", modelFacility.getStorageManagerUrl(),copiedModelFacility.getStorageManagerUrl());
+		assertEquals("Unexpected  Default Storage Type: ", modelFacility.getDefaultStorageType(),copiedModelFacility.getDefaultStorageType());
 
 		logger.info("Test copy REST to model OK");
 
