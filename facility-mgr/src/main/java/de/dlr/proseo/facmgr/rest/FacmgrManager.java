@@ -255,10 +255,8 @@ public class FacmgrManager {
 		if (modelFacility.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND));
 		}
-		logger.info("Coming here");
 		// Delete the order
 		RepositoryService.getFacilityRepository().deleteById(id);
-		logger.info("Coming here 2");
 
 		// Test whether the deletion was successful
 		modelFacility = RepositoryService.getFacilityRepository().findById(id);

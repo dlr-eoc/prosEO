@@ -254,7 +254,7 @@ public class FacmgrControllerTest {
 	 * Test: Get a facility by ID
 	 * Precondition: A facility in the database
 	 */
-//	@Test
+	@Test
 	public final void getFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -303,7 +303,7 @@ public class FacmgrControllerTest {
 	 * Test: List of all facilities
 	 * 
 	 */
-//	@Test
+	@Test
 	public final void getFacilities() {
 
 
@@ -403,7 +403,7 @@ public class FacmgrControllerTest {
 	 * Precondition: At least one facility with a known ID is in the database
 	 */
 	
-//	@Test
+	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -444,7 +444,7 @@ public class FacmgrControllerTest {
 		assertEquals("Wrong Name: ", facilitytoModify.getName(), getEntity.getBody().getName());
 		assertEquals("Wrong Description: ", facilitytoModify.getDescription(), getEntity.getBody().getDescription());
 		assertEquals("Wrong Processing Engine URL: ", facilitytoModify.getProcessingEngineUrl(), getEntity.getBody().getProcessingEngineUrl());
-		assertEquals("Wrong Deafult storage value: ", facilitytoModify.getDefaultStorageType().toString(), getEntity.getBody().getDefaultStorageType());
+		assertEquals("Wrong Deafult storage type value: ", facilitytoModify.getDefaultStorageType().toString(), getEntity.getBody().getDefaultStorageType());
 		assertEquals("Wrong Storage URL: ",  facilitytoModify.getStorageManagerUrl(), getEntity.getBody().getStorageManagerUrl());
 			
 		// Clean up database

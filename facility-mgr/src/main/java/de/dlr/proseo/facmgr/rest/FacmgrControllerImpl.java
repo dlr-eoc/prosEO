@@ -133,7 +133,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 	@Override
 	public ResponseEntity<RestProcessingFacility> modifyFacility(Long id, RestProcessingFacility restFacility) {
-		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
+		if (logger.isTraceEnabled()) logger.trace(">>> modifyFacility({})", id);
 		try {
 			RestProcessingFacility changedOrder = procFacilityManager.modifyFacility(id, restFacility);
 			HttpStatus httpStatus = (restFacility.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
