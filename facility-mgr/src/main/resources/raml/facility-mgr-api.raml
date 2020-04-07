@@ -24,7 +24,7 @@ securitySchemes:
             the content provided by the requested URL.
 
 types:
-  RestFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
+  RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
 
 resourceTypes:
   standard:
@@ -66,20 +66,20 @@ resourceTypes:
       200:
         body:
           application/json:
-            type: RestFacility[]
+            type: RestProcessingFacility[]
             example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility-list.json
   post:
     description: Create a new processing facility
     displayName: createFacility
     body:
       application/json:
-        type: RestFacility
+        type: RestProcessingFacility
         example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     responses:
       201:
         body:
           application/json:
-            type: RestFacility
+            type: RestProcessingFacility
             example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
   /{id}:
     uriParameters:
@@ -93,20 +93,20 @@ resourceTypes:
         200:
           body:
             application/json:
-              type: RestFacility
+              type: RestProcessingFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     patch:
       description: Update a processing facility by ID
       displayName: modifyFacility
       body:
         application/json:
-          type: RestFacility
+          type: RestProcessingFacility
           example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
       responses:
         200:
           body:
             application/json:
-              type: RestFacility
+              type: RestProcessingFacility
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     delete:
       description: Delete a processing facility by ID
