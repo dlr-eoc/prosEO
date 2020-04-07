@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
-import de.dlr.proseo.facmgr.rest.model.RestFacility;
+import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -100,7 +100,7 @@ public class FacmgrManager {
 		return message;
 	}
 
-	public RestFacility createFacility(RestFacility facility) throws IllegalArgumentException {
+	public RestProcessingFacility createFacility(RestProcessingFacility facility) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createFacility({})", (null == facility ? "MISSING" : facility.getName()));
 		
 		if (null == facility) {
@@ -122,15 +122,15 @@ public class FacmgrManager {
 	 * @throws NoResultException if no facilities matching the given search criteria could be found
 	 */
 	
-	public List<RestFacility> getFacility(String name) {
+	public List<RestProcessingFacility> getFacility(String name) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilities({})", name);
-		List<RestFacility> result = new ArrayList<>();
+		List<RestProcessingFacility> result = new ArrayList<>();
 		
 		if (null == name) {
 			// Simple case: no search criteria set
 			for (ProcessingFacility facility: RepositoryService.getFacilityRepository().findAll()) {
 				if (logger.isDebugEnabled()) logger.debug("Found facility with ID {}", facility.getId());
-				RestFacility resultFacility = FacmgrUtil.toRestFacility(facility);
+				RestProcessingFacility resultFacility = FacmgrUtil.toRestFacility(facility);
 				if (logger.isDebugEnabled()) logger.debug("Created result facilities with ID {}", resultFacility.getId());
 
 				result.add(resultFacility);
@@ -165,7 +165,7 @@ public class FacmgrManager {
 	 * @throws IllegalArgumentException if no order ID was given
 	 * @throws NoResultException if no order with the given ID exists
 	 */
-	public RestFacility getFacilityById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestProcessingFacility getFacilityById(Long id) throws IllegalArgumentException, NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilityById({})", id);
 		
 		if (null == id) {
@@ -191,7 +191,7 @@ public class FacmgrManager {
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws ConcurrentModificationException if the facility has been modified since retrieval by the client
 	 */
-	public RestFacility modifyFacility(Long id, RestFacility restFacility) {
+	public RestProcessingFacility modifyFacility(Long id, RestProcessingFacility restFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyFacility({})", id);
 		
 		if (null == id) {
@@ -225,7 +225,10 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
 		}	
-		
+//		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
+//			facilityChanged = true;
+//			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
+//		}	
 		// Save order only if anything was actually changed
 		if (facilityChanged)	{
 			modelFacility.incrementVersion();
@@ -247,13 +250,16 @@ public class FacmgrManager {
 	public void deleteFacilityById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteFacilityById({})", id);
 
-		// Test whether the order id is valid
+		// Test whether the facility id is valid
 		Optional<ProcessingFacility> modelFacility = RepositoryService.getFacilityRepository().findById(id);
 		if (modelFacility.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND));
 		}
+		logger.info("Coming here");
 		// Delete the order
 		RepositoryService.getFacilityRepository().deleteById(id);
+		logger.info("Coming here 2");
+
 		// Test whether the deletion was successful
 		modelFacility = RepositoryService.getFacilityRepository().findById(id);
 		if (!modelFacility.isEmpty()) {

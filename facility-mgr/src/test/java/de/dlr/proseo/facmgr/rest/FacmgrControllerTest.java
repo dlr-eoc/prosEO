@@ -40,8 +40,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.dlr.proseo.facmgr.FacilityManager;
 import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
-import de.dlr.proseo.facmgr.rest.model.RestFacility;
+import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -80,9 +81,9 @@ public class FacmgrControllerTest {
 	/* Test facility */
 	private static String[][] testFacilityData = {
 			// id, version, name, desc,processingEngineUrl, storageMangerUrl
-			{ "0", "0", "TestFacility 1", "Processing Facility 1", "https://www.prosEO-ProcFac1.de/kubernetes","https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0"},
-			{ "11", "11", "TestFacility 2", "Processing Facility 2", "https://www.prosEO-ProcFac2.de/kubernetes","https://www.prosEO-ProcFac2.de/proseo/storage-mgr/v1.0"},
-			{ "12", "12", "TestFacility 3", "Processing Facility 3", "https://www.prosEO-ProcFac3.de/kubernetes","https://www.prosEO-ProcFac3.de/proseo/storage-mgr/v1.0"}
+			{ "0", "0", "TestFacility 1", "Processing Facility 1", "https://www.prosEO-ProcFac1.de/kubernetes1","https://www.prosEO-ProcFac1.de/proseo/storage-mgr1/v1.0", "S3"},
+			{ "11", "11", "TestFacility 2", "Processing Facility 2", "https://www.prosEO-ProcFac2.de/kubernetes2","https://www.prosEO-ProcFac2.de/proseo/storage-mgr2/v1.0", "POSIX"},
+			{ "12", "12", "TestFacility 3", "Processing Facility 3", "https://www.prosEO-ProcFac3.de/kubernetes3","https://www.prosEO-ProcFac3.de/proseo/storage-mg3r/v1.0", "OTHER"}
 		};
 	
 	/**
@@ -106,6 +107,7 @@ public class FacmgrControllerTest {
 			testFacility.setDescription(testData[3]);
 			testFacility.setProcessingEngineUrl(testData[4]);
 			testFacility.setStorageManagerUrl(testData[5]);
+			testFacility.setDefaultStorageType(StorageType.valueOf(testData[6]));
 			
 			testFacility = RepositoryService.getFacilityRepository().save(testFacility);
 		
@@ -150,7 +152,7 @@ public class FacmgrControllerTest {
 	 * Test: Create a new facility
 	 */
 	@Transactional
-	@Test
+//	@Test
 	public final void testCreateFacility() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -161,7 +163,7 @@ public class FacmgrControllerTest {
 		// Create a facility in the database
 		ProcessingFacility facilityToCreate = createFacility(testFacilityData[0]);
 		testFacilities.add(facilityToCreate);
-		RestFacility restFacility = null;
+		RestProcessingFacility restFacility = null;
 		try {
 			restFacility = FacmgrUtil.toRestFacility(facilityToCreate);
 		} catch (Exception e) {
@@ -172,16 +174,16 @@ public class FacmgrControllerTest {
 		String testUrl = "http://localhost:" + this.port + FACILITY_BASE_URI + "/facilities";
 		logger.info("Testing URL {} / POST", testUrl);
 		
-		ResponseEntity<RestFacility> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.postForEntity(testUrl, restFacility, RestFacility.class);
+		ResponseEntity<RestProcessingFacility> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.postForEntity(testUrl, restFacility, RestProcessingFacility.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());
 		restFacility = postEntity.getBody();
 
 		assertNotEquals("Id should not be 0 (zero): ", 0L, restFacility.getId().longValue());
 
 		testUrl += "/" + restFacility.getId();
-		ResponseEntity<RestFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, RestFacility.class);
+		ResponseEntity<RestProcessingFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProcessingFacility.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 
 		// Clean up database
@@ -203,7 +205,7 @@ public class FacmgrControllerTest {
 	 * Test: Delete a facility by ID
 	 * Precondition: A facility in the database
 	 */
-//	@Test
+	@Test
 	public final void deleteFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -231,8 +233,8 @@ public class FacmgrControllerTest {
 		new TestRestTemplate(config.getUserName(), config.getUserPassword()).delete(testUrl);
 		
 		// Test that the facility is gone
-		ResponseEntity<RestFacility> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, RestFacility.class);
+		ResponseEntity<RestProcessingFacility> entity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProcessingFacility.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.NOT_FOUND, entity.getStatusCode());
 		
 		// Clean up database
@@ -277,8 +279,8 @@ public class FacmgrControllerTest {
 		String testUrl = "http://localhost:" + this.port + FACILITY_BASE_URI + "/facilities/" + facilityToGet.getId();
 		logger.info("Testing URL {} / GET", testUrl);
 		
-    	ResponseEntity<RestFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-						.getForEntity(testUrl, RestFacility.class);
+    	ResponseEntity<RestProcessingFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+						.getForEntity(testUrl, RestProcessingFacility.class);
 				assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 				assertEquals("Wrong orbit ID: ", facilityToGet.getId(), getEntity.getBody().getId().longValue());
 				
@@ -426,23 +428,23 @@ public class FacmgrControllerTest {
 		ProcessingFacility facilitytoModify = testFacilities.get(0);
 		facilitytoModify.setName("Modified_Name");		
 		
-		RestFacility restFacility = FacmgrUtil.toRestFacility(facilitytoModify);		
+		RestProcessingFacility restFacility = FacmgrUtil.toRestFacility(facilitytoModify);		
 
 		String testUrl = "http://localhost:" + this.port  + FACILITY_BASE_URI + "/facilities/" + facilitytoModify.getId();
 		logger.info("Testing URL {} / PATCH : {}", testUrl, restFacility.toString());
 
 		restFacility = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.patchForObject(testUrl, restFacility, RestFacility.class);
+				.patchForObject(testUrl, restFacility, RestProcessingFacility.class);
 		assertNotNull("Modified facility not set", restFacility);
 
 		// Test that the order attribute was changed as expected
-		ResponseEntity<RestFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
-				.getForEntity(testUrl, RestFacility.class);
+		ResponseEntity<RestProcessingFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
+				.getForEntity(testUrl, RestProcessingFacility.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
 		assertEquals("Wrong Name: ", facilitytoModify.getName(), getEntity.getBody().getName());
 		assertEquals("Wrong Description: ", facilitytoModify.getDescription(), getEntity.getBody().getDescription());
 		assertEquals("Wrong Processing Engine URL: ", facilitytoModify.getProcessingEngineUrl(), getEntity.getBody().getProcessingEngineUrl());
-		
+		assertEquals("Wrong Deafult storage value: ", facilitytoModify.getDefaultStorageType().toString(), getEntity.getBody().getDefaultStorageType());
 		assertEquals("Wrong Storage URL: ",  facilitytoModify.getStorageManagerUrl(), getEntity.getBody().getStorageManagerUrl());
 			
 		// Clean up database

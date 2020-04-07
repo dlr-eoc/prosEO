@@ -14,7 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import de.dlr.proseo.facmgr.rest.model.RestFacility;
+import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 
 
 /**
@@ -57,7 +57,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	 */
 
 	@Override
-	public ResponseEntity<RestFacility> createFacility(RestFacility facility) {	
+	public ResponseEntity<RestProcessingFacility> createFacility(RestProcessingFacility facility) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createFacility({})", (null == facility ? "MISSING" : facility.getName()));
 		
 		try {
@@ -74,7 +74,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * @return a response entity with either a list of facilities and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestFacility>> getFacilities(String name) {
+	public ResponseEntity<List<RestProcessingFacility>> getFacilities(String name) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilities( {})",  name);
 		
 		try {
@@ -91,7 +91,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * 		   HTTP status "NOT_FOUND", if no facility with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<RestFacility> getFacilityById(Long id) {
+	public ResponseEntity<RestProcessingFacility> getFacilityById(Long id) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilityById({})", id);
 		try {
 			return new ResponseEntity<>(procFacilityManager.getFacilityById(id), HttpStatus.OK);
@@ -132,10 +132,10 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * 		   HTTP status "NOT_FOUND", if no facility with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<RestFacility> modifyFacility(Long id, RestFacility restFacility) {
+	public ResponseEntity<RestProcessingFacility> modifyFacility(Long id, RestProcessingFacility restFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
 		try {
-			RestFacility changedOrder = procFacilityManager.modifyFacility(id, restFacility);
+			RestProcessingFacility changedOrder = procFacilityManager.modifyFacility(id, restFacility);
 			HttpStatus httpStatus = (restFacility.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
 			return new ResponseEntity<>(changedOrder, httpStatus);
 		} catch (EntityNotFoundException e) {
