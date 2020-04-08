@@ -273,15 +273,24 @@ public class OrderControllerImpl implements OrderController {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
 			Messages msg = orderUtil.resume(order);
-			if (msg.isTrue()) {
+			boolean found = false;
+			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
+				if (kc != null) {
+					found = true;
+					UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+				}
+			}
+			if (!found) {
 				UtilService.getJobStepUtil().checkForJobStepsToRun();
+			}
+			if (msg.isTrue()) {				
 				// canceled
 				RestOrder ro = RestUtil.createRestOrder(order);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
 			} else {
-				UtilService.getJobStepUtil().checkForJobStepsToRun();
 				// already running or at end, could not suspend
 				RestOrder ro = RestUtil.createRestOrder(order);
 				HttpHeaders responseHeaders = new HttpHeaders();
@@ -368,10 +377,10 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Override
 	@Transactional
-	public ResponseEntity<RestOrder> suspendOrder(String orderId) {
+	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
-			Messages msg = orderUtil.suspend(order);
+			Messages msg = orderUtil.suspend(order, force);
 			if (msg.isTrue()) {
 				// canceled
 				RestOrder ro = RestUtil.createRestOrder(order);

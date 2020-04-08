@@ -263,16 +263,11 @@ public class OrderUtil {
 						order.setOrderState(OrderState.COMPLETED);
 						answer = Messages.ORDER_COMPLETED;
 					} else {
-						jobStepUtil.searchForJobStepsToRun(procFacility);
+						// jobStepUtil.searchForJobStepsToRun(procFacility);
 						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;
 					}
-					order = RepositoryService.getOrderRepository().saveAndFlush(order);
-					if (order.getOrderState() == OrderState.PLANNED) {
-						for (Job job : order.getJobs()) {
-							jobUtil.setInitialAfterPlan(job);
-						}
-					}
+					order = RepositoryService.getOrderRepository().save(order);
 				}
 				break;	
 			case PLANNED:	
@@ -396,7 +391,7 @@ public class OrderUtil {
 	}
 	
 	@Transactional
-	public Messages suspend(ProcessingOrder order) {
+	public Messages suspend(ProcessingOrder order, Boolean force) {
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -412,7 +407,7 @@ public class OrderUtil {
 				break;
 			case RELEASED:
 				for (Job job : order.getJobs()) {
-					jobUtil.suspend(job);
+					jobUtil.suspend(job, force);
 				}
 				order.setOrderState(OrderState.PLANNED);
 				RepositoryService.getOrderRepository().save(order);
@@ -422,7 +417,7 @@ public class OrderUtil {
 			case SUSPENDING:
 				Boolean allSuspended = true;
 				for (Job job : order.getJobs()) {
-					allSuspended = jobUtil.suspend(job).isTrue() & allSuspended;
+					allSuspended = jobUtil.suspend(job, force).isTrue() & allSuspended;
 				}
 				if (!allSuspended) {
 					order.setOrderState(OrderState.SUSPENDING);
@@ -573,6 +568,18 @@ public class OrderUtil {
 			}	
 		}
  		return answer;
+	}
+	
+	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
+		if (order != null) {
+			for (Job j : order.getJobs()) {
+				if (!pfList.contains(j.getProcessingFacility())) {
+					pfList.add(j.getProcessingFacility());
+				}
+			}
+		}
+		return pfList;
 	}
 
 }

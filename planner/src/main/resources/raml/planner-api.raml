@@ -153,6 +153,8 @@ resourceTypes:
       patch:
         description: Suspend processing order of id 
         displayName: suspendOrder
+        queryParameters:
+          force?: boolean
         responses:
           200:
             body:
@@ -214,6 +216,8 @@ resourceTypes:
       patch:
         description: Suspend job of id 
         displayName: suspendJob
+        queryParameters:
+          force?: boolean
         responses:
           200:
             body:
@@ -273,6 +277,8 @@ resourceTypes:
       patch:
         description: Suspend job step of id 
         displayName: suspendJobStep
+        queryParameters:
+          force?: boolean
         responses:
           200:
             body:

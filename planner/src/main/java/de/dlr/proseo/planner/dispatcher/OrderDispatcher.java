@@ -368,9 +368,9 @@ public class OrderDispatcher {
 											hasUnsatisfiedInputQueries = true;
 										} 
 									}
-									if (hasUnsatisfiedInputQueries) {
-										jobStep.setJobStepState(JobStepState.WAITING_INPUT);
-									}
+//									if (hasUnsatisfiedInputQueries) {
+//										jobStep.setJobStepState(JobStepState.WAITING_INPUT);
+//									}
 
 									// save all created things
 									if (answer) {
@@ -481,9 +481,9 @@ public class OrderDispatcher {
 					hasUnsatisfiedInputQueries = true;
 				}
 			}
-			if (hasUnsatisfiedInputQueries) {
-				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
-			}
+//			if (hasUnsatisfiedInputQueries) {
+//				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
+//			}
 		}
 	}
 

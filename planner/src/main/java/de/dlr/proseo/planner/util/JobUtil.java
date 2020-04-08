@@ -45,7 +45,7 @@ public class JobUtil {
 	private EntityManager em;
 	
 	@Transactional
-	public Messages suspend(Job job) {
+	public Messages suspend(Job job, Boolean force) {
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -58,7 +58,7 @@ public class JobUtil {
 				// no job step is running
 				// supend all of them
 				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().suspend(js);
+					UtilService.getJobStepUtil().suspend(js, force);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 				RepositoryService.getJobRepository().save(job);
@@ -69,7 +69,7 @@ public class JobUtil {
 				// try to suspend job steps not running
 				Boolean allSuspended = true;
 				for (JobStep js : job.getJobSteps()) {
-					allSuspended = UtilService.getJobStepUtil().suspend(js).isTrue() & allSuspended;
+					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() & allSuspended;
 				}
 				if (allSuspended) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
@@ -359,22 +359,4 @@ public class JobUtil {
 		}
  		return answer;
 	}
-	
-	@Transactional
-	public void setInitialAfterPlan(Job job) {
-		if (job != null) {
-			switch (job.getJobState()) {
-			case INITIAL:
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().setInitialAfterPlan(js);
-				}
-				job.setJobState(JobState.INITIAL);
-				RepositoryService.getJobRepository().save(job);
-				break;
-			default:
-				break;
-			}
-		}		
-	}
-
 }

@@ -34,6 +34,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.planner.kubernetes.KubeJob;
 
 /**
  * Handle job steps 
@@ -80,7 +81,7 @@ public class JobStepUtil {
 	}
 
 	@Transactional
-	public Messages suspend(JobStep js) {
+	public Messages suspend(JobStep js, Boolean force) {
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED
@@ -96,7 +97,23 @@ public class JobStepUtil {
 				answer = Messages.JOBSTEP_SUSPENDED;
 				break;
 			case RUNNING:
-				answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				Boolean deleted = false;
+				if (force != null && force) {
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+						if (kj != null) {
+							deleted = kc.deleteJob(kj.getJobName());
+						}
+					}
+				}
+				if (deleted) {
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+					answer = Messages.JOBSTEP_SUSPENDED;
+					RepositoryService.getJobStepRepository().save(js);
+				} else {
+					answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				}
 				break;
 			case COMPLETED:
 				answer = Messages.JOBSTEP_COMPLETED;
@@ -329,26 +346,29 @@ public class JobStepUtil {
 	@Transactional
 	public void checkJobStepQueries(JobStep js) {
 		Boolean hasUnsatisfiedInputQueries = false;
-		logger.trace("Looking for product queries of job step: " + js.getId());
-		for (ProductQuery pq : js.getInputProductQueries()) {
-			if (!pq.isSatisfied()) {
-				if (productQueryService.executeQuery(pq, false, false)) {
-					js.getOutputProduct().getSatisfiedProductQueries().add(pq);
-					RepositoryService.getProductQueryRepository().save(pq);
-					RepositoryService.getProductRepository().save(js.getOutputProduct());
-				} else {
-					hasUnsatisfiedInputQueries = true;
+		if (   js.getJob() != null 
+			&& (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
+			logger.trace("Looking for product queries of job step: " + js.getId());
+			for (ProductQuery pq : js.getInputProductQueries()) {
+				if (!pq.isSatisfied()) {
+					if (productQueryService.executeQuery(pq, false, false)) {
+						js.getOutputProduct().getSatisfiedProductQueries().add(pq);
+						RepositoryService.getProductQueryRepository().save(pq);
+						RepositoryService.getProductRepository().save(js.getOutputProduct());
+					} else {
+						hasUnsatisfiedInputQueries = true;
+					}
 				}
 			}
-		}
-		if (hasUnsatisfiedInputQueries) {
-			if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
-				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+			if (hasUnsatisfiedInputQueries) {
+				if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+					RepositoryService.getJobStepRepository().save(js);
+				}				
+			} else {
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 				RepositoryService.getJobStepRepository().save(js);
-			}				
-		} else {
-			js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
-			RepositoryService.getJobStepRepository().save(js);
+			}
 		}
 	}
 
@@ -402,21 +422,4 @@ public class JobStepUtil {
 			}
 		}
     }
-	
-	@Transactional
-	public void setInitialAfterPlan(JobStep jobStep) {
-		if (jobStep != null) {
-			switch (jobStep.getJobStepState()) {
-			case INITIAL:
-				break;
-			case WAITING_INPUT:
-			case READY:
-				jobStep.setJobStepState(JobStepState.INITIAL);
-				RepositoryService.getJobStepRepository().save(jobStep);
-				break;
-			default:
-				break;
-			}
-		}		
-	}
 }

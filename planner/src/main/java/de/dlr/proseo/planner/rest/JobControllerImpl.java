@@ -26,9 +26,11 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;
+import de.dlr.proseo.planner.util.UtilService;
 
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to plan
@@ -107,6 +109,12 @@ public class JobControllerImpl implements JobController {
 		if (job != null) {
 			Messages msg = jobUtil.resume(job);
 			if (msg.isTrue()) {
+				if (job.getProcessingFacility() != null) {
+					KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+					if (kc != null) {
+						UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+					}
+				}
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));
@@ -152,10 +160,10 @@ public class JobControllerImpl implements JobController {
 
 	@Transactional
 	@Override 
-	public ResponseEntity<RestJob> suspendJob(String jobId) {
+	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean force) {
 		Job j = this.findJobById(jobId);
 		if (j != null) {
-			Messages msg = jobUtil.suspend(j);
+			Messages msg = jobUtil.suspend(j, force);
 			if (msg.isTrue()) {
 				RestJob pj = RestUtil.createRestJob(j);
 				HttpHeaders responseHeaders = new HttpHeaders();
