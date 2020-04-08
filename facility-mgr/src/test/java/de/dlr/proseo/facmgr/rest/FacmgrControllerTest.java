@@ -152,7 +152,7 @@ public class FacmgrControllerTest {
 	 * Test: Create a new facility
 	 */
 	@Transactional
-//	@Test
+	@Test
 	public final void testCreateFacility() {
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -170,7 +170,7 @@ public class FacmgrControllerTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		
 		String testUrl = "http://localhost:" + this.port + FACILITY_BASE_URI + "/facilities";
 		logger.info("Testing URL {} / POST", testUrl);
 		
@@ -205,7 +205,7 @@ public class FacmgrControllerTest {
 	 * Test: Delete a facility by ID
 	 * Precondition: A facility in the database
 	 */
-	@Test
+//	@Test
 	public final void deleteFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -254,7 +254,7 @@ public class FacmgrControllerTest {
 	 * Test: Get a facility by ID
 	 * Precondition: A facility in the database
 	 */
-	@Test
+//	@Test
 	public final void getFacilityById() {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -303,7 +303,7 @@ public class FacmgrControllerTest {
 	 * Test: List of all facilities
 	 * 
 	 */
-	@Test
+//	@Test
 	public final void getFacilities() {
 
 
@@ -403,7 +403,7 @@ public class FacmgrControllerTest {
 	 * Precondition: At least one facility with a known ID is in the database
 	 */
 	
-	@Test
+//	@Test
 	public final void testModifyOrder() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);

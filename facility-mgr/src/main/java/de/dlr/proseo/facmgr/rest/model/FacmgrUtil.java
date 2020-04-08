@@ -26,8 +26,9 @@ public class FacmgrUtil {
 		RestProcessingFacility restFacility = new RestProcessingFacility();
 		
 		restFacility.setId(modelFacility.getId());
+
 		restFacility.setVersion(Long.valueOf(modelFacility.getVersion()));
-		
+		logger.info("Coming here");
 		if (null != modelFacility.getName()) {
 			restFacility.setName(modelFacility.getName());
 
@@ -49,6 +50,8 @@ public class FacmgrUtil {
 			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
 		}
 		
+		logger.info("Coming here till the end");
+
 		return restFacility;
 		
 	}
@@ -61,7 +64,7 @@ public class FacmgrUtil {
 	 * @throws IllegalArgumentException if the REST facility violates syntax rules for date, enum or numeric values
 	 */
 	public static ProcessingFacility toModelFacility(RestProcessingFacility restFacility) {
-		if (logger.isTraceEnabled()) logger.trace(">>> toRestFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
+		if (logger.isTraceEnabled()) logger.trace(">>> toModelFacility({})", (null == restFacility ? "MISSING" : restFacility.getId()));
 		
 		if (null == restFacility)
 			return null;
