@@ -423,8 +423,8 @@ public class OrderControllerTest {
 	/**
 	 * Test method for {@link de.dlr.proseo.ordermgr.rest.OrderControllerImpl.getOrderById(Long)}.
 	 * 
-	 * Test: Get an Order by ID
-	 * Precondition: At least one order with a known ID is in the database
+	 * Test: Modify an Order 
+	 * Precondition: At least one order is in the database
 	 */
 	@Test
 	public final void testGetOrderById() {
@@ -590,7 +590,7 @@ public class OrderControllerTest {
 			}
 		});
 
-		logger.info("Test OK: Modify orbit");
+		logger.info("Test OK: Modify order");
 	}
 
 
