@@ -711,7 +711,7 @@ public class MissionCommandRunner {
 					return;
 				}
 				try {
-					restOrbit.setStartTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrbit.setStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
@@ -724,7 +724,7 @@ public class MissionCommandRunner {
 					return;
 				}
 				try {
-					restOrbit.setStopTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrbit.setStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}

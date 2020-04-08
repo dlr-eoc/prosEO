@@ -48,7 +48,7 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_FACILITY_NAME = "Facility name (empty field cancels): ";
 	private static final String PROMPT_PROCENG_URL = "Processing engine URL (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_URL = "Storage manager URL (empty field cancels): ";
-	private static final String PROMPT_STORAGE_TYPE = "Default storage typ (empty field cancels): ";
+	private static final String PROMPT_STORAGE_TYPE = "Default storage type (empty field cancels): ";
 	
 	private static final String URI_PATH_FACILITIES = "/facilities";
 	

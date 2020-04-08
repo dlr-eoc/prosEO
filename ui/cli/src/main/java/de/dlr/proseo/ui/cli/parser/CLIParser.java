@@ -12,10 +12,10 @@ import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.ui.cli.CLIConfiguration;
+import de.dlr.proseo.ui.cli.CLIUtil;
 
 /**
  * Parser for the prosEO Command Line Interface
@@ -103,30 +104,44 @@ public class CLIParser {
 	 * @return true, if the value is acceptable for the type, false otherwise
 	 */
 	private boolean isTypeOK(String type, String value) {
-		if ("string".equals(type) && null != value && !"".equals(value))
-			return true;
-		if ("integer".equals(type)) {
-			try {
-				Integer.parseInt(value);
+		switch (type) {
+		case "boolean":
+			if (null == value || "true".equals(value.toLowerCase()) || "false".equals(value.toLowerCase())) {
 				return true;
-			} catch (NumberFormatException e) {
+			} else {
 				return false;
 			}
-		}
-		if ("datetime".equals(type)) {
-			try {
-				Instant.parse(value);
-				return true;
-			} catch (IllegalArgumentException e) {
+		case "string":
+			if (null == value || value.isBlank()) {
 				return false;
-			}
-		}
-		if ("boolean".equals(type)) {
-			if (null == value || "true".equals(value.toLowerCase()) || "false".equals(value.toLowerCase()))
+			} else {
 				return true;
+			}
+		case "integer":
+			if (null == value || value.isBlank()) {
+				return false;
+			} else {
+				try {
+					Integer.parseInt(value);
+					return true;
+				} catch (NumberFormatException e) {
+					return false;
+				}
+			}
+		case "datetime":
+			if (null == value || value.isBlank()) {
+				return false;
+			} else {
+				try {
+					CLIUtil.parseDateTime(value);
+					return true;
+				} catch (DateTimeException e) {
+					return false;
+				}
+			}
+		default:
+			return false;
 		}
-		
-		return false;
 	}
 	
 	private List<ParsedOption> parseMultipleModalOptions(String optionString, CLICommand syntaxCommand) {

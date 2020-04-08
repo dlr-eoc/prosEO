@@ -539,13 +539,16 @@ public class ProcessingOrderMgr {
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param executionTimeFrom earliest order execution time
+	 * @param executionTimeTo latest order execution time
 	 * @return a list of orders
 	 * @throws NoResultException if no orders matching the given search criteria could be found
 	 */
 	
-	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
+	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date startTimeFrom,
+			@DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom, executionTimeTo);
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo);
 		List<RestOrder> result = new ArrayList<>();
 		
 		if (null == mission && null == identifier && (null == productclasses || 0 == productclasses.length) && null == executionTimeFrom && null == executionTimeTo) {
@@ -574,11 +577,17 @@ public class ProcessingOrderMgr {
 				}
 				jpqlQuery += ")";
 			}
-			if (null != executionTimeFrom) {
+			if (null != startTimeFrom) {
 				jpqlQuery += " and p.startTime >= :startTimeFrom";
 			}
+			if (null != startTimeTo) {
+				jpqlQuery += " and p.startTime <= :startTimeTo";
+			}
+			if (null != executionTimeFrom) {
+				jpqlQuery += " and p.executionTime >= :executionTimeFrom";
+			}
 			if (null != executionTimeTo) {
-				jpqlQuery += " and p.stopTime <= :startTimeTo";
+				jpqlQuery += " and p.executionTime <= :executionTimeTo";
 			}
 			Query query = em.createQuery(jpqlQuery);
 			if (null != mission) {
@@ -592,11 +601,17 @@ public class ProcessingOrderMgr {
 					query.setParameter("productClass" + i, productclasses[i]);
 				}
 			}
+			if (null != startTimeFrom) {
+				query.setParameter("startTimeFrom", startTimeFrom.toInstant());
+			}
+			if (null != startTimeTo) {
+				query.setParameter("startTimeTo", startTimeTo.toInstant());
+			}
 			if (null != executionTimeFrom) {
-				query.setParameter("startTimeFrom", executionTimeFrom.toInstant());
+				query.setParameter("executionTimeFrom", executionTimeFrom.toInstant());
 			}
 			if (null != executionTimeTo) {
-				query.setParameter("startTimeTo", executionTimeTo.toInstant());
+				query.setParameter("executionTimeTo", executionTimeTo.toInstant());
 			}
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof ProcessingOrder) {

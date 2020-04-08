@@ -256,6 +256,9 @@ public class JobCommandRunner {
 		/* Check command parameters */
 		// Find the order using the Order Manager
 		RestOrder restOrder = retrieveOrderByIdentifierParameter(showCommand);
+		if (null == restOrder) {
+			return;
+		}
 
 		JobState requestedJobState = null;
 		if (1 < showCommand.getParameters().size()) {
@@ -343,8 +346,9 @@ public class JobCommandRunner {
 		
 		/* Get job ID from command parameters and retrieve the job using Production Planner service */
 		RestJob restJob = retrieveJobByIdParameter(suspendCommand);
-		if (null == restJob)
+		if (null == restJob) {
 			return;
+		}
 		
 		/* Check whether (database) job is in state "RELEASED" or "STARTED", otherwise suspending not allowed */
 		if (!JobState.RELEASED.equals(restJob.getJobState())
@@ -400,8 +404,9 @@ public class JobCommandRunner {
 		
 		/* Get job ID from command parameters and retrieve the job using Production Planner service */
 		RestJob restJob = retrieveJobByIdParameter(resumeCommand);
-		if (null == restJob)
+		if (null == restJob) {
 			return;
+		}
 		
 		/* Check whether (database) job is in state "INITIAL", otherwise resuming not allowed */
 		if (!JobState.INITIAL.equals(restJob.getJobState())) {
@@ -454,8 +459,9 @@ public class JobCommandRunner {
 		
 		/* Get job ID from command parameters and retrieve the job using Production Planner service */
 		RestJob restJob = retrieveJobByIdParameter(cancelCommand);
-		if (null == restJob)
+		if (null == restJob) {
 			return;
+		}
 		
 		/* Check whether (database) job is in state "INITIAL", otherwise cancelling not allowed */
 		if (!JobState.INITIAL.equals(restJob.getJobState())) {
@@ -508,8 +514,9 @@ public class JobCommandRunner {
 		
 		/* Get job ID from command parameters and retrieve the job using Production Planner service */
 		RestJob restJob = retrieveJobByIdParameter(retryCommand);
-		if (null == restJob)
+		if (null == restJob) {
 			return;
+		}
 		
 		/* Check whether (database) job is in state "FAILED", otherwise retrying not allowed */
 		if (!JobState.FAILED.equals(restJob.getJobState())) {
@@ -632,8 +639,9 @@ public class JobCommandRunner {
 
 		/* Get job step ID from command parameters and retrieve the job using Production Planner service */
 		RestJobStep restJobStep = retrieveJobStepByIdParameter(suspendCommand);
-		if (null == restJobStep)
+		if (null == restJobStep) {
 			return;
+		}
 		
 		/* Check whether (database) job step is in state "READY", otherwise suspending not allowed */
 		if (!JobStepState.READY.equals(restJobStep.getJobStepState())
@@ -689,8 +697,9 @@ public class JobCommandRunner {
 		
 		/* Get job step ID from command parameters and retrieve the job using Production Planner service */
 		RestJobStep restJobStep = retrieveJobStepByIdParameter(resumeCommand);
-		if (null == restJobStep)
+		if (null == restJobStep) {
 			return;
+		}
 		
 		/* Check whether (database) job step is in state "READY", otherwise resuming not allowed */
 		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())) {
@@ -743,8 +752,9 @@ public class JobCommandRunner {
 		
 		/* Get job step ID from command parameters and retrieve the job using Production Planner service */
 		RestJobStep restJobStep = retrieveJobStepByIdParameter(cancelCommand);
-		if (null == restJobStep)
+		if (null == restJobStep) {
 			return;
+		}
 		
 		/* Check whether (database) job is in state "INITIAL" or "RUNNING", otherwise cancelling not allowed */
 		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())
@@ -798,8 +808,9 @@ public class JobCommandRunner {
 		
 		/* Get job step ID from command parameters and retrieve the job step using Production Planner service */
 		RestJobStep restJobStep = retrieveJobStepByIdParameter(retryCommand);
-		if (null == restJobStep)
+		if (null == restJobStep) {
 			return;
+		}
 		
 		/* Check whether (database) job step is in state "FAILED", otherwise retrying not allowed */
 		if (!JobStepState.FAILED.equals(restJobStep.getJobStepState())) {

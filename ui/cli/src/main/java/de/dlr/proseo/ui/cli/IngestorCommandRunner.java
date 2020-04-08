@@ -9,7 +9,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -163,7 +162,7 @@ public class IngestorCommandRunner {
 				return;
 			}
 			try {
-				restProduct.setSensingStartTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+				restProduct.setSensingStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
@@ -176,7 +175,7 @@ public class IngestorCommandRunner {
 				return;
 			}
 			try {
-				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
@@ -189,7 +188,7 @@ public class IngestorCommandRunner {
 				return;
 			}
 			try {
-				restProduct.setSensingStopTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
@@ -202,7 +201,7 @@ public class IngestorCommandRunner {
 				return;
 			}
 			try {
-				restProduct.setGenerationTime(OrbitTimeFormatter.format(Instant.parse(response + "Z"))); // no time zone in input expected
+				restProduct.setGenerationTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
 			} catch (DateTimeParseException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
@@ -262,9 +261,9 @@ public class IngestorCommandRunner {
 		
 		for (ParsedOption option: showCommand.getOptions()) {
 			if ("from".equals(option.getName())) {
-				requestURI += "&startTimeFrom=" + formatter.format(Instant.parse(option.getValue()));
+				requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 			} else if ("to".equals(option.getName())) {
-				requestURI += "&startTimeTo=" + formatter.format(Instant.parse(option.getValue()));
+				requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 			}
 		}
 		for (ParsedParameter parameter: showCommand.getParameters()) {

@@ -11,7 +11,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 
 import org.slf4j.Logger;
@@ -26,6 +32,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -35,12 +44,25 @@ import java.util.List;
  */
 public class CLIUtil {
 
+	private static final String MSG_CANNOT_PARSE_DATE_TIME_STRING = "Cannot parse date/time string '%s'";
 	/** YAML file format */
 	public static final String FILE_FORMAT_YAML = "YAML";
 	/** JSON file format */
 	public static final String FILE_FORMAT_JSON = "JSON";
 	/** XML file format */
 	public static final String FILE_FORMAT_XML = "XML";
+
+	/** Lenient date/time parsing pattern */
+	private static Pattern dateTimePattern = Pattern.compile(
+			"(?<year>\\d\\d\\d\\d)-(?<month>\\d\\d)-(?<day>\\d\\d)" + 	// date (groups 1-3)
+			"(?:T(?<hour>\\d\\d)\\:(?<minute>\\d\\d)" + 				// optional hour and minute (groups 4 and 5)
+				"(?:\\:(?<second>\\d\\d)" + 							// optional second (group 6)
+					"(?:\\.(?<frac>\\d{1,6})" + 							// optional fraction of a second (group 7)
+					")?" +
+				")?" +
+			")?" +
+			"(?<zone>[GZz+-].*)?"										// optional time zone (group 8)
+			);
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
@@ -170,10 +192,10 @@ public class CLIUtil {
 				attributeField.set(restObject, Long.parseLong(paramParts[1]));
 			} else if (Date.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Date of the form "yyyy-MM-dd'T'HH:mm:ss"
-				attributeField.set(restObject, Date.from(Instant.parse(paramParts[1] + "Z"))); // no timezone expected
+				attributeField.set(restObject, Date.from(parseDateTime(paramParts[1])));
 			} else if (Instant.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Instant of the form "yyyy-MM-dd'T'HH:mm:ss"
-				attributeField.set(restObject, Instant.parse(paramParts[1] + "Z")); // no timezone expected
+				attributeField.set(restObject, parseDateTime(paramParts[1]));
 			} else if (Boolean.class.isAssignableFrom(attributeField.getType())) {
 				// Parse attribute value as Boolean (true/false)
 				attributeField.set(restObject, Boolean.parseBoolean(paramParts[1]));
@@ -191,6 +213,82 @@ public class CLIUtil {
 			logger.error(message);
 			throw new RuntimeException(message, e);
 		}
+	}
+	
+	/**
+	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby after the following variants 
+	 * are allowed:
+	 * <ul>
+	 *   <li>yyyy-MM-dd</li>
+	 *   <li>yyyy-MM-ddTHH:mm</li>
+	 *   <li>yyyy-MM-ddTHH:mm:ss</li>
+	 *   <li>yyyy-MM-ddTHH:mm:ss.S[SSSSS]</li>
+	 *   <li>any of the above plus a time zone in general, RFC 822 or ISO 8601 format</li>
+	 * </ul>
+	 * Missing parts are set to zero, a missing time zone is set to UTC.
+	 * 
+	 * @param dateTime the date and time string to parse
+	 * @return the parsed point in time
+	 * @throws DateTimeException if the given string cannot be parsed according to the format given above
+	 */
+	public static Instant parseDateTime(String dateTime) throws DateTimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseDateTime({})", dateTime);
+		
+		// Check the format of the input string
+		Matcher m = dateTimePattern.matcher(dateTime);
+		
+		if (!m.matches()) {
+			throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
+		}
+		if (null != m.group("hour") && null == m.group("minute")) {
+			// If an hour is given, a minute must also be specified
+			throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
+		}
+		
+		// Check which parts of the date/time string are available
+		int year = Integer.parseInt(m.group("year"));
+		int month = Integer.parseInt(m.group("month"));
+		int day = Integer.parseInt(m.group("day"));
+		int hour = ( null == m.group("hour") ? 0 : Integer.parseInt(m.group("hour")) );
+		int minute =  (null == m.group("minute") ? 0 : Integer.parseInt(m.group("minute")) );
+		int second = ( null == m.group("second") ? 0 : Integer.parseInt(m.group("second")) );
+		// Nanoseconds need to padded with trailing zeroes
+		int nano = 0;
+		if (null != m.group("frac")) {
+			StringBuilder milliString = new StringBuilder(m.group("frac"));
+			for (int i = milliString.length(); i < 6; ++i) {
+				milliString.append('0');
+			}
+			nano = Integer.parseInt(milliString.toString()) * 1000;
+		}
+		
+		// Check the time zone
+		TimeZone tz = TimeZone.getTimeZone("UTC");
+		if (null != m.group("zone")) {
+			String tzString = m.group("zone");
+			if ("Z".equals(tzString.toUpperCase())) {
+				// do nothing, that's the default
+			} else if (tzString.matches("GMT[+-]\\d\\d?:?\\d?\\d?")) {
+				// Java time zone
+				tz = TimeZone.getTimeZone(tzString);
+			} else if (tzString.matches("[+-]\\d\\d?:?\\d?\\d?")) {
+				// ISO 8601 or RFC 822 time zone
+				tz = TimeZone.getTimeZone("GMT" + tzString);
+			} else {
+				throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
+			}
+		}
+		
+		// Try to create an instant from the given numbers
+		LocalDate date = LocalDate.of(year, month, day);
+		LocalTime time = LocalTime.of(hour, minute, second, nano);
+		ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.of(date, time), tz.toZoneId());
+		Instant result = Instant.from(zonedDateTime);
+		result.minusNanos(0); // force nano component of Instant
+		
+		if (logger.isTraceEnabled()) logger.trace(String.format("... converted input string %s to Instant %s", dateTime, result.toString()));
+		
+		return result;
 	}
 	
 }

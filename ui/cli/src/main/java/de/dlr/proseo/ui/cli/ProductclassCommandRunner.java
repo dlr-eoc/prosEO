@@ -59,13 +59,13 @@ public class ProductclassCommandRunner {
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_TYPE = "Product class name (empty field cancels): ";
+	private static final String PROMPT_VISIBILITY = "Product visibility (I)nternal, R)estricted, P)ublic; empty field cancels): ";
 	private static final String PROMPT_SELECTION_RULE = "Selection rule in Rule Language (empty field cancels, ^D terminates): ";
 
 	private static final String URI_PATH_PRODUCTCLASSES = "/productclasses";
 	private static final String URI_PATH_SELECTIONRULES = "/selectionrules";
 	
 	private static final String PRODUCTCLASSES = "product classes";
-	private static final char[] PROMPT_VISIBILITY = null;
 
 	/** The user manager used by all command runners */
 	@Autowired

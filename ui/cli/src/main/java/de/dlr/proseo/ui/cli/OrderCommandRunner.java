@@ -277,7 +277,7 @@ public class OrderCommandRunner {
 					return;
 				}
 				try {
-					restOrder.setStartTime(java.util.Date.from(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrder.setStartTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
@@ -290,7 +290,7 @@ public class OrderCommandRunner {
 					return;
 				}
 				try {
-					restOrder.setStopTime(java.util.Date.from(Instant.parse(response + "Z"))); // no time zone in input expected
+					restOrder.setStopTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
 				} catch (DateTimeParseException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
@@ -423,9 +423,9 @@ public class OrderCommandRunner {
 		if (showCommand.getParameters().isEmpty()) {
 			for (ParsedOption option: showCommand.getOptions()) {
 				if ("from".equals(option.getName())) {
-					requestURI += "&executionTimeFrom=" + formatter.format(Instant.parse(option.getValue() + "Z")); // no timezone expected
+					requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 				} else if ("to".equals(option.getName())) {
-					requestURI += "&executionTimeTo=" + formatter.format(Instant.parse(option.getValue() + "Z")); // no timezone expected
+					requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 				}
 			}
 		} else {

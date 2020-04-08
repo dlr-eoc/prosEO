@@ -85,17 +85,22 @@ public class OrderControllerImpl implements OrderController {
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param executionTimeFrom earliest order execution time
+	 * @param executionTimeTo latest order execution time
 	 * @return HTTP status "OK" and a list of products or
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date executionTimeFrom,
+	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date startTimeFrom,
+			@DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
 			@DateTimeFormat Date executionTimeTo) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, executionTimeFrom, executionTimeTo);
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses,
+				startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo);
 		
 		try {
 			return new ResponseEntity<>(
-					procOrderManager.getOrders(mission, identifier, productclasses, executionTimeFrom, executionTimeTo), HttpStatus.OK);
+					procOrderManager.getOrders(mission, identifier, productclasses,
+							startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		}
