@@ -93,6 +93,7 @@ public class JobStepUtil {
 			case READY:
 			case WAITING_INPUT:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				answer = Messages.JOBSTEP_SUSPENDED;
 				break;
@@ -109,6 +110,7 @@ public class JobStepUtil {
 				}
 				if (deleted) {
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
 					RepositoryService.getJobStepRepository().save(js);
 				} else {
@@ -138,6 +140,7 @@ public class JobStepUtil {
 			case READY:
 			case WAITING_INPUT:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				answer = Messages.JOBSTEP_CANCELED;
 				break;
@@ -172,6 +175,7 @@ public class JobStepUtil {
 			case WAITING_INPUT:
 			case FAILED:
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				answer = Messages.JOBSTEP_RETRIED;
 				break;
@@ -328,6 +332,7 @@ public class JobStepUtil {
 			case READY:
 				UtilService.getJobUtil().startJob(js.getJob());
 				js.setJobStepState(JobStepState.RUNNING);
+				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				answer = true;
 				break;
@@ -363,10 +368,12 @@ public class JobStepUtil {
 			if (hasUnsatisfiedInputQueries) {
 				if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
 				}				
 			} else {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 			}
 		}

@@ -61,6 +61,7 @@ public class JobUtil {
 					UtilService.getJobStepUtil().suspend(js, force);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_SUSPENDED;
 				break;
@@ -71,6 +72,7 @@ public class JobUtil {
 				for (JobStep js : job.getJobSteps()) {
 					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() & allSuspended;
 				}
+				job.incrementVersion();
 				if (allSuspended) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 					RepositoryService.getJobRepository().save(job);
@@ -124,6 +126,7 @@ public class JobUtil {
 				}
 				if (all) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					answer = Messages.JOB_RETRIED;
 				} else {
@@ -149,6 +152,7 @@ public class JobUtil {
 					UtilService.getJobStepUtil().cancel(js);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.FAILED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_CANCELED;
 				break;
@@ -186,6 +190,7 @@ public class JobUtil {
 					UtilService.getJobStepUtil().resume(js);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_RELEASED;
 				break;
@@ -224,6 +229,7 @@ public class JobUtil {
 			case RELEASED:
 				UtilService.getOrderUtil().startOrder(job.getProcessingOrder());
 				job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = true;
 				break;
@@ -326,6 +332,7 @@ public class JobUtil {
 					Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 					if (!all) {
 						job.setJobState(JobState.INITIAL);
+						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
 						UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());
@@ -343,6 +350,7 @@ public class JobUtil {
 					} else {
 						job.setJobState(JobState.FAILED);
 					}
+					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
 					UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());					
