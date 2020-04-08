@@ -80,7 +80,7 @@ public class BaseWrapper {
 	/**End-Message  of wrapper */
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
 	/**Start-Message  of wrapper */
-	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.05 with JobOrder file {}";
+	private static final String MSG_STARTING_BASE_WRAPPER = "Starting base-wrapper V00.00.07 with JobOrder file {}";
 	/**Invalid Environment Variable message */
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	/**File not readable message */
@@ -531,7 +531,7 @@ public class BaseWrapper {
 	 */
 	private ArrayList<PushedProcessingOutput> pushResults(JobOrder jo) {
 		logger.info("Uploading results to prosEO storage...");
-		logger.info("Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<storageID>/<product_id>/{}/<filename>", WRAPPER_TIMESTAMP);
+		logger.info("Upload File-Pattern is: FS_TYPE://<storageID>/<product_id>/<filename>");
 		AmazonS3 s3 = S3Ops.v1S3Client(ENV_S3_ACCESS_KEY, ENV_S3_SECRET_ACCESS_KEY, ENV_S3_ENDPOINT);
 		String separator = "/";
 		int numberOfOutputs = 0;
@@ -559,7 +559,6 @@ public class BaseWrapper {
 								p.setFsType(FS_TYPE.ALLUXIO.toString());
 								p.setId(Long.parseLong((io.getProductID())));
 								p.setPath(dstPath.toString());
-								p.setRevision(WRAPPER_TIMESTAMP);
 								pushedOutputs.add(p);
 							}
 						} catch(AlluxioException | IOException e) {
@@ -571,7 +570,7 @@ public class BaseWrapper {
 					if(fn.getFSType().equals(FS_TYPE.S3.toString()) && isInteger(io.getProductID())) {
 						try {
 							ArrayList<String> transaction = S3Ops.v1Upload(s3, fn.getFileName(), ENV_S3_STORAGE_ID_OUTPUTS, io.getProductID(), false);
-							if(null != transaction) {
+							if(null != transaction && transaction.size() > 0) {
 								for (String s : transaction) {
 									logger.info("  ... " + s);
 								}
@@ -579,8 +578,7 @@ public class BaseWrapper {
 								PushedProcessingOutput p = new PushedProcessingOutput();
 								p.setFsType(FS_TYPE.S3.toString());
 								p.setId(Long.parseLong((io.getProductID())));
-								p.setPath(ENV_S3_STORAGE_ID_OUTPUTS+separator+io.getProductID()+separator+fn.getFileName());
-								p.setRevision(WRAPPER_TIMESTAMP);
+								p.setPath(transaction.get(0));
 								pushedOutputs.add(p);
 							}
 						} catch ( java.lang.IllegalArgumentException e) {
@@ -672,7 +670,6 @@ public class BaseWrapper {
 				ingest.setProduct_id(p.getId());
 				ingest.setIngestorHttpResponse(singleResponse.gethttpResponse());
 				ingest.setPath(p.getNormedPath() + "/" + p.getFileName());
-				ingest.setRevision(p.getRevision());
 				ingests.add(ingest);
 			}
 			if(singleResponse != null && singleResponse.gethttpCode()!=201) {
@@ -805,7 +802,7 @@ public class BaseWrapper {
 		}
 		logger.info("Upload summary: listing {} Outputs of type `PushedProcessingOutput`", pushedProducts.size());
 		for (PushedProcessingOutput p : pushedProducts) {
-			logger.info("PRODUCT_ID={}, FS_TYPE={}, PATH={}, REVISION={}",p.getId(), p.getFsType(),p.getNormedPath()+p.getFileName(),p.getRevision());
+			logger.info("PRODUCT_ID={}, FS_TYPE={}, PATH={}",p.getId(), p.getFsType(),p.getNormedPath()+"/"+p.getFileName());
 		}
 
 		/** STEP [11] Register pushed products using prosEO-Ingestor REST API */

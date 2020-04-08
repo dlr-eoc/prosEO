@@ -63,6 +63,7 @@ public class OrderUtil {
 					jobUtil.cancel(job);
 				}
 				order.setOrderState(OrderState.FAILED);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
@@ -103,6 +104,7 @@ public class OrderUtil {
 			case APPROVED:
 				// jobs are in initial state, no change
 				order.setOrderState(OrderState.INITIAL);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;				
@@ -125,6 +127,7 @@ public class OrderUtil {
 					}
 				}
 				order.setOrderState(OrderState.INITIAL);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;	
@@ -214,6 +217,7 @@ public class OrderUtil {
 			case INITIAL:
 				// jobs are in initial state, no change
 				order.setOrderState(OrderState.APPROVED);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_APPROVED;
 				break;			
@@ -251,7 +255,7 @@ public class OrderUtil {
 	@Transactional
 	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
 		Messages answer = Messages.FALSE;
-		if (order != null) {
+		if (order != null && procFacility != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
@@ -263,11 +267,12 @@ public class OrderUtil {
 						order.setOrderState(OrderState.COMPLETED);
 						answer = Messages.ORDER_COMPLETED;
 					} else {
-						jobStepUtil.searchForJobStepsToRun(procFacility);
+						// jobStepUtil.searchForJobStepsToRun(procFacility);
 						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;
 					}
-					RepositoryService.getOrderRepository().save(order);
+					order.incrementVersion();
+					order = RepositoryService.getOrderRepository().save(order);
 				}
 				break;	
 			case PLANNED:	
@@ -321,6 +326,7 @@ public class OrderUtil {
 					order.setOrderState(OrderState.RELEASED);
 					answer = Messages.ORDER_RELEASED;
 				}
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				break;	
 			case RELEASED:
@@ -365,6 +371,7 @@ public class OrderUtil {
 				break;				
 			case RELEASED:
 				order.setOrderState(OrderState.RUNNING);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RELEASED;
 				break;				
@@ -391,7 +398,7 @@ public class OrderUtil {
 	}
 	
 	@Transactional
-	public Messages suspend(ProcessingOrder order) {
+	public Messages suspend(ProcessingOrder order, Boolean force) {
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -407,19 +414,21 @@ public class OrderUtil {
 				break;
 			case RELEASED:
 				for (Job job : order.getJobs()) {
-					jobUtil.suspend(job);
+					jobUtil.suspend(job, force);
 				}
 				order.setOrderState(OrderState.PLANNED);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
 			case RUNNING:
 			case SUSPENDING:
-				Boolean oneNotSuspended = true;
+				Boolean allSuspended = true;
 				for (Job job : order.getJobs()) {
-					oneNotSuspended = jobUtil.suspend(job).isTrue() & oneNotSuspended;
+					allSuspended = jobUtil.suspend(job, force).isTrue() & allSuspended;
 				}
-				if (oneNotSuspended) {
+				order.incrementVersion();
+				if (!allSuspended) {
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
@@ -466,13 +475,14 @@ public class OrderUtil {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
-					if (job.getJobState() != JobState.INITIAL) {
+					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
 						break;
 					}
 				}
 				if (all) {
 					order.setOrderState(OrderState.PLANNED);
+					order.incrementVersion();
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_RETRIED;
 				} else {
@@ -507,6 +517,7 @@ public class OrderUtil {
 			case FAILED:
 				// job steps are completed/failed
 				order.setOrderState(OrderState.CLOSED);
+				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CLOSED;
 				break;			
@@ -537,6 +548,7 @@ public class OrderUtil {
 					Boolean all = RepositoryService.getJobRepository().countJobNotFinishedByProcessingOrderId(order.getId()) == 0;
 					if (!all) {
 						order.setOrderState(OrderState.PLANNED);
+						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						em.merge(order);
 						answer = true;
@@ -551,8 +563,10 @@ public class OrderUtil {
 					Boolean completed = RepositoryService.getJobRepository().countJobFailedByProcessingOrderId(order.getId()) == 0;
 					if (completed) {
 						order.setOrderState(OrderState.COMPLETED);
+						order.incrementVersion();
 					} else {
 						order.setOrderState(OrderState.FAILED);
+						order.incrementVersion();
 					}
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);
@@ -568,6 +582,18 @@ public class OrderUtil {
 			}	
 		}
  		return answer;
+	}
+	
+	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
+		if (order != null) {
+			for (Job j : order.getJobs()) {
+				if (!pfList.contains(j.getProcessingFacility())) {
+					pfList.add(j.getProcessingFacility());
+				}
+			}
+		}
+		return pfList;
 	}
 
 }

@@ -6,7 +6,6 @@ public class PushedProcessingOutput {
 	private long id;
 	private String fsType;
 	private String path;
-	private long revision;
 	/**
 	 * @return the id
 	 */
@@ -41,19 +40,11 @@ public class PushedProcessingOutput {
 	 * @param path the path to set
 	 */
 	public void setPath(String path) {
-		this.path = path;
-	}
-	/**
-	 * @return the revision
-	 */
-	public long getRevision() {
-		return revision;
-	}
-	/**
-	 * @param revision the revision to set
-	 */
-	public void setRevision(long revision) {
-		this.revision = revision;
+		if (path != null) {
+			this.path = path.trim();
+		} else {
+			this.path = path;
+		}
 	}
 
 	/**
@@ -77,14 +68,22 @@ public class PushedProcessingOutput {
 		if (this.path == null) {
 			return "";
 		} else {
-			File productFile = new File(this.getPath());
-			String aPath = productFile.getParent();
+			String aPath = this.path;			
+			int last = aPath.lastIndexOf('/');
+			if (last > 0) {
+				aPath = aPath.substring(0, last);
+			}
 			String res = aPath;
 			if (this.fsType.equalsIgnoreCase("s3")) {
 				if (aPath.startsWith("/")) {
 					res = "s3:/" + aPath;
 				} else if (!aPath.startsWith("s3://")) {
-					res = "s3://" + aPath;
+					if (aPath.startsWith("s3:/")) {
+						res = aPath;
+						res = res.replaceAll("s3:/", "s3://");
+					} else {
+						res = "s3://" + aPath;
+					}
 				}
 			} else if (this.fsType.equalsIgnoreCase("alluxio")) {
 				if (aPath.startsWith("/")) {

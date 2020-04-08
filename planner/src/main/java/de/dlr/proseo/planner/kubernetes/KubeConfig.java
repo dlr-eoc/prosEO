@@ -343,6 +343,7 @@ public class KubeConfig {
 		V1DeleteOptions opt = new V1DeleteOptions();
 		opt.setApiVersion("batchV1");
 		opt.setPropagationPolicy("Foreground");
+		opt.setGracePeriodSeconds((long) 0);
 		try {
 			batchApiV1.deleteNamespacedJob(name, namespace, opt, null, null, 0, null, "Foreground");
 		} catch (Exception e) {

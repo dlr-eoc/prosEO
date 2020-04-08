@@ -45,22 +45,23 @@ public class JobUtil {
 	private EntityManager em;
 	
 	@Transactional
-	public Messages suspend(Job job) {
+	public Messages suspend(Job job, Boolean force) {
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				answer = Messages.JOB_HASTOBE_RELEASED;
+				answer = Messages.JOB_INITIAL;
 				break;
 			case RELEASED:
 				// no job step is running
 				// supend all of them
 				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().suspend(js);
+					UtilService.getJobStepUtil().suspend(js, force);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_SUSPENDED;
 				break;
@@ -69,16 +70,17 @@ public class JobUtil {
 				// try to suspend job steps not running
 				Boolean allSuspended = true;
 				for (JobStep js : job.getJobSteps()) {
-					allSuspended = UtilService.getJobStepUtil().suspend(js).isTrue() & allSuspended;
+					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() & allSuspended;
 				}
+				job.incrementVersion();
 				if (allSuspended) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_HOLD;
+					answer = Messages.JOB_SUSPENDED;
 				} else {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
 					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_SUSPENDED;
+					answer = Messages.JOB_HOLD;
 				}
 				break;
 			case COMPLETED:
@@ -116,13 +118,15 @@ public class JobUtil {
 				}
 				Boolean all = true;
 				for (JobStep js : job.getJobSteps()) {
-					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.INITIAL) {
+					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
+						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
 						break;
 					}
 				}
 				if (all) {
 					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					answer = Messages.JOB_RETRIED;
 				} else {
@@ -148,6 +152,7 @@ public class JobUtil {
 					UtilService.getJobStepUtil().cancel(js);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.FAILED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_CANCELED;
 				break;
@@ -185,6 +190,7 @@ public class JobUtil {
 					UtilService.getJobStepUtil().resume(js);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = Messages.JOB_RELEASED;
 				break;
@@ -223,6 +229,7 @@ public class JobUtil {
 			case RELEASED:
 				UtilService.getOrderUtil().startOrder(job.getProcessingOrder());
 				job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
+				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
 				answer = true;
 				break;
@@ -325,6 +332,7 @@ public class JobUtil {
 					Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 					if (!all) {
 						job.setJobState(JobState.INITIAL);
+						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
 						UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());
@@ -342,6 +350,7 @@ public class JobUtil {
 					} else {
 						job.setJobState(JobState.FAILED);
 					}
+					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
 					UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());					
@@ -358,5 +367,4 @@ public class JobUtil {
 		}
  		return answer;
 	}
-
 }

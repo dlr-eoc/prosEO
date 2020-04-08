@@ -295,7 +295,6 @@ public class StorageControllerImpl implements StorageController {
 		}
 
 		RestProductFS response = new RestProductFS();
-		long regTimeStamp = System.currentTimeMillis()/1000;
 		String separator = "/";
 
 		// fetch all storageIDs
@@ -330,10 +329,14 @@ public class StorageControllerImpl implements StorageController {
 
 		//check FS_TYPE of Source
 		SourceStorageType sourceStorageFsType = SourceStorageType.POSIX; // default...
-		if (restProductFS.getSourceStorageType().equals(SourceStorageType.S_3)) sourceStorageFsType=SourceStorageType.S_3;
-		if (restProductFS.getSourceStorageType().equals(SourceStorageType.POSIX)) sourceStorageFsType=SourceStorageType.POSIX;		
+		if (restProductFS.getSourceStorageType().equals(SourceStorageType.S_3)) {
+			sourceStorageFsType=SourceStorageType.S_3;
+		}
+		if (restProductFS.getSourceStorageType().equals(SourceStorageType.POSIX)) {
+			sourceStorageFsType=SourceStorageType.POSIX;		
+		}
 
-
+logger.info(restProductFS.toString());
 
 		// distinguish between requested target Storage FS_Type
 		switch (restProductFS.getTargetStorageType()) {
@@ -352,11 +355,9 @@ public class StorageControllerImpl implements StorageController {
 				/*
 				 * prepare final file/directory prefix within storage S3-storage pattern:
 				 * 
-				 * s3://<storageId>/<productId>/<regTimeStamp>/...<file>
+				 * s3://<storageId>/<productId>/<file>
 				 */				
-				String pref = 
-						restProductFS.getProductId()
-						+separator+regTimeStamp;
+				String pref = restProductFS.getProductId();
 
 				// distinguish between requested source Storage FS_Type
 				switch(sourceStorageFsType) {
@@ -384,7 +385,9 @@ public class StorageControllerImpl implements StorageController {
 						transferSumC.addAll(transferC);
 					}
 
-					if (transferSumC.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					if (transferSumC.size()==0) {
+						return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 					response.setProductId(restProductFS.getProductId());
 					response.setTargetStorageId(cfg.getS3DefaultBucket());
 					response.setRegistered(true);
@@ -466,19 +469,17 @@ public class StorageControllerImpl implements StorageController {
 				 * prepare final file/directory prefix within storage 
 				 * 
 				 * ALLUXIO-storage pattern (UnderFS is S3):
-				 * s3://<underFSBucket>/<underFSPrefix>/<defaultPrefix=storageId>/<productId>/<regTimeStamp>/...<file>
+				 * s3://<underFSBucket>/<underFSPrefix>/<defaultPrefix=storageId>/<productId>/<file>
 				 */		
 				// prefix used for transfer to ALLUXIO-UnderFS
 				String s3Pref = 
 						cfg.getAlluxioUnderFsS3BucketPrefix()
 						+separator+cfg.getAlluxioUnderFsDefaultPrefix()
-						+separator+restProductFS.getProductId()
-						+separator+regTimeStamp;
+						+separator+restProductFS.getProductId();
 				// prefix used for setRegisteredFilePath
 				String alluxioPref = 
 						cfg.getAlluxioUnderFsDefaultPrefix()
-						+separator+restProductFS.getProductId()
-						+separator+regTimeStamp;
+						+separator+restProductFS.getProductId();
 
 				switch(sourceStorageFsType) {
 				case S_3:
@@ -503,7 +504,9 @@ public class StorageControllerImpl implements StorageController {
 								);
 						transferSumC.addAll(transferC);
 					}
-					if (transferSumC.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					if (transferSumC.size()==0) {
+						return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 					response.setProductId(restProductFS.getProductId());
 					response.setTargetStorageId(cfg.getAlluxioUnderFsDefaultPrefix());
 					response.setRegistered(true);
@@ -534,7 +537,9 @@ public class StorageControllerImpl implements StorageController {
 								);
 						transferSumP.addAll(transferP);
 					}
-					if (transferSumP.size()==0) return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					if (transferSumP.size()==0) {
+						return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 					response.setProductId(restProductFS.getProductId());
 					response.setTargetStorageId(cfg.getAlluxioUnderFsDefaultPrefix());
 					response.setRegistered(true);

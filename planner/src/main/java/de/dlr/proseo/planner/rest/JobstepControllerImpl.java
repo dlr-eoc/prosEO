@@ -32,6 +32,7 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.UtilService;
 
 
 /**
@@ -120,6 +121,12 @@ public class JobstepControllerImpl implements JobstepController {
 		if (js != null) {
 			Messages msg = jobStepUtil.resume(js);
 			if (msg.isTrue()) {
+				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+					}
+				}
 				// canceled
 				RestJobStep pjs = RestUtil.createRestJobStep(js);
 				HttpHeaders responseHeaders = new HttpHeaders();
@@ -167,10 +174,10 @@ public class JobstepControllerImpl implements JobstepController {
 	}
 	@Override 
 	@Transactional
-	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId) {
+	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean force) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
-			Messages msg = jobStepUtil.suspend(js); 
+			Messages msg = jobStepUtil.suspend(js, force); 
 			if (msg.isTrue()) {
 				// suspended
 				RestJobStep pjs = RestUtil.createRestJobStep(js);

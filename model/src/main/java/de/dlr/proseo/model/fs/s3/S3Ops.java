@@ -272,6 +272,7 @@ public class S3Ops {
 			for (S3ObjectSummary o : list) {
 				response.add(o.getKey());
 			}
+			logger.info("Copied dir://{} to {}/{}", dir_path, bucket_name, key_prefix);
 
 			return response;
 		} catch (AmazonServiceException e) {
@@ -284,38 +285,50 @@ public class S3Ops {
 	/**
 	 * Upload File to S3 using Multipart-Uploads
 	 * 
+	 * The source file is uploaded to a S3 storage. The target key in the storage is build as:
+	 * s3://<bucket name>/ <target key prefix>/<source file name>
+	 * 
 	 * @param v1S3Client  AmazonS3 v1 client
-	 * @param file_path   String
-	 * @param bucket_name String
-	 * @param key_prefix  String
+	 * @param sourceFilePath The path of source file
+	 * @param targetBucketName The S3 bucket to store the file
+	 * @param targetKeyPrefix The key in the bucket to store the file
 	 * @param pause       Boolean
 	 * @return True/False
 	 */
-	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String file_path, String bucket_name, String key_prefix,
+	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName, String targetKeyPrefix,
 			boolean pause) {
 
 		ArrayList<String> response = new ArrayList<String>();
-		String key_name = null;
-		if (key_prefix != null) {
-			key_name = key_prefix + '/' + file_path;
+		String targetKeyName = null;
+		File f = new File(sourceFilePath);
+		if (f != null && f.isFile()) {
+			String fn = f.getName();
+			if (targetKeyPrefix != null && !targetKeyPrefix.isEmpty()) {
+				targetKeyName = targetKeyPrefix + '/' + fn;
+			} else {
+				targetKeyName = fn;
+			}
+			AmazonS3URI s3uri = new AmazonS3URI(targetBucketName);
+			String bucket = s3uri.getBucket();
+			TransferManager xfer_mgr = TransferManagerBuilder.standard()
+					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
+			try {
+				// logger.info("before upload: " + bucket + ", " + key_name + ", " + f);
+				Upload xfer = xfer_mgr.upload(bucket, targetKeyName, f);
+				// loop with Transfer.isDone()
+				// or block with Transfer.waitForCompletion()
+				V1XferMgrProgress.waitForCompletion(xfer);
+				// logger.info("after upload: " + bucket + ", " + key_name + ", " + f);
+				String result = "s3://" + bucket + (targetKeyName.startsWith("/") ? "" : "/") + targetKeyName;
+				response.add(result);
+				logger.info("Copied file://{} to {}", sourceFilePath, result);
+				xfer_mgr.shutdownNow(false);
+				return response;
+			} catch (AmazonServiceException e) {
+				logger.error(e.getErrorMessage());
+				return null;
+			}
 		} else {
-			key_name = file_path;
-		}
-		AmazonS3URI s3uri = new AmazonS3URI(bucket_name);
-		String bucket = s3uri.getBucket();
-		File f = new File(file_path);
-		TransferManager xfer_mgr = TransferManagerBuilder.standard()
-				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
-		try {
-			Upload xfer = xfer_mgr.upload(bucket, key_name, f);
-			// loop with Transfer.isDone()
-			// or block with Transfer.waitForCompletion()
-			V1XferMgrProgress.waitForCompletion(xfer);
-			response.add(" s3://"+bucket+"/"+key_name+"/"+f);
-			xfer_mgr.shutdownNow(false);
-			return response;
-		} catch (AmazonServiceException e) {
-			logger.error(e.getErrorMessage());
 			return null;
 		}
 	}
@@ -330,28 +343,26 @@ public class S3Ops {
 	 * @param pause       Boolean
 	 * @return True/False
 	 */
-	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String file_path, String bucket_name, String key_prefix,
+	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String sourcePath, String bucket_name, String targetPathPrefix,
 			boolean pause) {
 
 		String s3Prefix = "s3://";
 		String separator = "/";
-		if (!bucket_name.startsWith(s3Prefix))
+		if (!bucket_name.startsWith(s3Prefix)) {
 			bucket_name = s3Prefix + bucket_name;
-		File f = new File(file_path);
+		}
+		File f = new File(sourcePath);
 
-		ArrayList<String> response = new ArrayList<String>();
+		ArrayList<String> response;
 		if (f.isFile()) {
-			response = v1UploadFile(v1S3Client, file_path, bucket_name, key_prefix, false);
+			response = v1UploadFile(v1S3Client, sourcePath, bucket_name, targetPathPrefix, false);
 			if (null != response) {
-				logger.info("Copied file://{} to {}", file_path,
-						bucket_name + separator + key_prefix + separator + file_path);
 				return response;
 			}
 		}
 		if (f.isDirectory()) {
-			response = v1UploadDir(v1S3Client, file_path, bucket_name, key_prefix, true, false);
+			response = v1UploadDir(v1S3Client, sourcePath, bucket_name, targetPathPrefix, true, false);
 			if (null != response) {
-				logger.info("Copied dir://{} to {}/{}", file_path, bucket_name, key_prefix);
 				return response;
 			}
 		}
