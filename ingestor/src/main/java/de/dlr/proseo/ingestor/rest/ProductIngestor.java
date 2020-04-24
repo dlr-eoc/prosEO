@@ -194,7 +194,7 @@ public class ProductIngestor {
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
-		postData.put("targetStorageType", ingestorConfig.getDefaultStorageType());
+		postData.put("targetStorageType", facility.getDefaultStorageType());
 		
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
@@ -206,9 +206,11 @@ public class ProductIngestor {
 		try {
 			responseEntity = restTemplate.postForEntity(storageManagerUrl, postData, Map.class);
 		} catch (RestClientException e) {
+			String message = (null == responseEntity ? e.getMessage() : 
+				responseEntity.getStatusCode().toString() + ": " + responseEntity.getHeaders().getFirst(HTTP_HEADER_WARNING));
 			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
 					ingestorProduct.getProductClass(), facility.getName(),
-					responseEntity.getStatusCode().toString() + ": " + responseEntity.getHeaders().getFirst(HTTP_HEADER_WARNING)));
+					message));
 		}
 		if (!HttpStatus.CREATED.equals(responseEntity.getStatusCode())) {
 			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
