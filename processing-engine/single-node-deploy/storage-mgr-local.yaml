@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: storage-mgr
+spec:
+  selector:
+    matchLabels:
+      name: storage-mgr
+  template:
+    metadata:
+      labels:
+        name: storage-mgr
+        app: storage-mgr
+    spec:
+      imagePullSecrets:
+      - name: proseo-regcred
+      containers:
+        - name: proseo-storage-mgr
+          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT
+          resources:
+            requests:
+              cpu: "1.0"
+              memory: "512M"
+            limits:
+              cpu: "1.5"
+              memory: "1G"
+          ports:
+          - name: mgr-pod-port
+            containerPort: 8080
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: storage-mgr-service
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+  - name: service
+    port: 3000
+    targetPort: mgr-pod-port
+    protocol: TCP
+  selector:
+    name: storage-mgr
