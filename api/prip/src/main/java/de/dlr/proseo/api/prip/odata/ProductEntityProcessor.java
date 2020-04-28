@@ -54,6 +54,7 @@ import org.springframework.web.client.RestTemplate;
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
+import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 
 
 /**
@@ -163,20 +164,14 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	}
 
 	/**
-	 * Get the metadata for a single product from the prosEO Ingestor service
-	 * 
-	 * @param authHeader the Basic Authorization header for logging in to prosEO
-	 * @param productUuid the UUID of the product to retrieve
-	 * @return a product object
-	 * @throws IllegalArgumentException if the authorization header cannot be parsed
-	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws Unauthorized if the user named in the Basic Auth header is not authorized to access the requested product
-	 * @throws RestClientException if the request to the Ingestor fails for some other reason
-	 * @throws RuntimeException if any other exception occurs
+	 * Parse an HTTP authentication header into username and password
+	 * @param authHeader the authentication header to parse
+	 * @return a string array containing the username and the password
+	 * @throws IllegalArgumentException if the authentication header cannot be parsed
 	 */
-	private RestProduct getProduct(String authHeader, String productUuid)
-			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
-		// Parse authentication header
+	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+
 		if (null == authHeader) {
 			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException (message);
@@ -192,6 +187,27 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throw new IllegalArgumentException (message);
 		}
 		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
+		return userPassword;
+	}
+
+	/**
+	 * Get the metadata for a single product from the prosEO Ingestor service
+	 * 
+	 * @param authHeader the Basic Authorization header for logging in to prosEO
+	 * @param productUuid the UUID of the product to retrieve
+	 * @return a product object
+	 * @throws IllegalArgumentException if the authorization header cannot be parsed
+	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
+	 * @throws Unauthorized if the user named in the Basic Auth header is not authorized to access the requested product
+	 * @throws RestClientException if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException if any other exception occurs
+	 */
+	private RestProduct getProduct(String authHeader, String productUuid)
+			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({}, {})", authHeader, productUuid);
+
+		// Parse authentication header
+		String[] userPassword = parseAuthenticationHeader(authHeader);
 		
 		// Request product metadata from Ingestor service
 		
@@ -229,6 +245,63 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		RestProduct restProduct = entity.getBody();
 		if (logger.isDebugEnabled()) logger.debug("... product found: " + restProduct.getId());
 		return restProduct;
+	}
+
+	/**
+	 * Get the URL of the storage manager for a given processing facility from the prosEO Facility Manager service
+	 * 
+	 * @param authHeader the Basic Authorization header for logging in to prosEO
+	 * @param facilityName the name of the processing facility
+	 * @return the URL of the Storage Manager associated with the given processing facility
+	 * @throws IllegalArgumentException if the authorization header cannot be parsed
+	 * @throws HttpClientErrorException if an error is returned from the Facility Manager service
+	 * @throws Unauthorized if the user named in the Basic Auth header is not authorized to access the requested processing facility
+	 * @throws RestClientException if the request to the Facility Manager fails for some other reason
+	 * @throws RuntimeException if any other exception occurs
+	 */
+	private String getStorageManagerUrl(String authHeader, String facilityName)
+			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({}, {})", authHeader, facilityName);
+
+		// Parse authentication header
+		String[] userPassword = parseAuthenticationHeader(authHeader);
+		
+		// Request processing facility data from Facility Manager service
+		
+		// Attempt connection to service
+		ResponseEntity<RestProcessingFacility> entity = null;
+		try {
+			RestTemplate restTemplate = ( null == authHeader ? rtb.build() : rtb.basicAuthentication(userPassword[0], userPassword[1]).build() );
+			String requestUrl = config.getFacilityManagerUrl() + "/facilities/" + facilityName;
+			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
+			entity = restTemplate.getForEntity(requestUrl, RestProcessingFacility.class);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
+			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
+		} catch (HttpClientErrorException.Unauthorized e) {
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			throw e;
+		} catch (RestClientException e) {
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+		
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
+			logger.error(message);
+			throw new RuntimeException(message);
+		}
+		
+		RestProcessingFacility restProcessingFacility = entity.getBody();
+		if (logger.isDebugEnabled()) logger.debug("... processing facility found: " + restProcessingFacility.getId());
+		return restProcessingFacility.getStorageManagerUrl();
 	}
 
 	/**
@@ -339,7 +412,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/**
 	 * Download a product from the prosEO Storage Manager (any Storage Manager instance will do, because in the case
 	 * of multiple copies of the product on various facilities, these should be identical); the Storage Manager is
-	 * identified via the Ingestor component
+	 * identified via the Facility Manager component
 	 * <p>
 	 * This method does not actually return the data stream for the product, but rather redirects to the download
 	 * URI at the Storage Manager
@@ -366,15 +439,18 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText()));
 		}
-		RestProductFile productFile = restProduct.getProductFile().get(0);
+		// Select a random product file to transfer
+		int randomProductIndex = (int) (Math.random() * restProduct.getProductFile().size() - 0.5);
+		RestProductFile productFile = restProduct.getProductFile().get(randomProductIndex);
 		
 		// Get the service URI of the Storage Manager service
-		// TODO Change this into a REST call of the Processing Facility Manager
-		String storageManagerUrl = config.getStorageManagerUrl();
+		String storageManagerUrl = getStorageManagerUrl(request.getHeader(HttpHeaders.AUTHORIZATION), productFile.getProcessingFacilityName());
 		
 		// Build the download URI
 		String productDownloadUri = storageManagerUrl + "/storage/products/" + restProduct.getId();
+
 		// --- TEST Just download "something" ---
+		// TODO Remove test code!!
 		productDownloadUri = "https://www.visit-a-church.info/fileadmin/images/id/rantepao/ri_rantepao_theresia_aussen1280x960_tuk_bassler_20160413.jpg";
 		
 		// Redirect the request to the download URI

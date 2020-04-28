@@ -69,6 +69,46 @@
 			<artifactId>proseo-interfaces</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-model</artifactId>
+            <version>${project.version}</version>
+            <classifier>rest</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>s3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-s3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.alluxio</groupId>
+                    <artifactId>alluxio-core-client-fs</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish.jersey.bundles</groupId>
+                    <artifactId>jaxrs-ri</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>mysql</groupId>
+                    <artifactId>mysql-connector-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 	</dependencies>
 
 	<build>

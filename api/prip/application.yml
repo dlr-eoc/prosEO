@@ -1,26 +1,11 @@
-spring:
-    jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate.ddl-auto: update
-    datasource:
-        url: jdbc:postgresql://proseo-db:5432/proseo
-        username: postgres
-        password: sequel09Master
-    packagesToScan: de.dlr.proseo.model
 logging:
     level:
         root: INFO
         org.springframework.web.servlet: DEBUG
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
         org.apache.olingo: DEBUG
 proseo:
-    ingestor:
-        url: http://localhost:8081/proseo/ingestor/v0.1
-    orderManager:
-        url: http://localhost:8082/proseo/order-mgr/v0.1
-    processorManager:
-        url: http://localhost:8084/proseo/processor-mgr/v0.1
-    storageManager:
-        url: https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/
+    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
+    orderManager.url: http://localhost:8082/proseo/order-mgr/v0.1
+    processorManager.url: http://localhost:8084/proseo/processor-mgr/v0.1
+    facilityManager.url: http://localhost:8087/proseo/facility-mgr/v0.1
