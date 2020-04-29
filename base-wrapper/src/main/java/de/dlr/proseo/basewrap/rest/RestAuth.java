@@ -17,19 +17,25 @@ public class RestAuth implements ClientRequestFilter {
         this.password = password;
     }
 
+    /**
+     * Adds an HTTP Authorization header to the given client request context
+     * 
+     * @param requestContext the client request context
+     * @throws IOException if Base64 encoding of the authorization header text fails
+     */
+    @Override
     public void filter(ClientRequestContext requestContext) throws IOException {
-        MultivaluedMap<String, Object> headers = requestContext.getHeaders();
-        final String basicAuthentication = getBasicAuthentication();
-        headers.add("Authorization", basicAuthentication);
-
-    }
-
-    private String getBasicAuthentication() {
-        String token = this.user + ":" + this.password;
+    	
+    	// Encode username and password in Base64
+        String basicAuthentication = this.user + ":" + this.password;
         try {
-            return "Basic " + DatatypeConverter.printBase64Binary(token.getBytes("UTF-8"));
+        	basicAuthentication = "Basic " + DatatypeConverter.printBase64Binary(basicAuthentication.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException ex) {
-            throw new IllegalStateException("Cannot encode with UTF-8", ex);
+            throw new IOException("Cannot encode authentication string with UTF-8", ex);
         }
+
+        // Add the authorization string as
+        MultivaluedMap<String, Object> headers = requestContext.getHeaders();
+        headers.add("Authorization", basicAuthentication);
     }
 }
