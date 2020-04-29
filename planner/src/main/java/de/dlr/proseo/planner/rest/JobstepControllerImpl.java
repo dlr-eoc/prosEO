@@ -140,8 +140,8 @@ public class JobstepControllerImpl implements JobstepController {
 				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			}
 		}
+		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
 		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -166,8 +166,8 @@ public class JobstepControllerImpl implements JobstepController {
 				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			}
 		}
+		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
 		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -192,8 +192,8 @@ public class JobstepControllerImpl implements JobstepController {
 				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			}
 		}
+		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
 		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);

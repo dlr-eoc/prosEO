@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.rest.model.PodKube;
@@ -63,6 +64,21 @@ public class KubeConfig {
 	private String description;
 	private String url;
 	private String storageManagerUrl;
+	private StorageType storageType;
+	/**
+	 * @return the storageType
+	 */
+	public StorageType getStorageType() {
+		return storageType;
+	}
+
+	/**
+	 * @param storageType the storageType to set
+	 */
+	public void setStorageType(StorageType storageType) {
+		this.storageType = storageType;
+	}
+
 	private ProcessingFacility processingFacility;
 	private int nodesDelta = 0;
 	
@@ -102,6 +118,7 @@ public class KubeConfig {
 		description = pf.getDescription();
 		url = pf.getProcessingEngineUrl();
 		storageManagerUrl = pf.getStorageManagerUrl();
+		storageType = pf.getDefaultStorageType();
 		processingFacility = pf;
 	}
 	
@@ -373,7 +390,7 @@ public class KubeConfig {
 		} catch (ApiException e) {
 			if (e.getCode() == 404) {
 				// do nothing
-				logger.warn(Messages.KUBECONFIG_JOB_NOT_FOUND.formatWithPrefix(name));
+				Messages.KUBECONFIG_JOB_NOT_FOUND.log(logger, name);
 				return null;			
 			} else {
 				e. printStackTrace();

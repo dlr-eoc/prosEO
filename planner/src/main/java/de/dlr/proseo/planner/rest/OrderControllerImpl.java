@@ -96,7 +96,7 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
 		}
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -215,14 +215,12 @@ public class OrderControllerImpl implements OrderController {
 				if (msg.isTrue()) {
 					RestOrder ro = RestUtil.createRestOrder(order);
 					String message = msg.formatWithPrefix(order.getIdentifier());
-					logger.info(message);
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
 				} else {
 					RestOrder ro = RestUtil.createRestOrder(order);
 					String message = msg.formatWithPrefix(order.getIdentifier());
-					logger.warn(message);
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
@@ -231,15 +229,17 @@ public class OrderControllerImpl implements OrderController {
 				String message = "";
 				if (order == null && pf == null) {
 					message = Messages.ORDER_FACILITY_NOT_EXIST.formatWithPrefix(releaseId, facility);
+					Messages.ORDER_FACILITY_NOT_EXIST.log(logger, releaseId, facility);
 				} else {
 					if (order == null) {
 						message = Messages.ORDER_NOT_EXIST.formatWithPrefix(releaseId);
+						Messages.ORDER_NOT_EXIST.log(logger, releaseId);
 					}
 					if (pf == null) {
 						message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(facility);
+						Messages.FACILITY_NOT_EXIST.log(logger, facility);
 					}
 				}
-				logger.error(message);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -248,12 +248,15 @@ public class OrderControllerImpl implements OrderController {
 			String message = "";
 			if (releaseId == null && facility == null) {
 				message = Messages.PARAM_ID_FACILITY_NOT_SET.formatWithPrefix();
+				Messages.PARAM_ID_FACILITY_NOT_SET.log(logger);
 			} else {
 				if (releaseId == null) {
 					message = Messages.PARAM_ID_NOT_SET.formatWithPrefix();
+					Messages.PARAM_ID_NOT_SET.log(logger);
 				}
 				if (facility == null) {
 					message = Messages.PARAM_FACILITY_NOT_SET.formatWithPrefix();
+					Messages.PARAM_FACILITY_NOT_SET.log(logger);
 				}
 			}
 			logger.error(message);
@@ -298,8 +301,8 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -331,8 +334,8 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -364,8 +367,8 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -395,8 +398,8 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -426,8 +429,8 @@ public class OrderControllerImpl implements OrderController {
 				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
 		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);

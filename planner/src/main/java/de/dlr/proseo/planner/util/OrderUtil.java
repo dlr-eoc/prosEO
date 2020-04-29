@@ -88,6 +88,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -152,6 +153,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -204,6 +206,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -248,6 +251,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -299,6 +303,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -350,6 +355,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -393,6 +399,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -450,6 +457,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -495,6 +503,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -527,6 +536,7 @@ public class OrderUtil {
 			default:
 				break;
 			}
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}

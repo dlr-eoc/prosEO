@@ -36,6 +36,7 @@ import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
+import de.dlr.proseo.interfaces.rest.model.FsType;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 
 /**
@@ -196,6 +197,17 @@ public class JobDispatcher {
 				String restUrl = "/joborders";
 				String b64String = jobOrder.buildBase64String(true);
 				RestJoborder jo = new RestJoborder();
+				switch (kubeConfig.getStorageType()) {
+				case S3:
+					jo.setFsType(FsType.S_3);
+					break;
+				case POSIX:
+					// fall through intended
+				default:
+					jo.setFsType(FsType.POSIX);
+					break;					
+				}
+				
 				jo.setJobOrderStringBase64(b64String);
 				logger.info("HTTP Request: " + storageManagerUrl + restUrl);
 				

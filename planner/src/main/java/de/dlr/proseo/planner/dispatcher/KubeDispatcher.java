@@ -50,29 +50,29 @@ public class KubeDispatcher extends Thread {
     		if (kubeConfig != null) {
     			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig);
     		} else {
-    			logger.warn(Messages.KUBEDISPATCHER_CONFIG_NOT_SET.formatWithPrefix());
+    			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
     		}
     	} else {
     		if (productionPlanner != null) {
     			if (wait <= 0) {
-					logger.info(Messages.KUBEDISPATCHER_RUN_ONCE.formatWithPrefix());
+					Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
 					productionPlanner.checkForJobStepsToRun();
     			} else {
     				while (!this.isInterrupted()) {
     					// look for job steps to run
-    					logger.info(Messages.KUBEDISPATCHER_CYCLE.formatWithPrefix());
+    					Messages.KUBEDISPATCHER_CYCLE.log(logger);
     					productionPlanner.checkForJobStepsToRun();
     					try {
     						sleep(wait);
     					}
     					catch(InterruptedException e) {
-    						logger.info(Messages.KUBEDISPATCHER_INTERRUPT.formatWithPrefix());
+    						Messages.KUBEDISPATCHER_INTERRUPT.log(logger);
     						this.interrupt();
     					}
     				}
     			}
     		} else {
-    			logger.warn(Messages.KUBEDISPATCHER_PLANNER_NOT_SET.formatWithPrefix());
+    			Messages.KUBEDISPATCHER_PLANNER_NOT_SET.log(logger);
     		}
     	}
     }   
