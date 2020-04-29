@@ -17,7 +17,7 @@ spec:
       - name: proseo-regcred
       containers:
         - name: proseo-storage-mgr
-          image: proseo-registry.eoc.dlr.de/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-0b52c52
+          image: proseo-registry.eoc.dlr.de/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-403d5d1
           resources:
             requests:
               cpu: "1.0"

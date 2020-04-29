@@ -17,7 +17,7 @@ spec:
       - name: proseo-regcred
       containers:
         - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT
+          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-403d5d1
           resources:
             requests:
               cpu: "1.0"

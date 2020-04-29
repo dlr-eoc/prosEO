@@ -58,7 +58,7 @@ my $mission = {
             'PTM_${fileClass}_${productClass.productType}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStartTime)}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStopTime)}_' .
-            '${(new java.text.DecimalFormat(\\"00000\\")).format(orbit.orbitNumber)}_' .
+            '${(new java.text.DecimalFormat(\\"00000\\")).format(null == orbit.orbitNumber ? 0 : orbit.orbitNumber)}_' .
             '${parameters.get(\\"copernicusCollection\\").getParameterValue()}_' .
             '${configuredProcessor.processor.processorVersion.replaceAll(\\"\\\\\\\\.\\", \\"\\")}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(generationTime)}.nc'
