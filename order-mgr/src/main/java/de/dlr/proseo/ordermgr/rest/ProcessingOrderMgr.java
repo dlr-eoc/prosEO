@@ -358,10 +358,6 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setSliceOverlap(changedOrder.getSliceOverlap());
 		}
-		if (!modelOrder.getPropagateSlicing().equals(changedOrder.getPropagateSlicing())) {
-			orderChanged = true;
-			modelOrder.setPropagateSlicing(changedOrder.getPropagateSlicing());
-		}
 		if (!modelOrder.getFilterConditions().equals(changedOrder.getFilterConditions())) {
 			orderChanged = true;
 			modelOrder.setFilterConditions(changedOrder.getFilterConditions());

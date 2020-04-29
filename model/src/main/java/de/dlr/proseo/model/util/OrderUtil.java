@@ -79,9 +79,6 @@ public class OrderUtil {
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
-		if (null != processingOrder.getPropagateSlicing()) {
-			restOrder.setPropagateSlicing(processingOrder.getPropagateSlicing());
-		}
 
 		if (null != processingOrder.getFilterConditions()) {
 			
@@ -225,10 +222,6 @@ public class OrderUtil {
 		}
 		if (null != restOrder.getSliceOverlap()) {
 			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
-
-		}
-		if (null != restOrder.getPropagateSlicing()) {
-			processingOrder.setPropagateSlicing(restOrder.getPropagateSlicing());
 
 		}
 		

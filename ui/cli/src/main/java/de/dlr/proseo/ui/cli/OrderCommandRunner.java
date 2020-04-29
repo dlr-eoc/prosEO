@@ -603,9 +603,6 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getSliceOverlap()) { // mandatory
 			restOrder.setSliceOverlap(updatedOrder.getSliceOverlap());
 		}
-		if (isDeleteAttributes || null != updatedOrder.getPropagateSlicing()) {
-			restOrder.setPropagateSlicing(updatedOrder.getPropagateSlicing());
-		}
 		if (isDeleteAttributes || !updatedOrder.getFilterConditions().isEmpty()) {
 			restOrder.setFilterConditions(updatedOrder.getFilterConditions());
 		}

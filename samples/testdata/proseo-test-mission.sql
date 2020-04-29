@@ -370,7 +370,6 @@ CREATE TABLE public.processing_order (
     order_state character varying(255),
     output_file_class character varying(255),
     processing_mode character varying(255),
-    propagate_slicing boolean,
     slice_duration bigint,
     slice_overlap bigint,
     slicing_type character varying(255),
@@ -1027,7 +1026,7 @@ COPY public.processing_facility (id, version, default_storage_type, description,
 -- Data for Name: processing_order; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.processing_order (id, version, execution_time, identifier, order_state, output_file_class, processing_mode, propagate_slicing, slice_duration, slice_overlap, slicing_type, start_time, stop_time, uuid, mission_id) FROM stdin;
+COPY public.processing_order (id, version, execution_time, identifier, order_state, output_file_class, processing_mode, slice_duration, slice_overlap, slicing_type, start_time, stop_time, uuid, mission_id) FROM stdin;
 \.
 
 

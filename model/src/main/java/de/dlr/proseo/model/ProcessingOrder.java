@@ -103,9 +103,6 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private Duration sliceOverlap = Duration.ZERO;
 	
-	/** Indicates whether the granularity of the final product(s) shall be propagated to the generation of intermediate products */
-	private Boolean propagateSlicing = false;
-	
 	/** A set of additional conditions to apply to selected products.
 	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
 	@ElementCollection
@@ -334,24 +331,6 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setSliceOverlap(Duration sliceOverlap) {
 		this.sliceOverlap = sliceOverlap;
-	}
-
-	/**
-	 * Indicates whether end product slices shall be propagated to intermediate products
-	 * 
-	 * @return true, if slicing is to be propagated, false otherwise
-	 */
-	public Boolean getPropagateSlicing() {
-		return propagateSlicing;
-	}
-
-	/**
-	 * Sets whether end product slices shall be propagated to intermediate products
-	 * 
-	 * @param propagateSlicing true, if slicing is to be propagated, false otherwise
-	 */
-	public void setPropagateSlicing(Boolean propagateSlicing) {
-		this.propagateSlicing = propagateSlicing;
 	}
 
 	/**

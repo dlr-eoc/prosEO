@@ -488,7 +488,6 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "slicingType": "TIME_SLICE",
     "sliceDuration": 14400,
     "sliceOverlap": 0,
-    "propagateSlicing": false,
     "filterConditions": [
         {
             "key": "revision",

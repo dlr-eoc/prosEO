@@ -9,7 +9,6 @@
     "stopTime": "2019-07-31T12:00:00",
     "slicingType": "ORBIT",
     "sliceOverlap": 0,
-    "propagateSlicing": true,
     "filterConditions": [
         {
             "key": "copernicusCollection",
