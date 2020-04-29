@@ -194,7 +194,7 @@ public class ProductIngestor {
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
-		postData.put("targetStorageType", ingestorConfig.getDefaultStorageType());
+		postData.put("targetStorageType", facility.getDefaultStorageType());
 		
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
