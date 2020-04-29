@@ -14,16 +14,13 @@ logging:
 proseo:
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
-        user: s5p-proseo
-        password: sieb37.Schlaefer
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: none
         password: none
-        defaultStorageType: S3
-    user:
-        name: user
-        password: password
+    testuser:
+        name: testuser
+        password: testpassword
     testinput:
         directory: src/test/resources/IDA_test
         files:

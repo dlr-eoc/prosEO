@@ -25,14 +25,6 @@ public class IngestorConfiguration {
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlannerUrl;
 	
-	/** The user name to use for prosEO Production Planner logins */
-	@Value("${proseo.productionPlanner.user}")
-	private String productionPlannerUser;
-
-	/** The password to use for prosEO Production Planner logins */
-	@Value("${proseo.productionPlanner.password}")
-	private String productionPlannerPassword;
-
 	/** The user name to use for prosEO Storage Manager logins */
 	@Value("${proseo.storageManager.user}")
 	private String storageManagerUser;
@@ -48,24 +40,6 @@ public class IngestorConfiguration {
 	 */
 	public String getProductionPlannerUrl() {
 		return productionPlannerUrl;
-	}
-
-	/**
-	 * Gets the user for production planner logins
-	 * 
-	 * @return the productionPlannerUser
-	 */
-	public String getProductionPlannerUser() {
-		return productionPlannerUser;
-	}
-
-	/**
-	 * Gets the password for production planner logins
-	 * 
-	 * @return the productionPlannerPassword
-	 */
-	public String getProductionPlannerPassword() {
-		return productionPlannerPassword;
 	}
 
 	/**

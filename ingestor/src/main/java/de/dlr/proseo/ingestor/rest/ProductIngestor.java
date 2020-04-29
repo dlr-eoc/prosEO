@@ -23,6 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -37,7 +40,6 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
@@ -164,13 +166,15 @@ public class ProductIngestor {
      * 
      * @param facility the processing facility to ingest products to
      * @param ingestorProduct a product description with product file locations
+     * @param user the username to pass on to the Production Planner
+     * @param password the password to pass on to the Production Planner
      * @return a Json representation of the product updated and/or created including their product files
 	 * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
 	 * @throws ProcessingException if the communication with the Storage Manager or the Production Planner fails
 	 */
-	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct)
+	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException {
-		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {})", facility.getName(), ingestorProduct.getProductClass());
+		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
 		
 		// Create a new product in the metadata database
 		RestProduct newProduct;
@@ -237,17 +241,9 @@ public class ProductIngestor {
 		for (String auxFile: ingestorProduct.getAuxFileNames()) {
 			newProductFile.getAuxFileNames().add(auxFile);
 		}
-		switch (restProductFs.getTargetStorageType()) {
-		case S_3:
-			newProductFile.setStorageType(StorageType.S3);
-			break;
-		case POSIX:
-			newProductFile.setStorageType(StorageType.POSIX);
-			break;
-		case ALLUXIO:
-			newProductFile.setStorageType(StorageType.ALLUXIO);
-			break;
-		default:
+		try {
+			newProductFile.setStorageType(StorageType.valueOf(restProductFs.getTargetStorageType().toString()));
+		} catch (Exception e) {
 			newProductFile.setStorageType(StorageType.OTHER);
 		}
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
@@ -262,12 +258,8 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, newProduct.getId());
-			String ppUser = ingestorConfig.getProductionPlannerUser();
-			if (newProduct.getMissionCode() != null) {
-				ppUser = newProduct.getMissionCode() + "-" + ppUser;
-			}
-			restTemplate = rtb.basicAuthentication(
-					ppUser, ingestorConfig.getProductionPlannerPassword()).build();
+
+			restTemplate = rtb.basicAuthentication(user, password).build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
@@ -324,13 +316,15 @@ public class ProductIngestor {
      * @param productId the ID of the product to retrieve
      * @param facility the processing facility, in which the files have been stored
      * @param productFile the REST product file to store
+     * @param user the username to pass on to the Production Planner
+     * @param password the password to pass on to the Production Planner
      * @return the updated REST product file (with ID and version)
      * @throws IllegalArgumentException if the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
      */
-	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile) throws
-			IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {})", productId, facility, productFile.getProductFileName());
+	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile, String user, String password)
+			throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
@@ -361,21 +355,8 @@ public class ProductIngestor {
 		if (!productQueries.isEmpty()) {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, modelProduct.getId());
-			String user = "";
-			JobStep js = modelProduct.getJobStep();
-			Product p = modelProduct;
-			while (js == null && p.getEnclosingProduct() != null) {
-				p = p.getEnclosingProduct();
-				js = p.getJobStep();
-			}
-			if (js != null) {
-				String missionCode = js.getJob().getProcessingOrder().getMission().getCode();
-				user = missionCode + "-" + ingestorConfig.getProductionPlannerUser();
-			} else {
-				user = ingestorConfig.getProductionPlannerUser();
-			}
-			RestTemplate restTemplate = rtb.basicAuthentication(
-					user, ingestorConfig.getProductionPlannerPassword()).build();
+
+			RestTemplate restTemplate = rtb.basicAuthentication(user, password).build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,

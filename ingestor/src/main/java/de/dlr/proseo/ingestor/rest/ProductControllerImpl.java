@@ -63,7 +63,7 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
-	public ResponseEntity<?> deleteProductById(Long id) {
+	public ResponseEntity<?> deleteProductById(Long id, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductById({})", id);
 		
 		try {
@@ -88,7 +88,7 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo) {
+			Date startTimeFrom, Date startTimeTo, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
 		try {
@@ -108,7 +108,7 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
-	public ResponseEntity<RestProduct> createProduct(de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product) {
+	public ResponseEntity<RestProduct> createProduct(de.dlr.proseo.ingestor.rest.model.@Valid RestProduct product, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
 		
 		try {
@@ -127,7 +127,7 @@ public class ProductControllerImpl implements ProductController {
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists
 	 */
 	@Override
-	public ResponseEntity<RestProduct> getProductById(Long id) {
+	public ResponseEntity<RestProduct> getProductById(Long id, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 		
 		try {
@@ -152,7 +152,7 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "CONFLICT"and an error message, if the product has been modified since retrieval by the client
 	 */
 	@Override
-	public ResponseEntity<RestProduct> modifyProduct(Long id, RestProduct product) {
+	public ResponseEntity<RestProduct> modifyProduct(Long id, RestProduct product, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
 		try {
@@ -178,7 +178,8 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<RestProduct> getProductByUuid(
-			@Pattern(regexp = "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$") String uuid) {
+			@Pattern(regexp = "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$") String uuid,
+			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductByUuid({})", uuid);
 		
 		try {

@@ -22,11 +22,11 @@ import org.springframework.context.annotation.Import;
 public class IngestorTestConfiguration {
 	
 	/** A user name for test */
-	@Value("${proseo.user.name}")
+	@Value("${proseo.testuser.name}")
 	private String userName;
 	
 	/** A password for test */
-	@Value("${proseo.user.password}")
+	@Value("${proseo.testuser.password}")
 	private String userPassword;
 	
 	/** The URL of the prosEO Storage Manager mockup (from the database in the real world) */

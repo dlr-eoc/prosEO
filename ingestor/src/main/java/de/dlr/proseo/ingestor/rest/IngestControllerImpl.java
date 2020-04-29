@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
@@ -43,13 +44,17 @@ public class IngestControllerImpl implements IngestController {
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_FACILITY = 2051;
 	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
+	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 2056;
 	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
 	/* Message string constants */
 	private static final String MSG_INVALID_PROCESSING_FACILITY = "(E%d) Invalid processing facility %s for ingestion";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
+	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
+
 	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested in processing facility %s";
+	
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-ingestor ";
 	
@@ -116,18 +121,42 @@ public class IngestControllerImpl implements IngestController {
 		return responseHeaders;
 	}
 	
+	/**
+	 * Parse an HTTP authentication header into username and password
+	 * @param authHeader the authentication header to parse
+	 * @return a string array containing the username and the password
+	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 */
+	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+
+		if (null == authHeader) {
+			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] authParts = authHeader.split(" ");
+		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
+		return userPassword;
+	}
+
     /**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
      * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated
      * 
      * @param processingFacility the processing facility to ingest products to
      * @param ingestorProducts a list of product descriptions with product file locations
+     * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
      *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts) {
+	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts,
+			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProducts({}, IngestorProduct[{}])", processingFacility, ingestorProducts.size());
 		
 		// Check whether the given processing facility is valid
@@ -145,12 +174,15 @@ public class IngestControllerImpl implements IngestController {
 					HttpStatus.BAD_REQUEST);
 		}
 		
-		List<RestProduct> result = new ArrayList<>();
+		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		
 		// Loop over all products to ingest
+		List<RestProduct> result = new ArrayList<>();
+
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
-				result.add(productIngestor.ingestProduct(facility, ingestorProduct));
+				result.add(productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]));
 			} catch (ProcessingException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (IllegalArgumentException e) {
@@ -168,11 +200,12 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the processing facility to retrieve the product file metadata for
+     * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "OK" and the Json representation of the product file metadata, or
      * 	       HTTP status "NOT_FOUND", if no product file for the given product ID exists at the given processing facility 
      */
 	@Override
-	public ResponseEntity<RestProductFile> getProductFile(Long productId, String processingFacility) {
+	public ResponseEntity<RestProductFile> getProductFile(Long productId, String processingFacility, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductFile({}, {})", productId, processingFacility);
 		
 		// Check whether the given processing facility is valid
@@ -204,14 +237,14 @@ public class IngestControllerImpl implements IngestController {
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, in which the files have been stored
      * @param productFile the REST product file to store
+     * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and the updated REST product file (with ID and version) or
      *         HTTP status "BAD_REQUEST", if the processing facility or the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
      */
 	@Override
 	public ResponseEntity<RestProductFile> ingestProductFile(Long productId, String processingFacility,
-	        @javax.validation.Valid
-	        RestProductFile productFile) {
+	        @javax.validation.Valid RestProductFile productFile, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {})", productId, processingFacility, productFile.getProductFileName());
 		
 		// Check whether the given processing facility is valid
@@ -229,8 +262,13 @@ public class IngestControllerImpl implements IngestController {
 					HttpStatus.BAD_REQUEST);
 		}
 		
+		// Get username and password from HTTP Authentication header for authentication with Production Planner
+		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+		
 		try {
-			return new ResponseEntity<>(productIngestor.ingestProductFile(productId, facility, productFile), HttpStatus.CREATED);
+			return new ResponseEntity<>(productIngestor.ingestProductFile(
+						productId, facility, productFile, userPassword[0], userPassword[1]),
+					HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
@@ -241,13 +279,14 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, from which the files shall be deleted
+     * @param httpHeaders the HTTP request headers (injected)
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility) {
+	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, processingFacility);
 
 		// Check whether the given processing facility is valid
@@ -283,13 +322,15 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, in which the files have been stored
+     * @param httpHeaders the HTTP request headers (injected)
      * @param productFile the REST product file to store
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID or no processing facility with the given name exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "CONFLICT"and an error message, if the product file has been modified since retrieval by the client
      */
 	@Override
-	public ResponseEntity<RestProductFile> modifyProductFile(Long productId, String processingFacility, RestProductFile productFile) {
+	public ResponseEntity<RestProductFile> modifyProductFile(Long productId, String processingFacility, RestProductFile productFile,
+			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProductFile({}, {}, {})", productId, processingFacility, productFile.getProductFileName());
 
 		// Check whether the given processing facility is valid
