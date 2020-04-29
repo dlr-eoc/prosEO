@@ -158,9 +158,9 @@ public class JobDispatcher {
 			}
 
 			// read a job order file for test purposes
-			if (jobOrder != null) {
-				jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);
-			}
+//			if (jobOrder != null) {
+//				jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);
+//			}
 		}
 		return jobOrder;
 	}
