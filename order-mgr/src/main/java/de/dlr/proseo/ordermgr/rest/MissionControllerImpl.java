@@ -247,31 +247,27 @@ public class MissionControllerImpl implements MissionController {
 
 				// Update modified attributes
 				boolean missionChanged = false;
-				//boolean spacecraftChanged = false;
+
 				Mission changedMission = MissionUtil.toModelMission(mission);
 
-				if (!modelMission.getCode().equals(changedMission.getCode())) {
-					missionChanged = true;
-					modelMission.setCode(changedMission.getCode());
-				}
+				// Never change the mission code
 
 				if (!modelMission.getName().equals(changedMission.getName())) {
 					missionChanged = true;
 					modelMission.setName(changedMission.getName());
 				}
-
-				// This does not work, because changedMission never has any spacecrafts! (toModelMission() does not copy spacecrafts, and rightly so!)
-				//			if (!modelMission.getSpacecrafts().equals (changedMission.getSpacecrafts())) {
-				//				missionChanged = true;
-				//				spacecraftChanged = true;
-				//				modelMission.setSpacecrafts(changedMission.getSpacecrafts());
-				//			}
-				//
-				//			if(spacecraftChanged) {
-				//				for(Spacecraft modSpacecraft : changedMission.getSpacecrafts()) {			
-				//					modSpacecraft = RepositoryService.getSpacecraftRepository().save(modSpacecraft);
-				//				}	
-				//			}
+				if (!modelMission.getProductFileTemplate().equals(changedMission.getProductFileTemplate())) {
+					missionChanged = true;
+					modelMission.setProductFileTemplate(changedMission.getProductFileTemplate());
+				}
+				if (!modelMission.getFileClasses().equals(changedMission.getFileClasses()))	{
+					modelMission.getFileClasses().clear();
+					modelMission.getFileClasses().addAll(changedMission.getFileClasses());
+				}
+				if (!modelMission.getProcessingModes().equals(changedMission.getProcessingModes())) {
+					modelMission.getProcessingModes().clear();
+					modelMission.getProcessingModes().addAll(changedMission.getProcessingModes());
+				}
 
 				/* Check for new and changed spacecrafts */
 				Set<Spacecraft> newSpacecrafts = new HashSet<>();
