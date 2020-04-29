@@ -398,7 +398,7 @@ public class KubeJob {
 						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 						searchPod();
 						UtilService.getJobStepUtil().startJobStep(jobStep);
-						logger.info(Messages.KUBEJOB_CREATED.formatWithPrefix(kubeConfig.getId(), jobName));
+						Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
 					}
 				} catch (ApiException e1) {
 					// TODO Auto-generated catch block
@@ -618,7 +618,7 @@ public class KubeJob {
 		if (success) {
 			// delete kube job
 			kubeConfig.deleteJob(aJobName);
-			logger.info(Messages.KUBEJOB_FINISHED.formatWithPrefix(kubeConfig.getId(), aJobName));
+			Messages.KUBEJOB_FINISHED.log(logger, kubeConfig.getId(), aJobName);
 		}
 		return success;
 	}

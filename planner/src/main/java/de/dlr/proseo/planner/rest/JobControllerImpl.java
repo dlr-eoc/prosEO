@@ -78,8 +78,8 @@ public class JobControllerImpl implements JobController {
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(restJobs, responseHeaders, HttpStatus.OK);
 		}
+		Messages.JOBS_FOR_ORDER_NOT_EXIST.log(logger, String.valueOf(orderId));
 		String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.formatWithPrefix(String.valueOf(orderId));
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -95,8 +95,8 @@ public class JobControllerImpl implements JobController {
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
 		}
+		Messages.JOB_NOT_EXIST.log(logger, jobId);
 		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -126,8 +126,8 @@ public class JobControllerImpl implements JobController {
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.JOB_NOT_EXIST.log(logger, jobId);
 		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -151,8 +151,8 @@ public class JobControllerImpl implements JobController {
 				return new ResponseEntity<>(rj, responseHeaders, HttpStatus.NOT_MODIFIED);
 			}
 		}
+		Messages.JOB_NOT_EXIST.log(logger, jobId);
 		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -176,8 +176,8 @@ public class JobControllerImpl implements JobController {
 				return new ResponseEntity<>(pj, responseHeaders, HttpStatus.OK);
 			}
 		}
+		Messages.JOB_NOT_EXIST.log(logger, jobId);
 		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
-		logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);

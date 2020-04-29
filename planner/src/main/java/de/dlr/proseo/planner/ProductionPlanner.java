@@ -169,8 +169,7 @@ public class ProductionPlanner implements CommandLineRunner {
 					// error
 					kubeConfigs.remove(pf.getName().toLowerCase());
 
-					String message = Messages.PLANNER_FACILITY_DISCONNECTED.formatWithPrefix(pf.getName());
-					logger.error(message);
+					String message = Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
 				}
 			}
 			if (kubeConfig == null) {
@@ -178,21 +177,17 @@ public class ProductionPlanner implements CommandLineRunner {
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
-					String message = Messages.PLANNER_FACILITY_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
-					logger.info(message);
-					message = Messages.PLANNER_FACILITY_WORKER_CNT.formatWithPrefix(String.valueOf(kubeConfig.getWorkerCnt()));
-					logger.info(message);
+					String message = Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+					message = Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
 				} else {
-					String message = Messages.PLANNER_FACILITY_NOT_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
-					logger.error(message);
+					String message = Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
 				}
 			}
 		}
 		for (KubeConfig kf : getKubeConfigs()) {
 			if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
 				kubeConfigs.remove(kf.getId().toLowerCase());
-				String message = Messages.PLANNER_FACILITY_DISCONNECTED.formatWithPrefix(kf.getId(), kf.getProcessingEngineUrl());
-				logger.info(message);
+				String message = Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, kf.getId(), kf.getProcessingEngineUrl());
 			}
 		}
 	}
@@ -210,8 +205,7 @@ public class ProductionPlanner implements CommandLineRunner {
 					// error
 					kubeConfigs.remove(pf.getName().toLowerCase());
 
-					String message = Messages.PLANNER_FACILITY_DISCONNECTED.formatWithPrefix(pf.getName());
-					logger.error(message);
+					Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
 				}
 			}
 			if (kubeConfig == null) {
@@ -219,13 +213,10 @@ public class ProductionPlanner implements CommandLineRunner {
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
 					found = true;
-					String message = Messages.PLANNER_FACILITY_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
-					logger.info(message);
-					message = Messages.PLANNER_FACILITY_WORKER_CNT.formatWithPrefix(String.valueOf(kubeConfig.getWorkerCnt()));
-					logger.info(message);
+					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+					Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
 				} else {
-					String message = Messages.PLANNER_FACILITY_NOT_CONNECTED.formatWithPrefix(pf.getName(), pf.getProcessingEngineUrl());
-					logger.error(message);
+					Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
 				}
 			}
 		}

@@ -92,6 +92,7 @@ public class JobUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(job.getId()));
 		}
 		return answer;
 	}
@@ -136,6 +137,7 @@ public class JobUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(job.getId()));
 		}
 		return answer;
 	}
@@ -174,6 +176,7 @@ public class JobUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(job.getId()));
 		}
 		return answer;
 	}
@@ -212,6 +215,7 @@ public class JobUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(job.getId()));
 		}
 		return answer;
 	}
@@ -224,20 +228,29 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
+				Messages.JOB_INITIAL.log(logger, String.valueOf(job.getId()));
+				break;
 			case ON_HOLD:
+				Messages.JOB_HOLD.log(logger, String.valueOf(job.getId()));
 				break;
 			case RELEASED:
 				UtilService.getOrderUtil().startOrder(job.getProcessingOrder());
 				job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
+				Messages.JOB_STARTED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
 			case STARTED:
+				Messages.JOB_ALREADY_STARTED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
 			case COMPLETED:
+				Messages.JOB_ALREADY_COMPLETED.log(logger, String.valueOf(job.getId()));
+				break;
 			case FAILED:
+				Messages.JOB_ALREADY_FAILED.log(logger, String.valueOf(job.getId()));
+				break;
 			default:
 				break;
 			}
@@ -269,10 +282,15 @@ public class JobUtil {
 				}
 				job.setProcessingOrder(null);
 				job.getOutputParameters().clear();
+				Messages.JOB_DELETED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
 			case ON_HOLD:
+				Messages.JOB_ALREADY_HOLD.log(logger, String.valueOf(job.getId()));
+				break;
 			case STARTED:
+				Messages.JOB_ALREADY_STARTED.log(logger, String.valueOf(job.getId()));
+				break;
 			default:
 				break;
 			}
@@ -306,9 +324,11 @@ public class JobUtil {
 				}
 				job.setProcessingOrder(null);
 				job.getOutputParameters().clear();
+				Messages.JOB_DELETED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
 			case STARTED:
+				Messages.JOB_ALREADY_STARTED.log(logger, String.valueOf(job.getId()));
 			default:
 				break;
 			}

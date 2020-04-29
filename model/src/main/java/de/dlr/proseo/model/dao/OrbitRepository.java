@@ -51,4 +51,14 @@ public interface OrbitRepository extends JpaRepository<Orbit, Long> {
 	 */
 	@Query("select o from Orbit o where o.spacecraft.code = ?1 and o.startTime between ?2 and ?3")
 	public List<Orbit> findBySpacecraftCodeAndStartTimeBetween(String spacecraftCode, Instant startTimeFrom, Instant startTimeTo);
+	
+	/**
+	 * Get all orbits for a given spacecraft that start and stop time intersects the given time interval (inclusive)
+	 * @param spacecraftCode the spacecraft code
+	 * @param startTime the start time
+	 * @param stopTime the stop time
+	 * @return a list of orbits satisfying the selection criteria
+	 */
+	@Query("select o from Orbit o where o.spacecraft.code = ?1 and o.stopTime > ?2 and o.startTime < ?3")
+	public List<Orbit> findBySpacecraftCodeAndTimeIntersect(String spacecraftCode, Instant startTime, Instant stopTime);
 }

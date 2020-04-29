@@ -1,10 +1,12 @@
 package de.dlr.proseo.storagemgr.utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
@@ -14,19 +16,26 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.model.fs.s3.S3Ops;
+import de.dlr.proseo.storagemgr.rest.StorageControllerImpl;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import software.amazon.awssdk.services.s3.S3Client;
 
 public class StorageManagerUtils {
 
+	private static Logger logger = LoggerFactory.getLogger(StorageManagerUtils.class);
 
 	/**
 	 * @param s3AccessKey
@@ -61,37 +70,39 @@ public class StorageManagerUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix) throws Exception{
+	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix, String posixMountPoint) throws Exception{
 		// global storages...
 		ArrayList<String[]> storages = new ArrayList<String[]>();
 
 		// fetch S3-buckets
-		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
-		ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
+		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey, s3Endpoint);
+		try {
+			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
 
-		for (String b : s3bckts) {
-			if(b.startsWith(globalStorageIdPrefix)) {
-				String[] s = new String[2];
-				s[0]=b;
-				s[1]=String.valueOf(StorageType.S_3);
-				storages.add(s);
+			for (String b : s3bckts) {
+				if(b.startsWith(globalStorageIdPrefix)) {
+					String[] s = new String[2];
+					s[0]=b;
+					s[1]=String.valueOf(StorageType.S_3);
+					storages.add(s);
+				}
 			}
-		}
-
-		// fetch Alluxio-Prefixes
-		AmazonS3 s3_v1 = S3Ops.v1S3Client(s3AccessKey, s3SecretAccessKey,s3Endpoint);
-		List<String> allxio = S3Ops.listKeysInBucket(s3_v1, alluxioUnderFsBucket,alluxioUnderFsS3BucketPrefix,true);
-
-		for (String p : allxio) {
-			if(p.startsWith(globalStorageIdPrefix)) {
-				String[] s = new String[2];
-				s[0]=p;
-				s[1]=String.valueOf(StorageType.ALLUXIO);
-				storages.add(s);
-			}
+		} catch (Exception e) {
+			logger.warn(String.format("S3 endpoint not connected: %s", s3Endpoint));
 		}
 		s3.close();
-		s3_v1.shutdown();
+		
+		// POSIX
+		File targetFilePath = new File(posixMountPoint);
+		if (!targetFilePath.exists()) {
+			targetFilePath.mkdirs();
+		}
+		if (targetFilePath.exists()) {
+			String[] s = new String[2];
+			s[0]=targetFilePath.getPath();
+			s[1]=String.valueOf(StorageType.POSIX);
+			storages.add(s);
+		}
 		return storages;
 	}
 

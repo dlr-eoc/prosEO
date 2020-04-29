@@ -8,6 +8,7 @@ package de.dlr.proseo.planner.dispatcher;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -69,18 +70,18 @@ public class OrderDispatcher {
 					answer = createJobsForTimeSlices(order, pf);
 					break;
 				default:
-					logger.warn(Messages.ORDER_SLICING_TYPE_NOT_SET.formatWithPrefix(order.getIdentifier()));
+					Messages.ORDER_SLICING_TYPE_NOT_SET.log(logger, order.getIdentifier());
 					break;
 
 				}
 				break;
 			}
 			case RELEASED: {
-				logger.info(Messages.ORDER_WAIT_FOR_RELEASE.formatWithPrefix(order.getIdentifier(), order.getOrderState().toString()));
+				Messages.ORDER_WAIT_FOR_RELEASE.log(logger, order.getIdentifier(), order.getOrderState().toString());
 				break;
 			}
 			default: {
-				logger.info(Messages.ORDER_WAIT_FOR_RELEASE.formatWithPrefix(order.getIdentifier(), order.getOrderState().toString()));
+				Messages.ORDER_WAIT_FOR_RELEASE.log(logger, order.getIdentifier(), order.getOrderState().toString());
 				break;
 			}
 				
@@ -97,15 +98,15 @@ public class OrderDispatcher {
 		// check for needed data
 		if (order.getMission() == null) {
 			answer = false;
-			logger.warn(Messages.ORDER_MISSION_NOT_SET.formatWithPrefix(order.getIdentifier()));
+			Messages.ORDER_MISSION_NOT_SET.log(logger, order.getIdentifier());
 		}
 		if (order.getRequestedConfiguredProcessors().isEmpty()) {
 			answer = false;
-			logger.warn(Messages.ORDER_REQ_PROC_NOT_SET.formatWithPrefix(order.getIdentifier()));
+			Messages.ORDER_REQ_PROC_NOT_SET.log(logger, order.getIdentifier());
 		}
 		if (order.getRequestedProductClasses().isEmpty()) {
 			answer = false;
-			logger.warn(Messages.ORDER_REQ_PROD_CLASS_NOT_SET.formatWithPrefix(order.getIdentifier()));
+			Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -116,7 +117,7 @@ public class OrderDispatcher {
 		List<Orbit> orbits = order.getRequestedOrbits();
 		try {
 			if (orbits.isEmpty()) {
-				logger.warn(Messages.ORDER_REQ_ORBIT_NOT_SET.formatWithPrefix(order.getIdentifier()));
+				Messages.ORDER_REQ_ORBIT_NOT_SET.log(logger, order.getIdentifier());
 				answer = false;
 			} else {
 				// create a job for each orbit
@@ -125,14 +126,14 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					logger.warn(Messages.ORDER_REQ_PROD_CLASS_NOT_SET.formatWithPrefix(order.getIdentifier()));
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
 
 					// configured processor
 					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
 					if (configuredProcessors.isEmpty()) {
-						logger.warn(Messages.ORDER_REQ_CON_PROC_NOT_SET.formatWithPrefix(order.getIdentifier()));
+						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
 					} else {
 						// create jobs
@@ -162,7 +163,7 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				logger.warn(Messages.ORDER_REQ_DAY_NOT_SET.formatWithPrefix(order.getIdentifier()));
+				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
 				answer = false;
 			} else {
 				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
@@ -170,14 +171,14 @@ public class OrderDispatcher {
 				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					logger.warn(Messages.ORDER_REQ_PROD_CLASS_NOT_SET.formatWithPrefix(order.getIdentifier()));
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
 
 					// configured processor
 					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
 					if (configuredProcessors.isEmpty()) {
-						logger.warn(Messages.ORDER_REQ_CON_PROC_NOT_SET.formatWithPrefix(order.getIdentifier()));
+						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
 					} else {
 						// create jobs
@@ -209,7 +210,7 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null || order.getSliceDuration() == null) {
-				logger.warn(Messages.ORDER_REQ_TIMESLICE_NOT_SET.formatWithPrefix(order.getIdentifier()));
+				Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
 				answer = false;
 			} else {
 				startT = order.getStartTime();
@@ -217,14 +218,14 @@ public class OrderDispatcher {
 				sliceStopT = startT.plus(order.getSliceDuration());
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					logger.warn(Messages.ORDER_REQ_PROD_CLASS_NOT_SET.formatWithPrefix(order.getIdentifier()));
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
 
 					// configured processor
 					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
 					if (configuredProcessors.isEmpty()) {
-						logger.warn(Messages.ORDER_REQ_CON_PROC_NOT_SET.formatWithPrefix(order.getIdentifier()));
+						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
 					} else {
 						// create jobs
@@ -253,7 +254,7 @@ public class OrderDispatcher {
 
 		try {
 			if (orbit == null && (startT == null || stopT == null)) {
-				logger.warn(Messages.ORDER_REQ_ORBIT_OR_TIME_NOT_SET.formatWithPrefix(order.getIdentifier()));
+				Messages.ORDER_REQ_ORBIT_OR_TIME_NOT_SET.log(logger, order.getIdentifier());
 				answer = false;
 			} else {
 				// create a job for each orbit
@@ -262,14 +263,14 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					logger.warn(Messages.ORDER_REQ_PROD_CLASS_NOT_SET.formatWithPrefix(order.getIdentifier()));
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
 
 					// configured processor
 					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
 					if (configuredProcessors.isEmpty()) {
-						logger.warn(Messages.ORDER_REQ_CON_PROC_NOT_SET.formatWithPrefix(order.getIdentifier()));
+						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
 					} else {
 
@@ -288,6 +289,7 @@ public class OrderDispatcher {
 							job.setStopTime(stopT);
 							job.setProcessingOrder(order);
 							job.setProcessingFacility(pf);
+							List <JobStep> allJobSteps = new ArrayList<JobStep>();
 							// for each product class
 							for (ProductClass productClass : productClasses) {
 								// create job step(s)
@@ -352,26 +354,22 @@ public class OrderDispatcher {
 									// check all queries for existing product definition (has not to be created!)
 									List <JobStep> jobSteps = new ArrayList<JobStep>();
 									jobSteps.add(jobStep);
-									Boolean hasUnsatisfiedInputQueries = false;
+									allJobSteps.add(jobStep);
 									for (ProductQuery pq : jobStep.getInputProductQueries()) {
 										if (productQueryService.executeQuery(pq, false, true)) {
 											// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);							
 										} else {
-											// create job step to build product.
+											// otherwise create job step to build product.
 											// todo how to find configured processor?
-
 											createJobStepForProduct(job,
 													pq.getRequestedProductClass(),
 													configuredProcessors,
 													jobSteps,
+													allJobSteps,
 													products);
-											hasUnsatisfiedInputQueries = true;
 										} 
 									}
-//									if (hasUnsatisfiedInputQueries) {
-//										jobStep.setJobStepState(JobStepState.WAITING_INPUT);
-//									}
-
+									
 									// save all created things
 									if (answer) {
 										job = RepositoryService.getJobRepository().save(job);
@@ -387,11 +385,6 @@ public class OrderDispatcher {
 												int bla = 1;
 											}
 										}
-										//									for (Product p : products) {
-										//										if (p.getEnclosingProduct() == null) {
-										//											RepositoryService.getProductRepository().save(p);
-										//										}
-										//									}
 									}
 								}
 							}
@@ -407,7 +400,7 @@ public class OrderDispatcher {
 		return answer;
 	}
 
-	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, List<JobStep> jobStepList, List<Product> allProducts) {
+	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts) {
 
 
 		JobStep jobStep = new JobStep();
@@ -432,58 +425,71 @@ public class OrderDispatcher {
 			
 		}
 		if (configuredProcessor == null ) {
-			logger.warn(Messages.ORDERDISP_NO_CONF_PROC.formatWithPrefix(rootProductClass.getProductType()));
+			Messages.ORDERDISP_NO_CONF_PROC.log(logger, rootProductClass.getProductType());
 			jobStep = null;
 		} else {
-			jobStepList.add(jobStep);
-			// now we have all product classes, create related products
-			// also create job steps with queries related to product class
-			// collect created products
-			List <Product> products = new ArrayList<Product>();
+			Boolean found = false;
+			for (JobStep i : allJobStepList) {
+				if (i.getOutputProduct().getProductClass().equals(rootProductClass)) {
+					found = true;
+					break;
+				}
+			}
+			if (found) {
+				jobStep = null;
+			} else {
+				jobStepList.add(jobStep);
+				allJobStepList.add(jobStep);
+				// now we have all product classes, create related products
+				// also create job steps with queries related to product class
+				// collect created products
+				List <Product> products = new ArrayList<Product>();
 
-			Product rootProduct = createProducts(rootProductClass, 
-					null, 
-					configuredProcessor, 
-					job.getOrbit(), 
-					job,
-					jobStep, 
-					job.getProcessingOrder().getOutputFileClass(), 
-					job.getStartTime(), 
-					job.getStopTime(), 
-					products);
-			// now we have to create the product queries for job step.
+				Product rootProduct = createProducts(rootProductClass, 
+						null, 
+						configuredProcessor, 
+						job.getOrbit(), 
+						job,
+						jobStep, 
+						job.getProcessingOrder().getOutputFileClass(), 
+						job.getStartTime(), 
+						job.getStopTime(), 
+						products);
+				// now we have to create the product queries for job step.
 
-			for (Product p : products) {
-				for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
-					ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
-					if (!jobStep.getInputProductQueries().contains(pq)) {
-						jobStep.getInputProductQueries().add(pq);
+				for (Product p : products) {
+					for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
+						ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+						if (!jobStep.getInputProductQueries().contains(pq)) {
+							jobStep.getInputProductQueries().add(pq);
+						}
 					}
 				}
-			}
-			allProducts.addAll(products);
-			// this means also to create new job steps for products which are not satisfied
-			// check all queries for existing product definition (has not to be created!)
+				allProducts.addAll(products);
+				// this means also to create new job steps for products which are not satisfied
+				// check all queries for existing product definition (has not to be created!)
 
-			Boolean hasUnsatisfiedInputQueries = false;
-			for (ProductQuery pq : jobStep.getInputProductQueries()) {
-				if (productQueryService.executeQuery(pq, false, true)) {
-					// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
-				} else {
-					// create job step to build product.
-					// todo how to find configured processor?
+				Boolean hasUnsatisfiedInputQueries = false;
+				for (ProductQuery pq : jobStep.getInputProductQueries()) {
+					if (productQueryService.executeQuery(pq, false, true)) {
+						// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
+					} else {
+						// create job step to build product.
+						// todo how to find configured processor?
 
-					createJobStepForProduct(job,
-							pq.getRequestedProductClass(),
-							configuredProcessors,
-							jobStepList,
-							allProducts);
-					hasUnsatisfiedInputQueries = true;
+						createJobStepForProduct(job,
+								pq.getRequestedProductClass(),
+								configuredProcessors,
+								jobStepList,
+								allJobStepList,
+								allProducts);
+						hasUnsatisfiedInputQueries = true;
+					}
 				}
+				//			if (hasUnsatisfiedInputQueries) {
+				//				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
+				//			}
 			}
-//			if (hasUnsatisfiedInputQueries) {
-//				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
-//			}
 		}
 	}
 

@@ -78,14 +78,31 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
-	
+
 	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
 	private String alluxioUnderFsDefaultPrefix;
 	
+	@Value("${proseo.posix.mountPoint}")
+	private String posixMountPoint;
 	
 	
 	
 	
+	
+	/**
+	 * @return the posixMountPoint
+	 */
+	public String getPosixMountPoint() {
+		return posixMountPoint;
+	}
+
+	/**
+	 * @param posixMountPoint the posixMountPoint to set
+	 */
+	public void setPosixMountPoint(String posixMountPoint) {
+		this.posixMountPoint = posixMountPoint;
+	}
+
 	/**
 	 * @return the alluxioUnderFsDefaultPrefix
 	 */

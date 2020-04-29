@@ -126,6 +126,7 @@ public class JobStepUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(js.getId()));
 		}
 		return answer;
 	}
@@ -156,6 +157,7 @@ public class JobStepUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(js.getId()));
 		}
 		return answer;
 	}
@@ -182,6 +184,7 @@ public class JobStepUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(js.getId()));
 		}
 		return answer;
 	}
@@ -238,9 +241,12 @@ public class JobStepUtil {
 				}
 				js.getInputProductQueries().clear();
 				// RepositoryService.getJobStepRepository().delete(js);
+
+				Messages.JOBSTEP_DELETED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
 			case RUNNING:
+				Messages.JOBSTEP_ALREADY_RUNNING.log(logger, String.valueOf(js.getId()));
 				break;
 			default:
 				break;
@@ -277,6 +283,7 @@ public class JobStepUtil {
 				}
 				js.getInputProductQueries().clear();
 				// RepositoryService.getJobStepRepository().delete(js);
+				Messages.JOBSTEP_DELETED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
 			default:
@@ -316,6 +323,7 @@ public class JobStepUtil {
 			default:
 				break;
 			}
+			answer.log(logger, String.valueOf(js.getId()));
 		}
 		return answer;
 	}
@@ -334,6 +342,7 @@ public class JobStepUtil {
 				js.setJobStepState(JobStepState.RUNNING);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				Messages.JOBSTEP_STARTED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
 			case RUNNING:

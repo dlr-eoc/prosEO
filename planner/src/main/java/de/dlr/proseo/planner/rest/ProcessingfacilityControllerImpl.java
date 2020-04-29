@@ -67,14 +67,14 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getDescription(),
 						kc.getProcessingEngineUrl(),
 						kc.getStorageManagerUrl(),
-						StorageType.S_3.toString()));
+						kc.getStorageType().toString()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(l, responseHeaders, HttpStatus.OK);
 		}
+		Messages.FACILITY_NOT_DEFINED.log(logger);
     	String message = Messages.FACILITY_NOT_DEFINED.formatWithPrefix();
-    	logger.error(message);
     	HttpHeaders responseHeaders = new HttpHeaders();
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
     	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -97,13 +97,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					aKubeConfig.getDescription(),
 					aKubeConfig.getProcessingEngineUrl(),
 					aKubeConfig.getStorageManagerUrl(),
-					StorageType.S_3.toString());
+					aKubeConfig.getStorageType().toString());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
 		} else {
+			Messages.FACILITY_NOT_EXIST.log(logger, name);
 	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
-	    	logger.error(message);
 	    	HttpHeaders responseHeaders = new HttpHeaders();
 	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
@@ -129,13 +129,13 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					aKubeConfig.getDescription(),
 					aKubeConfig.getProcessingEngineUrl(),
 					aKubeConfig.getStorageManagerUrl(),
-					StorageType.S_3.toString());
+					aKubeConfig.getStorageType().toString());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
 		} else {
+			Messages.FACILITY_NOT_EXIST.log(logger, name);
 	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
-	    	logger.error(message);
 	    	HttpHeaders responseHeaders = new HttpHeaders();
 	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
