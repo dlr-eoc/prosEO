@@ -6,9 +6,12 @@
 package de.dlr.proseo.storagemgr.rest;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,10 +87,6 @@ public class JobOrderControllerImpl implements JoborderController {
 		RestJoborder response = new RestJoborder();
 		String separator = "/";
 		try {
-			// create internal buckets, if not existing
-			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
-					cfg.getS3EndPoint(), cfg.getJoborderBucket(), cfg.getS3Region());
-
 			
 			// check if we have a Base64 encoded string & if we have valid XML
 			if (!joborder.getJobOrderStringBase64()
@@ -99,7 +98,6 @@ public class JobOrderControllerImpl implements JoborderController {
 				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 			}
 
-			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 			DateTime tstamp=DateTime.now(DateTimeZone.UTC);
 			String objKey = 
 					cfg.getJoborderPrefix()
@@ -125,16 +123,41 @@ public class JobOrderControllerImpl implements JoborderController {
 				response.setMessage("XML Doc parsed from attribute jobOrderStringBase64 is not valid...");
 				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 			}
-			InputStream fis = new ByteArrayInputStream(bytes);
-			s3.putObject(PutObjectRequest.builder().bucket(cfg.getJoborderBucket()).key(objKey).build(),
-					RequestBody.fromInputStream(fis, bytes.length));
-			fis.close();
-			s3.close();
+			// switch fs type
+			switch (joborder.getFsType()) {
+			case S_3:
+				InputStream fis = new ByteArrayInputStream(bytes);
+				// create internal buckets, if not existing
+				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
+						cfg.getS3EndPoint(), cfg.getJoborderBucket(), cfg.getS3Region());
+				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				s3.putObject(PutObjectRequest.builder().bucket(cfg.getJoborderBucket()).key(objKey).build(),
+						RequestBody.fromInputStream(fis, bytes.length));
+				s3.close();
+				fis.close();
+				response.setFsType(FsType.S_3);
+				response.setPathInfo("s3://" + cfg.getJoborderBucket() + separator + objKey);
+				break;
+			case POSIX:
+				// create JOF file path if not exist
+				String filePath = cfg.getPosixMountPoint() + separator + objKey;
+				File jofFile = new File(filePath);
+				File jofFilePath = new File(jofFile.getParent());
+				if (!jofFilePath.exists()) {
+					jofFilePath.mkdirs();
+				}
+				FileOutputStream jofOut = new FileOutputStream(jofFile);
+				jofOut.write(bytes);
+				jofOut.close();
+				response.setFsType(FsType.POSIX);
+				response.setPathInfo(jofFile.getPath());
+				break;
+			default:
+				break;
+			}
 			// now prepare response
 			response.setUploaded(true);
-			response.setFsType(FsType.S_3);
 			response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-			response.setPathInfo("s3://" + cfg.getJoborderBucket() + separator + objKey);
 			logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {

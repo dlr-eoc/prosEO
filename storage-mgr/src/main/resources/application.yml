@@ -18,6 +18,8 @@ proseo:
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
       alluxioUnderFsS3BucketEndPoint: http://minio:9000
       alluxioUnderFsMaxPrefixes: 500
+    posix:
+      mountPoint: /mnt/proseodata
     joborder:
       bucket: internal
       prefix: joborders
