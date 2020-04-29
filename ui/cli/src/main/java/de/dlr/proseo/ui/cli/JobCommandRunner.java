@@ -265,7 +265,7 @@ public class JobCommandRunner {
 			try {
 				requestedJobState = JobState.valueOf(showCommand.getParameters().get(1).getValue().toUpperCase());
 			} catch (Exception e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_JOB_STATE_VALUE));
+				System.err.println(uiMsg(MSG_ID_INVALID_JOB_STATE_VALUE, showCommand.getParameters().get(1).getValue()));
 				return;
 			}
 		}
@@ -593,7 +593,7 @@ public class JobCommandRunner {
 			try {
 				requestedJobStepState = JobStepState.valueOf(showCommand.getParameters().get(1).getValue().toUpperCase());
 			} catch (Exception e) {
-				System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE_VALUE));
+				System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE_VALUE, showCommand.getParameters().get(1).getValue()));
 				return;
 			}
 		}

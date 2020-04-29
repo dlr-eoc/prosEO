@@ -335,7 +335,7 @@ public class UIMessages {
 		MSG_JOB_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOB_NOT_FOUND),
 		MSG_JOB_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOB_DATA_INVALID),
 		MSG_INVALID_JOBSTEP_STATE ("(E%d) Operation %s not allowed for job state %s (must be %s)", MSG_ID_INVALID_JOBSTEP_STATE),
-		MSG_INVALID_JOBSTEP_STATE_VALUE ("(E%d) Invalid job state %s", MSG_ID_INVALID_JOBSTEP_STATE_VALUE),
+		MSG_INVALID_JOBSTEP_STATE_VALUE ("(E%d) Invalid job step state %s", MSG_ID_INVALID_JOBSTEP_STATE_VALUE),
 		MSG_NO_JOBSTEP_DBID_GIVEN ("(E%d) No job database ID given", MSG_ID_NO_JOBSTEP_DBID_GIVEN),
 		MSG_JOBSTEP_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOBSTEP_NOT_FOUND),
 		MSG_JOBSTEP_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOBSTEP_DATA_INVALID),
