@@ -131,6 +131,11 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 		</dependency>
+		<dependency>
+		    <groupId>de.dlr.proseo</groupId>
+		    <artifactId>proseo-common</artifactId>
+		    <version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

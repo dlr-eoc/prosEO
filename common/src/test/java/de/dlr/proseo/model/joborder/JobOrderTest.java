@@ -1,6 +1,8 @@
 package de.dlr.proseo.model.joborder;
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -79,11 +81,38 @@ public class JobOrderTest {
 		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
-		jo.writeXML("src/test/resources/testjo.xml", true);
+		ByteArrayOutputStream jofStream = new ByteArrayOutputStream();
+		jo.writeXMLToStream(jofStream, true);
 
 		JobOrder jo2 = new JobOrder();
-		jo2.read("src/test/resources/testjo.xml");
-		jo2.writeXML("src/test/resources/testjocopy.xml", true);
+		jo2.read(jofStream.toString());
+		
+		assertNotNull("JOF copy failed: Conf", jo2.getConf());
+		assertEquals("JOF copy failed: Conf -> AcquisitionStation", jo.getConf().getAcquisitionStation(), jo2.getConf().getAcquisitionStation());
+		assertEquals("JOF copy failed: Conf -> BreakpointEnable", jo.getConf().getBreakpointEnable(), jo2.getConf().getBreakpointEnable());
+		assertEquals("JOF copy failed: Conf -> ConfigFileNames", jo.getConf().getConfigFileNames(), jo2.getConf().getConfigFileNames());
+		assertEquals("JOF copy failed: Conf -> DynamicProcessingParameters", jo.getConf().getDynamicProcessingParameters().size(), jo2.getConf().getDynamicProcessingParameters().size());
+		assertEquals("JOF copy failed: Conf -> ProcessingStation", jo.getConf().getProcessingStation(), jo2.getConf().getProcessingStation());
+		assertEquals("JOF copy failed: Conf -> ProcessorName", jo.getConf().getProcessorName(), jo2.getConf().getProcessorName());
+		assertEquals("JOF copy failed: Conf -> SensingTime -> Start", jo.getConf().getSensingTime().getStart(), jo2.getConf().getSensingTime().getStart());
+		assertEquals("JOF copy failed: Conf -> SensingTime -> Stop", jo.getConf().getSensingTime().getStop(), jo2.getConf().getSensingTime().getStop());
+		assertEquals("JOF copy failed: Conf -> StderrLogLevel", jo.getConf().getStderrLogLevel(), jo2.getConf().getStderrLogLevel());
+		assertEquals("JOF copy failed: Conf -> StdoutLogLevel", jo.getConf().getStdoutLogLevel(), jo2.getConf().getStdoutLogLevel());
+		assertEquals("JOF copy failed: Conf -> Test", jo.getConf().getTest(), jo2.getConf().getTest());
+		assertEquals("JOF copy failed: Conf -> Version", jo.getConf().getVersion(), jo2.getConf().getVersion());
+		
+		JO_PROC:
+		for (Proc joProc: jo.getListOfProcs()) {
+			for (Proc jo2Proc: jo2.getListOfProcs()) {
+				if (joProc.getTaskName().equals(jo2Proc.getTaskName())) {
+					assertEquals("JOF copy failed: Proc -> TaskVersion", joProc.getTaskVersion(), jo2Proc.getTaskVersion());
+					assertEquals("JOF copy failed: Proc -> ListOfInputs", joProc.getListOfInputs().size(), jo2Proc.getListOfInputs().size());
+					assertEquals("JOF copy failed: Proc -> ListOfOutputs", joProc.getListOfOutputs().size(), jo2Proc.getListOfOutputs().size());
+					break JO_PROC;
+				}
+			}
+			fail("JOF copy failed: Proc " + joProc.getTaskName() + " not found in copy");
+		}
 		
 	}
 
