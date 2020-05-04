@@ -223,7 +223,7 @@ public class KubeConfig {
 		// rebuild runtime data 
 		V1JobList k8sJobList = null;
 		try {
-			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -275,7 +275,7 @@ public class KubeConfig {
 	public V1PodList getPodList() {
 		V1PodList list = null;
 		try {
-			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -291,7 +291,7 @@ public class KubeConfig {
 	public V1JobList getJobList() {
 		V1JobList list = null;
 		try {
-			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null);
 			
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
@@ -362,7 +362,7 @@ public class KubeConfig {
 		opt.setPropagationPolicy("Foreground");
 		opt.setGracePeriodSeconds((long) 0);
 		try {
-			batchApiV1.deleteNamespacedJob(name, namespace, opt, null, null, 0, null, "Foreground");
+			batchApiV1.deleteNamespacedJob(name, namespace, "false", opt, null, 0, null, "Foreground");
 		} catch (Exception e) {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
@@ -513,7 +513,7 @@ public class KubeConfig {
 		kubeNodes = null;
 		workerCnt = 0;
 		try {
-			kubeNodes = apiV1.listNode(false, null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null);
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {

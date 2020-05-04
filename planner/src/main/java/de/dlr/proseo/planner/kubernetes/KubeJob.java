@@ -375,8 +375,6 @@ public class KubeJob {
 						.withBackoffLimit(0)
 						.build();			
 				V1Job job = new V1JobBuilder()
-						.withApiVersion("batch/V1")
-						.withKind("Job")
 						.withNewMetadata()
 						.withName(jobName)
 						.addToLabels("jobgroup", jobName + "spec")
@@ -427,7 +425,7 @@ public class KubeJob {
 		if (kubeConfig != null && kubeConfig.isConnected()) {
 			V1PodList pl;
 			try {
-				pl = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), true, null, null, null, 
+				pl = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, 
 						null, null, null, 30, null);
 				podNames.clear();
 				for (V1Pod p : pl.getItems()) {

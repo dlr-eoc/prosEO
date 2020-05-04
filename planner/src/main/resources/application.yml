@@ -61,6 +61,8 @@ proseo:
       alluxioUnderFsS3BucketEndPoint: http://192.168.20.159:9000
       alluxioUnderFsMaxPrefixes: 500
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
+    posix:
+      mountPoint: /mnt/proseodata
     joborder:
       bucket: internal
       prefix: joborders
