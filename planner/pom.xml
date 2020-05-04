@@ -24,6 +24,7 @@
 
 	<properties>
 		<module.version>0.1.0-SNAPSHOT</module.version>
+		<kubernetes.client.version>6.0.1</kubernetes.client.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
     <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
@@ -75,17 +76,17 @@
 		<dependency>
 			<groupId>io.kubernetes</groupId>
 			<artifactId>client-java</artifactId>
-			<version>4.0.0</version>
+			<version>${kubernetes.client.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.kubernetes</groupId>
 			<artifactId>client-java-proto</artifactId>
-			<version>4.0.0</version>
+			<version>${kubernetes.client.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.kubernetes</groupId>
 			<artifactId>client-java-api</artifactId>
-			<version>4.0.0</version>
+			<version>${kubernetes.client.version}</version>
 		</dependency>
 	</dependencies>
 

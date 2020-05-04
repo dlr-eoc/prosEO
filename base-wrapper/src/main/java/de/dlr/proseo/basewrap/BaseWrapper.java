@@ -210,10 +210,6 @@ public class BaseWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
 			envOK = false;
 		}
-		if (ENV_JOBORDER_FS_TYPE == null || ENV_JOBORDER_FS_TYPE.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
-			envOK = false;
-		}
 		if (ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);
 			envOK = false;

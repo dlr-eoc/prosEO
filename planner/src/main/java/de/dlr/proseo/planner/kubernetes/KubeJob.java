@@ -317,8 +317,6 @@ public class KubeJob {
 						.withName(containerName)
 						.withImage(imageName)
 						.withImagePullPolicy("Never")
-						//				.withCommand(command)
-						//			    .withArgs(jobOrderFileName)
 						.addNewEnv()
 						.withName("JOBORDER_FILE")
 						.withValue(jobOrder.getFileName())
@@ -367,18 +365,8 @@ public class KubeJob {
 						.withName("PROSEO_PW")
 						.withValue(ProductionPlanner.config.getWrapperPassword())
 						.endEnv()
-						.addNewVolumeMount()
-						.withName("ramdisk")
-						.withMountPath("/mnt/ramdisk")
-						.endVolumeMount()
 						.withResources(reqs)
 						.endContainer()
-						.addNewVolume()
-						.withName("ramdisk")
-						.withNewHostPath()
-						.withPath("/tmp")
-						.endHostPath()
-						.endVolume()
 						.withRestartPolicy("Never")
 						.withHostNetwork(true)
 						.withDnsPolicy("ClusterFirstWithHostNet")
@@ -387,6 +375,8 @@ public class KubeJob {
 						.withBackoffLimit(0)
 						.build();			
 				V1Job job = new V1JobBuilder()
+						.withApiVersion("batch/V1")
+						.withKind("Job")
 						.withNewMetadata()
 						.withName(jobName)
 						.addToLabels("jobgroup", jobName + "spec")
@@ -395,7 +385,9 @@ public class KubeJob {
 						.build();
 				try {
 					if (!js.isEmpty()) {
-						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+						logger.info("Creating job {}", job.toString());
+						job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+						logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 						searchPod();
 						UtilService.getJobStepUtil().startJobStep(jobStep);
 						Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
