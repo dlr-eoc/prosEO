@@ -94,8 +94,8 @@ kubectl apply -f storage-mgr-local.yaml
 kubectl apply -f kubernetes-dashboard.yaml
 
 # Upload test data to POSIX storage on Minikube
-kubectl exec storage-mgr-kxdcd -- mkdir -p /opt/s5p/data/integration-test
-kubectl cp $TEST_DATA_DIR storage-mgr-kxdcd:/opt/s5p/data/integration-test/testdata
+kubectl exec storage-mgr-8cdmv -- mkdir -p /opt/s5p/data/integration-test
+kubectl cp $TEST_DATA_DIR storage-mgr-8cdmv:/opt/s5p/data/integration-test/testdata
 
 # Create a processing facility
 echo "facility create localhost 'description=Docker Desktop Minikube' processingEngineUrl=https://localhost:8001/ storageManagerUrl=http://localhost:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1 defaultStorageType=POSIX" >>$CLI_SCRIPT

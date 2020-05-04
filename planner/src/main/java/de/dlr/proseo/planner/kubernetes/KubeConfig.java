@@ -6,13 +6,10 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -23,20 +20,19 @@ import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.rest.model.PodKube;
-import de.dlr.proseo.planner.util.UtilService;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.Configuration;
-import io.kubernetes.client.apis.BatchV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1JobList;
-import io.kubernetes.client.models.V1Node;
-import io.kubernetes.client.models.V1NodeList;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1Taint;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobList;
+import io.kubernetes.client.openapi.models.V1Node;
+import io.kubernetes.client.openapi.models.V1NodeList;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1Taint;
 import io.kubernetes.client.util.Config;
 
 /**
@@ -192,9 +188,9 @@ public class KubeConfig {
 				return false;
 			} else {								
 				// allow more response time and enhance time out 
-				client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
-				client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
-				client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
+//				client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
+//				client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
+//				client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
 
 				// get node info
 				getNodeInfo();
@@ -223,7 +219,7 @@ public class KubeConfig {
 		// rebuild runtime data 
 		V1JobList k8sJobList = null;
 		try {
-			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null);
+			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -275,7 +271,7 @@ public class KubeConfig {
 	public V1PodList getPodList() {
 		V1PodList list = null;
 		try {
-			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null);
+			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -291,7 +287,7 @@ public class KubeConfig {
 	public V1JobList getJobList() {
 		V1JobList list = null;
 		try {
-			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null);
+			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
 			
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
@@ -362,7 +358,7 @@ public class KubeConfig {
 		opt.setPropagationPolicy("Foreground");
 		opt.setGracePeriodSeconds((long) 0);
 		try {
-			batchApiV1.deleteNamespacedJob(name, namespace, "false", opt, null, 0, null, "Foreground");
+			batchApiV1.deleteNamespacedJob(name, namespace, "false", null, 0, null, "Foreground", opt);
 		} catch (Exception e) {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
@@ -513,7 +509,7 @@ public class KubeConfig {
 		kubeNodes = null;
 		workerCnt = 0;
 		try {
-			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null);
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {
