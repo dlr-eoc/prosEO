@@ -9,8 +9,6 @@ package de.dlr.proseo.planner.rest;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,19 +18,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.interfaces.rest.model.StorageType;
 import de.dlr.proseo.model.rest.ProcessingfacilityController;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.UtilService;
-import de.dlr.proseo.planner.rest.model.PodKube;
-import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1JobList;
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle
  * processing facilities.

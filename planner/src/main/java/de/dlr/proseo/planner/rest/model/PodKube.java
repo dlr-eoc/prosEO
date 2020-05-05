@@ -6,7 +6,7 @@
 package de.dlr.proseo.planner.rest.model;
 
 import de.dlr.proseo.model.rest.model.PlannerPod;
-import io.kubernetes.client.models.V1Job;
+import io.kubernetes.client.openapi.models.V1Job;
 /**
  * Handle a Kubernetes pod/job
  * 

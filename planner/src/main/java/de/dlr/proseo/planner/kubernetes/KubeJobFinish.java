@@ -5,12 +5,8 @@
  */
 package de.dlr.proseo.planner.kubernetes;
 
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
-import de.dlr.proseo.planner.util.UtilService;
 
 /**
  * Wait for finished Kubernetes job
