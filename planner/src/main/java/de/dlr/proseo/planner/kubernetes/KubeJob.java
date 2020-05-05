@@ -400,11 +400,6 @@ public class KubeJob {
 					return null;
 				}
 			}
-			/*
-			 * try { pod = apiV1.createNamespacedPod(aKubeConfig.getNamespace(), pod, null, null, null); }
-			 * catch (ApiException e) { // TODO Auto-generated catch block
-			 * e.printStackTrace(); }
-			 */
 			return this;
 		} else {
 			return null;
