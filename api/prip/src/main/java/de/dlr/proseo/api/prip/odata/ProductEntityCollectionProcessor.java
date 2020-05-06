@@ -286,7 +286,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
 			String requestUrl = config.getIngestorUrl() + "/products?mission=" + mission;
 			
-			// TODO Add filter conditions from $filter option, if set
+			// TODO Add filter conditions from $filter option, if set (performance improvement)
+			// Requires manual parsing of filter text --> expensive!
 			
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
@@ -328,13 +329,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			}
 			
 			// Create output product
-			Entity product = new Entity()
-					.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
-					.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, restProduct.getProductClass()))
-					.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-							"application/octet-stream"));
-			// TODO Add remaining properties
-			product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + restProduct.getUuid() + "')"));
+			Entity product = ProductUtil.toPripProduct(restProduct);
 			productList.add(product);
 		}
 		

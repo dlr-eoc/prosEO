@@ -320,13 +320,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		RestProduct restProduct = getProduct(authHeader, productUuid);
 
 		// Create output product
-		Entity product = new Entity()
-				.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
-				.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, restProduct.getProductClass()))
-				.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-						"application/octet-stream"));
-		// TODO Add remaining properties
-		product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + restProduct.getUuid() + "')"));
+		Entity product = ProductUtil.toPripProduct(restProduct);
 
 		if (logger.isTraceEnabled()) logger.trace("<<< downloadProduct()");
 		return product;
