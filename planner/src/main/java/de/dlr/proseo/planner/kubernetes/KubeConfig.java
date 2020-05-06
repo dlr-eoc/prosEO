@@ -6,6 +6,7 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -177,8 +178,17 @@ public class KubeConfig {
 						 "c36ff53775d69aa6bdbfa1486d8908a2fc9c38e712e6b0b69584a4f0cd9e8006", 
 						 false);
 			} else {
-				client = Config.fromUrl(url, false);
+                try {
+                	// beschreibt Kubernetes in Docker
+                    client = Config.fromConfig("kube_config");
+                } catch (IOException e) {
+                    logger.info("Cannot access Kubernetes Configuration file: " + e.getMessage());
+                }
+                if (client == null) {
+                    client = Config.fromUrl(url, false);
+                }
 			}
+			client.setDebugging(true);
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
@@ -188,9 +198,9 @@ public class KubeConfig {
 				return false;
 			} else {								
 				// allow more response time and enhance time out 
-//				client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
-//				client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
-//				client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
+				client.setReadTimeout(100000);
+				client.setWriteTimeout(100000);
+				client.setConnectTimeout(100000);
 
 				// get node info
 				getNodeInfo();
