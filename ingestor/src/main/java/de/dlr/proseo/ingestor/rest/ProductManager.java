@@ -42,6 +42,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 
@@ -81,6 +82,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_NOT_FOUND_BY_UUID = 2022;
 	private static final int MSG_ID_PRODUCT_RETRIEVED_BY_UUID = 2023;
 	private static final int MSG_ID_DUPLICATE_PRODUCT_UUID = 2024;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND = 2025;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -102,6 +104,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
 	private static final String MSG_PRODUCT_NOT_FOUND_BY_UUID = "(E%d) No product found for UUID %s";
 	private static final String MSG_DUPLICATE_PRODUCT_UUID = "(E%d) Duplicate product UUID %s";
+	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -358,6 +361,17 @@ public class ProductManager {
 					product.getMode(), product.getMissionCode()));
 		}
 		
+		// Add configured processor, if given
+		if (null != product.getConfiguredProcessor()) {
+			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
+					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+			if (null == configuredProcessor) {
+				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
+						product.getConfiguredProcessor().getIdentifier()));
+			}
+			modelProduct.setConfiguredProcessor(configuredProcessor);
+		}
+		
 		// Everything OK, store new product in database
 		modelProduct = RepositoryService.getProductRepository().save(modelProduct);
 		
@@ -571,6 +585,24 @@ public class ProductManager {
 			modelComponentProduct.setEnclosingProduct(null);
 			RepositoryService.getProductRepository().save(modelComponentProduct);
 			modelProduct.getComponentProducts().remove(modelComponentProduct);
+		}
+		
+		// Update configured processor relationship
+		if (null == modelProduct.getConfiguredProcessor() && null == product.getConfiguredProcessor()) {
+			// OK - no configured processor on both sides
+		} else if (null == product.getConfiguredProcessor()) {
+			// Configured processor was set, but is no more
+			productChanged = true;
+			modelProduct.setConfiguredProcessor(null);
+		} else if (null == modelProduct.getConfiguredProcessor() 
+				|| !modelProduct.getConfiguredProcessor().getIdentifier().equals(changedProduct.getConfiguredProcessor().getIdentifier())) {
+			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
+					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+			if (null == configuredProcessor) {
+				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
+						product.getConfiguredProcessor().getIdentifier()));
+			}
+			modelProduct.setConfiguredProcessor(configuredProcessor);
 		}
 		
 		// Check for added or changed parameters
