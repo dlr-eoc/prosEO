@@ -63,7 +63,7 @@ services:
       - proseo-productclass-mgr
       - proseo-facility-mgr
   proseo-api-prip:
-    image: ${REGISTRY_URL}/proseo-api-prip:0.0.1-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-api-prip:0.1.0-SNAPSHOT-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8089:8080"
     depends_on:

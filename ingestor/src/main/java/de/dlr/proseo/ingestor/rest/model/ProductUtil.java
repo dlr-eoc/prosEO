@@ -120,15 +120,7 @@ public class ProductUtil {
 			restProduct.setOrbit(restOrbit);
 		}
 		for (ProductFile modelFile: modelProduct.getProductFile()) {
-			RestProductFile restFile = new RestProductFile();
-			restFile.setId(modelFile.getId());
-			restFile.setVersion(Long.valueOf(modelFile.getVersion()));
-			restFile.setProcessingFacilityName(modelFile.getProcessingFacility().getName());
-			restFile.setProductFileName(modelFile.getProductFileName());
-			restFile.setFilePath(modelFile.getFilePath());
-			restFile.setStorageType(modelFile.getStorageType().toString());
-			restFile.getAuxFileNames().addAll(modelFile.getAuxFileNames());
-			restProduct.getProductFile().add(restFile);
+			restProduct.getProductFile().add(ProductFileUtil.toRestProductFile(modelFile));
 		}
 		if (null != modelProduct.getConfiguredProcessor()) {
 			ConfiguredProcessor modelConfiguredProcessor = modelProduct.getConfiguredProcessor();
