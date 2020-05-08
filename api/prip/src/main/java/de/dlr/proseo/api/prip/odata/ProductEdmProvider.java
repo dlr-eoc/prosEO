@@ -84,8 +84,11 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String EN_PRODUCTIONTYPE_NAME = ET_PRODUCT_PROP_PRODUCTION_TYPE;
 	public static final FullQualifiedName EN_PRODUCTIONTYPE_FQN = new FullQualifiedName(NAMESPACE, EN_PRODUCTIONTYPE_NAME);
 	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = "systematic_production";
+	public static final int EN_PRODUCTIONTYPE_SYSTEMATIC_VAL = 10;
 	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = "on-demand:default";
+	public static final int EN_PRODUCTIONTYPE_ONDEMDEF_VAL = 20;
 	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = "on-demand:non-default";
+	public static final int EN_PRODUCTIONTYPE_ONDEMNODEF_VAL = 30;
 
 	// Complex Types
 	public static final String CT_CHECKSUM_NAME = "Checksum";
@@ -156,9 +159,9 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		// This method is called for one of the EnumTypes that are configured in the Schema
 		if(enumTypeName.equals(EN_PRODUCTIONTYPE_FQN)){
 			// Create enumeration values
-			CsdlEnumMember systematic = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_SYSTEMATIC).setValue(EN_PRODUCTIONTYPE_SYSTEMATIC);
-			CsdlEnumMember onDemandDefault = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_ONDEMDEF).setValue(EN_PRODUCTIONTYPE_ONDEMDEF);
-			CsdlEnumMember onDemandNonDefault = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_ONDEMNODEF).setValue(EN_PRODUCTIONTYPE_ONDEMNODEF);
+			CsdlEnumMember systematic = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_SYSTEMATIC).setValue(String.valueOf(EN_PRODUCTIONTYPE_SYSTEMATIC_VAL));
+			CsdlEnumMember onDemandDefault = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_ONDEMDEF).setValue(String.valueOf(EN_PRODUCTIONTYPE_ONDEMDEF_VAL));
+			CsdlEnumMember onDemandNonDefault = new CsdlEnumMember().setName(EN_PRODUCTIONTYPE_ONDEMNODEF).setValue(String.valueOf(EN_PRODUCTIONTYPE_ONDEMNODEF_VAL));
 			
 			// Configure ProductionType enumeration type
 			CsdlEnumType productionTypeType = new CsdlEnumType();
@@ -225,7 +228,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlProperty productionType = new CsdlProperty().setName(ET_PRODUCT_PROP_PRODUCTION_TYPE).setType(EN_PRODUCTIONTYPE_FQN);
 			
 			// Add navigation properties
-			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES).setType(ET_ATTRIBUTES_FQN);
+			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
+				.setType(ET_ATTRIBUTES_FQN).setCollection(true).setPartner(ET_PRODUCT_NAME);
 
 			// Create CsdlPropertyRef for Key element
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
@@ -243,8 +247,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			return productType;
 		} else if (entityTypeName.equals(ET_ATTRIBUTES_FQN)) {
 			// Create Attribute properties
-			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID).setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
-			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
 
@@ -255,7 +258,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			// Configure Attributes entity type
 			CsdlEntityType attributesType = new CsdlEntityType();
 			attributesType.setName(ET_ATTRIBUTES_NAME);
-			attributesType.setProperties(Arrays.asList(id, name , contentType, contentLength));
+			attributesType.setProperties(Arrays.asList(id, contentType, contentLength));
 			attributesType.setKey(Collections.singletonList(idRef));
 			
 			return attributesType;
