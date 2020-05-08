@@ -49,6 +49,7 @@
 		<module>api</module>
 		<module>user-mgr</module>
 		<module>facility-mgr</module>
+		<module>common</module>
 	</modules>
 
 	<dependencies>

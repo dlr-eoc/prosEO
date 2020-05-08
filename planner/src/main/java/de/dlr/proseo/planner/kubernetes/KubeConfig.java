@@ -6,13 +6,11 @@
 package de.dlr.proseo.planner.kubernetes;
 
 
-import java.net.ConnectException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -23,20 +21,19 @@ import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.rest.model.PodKube;
-import de.dlr.proseo.planner.util.UtilService;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.Configuration;
-import io.kubernetes.client.apis.BatchV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1DeleteOptions;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1JobList;
-import io.kubernetes.client.models.V1Node;
-import io.kubernetes.client.models.V1NodeList;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1Taint;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.BatchV1Api;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobList;
+import io.kubernetes.client.openapi.models.V1Node;
+import io.kubernetes.client.openapi.models.V1NodeList;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1Taint;
 import io.kubernetes.client.util.Config;
 
 /**
@@ -181,8 +178,17 @@ public class KubeConfig {
 						 "c36ff53775d69aa6bdbfa1486d8908a2fc9c38e712e6b0b69584a4f0cd9e8006", 
 						 false);
 			} else {
-				client = Config.fromUrl(url, false);
+                try {
+                	// beschreibt Kubernetes in Docker
+                    client = Config.fromConfig("kube_config");
+                } catch (IOException e) {
+                    logger.info("Cannot access Kubernetes Configuration file: " + e.getMessage());
+                }
+                if (client == null) {
+                    client = Config.fromUrl(url, false);
+                }
 			}
+			client.setDebugging(true);
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
@@ -192,9 +198,9 @@ public class KubeConfig {
 				return false;
 			} else {								
 				// allow more response time and enhance time out 
-				client.getHttpClient().setReadTimeout(100000, TimeUnit.MILLISECONDS);
-				client.getHttpClient().setWriteTimeout(100000, TimeUnit.MILLISECONDS);
-				client.getHttpClient().setConnectTimeout(100000, TimeUnit.MILLISECONDS);
+				client.setReadTimeout(100000);
+				client.setWriteTimeout(100000);
+				client.setConnectTimeout(100000);
 
 				// get node info
 				getNodeInfo();
@@ -362,7 +368,7 @@ public class KubeConfig {
 		opt.setPropagationPolicy("Foreground");
 		opt.setGracePeriodSeconds((long) 0);
 		try {
-			batchApiV1.deleteNamespacedJob(name, namespace, opt, null, null, 0, null, "Foreground");
+			batchApiV1.deleteNamespacedJob(name, namespace, "false", null, 0, null, "Foreground", opt);
 		} catch (Exception e) {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
@@ -513,7 +519,7 @@ public class KubeConfig {
 		kubeNodes = null;
 		workerCnt = 0;
 		try {
-			kubeNodes = apiV1.listNode(false, null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null);
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {

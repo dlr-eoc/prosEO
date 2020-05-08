@@ -1,11 +1,12 @@
 /**
+ * JobOrder.java
  * 
+ * (C) 2019 Prophos Informatik GmbH
  */
 package de.dlr.proseo.model.joborder;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,16 +45,14 @@ import org.slf4j.LoggerFactory;
  *  
  */
 public class JobOrder {
+	
 	// Logger
 	private static Logger logger = LoggerFactory.getLogger(JobOrder.class);
+	
 	// Error Messages
 	private static final String MSG_ERROR_INSTANTIATING_DOCUMENT_BUILDER = "Error instantiating DocumentBuilder: {}";
 	private static final String MSG_JOF_NOT_PARSEABLE = "JobOrder file {} not parseable ({})";
-	private static final String MSG_JOF_IO_ERR = "JobOrder file {} could not be opened ({})";
-	/**
-	 * 
-	 */
-	private Conf conf;
+	
 	/**
 	 * The file name where job order is stored
 	 */
@@ -62,6 +61,16 @@ public class JobOrder {
 	 * The file system type where job order is stored
 	 */
 	private String fsType;
+
+	/**
+	 * The IPF_Conf part of the Job Order
+	 */
+	private Conf conf;
+	/**
+	 * The list of processors
+	 */
+	private List<Proc> listOfProcs;
+
 	/**
 	 * @return the fileName
 	 */
@@ -87,7 +96,6 @@ public class JobOrder {
 		this.fsType = fsType;
 	}
 	
-	private List<Proc> listOfProcs;
 	/**
 	 * @return the conf
 	 */
@@ -106,6 +114,7 @@ public class JobOrder {
 	public List<Proc> getListOfProcs() {
 		return listOfProcs;
 	}
+	
 	/**
 	 * @param conf
 	 */
@@ -155,6 +164,12 @@ public class JobOrder {
 		}
 	}
 	
+	/**
+	 * Writes the content of the Job Order to an XML-formatted output stream
+	 * @param aStream the stream to write to
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
+	 * @return true, if the operation completed successfully, false otherwise
+	 */
 	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
@@ -197,23 +212,13 @@ public class JobOrder {
 	}
 
 	/**
-	 * Read info from XML sub tree
-	 * @param thisNode XML node containing information
+	 * Read a Job Order  from an XML-formatted string
+	 * @param jobOrderString the XML-formatted Job Order File
+	 * @return a Job Order object
 	 */
-	public JobOrder read(String aFileName) {
-		try {
-			InputStream aStream = new FileInputStream(aFileName);
-			return readFromStream(aStream);
-		} catch (IOException e) {
-			logger.error(MSG_JOF_IO_ERR, aFileName, e.getMessage());
-			return null;
-		}		
-	}
-	/**
-	 * Read info from XML sub tree
-	 * @param thisNode XML node containing information
-	 */
-	public JobOrder readFromStream(InputStream aStream) {
+	public JobOrder read(String jobOrderString) {
+		InputStream aStream = new ByteArrayInputStream(jobOrderString.getBytes());
+
 		DocumentBuilder docBuilder = null;
 		try {
 			docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();

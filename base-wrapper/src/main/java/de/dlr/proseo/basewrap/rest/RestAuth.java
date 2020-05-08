@@ -1,11 +1,11 @@
 package de.dlr.proseo.basewrap.rest;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.util.Base64;
+
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.xml.bind.DatatypeConverter;
 
 public class RestAuth implements ClientRequestFilter {
 
@@ -28,13 +28,9 @@ public class RestAuth implements ClientRequestFilter {
     	
     	// Encode username and password in Base64
         String basicAuthentication = this.user + ":" + this.password;
-        try {
-        	basicAuthentication = "Basic " + DatatypeConverter.printBase64Binary(basicAuthentication.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException ex) {
-            throw new IOException("Cannot encode authentication string with UTF-8", ex);
-        }
+        basicAuthentication = "Basic " + Base64.getEncoder().encodeToString(basicAuthentication.getBytes());
 
-        // Add the authorization string as
+        // Add the authorization string to the request headers
         MultivaluedMap<String, Object> headers = requestContext.getHeaders();
         headers.add("Authorization", basicAuthentication);
     }

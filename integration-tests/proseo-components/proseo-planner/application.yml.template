@@ -2,48 +2,68 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
+        open-in-view: false
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: ********
-    packagesToScan: de.dlr.proseo.model
-
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
 proseo:
+    defaultuser.name: sysadm
+    defaultuser.password: sysadm
+    wrapper:
+        user: wrapper
+        password: somepw
+    userManager:
+        url: http://localhost:8086/proseo/user-mgr/v0.1
+    orderManager:
+        url: http://localhost:8082/proseo/order-mgr/v0.1
+    processorManager:
+        url: http://localhost:8084/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: http://localhost:8085/proseo/productclass-mgr/v0.1
     productionPlanner:
-        url: http://proseo-prodplanner:8080/proseo/planner
-        user: none
-        password: none
-        cyclewaittime: 1000
+        # Callback URL for Wrapper
+        url: http://brainhost:8080/proseo/planner/v0.1
+        user: wrapper
+        password: somepw
         maxcycles: 50
+        # time in milliseconds
+        cyclewaittime: 1000
+        # run once if <= 0 (at startup)
+        dispatcherwaittime: 0
     storageManager:
-        url: https://proseo-k8s-gate.de/api/v1/services/storage-mgr
-        user: none
-        password: none
+        url: http://localhost:8001/proseo/storage-mgr/v0.1
+        user: wrapper
+        password: ingest&plan
+    ingestor:
+        url: http://brainhost:8080/proseo/ingestor/v0.1
+        user: wrapper
+        password: somepw
     global:
       storageIdPrefix: proseo
     procFacility:
       name: devel
-      url: https://proseo-k8s-gate.de/
+      url: http://localhost:9887/k8s-api-endpoint
       descr: local env :-)
     s3:
       s3AccessKey: XXXX
       s3SecretAccessKey: XXXX
-      s3EndPoint: https://obs.eu-de.otc.t-systems.com
+      s3EndPoint: https://localhost:9000
       s3Region: eu-de
       s3DefaultBucket: proseo-data-001
       s3MaxNumberOfBuckets: 50
     alluxio:
-      alluxioUnderFsS3Bucket: otc-proseo01-internal
+      alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
-      alluxioUnderFsS3BucketEndPoint: https://obs.eu-de.otc.t-systems.com
-      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
+      alluxioUnderFsS3BucketEndPoint: http://localhost:9000
       alluxioUnderFsMaxPrefixes: 500
+      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
+    posix:
+      mountPoint: /mnt/proseodata
     joborder:
       bucket: internal
       prefix: joborders

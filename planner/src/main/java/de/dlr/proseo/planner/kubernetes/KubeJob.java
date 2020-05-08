@@ -41,17 +41,17 @@ import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
-import io.kubernetes.client.ApiException;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.Copy;
 import io.kubernetes.client.custom.Quantity;
-import io.kubernetes.client.models.V1Job;
-import io.kubernetes.client.models.V1JobBuilder;
-import io.kubernetes.client.models.V1JobCondition;
-import io.kubernetes.client.models.V1JobSpec;
-import io.kubernetes.client.models.V1JobSpecBuilder;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1ResourceRequirements;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1JobBuilder;
+import io.kubernetes.client.openapi.models.V1JobCondition;
+import io.kubernetes.client.openapi.models.V1JobSpec;
+import io.kubernetes.client.openapi.models.V1JobSpecBuilder;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 
 /**
  * A KubeJob describes the complete information to run a Kubernetes job.
@@ -317,8 +317,6 @@ public class KubeJob {
 						.withName(containerName)
 						.withImage(imageName)
 						.withImagePullPolicy("Never")
-						//				.withCommand(command)
-						//			    .withArgs(jobOrderFileName)
 						.addNewEnv()
 						.withName("JOBORDER_FILE")
 						.withValue(jobOrder.getFileName())
@@ -367,18 +365,8 @@ public class KubeJob {
 						.withName("PROSEO_PW")
 						.withValue(ProductionPlanner.config.getWrapperPassword())
 						.endEnv()
-						.addNewVolumeMount()
-						.withName("ramdisk")
-						.withMountPath("/mnt/ramdisk")
-						.endVolumeMount()
 						.withResources(reqs)
 						.endContainer()
-						.addNewVolume()
-						.withName("ramdisk")
-						.withNewHostPath()
-						.withPath("/tmp")
-						.endHostPath()
-						.endVolume()
 						.withRestartPolicy("Never")
 						.withHostNetwork(true)
 						.withDnsPolicy("ClusterFirstWithHostNet")
@@ -395,7 +383,9 @@ public class KubeJob {
 						.build();
 				try {
 					if (!js.isEmpty()) {
-						aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+						logger.info("Creating job {}", job.toString());
+						job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+						logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 						searchPod();
 						UtilService.getJobStepUtil().startJobStep(jobStep);
 						Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
@@ -435,8 +425,8 @@ public class KubeJob {
 		if (kubeConfig != null && kubeConfig.isConnected()) {
 			V1PodList pl;
 			try {
-				pl = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), true, null, null, null, 
-						null, null, null, 30, null);
+				pl = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, 
+						null, null, null, null, 30, null);
 				podNames.clear();
 				for (V1Pod p : pl.getItems()) {
 					String pn = p.getMetadata().getName();

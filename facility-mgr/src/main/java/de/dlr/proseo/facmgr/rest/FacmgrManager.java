@@ -213,6 +213,7 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setName(changedFacility.getName());
 		}
+		// TODO Catch null value for description
 		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
 			facilityChanged = true;
 			modelFacility.setDescription(changedFacility.getDescription());
