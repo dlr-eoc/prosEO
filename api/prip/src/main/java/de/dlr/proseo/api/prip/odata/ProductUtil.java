@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.interfaces.rest.model.RestParameter;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
+import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -39,6 +40,8 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  *
  */
 public class ProductUtil {
+
+	private static final String ERR_NO_PRODUCT_FILES_FOUND = "No product files found in product ";
 
 	private static final int DATE_TIME_OFFSET_LENGTH = 24;
 
@@ -56,14 +59,20 @@ public class ProductUtil {
 	public static Entity toPripProduct(RestProduct restProduct) throws IllegalArgumentException, URISyntaxException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toPripProduct({})", restProduct.getId());
 		
+		// Select a product file
+		if (restProduct.getProductFile().isEmpty()) {
+			throw new IllegalArgumentException(ERR_NO_PRODUCT_FILES_FOUND + restProduct.getId());
+		}
+		RestProductFile restProductFile = restProduct.getProductFile().get(0);
+		
 		Entity product = new Entity();
 		product.setType(ProductEdmProvider.ET_PRODUCT_FQN.getFullQualifiedNameAsString());
 		product.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
-			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, restProduct.getProductClass()))
+			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, restProductFile.getProductFileName()))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, ValueType.PRIMITIVE,
 				"application/octet-stream"))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, ValueType.PRIMITIVE,
-				/* TODO restProductFile.getDownloadSize() */ 1234567))
+				restProductFile.getFileSize()))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CREATION_DATE, ValueType.PRIMITIVE,
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
@@ -78,6 +87,16 @@ public class ProductUtil {
 		contentDate.getValue().add(new Property(null, ProductEdmProvider.CT_TIMERANGE_PROP_END, ValueType.PRIMITIVE,
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStopTime())))));
 		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE, ValueType.COMPLEX, contentDate));
+		
+		// TODO Fill checksum information from restProductFile
+		List<ComplexValue> checksums = new ArrayList<>();
+		ComplexValue checksum = new ComplexValue();
+		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, ValueType.PRIMITIVE, "MD5"));
+		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, ValueType.PRIMITIVE, restProductFile.getChecksum()));
+		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, ValueType.PRIMITIVE,
+				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))));
+		checksums.add(checksum);
+		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS, ValueType.COLLECTION_COMPLEX, checksums));
 
 		// Create navigatable collection of attributes
 		EntityCollection attributes = new EntityCollection();

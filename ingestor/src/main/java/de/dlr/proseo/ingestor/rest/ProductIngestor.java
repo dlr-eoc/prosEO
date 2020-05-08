@@ -246,6 +246,8 @@ public class ProductIngestor {
 		} catch (Exception e) {
 			newProductFile.setStorageType(StorageType.OTHER);
 		}
+		newProductFile.setFileSize(ingestorProduct.getFileSize());
+		newProductFile.setChecksum(ingestorProduct.getChecksum());
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
 		newProductFile.setProduct(newModelProduct);
 		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
@@ -477,6 +479,14 @@ public class ProductIngestor {
 		if (!modelProductFile.getStorageType().equals(changedProductFile.getStorageType())) {
 			productFileChanged = true;
 			modelProductFile.setStorageType(changedProductFile.getStorageType());
+		}
+		if (!modelProductFile.getFileSize().equals(changedProductFile.getFileSize())) {
+			productFileChanged = true;
+			modelProductFile.setFileSize(changedProductFile.getFileSize());
+		}
+		if (!modelProductFile.getChecksum().equals(changedProductFile.getChecksum())) {
+			productFileChanged = true;
+			modelProductFile.setChecksum(changedProductFile.getChecksum());
 		}
 		
 		// The set of aux file names gets replaced completely, if not equal

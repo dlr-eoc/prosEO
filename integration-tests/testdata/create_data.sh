@@ -118,7 +118,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "50545d8ad8486dd9297014cf2e769f71"
     },
     {
 		"missionCode": "PTM",
@@ -140,7 +142,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104094500_20191104103000_20191104120100.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "3ca720d0d2a7dee0ba95a9b50047b5a0"
     },
     {
 		"missionCode": "PTM",
@@ -162,7 +166,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104103000_20191104111500_20191104120200.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "f65f2591c400a85ced1d7557a6644138"
     },
     {
 		"missionCode": "PTM",
@@ -184,7 +190,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104111500_20191104120000_20191104120300.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "58a029e6b09ad1e749fc1ff523dbbf80"
     },
     {
 		"missionCode": "PTM",
@@ -206,7 +214,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104120000_20191104124500_20191104150000.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "9ecc9bbc7abb0672efd51a39e8fc2c59"
     },
     {
 		"missionCode": "PTM",
@@ -228,7 +238,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104124500_20191104133000_20191104150100.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "fb720888a0d9bae6b16c1f9607c4de27"
     },
     {
 		"missionCode": "PTM",
@@ -250,7 +262,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104133000_20191104141500_20191104150200.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "4ef20d31f2e051d16cf06db2bae2c76e"
     },
     {
 		"missionCode": "PTM",
@@ -272,7 +286,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104141500_20191104150000_20191104150300.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "8b3a2f2f386c683ce9b1c68bb52b34d2"
     },
     {
 		"missionCode": "PTM",
@@ -294,7 +310,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104150000_20191104154500_20191104180000.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "6bea82661ad200b8dc8a912bbc9c89f6"
     },
     {
 		"missionCode": "PTM",
@@ -316,7 +334,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104154500_20191104163000_20191104180100.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "a1953fa0c117f803c26902243bb0d3aa"
     },
     {
 		"missionCode": "PTM",
@@ -338,7 +358,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104163000_20191104171500_20191104180200.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "a9fb7fc052b5aced6f6dc9d753bbe790"
     },
     {
 		"missionCode": "PTM",
@@ -360,7 +382,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104171500_20191104180000_20191104180300.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "b8b5304d83100a56114cd5ca6a6bc581"
     },
     {
 		"missionCode": "PTM",
@@ -382,7 +406,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104180000_20191104184500_20191104210000.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "9211729e47c5e2487de302f1ca48f4b9"
     },
     {
 		"missionCode": "PTM",
@@ -404,7 +430,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "PTM_L0_20191104184500_20191104193000_20191104210100.RAW",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 84,
+    	"checksum": "95eb634992099c7ebb7bf5b76b243da1"
     },
     {
 		"missionCode": "PTM",
@@ -426,7 +454,9 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "mountPoint": "s3://proseo-s5p-main",
         "filePath": "integration-test/testdata",
         "productFileName": "bulletinb-380.xml",
-        "auxFileNames": []
+        "auxFileNames": [],
+    	"fileSize": 51090,
+    	"checksum": "b754f424e3dad8f1c107ed6b8ad9d06a"
     }
 ]
 EOF
@@ -487,7 +517,6 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "slicingType": "TIME_SLICE",
     "sliceDuration": 14400,
     "sliceOverlap": 0,
-    "propagateSlicing": false,
     "filterConditions": [
         {
             "key": "revision",

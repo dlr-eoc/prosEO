@@ -3,3 +3,4 @@
 /application.yml
 /*.log
 /stop_brain.sh
+/testfiles/

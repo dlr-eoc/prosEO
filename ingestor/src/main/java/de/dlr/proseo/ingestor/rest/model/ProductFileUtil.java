@@ -44,6 +44,8 @@ public class ProductFileUtil {
 		restProductFile.setProductFileName(modelProductFile.getProductFileName());
 		restProductFile.setFilePath(modelProductFile.getFilePath());
 		restProductFile.setStorageType(modelProductFile.getStorageType().toString());
+		restProductFile.setFileSize(modelProductFile.getFileSize());
+		restProductFile.setChecksum(modelProductFile.getChecksum());
 		restProductFile.getAuxFileNames().addAll(modelProductFile.getAuxFileNames());
 		
 		return restProductFile;
@@ -75,6 +77,8 @@ public class ProductFileUtil {
 		modelProductFile.getAuxFileNames().addAll(restProductFile.getAuxFileNames());
 		modelProductFile.setFilePath(restProductFile.getFilePath());
 		modelProductFile.setStorageType(StorageType.valueOf(restProductFile.getStorageType()));
+		modelProductFile.setFileSize(restProductFile.getFileSize());
+		modelProductFile.setChecksum(restProductFile.getChecksum());
 		
 		return modelProductFile;
 	}

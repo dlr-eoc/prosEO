@@ -18,3 +18,10 @@
       auxFileNames?:
         type: string[]
         description: Names of auxiliary files being part of the product
+      fileSize:
+        type: integer
+        format: long
+        description: The size of the primary product file in bytes
+      checksum:
+        type: string
+        description: Checksum value for the primary product file (computed by MD5 algorithm)

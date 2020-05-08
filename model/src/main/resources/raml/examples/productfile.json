@@ -3,8 +3,9 @@
     "version": 0,
     "productId": 689327,
     "processingFacilityName" : "DLR_S5P_VAL",
-    "productFileName": "S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW",
+    "productFileName": "S5P_OPER_L0________20190509T212509_20190509T214507_08138_01.ZIP",
     "auxFileNames": [
+        "S5P_OPER_L0__ENG_A__20190509T212509_20190509T214507_08138_01.RAW",
         "S5P_OPER_L0__ODB_1__20190509T212508_20190509T214507_08138_01.RAW",
         "S5P_OPER_L0__ODB_2__20190509T212508_20190509T214507_08138_01.RAW",
         "S5P_OPER_L0__ODB_3__20190509T212508_20190509T214507_08138_01.RAW",
@@ -16,5 +17,7 @@
         "S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW"
     ],
     "filePath": "/data/proseo/storage_val/S5P_OPER_L0__08138_01",
-    "storageType": "POSIX"
+    "storageType": "POSIX",
+    "fileSize": 2625765376,
+    "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c"
 }

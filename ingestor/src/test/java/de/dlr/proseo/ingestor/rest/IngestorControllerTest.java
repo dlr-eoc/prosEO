@@ -89,7 +89,8 @@ public class IngestorControllerTest {
 	private static final String TEST_GEN_TIME_TEXT = "2018-08-15T10:12:39.000789";
 	private static final String TEST_MODE_OFFL = "OFFL";
 	private static final String TEST_FILE_CLASS = "OPER";
-	
+	private static final long TEST_FILE_SIZE = 7654321L;
+	private static final String TEST_CHECKSUM = "fb720888a0d9bae6b16c1f9607c4de27";
 	
 	/* Test products */
 	private static String[][] testProductData = {
@@ -304,6 +305,8 @@ public class IngestorControllerTest {
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());
+		ingestorProduct.setFileSize(TEST_FILE_SIZE);
+		ingestorProduct.setChecksum(TEST_CHECKSUM);
 		ingestorProduct.getParameters().add(new RestParameter(
 				"copernicusCollection", "STRING", "01"));
 		ingestorProduct.getParameters().add(new RestParameter(
