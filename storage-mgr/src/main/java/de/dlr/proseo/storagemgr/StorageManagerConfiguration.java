@@ -81,14 +81,31 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
 	private String alluxioUnderFsDefaultPrefix;
-	
+
 	@Value("${proseo.posix.mountPoint}")
 	private String posixMountPoint;
+
+	@Value("${proseo.posix.workerMountPoint}")
+	private String posixWorkerMountPoint;
 	
 	
 	
 	
 	
+	/**
+	 * @return the posixWorkerMountPoint
+	 */
+	public String getPosixWorkerMountPoint() {
+		return posixWorkerMountPoint;
+	}
+
+	/**
+	 * @param posixWorkerMountPoint the posixWorkerMountPoint to set
+	 */
+	public void setPosixWorkerMountPoint(String posixWorkerMountPoint) {
+		this.posixWorkerMountPoint = posixWorkerMountPoint;
+	}
+
 	/**
 	 * @return the posixMountPoint
 	 */

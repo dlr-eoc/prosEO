@@ -20,6 +20,7 @@ proseo:
       alluxioUnderFsMaxPrefixes: 500
     posix:
       mountPoint: /mnt/proseodata
+      workerMountPoint: /mnt/localproseodata
     joborder:
       bucket: internal
       prefix: joborders

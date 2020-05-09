@@ -29,7 +29,9 @@ import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.model.fs.s3.S3Ops;
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.StorageControllerImpl;
+import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import software.amazon.awssdk.services.s3.S3Client;
 
@@ -106,6 +108,33 @@ public class StorageManagerUtils {
 		return storages;
 	}
 
+	public static Boolean getAllStoragesInto(StorageManagerConfiguration cfg, ArrayList<String> s3Storages, ArrayList<String> alluxioStorages,ArrayList<String> posixStorages) throws Exception {
+		// fetch all storageIDs
+		ArrayList<String[]> storages;
+			storages = StorageManagerUtils
+					.getAllStorages(cfg.getS3AccessKey(), 
+							cfg.getS3SecretAccessKey(), 
+							cfg.getS3EndPoint(), 
+							cfg.getStorageIdPrefix(),
+							cfg.getAlluxioUnderFsS3Bucket(), 
+							cfg.getAlluxioUnderFsS3BucketPrefix(),
+							cfg.getPosixMountPoint()
+							);
+		
+
+		for (String[] entry : storages) {
+			if (entry[1].equals(String.valueOf(StorageType.S_3))) {
+				s3Storages.add(entry[0]);
+			} else if (entry[1].equals(String.valueOf(StorageType.ALLUXIO))) {
+				alluxioStorages.add(entry[0]);
+			} else if (entry[1].equals(String.valueOf(StorageType.POSIX))) {
+				posixStorages.add(entry[0]);
+			}
+		}
+
+		return true;
+	}
+	
 	/**
 	 * Check if the provided String represents a valid XML Document
 	 * 
@@ -158,5 +187,48 @@ public class StorageManagerUtils {
 		}
 		inputStream.close();
 		return stringBuilder.toString();
+	}
+
+	/**
+	 * Get FsType of path
+	 * 
+	 * @param pathInfo
+	 * @return FsType
+	 */
+	public static FsType getFsType(String pathInfo) {
+		FsType storageType = null;
+		if (pathInfo != null) {
+			// Find storage type
+			if (pathInfo.startsWith("s3:") || pathInfo.startsWith("S3:")) {
+				storageType = FsType.S_3;
+			} else if (pathInfo.startsWith("alluxio:")) {
+				storageType = FsType.ALLUXIO;
+			} else if (pathInfo.startsWith("/")) {
+				storageType = FsType.POSIX;
+			}
+		}
+		return storageType;
+	}
+	/**
+	 * Remove storage dependent path information  
+	 * 
+	 * @param pathInfo
+	 * @return Relative path
+	 */
+	public static String getRelativePath(String pathInfo) {
+		String relPath = null;
+		if (pathInfo != null) {
+			relPath = pathInfo.trim();
+			// Find storage type
+			if (relPath.startsWith("s3:/") || relPath.startsWith("S3:/")) {
+				relPath = relPath.substring(4);
+			} else if (relPath.startsWith("alluxio:/")) {
+				relPath = relPath.substring(9);
+			} else if (relPath.startsWith("/")) {
+				relPath = relPath;
+			}
+			
+		}
+		return relPath;
 	}
 }
