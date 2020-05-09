@@ -28,3 +28,10 @@
       storageType:
         type: string
         description: The string representation of the type of the storage location (e. g. "S3", "POSIX")
+      fileSize:
+        type: integer
+        format: long
+        description: The size of the primary product file in bytes
+      checksum:
+        type: string
+        description: Checksum value for the primary product file (computed by MD5 algorithm)

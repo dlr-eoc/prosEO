@@ -8,11 +8,13 @@ package de.dlr.proseo.basewrap;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -95,6 +97,7 @@ public class BaseWrapper {
 	private static final String MSG_STARTING_PROCESSOR = "Starting Processing using command {} and local JobOrderFile: {}";
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
+	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -189,7 +192,6 @@ public class BaseWrapper {
 
 		return workFileName;
 	}
-
 
 	/**
 	 * Check presence and values of all required Environment Variables
@@ -486,17 +488,28 @@ public class BaseWrapper {
 						logger.error(MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED, productFile.getProductId());
 						return null;
 					}
-					Path filePath = Paths.get(fileTypeAndName[1]);
+					String filePath = fileTypeAndName[1]; // This is not a file path in the local (POSIX) file system; its separator is always "/"
+					int lastSeparatorIndex = filePath.lastIndexOf('/');
+					String parentPath = filePath.substring(0, lastSeparatorIndex);
+					String fileName = filePath.substring(lastSeparatorIndex + 1);
 					if (null == productFile.getFilePath()) {
-						productFile.setFilePath(filePath.getParent().toString());
-					} else if (!productFile.getFilePath().equals(filePath.getParent().toString())) {
+						productFile.setFilePath(parentPath);
+					} else if (!productFile.getFilePath().equals(parentPath)) {
 						logger.error(MSG_DIFFERENT_FILE_PATHS_ASSIGNED, productFile.getProductId());
 						return null;
 					}
 					if (null == productFile.getProductFileName()) {
-						productFile.setProductFileName(filePath.getFileName().toString());
+						productFile.setProductFileName(fileName);
+						File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
+						productFile.setFileSize(primaryProductFile.length());
+						try {
+							productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
+						} catch (IOException e) {
+							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+							return null;
+						}
 					} else {
-						productFile.getAuxFileNames().add(filePath.getFileName().toString());
+						productFile.getAuxFileNames().add(fileName);
 					}
 
 					++numOutputs;
@@ -583,7 +596,11 @@ public class BaseWrapper {
 
 	/**
 	 * Hook for mission-specific modifications to the final job order document after execution of the processor (before push of
-	 * results).
+	 * results). Intended for
+	 * <ol>
+	 *   <li>Adding additional output files to the output list as desired (e. g. log files, job order file)</li>
+	 *   <li>Packaging multiple files into a single ZIP file for delivery via the PRIP if desired</li>
+	 * </ol>
 	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
 	 * 
 	 * @param joWork the job order document to modify

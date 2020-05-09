@@ -6,23 +6,17 @@
 package de.dlr.proseo.api.prip.odata;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
-
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.EntityCollection;
-import org.apache.olingo.commons.api.data.Property;
-import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.edm.EdmProperty;
@@ -45,9 +39,11 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.apache.olingo.server.api.uri.UriResourcePrimitiveProperty;
 import org.apache.olingo.server.api.uri.queryoption.CountOption;
+import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
 import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.OrderByItem;
 import org.apache.olingo.server.api.uri.queryoption.OrderByOption;
+import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 import org.apache.olingo.server.api.uri.queryoption.expression.Member;
@@ -281,15 +277,16 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		
 		// Attempt connection to service
 		@SuppressWarnings("rawtypes")
-		ResponseEntity<List> entity = null;
+		ResponseEntity<List> httpResponseEntity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(mission + "-" + username, password).build() );
 			String requestUrl = config.getIngestorUrl() + "/products?mission=" + mission;
 			
-			// TODO Add filter conditions from $filter option, if set
+			// TODO Add filter conditions from $filter option, if set (performance improvement)
+			// Requires manual parsing of filter text --> expensive!
 			
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
-			entity = restTemplate.getForEntity(requestUrl, List.class);
+			httpResponseEntity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
@@ -307,14 +304,14 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		}
 		
 		// All GET requests should return HTTP status OK
-		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+		if (!HttpStatus.OK.equals(httpResponseEntity.getStatusCode())) {
 			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+					httpResponseEntity.getStatusCodeValue(), httpResponseEntity.getStatusCode().toString(), httpResponseEntity.getHeaders().getFirst("Warning"));
 			logger.error(message);
 			throw new RuntimeException(message);
 		}
 		
-		List<?> restProducts = entity.getBody();
+		List<?> restProducts = httpResponseEntity.getBody();
 		if (logger.isDebugEnabled()) logger.debug("... products found: " + restProducts.size());
 		ObjectMapper mapper = new ObjectMapper();
 		for (Object object: restProducts) {
@@ -327,14 +324,14 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 				continue;
 			}
 			
+			// Filter products not yet generated
+			if (null == restProduct.getGenerationTime() || restProduct.getProductFile().isEmpty()) {
+				if (logger.isTraceEnabled()) logger.trace("... skipping product {} without product files", restProduct.getId());
+				continue;
+			}
+			
 			// Create output product
-			Entity product = new Entity()
-					.addProperty(new Property(null, "Id", ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
-					.addProperty(new Property(null, "Name", ValueType.PRIMITIVE, restProduct.getProductClass()))
-					.addProperty(new Property(null, "ContentType", ValueType.PRIMITIVE,
-							"application/octet-stream"));
-			// TODO Add remaining properties
-			product.setId(new URI(ProductEdmProvider.ET_PRODUCT_NAME + "('" + restProduct.getUuid() + "')"));
+			Entity product = ProductUtil.toPripProduct(restProduct);
 			productList.add(product);
 		}
 		
@@ -375,16 +372,16 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			throws ODataApplicationException, ODataLibraryException {
 		if (logger.isTraceEnabled()) logger.trace(">>> readEntityCollection({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 		
-		// 1st we have retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
+		// [1] Retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first segment is the EntitySet
 		EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
 
-		// 2nd: fetch the data from backend for this requested EntitySetName
-		// it has to be delivered as EntitySet object
-		EntityCollection entitySet;
+		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as EntityCollection object)
+		EntityCollection entityCollection;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
+				// Retrieve mission, user name and password from Authorization HTTP header
 				String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 				if (null == authHeader) {
 					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
@@ -407,7 +404,9 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 					return;
 				}
 				String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
-				entitySet = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0], uriInfo);
+
+				// Query the backend services for the requested products, passing on user, password and mission
+				entityCollection = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0], uriInfo);
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
@@ -438,16 +437,24 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 
 		if (logger.isDebugEnabled()) logger.debug("... preparing data for response");
 		
-		// 3rd: create a serializer based on the requested format (json)
+		// [3] Check for system query options
+		SelectOption selectOption = uriInfo.getSelectOption();
+		ExpandOption expandOption = uriInfo.getExpandOption();
+		
+		// [4] Create a serializer based on the requested format (json)
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
-		// 4th: Now serialize the content: transform from the EntitySet object to InputStream
+		// [5] Now serialize the content: transform from the EntitySet object to InputStream, taking into account system query options
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+		String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntityType,
+				expandOption, selectOption);
+
+		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
 
 		final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
-		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with().id(id).contextURL(contextUrl).build();
-		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entitySet, opts);
+		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with()
+				.id(id).contextURL(contextUrl).expand(expandOption).select(selectOption).build();
+		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 		InputStream serializedContent = serializerResult.getContent();
 
 		// Finally: configure the response object: set the body, headers and status code
@@ -455,7 +462,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		response.setStatusCode(HttpStatusCode.OK.getStatusCode());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
 		
-		if (logger.isTraceEnabled()) logger.trace("<<< readEntityCollection(");
+		if (logger.isTraceEnabled()) logger.trace("<<< readEntityCollection()");
 	}
 
 }

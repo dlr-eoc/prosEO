@@ -30,9 +30,9 @@ public class ProductFile extends PersistentObject {
 	
 	// the path separator string
 	// at the moment there is no specialized handling for path strings
-	// todo: is it guaranteed that all components are working at the same manor?
+	// TODO is it guaranteed that all components are working at the same manner?
 	
-	private static String pathSeparator = "/";
+	private static final String pathSeparator = "/";
 
 	/** The product this data file belongs to */
 	@ManyToOne
@@ -55,6 +55,12 @@ public class ProductFile extends PersistentObject {
 	/** Type of the storage location */
 	@Enumerated(EnumType.STRING)
 	private StorageType storageType;
+	
+	/** The size of the primary product file in bytes */
+	private Long fileSize;
+	
+	/** Checksum value for the primary product file (computed by MD5 algorithm) */
+	private String checksum;
 	
 	/**
 	 * The available storage types 
@@ -158,6 +164,44 @@ public class ProductFile extends PersistentObject {
 	}
 
 	/**
+	 * Gets the size in bytes of the primary product file
+	 * 
+	 * @return the file size
+	 */
+	public Long getFileSize() {
+		return fileSize;
+	}
+
+	/**
+	 * Sets the size in bytes of the primary product file
+	 * 
+	 * @param fileSize the file size to set
+	 */
+	public void setFileSize(Long fileSize) {
+		this.fileSize = fileSize;
+	}
+
+	/**
+	 * Gets the MD5 checksum for the primary product file
+	 * 
+	 * @return the checksum string
+	 */
+	public String getChecksum() {
+		return checksum;
+	}
+
+	/**
+	 * Sets the MD5 checksum for the primary product file
+	 * 
+	 * @param checksum the checksum to set
+	 */
+	public void setChecksum(String checksum) {
+		this.checksum = checksum;
+	};
+
+	/**
+	 * Return a product file path consisting of file path and product file name
+	 * 
 	 * @return generated file name path
 	 */
 	public String getProductFilePathName() {
@@ -195,6 +239,6 @@ public class ProductFile extends PersistentObject {
 	public String toString() {
 		return "ProductFile [processingFacility=" + processingFacility + ", productFileName=" + productFileName + ", auxFileNames="
 				+ auxFileNames + ", filePath=" + filePath + ", storageType=" + storageType + "]";
-	};
+	}
 
 }

@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ProductQuality;
@@ -119,15 +120,18 @@ public class ProductUtil {
 			restProduct.setOrbit(restOrbit);
 		}
 		for (ProductFile modelFile: modelProduct.getProductFile()) {
-			RestProductFile restFile = new RestProductFile();
-			restFile.setId(modelFile.getId());
-			restFile.setVersion(Long.valueOf(modelFile.getVersion()));
-			restFile.setProcessingFacilityName(modelFile.getProcessingFacility().getName());
-			restFile.setProductFileName(modelFile.getProductFileName());
-			restFile.setFilePath(modelFile.getFilePath());
-			restFile.setStorageType(modelFile.getStorageType().toString());
-			restFile.getAuxFileNames().addAll(modelFile.getAuxFileNames());
-			restProduct.getProductFile().add(restFile);
+			restProduct.getProductFile().add(ProductFileUtil.toRestProductFile(modelFile));
+		}
+		if (null != modelProduct.getConfiguredProcessor()) {
+			ConfiguredProcessor modelConfiguredProcessor = modelProduct.getConfiguredProcessor();
+			RestConfiguredProcessor restConfiguredProcessor = new RestConfiguredProcessor();
+			restConfiguredProcessor.setId(modelConfiguredProcessor.getId());
+			restConfiguredProcessor.setVersion(Long.valueOf(modelConfiguredProcessor.getVersion()));
+			restConfiguredProcessor.setIdentifier(modelConfiguredProcessor.getIdentifier());
+			restConfiguredProcessor.setProcessorName(modelConfiguredProcessor.getProcessor().getProcessorClass().getProcessorName());
+			restConfiguredProcessor.setProcessorVersion(modelConfiguredProcessor.getProcessor().getProcessorVersion());
+			restConfiguredProcessor.setConfigurationVersion(modelConfiguredProcessor.getConfiguration().getConfigurationVersion());
+			restProduct.setConfiguredProcessor(restConfiguredProcessor);
 		}
 		for (String productParameterKey: modelProduct.getParameters().keySet()) {
 			RestParameter restParameter = new RestParameter(
@@ -141,7 +145,7 @@ public class ProductUtil {
 	}
 	
 	/**
-	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no product references)
+	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no object references)
 	 * 
 	 * @param restProduct the REST product
 	 * @return a (roughly) equivalent model product or null, if no REST product was given
