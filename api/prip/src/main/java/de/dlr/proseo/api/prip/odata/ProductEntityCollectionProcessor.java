@@ -44,6 +44,8 @@ import org.apache.olingo.server.api.uri.queryoption.FilterOption;
 import org.apache.olingo.server.api.uri.queryoption.OrderByItem;
 import org.apache.olingo.server.api.uri.queryoption.OrderByOption;
 import org.apache.olingo.server.api.uri.queryoption.SelectOption;
+import org.apache.olingo.server.api.uri.queryoption.SkipOption;
+import org.apache.olingo.server.api.uri.queryoption.TopOption;
 import org.apache.olingo.server.api.uri.queryoption.expression.Expression;
 import org.apache.olingo.server.api.uri.queryoption.expression.ExpressionVisitException;
 import org.apache.olingo.server.api.uri.queryoption.expression.Member;
@@ -271,7 +273,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({}, ********, {})", username, mission);
 		
 		EntityCollection productsCollection = new EntityCollection();
-		List<Entity> productList = productsCollection.getEntities();
+		List<Entity> productList = new ArrayList<>();
 
 		// Request product list from Ingestor service
 		
@@ -346,6 +348,40 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		if (null != orderByOption) {
 			sortProductList(productList, orderByOption);
 		}
+		
+		// Check $skip option
+		SkipOption skipOption = uriInfo.getSkipOption();
+		if (skipOption != null) {
+		    int skipNumber = skipOption.getValue();
+		    if (logger.isTraceEnabled()) logger.trace("... skipping {} products due to $skip option", skipNumber);
+		    if (skipNumber >= 0) {
+		        if(skipNumber <= productList.size()) {
+		        	productList = productList.subList(skipNumber, productList.size());
+		        } else {
+		            // The client skipped all entities
+		        	productList.clear();
+		        }
+		    } else {
+		        throw new ODataApplicationException("Invalid value for $skip", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+		    }
+		}
+		
+		// Check $top option
+		TopOption topOption = uriInfo.getTopOption();
+		if (topOption != null) {
+		    int topNumber = topOption.getValue();
+		    if (logger.isTraceEnabled()) logger.trace("... returning max. {} products due to $top option", topNumber);
+		    if (topNumber >= 0) {
+		        if(topNumber <= productList.size()) {
+		        	productList = productList.subList(0, topNumber);
+		        }  // else the client has requested more entities than available => return what we have
+		    } else {
+		        throw new ODataApplicationException("Invalid value for $top", HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
+		    }
+		}
+		
+		// Add the product list to the product collection
+		productsCollection.getEntities().addAll(productList);
 		
 		// Check $count option
 		CountOption countOption = uriInfo.getCountOption();
