@@ -177,6 +177,8 @@ public class KubeConfig {
 						 "user1", 
 						 "c36ff53775d69aa6bdbfa1486d8908a2fc9c38e712e6b0b69584a4f0cd9e8006", 
 						 false);
+			} else 	if (id.equalsIgnoreCase("Lerchenhof")) {
+				client = Config.fromUrl(url, false);
 			} else {
                 try {
                 	// beschreibt Kubernetes in Docker

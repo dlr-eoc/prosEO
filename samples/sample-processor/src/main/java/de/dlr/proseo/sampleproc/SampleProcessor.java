@@ -83,6 +83,7 @@ public class SampleProcessor {
 	private static final String JOF_TAG_OUTPUT = "Output";
 	private static final String JOF_TAG_FILE_NAME = "File_Name";
 	private static final String JOF_TAG_FILE_TYPE = "File_Type";
+	private static final String JOF_TAG_FILE_NAME_TYPE = "File_Name_Type";
 	private static final String JOF_TAG_FILE_VERSION = "File_Type";
 	private static final String JOF_TAG_TASK_NAME = "Task_Name";
 	private static final String JOF_TAG_CONFIG_FILES = "Config_Files";
@@ -466,38 +467,44 @@ public class SampleProcessor {
 				logger.error(MSG_JOF_TAG_MISSING, JOF_TAG_FILE_TYPE);
 				return false;
 			}
-			
-			// Generate a product with random identifier and the file type specified in the JobOrder document
-			SampleProduct outputProduct = new SampleProduct();
-			outputProduct.setId("DERIVED_FROM_"+inputProduct.getId().replace("/", "_"));
-			outputProduct.setType(outputFileTypes.item(0).getTextContent());
-			outputProduct.setStartTime(inputProduct.getStartTime());
-			outputProduct.setStopTime(inputProduct.getStopTime());
-			outputProduct.setGenerationTime(Instant.now());
-			outputProduct.setRevision(inputProduct.getRevision());
-			
-			// Write the output product to a file
-			String outputFileName = outputFileNames.item(0).getTextContent();
-			logger.debug("... creating output product file {}", outputFileName);
-			BufferedWriter output = null;
-			try {
-				output = new BufferedWriter(new FileWriter(new File(outputFileName)));
-				output.write(
-					String.format("%s|%s|%s|%s|%s|%d", outputProduct.getId(), outputProduct.getType(),
-						outputProduct.getStartTime().toString(), outputProduct.getStopTime().toString(),
-						outputProduct.getGenerationTime().toString(), outputProduct.getRevision()
-					)
-				);
-				output.newLine();
-			} catch (IOException e) {
-				logger.error(MSG_FILE_NOT_WRITABLE, outputFileName);
+			NodeList outputFileNameTypes = ((Element) outputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME_TYPE);
+			if (0 == outputFileNameTypes.getLength()) {
+				logger.error(MSG_JOF_TAG_MISSING, JOF_TAG_FILE_NAME_TYPE);
 				return false;
-			} finally {
-				if (null != output) {
-					try {
-						output.close();
-					} catch (IOException e) {
-						logger.warn(MSG_FILE_NOT_CLOSABLE, outputFileName);
+			}
+			if (outputFileNameTypes.item(0).getTextContent().trim().equalsIgnoreCase("physical")) { 
+				// Generate a product with random identifier and the file type specified in the JobOrder document
+				SampleProduct outputProduct = new SampleProduct();
+				outputProduct.setId("DERIVED_FROM_"+inputProduct.getId().replace("/", "_"));
+				outputProduct.setType(outputFileTypes.item(0).getTextContent());
+				outputProduct.setStartTime(inputProduct.getStartTime());
+				outputProduct.setStopTime(inputProduct.getStopTime());
+				outputProduct.setGenerationTime(Instant.now());
+				outputProduct.setRevision(inputProduct.getRevision());
+
+				// Write the output product to a file
+				String outputFileName = outputFileNames.item(0).getTextContent();
+				logger.debug("... creating output product file {}", outputFileName);
+				BufferedWriter output = null;
+				try {
+					output = new BufferedWriter(new FileWriter(new File(outputFileName)));
+					output.write(
+							String.format("%s|%s|%s|%s|%s|%d", outputProduct.getId(), outputProduct.getType(),
+									outputProduct.getStartTime().toString(), outputProduct.getStopTime().toString(),
+									outputProduct.getGenerationTime().toString(), outputProduct.getRevision()
+									)
+							);
+					output.newLine();
+				} catch (IOException e) {
+					logger.error(MSG_FILE_NOT_WRITABLE, outputFileName);
+					return false;
+				} finally {
+					if (null != output) {
+						try {
+							output.close();
+						} catch (IOException e) {
+							logger.warn(MSG_FILE_NOT_CLOSABLE, outputFileName);
+						}
 					}
 				}
 			}

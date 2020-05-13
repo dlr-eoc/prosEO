@@ -441,7 +441,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		String storageManagerUrl = getStorageManagerUrl(request.getHeader(HttpHeaders.AUTHORIZATION), productFile.getProcessingFacilityName());
 		
 		// Build the download URI
-		String productDownloadUri = storageManagerUrl + "/storage/products/" + restProduct.getId();
+		String productDownloadUri = storageManagerUrl + "/products/" + restProduct.getId();
 
 		// --- TEST Just download "something" ---
 		// TODO Remove test code!!

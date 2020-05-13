@@ -8,7 +8,7 @@ proseo:
     s3:
       s3AccessKey: short_access_key
       s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://minio:9000
+      s3EndPoint: http://192.168.20.159:9000
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
       s3DefaultBucket: proseo-data-001
@@ -16,7 +16,7 @@ proseo:
       alluxioUnderFsS3Bucket: internal
       alluxioUnderFsS3BucketPrefix: underfs
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
-      alluxioUnderFsS3BucketEndPoint: http://minio:9000
+      alluxioUnderFsS3BucketEndPoint: http://192.168.20.159:9000
       alluxioUnderFsMaxPrefixes: 500
     posix:
       mountPoint: /mnt/proseodata
@@ -24,6 +24,10 @@ proseo:
     joborder:
       bucket: internal
       prefix: joborders
+    storageManager:
+        user: PTM-wrapper
+        password: ingest&plan
+        defaultStorageType: S3
     mountpoints:
      #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
       alluxio:

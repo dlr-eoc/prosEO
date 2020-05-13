@@ -48,7 +48,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String HTTP_MSG_PREFIX = "4000 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
-	private static Logger logger = LoggerFactory.getLogger(StorageControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -136,14 +136,13 @@ public class JobOrderControllerImpl implements JoborderController {
 	}
 
 	@Override
-	public ResponseEntity<RestJoborder> getRestJoborderByPathInfo(String pathInfo) {
-		RestJoborder response = new RestJoborder();
+	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
+		String response = "";
 		if (pathInfo != null) {
 			ProseoFile proFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			// Find storage type
 			if (proFile == null || proFile.getFsType() == FsType.ALLUXIO) {
 				logger.warn("Invalid storage type for path: {}", pathInfo);
-				response.setMessage("Invalid storage type for path: {}" + pathInfo);
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}
 			InputStream jofStream = proFile.getDataAsInputStream();
@@ -157,17 +156,10 @@ public class JobOrderControllerImpl implements JoborderController {
 							errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
-				response.setJobOrderStringBase64(new String(bytes));
-				response.setFsType(proFile.getFsType());
-				response.setPathInfo(proFile.getFullPath());
-				response.setUploaded(true);
-				response.setMessage("Job Order found.");
+				response = new String(bytes);
 				return new ResponseEntity<>(response, HttpStatus.OK);
 			}				
 		} 
-		response.setPathInfo(pathInfo);
-		response.setUploaded(false);
-		response.setMessage("Job Order not found.");
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
 }

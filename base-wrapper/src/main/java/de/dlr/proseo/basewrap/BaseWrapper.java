@@ -17,6 +17,8 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,6 +147,7 @@ public class BaseWrapper {
 		, PROSEO_USER
 		, PROSEO_PW
 		, LOCAL_FS_MOUNT
+		, NODE_IP
 	}
 
 	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
@@ -164,6 +167,7 @@ public class BaseWrapper {
 	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
 	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
 	private String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
+	private String ENV_NODE_IP = System.getenv(ENV_VARS.NODE_IP.toString());
 
 
 	/**
@@ -256,6 +260,14 @@ public class BaseWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOCAL_FS_MOUNT);
 			envOK = false;
 		}
+		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
+			envOK = false;
+		} else {
+			// set local storage manager end point
+			String replaced = ENV_STORAGE_ENDPOINT.replaceFirst("%NODE_IP%", ENV_NODE_IP);
+			ENV_STORAGE_ENDPOINT = replaced;
+		}
 		if (envOK) {
 			logger.info(MSG_ENVIRONMENT_CHECK_PASSED);
 			logger.info(MSG_PREFIX_TIMESTAMP_FOR_NAMING, WRAPPER_TIMESTAMP);
@@ -269,22 +281,21 @@ public class BaseWrapper {
 	 */
 	private String provideInitialJOF() {
 		if (logger.isTraceEnabled()) logger.trace(">>> provideInitialJOF()");
-
 		// Call Storage Manager to retrieve Job Order File as Base64-encoded string
-		HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
-				"/joborders/" + ENV_JOBORDER_FILE, null, null, RestOps.HttpMethod.GET);
+		try {
+			Map<String,String> params = new HashMap<>();
+			params.put("pathInfo", ENV_JOBORDER_FILE);
+			HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
+					"/joborders", null, params, RestOps.HttpMethod.GET);
 
-		if (200 == responseInfo.gethttpCode()) {
-			RestJoborder jobOrder;
-			try {
-				jobOrder = (new ObjectMapper()).readValue(responseInfo.gethttpResponse(), RestJoborder.class);
-			} catch (JsonProcessingException e) {
-				logger.error(MSG_ERROR_DECODING_JOB_ORDER, responseInfo.gethttpResponse());
+			if (200 == responseInfo.gethttpCode()) {
+				return new String(Base64.getDecoder().decode(responseInfo.gethttpResponse()));
+			} else {
+				logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode());
 				return null;
 			}
-			return new String(Base64.getDecoder().decode(jobOrder.getJobOrderStringBase64()));
-		} else {
-			logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode());
+		} catch (Exception e) {
+			logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, "Error in RestOps.restApiCall");
 			return null;
 		}
 	}
@@ -322,21 +333,30 @@ public class BaseWrapper {
 			for (InputOutput io: item.getListOfInputs()) {
 				// Loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
-
+					Boolean done = false;
 					// Fill original filename with current val of `File_Name` --> for later use...
 					fn.setOriginalFileName(fn.getFileName());
-
-					// Request input file from Storage Manager
-					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
-							"/productfiles/" + fn.getFileName(), null, null, RestOps.HttpMethod.GET);
-
-					if (200 != responseInfo.gethttpCode()) {
-						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
-						return null;
+					if (fn.getFSType().equals(FS_TYPE.POSIX.toString())) {
+						File f = new File(fn.getFileName());
+						if (f.exists()) {
+							// nothing to do
+							done = true;
+						} 
 					}
+					if (!done) {
+						// Request input file from Storage Manager
+						Map<String,String> params = new HashMap<>();
+						params.put("pathInfo", fn.getFileName());
+						HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
+								"/productfiles", null, params, RestOps.HttpMethod.GET);
 
-					fn.setFileName(responseInfo.gethttpResponse());
+						if (200 != responseInfo.gethttpCode()) {
+							logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
+							return null;
+						}
 
+						fn.setFileName(responseInfo.gethttpResponse());
+					}
 					++numberOfInputs;
 				}
 			}
@@ -408,7 +428,7 @@ public class BaseWrapper {
 	/**
 	 * Executes the processor
 	 * 
-	 * @param shellCommand command for executing the processor
+	 * @param shellCommand command for executing the processor, TODO remove, use ENV direct
 	 * @param jofPath path of re-mapped JobOrder file valid in container context
 	 * @return True/False
 	 */
@@ -464,20 +484,23 @@ public class BaseWrapper {
 					logger.error(MSG_PRODUCT_ID_NOT_PARSEABLE, io.getProductID());
 					return null;
 				}
+				productFile.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
 				pushedOutputs.add(productFile);
 
 				// Loop all output files
 				for (IpfFileName fn: io.getFileNames()) {
 					// Push output file to Storage Manager
+					Map<String,String> params = new HashMap<>();
+					params.put("pathInfo", fn.getFileName());
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
-							"/productfiles/" + fn.getFileName(), null, null, RestOps.HttpMethod.PUT);
+							"/productfiles", null, params, RestOps.HttpMethod.PUT);
 
 					if (201 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
 						return null;
 					}
 
-					String[] fileTypeAndName = responseInfo.gethttpResponse().split("|", 2);
+					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]");
 					if (2 != fileTypeAndName.length) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						return null;
@@ -500,20 +523,26 @@ public class BaseWrapper {
 					}
 					if (null == productFile.getProductFileName()) {
 						productFile.setProductFileName(fileName);
-						File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
-						productFile.setFileSize(primaryProductFile.length());
-						try {
-							productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
-						} catch (IOException e) {
-							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
-							return null;
-						}
+						if (!io.getFileNameType().equalsIgnoreCase("Directory")) {
+							File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
+							productFile.setFileSize(primaryProductFile.length());
+							try {
+								productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
+							} catch (IOException e) {
+								logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+								return null;
+							}
+						} else {
+							productFile.setFileSize(0L);
+							productFile.setChecksum("");
+						}						
 					} else {
 						productFile.getAuxFileNames().add(fileName);
 					}
 
 					++numOutputs;
 				}
+
 			}
 		}
 
@@ -574,14 +603,23 @@ public class BaseWrapper {
 	private void callBack(String msg) {
 		if (logger.isTraceEnabled()) logger.trace(">>> callBack({})", msg);
 
-		// queryParam status is set by wrapper
-		HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_STATE_CALLBACK_ENDPOINT, "", msg, "status", RestOps.HttpMethod.PATCH);
+		try {
+			Map<String,String> params = new HashMap<>();
+			params.put("status", msg);
+			// queryParam status is set by wrapper
+			HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_STATE_CALLBACK_ENDPOINT,
+					"", null, params, RestOps.HttpMethod.POST);
 
-		if (null == responseInfo || 200 != responseInfo.gethttpCode()) {
-			logger.error(MSG_ERROR_CALLING_PLANNER, (null == responseInfo ? 500 : responseInfo.gethttpCode()));
+			if (null == responseInfo || 200 != responseInfo.gethttpCode()) {
+				logger.error(MSG_ERROR_CALLING_PLANNER, (null == responseInfo ? 500 : responseInfo.gethttpCode()));
+			}
+
+			logger.info(MSG_PLANNER_RESPONSE, responseInfo.gethttpResponse(), responseInfo.gethttpCode());
+		} catch (Exception e) {
+			logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, "Error in RestOps.restApiCall");
+			return;
 		}
-
-		logger.info(MSG_PLANNER_RESPONSE, responseInfo.gethttpResponse(), responseInfo.gethttpCode());
+		
 	}
 
 	/**

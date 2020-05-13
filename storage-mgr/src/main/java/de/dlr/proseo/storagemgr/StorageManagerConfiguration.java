@@ -88,10 +88,25 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
 	
+	@Value("${proseo.storageManager.defaultStorageType}")
+	private String defaultStorageType;
 	
 	
 	
-	
+	/**
+	 * @return the defaultStorageType
+	 */
+	public String getDefaultStorageType() {
+		return defaultStorageType;
+	}
+
+	/**
+	 * @param defaultStorageType the defaultStorageType to set
+	 */
+	public void setDefaultStorageType(String defaultStorageType) {
+		this.defaultStorageType = defaultStorageType;
+	}
+
 	/**
 	 * @return the posixWorkerMountPoint
 	 */

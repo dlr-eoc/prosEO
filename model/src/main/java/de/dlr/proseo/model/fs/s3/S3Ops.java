@@ -1,5 +1,6 @@
 package de.dlr.proseo.model.fs.s3;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
@@ -24,12 +25,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.Copy;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.util.StringUtils;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -438,5 +441,18 @@ public class S3Ops {
 			return null;
 		}
 
+	}
+	
+	public static void createFolder(S3Client client, String bucketName, String folderName) {
+	    // create meta-data for your folder and set content-length to 0
+		String key = folderName;
+		if (!key.endsWith("/")) {
+		    key += "/";
+		}		
+		PutObjectRequest putRequest = PutObjectRequest.builder()
+		        .bucket(bucketName)
+		        .key(key)
+		        .build();
+		client.putObject(putRequest, RequestBody.empty());
 	}
 }

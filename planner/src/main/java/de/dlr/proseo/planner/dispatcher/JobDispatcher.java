@@ -148,7 +148,7 @@ public class JobDispatcher {
 						}
 					}
 					Product p = jobStep.getOutputProduct();
-					addIpfIOOutput(p, proc, jobStep); 
+					addIpfIOOutput(p, proc, jobStep, ""); 
 					jobOrder.getListOfProcs().add(proc);
 				}
 
@@ -158,25 +158,36 @@ public class JobDispatcher {
 			}
 
 			// read a job order file for test purposes
-//			if (jobOrder != null) {
-//				jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);
-//			}
+			if (jobOrder != null) {
+				jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);
+			}
 		}
 		return jobOrder;
 	}
 	
-	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep) {
+	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep, String baseDir) {
 		String fnType = p.getComponentProducts().isEmpty() ? "Physical" : "Directory"; 
 		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, "Output", String.valueOf(p.getId()));
+		String storageType = jobStep.getJob().getProcessingFacility().getDefaultStorageType().toString();
+		String fn = "";
 		if (p.getGenerationTime() != null) {
-			sio.getFileNames().add(new IpfFileName(p.generateFilename(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
-//			sio.getFileNames().add(new IpfFileName("s3:/proseo-data-001/output/" + jobStep.getId() + "/" + p.generateFilename(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
+			fn = p.generateFilename();
+			if (fnType.equals("Directory")) {
+				int i = fn.lastIndexOf('.');
+				if (i > 0) {
+					fn = fn.substring(0, i);
+				}
+			}
+			fn = baseDir + fn;
+			sio.getFileNames().add(new IpfFileName(fn, storageType)); 
+			
 		} else {
-			sio.getFileNames().add(new IpfFileName(p.getProductClass().getProductType(), "S3")); // p.getJobStep().getJob().getProcessingFacility().getDefaultFSType()));
+			fn = baseDir + p.getProductClass().getProductType();
+			sio.getFileNames().add(new IpfFileName(fn, storageType)); 
 		}
 		proc.getListOfOutputs().add(sio);
 		for (Product sp : p.getComponentProducts()) {
-			addIpfIOOutput(sp, proc, jobStep);
+			addIpfIOOutput(sp, proc, jobStep, fn + "/");
 		}
 	}
 

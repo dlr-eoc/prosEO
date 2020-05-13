@@ -50,82 +50,59 @@ resourceTypes:
           application/json:
             type: RestInfo
 
-/storage:
-  type: standard
+/products:
   get:
-    description: Get storages by id
+    description: Get product metadata, optionally filtered by storage type, storage ID, product (database) ID
     queryParameters:
-      id?: string
+      storageType?:
+        enum: [S3, ALLUXIO, POSIX]
+      storageId?: string
+      id?:
+        type: integer
+        format: long
     responses:
       200:
         body:
           application/json:
-            type: RestStorage[]
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage-list.json
+            type: RestProductFS[]
   post:
-    description: Create a new storage
+    description: Register products/files/dirs from unstructered storage in prosEO-storage
     body:
       application/json:
-        type: RestStorage
-        example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
+        type: RestProductFS
+        example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS.json
     responses:
       201:
         body:
           application/json:
-            type: RestStorage
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
-  /products:
-    # /register URI path removed (unnecessary)
+            type: RestProductFS
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
+  delete:
+    description: Delete/remove product by product (database) ID from prosEO storage
+    queryParameters:
+      pathInfo: 
+        type: string
+        description: The file path as S3/ALLUXIO/POSIX string for download
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestProductFS
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-del.json
+  /download:
     get:
-      description: Get product metadata, optionally filtered by storage type, storage ID, product (database) ID
+      description: Get the data files for the product as data stream (optionally zip-compressed, optionally range-restricted)
       queryParameters:
-        storageType?:
-          enum: [S3, ALLUXIO, POSIX]
-        storageId?: string
-        id?:
-          type: integer
-          format: long
+        pathInfo: 
+          type: string
+          description: The file path as S3/ALLUXIO/POSIX string for download
+        zip?: boolean
+        fromByte?: integer
+        toByte?: integer
       responses:
         200:
           body:
-            application/json:
-              type: RestProductFS[]
-    post:
-      description: Register products/files/dirs from unstructered storage in prosEO-storage
-      body:
-        application/json:
-          type: RestProductFS
-          example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS.json
-      responses:
-        201:
-          body:
-            application/json:
-              type: RestProductFS
-              example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
-    /{productId}:
-      uriParameters:
-        productId:
-          type: integer
-          format: long
-          description: The database ID of the product
-      get:
-        description: Get the data files for the product as data stream (optionally zip-compressed, optionally range-restricted)
-        queryParameters:
-          zip?: boolean
-          fromByte?: integer
-          toByte?: integer
-        responses:
-          200:
-            body:
-              application/octet-stream:
-      delete:
-        description: Delete/remove product by product (database) ID from prosEO storage
-        responses:
-          200:
-            body:
-              application/json:
-                type: RestProductFS
-                example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-del.json
+            application/octet-stream:
 
 /productfiles:
   description: Methods to transfer product files between Storage Manager and processor (Base Wrapper)
@@ -146,8 +123,6 @@ resourceTypes:
       pathInfo: 
         type: string
         description: The file path as local POSIX path for upload
-      storageType:
-          enum: [S3, ALLUXIO, POSIX]
     responses:
       201:
         body:
@@ -155,7 +130,7 @@ resourceTypes:
             description: |
               The file system type (S3/ALLUXIO/POSIX), followed by a vertical bar ('|'),
               followed by the resulting S3/ALLUXIO/POSIX file path
-
+              
 /joborders:
   post:
     description: Upload prosEO Job Order File for later use in a job
@@ -176,6 +151,5 @@ resourceTypes:
     responses:
       200:
         body:
-          application/json:
-            type: RestJoborder
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64-response.json
+          text/plain:
+            description: The resulting Base64-encoded string

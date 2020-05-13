@@ -315,7 +315,7 @@ public class IngestorControllerTest {
 		ingestorProducts.add(ingestorProduct);
 		
 		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
-		String testUrl = config.getStorageManagerUrl() + "/storage/products/register";
+		String testUrl = config.getStorageManagerUrl() + "/products/register";
 		Map<String, String> mockRequest = new HashMap<>();
 		mockRequest.put("productId", "4711");
 		

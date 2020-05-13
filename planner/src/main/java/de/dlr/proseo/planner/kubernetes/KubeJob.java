@@ -44,6 +44,8 @@ import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.Copy;
 import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.models.V1EnvVarSource;
+import io.kubernetes.client.openapi.models.V1EnvVarSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobBuilder;
 import io.kubernetes.client.openapi.models.V1JobCondition;
@@ -299,13 +301,19 @@ public class KubeJob {
 				String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
 				
 				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
+				// todo Find correct name!
+				String shellCommand = "ll";
+				
+				String localMountPoint = "/mnt/localproseodata";
+				
 				// Use Java style Map (as opposed to Scala's Map class)
 				
 				// Build a ResourceRequirements object
 				V1ResourceRequirements reqs = new V1ResourceRequirements();
 				reqs.putRequestsItem("cpu", new Quantity("1"))
 					.putRequestsItem("memory", new Quantity("1500Mi"));
-				
+				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
+				String localStorageManagerUrl = kubeConfig.getStorageManagerUrl().replaceFirst("://[^:]*", "://%NODE_IP%");
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
 						.withNewTemplate()
 						.withNewMetadata()
@@ -316,46 +324,42 @@ public class KubeJob {
 						.addNewContainer()
 						.withName(containerName)
 						.withImage(imageName)
-						.withImagePullPolicy("Never")
+						// .withImagePullPolicy("Never")
 						.addNewEnv()
-						.withName("JOBORDER_FILE")
-						.withValue(jobOrder.getFileName())
+						.withName("NODE_IP")
+						.withValueFrom(es)
 						.endEnv()
 						.addNewEnv()
 						.withName("JOBORDER_FS_TYPE")
 						.withValue(jobOrder.getFsType())
 						.endEnv()
 						.addNewEnv()
+						.withName("JOBORDER_FILE")
+						.withValue(jobOrder.getFileName())
+						.endEnv()
+						.addNewEnv()
+						.withName("STORAGE_ENDPOINT")
+						.withValue(localStorageManagerUrl)
+						.endEnv()
+						.addNewEnv()
+						.withName("STORAGE_USER")
+						.withValue(wrapUser)
+						.endEnv()
+						.addNewEnv()
+						.withName("STORAGE_PASSWORD")
+						.withValue(ProductionPlanner.config.getWrapperPassword())
+						.endEnv()
+						.addNewEnv()
 						.withName("STATE_CALLBACK_ENDPOINT")
 						.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
 						.endEnv()
 						.addNewEnv()
-						.withName("S3_ENDPOINT")
-						.withValue(ProductionPlanner.config.getS3EndPoint())
-						.endEnv()
-						.addNewEnv()
-						.withName("S3_ACCESS_KEY")
-						.withValue(ProductionPlanner.config.getS3AccessKey())
-						.endEnv()
-						.addNewEnv()
-						.withName("S3_SECRET_ACCESS_KEY")
-						.withValue(ProductionPlanner.config.getS3SecretAccessKey())
-						.endEnv()
-						.addNewEnv()
-						.withName("S3_STORAGE_ID_OUTPUTS")
-						.withValue(ProductionPlanner.config.getS3DefaultBucket())
-						.endEnv()
-						.addNewEnv()
-						.withName("ALLUXIO_STORAGE_ID_OUTPUTS")
-						.withValue("alluxio1")
+						.withName("PROCESSING_FACILITY_NAME")
+						.withValue(kubeConfig.getId())
 						.endEnv()
 						.addNewEnv()
 						.withName("INGESTOR_ENDPOINT")
 						.withValue(ProductionPlanner.config.getIngestorUrl())
-						.endEnv()
-						.addNewEnv()
-						.withName("PROCESSING_FACILITY_NAME")
-						.withValue(kubeConfig.getId())
 						.endEnv()
 						.addNewEnv()
 						.withName("PROSEO_USER")
@@ -365,8 +369,22 @@ public class KubeJob {
 						.withName("PROSEO_PW")
 						.withValue(ProductionPlanner.config.getWrapperPassword())
 						.endEnv()
+						.addNewEnv()
+						.withName("LOCAL_FS_MOUNT")
+						.withValue(localMountPoint)
+						.endEnv()
+						.addNewVolumeMount()
+						.withName("localfsmount")
+						.withMountPath(localMountPoint)
+						.endVolumeMount()
 						.withResources(reqs)
 						.endContainer()
+						.addNewVolume()
+						.withName("localfsmount")
+						.withNewHostPath()
+						.withPath(localMountPoint)
+						.endHostPath()
+						.endVolume()
 						.withRestartPolicy("Never")
 						.withHostNetwork(true)
 						.withDnsPolicy("ClusterFirstWithHostNet")
