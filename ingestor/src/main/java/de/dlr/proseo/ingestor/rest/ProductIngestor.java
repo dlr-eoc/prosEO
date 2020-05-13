@@ -98,8 +98,8 @@ public class ProductIngestor {
 
 	/* URLs for Storage Manager and Production Planner */
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
-	private static final String URL_STORAGE_MANAGER_REGISTER = "/storage/products/register";
-	private static final String URL_STORAGE_MANAGER_DELETE = "/storage/products/%d";
+	private static final String URL_STORAGE_MANAGER_REGISTER = "/products";
+	private static final String URL_STORAGE_MANAGER_DELETE = "/products/%d";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	
 	/** A logger for this class */

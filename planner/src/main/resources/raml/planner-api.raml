@@ -306,7 +306,7 @@ resourceTypes:
               example: !include ../../../../../model/src/main/resources/raml/examples/processingfacility.json
     /finish:
       /{podname}:
-        patch:
+        post:
           description: Pod of name has finished with state
           displayName: finishKubeJob
           queryParameters:

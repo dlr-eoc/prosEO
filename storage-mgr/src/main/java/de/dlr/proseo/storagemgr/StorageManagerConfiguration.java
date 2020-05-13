@@ -81,14 +81,46 @@ public class StorageManagerConfiguration {
 
 	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
 	private String alluxioUnderFsDefaultPrefix;
-	
+
 	@Value("${proseo.posix.mountPoint}")
 	private String posixMountPoint;
+
+	@Value("${proseo.posix.workerMountPoint}")
+	private String posixWorkerMountPoint;
+	
+	@Value("${proseo.storageManager.defaultStorageType}")
+	private String defaultStorageType;
 	
 	
 	
-	
-	
+	/**
+	 * @return the defaultStorageType
+	 */
+	public String getDefaultStorageType() {
+		return defaultStorageType;
+	}
+
+	/**
+	 * @param defaultStorageType the defaultStorageType to set
+	 */
+	public void setDefaultStorageType(String defaultStorageType) {
+		this.defaultStorageType = defaultStorageType;
+	}
+
+	/**
+	 * @return the posixWorkerMountPoint
+	 */
+	public String getPosixWorkerMountPoint() {
+		return posixWorkerMountPoint;
+	}
+
+	/**
+	 * @param posixWorkerMountPoint the posixWorkerMountPoint to set
+	 */
+	public void setPosixWorkerMountPoint(String posixWorkerMountPoint) {
+		this.posixWorkerMountPoint = posixWorkerMountPoint;
+	}
+
 	/**
 	 * @return the posixMountPoint
 	 */

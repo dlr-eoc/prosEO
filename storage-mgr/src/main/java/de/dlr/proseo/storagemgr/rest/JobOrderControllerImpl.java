@@ -6,12 +6,10 @@
 package de.dlr.proseo.storagemgr.rest;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,14 +27,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
+import de.dlr.proseo.storagemgr.utils.ProseoFile;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
@@ -53,7 +48,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String HTTP_MSG_PREFIX = "4000 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
-	private static Logger logger = LoggerFactory.getLogger(StorageControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -86,8 +81,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	public ResponseEntity<RestJoborder> createRestJoborder(@Valid RestJoborder joborder) {
 		RestJoborder response = new RestJoborder();
 		String separator = "/";
-		try {
-			
+		try {			
 			// check if we have a Base64 encoded string & if we have valid XML
 			if (!joborder.getJobOrderStringBase64()
 					.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$")) {
@@ -123,48 +117,49 @@ public class JobOrderControllerImpl implements JoborderController {
 				response.setMessage("XML Doc parsed from attribute jobOrderStringBase64 is not valid...");
 				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 			}
-			// switch fs type
-			switch (joborder.getFsType()) {
-			case S_3:
-				InputStream fis = new ByteArrayInputStream(bytes);
-				// create internal buckets, if not existing
-				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
-						cfg.getS3EndPoint(), cfg.getJoborderBucket(), cfg.getS3Region());
-				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-				s3.putObject(PutObjectRequest.builder().bucket(cfg.getJoborderBucket()).key(objKey).build(),
-						RequestBody.fromInputStream(fis, bytes.length));
-				s3.close();
-				fis.close();
-				response.setFsType(FsType.S_3);
-				response.setPathInfo("s3://" + cfg.getJoborderBucket() + separator + objKey);
-				break;
-			case POSIX:
-				// create JOF file path if not exist
-				String filePath = cfg.getPosixMountPoint() + separator + objKey;
-				File jofFile = new File(filePath);
-				File jofFilePath = new File(jofFile.getParent());
-				if (!jofFilePath.exists()) {
-					jofFilePath.mkdirs();
+			ProseoFile proFile = ProseoFile.fromType(joborder.getFsType(), objKey, cfg);
+			if (proFile != null) {
+				if (proFile.writeBytes(bytes)) {
+					response.setFsType(proFile.getFsType());
+					response.setPathInfo(proFile.getFullPath());
+					response.setUploaded(true);
+					response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
+					logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
+					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
-				FileOutputStream jofOut = new FileOutputStream(jofFile);
-				jofOut.write(bytes);
-				jofOut.close();
-				response.setFsType(FsType.POSIX);
-				response.setPathInfo(jofFile.getPath());
-				break;
-			default:
-				break;
 			}
-			// now prepare response
-			response.setUploaded(true);
-			response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
-			logger.info("Received & Uploaded joborder-file: {}", response.getPathInfo());
-			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
+		}		
+		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
+	@Override
+	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
+		String response = "";
+		if (pathInfo != null) {
+			ProseoFile proFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+			// Find storage type
+			if (proFile == null || proFile.getFsType() == FsType.ALLUXIO) {
+				logger.warn("Invalid storage type for path: {}", pathInfo);
+				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+			}
+			InputStream jofStream = proFile.getDataAsInputStream();
+			if (jofStream != null) {
+				byte[] bytes = null;
+				try {
+					bytes = java.util.Base64.getEncoder().encode(jofStream.readAllBytes());
+				} catch (IOException e) {
+					logger.error("Invalid job order stream");
+					return new ResponseEntity<>(
+							errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+				response = new String(bytes);
+				return new ResponseEntity<>(response, HttpStatus.OK);
+			}				
+		} 
+		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+	}
 }

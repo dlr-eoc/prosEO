@@ -1,5 +1,8 @@
 package de.dlr.proseo.basewrap.rest;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -31,29 +34,30 @@ public class RestOps {
 	 * @return ArrayList holding HTTP return code & response as String
 	 */
 	public static HttpResponseInfo restApiCall(String user, String pw, String endPoint, String endPointPath, String payLoad,
-			String queryParam, HttpMethod method) {
-		if (logger.isTraceEnabled()) logger.trace(">>> restApiCall({}, PWD, {}, {}, {}, {}, {}", user, endPoint, endPointPath, payLoad, queryParam, method.toString());
+			Map<String,String> queryParams, HttpMethod method) {
+		if (logger.isTraceEnabled()) logger.trace(">>> restApiCall({}, PWD, {}, {}, {}, {}, {}", user, endPoint, endPointPath, payLoad, queryParams.toString(), method.toString());
 		
 		HttpResponseInfo responseInfo = new HttpResponseInfo();
-		Client client = ClientBuilder.newClient().register(new RestAuth(user, pw));
-		WebTarget webTarget = client.target(endPoint).path(endPointPath);
 		Response response = null;
-
+		String content = payLoad==null?"":payLoad;
 		try {
+			Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
+			WebTarget webTarget = client.target(endPoint).path(endPointPath);
+			if (queryParams != null) {
+				for (Entry<String, String> queryParam : queryParams.entrySet()) {
+					webTarget = webTarget.queryParam(queryParam.getKey(), queryParam.getValue());
+				}
+			}
 			switch (method) {
 			case POST:
 				logger.info(method + " " + webTarget.getUri());
-				response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(payLoad, MediaType.APPLICATION_JSON));
+				response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(content, MediaType.APPLICATION_JSON));
 				break;
 			case PUT:
-				webTarget = webTarget.queryParam(queryParam, payLoad);
 				logger.info(method + " " + webTarget.getUri());
-				response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(payLoad, MediaType.APPLICATION_JSON));
+				response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(content, MediaType.APPLICATION_JSON));
 				break;
 			case GET:
-				if (queryParam != null) {
-					webTarget = webTarget.queryParam(queryParam, payLoad);
-				}
 				logger.info(method + " " + webTarget.getUri());
 				response = webTarget.request(MediaType.APPLICATION_JSON).method("GET");
 
@@ -61,15 +65,16 @@ public class RestOps {
 			default:
 				throw new UnsupportedOperationException(method + " not implemented");
 			}
+			if (logger.isDebugEnabled()) logger.debug("response = " + response);
+			responseInfo.sethttpCode(response.getStatus());
+			responseInfo.sethttpResponse(response.readEntity(String.class));
+			response.close();
+			client.close();
 		} catch (ProcessingException e) {
 			logger.error("Exception during REST API call: " + e.getMessage(), e);
-			throw e;
+			return null;
 		}
 
-		if (logger.isDebugEnabled()) logger.debug("response = " + response);
-		responseInfo.sethttpCode(response.getStatus());
-		responseInfo.sethttpResponse(response.readEntity(String.class));
-		response.close();
 		return responseInfo;
 	}
 }

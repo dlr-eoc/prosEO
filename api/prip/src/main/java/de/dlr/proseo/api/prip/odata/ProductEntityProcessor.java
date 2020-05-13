@@ -442,7 +442,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		
 		// Build the download URI
 		// TODO Change to pathinfo for zipped file if available, product file otherwise
-		String productDownloadUri = storageManagerUrl + "/storage/products/" + restProduct.getId();
+		String productDownloadUri = storageManagerUrl + "/products/" + restProduct.getId();
 
 		// --- TEST Just download "something" ---
 		// TODO Remove test code!!

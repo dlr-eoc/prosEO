@@ -50,75 +50,106 @@ resourceTypes:
           application/json:
             type: RestInfo
 
-/storage:
-  type: standard
+/products:
   get:
-    description: Get storages by id
+    description: Get product metadata, optionally filtered by storage type, storage ID, product (database) ID
     queryParameters:
-      id?: string
+      storageType?:
+        enum: [S3, ALLUXIO, POSIX]
+      storageId?: string
+      id?:
+        type: integer
+        format: long
     responses:
       200:
         body:
           application/json:
-            type: RestStorage[]
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage-list.json
+            type: RestProductFS[]
   post:
-    description: Create a new storage
+    description: Register products/files/dirs from unstructered storage in prosEO-storage
     body:
       application/json:
-        type: RestStorage
-        example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
+        type: RestProductFS
+        example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS.json
     responses:
       201:
         body:
           application/json:
-            type: RestStorage
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/storage.json
-  /products:
-    /register:
-      post:
-        description: register products/files/dirs from unstructered storage in prosEO-storage
+            type: RestProductFS
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
+  delete:
+    description: Delete/remove product by product (database) ID from prosEO storage
+    queryParameters:
+      pathInfo: 
+        type: string
+        description: The file path as S3/ALLUXIO/POSIX string for download
+    responses:
+      200:
         body:
           application/json:
             type: RestProductFS
-            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS.json
-        responses:
-          201:
-            body:
-              application/json:
-                type: RestProductFS
-                example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-del.json
+  /download:
     get:
-      description: get product-infos by Id
+      description: Get the data files for the product as data stream (optionally zip-compressed, optionally range-restricted)
       queryParameters:
-        id?: string
+        pathInfo: 
+          type: string
+          description: The file path as S3/ALLUXIO/POSIX string for download
+        zip?: boolean
+        fromByte?: integer
+        toByte?: integer
       responses:
         200:
           body:
-            application/json:
-              type: RestProductFS
-    /{productId}:
-      delete:
-        description: delete/remove product having productId from prosEO storage
-        responses:
-          200:
-            body:
-              application/json:
-                type: RestProductFS
-                example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-del.json
+            application/octet-stream:
 
-
-
+/productfiles:
+  description: Methods to transfer product files between Storage Manager and processor (Base Wrapper)
+  get:
+    description: Retrieve file from Storage Manager into locally accessible file system
+    queryParameters:
+      pathInfo: 
+        type: string
+        description: The file path as S3/ALLUXIO/POSIX string for download
+    responses:
+      200:
+        body:
+          text/plain:
+            description: The resulting file path in the local POSIX file system
+  put:
+    description: Push file from local POSIX file system to Storage Manager
+    queryParameters:
+      pathInfo: 
+        type: string
+        description: The file path as local POSIX path for upload
+    responses:
+      201:
+        body:
+          text/plain:
+            description: |
+              The file system type (S3/ALLUXIO/POSIX), followed by a vertical bar ('|'),
+              followed by the resulting S3/ALLUXIO/POSIX file path
+              
 /joborders:
-    post:
-      description: upload prosEO joborder file for later use in a job
-      body:
-        application/json:
-          type: RestJoborder
-          example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64.json
-      responses:
-        201:
-          body:
-            application/json:
-              type: RestJoborder
-              example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64-response.json
+  post:
+    description: Upload prosEO Job Order File for later use in a job
+    body:
+      application/json:
+        type: RestJoborder
+        example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64.json
+    responses:
+      201:
+        body:
+          application/json:
+            type: RestJoborder
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/joborderBase64-response.json
+  get:
+    description: Download prosEO Job Order File as Base64-encoded string
+    queryParameters:
+      pathInfo: string
+    responses:
+      200:
+        body:
+          text/plain:
+            description: The resulting Base64-encoded string

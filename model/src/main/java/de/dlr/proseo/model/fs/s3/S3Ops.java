@@ -1,6 +1,8 @@
 package de.dlr.proseo.model.fs.s3;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 
 import java.nio.file.Files;
@@ -23,12 +25,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.Copy;
 import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.util.StringUtils;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -215,7 +219,7 @@ public class S3Ops {
 			File f = new File(ContainerPath);
 			if (Files.exists(Paths.get(ContainerPath), LinkOption.NOFOLLOW_LINKS))
 				f.delete();
-			File subdirs = new File(FilenameUtils.getPath(ContainerPath));
+			File subdirs = new File(FilenameUtils.getPrefix(ContainerPath) + FilenameUtils.getPath(ContainerPath));
 			subdirs.mkdirs();
 
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
@@ -239,6 +243,34 @@ public class S3Ops {
 			logger.error(e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * fetch file from S3 to local file
+	 * 
+	 * @param s3            a given instantiated S3Client
+	 * @param s3Object      URI of S3-Object (e.g. s3://bucket/path/to/some/file)
+	 * @param ContainerPath local target filePath
+	 * @return
+	 */
+	public static InputStream v2FetchStream(S3Client s3, String s3Object) {
+		InputStream stream = null;
+		try {
+			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
+			stream = s3.getObject(GetObjectRequest.builder().bucket(s3uri.getBucket()).key(s3uri.getKey()).build(),
+					ResponseTransformer.toInputStream());
+		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
+			logger.error(e.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
+			logger.error(s3Object + " --> " + e.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e) {
+			logger.error(s3Object + " --> " + e.getMessage());
+		} catch (software.amazon.awssdk.services.s3.model.S3Exception e) {
+			logger.error(e.getMessage());
+		} catch (SecurityException e) {
+			logger.error(e.getMessage());
+		}
+		return stream;
 	}
 
 	/**
@@ -409,5 +441,18 @@ public class S3Ops {
 			return null;
 		}
 
+	}
+	
+	public static void createFolder(S3Client client, String bucketName, String folderName) {
+	    // create meta-data for your folder and set content-length to 0
+		String key = folderName;
+		if (!key.endsWith("/")) {
+		    key += "/";
+		}		
+		PutObjectRequest putRequest = PutObjectRequest.builder()
+		        .bucket(bucketName)
+		        .key(key)
+		        .build();
+		client.putObject(putRequest, RequestBody.empty());
 	}
 }
