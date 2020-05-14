@@ -48,7 +48,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	private static final String HTTP_MSG_PREFIX = "4000 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
-	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(JoborderController.class);
 	@Autowired
 	private StorageManagerConfiguration cfg;
 

@@ -140,11 +140,7 @@ public class JobDispatcher {
 					// dynamic input files calculated by input products
 					for (ProductQuery pq : jobStep.getOutputProduct().getSatisfiedProductQueries()) {
 						for (Product p : pq.getNewestSatisfyingProducts()) {
-							for (ProductFile pf : p.getProductFile()) {
-								InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
-								sio.getFileNames().add(new IpfFileName(pf.getProductFilePathName(), pf.getStorageType().name()));
-								proc.getListOfInputs().add(sio);
-							}
+							addIpfIOInput(p, proc, jobStep);
 						}
 					}
 					Product p = jobStep.getOutputProduct();
@@ -164,6 +160,21 @@ public class JobDispatcher {
 		}
 		return jobOrder;
 	}
+	
+	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep) {
+		if (p.getComponentProducts().isEmpty()) {
+			for (ProductFile pf : p.getProductFile()) {
+				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
+				sio.getFileNames().add(new IpfFileName(pf.getProductFilePathName(), pf.getStorageType().name()));
+				proc.getListOfInputs().add(sio);
+			}
+		} else {
+			for (Product sp : p.getComponentProducts()) {
+				addIpfIOInput(sp, proc, jobStep);
+			}
+		}
+	}
+
 	
 	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep, String baseDir) {
 		String fnType = p.getComponentProducts().isEmpty() ? "Physical" : "Directory"; 

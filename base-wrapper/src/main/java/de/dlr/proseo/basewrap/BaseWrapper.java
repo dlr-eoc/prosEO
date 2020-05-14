@@ -346,7 +346,7 @@ public class BaseWrapper {
 					if (!done) {
 						// Request input file from Storage Manager
 						Map<String,String> params = new HashMap<>();
-						params.put("pathInfo", fn.getFileName());
+						params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
 						HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
 								"/productfiles", null, params, RestOps.HttpMethod.GET);
 
@@ -369,7 +369,7 @@ public class BaseWrapper {
 
 					// Fill original filename with current val of `File_Name` --> for later use --> push results step
 					fn.setOriginalFileName(fn.getFileName());
-
+					
 					// Set output file_name to local work-dir path
 					fn.setFileName(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX
 							+ File.separator + normalizeFileName(fn.getFileName()));
@@ -491,7 +491,7 @@ public class BaseWrapper {
 				for (IpfFileName fn: io.getFileNames()) {
 					// Push output file to Storage Manager
 					Map<String,String> params = new HashMap<>();
-					params.put("pathInfo", fn.getFileName());
+					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
 							"/productfiles", null, params, RestOps.HttpMethod.PUT);
 
@@ -500,7 +500,7 @@ public class BaseWrapper {
 						return null;
 					}
 
-					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]");
+					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]");  // pipe sign is a symbol of regex, escaped with brackets
 					if (2 != fileTypeAndName.length) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						return null;

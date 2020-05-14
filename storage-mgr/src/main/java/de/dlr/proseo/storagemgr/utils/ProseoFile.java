@@ -86,18 +86,25 @@ public abstract class ProseoFile {
 	protected void buildFileName() {
 		fileName = "";	
 		if (relPath != null) {
-			if (relPath.endsWith("/")) {
-				relPath = relPath.substring(0, relPath.length() - 1);
-			}
-			int i = relPath.lastIndexOf('/');
-			if (i > 0) {
-				fileName = relPath.substring(i + 1, relPath.length());
-				relPath = relPath.substring(0, i - 1);
+			if (!relPath.endsWith("/")) {
+				int i = relPath.lastIndexOf('/');
+				if (i > 0) {
+					fileName = relPath.substring(i + 1, relPath.length());
+					relPath = relPath.substring(0, i);
+				}
 			}
 		}
 	}
 	public String getRelPathAndFile() {
-		return relPath + "/" + fileName;
+		if (relPath.endsWith("/")) {
+			return relPath + fileName;
+		} else {
+			return relPath + "/" + fileName;
+		}
+	}
+	
+	public Boolean isDirectory() {
+		return (fileName == null) || fileName.isEmpty();
 	}
 	
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {

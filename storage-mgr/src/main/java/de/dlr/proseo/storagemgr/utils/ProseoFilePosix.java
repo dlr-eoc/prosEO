@@ -87,7 +87,7 @@ public class ProseoFilePosix extends ProseoFile {
 
 	@Override
 	public String getFullPath() {
-		return "/" + getBasePath() + "/" + getRelPath() + "/" + getFileName();
+		return "/" + getBasePath() + "/" + getRelPathAndFile();
 	}
 
 	@Override
@@ -126,13 +126,23 @@ public class ProseoFilePosix extends ProseoFile {
 			File srcFile = new File(this.getFullPath());
 			switch (proFile.getFsType()) {
 			case S_3:// create internal buckets & prefixes if not exists..
-				if (!recursive && srcFile.isDirectory()) {
+				String targetPath = null;
+				if (srcFile.isDirectory()) {
 					StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
 					S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 					S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
 					result = new ArrayList<String>();
 					result.add(proFile.getFullPath());
+					if (recursive) {
+						targetPath = proFile.getRelPath();
+						if (targetPath.endsWith("/")) {
+							targetPath = targetPath.substring(0, targetPath.length() - 1);
+						}
+					}
 				} else {
+					targetPath = proFile.getRelPath();
+				}
+				if (targetPath != null) {
 					StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
 					AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 					result = S3Ops.v1Upload(
@@ -143,7 +153,7 @@ public class ProseoFilePosix extends ProseoFile {
 							// the storageId -> =BucketName
 							cfg.getS3DefaultBucket(), 
 							// the final prefix of the file or directory
-							proFile.getRelPath(), 
+							targetPath, 
 							false
 							);
 				}

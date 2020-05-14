@@ -113,8 +113,8 @@ public class SampleProcessor {
 			{ PRODUCT_TYPE_L1B, PRODUCT_TYPE_L0 },
 			{ PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L0 },
 			{ PRODUCT_TYPE_L1B_2, PRODUCT_TYPE_L0 },
-			{ PRODUCT_TYPE_L2A, PRODUCT_TYPE_L1B },
-			{ PRODUCT_TYPE_L2B, PRODUCT_TYPE_L1B_1 },
+			{ PRODUCT_TYPE_L2A, PRODUCT_TYPE_L1B, PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L1B_2 },
+			{ PRODUCT_TYPE_L2B, PRODUCT_TYPE_L1B, PRODUCT_TYPE_L1B_1, PRODUCT_TYPE_L1B_2 },
 			{ PRODUCT_TYPE_L3, PRODUCT_TYPE_L2A, PRODUCT_TYPE_L2B }
 	};
 	
@@ -386,7 +386,9 @@ public class SampleProcessor {
 			}
 			if (PRODUCT_TYPES.get(outputFileType).contains(inputFileTypes.item(0).getTextContent())) {
 				inputFileName = inputFileNames.item(0).getTextContent();
-				break;
+				if (!(new File(inputFileName)).isDirectory()) {
+					break;
+				}
 			}
 		}
 		if (null == inputFileName) {
@@ -556,8 +558,8 @@ public class SampleProcessor {
 		try {			
 			int i = ((int)(9.0 * Math.random())) + 1;
 			while (i > 0) {
-				logger.info("... wait " + ((i) * 10) + " seconds ...");
-				Thread.sleep(10000);
+				logger.info("... wait " + ((i) * 1) + " seconds ...");
+				Thread.sleep(1000);
 				i--;
 			}
 		} catch (InterruptedException e) {
