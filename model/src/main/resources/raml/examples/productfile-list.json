@@ -20,7 +20,8 @@
         "filePath": "/data/proseo/storage_val/S5P_OPER_L0__08138_01",
         "storageType": "POSIX",
         "fileSize": 2625765376,
-        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c"
+        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c",
+        "checksumTime": "2019-10-05T10:12:39.000000"
     },
     {
         "id": 966521,
@@ -43,6 +44,7 @@
         "filePath": "/data/proseo/storage_val/S5P_OPER_L0__08138_01",
         "storageType": "POSIX",
         "fileSize": 2625765376,
-        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c"
+        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c",
+        "checksumTime": "2019-10-05T10:12:39.000000"
     }
 ]

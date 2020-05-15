@@ -8,13 +8,12 @@ package de.dlr.proseo.basewrap;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -28,12 +27,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
-import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * prosEO Base Processor Wrapper - for processors conforming to ESA's
@@ -66,8 +65,10 @@ public class BaseWrapper {
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
 	/** Directory prefix of produced output data */
 	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
-	/** Constant for file name type in JOF */
-	private static final String FILENAME_TYPE_DIRECTORY = "Directory";
+	/** Constant for file name type "Directory" in JOF */
+	protected static final String FILENAME_TYPE_DIRECTORY = "Directory";
+	/** Constant for file name type "Archive" in JOF (non-standard extension!) */
+	protected static final String FILENAME_TYPE_ARCHIVE = "Archive";
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -77,7 +78,6 @@ public class BaseWrapper {
 	private static final String MSG_ENVIRONMENT_CHECK_PASSED = "Check of environment variables passed";
 	private static final String MSG_ERROR_CALLING_PLANNER = "Error calling Production Planner (HTTP status code: {})";
 	private static final String MSG_ERROR_CONVERTING_INGESTOR_PRODUCT = "Error converting ingestor product with ID {} to JSON (cause: {})";
-	private static final String MSG_ERROR_DECODING_JOB_ORDER = "Error decoding HTTP JSON response as Job Order: {}";
 	private static final String MSG_ERROR_PUSHING_OUTPUT_FILE = "Error pushing output file {}, HTTP status code {}";
 	private static final String MSG_ERROR_REGISTERING_PRODUCT = "Error registering product with ID {} with Ingestor (HTTP status code: {})";
 	private static final String MSG_ERROR_RETRIEVING_INPUT_FILE = "Error retrieving input file {}, HTTP status code {}";
@@ -100,6 +100,7 @@ public class BaseWrapper {
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
+	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -316,6 +317,17 @@ public class BaseWrapper {
 		//jobOrderDoc = docBuilder.parse(jobOrderFile);
 		return jobOrderDoc;
 	}
+
+	/**
+	 * Hook for mission-specific modifications to the job order document before fetching input data
+	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param jobOrderDoc the job order document to modify
+	 */
+	protected void preFetchInputHook(JobOrder jobOrderDoc) {
+		// No operation
+	}
+
 	/**
 	 * Fetch remote input-data to container-workdir(based on FS_TYPE) and return valid JobOrder object for container-runtime-context. (=remapped file-pathes)
 	 * 
@@ -458,6 +470,24 @@ public class BaseWrapper {
 		return exitCode == EXIT_CODE_OK;
 	}
 
+	/**
+	 * Hook for mission-specific modifications to the final job order document after execution of the processor (before push of
+	 * results). Intended for
+	 * <ol>
+	 *   <li>Adding additional output files to the output list as desired (e. g. log files, job order file)</li>
+	 *   <li>Packaging multiple files into a single ZIP file for delivery via the PRIP if desired (add an output file
+	 *       with File_Name_Type "Archive", using Java constant FILENAME_TYPE_ARCHIVE)</li>
+	 * </ol>
+	 * Note: The first (non-archive) output file is taken as the (main) product file, subsequent files are interpreted as
+	 * auxiliary files.
+	 * 
+	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param joWork the job order document to modify
+	 */
+	protected void postProcessingHook(JobOrder joWork) {
+		// No operation
+	}
 
 	/**
 	 * Pushes processing results to prosEO storage
@@ -477,6 +507,12 @@ public class BaseWrapper {
 		for(Proc item : jo.getListOfProcs()) {
 			// Loop all Outputs
 			for (InputOutput io: item.getListOfOutputs()) {
+				// Ignore directories (cannot be pushed)
+				if (FILENAME_TYPE_DIRECTORY.equals(io.getFileNameType())) {
+					continue;
+				}
+				
+				// Prepare product file for Ingestor REST API
 				RestProductFile productFile = new RestProductFile();
 				try {
 					productFile.setProductId(Long.parseLong((io.getProductID())));
@@ -500,43 +536,67 @@ public class BaseWrapper {
 						return null;
 					}
 
+					// Retrieve storage type and file path from Storage Manager response
 					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]");
 					if (2 != fileTypeAndName.length) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						return null;
 					}
+					
+					// Make sure all product files have the same storage tpye
 					if (null == productFile.getStorageType()) {
 						productFile.setStorageType(fileTypeAndName[0]);
 					} else if (!productFile.getStorageType().equals(fileTypeAndName[0])) {
 						logger.error(MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED, productFile.getProductId());
 						return null;
 					}
+					
+					// Separate the file path into a directory path and a file name
 					String filePath = fileTypeAndName[1]; // This is not a file path in the local (POSIX) file system; its separator is always "/"
 					int lastSeparatorIndex = filePath.lastIndexOf('/');
 					String parentPath = filePath.substring(0, lastSeparatorIndex);
 					String fileName = filePath.substring(lastSeparatorIndex + 1);
+					
+					// Make sure all product files are stored in the same path
 					if (null == productFile.getFilePath()) {
 						productFile.setFilePath(parentPath);
 					} else if (!productFile.getFilePath().equals(parentPath)) {
 						logger.error(MSG_DIFFERENT_FILE_PATHS_ASSIGNED, productFile.getProductId());
 						return null;
 					}
-					if (null == productFile.getProductFileName()) {
+					
+					// Create metadata for this file
+					if (FILENAME_TYPE_ARCHIVE.equals(io.getFileNameType())) {
+						// Extension to JOF specification, only to be used in "postProcessingHook()" to identify ZIP archives,
+						// must only be used once
+						if (null != productFile.getZipFileName()) {
+							logger.error(MSG_MORE_THAN_ONE_ZIP_ARCHIVE, productFile.getProductId());
+							return null;
+						}
+						productFile.setZipFileName(fileName);
+						File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
+						productFile.setZipFileSize(primaryProductFile.length());
+						try {
+							productFile.setZipChecksum(MD5Util.md5Digest(primaryProductFile));
+							productFile.setZipChecksumTime(OrbitTimeFormatter.format(Instant.now()));
+						} catch (IOException e) {
+							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+							return null;
+						}
+					} else if (null == productFile.getProductFileName()) {
+						// The first (non-archive) file is taken as the main product file
 						productFile.setProductFileName(fileName);
-						if (!io.getFileNameType().equalsIgnoreCase("Directory")) {
-							File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
-							productFile.setFileSize(primaryProductFile.length());
-							try {
-								productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
-							} catch (IOException e) {
-								logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
-								return null;
-							}
-						} else {
-							productFile.setFileSize(0L);
-							productFile.setChecksum("");
-						}						
+						File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
+						productFile.setFileSize(primaryProductFile.length());
+						try {
+							productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
+							productFile.setChecksumTime(OrbitTimeFormatter.format(Instant.now()));
+						} catch (IOException e) {
+							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+							return null;
+						}
 					} else {
+						// Subsequent (non-archive) files are auxiliary files
 						productFile.getAuxFileNames().add(fileName);
 					}
 
@@ -620,31 +680,6 @@ public class BaseWrapper {
 			return;
 		}
 		
-	}
-
-	/**
-	 * Hook for mission-specific modifications to the job order document before fetching input data
-	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
-	 * 
-	 * @param jobOrderDoc the job order document to modify
-	 */
-	protected void preFetchInputHook(JobOrder jobOrderDoc) {
-		// No operation
-	}
-
-	/**
-	 * Hook for mission-specific modifications to the final job order document after execution of the processor (before push of
-	 * results). Intended for
-	 * <ol>
-	 *   <li>Adding additional output files to the output list as desired (e. g. log files, job order file)</li>
-	 *   <li>Packaging multiple files into a single ZIP file for delivery via the PRIP if desired</li>
-	 * </ol>
-	 * Intended for override by mission-specific job classes, NO-OP in BaseWrapper.
-	 * 
-	 * @param joWork the job order document to modify
-	 */
-	protected void postProcessingHook(JobOrder joWork) {
-		// No operation
 	}
 
 	/**

@@ -41,7 +41,8 @@
             "S5P_OPER_L0__SAT_A__20190509T212509_20190509T214507_08138_01.RAW"
         ],
         "fileSize": 2625765376,
-        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c"
+        "checksum": "182a460e2a8c6da3cdbbfd27cb355c2c",
+        "checksumTime": "2019-10-05T10:12:39.000000"
     },
     {
         "id": 0,
@@ -74,6 +75,7 @@
         "filePath": "L2/O3-614941691",
         "productFileName": "S5P_RPRO_L2__O3_____20190509T220707_20190509T234837_08137_01_010107_20190627T104122.nc",
         "fileSize": 987758592,
-        "checksum": "6622f301c5b093c4bfc5fdd922e315a7"
+        "checksum": "6622f301c5b093c4bfc5fdd922e315a7",
+        "checksumTime": "2019-10-05T10:12:39.000000"
     }
 ]

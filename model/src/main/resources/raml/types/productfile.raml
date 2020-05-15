@@ -35,3 +35,21 @@
       checksum:
         type: string
         description: Checksum value for the primary product file (computed by MD5 algorithm)
+      checksumTime:
+        type: string
+        description: Checksum generation time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      zipFileName?:
+        type: string
+        description: The file name of the ZIP archive containing all product and auxiliary files intended for distribution
+      zipFileSize?:
+        type: integer
+        format: long
+        description: The file size of the ZIP archive in bytes
+      zipChecksum?:
+        type: string
+        description: The MD5 checksum for the ZIP archive
+      zipChecksumTime?:
+        type: string
+        description: ZIP archive checksum generation time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$

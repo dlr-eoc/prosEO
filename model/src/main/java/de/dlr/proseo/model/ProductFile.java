@@ -5,10 +5,12 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -61,6 +63,23 @@ public class ProductFile extends PersistentObject {
 	
 	/** Checksum value for the primary product file (computed by MD5 algorithm) */
 	private String checksum;
+	
+	/** Checksum generation time */
+	@Column(name = "checksum_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant checksumTime;
+	
+	/** The file name of the ZIP archive containing all product and auxiliary files intended for distribution */
+	private String zipFileName;
+	
+	/** The file size of the ZIP archive in bytes */
+	private Long zipFileSize;
+	
+	/** The MD5 checksum for the ZIP archive */
+	private String zipChecksum;
+	
+	/** ZIP archive checksum generation time */
+	@Column(name = "zip_checksum_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant zipChecksumTime;
 	
 	/**
 	 * The available storage types 
@@ -198,6 +217,96 @@ public class ProductFile extends PersistentObject {
 	public void setChecksum(String checksum) {
 		this.checksum = checksum;
 	};
+
+	/**
+	 * Gets the computation time for the product file checksum
+	 * 
+	 * @return the checksum computation time
+	 */
+	public Instant getChecksumTime() {
+		return checksumTime;
+	}
+
+	/**
+	 * Sets the computation time for the product file checksum
+	 * 
+	 * @param checksumTime the checksumTime to set
+	 */
+	public void setChecksumTime(Instant checksumTime) {
+		this.checksumTime = checksumTime;
+	}
+
+	/**
+	 * Gets the name of the ZIP archive
+	 * 
+	 * @return the ZIP archive file name or null, if no ZIP archive exists
+	 */
+	public String getZipFileName() {
+		return zipFileName;
+	}
+
+	/**
+	 * Sets the name of the ZIP archive
+	 * 
+	 * @param zipFileName the ZIP archive file name to set (may be null)
+	 */
+	public void setZipFileName(String zipFileName) {
+		this.zipFileName = zipFileName;
+	}
+
+	/**
+	 * Gets the size of the ZIP archive in bytes
+	 * 
+	 * @return the ZIP archive file size or null, if no ZIP archive exists
+	 */
+	public Long getZipFileSize() {
+		return zipFileSize;
+	}
+
+	/**
+	 * Sets the size of the ZIP archive in bytes
+	 * 
+	 * @param zipFileSize the ZIP archive file size to set
+	 */
+	public void setZipFileSize(Long zipFileSize) {
+		this.zipFileSize = zipFileSize;
+	}
+
+	/**
+	 * Gets the MD5 checksum of the ZIP archive
+	 * 
+	 * @return the ZIP archive checksum or null, if no ZIP archive exists
+	 */
+	public String getZipChecksum() {
+		return zipChecksum;
+	}
+
+	/**
+	 * Sets the MD5 checksum of the ZIP archive
+	 * 
+	 * @param zipChecksum the ZIP archive checksum to set (may be null)
+	 */
+	public void setZipChecksum(String zipChecksum) {
+		this.zipChecksum = zipChecksum;
+	}
+
+	/**
+	 * Gets the computation time for the ZIP archive file checksum
+	 * 
+	 * @return the checksum computation time or null, if no ZIP archive exists
+	 */
+	public Instant getZipChecksumTime() {
+		return zipChecksumTime;
+	}
+
+	/**
+	 * Sets the computation time for the ZIP archive file checksum
+	 * 
+	 * @param zipChecksumTime the checksum computation time to set (may be null)
+	 */
+	public void setZipChecksumTime(Instant zipChecksumTime) {
+		this.zipChecksumTime = zipChecksumTime;
+	}
 
 	/**
 	 * Return a product file path consisting of file path and product file name

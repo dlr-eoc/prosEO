@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -43,6 +44,7 @@ import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Services required to ingest products from pickup points into the prosEO database, and to create, read, updated and delete
@@ -99,7 +101,7 @@ public class ProductIngestor {
 	/* URLs for Storage Manager and Production Planner */
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
 	private static final String URL_STORAGE_MANAGER_REGISTER = "/products";
-	private static final String URL_STORAGE_MANAGER_DELETE = "/products/%d";
+	private static final String URL_STORAGE_MANAGER_DELETE = "/products?pathInfo=%s";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	
 	/** A logger for this class */
@@ -245,6 +247,7 @@ public class ProductIngestor {
 		}
 		newProductFile.setFileSize(ingestorProduct.getFileSize());
 		newProductFile.setChecksum(ingestorProduct.getChecksum());
+		newProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(ingestorProduct.getChecksumTime())));
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
 		newProductFile.setProduct(newModelProduct);
 		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
@@ -399,18 +402,27 @@ public class ProductIngestor {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility));
 		}
 		
-		// Remove the product from the processing facility storage
-		String storageManagerUrl = facility.getStorageManagerUrl() + String.format(URL_STORAGE_MANAGER_DELETE, product.get().getId());
-		RestTemplate restTemplate = rtb.basicAuthentication(
-				ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
-		try {
-			restTemplate.delete(storageManagerUrl);
-		} catch (RestClientException e) {
-			throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
-					product.get().getId(), facility.getName(), e.getMessage()));
+		// Remove the product from the processing facility storage: Delete all files individually by path name
+		List<String> allFiles = new ArrayList<>(modelProductFile.getAuxFileNames());
+		allFiles.add(modelProductFile.getProductFileName());
+		if (null != modelProductFile.getZipFileName()) {
+			allFiles.add(modelProductFile.getZipFileName());
 		}
-
-		// Delete the product
+		for (String fileName: allFiles) {
+			String storageManagerUrl = facility.getStorageManagerUrl()
+					+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
+			RestTemplate restTemplate = rtb
+					.basicAuthentication(ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword())
+					.build();
+			try {
+				restTemplate.delete(storageManagerUrl);
+			} catch (RestClientException e) {
+				throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
+						product.get().getId(), facility.getName(), e.getMessage()));
+			} 
+		}
+		
+		// Delete the product file metadata
 		RepositoryService.getProductFileRepository().deleteById(modelProductFile.getId());
 
 		// Test whether the deletion was successful
@@ -484,6 +496,41 @@ public class ProductIngestor {
 		if (!modelProductFile.getChecksum().equals(changedProductFile.getChecksum())) {
 			productFileChanged = true;
 			modelProductFile.setChecksum(changedProductFile.getChecksum());
+		}
+		if (!modelProductFile.getChecksumTime().equals(changedProductFile.getChecksumTime())) {
+			productFileChanged = true;
+			modelProductFile.setChecksumTime(changedProductFile.getChecksumTime());
+		}
+		if (null == modelProductFile.getZipFileName()) {
+			if (null == changedProductFile.getZipFileName()) {
+				// OK, nothing changed
+			} else {
+				// ZIP archive added
+				productFileChanged = true;
+				
+				// All ZIP archive-related attributes must be set
+				modelProductFile.setZipFileName(changedProductFile.getZipFileName());
+				modelProductFile.setZipFileSize(changedProductFile.getZipFileSize());
+				modelProductFile.setZipChecksum(changedProductFile.getZipChecksum());
+				modelProductFile.setZipChecksumTime(changedProductFile.getZipChecksumTime());
+			}
+		} else {
+			if (!modelProductFile.getZipFileName().equals(changedProductFile.getZipFileName())) {
+				productFileChanged = true;
+				modelProductFile.setZipFileName(changedProductFile.getZipFileName());
+			}
+			if (!modelProductFile.getZipFileSize().equals(changedProductFile.getZipFileSize())) {
+				productFileChanged = true;
+				modelProductFile.setZipFileSize(changedProductFile.getZipFileSize());
+			}
+			if (!modelProductFile.getZipChecksum().equals(changedProductFile.getZipChecksum())) {
+				productFileChanged = true;
+				modelProductFile.setZipChecksum(changedProductFile.getZipChecksum());
+			}
+			if (!modelProductFile.getZipChecksumTime().equals(changedProductFile.getZipChecksumTime())) {
+				productFileChanged = true;
+				modelProductFile.setZipChecksumTime(changedProductFile.getZipChecksumTime());
+			} 
 		}
 		
 		// The set of aux file names gets replaced completely, if not equal

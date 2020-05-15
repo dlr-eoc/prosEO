@@ -60,6 +60,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param the ID of the product to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product did not exist, or
+	 *         HTTP status "BAD_REQUEST", if the product still has files at some Processing Facility, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
@@ -71,6 +72,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalStateException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

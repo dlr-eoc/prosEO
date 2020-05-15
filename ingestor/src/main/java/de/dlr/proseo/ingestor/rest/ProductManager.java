@@ -83,6 +83,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_RETRIEVED_BY_UUID = 2023;
 	private static final int MSG_ID_DUPLICATE_PRODUCT_UUID = 2024;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND = 2025;
+	private static final int MSG_ID_PRODUCT_HAS_FILES = 2026;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -105,6 +106,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_NOT_FOUND_BY_UUID = "(E%d) No product found for UUID %s";
 	private static final String MSG_DUPLICATE_PRODUCT_UUID = "(E%d) Duplicate product UUID %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found";
+	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d has existing files and cannot be deleted";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -166,15 +168,21 @@ public class ProductManager {
 	 * 
 	 * @param the ID of the product to delete
 	 * @throws EntityNotFoundException if the product to delete does not exist in the database
+	 * @throws IllegalStateException if the product to delete still as files at some Processing Facility
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	public void deleteProductById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteProductById(Long id) throws EntityNotFoundException, IllegalStateException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductById({})", id);
 		
 		// Test whether the product id is valid
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
 		if (modelProduct.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND));
+		}
+		
+		// Make sure product does not exist on any Processing Facility
+		if (!modelProduct.get().getProductFile().isEmpty()) {
+			throw new IllegalStateException(logError(MSG_PRODUCT_HAS_FILES, MSG_ID_PRODUCT_HAS_FILES, modelProduct.get().getId()));
 		}
 		
 		// Delete the product

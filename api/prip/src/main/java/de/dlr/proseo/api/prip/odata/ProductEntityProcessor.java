@@ -440,14 +440,10 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// Get the service URI of the Storage Manager service
 		String storageManagerUrl = getStorageManagerUrl(request.getHeader(HttpHeaders.AUTHORIZATION), productFile.getProcessingFacilityName());
 		
-		// Build the download URI
-		// TODO Change to pathinfo for zipped file if available, product file otherwise
-		String productDownloadUri = storageManagerUrl + "/products/" + restProduct.getId();
+		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
+		String productDownloadUri = storageManagerUrl + "/products?pathInfo=" + productFile.getFilePath() + "/" +
+				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
 
-		// --- TEST Just download "something" ---
-		// TODO Remove test code!!
-		productDownloadUri = "https://www.visit-a-church.info/fileadmin/images/id/rantepao/ri_rantepao_theresia_aussen1280x960_tuk_bassler_20160413.jpg";
-		
 		// Redirect the request to the download URI
 		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, productDownloadUri);
