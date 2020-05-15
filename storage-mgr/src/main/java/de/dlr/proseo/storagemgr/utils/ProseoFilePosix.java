@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -193,5 +194,39 @@ public class ProseoFilePosix extends ProseoFile {
 			return result;
 		}
 		return null;
+	}
+
+	@Override
+	public ArrayList<String> delete() {
+		ArrayList<String> result = new ArrayList<String>();
+		File srcFile = new File(this.getFullPath());
+		if (srcFile.isDirectory()) {
+			try {
+				FileUtils.deleteDirectory(srcFile);
+				result.add(getFullPath());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			srcFile.delete();
+			result.add(getFullPath());
+		}
+		return result;
+	}
+
+	@Override
+	public FileSystemResource getFileSystemResource() {
+		return new FileSystemResource(getFullPath());
+	}
+
+	@Override
+	public long getLength() {
+		File f = new File(getFullPath());
+		if (f.isFile()) {
+			return f.length();
+		} else {
+			return 0;
+		}
 	}
 }

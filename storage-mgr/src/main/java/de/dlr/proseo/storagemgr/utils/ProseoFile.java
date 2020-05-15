@@ -1,10 +1,14 @@
 package de.dlr.proseo.storagemgr.utils;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
@@ -91,20 +95,31 @@ public abstract class ProseoFile {
 				if (i > 0) {
 					fileName = relPath.substring(i + 1, relPath.length());
 					relPath = relPath.substring(0, i);
+				} else {
+					fileName = relPath;
+					relPath = "";
 				}
 			}
 		}
 	}
 	public String getRelPathAndFile() {
-		if (relPath.endsWith("/")) {
+		if (relPath.endsWith("/") || relPath.isEmpty()) {
 			return relPath + fileName;
 		} else {
 			return relPath + "/" + fileName;
 		}
 	}
-	
+
 	public Boolean isDirectory() {
 		return (fileName == null) || fileName.isEmpty();
+	}
+	
+	public String getExtension() {
+		if ((fileName == null) || fileName.isEmpty()) {
+			return "";
+		} else {
+			return FilenameUtils.getExtension(fileName);
+		}
 	}
 	
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {
@@ -177,8 +192,12 @@ public abstract class ProseoFile {
 		logger.warn("pathInfo not set");
 		return null;
 	}
-	
+
 	public abstract FsType getFsType();
+	
+	public abstract FileSystemResource getFileSystemResource();
+	
+	public abstract ArrayList<String> delete();
 	
 	public abstract String getFullPath();
 
@@ -187,4 +206,6 @@ public abstract class ProseoFile {
 	public abstract Boolean writeBytes(byte[] bytes) throws Exception;
 	
 	public abstract ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception;
+	
+	public abstract long getLength();
 }

@@ -6,6 +6,8 @@
  */
 package de.dlr.proseo.storagemgr.rest;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -17,17 +19,21 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRange;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
+import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
-
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
@@ -53,9 +59,11 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Log an error and return the corresponding HTTP message header
 	 * 
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @param messageFormat     the message text with parameter placeholders in
+	 *                          String.format() style
+	 * @param messageId         a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the
+	 *                          message format)
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
@@ -76,7 +84,7 @@ public class ProductControllerImpl implements ProductController {
 	@Override
 	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
 		// get node name info...
-		String hostName ="";
+		String hostName = "";
 		try {
 			InetAddress iAddress = InetAddress.getLocalHost();
 			hostName = iAddress.getHostName();
@@ -85,29 +93,30 @@ public class ProductControllerImpl implements ProductController {
 		}
 
 		RestProductFS response = new RestProductFS();
-		
+
 		logger.info(restProductFS.toString());
 		String pref = restProductFS.getProductId();
-		
+
 		ArrayList<String> transferSum = new ArrayList<String>();
 
-		ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(restProductFS.getTargetStorageType().toString()), pref, cfg);
+		ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(restProductFS.getTargetStorageType().toString()),
+				pref, cfg);
 
 		try {
 			for (String fileOrDir : restProductFS.getSourceFilePaths()) {
-				ProseoFile sourceFile = ProseoFile.fromTypeFullPath(FsType.fromValue(restProductFS.getSourceStorageType().toString()), fileOrDir, cfg);
+				ProseoFile sourceFile = ProseoFile.fromTypeFullPath(
+						FsType.fromValue(restProductFS.getSourceStorageType().toString()), fileOrDir, cfg);
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, true);
 				if (transfered != null) {
 					transferSum.addAll(transfered);
 				}
 			}
 			setRestProductFS(response, restProductFS, cfg.getS3DefaultBucket(), true, targetFile.getFullPath() + "/",
-							 transferSum, false, "registration executed on node "+hostName);
+					transferSum, false, "registration executed on node " + hostName);
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
-			return new ResponseEntity<>(
-					errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -116,16 +125,9 @@ public class ProductControllerImpl implements ProductController {
 		List<RestProductFS> response = new ArrayList<RestProductFS>();
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
-	
-	private RestProductFS setRestProductFS(RestProductFS response,
-			RestProductFS restProductFS,
-			String storageId,
-			Boolean registered,
-			String registeredFilePath,
-			List<String> registeredFiles,
-			Boolean deleted,
-			String msg
-			) {
+
+	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
+			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
 		if (response != null && restProductFS != null) {
 			response.setProductId(restProductFS.getProductId());
 			response.setTargetStorageId(storageId);
@@ -143,15 +145,73 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	@Override
-	public ResponseEntity<?> getObject(String pathInfo, Boolean zip, Long fromByte, Long toByte) {
-		List<RestProductFS> response = new ArrayList<RestProductFS>();
-		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);		
+	public ResponseEntity<?> getObject(String pathInfo, Long fromByte, Long toByte) {
+		if (pathInfo != null) {
+			try {
+				ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+				InputStream stream = sourceFile.getDataAsInputStream();
+				if (stream == null) {
+					return new ResponseEntity<>("File not found", HttpStatus.NOT_FOUND);
+				}
+				Long len = sourceFile.getLength();
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
+				long from = 0;
+				long to = len - 1;
+				HttpStatus status = HttpStatus.OK;
+				if (fromByte != null || toByte != null) {
+					List<HttpRange> ranges = new ArrayList<HttpRange>();
+					if (fromByte != null) {
+						from = fromByte;
+						stream.skip(from);
+					}
+					if (toByte != null) {
+						to = Math.min(toByte, len - 1);
+					}
+					len = to - from + 1;
+					HttpRange range = HttpRange.createByteRange(from, to);
+					ranges.add(range);
+					headers.setRange(ranges);
+					headers.setContentType(new MediaType("multipart", "byteranges"));
+					status = HttpStatus.PARTIAL_CONTENT;
+				} else {
+					headers.setContentType(new MediaType("application", sourceFile.getExtension()));
+				}
+				headers.setContentLength(len);
+				InputStreamResource fsr = new InputStreamResource(stream);
+				if (fsr != null) {
+					return new ResponseEntity<>(fsr, headers, status);
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
 	}
 
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
-		// TODO Auto-generated method stub
-		return null;
+		RestProductFS response = new RestProductFS();
+		if (pathInfo != null) {
+			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+			try {
+				ArrayList<String> deleted = sourceFile.delete();
+				if (deleted != null && !deleted.isEmpty()) {
+					response.setProductId("");
+					response.setDeleted(true);
+					response.setRegistered(false);
+					response.setSourceFilePaths(deleted);
+					response.setSourceStorageType(SourceStorageType.fromValue(sourceFile.getFsType().toString()));
+					return new ResponseEntity<>(response, HttpStatus.OK);
+				}
+			} catch (Exception e) {
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}
+		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
 
 }

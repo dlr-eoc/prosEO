@@ -23,6 +23,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -91,7 +92,6 @@ public class S3Ops {
 		if (!prefix.endsWith(delimiter)) {
 			prefix += delimiter;
 		}
-
 		ListObjectsRequest listObjectsRequest = null;
 		if (isTopLevel) {
 			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withDelimiter(delimiter);
@@ -455,4 +455,25 @@ public class S3Ops {
 		        .build();
 		client.putObject(putRequest, RequestBody.empty());
 	}
+	
+	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
+	    ObjectListing objectList = client.listObjects(bucketName, prefix );
+	    List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
+	    String[] keysList = new String[ objectSummeryList.size() ];
+	    int count = 0;
+	    for( S3ObjectSummary summery : objectSummeryList ) {
+	        keysList[count++] = summery.getKey();
+	    }
+	    DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest( bucketName ).withKeys( keysList );
+	    client.deleteObjects(deleteObjectsRequest);
+	}
+	
+	public static long getLength(AmazonS3 client, String bucketName, String key) {
+		ObjectMetadata md = client.getObjectMetadata(bucketName, key);
+		if (md != null) {
+			return md.getContentLength();
+		}
+		return 0;
+	}
+
 }

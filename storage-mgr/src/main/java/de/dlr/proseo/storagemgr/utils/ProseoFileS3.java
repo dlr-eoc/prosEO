@@ -2,12 +2,14 @@ package de.dlr.proseo.storagemgr.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 
 import com.amazonaws.services.s3.AmazonS3;
 
@@ -156,5 +158,34 @@ public class ProseoFileS3 extends ProseoFile {
 			return result;
 		}
 		return null;
+	}
+	
+	@Override
+	public ArrayList<String> delete() {
+		ArrayList<String> result = new ArrayList<String>();
+		AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+		try {
+			S3Ops.deleteDirectory(s3, getBasePath(), getRelPathAndFile());	
+			result.add(getFullPath());		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	@Override
+	public FileSystemResource getFileSystemResource() {
+		return new FileSystemResource(getFullPath());
+	}
+	
+
+	@Override
+	public long getLength() {
+		if (isDirectory()) {
+			return 0;
+		} else {
+			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			return S3Ops.getLength(s3, getBasePath(), getRelPathAndFile());
+		}
 	}
 }

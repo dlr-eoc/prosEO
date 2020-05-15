@@ -91,11 +91,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(cfg.getDefaultStorageType()), sourceFile.getRelPathAndFile(), cfg);
 			try {
-					ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
-					if (transfered != null && !transfered.isEmpty()) {
-						response = targetFile.getFsType() + "|" + transfered.get(0);
-						return new ResponseEntity<>(response, HttpStatus.CREATED);
-					}
+				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+				if (transfered != null && !transfered.isEmpty()) {
+					response = targetFile.getFsType() + "|" + transfered.get(0);
+					return new ResponseEntity<>(response, HttpStatus.CREATED);
+				}
 			} catch (Exception e) {
 				return new ResponseEntity<>(
 						errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 

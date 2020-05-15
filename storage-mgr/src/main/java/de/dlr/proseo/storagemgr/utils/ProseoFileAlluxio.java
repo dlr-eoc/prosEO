@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
@@ -73,8 +74,23 @@ public class ProseoFileAlluxio extends ProseoFile {
 	}
 
 	@Override
+	public ArrayList<String> delete() {
+		return null;
+	}
+
+	@Override
 	public Boolean writeBytes(byte[] bytes) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public FileSystemResource getFileSystemResource() {
+		return null;
+	}
+
+	@Override
+	public long getLength() {
+		return 0;
 	}
 }

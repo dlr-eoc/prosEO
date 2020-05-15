@@ -310,8 +310,10 @@ public class KubeJob {
 				
 				// Build a ResourceRequirements object
 				V1ResourceRequirements reqs = new V1ResourceRequirements();
-				reqs.putRequestsItem("cpu", new Quantity("1"))
-					.putRequestsItem("memory", new Quantity("1500Mi"));
+				String cpus = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("cpu", "1");
+				String mem = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("memory", "1500Mi");
+				reqs.putRequestsItem("cpu", new Quantity(cpus))
+					.putRequestsItem("memory", new Quantity(mem));
 				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
 				String localStorageManagerUrl = kubeConfig.getStorageManagerUrl().replaceFirst("://[^:]*", "://%NODE_IP%");
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
