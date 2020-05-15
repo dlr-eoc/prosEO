@@ -3,11 +3,12 @@ prosEO k8s setup (OpenStack)
 deploy a k8s-cluster using terraform & kubespray
 
 ### prerequisites
-- docker engine running at your control host
+- docker engine running at your control host (local development machine)
 - ssh-keygen
 - unrestricted internet access
 
 ### deploy steps
+Perform this on your local development machine
 - create public and private ssh-key (e.g. by using ssh-keygen) and copy the keys to:
   - ssh-keys/`cluster-key.pem` (private key)
   - ssh-keys/`cluster-key.pub` (public key)
@@ -61,16 +62,17 @@ terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
 
 ### prepare created bastion-VM (inside container)
 ```sh
-ssh linux@<bastion-host>
+ssh linux@<bastion-host> # Use IP address given at end of terraform apply output
 sudo vi /etc/ssh/sshd_config
 AllowTcpForw.. yes
 sudo systemctl restart sshd
+exit # Leave bastion host
 ```
 
 ### check ssh-connectivity between nodes (inside container)
 ```sh
 cd /kubespray/inventory/proseo-spray/
-ansible -i hosts -m ping all
+ansible -i hosts -m ping all # --> Does not work (ansible cannot reach hosts behind bastion host) TIPP try to collect info with ansible-inventory
 ```
 
 ### run kubespray (inside container)
