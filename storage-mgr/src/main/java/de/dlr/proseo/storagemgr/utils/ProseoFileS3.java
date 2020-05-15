@@ -72,7 +72,7 @@ public class ProseoFileS3 extends ProseoFile {
 
 	@Override
 	public String getFullPath() {
-		return "s3://" + getBasePath() + "/" + getRelPath() + "/" + getFileName();
+		return "s3://" + getBasePath() + "/" + getRelPathAndFile();
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class ProseoFileS3 extends ProseoFile {
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
 					cfg.getS3EndPoint(), getBasePath(), cfg.getS3Region());
 			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-			s3.putObject(PutObjectRequest.builder().bucket(getBasePath()).key(getRelPath()).build(),
+			s3.putObject(PutObjectRequest.builder().bucket(getBasePath()).key(getRelPathAndFile()).build(),
 					RequestBody.fromInputStream(fis, bytes.length));
 			s3.close();
 			fis.close();
@@ -128,18 +128,24 @@ public class ProseoFileS3 extends ProseoFile {
 			case POSIX:
 				S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
 				if (null==sourceKey) sourceKey="";
-				if (S3Ops.v2FetchFile(
-						//the client
-						s3c, 
-						// the source S3-Bucket
-						this.getFullPath(), 
-						// the final prefix including productId pattern of the file or directory
-						proFile.getFullPath()
-						)) {
-					result = new ArrayList<String>();
-					File targetFile = new File(proFile.getFullPath());
-					targetFile.setWritable(true, false);
-					result.add(proFile.getFullPath());
+				result = new ArrayList<String>();
+				// TODO recursive
+				if (this.isDirectory()) {
+					FileUtils.forceMkdir(new File(proFile.getFullPath()));
+					result.add(proFile.getFullPath());					
+				} else {
+					if (S3Ops.v2FetchFile(
+							//the client
+							s3c, 
+							// the source S3-Bucket
+							this.getFullPath(), 
+							// the final prefix including productId pattern of the file or directory
+							proFile.getFullPath()
+							)) {
+						File targetFile = new File(proFile.getFullPath());
+						targetFile.setWritable(true, false);
+						result.add(proFile.getFullPath());
+					}
 				};
 				break;
 			case ALLUXIO:

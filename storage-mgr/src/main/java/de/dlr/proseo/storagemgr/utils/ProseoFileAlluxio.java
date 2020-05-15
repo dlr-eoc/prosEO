@@ -59,7 +59,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 
 	@Override
 	public String getFullPath() {
-		return "alluxio://" + getBasePath() + "/" + getRelPath();
+		return "alluxio://" + getRelPathAndFile();
 	}
 
 	@Override
