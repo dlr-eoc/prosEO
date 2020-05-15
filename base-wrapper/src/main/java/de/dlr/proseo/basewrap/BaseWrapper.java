@@ -151,25 +151,44 @@ public class BaseWrapper {
 		, NODE_IP
 	}
 
-	/** Environment Variables from Container (set via run-invocation or directly from docker-image)*/
+	// Environment Variables from Container (set via run-invocation or directly from docker-image)
+	
+	// Variables to be provided by Production Planner during invocation
+	/** File system type for the Job Order File */
 	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
+	/** Path to Job Order File, format according to file system type */
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
+	
+	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
+	/** Own node IP address to be inserted in %NODE_IP% variable in Storage Manager endpoint */
+	private String ENV_NODE_IP = System.getenv(ENV_VARS.NODE_IP.toString());
+	/** User name for local Storage Manager */
 	private String ENV_STORAGE_USER = System.getenv(ENV_VARS.STORAGE_USER.toString());
+	/** Password for local Storage Manager */
 	private String ENV_STORAGE_PASSWORD = System.getenv(ENV_VARS.STORAGE_PASSWORD.toString());
+	/** Mount point of shared local file system */
+	private String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
+	
+	/** User name for prosEO Control Instance */
+	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
+	/** Password for prosEO Control Instance */
+	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
+
 	/**
 	 * Callback address for prosEO Production Planner, format is:
 	 * <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
 	 */
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
-	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
+	/** Name of the Processing Facility this wrapper is running in */
 	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
+	
+	/** HTTP endpoint for Ingestor callback */
 	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
-	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
-	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
-	private String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
-	private String ENV_NODE_IP = System.getenv(ENV_VARS.NODE_IP.toString());
 
+	// Variables to be provided by the processor or wrapper image
+	/** Shell command to run the processor (with path to Job Order File as sole parameter) */
+	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 
 	/**
 	 * Remove protocol information, leading and trailing slashes from given file name
@@ -440,19 +459,18 @@ public class BaseWrapper {
 	/**
 	 * Executes the processor
 	 * 
-	 * @param shellCommand command for executing the processor, TODO remove, use ENV direct
 	 * @param jofPath path of re-mapped JobOrder file valid in container context
 	 * @return True/False
 	 */
-	private Boolean runProcessor(String shellCommand, String jofPath) {
-		if (logger.isTraceEnabled()) logger.trace(">>> runProcessor({}, {})", shellCommand, jofPath);
+	private Boolean runProcessor(String jofPath) {
+		if (logger.isTraceEnabled()) logger.trace(">>> runProcessor({}, {})", jofPath);
 
-		logger.info(MSG_STARTING_PROCESSOR, shellCommand, jofPath);
+		logger.info(MSG_STARTING_PROCESSOR, jofPath);
 
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.redirectErrorStream(true); 
 
-		processBuilder.command((shellCommand + " " + jofPath).split(" "));
+		processBuilder.command((ENV_PROCESSOR_SHELL_COMMAND + " " + jofPath).split(" "));
 		int exitCode = EXIT_CODE_FAILURE; // Failure
 		try {
 			Process process = processBuilder.start();
@@ -745,10 +763,7 @@ public class BaseWrapper {
 
 		/* STEP [7] Execute Processor */
 
-		Boolean procRun = runProcessor(
-				ENV_PROCESSOR_SHELL_COMMAND,
-				CONTAINER_JOF_PATH
-				);
+		Boolean procRun = runProcessor(CONTAINER_JOF_PATH);
 		if (!procRun) {
 			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
