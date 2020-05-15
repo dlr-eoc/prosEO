@@ -1,1 +1,1 @@
-docker run --rm -it -v $(pwd)/terraform/state:/terraform/state proseo-k8s-deployer:7c21410
+docker run --rm -it -v $(pwd)/terraform/state:/terraform/state proseo-k8s-deployer:39f8db4

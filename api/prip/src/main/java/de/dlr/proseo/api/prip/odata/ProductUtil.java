@@ -68,11 +68,12 @@ public class ProductUtil {
 		Entity product = new Entity();
 		product.setType(ProductEdmProvider.ET_PRODUCT_FQN.getFullQualifiedNameAsString());
 		product.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
-			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, restProductFile.getProductFileName()))
+			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, 
+				(null == restProductFile.getZipFileName() ? restProductFile.getProductFileName() : restProductFile.getZipFileName())))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, ValueType.PRIMITIVE,
 				"application/octet-stream"))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, ValueType.PRIMITIVE,
-				restProductFile.getFileSize()))
+				(null == restProductFile.getZipFileName() ? restProductFile.getFileSize() : restProductFile.getZipFileSize())))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CREATION_DATE, ValueType.PRIMITIVE,
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
@@ -88,13 +89,16 @@ public class ProductUtil {
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getSensingStopTime())))));
 		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE, ValueType.COMPLEX, contentDate));
 		
-		// TODO Fill checksum information from restProductFile
+		// Fill checksum information from restProductFile
 		List<ComplexValue> checksums = new ArrayList<>();
 		ComplexValue checksum = new ComplexValue();
 		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, ValueType.PRIMITIVE, "MD5"));
-		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, ValueType.PRIMITIVE, restProductFile.getChecksum()));
+		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, ValueType.PRIMITIVE,
+			(null == restProductFile.getZipFileName() ? restProductFile.getChecksum() : restProductFile.getZipChecksum())));
 		checksum.getValue().add(new Property(null, ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, ValueType.PRIMITIVE,
-				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))));
+			(null == restProductFile.getZipFileName() ?
+				Date.from(Instant.from(OrbitTimeFormatter.parse(restProductFile.getChecksumTime()))) :
+				Date.from(Instant.from(OrbitTimeFormatter.parse(restProductFile.getZipChecksumTime()))))));
 		checksums.add(checksum);
 		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS, ValueType.COLLECTION_COMPLEX, checksums));
 

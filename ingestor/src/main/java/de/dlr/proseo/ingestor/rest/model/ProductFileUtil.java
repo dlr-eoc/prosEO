@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
  * Utility methods for product files, e. g. for conversion between prosEO model and REST model
@@ -21,6 +22,7 @@ import de.dlr.proseo.model.ProductFile.StorageType;
  */
 public class ProductFileUtil {
 
+	private static final String MSG_ZIP_ARCHIVE_ATTRIBUTES_INCOMPLETE = "ZIP archive attributes incomplete";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductFileUtil.class);
 	
@@ -46,7 +48,15 @@ public class ProductFileUtil {
 		restProductFile.setStorageType(modelProductFile.getStorageType().toString());
 		restProductFile.setFileSize(modelProductFile.getFileSize());
 		restProductFile.setChecksum(modelProductFile.getChecksum());
+		restProductFile.setChecksumTime(OrbitTimeFormatter.format(modelProductFile.getChecksumTime()));
 		restProductFile.getAuxFileNames().addAll(modelProductFile.getAuxFileNames());
+		
+		if (null != modelProductFile.getZipFileName()) {
+			restProductFile.setZipFileName(modelProductFile.getZipFileName());
+			restProductFile.setZipFileSize(modelProductFile.getZipFileSize());
+			restProductFile.setZipChecksum(modelProductFile.getZipChecksum());
+			restProductFile.setZipChecksumTime(OrbitTimeFormatter.format(modelProductFile.getZipChecksumTime()));
+		}
 		
 		return restProductFile;
 	}
@@ -79,7 +89,19 @@ public class ProductFileUtil {
 		modelProductFile.setStorageType(StorageType.valueOf(restProductFile.getStorageType()));
 		modelProductFile.setFileSize(restProductFile.getFileSize());
 		modelProductFile.setChecksum(restProductFile.getChecksum());
+		modelProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(restProductFile.getChecksumTime())));
 		
+		if (null != restProductFile.getZipFileName()) {
+			// Check that all ZIP archive-related attributes are set (declared as optional in API spec!)
+			if (null == restProductFile.getZipFileSize() || null == restProductFile.getZipChecksum() || null == restProductFile.getZipChecksumTime()) {
+				throw new IllegalArgumentException(MSG_ZIP_ARCHIVE_ATTRIBUTES_INCOMPLETE);
+			}
+			// Set ZIP archive attributes
+			modelProductFile.setZipFileName(restProductFile.getZipFileName());
+			modelProductFile.setZipFileSize(restProductFile.getZipFileSize());
+			modelProductFile.setZipChecksum(restProductFile.getZipChecksum());
+			modelProductFile.setZipChecksumTime(Instant.from(OrbitTimeFormatter.parse(restProductFile.getZipChecksumTime())));
+		}
 		return modelProductFile;
 	}
 }
