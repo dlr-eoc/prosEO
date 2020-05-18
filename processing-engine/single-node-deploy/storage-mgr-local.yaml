@@ -17,7 +17,7 @@ spec:
       - name: proseo-regcred
       containers:
         - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-403d5d1
+          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-c127be4
           resources:
             requests:
               cpu: "1.0"
@@ -40,6 +40,7 @@ spec:
   ports:
   - name: service
     port: 3000
+    nodePort: 30001
     targetPort: mgr-pod-port
     protocol: TCP
   selector:

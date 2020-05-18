@@ -1,7 +1,12 @@
 {
     "name": "Test",
     "description": "Processing Facility 1",
-    "processingEngineUrl": "https://www.prosEO-ProcFac1.de/kubernetes",
-    "storageManagerUrl": "https://www.prosEO-ProcFac1.de/proseo/storage-mgr/v1.0",
+    "processingEngineUrl": "https://procfac1.proseo-domain.de/kubernetes",
+    "processingEngineUser": "kubeuser1",
+    "processingEnginePassword": "very-secret-password",
+    "storageManagerUrl": "http://procfac1.proseo-domain.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v0.1",
+    "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "storageManagerUser": "smuser",
+    "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "S3"
 }

@@ -210,46 +210,49 @@ public class JobDispatcher {
 	 * @return job order
 	 */
 	public JobOrder sendJobOrderToStorageManager(KubeConfig kubeConfig, JobOrder jobOrder) {
+		if (logger.isTraceEnabled()) logger.trace(">>> sendJobOrderToStorageManager({}, {})", kubeConfig, jobOrder);
 		
 		String storageManagerUrl = kubeConfig.getStorageManagerUrl();
 		
-		if (storageManagerUrl != null && jobOrder != null) {
-			try {
-				RestTemplate restTemplate = new RestTemplate();
-				String restUrl = "/joborders";
-				String b64String = jobOrder.buildBase64String(true);
-				RestJoborder jo = new RestJoborder();
-				switch (kubeConfig.getStorageType()) {
-				case S3:
-					jo.setFsType(FsType.S_3);
-					break;
-				case POSIX:
-					// fall through intended
-				default:
-					jo.setFsType(FsType.POSIX);
-					break;					
-				}
-				
-				jo.setJobOrderStringBase64(b64String);
-				logger.info("HTTP Request: " + storageManagerUrl + restUrl);
-				
-				ResponseEntity<RestJoborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, RestJoborder.class);
-
-				logger.info("... response is {}", response.getStatusCode());
-
-				if (response != null && response.getBody() != null && response.getBody().getUploaded()) {
-					jobOrder.setFileName(response.getBody().getPathInfo());
-					jobOrder.setFsType(response.getBody().getFsType().value());
-				} else {
-					return null;
-				}		
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
-		} else {
+		if (null == storageManagerUrl || null == jobOrder) {
+			logger.error("Insufficient data for sending job order to Storage Manager");
 			return null;
-		}			
+		}
+		
+		try {
+			RestTemplate restTemplate = new RestTemplate();
+			String restUrl = "/joborders";
+			String b64String = jobOrder.buildBase64String(true);
+			RestJoborder jo = new RestJoborder();
+			switch (kubeConfig.getStorageType()) {
+			case S3:
+				jo.setFsType(FsType.S_3);
+				break;
+			case POSIX:
+				// fall through intended
+			default:
+				jo.setFsType(FsType.POSIX);
+				break;					
+			}
+			
+			jo.setJobOrderStringBase64(b64String);
+			logger.info("HTTP Request: " + storageManagerUrl + restUrl);
+			
+			ResponseEntity<RestJoborder> response = restTemplate.postForEntity(storageManagerUrl + restUrl, jo, RestJoborder.class);
+
+			logger.info("... response is {}", response.getStatusCode());
+
+			if (response != null && response.getBody() != null && response.getBody().getUploaded()) {
+				jobOrder.setFileName(response.getBody().getPathInfo());
+				jobOrder.setFsType(response.getBody().getFsType().value());
+			} else {
+				return null;
+			}		
+		} catch (Exception e) {
+			logger.error("Exception sending job order to Storage Manager: {}", e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
 		
 		return jobOrder;
 	}

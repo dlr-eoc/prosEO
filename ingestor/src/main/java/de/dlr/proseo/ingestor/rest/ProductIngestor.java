@@ -40,6 +40,7 @@ import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.ProductQuery;
@@ -75,6 +76,10 @@ public class ProductIngestor {
 	private static final int MSG_ID_PRODUCT_FILE_DELETED = 2068;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
+
+	// Same as in ProductManager
+	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -91,6 +96,9 @@ public class ProductIngestor {
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
 	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
 
+	// Same as in ProductManager
+	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
 	private static final String MSG_PRODUCT_FILE_INGESTED = "(I%d) Product file %s ingested for product ID %d at processing facility %s";
@@ -169,7 +177,7 @@ public class ProductIngestor {
      * @param password the password to pass on to the Production Planner
      * @return a Json representation of the product updated and/or created including their product files
 	 * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
-	 * @throws ProcessingException if the communication with the Storage Manager or the Production Planner fails
+	 * @throws ProcessingException if the communication with the Storage Manager fails
 	 */
 	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException {
@@ -203,7 +211,7 @@ public class ProductIngestor {
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
 		if (logger.isDebugEnabled()) logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
 		RestTemplate restTemplate = rtb.basicAuthentication(
-				ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword()).build();
+				facility.getStorageManagerUser(), facility.getStorageManagerPassword()).build();
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> responseEntity = null;
 		try {
@@ -219,6 +227,7 @@ public class ProductIngestor {
 			throw new ProcessingException(logError(MSG_ERROR_STORING_PRODUCT, MSG_ID_ERROR_STORING_PRODUCT,
 					ingestorProduct.getProductClass(), facility.getName(), responseEntity.getStatusCode().toString()));
 		}
+		if (logger.isTraceEnabled()) logger.trace("... Call to Storage Manager successful");
 		
 		// Extract the product file paths from the response
 		ObjectMapper mapper = new ObjectMapper();
@@ -254,20 +263,6 @@ public class ProductIngestor {
 		newModelProduct.getProductFile().add(newProductFile);
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
 		
-		// Check whether there are open product queries for this product type
-		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-				.findUnsatisfiedByProductClass(newModelProduct.getProductClass().getId());
-		if (!productQueries.isEmpty()) {
-			// If so, inform the production planner of the new product
-			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, newProduct.getId());
-
-			restTemplate = rtb.basicAuthentication(user, password).build();
-			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
-			if (!HttpStatus.OK.equals(response.getStatusCode())) {
-				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
-						newProduct.getId(), newProduct.getProductClass(), response.getStatusCode().toString()));
-			}
-		}
 		
 		// Product ingestion successful
 		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
@@ -351,21 +346,6 @@ public class ProductIngestor {
 		
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 		
-		// Check whether there are open product queries for this product type
-		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
-				.findUnsatisfiedByProductClass(modelProduct.getProductClass().getId());
-		if (!productQueries.isEmpty()) {
-			// If so, inform the production planner of the new product
-			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, modelProduct.getId());
-
-			RestTemplate restTemplate = rtb.basicAuthentication(user, password).build();
-			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
-			if (!HttpStatus.OK.equals(response.getStatusCode())) {
-				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
-						modelProduct.getId(), modelProduct.getProductClass().getProductType(), response.getStatusCode().toString()));
-			}
-		}
-		
 		// Return the updated REST product file
 		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
 
@@ -412,7 +392,7 @@ public class ProductIngestor {
 			String storageManagerUrl = facility.getStorageManagerUrl()
 					+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
 			RestTemplate restTemplate = rtb
-					.basicAuthentication(ingestorConfig.getStorageManagerUser(), ingestorConfig.getStorageManagerPassword())
+					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
 					.build();
 			try {
 				restTemplate.delete(storageManagerUrl);
@@ -550,6 +530,74 @@ public class ProductIngestor {
 		
 		// Return the updated REST product file
 		return ProductFileUtil.toRestProductFile(modelProductFile);
+	}
+
+	/**
+	 * Notify the Production Planner component of newly ingested products
+	 * 
+     * @param user the username to pass on to the Production Planner
+     * @param password the password to pass on to the Production Planner
+     * @param ingestorProduct a product description with product file locations
+	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
+	 * @throws RestClientException if an error in the REST API occurs
+	 * @throws ProcessingException if the communication with the Production Planner fails
+	 */
+	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct)
+			throws IllegalArgumentException, RestClientException, ProcessingException {
+		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
+
+		// Retrieve the product class from the database
+		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
+				.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
+		if (null == modelProductClass) {
+			throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
+					ingestorProduct.getMissionCode(), ingestorProduct.getProductClass()));
+		}
+		
+		// Check whether there are open product queries for this product type
+		List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+				.findUnsatisfiedByProductClass(modelProductClass.getId());
+		if (!productQueries.isEmpty()) {
+			// If so, inform the production planner of the new product
+			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
+
+			RestTemplate restTemplate = rtb.basicAuthentication(user, password).build();
+			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
+			if (!HttpStatus.OK.equals(response.getStatusCode())) {
+				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,
+						ingestorProduct.getId(), ingestorProduct.getProductClass(), response.getStatusCode().toString()));
+			}
+		}
+	}
+
+	/**
+	 * Notify the Production Planner component of newly ingested products
+	 * 
+     * @param user the username to pass on to the Production Planner
+     * @param password the password to pass on to the Production Planner
+	 * @param restProductFile the product file that has been ingested
+	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
+	 * @throws RestClientException if an error in the REST API occurs
+	 * @throws ProcessingException if the communication with the Production Planner fails
+	 */
+	public void notifyPlanner(String user, String password, RestProductFile restProductFile)
+			throws IllegalArgumentException, RestClientException, ProcessingException {
+		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
+
+		// Retrieve the product for the given product file
+		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(restProductFile.getProductId());
+		if (modelProduct.isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProductFile.getProductId()));
+		}
+		
+		// Copy the relevant attributes to an IngestorProduct
+		IngestorProduct ingestorProduct = new IngestorProduct();
+		ingestorProduct.setId(modelProduct.get().getId());
+		ingestorProduct.setMissionCode(modelProduct.get().getProductClass().getMission().getCode());
+		ingestorProduct.setProductClass(modelProduct.get().getProductClass().getProductType());
+		
+		// Notify planner
+		notifyPlanner(user, password, ingestorProduct);
 	}
 
 }

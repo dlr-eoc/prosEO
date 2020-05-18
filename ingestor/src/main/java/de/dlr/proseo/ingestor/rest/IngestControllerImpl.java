@@ -183,6 +183,9 @@ public class IngestControllerImpl implements IngestController {
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
 				result.add(productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]));
+				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");
+				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
+				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
 			} catch (ProcessingException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (IllegalArgumentException e) {
@@ -266,9 +269,10 @@ public class IngestControllerImpl implements IngestController {
 		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		
 		try {
-			return new ResponseEntity<>(productIngestor.ingestProductFile(
-						productId, facility, productFile, userPassword[0], userPassword[1]),
-					HttpStatus.CREATED);
+			RestProductFile restProductFile = productIngestor.ingestProductFile(
+						productId, facility, productFile, userPassword[0], userPassword[1]);
+			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile);
+			return new ResponseEntity<>(restProductFile, HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}

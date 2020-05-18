@@ -14,7 +14,3 @@ logging:
 proseo:
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
-    storageManager:
-        # url: from database
-        user: none
-        password: none

@@ -13,19 +13,20 @@ The (virtual) machines need to at least fulfil the following requirements:
 - more TBD
 - Optional: Access to some object storage conforming to the AWS S3 protocol
 
-# Step 1: Install Docker and Kubernetes
+# Installation Process
+## Step 1: Install Docker and Kubernetes
 TBD
 
-# Step 2: Deploy the prosEO Storage Manager
+## Step 2: Deploy the prosEO Storage Manager
 TBD
 
-# Step 3 (optional): Deploy Alluxio as Storage Provider
+## Step 3 (optional): Deploy Alluxio as Storage Provider
 TBD
 
-# Step 4 (optional): Deploy Minio as S3 Object Storage Provider
+## Step 4 (optional): Deploy Minio as S3 Object Storage Provider
 TBD
 
-# Configure prosEO
+# prosEO Configuration
 Add the new storage facility to the prosEO Control Instance configuration:
 
 ## Alternative 1: Using Command Line Interface

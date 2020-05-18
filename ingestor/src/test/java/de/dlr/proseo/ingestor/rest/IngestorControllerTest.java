@@ -274,8 +274,10 @@ public class IngestorControllerTest {
 					facility.setName(TEST_NAME);
 				}
 				// Make sure the following attributes are as expected	
-				facility.setProcessingEngineUrl(ingestorConfig.getProductionPlannerUrl());
+				facility.setProcessingEngineUrl("not used");
 				facility.setStorageManagerUrl(config.getStorageManagerUrl());
+				facility.setStorageManagerUser("testuser");
+				facility.setStorageManagerPassword("testpwd");
 				facility = RepositoryService.getFacilityRepository().save(facility);
 
 				return null;
@@ -307,6 +309,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setProductFileName(productFile.getName());
 		ingestorProduct.setFileSize(TEST_FILE_SIZE);
 		ingestorProduct.setChecksum(TEST_CHECKSUM);
+		ingestorProduct.setChecksumTime(TEST_GEN_TIME_TEXT);
 		ingestorProduct.getParameters().add(new RestParameter(
 				"copernicusCollection", "STRING", "01"));
 		ingestorProduct.getParameters().add(new RestParameter(
@@ -315,7 +318,7 @@ public class IngestorControllerTest {
 		ingestorProducts.add(ingestorProduct);
 		
 		// Check mock storage manager is up (logging calls) (using Castlemock: https://hub.docker.com/r/castlemock/castlemock/)
-		String testUrl = config.getStorageManagerUrl() + "/products/register";
+		String testUrl = config.getStorageManagerUrl() + "/products";
 		Map<String, String> mockRequest = new HashMap<>();
 		mockRequest.put("productId", "4711");
 		

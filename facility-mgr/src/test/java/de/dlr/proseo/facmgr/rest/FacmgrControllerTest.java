@@ -52,6 +52,10 @@ import de.dlr.proseo.model.service.RepositoryService;
 public class FacmgrControllerTest {
 	/* The base URI of the Orders */
 	private static String FACILITY_BASE_URI = "/proseo/facility-mgr/v0.1";
+	
+	// Some users and passwords
+	private static final String TEST_USER = "testUser";
+	private static final String TEST_PASSWORD = "testPassword";
 
 	@LocalServerPort
 	private int port;
@@ -106,7 +110,12 @@ public class FacmgrControllerTest {
 			testFacility.setName(testData[2]);
 			testFacility.setDescription(testData[3]);
 			testFacility.setProcessingEngineUrl(testData[4]);
+			testFacility.setProcessingEngineUser(TEST_USER);
+			testFacility.setProcessingEnginePassword(TEST_PASSWORD);
 			testFacility.setStorageManagerUrl(testData[5]);
+			testFacility.setLocalStorageManagerUrl(testData[5]);
+			testFacility.setStorageManagerUser(TEST_USER);
+			testFacility.setStorageManagerPassword(TEST_PASSWORD);
 			testFacility.setDefaultStorageType(StorageType.valueOf(testData[6]));
 			
 			testFacility = RepositoryService.getFacilityRepository().save(testFacility);

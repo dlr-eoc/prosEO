@@ -92,8 +92,22 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 # aws s3 sync $TEST_DATA_DIR s3://<bucket> --endpoint-url https://<provider-url>
 
 # Create a processing facility
-# echo "facility create <facility-name> description=<facility-description> defaultStorageType=S3 processingEngineUrl=https://<facility-url>/ storageManagerUrl=https://<facility-url>/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
-echo "facility create localhost description=Docker_Desktop_Minikube defaultStorageType=POSIX processingEngineUrl=https://kubernetes.docker.internal:6443/ storageManagerUrl=https://kubernetes.docker.internal:6443/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/" >>$CLI_SCRIPT
+cat >$TEST_DATA_DIR/facility.json <<EOF
+{
+    "name": "localhost",
+    "description": "Docker Desktop Minikube",
+    "processingEngineUrl": "http://host.docker.internal:8001/",
+    "processingEngineUser": "kubeuser1",
+    "processingEnginePassword": "very-secret-password",
+    "storageManagerUrl": 
+    	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+    "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "storageManagerUser": "smuser",
+    "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
+    "defaultStorageType": "POSIX"
+}
+EOF
+echo "facility create --file=$TEST_DATA_DIR/facility.json" >>$CLI_SCRIPT
 
 # Ingest test data into prosEO
 echo "ingest --file=$TEST_DATA_DIR/ingest_products.json telekom-otc" >>$CLI_SCRIPT

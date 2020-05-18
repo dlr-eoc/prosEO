@@ -40,6 +40,7 @@ spec:
   ports:
   - name: service
     port: 3000
+    nodePort: 30001
     targetPort: mgr-pod-port
     protocol: TCP
   selector:

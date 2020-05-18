@@ -41,11 +41,30 @@ public class FacmgrUtil {
 			restFacility.setProcessingEngineUrl(modelFacility.getProcessingEngineUrl());
 
 		}	
+		if (null != modelFacility.getProcessingEngineUser()) {
+			restFacility.setProcessingEngineUser(modelFacility.getProcessingEngineUser());
+
+		}
+		if (null != modelFacility.getProcessingEnginePassword()) {
+			restFacility.setProcessingEnginePassword(modelFacility.getProcessingEnginePassword());
+
+		}
 		if (null != modelFacility.getStorageManagerUrl()) {
 			restFacility.setStorageManagerUrl(modelFacility.getStorageManagerUrl());
 
 		}	
-		
+		if (null != modelFacility.getLocalStorageManagerUrl()) {
+			restFacility.setLocalStorageManagerUrl(modelFacility.getLocalStorageManagerUrl());
+
+		}	
+		if (null != modelFacility.getStorageManagerUser()) {
+			restFacility.setStorageManagerUser(modelFacility.getStorageManagerUser());
+
+		}
+		if (null != modelFacility.getStorageManagerPassword()) {
+			restFacility.setStorageManagerPassword(modelFacility.getStorageManagerPassword());
+
+		}
 		if (null != modelFacility.getDefaultStorageType()) {
 			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
 		}
@@ -90,11 +109,30 @@ public class FacmgrUtil {
 			modelFacility.setProcessingEngineUrl(restFacility.getProcessingEngineUrl());
 
 		}	
+		if (null != restFacility.getProcessingEngineUser()) {
+			modelFacility.setProcessingEngineUser(restFacility.getProcessingEngineUser());
+
+		}	
+		if (null != restFacility.getProcessingEnginePassword()) {
+			modelFacility.setProcessingEnginePassword(restFacility.getProcessingEnginePassword());
+
+		}	
 		if (null != restFacility.getStorageManagerUrl()) {
 			modelFacility.setStorageManagerUrl(restFacility.getStorageManagerUrl());
 
 		}	
-		
+		if (null != restFacility.getLocalStorageManagerUrl()) {
+			modelFacility.setLocalStorageManagerUrl(restFacility.getLocalStorageManagerUrl());
+
+		}	
+		if (null != restFacility.getStorageManagerUser()) {
+			modelFacility.setStorageManagerUser(restFacility.getStorageManagerUser());
+
+		}	
+		if (null != restFacility.getStorageManagerPassword()) {
+			modelFacility.setStorageManagerPassword(restFacility.getStorageManagerPassword());
+
+		}	
 		if (null != restFacility.getDefaultStorageType()) {		
 			modelFacility.setDefaultStorageType(StorageType.valueOf(restFacility.getDefaultStorageType()));
 		}		
