@@ -36,8 +36,26 @@ public class ProcessingFacility extends PersistentObject {
 	/** The URL to access this facility's processing engine (Kubernetes instance) */
 	private String processingEngineUrl;
 	
+	/** User name for connecting to this facility's processing engine (Kubernetes instance) */
+	private String processingEngineUser;
+	
+	/** Password for connecting to this facility's processing engine (Kubernetes instance) */
+	private String processingEnginePassword;
+	
 	/** The URL to access this facility's storage manager */
 	private String storageManagerUrl;
+	
+	/**
+	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
+	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
+	 */
+	private String localStorageManagerUrl;
+	
+	/** User name for connecting to the Storage Manager (locally and from external services) */
+	private String storageManagerUser;
+	
+	/** Password for connecting to the Storage Manager (locally and from external services) */
+	private String storageManagerPassword;
 
 	/** The default storage type (S3, POSIX, ...) to use in this facility. */
 	@Enumerated(EnumType.STRING)
@@ -94,6 +112,42 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
+	 * Gets the user name for the processing engine
+	 * 
+	 * @return the processing engine user
+	 */
+	public String getProcessingEngineUser() {
+		return processingEngineUser;
+	}
+
+	/**
+	 * Sets the user name for the processing engine
+	 * 
+	 * @param processingEngineUser the processing engine user to set
+	 */
+	public void setProcessingEngineUser(String processingEngineUser) {
+		this.processingEngineUser = processingEngineUser;
+	}
+
+	/**
+	 * Gets the password for the processing engine
+	 * 
+	 * @return the processing engine password
+	 */
+	public String getProcessingEnginePassword() {
+		return processingEnginePassword;
+	}
+
+	/**
+	 * Sets the password for the processing engine
+	 * 
+	 * @param processingEnginePassword the processing engine password to set
+	 */
+	public void setProcessingEnginePassword(String processingEnginePassword) {
+		this.processingEnginePassword = processingEnginePassword;
+	}
+
+	/**
 	 * Gets the URL of the facility's storage manager
 	 * 
 	 * @return the URL of the storage manager
@@ -109,6 +163,48 @@ public class ProcessingFacility extends PersistentObject {
 	 */
 	public void setStorageManagerUrl(String storageManagerUrl) {
 		this.storageManagerUrl = storageManagerUrl;
+	}
+
+	/**
+	 * @return the localStorageManagerUrl
+	 */
+	public String getLocalStorageManagerUrl() {
+		return localStorageManagerUrl;
+	}
+
+	/**
+	 * @param localStorageManagerUrl the localStorageManagerUrl to set
+	 */
+	public void setLocalStorageManagerUrl(String localStorageManagerUrl) {
+		this.localStorageManagerUrl = localStorageManagerUrl;
+	}
+
+	/**
+	 * @return the storageManagerUser
+	 */
+	public String getStorageManagerUser() {
+		return storageManagerUser;
+	}
+
+	/**
+	 * @param storageManagerUser the storageManagerUser to set
+	 */
+	public void setStorageManagerUser(String storageManagerUser) {
+		this.storageManagerUser = storageManagerUser;
+	}
+
+	/**
+	 * @return the storageManagerPassword
+	 */
+	public String getStorageManagerPassword() {
+		return storageManagerPassword;
+	}
+
+	/**
+	 * @param storageManagerPassword the storageManagerPassword to set
+	 */
+	public void setStorageManagerPassword(String storageManagerPassword) {
+		this.storageManagerPassword = storageManagerPassword;
 	}
 
 	/**

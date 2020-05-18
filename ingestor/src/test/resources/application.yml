@@ -14,10 +14,10 @@ logging:
 proseo:
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
+        
+# Test configuration
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
-        user: none
-        password: none
     testuser:
         name: testuser
         password: testpassword
