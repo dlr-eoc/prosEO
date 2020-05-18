@@ -97,10 +97,12 @@ public class ProductControllerImpl implements ProductController {
 			for (String fileOrDir : restProductFS.getSourceFilePaths()) {
 				ProseoFile sourceFile = ProseoFile.fromTypeFullPath(FsType.fromValue(restProductFS.getSourceStorageType().toString()), fileOrDir, cfg);
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, true);
+				if (logger.isDebugEnabled()) logger.debug("Files transferred: {}", transfered);
 				if (transfered != null) {
 					transferSum.addAll(transfered);
 				}
 			}
+			if (logger.isDebugEnabled()) logger.debug("Files registered: {}", transferSum);
 			setRestProductFS(response, restProductFS, cfg.getS3DefaultBucket(), true, targetFile.getFullPath() + "/",
 							 transferSum, false, "registration executed on node "+hostName);
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -139,6 +141,7 @@ public class ProductControllerImpl implements ProductController {
 			response.setDeleted(deleted);
 			response.setMessage(msg);
 		}
+		if (logger.isDebugEnabled()) logger.debug("Response created: {}", response);
 		return response;
 	}
 

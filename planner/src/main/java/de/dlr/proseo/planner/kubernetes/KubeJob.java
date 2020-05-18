@@ -267,6 +267,8 @@ public class KubeJob {
 	 */
 	@Transactional
 	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) {	
+		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
+		
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
 		if (aKubeConfig.isConnected()) {
@@ -288,11 +290,13 @@ public class KubeJob {
 				JobDispatcher jd = new JobDispatcher();
 				jobOrder = jd.createJobOrder(jobStep);
 				if (jobOrder == null) {
+					logger.error("Creation of job order for job step {} failed", jobStep.getId());
 					// todo Exception
 					return null;
 				}
 				jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
 				if (jobOrder == null) {
+					logger.error("Sending of job order to Storage Manager failed for job step {}", jobStep.getId());
 					// todo Exception
 					return null;
 				}
@@ -301,8 +305,6 @@ public class KubeJob {
 				String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
 				
 				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
-				// todo Find correct name!
-				String shellCommand = "ll";
 				
 				String localMountPoint = "/mnt/localproseodata";
 				
@@ -400,26 +402,27 @@ public class KubeJob {
 						.withSpec(jobSpec)
 						.build();
 				try {
-					if (!js.isEmpty()) {
-						logger.info("Creating job {}", job.toString());
-						job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
-						logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
-						searchPod();
-						UtilService.getJobStepUtil().startJobStep(jobStep);
-						Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
-					}
+					logger.info("Creating job {}", job.toString());
+					job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+					logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
+					searchPod();
+					UtilService.getJobStepUtil().startJobStep(jobStep);
+					Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
 				} catch (ApiException e1) {
 					// TODO Auto-generated catch block
+					logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
 					e1.printStackTrace();
 					return null;
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
+					logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
 					e.printStackTrace();
 					return null;
 				}
 			}
 			return this;
 		} else {
+			logger.warn("Kubernetes configuration {} not connected", aKubeConfig);
 			return null;
 		}
 	}	

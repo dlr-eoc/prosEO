@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -121,77 +122,85 @@ public class ProseoFilePosix extends ProseoFile {
 
 	@Override
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
-		if (proFile != null) {
-			ArrayList<String> result = null;
-			File srcFile = new File(this.getFullPath());
-			switch (proFile.getFsType()) {
-			case S_3:// create internal buckets & prefixes if not exists..
-				String targetPath = null;
-				if (srcFile.isDirectory()) {
-					StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-					S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-					S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
-					result = new ArrayList<String>();
-					result.add(proFile.getFullPath());
-					if (recursive) {
-						targetPath = proFile.getRelPath();
-						if (targetPath.endsWith("/")) {
-							targetPath = targetPath.substring(0, targetPath.length() - 1);
-						}
-					}
-				} else {
-					targetPath = proFile.getRelPath();
-				}
-				if (targetPath != null) {
-					StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-					AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-					result = S3Ops.v1Upload(
-							//the client
-							s3, 
-							// the local POSIX source file or directory
-							this.getFullPath(), 
-							// the storageId -> =BucketName
-							cfg.getS3DefaultBucket(), 
-							// the final prefix of the file or directory
-							targetPath, 
-							false
-							);
-				}
-				break;
-			case POSIX:
-				result = new ArrayList<String>();
-				ArrayList<File> files = new ArrayList<File>();
-				if (srcFile.isDirectory()) {
-					if (recursive) {
-						File[] srcFiles = srcFile.listFiles();
-						for (File f : srcFiles) {
-							files.add(f);
-						}
-					} else {
-						FileUtils.forceMkdir(new File(proFile.getFullPath()));
-						result.add(proFile.getFullPath());
-					}
-				} else {
-					if (srcFile.isFile()) {
-						files.add(srcFile);
-					}
-				}
-				for (File f : files) {
-					File targetFile = new File(proFile.getFullPath() + "/" + srcFile.getName());
-					FileUtils.copyFile(srcFile, targetFile);
-					if (targetFile.exists()) {
-						targetFile.setWritable(true, false);
-						result.add(targetFile.getPath());
-					}					
-				}		
-				break;
-			case ALLUXIO:
-				break;
-			default:
-				break;
-			}
-			return result;
+		if (proFile == null) {
+			logger.error("Illegal call of ProseoFilePosix::copyTo(ProseoFile, Boolean) with null argument");
+			return null;
 		}
-		return null;
+		if (logger.isDebugEnabled()) logger.debug("Copying from {} to {}", this.getFullPath(), proFile.getFullPath());
+
+		ArrayList<String> result = null;
+		File srcFile = new File(this.getFullPath());
+		switch (proFile.getFsType()) {
+		case S_3:// create internal buckets & prefixes if not exists..
+			String targetPath = null;
+			if (srcFile.isDirectory()) {
+				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
+				result = new ArrayList<String>();
+				result.add(proFile.getFullPath());
+				if (recursive) {
+					targetPath = proFile.getRelPath();
+					if (targetPath.endsWith("/")) {
+						targetPath = targetPath.substring(0, targetPath.length() - 1);
+					}
+				}
+			} else {
+				targetPath = proFile.getRelPath();
+			}
+			if (targetPath != null) {
+				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				result = S3Ops.v1Upload(
+						//the client
+						s3, 
+						// the local POSIX source file or directory
+						this.getFullPath(), 
+						// the storageId -> =BucketName
+						cfg.getS3DefaultBucket(), 
+						// the final prefix of the file or directory
+						targetPath, 
+						false
+						);
+			}
+			break;
+		case POSIX:
+			result = new ArrayList<String>();
+			ArrayList<File> files = new ArrayList<File>();
+			if (srcFile.isDirectory()) {
+				if (recursive) {
+					File[] srcFiles = srcFile.listFiles();
+					for (File f : srcFiles) {
+						files.add(f);
+					}
+				} else {
+					FileUtils.forceMkdir(new File(proFile.getFullPath()));
+					result.add(proFile.getFullPath());
+				}
+			} else {
+				if (srcFile.isFile()) {
+					files.add(srcFile);
+				} else {
+					logger.error("Cannot find source file {}", srcFile);
+				}
+			}
+			for (File f : files) {
+				File targetFile = new File(proFile.getFullPath() + "/" + f.getName());
+				FileUtils.copyFile(f, targetFile);
+				if (targetFile.exists()) {
+					targetFile.setWritable(true, false);
+					result.add(targetFile.getPath());
+				} else {
+					logger.error("Cannot copy from source {} to target {}", f.getCanonicalPath(), targetFile.getCanonicalPath());
+				}
+			}		
+			break;
+		case ALLUXIO:
+			break;
+		default:
+			break;
+		}
+		if (logger.isDebugEnabled()) logger.debug("Files copied: {}", result);
+		return result;
 	}
 }
