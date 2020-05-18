@@ -46,21 +46,22 @@ public class ProductControllerImpl implements ProductController {
 	@Transactional
 	public ResponseEntity<?> getObjectByProductid(String productid) {		
 		// look for product
-		try {
-			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
-			if (p != null && p.getProductFile() != null) {
-				for (ProductFile pf : p.getProductFile()) {
-					if (pf.getProcessingFacility() != null) {
-						de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(pf.getProcessingFacility().getName());
-						if (aKubeConfig != null) {
-							UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig);	
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+//		try {
+//			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
+//			if (p != null && p.getProductFile() != null) {
+//				for (ProductFile pf : p.getProductFile()) {
+//					if (pf.getProcessingFacility() != null) {
+//						de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(pf.getProcessingFacility().getName());
+//						if (aKubeConfig != null) {
+//							UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig);	
+//						}
+//					}
+//				}
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//		}
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}
 }

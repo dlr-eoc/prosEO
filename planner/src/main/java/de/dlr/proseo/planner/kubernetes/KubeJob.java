@@ -301,10 +301,8 @@ public class KubeJob {
 				String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
 				
 				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
-				// todo Find correct name!
-				String shellCommand = "ll";
 				
-				String localMountPoint = "/mnt/localproseodata";
+				String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
 				
 				// Use Java style Map (as opposed to Scala's Map class)
 				
@@ -315,7 +313,7 @@ public class KubeJob {
 				reqs.putRequestsItem("cpu", new Quantity(cpus))
 					.putRequestsItem("memory", new Quantity(mem));
 				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
-				String localStorageManagerUrl = kubeConfig.getStorageManagerUrl().replaceFirst("://[^:]*", "://%NODE_IP%");
+				String localStorageManagerUrl = kubeConfig.getStorageManagerUrl().replaceFirst("://[^:]+:[0-9]+/", "://%NODE_IP%:30001/");
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
 						.withNewTemplate()
 						.withNewMetadata()

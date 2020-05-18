@@ -63,6 +63,7 @@ proseo:
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
     posix:
       mountPoint: /mnt/proseodata
+      workerMountPoint: /mnt/localproseodata
     joborder:
       bucket: internal
       prefix: joborders

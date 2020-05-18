@@ -74,6 +74,23 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.dispatcherwaittime}")
 	private String productionPlannerDispatcherWaitTime;
 
+	/** Mount point for wrapper */
+	@Value("${proseo.posix.workerMountPoint}")
+	private String posixWorkerMountPoint;
+
+	/**
+	 * @return the posixWorkerMountPoint
+	 */
+	public String getPosixWorkerMountPoint() {
+		return posixWorkerMountPoint;
+	}
+
+	/**
+	 * @param posixWorkerMountPoint the posixWorkerMountPoint to set
+	 */
+	public void setPosixWorkerMountPoint(String posixWorkerMountPoint) {
+		this.posixWorkerMountPoint = posixWorkerMountPoint;
+	}
 
 	/**
 	 * @return the s3Url
