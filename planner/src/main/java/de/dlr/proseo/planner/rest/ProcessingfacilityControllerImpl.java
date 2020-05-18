@@ -58,7 +58,12 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getId(),
 						kc.getDescription(),
 						kc.getProcessingEngineUrl(),
+						kc.getProcessingEngineUser(),
+						kc.getProcessingEnginePassword(),
 						kc.getStorageManagerUrl(),
+						kc.getLocalStorageManagerUrl(),
+						kc.getStorageManagerUser(),
+						kc.getStorageManagerPassword(),
 						kc.getStorageType().toString()));
 			}
 			HttpHeaders responseHeaders = new HttpHeaders();
@@ -80,16 +85,21 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
 		// todo handle name
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
+		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
+		if (kc != null) {
 			RestProcessingFacility pf = new RestProcessingFacility(
 					null,
 					null,
-					aKubeConfig.getId(),
-					aKubeConfig.getDescription(),
-					aKubeConfig.getProcessingEngineUrl(),
-					aKubeConfig.getStorageManagerUrl(),
-					aKubeConfig.getStorageType().toString());
+					kc.getId(),
+					kc.getDescription(),
+					kc.getProcessingEngineUrl(),
+					kc.getProcessingEngineUser(),
+					kc.getProcessingEnginePassword(),
+					kc.getStorageManagerUrl(),
+					kc.getLocalStorageManagerUrl(),
+					kc.getStorageManagerUser(),
+					kc.getStorageManagerPassword(),
+					kc.getStorageType().toString());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
@@ -110,18 +120,23 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
 		// todo handle name
 		productionPlanner.updateKubeConfig(name);
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
-			aKubeConfig.sync();
-			UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig);
+		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
+		if (kc != null) {
+			kc.sync();
+			UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
 			RestProcessingFacility pf = new RestProcessingFacility(
 					null,
 					null,
-					aKubeConfig.getId(),
-					aKubeConfig.getDescription(),
-					aKubeConfig.getProcessingEngineUrl(),
-					aKubeConfig.getStorageManagerUrl(),
-					aKubeConfig.getStorageType().toString());
+					kc.getId(),
+					kc.getDescription(),
+					kc.getProcessingEngineUrl(),
+					kc.getProcessingEngineUser(),
+					kc.getProcessingEnginePassword(),
+					kc.getStorageManagerUrl(),
+					kc.getLocalStorageManagerUrl(),
+					kc.getStorageManagerUser(),
+					kc.getStorageManagerPassword(),
+					kc.getStorageType().toString());
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);

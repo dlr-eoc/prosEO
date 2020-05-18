@@ -62,6 +62,101 @@ public class KubeConfig {
 	private String url;
 	private String storageManagerUrl;
 	private StorageType storageType;
+	/** User name for connecting to this facility's processing engine (Kubernetes instance) */
+	private String processingEngineUser;
+	
+	/** Password for connecting to this facility's processing engine (Kubernetes instance) */
+	private String processingEnginePassword;
+
+	/**
+	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
+	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
+	 */
+	private String localStorageManagerUrl;
+	
+	/** User name for connecting to the Storage Manager (locally and from external services) */
+	private String storageManagerUser;
+	
+	/** Password for connecting to the Storage Manager (locally and from external services) */
+	private String storageManagerPassword;
+
+	/**
+	 * @return the storageManagerPassword
+	 */
+	public String getStorageManagerPassword() {
+		return storageManagerPassword;
+	}
+
+	/**
+	 * @param storageManagerPassword the storageManagerPassword to set
+	 */
+	public void setStorageManagerPassword(String storageManagerPassword) {
+		this.storageManagerPassword = storageManagerPassword;
+	}
+
+	/**
+	 * @return the processingEngineUser
+	 */
+	public String getProcessingEngineUser() {
+		return processingEngineUser;
+	}
+
+	/**
+	 * @return the processingEnginePassword
+	 */
+	public String getProcessingEnginePassword() {
+		return processingEnginePassword;
+	}
+
+	/**
+	 * @return the localStorageManagerUrl
+	 */
+	public String getLocalStorageManagerUrl() {
+		return localStorageManagerUrl;
+	}
+
+	/**
+	 * @return the storageManagerUser
+	 */
+	public String getStorageManagerUser() {
+		return storageManagerUser;
+	}
+
+	/**
+	 * @param storageManagerUrl the storageManagerUrl to set
+	 */
+	public void setStorageManagerUrl(String storageManagerUrl) {
+		this.storageManagerUrl = storageManagerUrl;
+	}
+
+	/**
+	 * @param processingEngineUser the processingEngineUser to set
+	 */
+	public void setProcessingEngineUser(String processingEngineUser) {
+		this.processingEngineUser = processingEngineUser;
+	}
+
+	/**
+	 * @param processingEnginePassword the processingEnginePassword to set
+	 */
+	public void setProcessingEnginePassword(String processingEnginePassword) {
+		this.processingEnginePassword = processingEnginePassword;
+	}
+
+	/**
+	 * @param localStorageManagerUrl the localStorageManagerUrl to set
+	 */
+	public void setLocalStorageManagerUrl(String localStorageManagerUrl) {
+		this.localStorageManagerUrl = localStorageManagerUrl;
+	}
+
+	/**
+	 * @param storageManagerUser the storageManagerUser to set
+	 */
+	public void setStorageManagerUser(String storageManagerUser) {
+		this.storageManagerUser = storageManagerUser;
+	}
+
 	/**
 	 * @return the storageType
 	 */
@@ -116,6 +211,11 @@ public class KubeConfig {
 		url = pf.getProcessingEngineUrl();
 		storageManagerUrl = pf.getStorageManagerUrl();
 		storageType = pf.getDefaultStorageType();
+		localStorageManagerUrl = pf.getLocalStorageManagerUrl();
+		processingEngineUser = pf.getProcessingEngineUser();
+		processingEnginePassword = pf.getProcessingEnginePassword();
+		storageManagerUser = pf.getStorageManagerUser();
+		storageManagerPassword = pf.getStorageManagerPassword();
 		processingFacility = pf;
 	}
 	

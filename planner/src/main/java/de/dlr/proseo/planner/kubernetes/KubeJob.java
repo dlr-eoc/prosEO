@@ -317,7 +317,7 @@ public class KubeJob {
 				reqs.putRequestsItem("cpu", new Quantity(cpus))
 					.putRequestsItem("memory", new Quantity(mem));
 				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
-				String localStorageManagerUrl = kubeConfig.getStorageManagerUrl().replaceFirst("://[^:]+:[0-9]+/", "://%NODE_IP%:30001/");
+				String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
 						.withNewTemplate()
 						.withNewMetadata()

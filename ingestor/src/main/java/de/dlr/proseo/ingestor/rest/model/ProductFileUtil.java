@@ -41,6 +41,7 @@ public class ProductFileUtil {
 		RestProductFile restProductFile = new RestProductFile();
 		
 		restProductFile.setId(modelProductFile.getId());
+		restProductFile.setProductId(modelProductFile.getProduct().getId());
 		restProductFile.setVersion(Long.valueOf(modelProductFile.getVersion()));
 		restProductFile.setProcessingFacilityName(modelProductFile.getProcessingFacility().getName());
 		restProductFile.setProductFileName(modelProductFile.getProductFileName());
