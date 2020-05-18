@@ -554,7 +554,7 @@ public class BaseWrapper {
 						return null;
 					}
 
-					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]");  // pipe sign is a symbol of regex, escaped with brackets
+					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]", 2);  // pipe sign is a symbol of regex, escaped with brackets
 					if (2 != fileTypeAndName.length) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						return null;
