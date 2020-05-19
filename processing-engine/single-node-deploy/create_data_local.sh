@@ -89,7 +89,7 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 
 # Create the storage manager in the local Minikube
 kubectl apply -f storage-mgr-local.yaml
-POD=`kubectl get pods --no-headers=true | cut -d ' ' -f 1`
+POD=`kubectl get pods --no-headers=true | grep storage-mgr | cut -d ' ' -f 1`
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 kubectl apply -f kubernetes-dashboard.yaml

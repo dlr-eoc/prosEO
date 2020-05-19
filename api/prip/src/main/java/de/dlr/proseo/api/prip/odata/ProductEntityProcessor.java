@@ -40,6 +40,7 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
@@ -77,6 +78,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
+	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -88,6 +90,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
+	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
 	
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -109,21 +112,28 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityProcessor.class);
 
 	/**
-	 * Create and log a formatted informational message
+	 * Create and log a formatted message at the given level
 	 * 
+	 * @param level the logging level to use
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
 	 * @param messageId a (unique) message id
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted info mesage
 	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
+	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
 
 		// Log the error message
 		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
+		if (Level.ERROR.equals(level)) {
+			logger.error(message);
+		} else if (Level.WARN.equals(level)) {
+			logger.warn(message);
+		} else {
+			logger.info(message);
+		}
 
 		return message;
 	}
@@ -137,15 +147,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @return a formatted error message
 	 */
 	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-
-		return message;
+		return log(Level.ERROR, messageFormat, messageId, messageParameters);
 	}
 
 	/**
@@ -443,6 +445,40 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
 		String productDownloadUri = storageManagerUrl + "/products?pathInfo=" + productFile.getFilePath() + "/" +
 				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
+		
+		// Evaluate HTTP Range Header
+		String rangeHeader = request.getHeader(HttpHeaders.RANGE);
+		if (rangeHeader.startsWith("bytes=")) {
+			String[] rangeParts = rangeHeader.substring(6).split("-", 2);
+			if (2 == rangeParts.length) {
+				int fromByte = 0;
+				int toByte = (null == productFile.getZipFileName() ? productFile.getFileSize().intValue() : productFile.getZipFileSize().intValue()) - 1;
+				try {
+					if (rangeParts[0].isBlank()) {
+						if (rangeParts[1].isBlank()) {
+							log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+						} else {
+							// Range header format "bytes=-nnnn", i. e. last nnnn bytes to transfer
+							fromByte = toByte - Integer.parseInt(rangeParts[1]);
+						}
+					} else {
+						// Range header format "bytes=nnnn-[mmmm]", i. e. transfer starts from byte nnnn
+						fromByte = Integer.parseInt(rangeParts[0]);
+						if (!rangeParts[1].isBlank()) {
+							// Range header format "bytes=nnnn-mmmm", i. e. transfer ends at byte nnnn
+							toByte = Integer.parseInt(rangeParts[1]);
+						}
+					}
+					productDownloadUri += "&fromByte=" + fromByte + "&toByte=" + toByte;
+				} catch (NumberFormatException e) {
+						log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+				}
+			} else {
+				log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+			}
+		} else {
+			log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+		}
 
 		// Redirect the request to the download URI
 		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
