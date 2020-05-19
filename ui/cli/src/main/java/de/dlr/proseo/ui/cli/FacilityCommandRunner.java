@@ -411,8 +411,23 @@ public class FacilityCommandRunner {
 		if (null != updatedFacility.getProcessingEngineUrl() && !updatedFacility.getProcessingEngineUrl().isBlank()) {
 			restFacility.setProcessingEngineUrl(updatedFacility.getProcessingEngineUrl());
 		}
+		if (null != updatedFacility.getProcessingEngineUser() && !updatedFacility.getProcessingEngineUser().isBlank()) {
+			restFacility.setProcessingEngineUser(updatedFacility.getProcessingEngineUser());
+		}
+		if (null != updatedFacility.getProcessingEnginePassword() && !updatedFacility.getProcessingEnginePassword().isBlank()) {
+			restFacility.setProcessingEnginePassword(updatedFacility.getProcessingEnginePassword());
+		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());
+		}
+		if (null != updatedFacility.getLocalStorageManagerUrl() && !updatedFacility.getLocalStorageManagerUrl().isBlank()) {
+			restFacility.setLocalStorageManagerUrl(updatedFacility.getLocalStorageManagerUrl());
+		}
+		if (null != updatedFacility.getStorageManagerUser() && !updatedFacility.getStorageManagerUser().isBlank()) {
+			restFacility.setStorageManagerUser(updatedFacility.getStorageManagerUser());
+		}
+		if (null != updatedFacility.getStorageManagerPassword() && !updatedFacility.getStorageManagerPassword().isBlank()) {
+			restFacility.setStorageManagerPassword(updatedFacility.getStorageManagerPassword());
 		}
 		if (null != updatedFacility.getDefaultStorageType() && !updatedFacility.getDefaultStorageType().isBlank()) {
 			restFacility.setDefaultStorageType(updatedFacility.getDefaultStorageType());
