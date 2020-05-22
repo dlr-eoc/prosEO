@@ -7,6 +7,9 @@ spec:
   selector:
     matchLabels:
       name: storage-mgr
+  # From Kubernetes 1.17 onwards
+  # topologyKeys:
+  #   - "kubernetes.io/hostname"
   template:
     metadata:
       labels:
@@ -36,6 +39,8 @@ spec:
           - name: mnt
             mountPath: /mnt
       restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
 ---
 kind: Service
 apiVersion: v1

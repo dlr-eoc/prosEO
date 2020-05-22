@@ -39,6 +39,8 @@ my $USERMGR_AUTHORITIES = 'ROLE_USERMGR';
 my $USER_USER = 'proseo';
 my $USER_PWD = 'proseo';
 my $USER_GROUP = 'oper';
+my $WRAPPER_USER = 'wrapper';
+my $WRAPPER_PWD = 'ingest&plan';
 my $USER_AUTHORITIES = 'ROLE_USER';
 my $CLI_SCRIPT_NAME = 'cli_script.txt';
 
@@ -288,8 +290,10 @@ say '... creating mission users';
 print $cli_script 'user create --mission=' . $mission->{code} . ' ' . $USERMGR_USER . ' password=' . $USERMGR_PWD . ' authorities=' . $USERMGR_AUTHORITIES . "\n";
 print $cli_script 'login --user=' . $USERMGR_USER . ' --password=' . $USERMGR_PWD . ' PTM' . "\n";
 print $cli_script 'user create ' . $USER_USER . ' password=' . $USER_PWD . "\n";
+print $cli_script 'user create ' . $WRAPPER_USER . ' password=' . $WRAPPER_PWD . "\n";
 print $cli_script 'group create ' . $USER_GROUP . ' authorities=' . $USER_AUTHORITIES . "\n";
 print $cli_script 'group add ' . $USER_GROUP . ' ' . $USER_USER . "\n";
+print $cli_script 'group add ' . $USER_GROUP . ' ' . $WRAPPER_USER . "\n";
 
 # Perform the remaining configuration steps as regular user
 print $cli_script 'login --user=' . $USER_USER . ' --password=' . $USER_PWD . ' PTM' . "\n";
