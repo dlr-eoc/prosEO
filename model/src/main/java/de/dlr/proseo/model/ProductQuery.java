@@ -279,7 +279,8 @@ public class ProductQuery extends PersistentObject {
 	public List<Product> getNewestSatisfyingProducts() {
 		HashMap<Instant, HashMap<Instant, Product>> newestProducts = new HashMap<Instant, HashMap<Instant, Product>>();
 		for (Product p : satisfyingProducts) {
-			if (p.getProductFile() != null && !p.getProductFile().isEmpty()) {
+			if ((p.getProductFile() != null && !p.getProductFile().isEmpty())
+					|| !p.getComponentProducts().isEmpty()) {
 				if (newestProducts.get(p.getSensingStartTime()) == null) {
 					HashMap<Instant, Product> stopMap = new HashMap<Instant, Product>();
 					stopMap.put(p.getSensingStopTime(), p);

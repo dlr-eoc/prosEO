@@ -19,8 +19,8 @@ import org.springframework.http.ResponseEntity;
 
 import com.amazonaws.services.s3.AmazonS3;
 
-import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import software.amazon.awssdk.services.s3.S3Client;
 

@@ -114,14 +114,7 @@ public class ProductQueryService {
 		// Filter products available at the requested processing facility
 		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
 		List<Product> productsAtFacility = new ArrayList<>();
-		for (Product product: products) {
-			for (ProductFile productFile: product.getProductFile()) {
-				if (facility.equals(productFile.getProcessingFacility())) {
-					productsAtFacility.add(product);
-					break;
-				}
-			}
-		}
+		getProductsAtFacility(productsAtFacility, products, facility, false);
 		products = productsAtFacility;
 		
 		// Check if all conditions of the selection rule are met
@@ -143,7 +136,8 @@ public class ProductQueryService {
 		for (Object selectedItem: selectedItems) {
 			if (selectedItem instanceof Product) {
 				Product product = (Product) selectedItem;
-				if (product.getProductFile() != null && !product.getProductFile().isEmpty()) {
+				if ((product.getProductFile() != null && !product.getProductFile().isEmpty())
+						|| !product.getComponentProducts().isEmpty()) {
 					if (productQuery.testFilterConditions(product)) {
 						selectedProducts.add(product);
 					} else {
@@ -171,6 +165,33 @@ public class ProductQueryService {
 		}		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 		return true;
+	}
+	
+	private boolean getProductsAtFacility(List<Product> productsAtFacility, List<Product> products, ProcessingFacility facility, Boolean inComponent) {
+		Boolean answer = true; 
+		for (Product product: products) {
+			if (product.getComponentProducts().isEmpty()) { 
+				Boolean found = false;
+				for (ProductFile productFile: product.getProductFile()) {
+					if (facility.equals(productFile.getProcessingFacility())) {
+						if (!inComponent) {
+							productsAtFacility.add(product);
+						}
+						found = true;
+						break;
+					}
+				}
+				answer &= found; 
+			} else {
+				List<Product> componentProducts = new ArrayList<Product>();
+				componentProducts.addAll(product.getComponentProducts());
+				answer &= getProductsAtFacility(productsAtFacility, componentProducts, facility, true);
+				if (answer) {
+					productsAtFacility.add(product);
+				}
+			}
+		}
+		return answer;
 	}
 	
 	/**

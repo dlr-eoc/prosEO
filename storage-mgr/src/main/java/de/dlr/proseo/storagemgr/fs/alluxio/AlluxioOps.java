@@ -1,4 +1,4 @@
-package de.dlr.proseo.model.fs.alluxio;
+package de.dlr.proseo.storagemgr.fs.alluxio;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
