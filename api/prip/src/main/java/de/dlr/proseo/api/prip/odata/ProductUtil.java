@@ -74,10 +74,10 @@ public class ProductUtil {
 				"application/octet-stream"))
 			.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, ValueType.PRIMITIVE,
 				(null == restProductFile.getZipFileName() ? restProductFile.getFileSize() : restProductFile.getZipFileSize())))
-			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CREATION_DATE, ValueType.PRIMITIVE,
+			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, ValueType.PRIMITIVE,
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))))
-			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
-				Date.from(Instant.now().plusSeconds(50 * 365 * 24 * 60 * 60))))  // TODO Define eviction policy (currently 50 years)
+//			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
+//				Date.from(Instant.now().plusSeconds(50 * 365 * 24 * 60 * 60))))  // TODO Define eviction policy (currently 50 years)
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, ValueType.ENUM,
 				"NOMINAL".equals(restProduct.getProductQuality()) ? 
 					ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL : ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL));

@@ -52,6 +52,8 @@ import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
@@ -79,6 +81,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
 	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
+	private static final int MSG_ID_CANNOT_DESERIALIZE_RESPONSE = 5103;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -90,6 +93,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
+	private static final String MSG_CANNOT_DESERIALIZE_RESPONSE = "(E%d) Cannot deserialize HTTP response";
+
 	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
 	
 	/* Other string constants */
@@ -168,7 +173,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/**
 	 * Parse an HTTP authentication header into username and password
 	 * @param authHeader the authentication header to parse
-	 * @return a string array containing the username and the password
+	 * @return a string array containing the mission, the username and the password
 	 * @throws IllegalArgumentException if the authentication header cannot be parsed
 	 */
 	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
@@ -189,7 +194,12 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throw new IllegalArgumentException (message);
 		}
 		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
-		return userPassword;
+		
+		String[] result = new String[3];
+		result[0] = missionUserPassword[0];
+		result[1] = userPassword[0];
+		result[2] = userPassword[1];
+		return result;
 	}
 
 	/**
@@ -209,14 +219,15 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({}, {})", authHeader, productUuid);
 
 		// Parse authentication header
-		String[] userPassword = parseAuthenticationHeader(authHeader);
+		String[] missionUserPassword = parseAuthenticationHeader(authHeader);
 		
 		// Request product metadata from Ingestor service
 		
 		// Attempt connection to service
 		ResponseEntity<RestProduct> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == authHeader ? rtb.build() : rtb.basicAuthentication(userPassword[0], userPassword[1]).build() );
+			RestTemplate restTemplate = ( null == authHeader ? rtb.build() : 
+				rtb.basicAuthentication(missionUserPassword[0] + "-" + missionUserPassword[1], missionUserPassword[2]).build());
 			String requestUrl = config.getIngestorUrl() + "/products/uuid/" + productUuid;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, RestProduct.class);
@@ -225,7 +236,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, missionUserPassword[1]), e);
 			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -263,26 +274,27 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 */
 	private String getStorageManagerUrl(String authHeader, String facilityName)
 			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({}, {})", authHeader, facilityName);
+		if (logger.isTraceEnabled()) logger.trace(">>> getStorageManagerUrl({}, {})", authHeader, facilityName);
 
 		// Parse authentication header
-		String[] userPassword = parseAuthenticationHeader(authHeader);
+		String[] missionUserPassword = parseAuthenticationHeader(authHeader);
 		
 		// Request processing facility data from Facility Manager service
 		
 		// Attempt connection to service
-		ResponseEntity<RestProcessingFacility> entity = null;
+		ResponseEntity<?> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == authHeader ? rtb.build() : rtb.basicAuthentication(userPassword[0], userPassword[1]).build() );
-			String requestUrl = config.getFacilityManagerUrl() + "/facilities/" + facilityName;
+			RestTemplate restTemplate = ( null == authHeader ? rtb.build() :
+				rtb.basicAuthentication(missionUserPassword[0] + "-" + missionUserPassword[1], missionUserPassword[2]).build() );
+			String requestUrl = config.getFacilityManagerUrl() + "/facilities?name=" + facilityName;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
-			entity = restTemplate.getForEntity(requestUrl, RestProcessingFacility.class);
+			entity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, missionUserPassword[1]), e);
 			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -301,9 +313,18 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throw new RuntimeException(message);
 		}
 		
-		RestProcessingFacility restProcessingFacility = entity.getBody();
-		if (logger.isDebugEnabled()) logger.debug("... processing facility found: " + restProcessingFacility.getId());
-		return restProcessingFacility.getStorageManagerUrl();
+		if (entity.getBody() instanceof List) {
+			List<?> body = (List<?>) entity.getBody();
+			if (1 == body.size()) {
+				RestProcessingFacility restProcessingFacility = (new ObjectMapper()).convertValue(body.get(0), RestProcessingFacility.class);
+				if (logger.isDebugEnabled()) logger.debug("... processing facility found: " + restProcessingFacility.getId());
+				return restProcessingFacility.getStorageManagerUrl();
+			}
+		}
+		
+		String message = String.format(MSG_CANNOT_DESERIALIZE_RESPONSE, MSG_ID_CANNOT_DESERIALIZE_RESPONSE);
+		logger.error(message);
+		throw new RuntimeException(message);
 	}
 
 	/**
@@ -448,38 +469,40 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		
 		// Evaluate HTTP Range Header
 		String rangeHeader = request.getHeader(HttpHeaders.RANGE);
-		if (rangeHeader.startsWith("bytes=")) {
-			String[] rangeParts = rangeHeader.substring(6).split("-", 2);
-			if (2 == rangeParts.length) {
-				int fromByte = 0;
-				int toByte = (null == productFile.getZipFileName() ? productFile.getFileSize().intValue() : productFile.getZipFileSize().intValue()) - 1;
-				try {
-					if (rangeParts[0].isBlank()) {
-						if (rangeParts[1].isBlank()) {
-							log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+		if (null != rangeHeader) {
+			if (rangeHeader.startsWith("bytes=")) {
+				String[] rangeParts = rangeHeader.substring(6).split("-", 2);
+				if (2 == rangeParts.length) {
+					int fromByte = 0;
+					int toByte = (null == productFile.getZipFileName() ? productFile.getFileSize().intValue()
+							: productFile.getZipFileSize().intValue()) - 1;
+					try {
+						if (rangeParts[0].isBlank()) {
+							if (rangeParts[1].isBlank()) {
+								log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+							} else {
+								// Range header format "bytes=-nnnn", i. e. last nnnn bytes to transfer
+								fromByte = toByte - Integer.parseInt(rangeParts[1]);
+							}
 						} else {
-							// Range header format "bytes=-nnnn", i. e. last nnnn bytes to transfer
-							fromByte = toByte - Integer.parseInt(rangeParts[1]);
+							// Range header format "bytes=nnnn-[mmmm]", i. e. transfer starts from byte nnnn
+							fromByte = Integer.parseInt(rangeParts[0]);
+							if (!rangeParts[1].isBlank()) {
+								// Range header format "bytes=nnnn-mmmm", i. e. transfer ends at byte nnnn
+								toByte = Integer.parseInt(rangeParts[1]);
+							}
 						}
-					} else {
-						// Range header format "bytes=nnnn-[mmmm]", i. e. transfer starts from byte nnnn
-						fromByte = Integer.parseInt(rangeParts[0]);
-						if (!rangeParts[1].isBlank()) {
-							// Range header format "bytes=nnnn-mmmm", i. e. transfer ends at byte nnnn
-							toByte = Integer.parseInt(rangeParts[1]);
-						}
-					}
-					productDownloadUri += "&fromByte=" + fromByte + "&toByte=" + toByte;
-				} catch (NumberFormatException e) {
+						productDownloadUri += "&fromByte=" + fromByte + "&toByte=" + toByte;
+					} catch (NumberFormatException e) {
 						log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+					}
+				} else {
+					log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 				}
 			} else {
 				log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
-			}
-		} else {
-			log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+			} 
 		}
-
 		// Redirect the request to the download URI
 		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, productDownloadUri);
