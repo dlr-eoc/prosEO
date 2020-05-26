@@ -28,8 +28,8 @@ import org.xml.sax.SAXParseException;
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 
-import de.dlr.proseo.model.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.rest.ProductControllerImpl;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
