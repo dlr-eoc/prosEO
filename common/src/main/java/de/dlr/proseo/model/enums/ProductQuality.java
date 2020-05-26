@@ -17,5 +17,7 @@ public enum ProductQuality {
 	/** Products created with an experimental configuration, possibly not suitable for general use */
 	EXPERIMENTAL,
 	/** Products generated for test use only, usually not suited for general use */
-	TEST
+	TEST,
+	/** Products with nominal (production, operational) quality, generated from systematic processing */
+	SYSTEMATIC
 }

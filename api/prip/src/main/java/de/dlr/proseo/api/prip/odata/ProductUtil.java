@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.interfaces.rest.model.RestParameter;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -65,6 +66,18 @@ public class ProductUtil {
 		}
 		RestProductFile restProductFile = restProduct.getProductFile().get(0);
 		
+		// Determine production type
+		String productQuality = restProduct.getProductQuality();
+		int productionType;
+		if (ProductQuality.SYSTEMATIC.name().equals(productQuality)) {
+			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL;
+		} else if (ProductQuality.NOMINAL.name().equals(productQuality)) {
+			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
+		} else {
+			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
+		}
+		
+		// Create product entity
 		Entity product = new Entity();
 		product.setType(ProductEdmProvider.ET_PRODUCT_FQN.getFullQualifiedNameAsString());
 		product.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_ID, ValueType.PRIMITIVE, UUID.fromString(restProduct.getUuid())))
@@ -78,9 +91,7 @@ public class ProductUtil {
 				Date.from(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())))))
 //			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
 //				Date.from(Instant.now().plusSeconds(50 * 365 * 24 * 60 * 60))))  // TODO Define eviction policy (currently 50 years)
-			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, ValueType.ENUM,
-				"NOMINAL".equals(restProduct.getProductQuality()) ? 
-					ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL : ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL));
+			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, ValueType.ENUM, productionType));
 
 		ComplexValue contentDate = new ComplexValue();
 		contentDate.getValue().add(new Property(null, ProductEdmProvider.CT_TIMERANGE_PROP_START, ValueType.PRIMITIVE,

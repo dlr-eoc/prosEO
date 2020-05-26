@@ -24,7 +24,7 @@ spec:
           path: /Users/thomas/S5P-PRO/prosEO/processing-engine/single-node-deploy/storage-mgr-data
       containers:
         - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-5128978
+          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-1344a2c
           resources:
             requests:
               cpu: "1.0"

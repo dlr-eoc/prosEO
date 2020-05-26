@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
@@ -82,6 +83,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
 	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
 	private static final int MSG_ID_CANNOT_DESERIALIZE_RESPONSE = 5103;
+	private static final int MSG_ID_REDIRECT = 5104;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -96,6 +98,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final String MSG_CANNOT_DESERIALIZE_RESPONSE = "(E%d) Cannot deserialize HTTP response";
 
 	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
+
+	private static final String MSG_REDIRECT = "(I%d) Redirecting download request to Storage Manger URL %s";
 	
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -464,9 +468,19 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		String storageManagerUrl = getStorageManagerUrl(request.getHeader(HttpHeaders.AUTHORIZATION), productFile.getProcessingFacilityName());
 		
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
-		String productDownloadUri = storageManagerUrl + "/products?pathInfo=" + productFile.getFilePath() + "/" +
-				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
-		
+		URIBuilder uriBuilder = null;
+		try {
+			uriBuilder = new URIBuilder(storageManagerUrl + "/products/download");
+			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" +
+				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName()));
+		} catch (URISyntaxException e) {
+			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			e.printStackTrace();
+			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
+
 		// Evaluate HTTP Range Header
 		String rangeHeader = request.getHeader(HttpHeaders.RANGE);
 		if (null != rangeHeader) {
@@ -492,7 +506,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 								toByte = Integer.parseInt(rangeParts[1]);
 							}
 						}
-						productDownloadUri += "&fromByte=" + fromByte + "&toByte=" + toByte;
+						uriBuilder.addParameter("fromByte", String.valueOf(fromByte));
+						uriBuilder.addParameter("toByte", String.valueOf(toByte));
 					} catch (NumberFormatException e) {
 						log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 					}
@@ -504,8 +519,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			} 
 		}
 		// Redirect the request to the download URI
+		log(Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
 		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
-		response.setHeader(HttpHeader.LOCATION, productDownloadUri);
+		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< readMediaEntity()");
