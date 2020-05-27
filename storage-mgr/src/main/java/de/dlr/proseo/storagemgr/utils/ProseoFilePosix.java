@@ -175,8 +175,13 @@ public class ProseoFilePosix extends ProseoFile {
 						files.add(f);
 					}
 				} else {
-					FileUtils.forceMkdir(new File(proFile.getFullPath()));
-					result.add(proFile.getFullPath());
+					File targetFile = new File(proFile.getFullPath());
+					if (this.isDirectory()) {
+						if (!targetFile.exists()) {
+							FileUtils.forceMkdir(targetFile);
+						}
+						result.add(proFile.getFullPath());		
+					}
 				}
 			} else {
 				if (srcFile.isFile()) {
@@ -187,12 +192,16 @@ public class ProseoFilePosix extends ProseoFile {
 			}
 			for (File f : files) {
 				File targetFile = new File(proFile.getFullPath() + "/" + f.getName());
-				FileUtils.copyFile(f, targetFile);
 				if (targetFile.exists()) {
-					targetFile.setWritable(true, false);
 					result.add(targetFile.getPath());
 				} else {
-					logger.error("Cannot copy from source {} to target {}", f.getCanonicalPath(), targetFile.getCanonicalPath());
+					FileUtils.copyFile(f, targetFile);
+					if (targetFile.exists()) {
+						targetFile.setWritable(true, false);
+						result.add(targetFile.getPath());
+					} else {
+						logger.error("Cannot copy from source {} to target {}", f.getCanonicalPath(), targetFile.getCanonicalPath());
+					}
 				}
 			}		
 			break;

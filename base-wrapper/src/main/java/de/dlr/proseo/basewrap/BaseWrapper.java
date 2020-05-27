@@ -149,6 +149,8 @@ public class BaseWrapper {
 		, PROSEO_PW
 		, LOCAL_FS_MOUNT
 		, NODE_IP
+		, STORAGE_MGR_SERVICE_SERVICE_HOST
+		, STORAGE_MGR_SERVICE_SERVICE_PORT
 	}
 
 	// Environment Variables from Container (set via run-invocation or directly from docker-image)
@@ -161,6 +163,16 @@ public class BaseWrapper {
 	
 	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
+	
+	/**
+	 * Cluster port of storage manager
+	 */
+	private String ENV_STORAGE_MGR_SERVICE_SERVICE_PORT = System.getenv(ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_PORT.toString());
+	/**
+	 * Cluster IP of storage manager
+	 */
+	private String ENV_STORAGE_MGR_SERVICE_SERVICE_HOST = System.getenv(ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_HOST.toString());
+	
 	/** Own node IP address to be inserted in %NODE_IP% variable in Storage Manager endpoint */
 	private String ENV_NODE_IP = System.getenv(ENV_VARS.NODE_IP.toString());
 	/** User name for local Storage Manager */
@@ -280,14 +292,37 @@ public class BaseWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOCAL_FS_MOUNT);
 			envOK = false;
 		}
-		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
+//		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
+//			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
+//			envOK = false;
+//		} else {
+//			// set local storage manager end point
+//			String replaced = ENV_STORAGE_ENDPOINT.replaceFirst("%NODE_IP%", ENV_NODE_IP);
+//			ENV_STORAGE_ENDPOINT = replaced;
+//		}
+		if(ENV_STORAGE_MGR_SERVICE_SERVICE_HOST==null || ENV_STORAGE_MGR_SERVICE_SERVICE_HOST.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_HOST);
 			envOK = false;
-		} else {
-			// set local storage manager end point
-			String replaced = ENV_STORAGE_ENDPOINT.replaceFirst("%NODE_IP%", ENV_NODE_IP);
-			ENV_STORAGE_ENDPOINT = replaced;
 		}
+		if(ENV_STORAGE_MGR_SERVICE_SERVICE_PORT==null || ENV_STORAGE_MGR_SERVICE_SERVICE_PORT.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_PORT);
+			envOK = false;
+		}
+//		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
+//			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
+//			envOK = false;
+//		}
+		// Build storage endpoint
+		if (envOK) {
+			// use storage manager env settings of Kubernetes if endpont doesn't start with http 
+			if (!ENV_STORAGE_ENDPOINT.toLowerCase().startsWith("http")) {
+				// set local storage manager end point
+				String replaced = "http://" + ENV_STORAGE_MGR_SERVICE_SERVICE_HOST + ":" + ENV_STORAGE_MGR_SERVICE_SERVICE_PORT + 
+						(ENV_STORAGE_ENDPOINT.startsWith("/")?"":("/")) + ENV_STORAGE_ENDPOINT;
+				ENV_STORAGE_ENDPOINT = replaced;
+			}
+		}
+
 		if (envOK) {
 			logger.info(MSG_ENVIRONMENT_CHECK_PASSED);
 			logger.info(MSG_PREFIX_TIMESTAMP_FOR_NAMING, WRAPPER_TIMESTAMP);

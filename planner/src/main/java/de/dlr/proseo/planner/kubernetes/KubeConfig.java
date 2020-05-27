@@ -205,6 +205,10 @@ public class KubeConfig {
 	}
 
 	public KubeConfig (ProcessingFacility pf) {
+		setFacility(pf);
+	}
+	
+	public void setFacility(ProcessingFacility pf) {
 		id = pf.getName();
 		longId = pf.getId();
 		description = pf.getDescription();
