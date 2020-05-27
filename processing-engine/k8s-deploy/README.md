@@ -59,7 +59,7 @@ terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
 terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
 ```
 
-### prepare created bastion-VM (inside container)
+### prepare created bastion-VM (from inside container)
 ```sh
 ssh linux@<bastion-host>
 sudo vi /etc/ssh/sshd_config
@@ -67,11 +67,43 @@ AllowTcpForw.. yes
 sudo systemctl restart sshd
 ```
 
+### prepare bastion host tunneling (from inside container)
+
+Kubespray can generate a SSH configuration that lets you tunnel through the
+bastion host. Before you can run the complete kubespray setup, you need to run
+this.
+```sh
+cd /kubespray
+ansible-playbook -i inventory/proseo-spray/hosts --become  cluster.yml --flush-cache -l bastion
+```
+
+This generates a `ssh-bastion.conf`, which is most easily used by copying it to
+the user configuration file.
+```sh
+cd /kubespray
+cp ssh-bastion.conf ~/.ssh/config
+```
+
+SSH tunnels through the bastion host will be set up when any of the cluster-
+internal IP addresses are accessed.
+
 ### check ssh-connectivity between nodes (inside container)
 ```sh
 cd /kubespray/inventory/proseo-spray/
-ansible -i hosts -m ping all
+ANSIBLE_HOST_KEY_CHECKING=False ansible -i hosts -m ping all
 ```
+
+*Note 1:* Ansible is not good at letting you accept host SSH keys. Setting
+this environment variable to `False` bypasses checks, which is not usually
+safe. However, when using terraform, the keys were just generated - there is
+not much you can do to verify the keys by any means that will apply
+everywhere.
+
+*Note 2:* As a result of the ping command, SSH tunnels have been established
+from the deploy container through the bastion host to internal nodes. You
+can verify this by running `ps` and seeing a lot of SSH processes. If ansible
+fails because a tunnel is not working, re-running this ping command should
+work to create them.
 
 ### run kubespray (inside container)
 kubespray is responsible for the complete sw-config of all k8s-components
