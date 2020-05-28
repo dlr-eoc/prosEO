@@ -32,6 +32,8 @@ import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+
+import alluxio.exception.FileAlreadyExistsException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -225,6 +227,13 @@ public class S3Ops {
 			logger.info("Copied " + s3Object + " to " + "file://" + ContainerPath);
 			return true;
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
+			try {
+				if (e.getCause().getCause().getCause().getClass().equals(FileAlreadyExistsException.class)) {
+					return true;
+				}
+			} catch (Exception ee) {
+				logger.error(ee.getMessage());
+			}
 			logger.error(e.getMessage());
 			return false;
 		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {

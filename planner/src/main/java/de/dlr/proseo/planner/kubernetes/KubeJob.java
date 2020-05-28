@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1JobBuilder;
 import io.kubernetes.client.openapi.models.V1JobCondition;
 import io.kubernetes.client.openapi.models.V1JobSpec;
 import io.kubernetes.client.openapi.models.V1JobSpecBuilder;
+import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimVolumeSource;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
@@ -318,6 +319,7 @@ public class KubeJob {
 					.putRequestsItem("memory", new Quantity(mem));
 				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
 				String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
+
 				V1JobSpec jobSpec = new V1JobSpecBuilder()
 						.withNewTemplate()
 						.withNewMetadata()
@@ -378,16 +380,16 @@ public class KubeJob {
 						.withValue(localMountPoint)
 						.endEnv()
 						.addNewVolumeMount()
-						.withName("localfsmount")
+						.withName("proseo-mnt")
 						.withMountPath(localMountPoint)
 						.endVolumeMount()
 						.withResources(reqs)
 						.endContainer()
 						.addNewVolume()
-						.withName("localfsmount")
-						.withNewHostPath()
-						.withPath(localMountPoint)
-						.endHostPath()
+						.withName("proseo-mnt")		
+						.withNewPersistentVolumeClaim()
+						.withClaimName("proseo-nfs")
+						.endPersistentVolumeClaim()
 						.endVolume()
 						.withRestartPolicy("Never")
 						.withHostNetwork(true)

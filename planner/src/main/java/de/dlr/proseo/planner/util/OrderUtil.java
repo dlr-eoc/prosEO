@@ -430,15 +430,31 @@ public class OrderUtil {
 				break;			
 			case RUNNING:
 			case SUSPENDING:
-				Boolean allSuspended = true;
+				Boolean suspending = false;
+				Boolean allFinished = true;
 				for (Job job : order.getJobs()) {
-					allSuspended = jobUtil.suspend(job, force).isTrue() & allSuspended;
+					jobUtil.suspend(job, force);
+					// check for state
+					if (job.getJobState() == JobState.COMPLETED || job.getJobState() == JobState.RELEASED) {
+						allFinished = allFinished & true;
+					} else {
+						allFinished = allFinished & false;
+					}
+					if (job.getJobState() == JobState.ON_HOLD || job.getJobState() == JobState.STARTED) {
+						suspending = true;
+					}
 				}
 				order.incrementVersion();
-				if (!allSuspended) {
+				if (suspending) {
+					// check whether some jobs are already finished
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
+				} else if (allFinished) {
+					// check whether some jobs are already finished
+					order.setOrderState(OrderState.COMPLETED);
+					RepositoryService.getOrderRepository().save(order);
+					answer = Messages.ORDER_COMPLETED;
 				} else {
 					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);

@@ -199,12 +199,13 @@ public class ProductionPlanner implements CommandLineRunner {
 		if (pf != null) {
 			kubeConfig = getKubeConfig(pf.getName());
 			if (kubeConfig != null) {
+				kubeConfig.setFacility(pf);
 				if (kubeConfig.connect()) {
 					found = true;
 				} else {
 					// error
 					kubeConfigs.remove(pf.getName().toLowerCase());
-
+					kubeConfig = null;
 					Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
 				}
 			}

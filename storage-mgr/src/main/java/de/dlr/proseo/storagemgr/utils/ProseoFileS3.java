@@ -132,21 +132,27 @@ public class ProseoFileS3 extends ProseoFile {
 				if (null==sourceKey) sourceKey="";
 				result = new ArrayList<String>();
 				// TODO recursive
+				File targetFile = new File(proFile.getFullPath());
 				if (this.isDirectory()) {
-					FileUtils.forceMkdir(new File(proFile.getFullPath()));
+					if (!targetFile.exists()) {
+						FileUtils.forceMkdir(targetFile);
+					}
 					result.add(proFile.getFullPath());					
 				} else {
-					if (S3Ops.v2FetchFile(
-							//the client
-							s3c, 
-							// the source S3-Bucket
-							this.getFullPath(), 
-							// the final prefix including productId pattern of the file or directory
-							proFile.getFullPath()
-							)) {
-						File targetFile = new File(proFile.getFullPath());
-						targetFile.setWritable(true, false);
+					if (targetFile.exists()) {
 						result.add(proFile.getFullPath());
+					} else {
+						if (S3Ops.v2FetchFile(
+								//the client
+								s3c, 
+								// the source S3-Bucket
+								this.getFullPath(), 
+								// the final prefix including productId pattern of the file or directory
+								proFile.getFullPath()
+								)) {
+							targetFile.setWritable(true, false);
+							result.add(proFile.getFullPath());
+						}
 					}
 				};
 				break;

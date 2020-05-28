@@ -40,39 +40,57 @@ public class RestOps {
 		HttpResponseInfo responseInfo = new HttpResponseInfo();
 		Response response = null;
 		String content = payLoad==null?"":payLoad;
-		try {
-			Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
-			WebTarget webTarget = client.target(endPoint).path(endPointPath);
-			if (queryParams != null) {
-				for (Entry<String, String> queryParam : queryParams.entrySet()) {
-					webTarget = webTarget.queryParam(queryParam.getKey(), queryParam.getValue());
+		int retry = 0;
+		while (retry < 10) {
+			try {
+				Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
+				WebTarget webTarget = client.target(endPoint).path(endPointPath);
+				if (queryParams != null) {
+					for (Entry<String, String> queryParam : queryParams.entrySet()) {
+						webTarget = webTarget.queryParam(queryParam.getKey(), queryParam.getValue());
+					}
+				}
+				switch (method) {
+				case POST:
+					logger.info(method + " " + webTarget.getUri());
+					response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(content, MediaType.APPLICATION_JSON));
+					break;
+				case PUT:
+					logger.info(method + " " + webTarget.getUri());
+					response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(content, MediaType.APPLICATION_JSON));
+					break;
+				case GET:
+					logger.info(method + " " + webTarget.getUri());
+					response = webTarget.request(MediaType.APPLICATION_JSON).get();
+					break;
+				default:
+					throw new UnsupportedOperationException(method + " not implemented");
+				}
+				if (logger.isDebugEnabled()) logger.debug("response = " + response);
+				responseInfo.sethttpCode(response.getStatus());
+				responseInfo.sethttpResponse(response.readEntity(String.class));
+				response.close();
+				client.close();
+				return responseInfo;
+			} catch (ProcessingException e) {
+				logger.error("Exception during REST API call: " + e.getMessage(), e);
+				if (retry < 5) {
+					// sometimes there is the exception "no route to host" which isn't really true
+					// therefore wait a little bit and try again.
+					//
+					// TODO is there a possibility to avoid this?
+					logger.info("Retry...");
+					try {
+						logger.wait(1000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				} else {
+					return null;
 				}
 			}
-			switch (method) {
-			case POST:
-				logger.info(method + " " + webTarget.getUri());
-				response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(content, MediaType.APPLICATION_JSON));
-				break;
-			case PUT:
-				logger.info(method + " " + webTarget.getUri());
-				response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(content, MediaType.APPLICATION_JSON));
-				break;
-			case GET:
-				logger.info(method + " " + webTarget.getUri());
-				response = webTarget.request(MediaType.APPLICATION_JSON).method("GET");
-
-				break;
-			default:
-				throw new UnsupportedOperationException(method + " not implemented");
-			}
-			if (logger.isDebugEnabled()) logger.debug("response = " + response);
-			responseInfo.sethttpCode(response.getStatus());
-			responseInfo.sethttpResponse(response.readEntity(String.class));
-			response.close();
-			client.close();
-		} catch (ProcessingException e) {
-			logger.error("Exception during REST API call: " + e.getMessage(), e);
-			return null;
+			retry++;
 		}
 
 		return responseInfo;
