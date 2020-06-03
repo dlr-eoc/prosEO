@@ -37,23 +37,33 @@ sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.y
 # Create the Persistent Volumes
 kubectl apply -f nfs-pv.yaml
 
-# Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
-INGEST_DIR=storage-mgr-data/transfer
-mkdir -p $INGEST_DIR
+# Find the NFS server pod
+NFS_SERVER_POD=$(kubectl get pods --no-headers=true | grep proseo-nfs-server | cut -d ' ' -f 1)
 
 # Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
-POSIX_MOUNT_POINT=storage-mgr-data/proseodata
-mkdir -p $POSIX_MOUNT_POINT
+kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/proseodata
 
+# Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
+kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/transfer
+
+# Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
+INGEST_MOUNT_POINT=/mnt
 
 # -------------------------
 # Create L0/AUX input data
 # -------------------------
 
+# Create empty subdirectory for test data
+TEST_DATA_DIR=testfiles
+mkdir -p $TEST_DATA_DIR
+rm $TEST_DATA_DIR/*
+
+INGEST_DIR=$TEST_DATA_DIR/transfer
+FILE_PATH=import/products
+
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
 # L0 products are in 45 min slices, starting with orbit 3000
-FILE_PATH=import/products
 mkdir -p ${INGEST_DIR}/${FILE_PATH}
 cd ${INGEST_DIR}/${FILE_PATH}
 
@@ -119,6 +129,9 @@ cd -
 # Using bulletinb-380.xml
 cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
 
+# Copy test data into NFS server
+kubectl cp ${INGEST_DIR} $NFS_SERVER_POD:/exports
+
 
 # -------------------------
 # Create Storage Manager
@@ -126,9 +139,6 @@ cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
 
 # Create the storage manager in the local Minikube
 kubectl apply -f storage-mgr-local.yaml
-
-# Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
-INGEST_MOUNT_POINT=/mnt
 
 
 # -------------------------
@@ -143,11 +153,6 @@ kubectl proxy --accept-hosts='.*' &
 # -------------------------
 # Create prosEO config files
 # -------------------------
-
-# Create empty subdirectory for test data
-TEST_DATA_DIR=testfiles
-mkdir -p $TEST_DATA_DIR
-rm $TEST_DATA_DIR/*
 
 # Create a new CLI command script
 CLI_SCRIPT=cli_data_script.txt

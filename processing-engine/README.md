@@ -202,7 +202,30 @@ export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
 docker-compose up -d
 ```
 
-# Step 4: Install and Run the prosEO Command Line Interface
+# Step 4: Setup the Kubernetes Cluster with Storage Manager and File System Cache
+This step requires configuring an NFS (or other) file server to serve the common storage area
+to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
+given in the example directory `single-node-deploy`, the following commands must be issued
+(also available as part of the script `single-node-deploy/create_data_local.sh`):
+```sh
+# Create the File System Cache
+kubectl apply -f nfs-server-local.yaml
+
+# Create Persistent Volumes
+NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
+sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
+kubectl apply -f nfs-pv.yaml 
+
+# Create the export directories
+NFS_SERVER_POD=$(kubectl get pods --no-headers=true | grep proseo-nfs-server | cut -d ' ' -f 1)
+kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/proseodata /exports/transfer
+
+# Create the Storage Manager
+kubectl apply -f storage-mgr-local.yaml
+```
+
+
+# Step 5: Install and Run the prosEO Command Line Interface
 The current version of the prosEO Command Line Interface (CLI) can be downloaded from
 <https://proseo-registry.eoc.dlr.de/artifactory/proseo/proseo-ui-cli.jar>. The CLI must
 be configured with a YAML file to be able to connect to the prosEO Control Instance.
@@ -219,15 +242,19 @@ user update sysadm password=<new password>
 create mission PTM 'name=prosEO Test Mission'
 ```
 
-
-# Step 5: Configure the prosEO Processing Facility
+# Step 6: Configure the prosEO Processing Facility
 Create a JSON file `facility.json` describing the local processing facility:
 ```
 {
   "name" : "localhost",
   "description" : "Docker Desktop Minikube",
   "processingEngineUrl" : "http://host.docker.internal:8001/",
+  "processingEngineUser" : "kubeuser1",
+  "processingEnginePassword" : "very-secret-password",
   "storageManagerUrl" : "http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
+  "localStorageManagerUrl" : "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
+  "storageManagerUser" : "smuser",
+  "storageManagerPassword" : "smpwd-but-that-would-be-way-too-short",
   "defaultStorageType" : "POSIX"
 }
 ```
@@ -239,4 +266,5 @@ facility create --file=facility.json
 ```
 
 You are now ready to configure your first mission. See <https://github.com/dlr-eoc/prosEO/tree/master/samples/testdata> for
-an example, which works with the prosEO Sample Processor.
+an example, which works with the prosEO Sample Processor. Test input data and processing orders
+can be generated with the above mentioned script `single-node-deploy/create_data_local.sh`.

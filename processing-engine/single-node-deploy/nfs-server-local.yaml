@@ -49,8 +49,25 @@ spec:
           mountPath: /exports
       volumes:
       - name: mnt
-        hostPath:
-          path: /Users/thomas/S5P-PRO/prosEO/processing-engine/single-node-deploy/storage-mgr-data
+        persistentVolumeClaim:
+          claimName: nfs-pv-provisioning-demo
+#        hostPath:
+#          # Does not work: OS X file systems cannot be exported via NFS!
+#          path: /Users/thomas/S5P-PRO/prosEO/processing-engine/single-node-deploy/storage-mgr-data
       restartPolicy: Always
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
+      
+---
+# Persisten volume provided by Kubernetes
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pv-provisioning-demo
+  labels:
+    demo: nfs-pv-provisioning
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 100Gi
