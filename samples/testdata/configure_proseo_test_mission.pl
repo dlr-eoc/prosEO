@@ -12,8 +12,8 @@ use strict;
 
 use Getopt::Long qw(:config pass_through);
 use File::Glob qw(:bsd_glob);
+use File::Path qw(make_path);
 use FileHandle;
-# use XML::Twig;
 
 #
 # -- Default values (same for all objects)
@@ -43,6 +43,7 @@ my $WRAPPER_USER = 'wrapper';
 my $WRAPPER_PWD = 'ingest&plan';
 my $USER_AUTHORITIES = 'ROLE_USER';
 my $CLI_SCRIPT_NAME = 'cli_script.txt';
+my $TEST_FILE_DIR = 'testfiles';
 
 #
 # -- Main script
@@ -236,7 +237,13 @@ $selection_rules{'PTM_L3'} = '
     FOR PTM_L2B SELECT ValIntersect(0, 0) MINCOVER(90)';
 $applicable_processors{'PTM_L3'} = [ 'PTML3_0.1.0_OPER_2020-03-25' ];
 
+
 # --- Output creation script ---
+# Ensure test file directory exists
+if ( ! -e $TEST_FILE_DIR ) {
+	make_path( $TEST_FILE_DIR );
+}
+
 # Create output file for CLI script
 say '... starting CLI script';
 my $cli_script = FileHandle->new( $CLI_SCRIPT_NAME, 'w' ) or error_die( 'Cannot open script file ' . $CLI_SCRIPT_NAME );
@@ -246,7 +253,7 @@ print $cli_script "login -usysadm -psysadm\n";
 
 # Output mission
 say '... creating mission';
-my $filename = $mission->{code} . '.json';
+my $filename = $TEST_FILE_DIR . "/" . $mission->{code} . '.json';
 my $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
     
 print $fh "{\n";
@@ -300,7 +307,7 @@ print $cli_script 'login --user=' . $USER_USER . ' --password=' . $USER_PWD . ' 
 
 # Create spacecraft orbits
 say '... creating spacecraft orbits';
-$filename = $mission->{code} . '_orbits.json';
+$filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_orbits.json';
 $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
 print $fh '[' . "\n";
@@ -321,7 +328,7 @@ print $cli_script 'orbit create --file=' . $filename . "\n";
 # Create processors classes
 say '... creating processor classes';
 foreach my $processor_class ( @processor_classes ) {
-	$filename = $mission->{code} . '_' . $processor_class . '.json';
+	$filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_' . $processor_class . '.json';
 	$fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
 	print $fh '{ "missionCode": "' . $mission->{code} . '", "processorName": "' . $processor_class . '", "productClasses": [] }' . "\n";
@@ -333,7 +340,7 @@ foreach my $processor_class ( @processor_classes ) {
 # Create processor versions
 say '... creating processor versions';
 foreach my $processor ( @processors ) {
-    $filename = $mission->{code} . '_' . $processor->{processorName} . '_' . $processor->{processorVersion} . '.json';
+    $filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_' . $processor->{processorName} . '_' . $processor->{processorVersion} . '.json';
     $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
 	print $fh '{ "missionCode": "' . $mission->{code} . '", "processorName": "' . $processor->{processorName} . '", "processorVersion": "' . $processor->{processorVersion} . '", ';
@@ -374,7 +381,7 @@ foreach my $processor ( @processors ) {
 # Create configurations
 say '... creating configurations';
 foreach my $configuration ( @configurations ) {
-    $filename = $mission->{code} . '_' . $configuration->{processorName} . '_conf_' . $configuration->{configurationVersion} . '.json';
+    $filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_' . $configuration->{processorName} . '_conf_' . $configuration->{configurationVersion} . '.json';
     $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
     print $fh '{ "missionCode": "' . $mission->{code} 
@@ -446,7 +453,7 @@ say '... creating product classes';
 my @class_key_sequence = ( 'L0________', 'AUX_IERS_B', 'L1B_______', 'L1B_PART1', 'L1B_PART2', 'PTM_L2A', 'PTM_L2B', 'PTM_L3' );
 
 foreach my $product_class ( @class_key_sequence ) {
-    $filename = $mission->{code} . '_' . $product_types{$product_class} . '.json';
+    $filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_' . $product_types{$product_class} . '.json';
     $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
 	print $fh '{ ';
@@ -470,7 +477,7 @@ foreach my $product_class ( @class_key_sequence ) {
     print $cli_script 'productclass create --file=' . $filename . "\n";
 
 	if ($selection_rules{$product_class}) {
-	    $filename = $mission->{code} . '_' . $product_types{$product_class} . '_rule.txt';
+	    $filename = $TEST_FILE_DIR . "/" . $mission->{code} . '_' . $product_types{$product_class} . '_rule.txt';
 	    $fh = FileHandle->new( $filename, 'w' ) or error_die( 'Cannot open output file ' . $filename );
 
         print $fh $selection_rules{$product_class} . "\n";

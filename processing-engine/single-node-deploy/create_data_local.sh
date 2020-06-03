@@ -1,30 +1,62 @@
 #!/bin/bash
 #
-# create_data.sh
-# --------------
+# create_data_local.sh
+# --------------------
 #
-# Create dynamic test data for the prosEO test mission:
+# Create Kubernetes services on a local Docker Desktop instance
+# and dynamic test data for the prosEO test mission:
 # - L0 input data
 # - IERSB AUX input data
-# - a processing facility on a Telekom OTC cluster
+# - a processing facility on Docker Desktop
 # - a processing order for L2 products
 # - a processing order for L3 products
 #
 
-# Create a new CLI command script
-CLI_SCRIPT=cli_data_script.txt
-echo "" >$CLI_SCRIPT
- 
-# Create empty subdirectory for test data
-TEST_DATA_DIR=testfiles
-mkdir -p $TEST_DATA_DIR
-cd $TEST_DATA_DIR
-rm *
+# -------------------------
+# Tag Storage Manager image
+# -------------------------
+STORAGE_MGR_TAG=$1
+if [ x$STORAGE_MGR_TAG = x ] ; then
+	echo "Usage: $0 <Storage Manager image tag>"
+	exit 1
+fi
+docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
+docker push localhost:5000/proseo-storage-mgr:latest
 
-# Create L0 input data
+# -------------------------
+# Prepare local file server
+# -------------------------
+
+# Create the file system cache in the local Minikube
+kubectl apply -f nfs-server-local.yaml
+
+# Find the cluster IP address of the local NFS server (file system cache)
+NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
+# Update the IP address in the Persistent Volume configuration (no DNS resolution before Storage Manager pod instantiation, I'm afraid)
+sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
+# Create the Persistent Volumes
+kubectl apply -f nfs-pv.yaml
+
+# Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
+INGEST_DIR=storage-mgr-data/transfer
+mkdir -p $INGEST_DIR
+
+# Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
+POSIX_MOUNT_POINT=storage-mgr-data/proseodata
+mkdir -p $POSIX_MOUNT_POINT
+
+
+# -------------------------
+# Create L0/AUX input data
+# -------------------------
+
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
 # L0 products are in 45 min slices, starting with orbit 3000
+FILE_PATH=import/products
+mkdir -p ${INGEST_DIR}/${FILE_PATH}
+cd ${INGEST_DIR}/${FILE_PATH}
+
 cat >PTM_L0_20191104090000_20191104094500_20191104120000.RAW <<EOF
 1234567|L0________|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
 EOF
@@ -85,19 +117,41 @@ cd -
 
 # IERSB AUX products are real-world data:
 # Using bulletinb-380.xml
-cp -p bulletinb-380.xml $TEST_DATA_DIR
+cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
+
+
+# -------------------------
+# Create Storage Manager
+# -------------------------
 
 # Create the storage manager in the local Minikube
 kubectl apply -f storage-mgr-local.yaml
-POD=`kubectl get pods --no-headers=true | grep storage-mgr | cut -d ' ' -f 1`
+
+# Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
+INGEST_MOUNT_POINT=/mnt
+
+
+# -------------------------
+# Create Kubernetes Dashboard
+# -------------------------
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 kubectl apply -f kubernetes-dashboard.yaml
 kubectl proxy --accept-hosts='.*' &
 
-# Upload test data to POSIX storage on Minikube
-kubectl exec $POD -- mkdir -p /opt/s5p/data/integration-test
-kubectl cp $TEST_DATA_DIR ${POD}:/opt/s5p/data/integration-test/testdata
+
+# -------------------------
+# Create prosEO config files
+# -------------------------
+
+# Create empty subdirectory for test data
+TEST_DATA_DIR=testfiles
+mkdir -p $TEST_DATA_DIR
+rm $TEST_DATA_DIR/*
+
+# Create a new CLI command script
+CLI_SCRIPT=cli_data_script.txt
+echo "" >$CLI_SCRIPT
 
 # Create a processing facility
 cat >$TEST_DATA_DIR/facility.json <<EOF
@@ -138,8 +192,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -163,8 +217,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104094500_20191104103000_20191104120100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -188,8 +242,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104103000_20191104111500_20191104120200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -213,8 +267,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104111500_20191104120000_20191104120300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -238,8 +292,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104120000_20191104124500_20191104150000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -263,8 +317,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104124500_20191104133000_20191104150100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -288,8 +342,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104133000_20191104141500_20191104150200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -313,8 +367,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104141500_20191104150000_20191104150300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -338,8 +392,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104150000_20191104154500_20191104180000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -363,8 +417,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104154500_20191104163000_20191104180100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -388,8 +442,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104163000_20191104171500_20191104180200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -413,8 +467,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104171500_20191104180000_20191104180300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -438,8 +492,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104180000_20191104184500_20191104210000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -463,8 +517,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "PTM_L0_20191104184500_20191104193000_20191104210100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
@@ -488,8 +542,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
             }
         ],
         "sourceStorageType": "POSIX",
-        "mountPoint": "/opt/s5p/data",
-        "filePath": "integration-test/testdata",
+        "mountPoint": "${INGEST_MOUNT_POINT}",
+        "filePath": "${FILE_PATH}",
         "productFileName": "bulletinb-380.xml",
         "auxFileNames": [],
     	"fileSize": 51090,
