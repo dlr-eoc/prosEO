@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -177,6 +178,24 @@ public class ProseoFileS3 extends ProseoFile {
 			e.printStackTrace();
 		}
 		return result;
+	}
+
+	@Override
+	public ArrayList<ProseoFile> list() {
+		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();				
+		try {
+			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
+			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			List<String> files = S3Ops.listObjectsInBucket(s3, getBasePath(), getRelPath());
+			for (String f : files) {
+				list.add(new ProseoFileS3(f, true, cfg));
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return list;
 	}
 	
 	@Override

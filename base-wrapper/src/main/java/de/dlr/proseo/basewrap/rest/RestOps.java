@@ -2,6 +2,7 @@ package de.dlr.proseo.basewrap.rest;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -81,8 +82,8 @@ public class RestOps {
 					// TODO is there a possibility to avoid this?
 					logger.info("Retry...");
 					try {
-						logger.wait(1000);
-					} catch (InterruptedException e1) {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}

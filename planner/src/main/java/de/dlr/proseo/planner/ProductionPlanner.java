@@ -262,7 +262,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public void startDispatcher() {
 		if (kubeDispatcher == null || !kubeDispatcher.isAlive()) {
-			kubeDispatcher = new KubeDispatcher(this, null);
+			kubeDispatcher = new KubeDispatcher(this, null, false);
 			kubeDispatcher.start();
 		} else {
 			if (kubeDispatcher.isInterrupted()) {

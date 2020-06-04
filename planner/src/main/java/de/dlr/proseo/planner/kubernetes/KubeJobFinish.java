@@ -51,7 +51,7 @@ public class KubeJobFinish extends Thread {
     			catch(InterruptedException e) {
     			}
     		}
-    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig());
+    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
     		kd .start();
     	}
     }    	

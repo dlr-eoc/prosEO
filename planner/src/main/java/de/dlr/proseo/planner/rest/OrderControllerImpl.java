@@ -281,7 +281,7 @@ public class OrderControllerImpl implements OrderController {
 				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
 				if (kc != null) {
 					found = true;
-					UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+					UtilService.getJobStepUtil().checkOrderToRun(kc, order);
 				}
 			}
 			if (!found) {

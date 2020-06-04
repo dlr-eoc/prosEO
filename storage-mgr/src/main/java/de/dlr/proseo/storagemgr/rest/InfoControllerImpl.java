@@ -6,8 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.General;
-import de.dlr.proseo.storagemgr.rest.model.K8sNodeMountPoints;
+import de.dlr.proseo.storagemgr.rest.model.S3;
+import de.dlr.proseo.storagemgr.rest.model.Posix;
+import de.dlr.proseo.storagemgr.rest.model.Joborder;
 import de.dlr.proseo.storagemgr.rest.model.RestInfo;
 
 @Component
@@ -21,23 +22,23 @@ public class InfoControllerImpl implements InfoController{
 		
 		RestInfo response = new RestInfo();
 		
-		General gen = new General();
-		gen.setAlluxioUnderFsMaxPrefixes(Long.valueOf(cfg.getAlluxioUnderFsMaxPrefixes()));
-		gen.setAlluxioUnderFsS3Bucket(cfg.getAlluxioUnderFsS3Bucket());
-		gen.setAlluxioUnderFsS3BucketEndPoint(cfg.getAlluxioUnderFsS3BucketEndPoint());
-		gen.setAlluxioUnderFsS3BucketPrefix(cfg.getAlluxioUnderFsS3BucketPrefix());
-		gen.setJoborderBucket(cfg.getJoborderBucket());
-		gen.setJoborderBucketPrefix(cfg.getJoborderPrefix());
-		gen.setProcFacility(cfg.getProcFacilityName());
-		gen.setS3EndPoint(cfg.getS3EndPoint());
-		gen.setS3MaxNumberOfBuckets(Long.valueOf(cfg.getS3MaxNumberOfBuckets()));
-		response.setGeneral(gen);
+		S3 s3 = new S3();
+		s3.setS3EndPoint(cfg.getS3EndPoint());
+		s3.setS3Region(cfg.getS3Region());
+		s3.setS3MaxNumberOfBuckets(Long.valueOf(cfg.getS3MaxNumberOfBuckets()));
+		s3.setS3DefaultBucket(cfg.getS3DefaultBucket());
+		response.setS3(s3);
 		
-		K8sNodeMountPoints k8s = new K8sNodeMountPoints();
-		k8s.setAlluxioCacheMount(cfg.getAlluxioK8sMountPointCache());
-		k8s.setAlluxioFuseMount(cfg.getAlluxioK8sMountPointFuse());
-		k8s.setUnregisteredProductsMount(cfg.getUnregisteredProductsK8sMountPoint());
-		response.setK8sNodeMountPoints(k8s);
+
+		Posix posix = new Posix();
+		posix.setMountPoint(cfg.getPosixMountPoint());
+		posix.setWorkerMountPoint(cfg.getPosixWorkerMountPoint());
+		response.setPosix(posix);
+		Joborder joborder = new Joborder();
+		joborder.setBucket(cfg.getJoborderBucket());
+		joborder.setPrefix(cfg.getJoborderPrefix());
+
+		response.setJoborder(joborder);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

@@ -79,6 +79,12 @@ public class ProseoFileAlluxio extends ProseoFile {
 	}
 
 	@Override
+	public ArrayList<ProseoFile> list() {
+		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();
+		return list;
+	}
+
+	@Override
 	public Boolean writeBytes(byte[] bytes) throws Exception {
 		// TODO Auto-generated method stub
 		return null;

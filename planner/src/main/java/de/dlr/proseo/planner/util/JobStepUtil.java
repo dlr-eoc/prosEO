@@ -25,7 +25,9 @@ import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.dao.ProductRepository;
@@ -58,7 +60,7 @@ public class JobStepUtil {
 	private ProductionPlanner productionPlanner;
 	
 	@Transactional
-	public void searchForJobStepsToRun(ProcessingFacility processingFacility) {
+	public void searchForJobStepsToRun(ProcessingFacility processingFacility, ProductClass pc) {
 		// Search for all job steps on processingFacility with states INITIAL, WAITING_INPUT
 		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
@@ -66,18 +68,34 @@ public class JobStepUtil {
 		List<JobStep> jobSteps = null;
 		if (processingFacility == null) {
 			jobSteps = new ArrayList<>();
-			for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
-				jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
+			if (pc != null) {
+				List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+						.findUnsatisfiedByProductClass(pc.getId());
+				for (ProductQuery pq : productQueries) {
+					jobSteps.add(pq.getJobStep());
+				}
+			} else {
+				for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
+					jobSteps.addAll(RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(pf.getId(), jobStepStates));
+				}
 			}
 		} else {
-			jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+			if (pc != null) {
+				jobSteps = new ArrayList<>();
+				List<ProductQuery> productQueries = RepositoryService.getProductQueryRepository()
+						.findUnsatisfiedByProductClass(pc.getId());
+				for (ProductQuery pq : productQueries) {
+					if (pq.getJobStep().getJob().getProcessingFacility().getId() == processingFacility.getId()) {
+						jobSteps.add(pq.getJobStep());
+					}
+				}
+			} else {
+				jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+			}
 		}
 		for (JobStep js : jobSteps) {
 			checkJobStepQueries(js);
 		}
-		// check whether there are new satisfied product queries
-		
-		// Change state appropriate to result
 	}
 
 	@Transactional
@@ -409,21 +427,23 @@ public class JobStepUtil {
     		Collection<KubeConfig> kcs = productionPlanner.getKubeConfigs();
     		if (kcs != null) {
     			for (KubeConfig kc : kcs) {
-    				checkForJobStepsToRun(kc);
+    				checkForJobStepsToRun(kc, null, false);
     			}
     		}
     	}
     }
-	
+
 	@Transactional
-    public void checkForJobStepsToRun(KubeConfig kc) {
+    public void checkForJobStepsToRun(KubeConfig kc, ProductClass pc, Boolean onlyRun) {
 		if (productionPlanner != null) {
 			if (kc != null) {
 				List<JobStepState> states = new ArrayList<JobStepState>();
 				states.add(JobStepState.READY);
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
-					this.searchForJobStepsToRun(pfo.get());
+					if (!onlyRun) {
+						this.searchForJobStepsToRun(pfo.get(), pc);
+					}
 					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
 					for (JobStep js : jobSteps) {
 						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
@@ -438,4 +458,69 @@ public class JobStepUtil {
 			}
 		}
     }
+
+	@Transactional
+    public void checkJobStepToRun(KubeConfig kc, JobStep js) {
+		if (productionPlanner != null) {
+			if (kc != null && js != null) {
+				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+				if (pfo.isPresent()) {
+					checkJobStepQueries(js);
+					if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+						if (kc.couldJobRun()) {
+							kc.createJob(String.valueOf(js.getId()), null, null);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Transactional
+    public void checkJobToRun(KubeConfig kc, Job job) {
+		if (productionPlanner != null) {
+			if (kc != null && job != null) {
+				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+				if (pfo.isPresent()) {
+					for (JobStep js : job.getJobSteps()) {
+						checkJobStepQueries(js);
+						if (js.getJobStepState() == JobStepState.READY) {	
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	@Transactional
+    public void checkOrderToRun(KubeConfig kc, ProcessingOrder order) {
+		if (productionPlanner != null) {
+			if (kc != null && order != null) {
+				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+				if (pfo.isPresent()) {
+					List<Job> jobList = new ArrayList<Job>();
+					jobList.addAll(order.getJobs());
+					for (Job job : jobList) {
+						List<JobStep> jobStepList = new ArrayList<JobStep>();
+						jobStepList.addAll(job.getJobSteps());
+						for (JobStep js : jobStepList) {
+							checkJobStepQueries(js);
+							if (js.getJobStepState() == JobStepState.READY) {	
+								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+									if (kc.couldJobRun()) {
+										kc.createJob(String.valueOf(js.getId()), null, null);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

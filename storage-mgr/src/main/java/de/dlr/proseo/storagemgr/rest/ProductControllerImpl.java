@@ -33,6 +33,7 @@ import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
+import de.dlr.proseo.storagemgr.rest.model.TargetStorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
 /**
@@ -96,6 +97,9 @@ public class ProductControllerImpl implements ProductController {
 
 		logger.info(restProductFS.toString());
 		String pref = restProductFS.getProductId();
+		if (!pref.endsWith("/")) {
+			pref = pref + "/";
+		}
 
 		ArrayList<String> transferSum = new ArrayList<String>();
 
@@ -113,7 +117,7 @@ public class ProductControllerImpl implements ProductController {
 				}
 			}
 			if (logger.isDebugEnabled()) logger.debug("Files registered: {}", transferSum);
-			setRestProductFS(response, restProductFS, cfg.getS3DefaultBucket(), true, targetFile.getFullPath() + "/",
+			setRestProductFS(response, restProductFS, targetFile.getBasePath(), true, targetFile.getFullPath() + "/",
 					transferSum, false, "registration executed on node " + hostName);
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
@@ -123,8 +127,18 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	@Override
-	public ResponseEntity<List<RestProductFS>> getRestProductFs(StorageType storageType, String storageId, Long id) {
+	public ResponseEntity<List<RestProductFS>> getRestProductFs(StorageType storageType, Long id) {
+		List<StorageType> stl = new ArrayList<StorageType>();
+		if (storageType == null) {
+			stl.add(StorageType.S_3);
+			stl.add(StorageType.POSIX);
+		} else {
+			stl.add(storageType);
+		}
 		List<RestProductFS> response = new ArrayList<RestProductFS>();
+		for (StorageType st : stl) {
+			listProductFiles(st, id, response);
+		}		
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
@@ -215,6 +229,23 @@ public class ProductControllerImpl implements ProductController {
 			}
 		}
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+	}
+	
+	private void listProductFiles(StorageType st, Long id, List<RestProductFS> response) {
+		ProseoFile path = null;
+		FsType ft = FsType.fromValue(st.toString());
+		if (id == null) {
+			path = ProseoFile.fromType(ft, "", cfg);
+		} else {
+			path = ProseoFile.fromType(ft, String.valueOf(id) + "/", cfg);
+		}
+		List<ProseoFile> files = path.list();
+		for (ProseoFile f : files) {
+			RestProductFS fs = new RestProductFS();
+			fs.setTargetStorageType(TargetStorageType.fromValue(f.getFsType().toString()));
+			fs.setRegisteredFilePath(f.getFullPath());
+			response.add(fs);
+		}
 	}
 
 }

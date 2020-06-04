@@ -85,11 +85,24 @@ public class ProductfileControllerImpl implements ProductfileController {
 	}
 
 	@Override
-	public ResponseEntity<String> updateProductfiles(String pathInfo) {
+	public ResponseEntity<String> updateProductfiles(String pathInfo, Long productId) {
 		String response = "";
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-			ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(cfg.getDefaultStorageType()), sourceFile.getRelPathAndFile(), cfg);
+			String targetRelPath = String.valueOf(productId);
+			String aPath = sourceFile.getRelPathAndFile();
+			while (aPath.startsWith("/")) {
+				aPath = aPath.substring(1);			
+			}
+			String relPath = "";
+			int pos = aPath.indexOf('/');
+			if (pos >= 0) {
+				relPath = aPath.substring(pos + 1);
+			} else {
+				relPath = aPath;
+			}
+			// replace top relPath directory
+			ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
 			try {
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 				if (transfered != null && !transfered.isEmpty()) {

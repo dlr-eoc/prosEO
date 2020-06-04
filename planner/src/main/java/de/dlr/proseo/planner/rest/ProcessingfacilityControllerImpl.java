@@ -123,7 +123,7 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
 		if (kc != null) {
 			kc.sync();
-			UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, null, false);
 			RestProcessingFacility pf = new RestProcessingFacility(
 					kc.getLongId(),
 					null,

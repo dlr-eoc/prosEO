@@ -112,7 +112,7 @@ public class JobControllerImpl implements JobController {
 				if (job.getProcessingFacility() != null) {
 					KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 					if (kc != null) {
-						UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+						UtilService.getJobStepUtil().checkJobToRun(kc, job);
 					}
 				}
 				RestJob rj = RestUtil.createRestJob(job);

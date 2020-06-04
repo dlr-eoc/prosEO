@@ -81,8 +81,7 @@ public class S3Ops {
 	 * @param prefix
 	 * @return List<String> the keys
 	 */
-	public static List<String> listKeysInBucket(AmazonS3 s3, String bucketName, String prefix,
-			Boolean likeSimpleFolders) {
+	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) {
 		Boolean isTopLevel = false;
 		String delimiter = "/";
 		if (prefix == "" || prefix == "/") {
@@ -93,21 +92,17 @@ public class S3Ops {
 		}
 		ListObjectsRequest listObjectsRequest = null;
 		if (isTopLevel) {
-			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withDelimiter(delimiter);
+			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName);
 		} else {
-			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix)
-					.withDelimiter(delimiter);
+			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
 		}
 		ObjectListing objects = s3.listObjects(listObjectsRequest);
 
-		if (likeSimpleFolders) {
-			List<String> folderLike = new ArrayList<String>();
-			for (String f : objects.getCommonPrefixes()) {
-				folderLike.add(f.replace(prefix, "").replace(delimiter, ""));
-			}
-			return folderLike;
+		List<String> folderLike = new ArrayList<String>();
+		for (S3ObjectSummary f : objects.getObjectSummaries()) {
+			folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 		}
-		return objects.getCommonPrefixes();
+		return folderLike;
 	}
 
 	/**

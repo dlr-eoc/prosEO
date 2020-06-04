@@ -271,7 +271,6 @@ public class OrderUtil {
 						order.setOrderState(OrderState.COMPLETED);
 						answer = Messages.ORDER_COMPLETED;
 					} else {
-						// jobStepUtil.searchForJobStepsToRun(procFacility);
 						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;
 					}

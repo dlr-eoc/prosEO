@@ -581,6 +581,7 @@ public class BaseWrapper {
 					// Push output file to Storage Manager
 					Map<String,String> params = new HashMap<>();
 					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
+					params.put("productId", io.getProductID());
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
 							"/productfiles", null, params, RestOps.HttpMethod.PUT);
 

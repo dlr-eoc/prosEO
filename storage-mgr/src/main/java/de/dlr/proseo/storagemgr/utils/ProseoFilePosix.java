@@ -9,8 +9,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
@@ -46,10 +48,18 @@ public class ProseoFilePosix extends ProseoFile {
 			}
 			if (aPath.startsWith(base)) {
 				basePath = base;
-				relPath = aPath.substring(base.length() + 1);
+				if (aPath.length() == base.length()) {
+					relPath = "/";
+				} else {
+					relPath = aPath.substring(base.length() + 1);
+				}
 			} else if (aPath.startsWith(baseWorker)) {
 				basePath = baseWorker;
-				relPath = aPath.substring(baseWorker.length() + 1);
+				if (aPath.length() == baseWorker.length()) {
+					relPath = "/";
+				} else {
+					relPath = aPath.substring(baseWorker.length() + 1);
+				}
 			} else {
 				int pos = aPath.indexOf('/');
 				if (pos >= 0) {
@@ -233,6 +243,22 @@ public class ProseoFilePosix extends ProseoFile {
 		return result;
 	}
 
+	@Override
+	public ArrayList<ProseoFile> list() {
+		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();
+		File srcFile = new File(this.getFullPath());
+		if (srcFile.isDirectory()) {
+			Collection<File> files = FileUtils.listFilesAndDirs(srcFile, TrueFileFilter.INSTANCE , TrueFileFilter.INSTANCE );
+			for (File file : files) {
+				File tmpFile = new File(file.getAbsolutePath());
+				if (tmpFile.isFile()) {
+					list.add(new ProseoFilePosix(file.getAbsolutePath(), true, cfg));
+				}
+			}
+		}
+		return list;
+	}
+	
 	@Override
 	public FileSystemResource getFileSystemResource() {
 		return new FileSystemResource(getFullPath());

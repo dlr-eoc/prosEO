@@ -199,6 +199,8 @@ public abstract class ProseoFile {
 	
 	public abstract ArrayList<String> delete();
 	
+	public abstract ArrayList<ProseoFile> list();
+	
 	public abstract String getFullPath();
 
 	public abstract InputStream getDataAsInputStream();

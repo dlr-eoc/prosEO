@@ -65,7 +65,6 @@ public class JobstepControllerImpl implements JobstepController {
 		
 		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
 		Iterable<JobStep> it;
-		jobStepUtil.searchForJobStepsToRun(null);
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
 		} else {
@@ -124,7 +123,7 @@ public class JobstepControllerImpl implements JobstepController {
 				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
 					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
 					if (kc != null) {
-						UtilService.getJobStepUtil().checkForJobStepsToRun(kc);
+						UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
 					}
 				}
 				// canceled

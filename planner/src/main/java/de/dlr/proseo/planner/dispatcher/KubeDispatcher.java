@@ -28,13 +28,15 @@ public class KubeDispatcher extends Thread {
 	
     private ProductionPlanner productionPlanner;
     private boolean runOnce;
+    private boolean onlyRun;
     private KubeConfig kubeConfig;
 
-	public KubeDispatcher(ProductionPlanner p, KubeConfig kc) {
+	public KubeDispatcher(ProductionPlanner p, KubeConfig kc, Boolean onlyRun) {
 		super((kc != null && p == null) ? "KubeDispatcherRunOnce" : "KubeDispatcher");
 		this.setDaemon(true);
 		productionPlanner = p;
 		kubeConfig = kc;
+		this.onlyRun = onlyRun;
 		runOnce = (kc != null && p == null);
 	}
 	
@@ -48,7 +50,7 @@ public class KubeDispatcher extends Thread {
     	}
     	if (runOnce) {
     		if (kubeConfig != null) {
-    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig);
+    			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, null, onlyRun);
     		} else {
     			Messages.KUBEDISPATCHER_CONFIG_NOT_SET.log(logger);
     		}

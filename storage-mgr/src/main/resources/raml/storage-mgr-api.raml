@@ -52,11 +52,10 @@ resourceTypes:
 
 /products:
   get:
-    description: Get product metadata, optionally filtered by storage type, storage ID, product (database) ID
+    description: Get product metadata, optionally filtered by storage type, product (database) ID
     queryParameters:
       storageType?:
         enum: [S3, ALLUXIO, POSIX]
-      storageId?: string
       id?:
         type: integer
         format: long
@@ -78,7 +77,7 @@ resourceTypes:
             type: RestProductFS
             example: !include ../../../../../interfaces/src/main/resources/raml/examples/productFS-reg.json
   delete:
-    description: Delete/remove product by product (database) ID from prosEO storage
+    description: Delete/remove product by product path info from prosEO storage
     queryParameters:
       pathInfo: 
         type: string
@@ -122,6 +121,10 @@ resourceTypes:
       pathInfo: 
         type: string
         description: The file path as local POSIX path for upload
+      productId:
+        type: integer
+        format: long
+        description: The product id used to generate target file path
     responses:
       201:
         body:

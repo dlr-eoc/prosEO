@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -210,7 +211,8 @@ public class ProductIngestor {
 		// Store the product in the storage manager for the given processing facility
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
 		if (logger.isDebugEnabled()) logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
-		RestTemplate restTemplate = rtb.basicAuthentication(
+		
+		RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000)).basicAuthentication(
 				facility.getStorageManagerUser(), facility.getStorageManagerPassword()).build();
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> responseEntity = null;
@@ -391,6 +393,7 @@ public class ProductIngestor {
 		for (String fileName: allFiles) {
 			String storageManagerUrl = facility.getStorageManagerUrl()
 					+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
+			
 			RestTemplate restTemplate = rtb
 					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
 					.build();
@@ -561,7 +564,8 @@ public class ProductIngestor {
 			// If so, inform the production planner of the new product
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
 
-			RestTemplate restTemplate = rtb.basicAuthentication(user, password).build();
+			
+			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000)).basicAuthentication(user, password).build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,

@@ -182,7 +182,9 @@ public class IngestControllerImpl implements IngestController {
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
-				result.add(productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]));
+				RestProduct restProduct = productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]);
+				result.add(restProduct);
+				ingestorProduct.setId(restProduct.getId());
 				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");
 				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
 				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
