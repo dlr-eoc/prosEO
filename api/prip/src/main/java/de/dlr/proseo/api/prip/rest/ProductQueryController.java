@@ -7,17 +7,12 @@ package de.dlr.proseo.api.prip.rest;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.List;
-
 import javax.servlet.ServletException;
 //import javax.persistence.EntityNotFoundException;
 //import javax.persistence.NoResultException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
 import org.slf4j.LoggerFactory;
 import org.apache.olingo.commons.api.edmx.EdmxReference;
 import org.apache.olingo.server.api.OData;
@@ -26,9 +21,6 @@ import org.apache.olingo.server.api.ServiceMetadata;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.dlr.proseo.api.prip.odata.ProductEdmProvider;
 import de.dlr.proseo.api.prip.odata.ProductEntityCollectionProcessor;
 import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
-import de.dlr.proseo.api.prip.rest.model.CscProduct;
 
 /**
  * Spring MVC controller for the prosEO Processor Manager; implements the services required to manage processor versions.
@@ -57,7 +48,7 @@ public class ProductQueryController {
 	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
 
 	/** The service URI */
-	public static final String URI = "/proseo/prip/odata";
+	public static final String URI = "/proseo/prip/odata/v1";
 
 	/** The EDM provider for products */
 	@Autowired
@@ -73,18 +64,6 @@ public class ProductQueryController {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryController.class);
-
-	/**
-	 * Create an HTTP "Warning" header with the given text message
-	 * 
-	 * @param message the message text
-	 * @return an HttpHeaders object with a warning message
-	 */
-	private HttpHeaders errorHeaders(String message) {
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
-		return responseHeaders;
-	}
 
 	/**
 	 * Process.
@@ -107,7 +86,7 @@ public class ProductQueryController {
 			// let the handler do the work
 			handler.process(new HttpServletRequestWrapper(request) {
 				// Spring MVC matches the whole path as the servlet path
-				// Olingo wants just the prefix, ie upto /odata, so that it
+				// Olingo wants just the prefix, i.e. up to /odata/{version}, so that it
 				// can parse the rest of it as an OData path. So we need to override
 				// getServletPath()
 				@Override

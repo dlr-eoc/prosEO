@@ -1,35 +1,5 @@
 ---
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: storage-mgr
-spec:
-  selector:
-    matchLabels:
-      name: storage-mgr
-  template:
-    metadata:
-      labels:
-        name: storage-mgr
-        app: storage-mgr
-    spec:
-      imagePullSecrets:
-      - name: proseo-regcred
-      containers:
-        - name: proseo-storage-mgr
-          image: localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-c127be4
-          resources:
-            requests:
-              cpu: "1.0"
-              memory: "512M"
-            limits:
-              cpu: "1.5"
-              memory: "1G"
-          ports:
-          - name: mgr-pod-port
-            containerPort: 8080
-      restartPolicy: Always
----
+# The prosEO Storage Manager service
 kind: Service
 apiVersion: v1
 metadata:
@@ -45,3 +15,90 @@ spec:
     protocol: TCP
   selector:
     name: storage-mgr
+  # Only available in Kubernetes 1.17+
+#  topologyKeys:
+#    - "kubernetes.io/hostname"
+
+---
+# Storage Manager pods
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: storage-mgr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: storage-mgr
+  template:
+    metadata:
+      labels:
+        name: storage-mgr
+        app: storage-mgr
+    spec:
+      imagePullSecrets:
+      - name: proseo-regcred
+      volumes:
+      - name: proseo-mnt
+        persistentVolumeClaim:
+          claimName: proseo-nfs
+      - name: proseo-mnt-ingest
+        persistentVolumeClaim:
+          claimName: proseo-ingest
+      containers:
+        - name: proseo-storage-mgr
+          image: localhost:5000/proseo-storage-mgr:latest
+          resources:
+            requests:
+              cpu: "1.0"
+              memory: "512M"
+            limits:
+              cpu: "1.5"
+              memory: "2G"
+          ports:
+          - name: mgr-pod-port
+            containerPort: 8080
+          volumeMounts:
+          - name: proseo-mnt
+            mountPath: "/proseo/data"
+          - name: proseo-mnt-ingest
+            mountPath: "/mnt"
+      restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+
+---
+# The common storage area for Storage Manager and Processing Engine
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proseo-nfs
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany # Access modes for volumes is defined under Persistent Volumes
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      name: proseo-nfs-share
+
+---
+# The (usually externally mounted) file system to ingest products from
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proseo-ingest
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany # Access modes for volumes is defined under Persistent Volumes
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      name: proseo-ingest-share

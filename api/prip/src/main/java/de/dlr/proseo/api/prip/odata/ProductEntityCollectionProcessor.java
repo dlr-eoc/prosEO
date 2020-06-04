@@ -257,6 +257,16 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			}
 		}
 	}
+	
+	/**
+	 * Creates an "orderby" specifying ascending order by publication date
+	 * @return the prepared "orderby" option
+	 */
+	private OrderByOption createPublicationDateAscendingOption() {
+		// TODO
+		return null;
+		
+	}
 
 	/**
 	 * Read the requested products from the prosEO kernel components
@@ -294,7 +304,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, e.getMessage()), e);
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
 			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -345,6 +355,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		
 		// Check $orderby option
 		OrderByOption orderByOption = uriInfo.getOrderByOption();
+		if (null == orderByOption) {
+			// If nothing is specified, the output shall be ordered ascending by publication date (PRIP spec. v1.4, sec. 3.3)
+			orderByOption = createPublicationDateAscendingOption();
+		}
 		if (null != orderByOption) {
 			sortProductList(productList, orderByOption);
 		}

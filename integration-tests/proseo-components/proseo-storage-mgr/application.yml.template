@@ -18,9 +18,16 @@ proseo:
       alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
       alluxioUnderFsS3BucketEndPoint: https://obs.eu-de.otc.t-systems.com
       alluxioUnderFsMaxPrefixes: 500
+    posix:
+      mountPoint: /proseo/data
+      workerMountPoint: /proseo/data
     joborder:
       bucket: otc-proseo01-internal
       prefix: joborders
+    storageManager:
+        user: XXXX
+        password: XXXX
+        defaultStorageType: S3
     mountpoints:
      #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
       alluxio:

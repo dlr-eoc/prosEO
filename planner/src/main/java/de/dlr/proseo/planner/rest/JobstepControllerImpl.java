@@ -218,4 +218,11 @@ public class JobstepControllerImpl implements JobstepController {
 		return js;
 	}
 
+	@Transactional
+	@Override
+	public ResponseEntity<RestJobStep> retryJobStep(String id) {
+		// TODO Auto-generated method stub
+		return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NOT_IMPLEMENTED);
+	}
+
 }

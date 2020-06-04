@@ -216,5 +216,12 @@ public class JobControllerImpl implements JobController {
 		}
 		return RepositoryService.getJobRepository().findAll();
 	}
+
+	@Transactional
+	@Override
+	public ResponseEntity<RestJob> retryJob(String id) {
+		// TODO Auto-generated method stub
+		return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NOT_IMPLEMENTED);
+	}
 	
 }

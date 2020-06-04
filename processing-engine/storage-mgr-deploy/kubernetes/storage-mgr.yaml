@@ -7,6 +7,9 @@ spec:
   selector:
     matchLabels:
       name: storage-mgr
+  # From Kubernetes 1.17 onwards
+  topologyKeys:
+    - "kubernetes.io/hostname"
   template:
     metadata:
       labels:
@@ -15,6 +18,10 @@ spec:
     spec:
       imagePullSecrets:
       - name: proseo-regcred
+      volumes:
+      - name: mnt
+        hostPath:
+          path: /mnt
       containers:
         - name: proseo-storage-mgr
           image: proseo-registry.eoc.dlr.de/proseo-storage-mgr:0.1.0-SNAPSHOT-integration-rc1-403d5d1
@@ -28,7 +35,12 @@ spec:
           ports:
           - name: mgr-pod-port
             containerPort: 8080
+          volumeMounts:
+          - name: mnt
+            mountPath: /mnt
       restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
 ---
 kind: Service
 apiVersion: v1

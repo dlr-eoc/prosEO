@@ -42,6 +42,7 @@ public class FacmgrManager {
 	private static final int MSG_ID_FACILITY_MODIFIED = 1019;
 	private static final int MSG_ID_FACILITY_NOT_MODIFIED = 1020;
 	private static final int MSG_ID_FACILITY_CREATED = 1021;
+	private static final int MSG_ID_DUPLICATE_FACILITY = 1022;
 
 
 	/* Message string constants */
@@ -50,6 +51,8 @@ public class FacmgrManager {
 	private static final String MSG_FACILITY_MISSING = "(E%d) Facility not set";
 	private static final String MSG_FACILITY_DELETED = "(I%d) Facility with id %d deleted";
 	private static final String MSG_FACILITY_ID_MISSING = "(E%d) Facility ID not set";
+	private static final String MSG_DUPLICATE_FACILITY = "(E%d) Facility %s exists already";
+
 	private static final String MSG_FACILITY_RETRIEVED = "(I%d) Facility with ID %s retrieved";
 	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
 	private static final String MSG_FACILITY_MODIFIED = "(I%d) Facility with id %d modified";
@@ -105,9 +108,15 @@ public class FacmgrManager {
 		
 		if (null == facility) {
 			throw new IllegalArgumentException(logError(MSG_FACILITY_MISSING, MSG_ID_FACILITY_MISSING));
-		}		
+		}
 		
-		ProcessingFacility modelFacility = FacmgrUtil.toModelFacility(facility);
+		// Make sure the facility does not yet exist
+		ProcessingFacility modelFacility = RepositoryService.getFacilityRepository().findByName(facility.getName());
+		if (null != modelFacility) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_FACILITY, MSG_ID_DUPLICATE_FACILITY, facility.getName()));
+		}
+		
+		modelFacility = FacmgrUtil.toModelFacility(facility);
 		
 		modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
 		logInfo(MSG_FACILITY_CREATED, MSG_ID_FACILITY_CREATED, facility.getName());
@@ -222,23 +231,43 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
 		}	
+		if (!modelFacility.getProcessingEngineUser().equals(changedFacility.getProcessingEngineUser())) {
+			facilityChanged = true;
+			modelFacility.setProcessingEngineUser(changedFacility.getProcessingEngineUser());
+		}	
+		if (!modelFacility.getProcessingEnginePassword().equals(changedFacility.getProcessingEnginePassword())) {
+			facilityChanged = true;
+			modelFacility.setProcessingEnginePassword(changedFacility.getProcessingEnginePassword());
+		}	
 		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
 			facilityChanged = true;
 			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
 		}	
-//		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
-//			facilityChanged = true;
-//			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
-//		}	
+		if (!modelFacility.getLocalStorageManagerUrl().equals(changedFacility.getLocalStorageManagerUrl())) {
+			facilityChanged = true;
+			modelFacility.setLocalStorageManagerUrl(changedFacility.getLocalStorageManagerUrl());
+		}	
+		if (!modelFacility.getStorageManagerUser().equals(changedFacility.getStorageManagerUser())) {
+			facilityChanged = true;
+			modelFacility.setStorageManagerUser(changedFacility.getStorageManagerUser());
+		}	
+		if (!modelFacility.getStorageManagerPassword().equals(changedFacility.getStorageManagerPassword())) {
+			facilityChanged = true;
+			modelFacility.setStorageManagerPassword(changedFacility.getStorageManagerPassword());
+		}	
+		if (!modelFacility.getDefaultStorageType().equals(changedFacility.getDefaultStorageType())) {
+			facilityChanged = true;
+			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
+		}	
 		// Save order only if anything was actually changed
 		if (facilityChanged)	{
 			modelFacility.incrementVersion();
 			modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
 			logInfo(MSG_FACILITY_MODIFIED, MSG_ID_FACILITY_MODIFIED, id);
-			} else {
-					logInfo(MSG_FACILITY_NOT_MODIFIED, MSG_ID_FACILITY_NOT_MODIFIED, id);
-			}
-			return FacmgrUtil.toRestFacility(modelFacility);
+		} else {
+			logInfo(MSG_FACILITY_NOT_MODIFIED, MSG_ID_FACILITY_NOT_MODIFIED, id);
+		}
+		return FacmgrUtil.toRestFacility(modelFacility);
 	}
 	
 	/**

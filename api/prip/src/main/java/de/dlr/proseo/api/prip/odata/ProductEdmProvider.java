@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 	// Service Namespace
-	public static final String NAMESPACE = "prosEO.PRIP";
+	public static final String NAMESPACE = "OData.CSC"; // Copernicus Space Component
 
 	// EDM Container
 	public static final String CONTAINER_NAME = "Container";
@@ -55,7 +55,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	// Entity Types
 	public static final String ET_PRODUCT_NAME = "Product";
 	public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
-	public static final String ET_PRODUCT_PROP_CREATION_DATE = "CreationDate";
+	public static final String ET_PRODUCT_PROP_PUBLICATION_DATE = "PublicationDate";
 	public static final String ET_PRODUCT_PROP_EVICTION_DATE = "EvictionDate";
 	public static final String ET_PRODUCT_PROP_CHECKSUMS = "Checksums";
 	public static final String ET_PRODUCT_PROP_CONTENT_DATE = "ContentDate";
@@ -64,18 +64,23 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	
 	public static final String ET_ATTRIBUTES_NAME = ET_PRODUCT_PROP_ATTRIBUTES;
 	public static final FullQualifiedName ET_ATTRIBUTES_FQN = new FullQualifiedName(NAMESPACE, ET_ATTRIBUTES_NAME);
+	private static final String ET_ATTRIBUTES_PROP_VALUETYPE = "ValueType";
 	
 	public static final String ET_STRINGATTRIBUTE_NAME = "StringAttribute";
 	public static final Object ET_STRINGATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_STRINGATTRIBUTE_NAME);
 	public static final String ET_STRINGATTRIBUTE_PROP_STRING_VALUE = "StringValue";
 	
-	public static final String ET_DATEATTRIBUTE_NAME = "DateAttribute";
+	public static final String ET_DATEATTRIBUTE_NAME = "DateTimeOffsetAttribute";
 	public static final Object ET_DATEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DATEATTRIBUTE_NAME);
 	public static final String ET_DATEATTRIBUTE_PROP_DATE_VALUE = "DateValue";
 	
 	public static final String ET_INTEGERATTRIBUTE_NAME = "IntegerAttribute";
 	public static final Object ET_INTEGERATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_INTEGERATTRIBUTE_NAME);
 	public static final String ET_INTEGERATTRIBUTE_PROP_INTEGER_VALUE = "IntegerValue";
+
+	public static final String ET_DOUBLEATTRIBUTE_NAME = "DoubleAttribute";
+	public static final Object ET_DOUBLEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DOUBLEATTRIBUTE_NAME);
+	public static final String ET_DOUBLEATTRIBUTE_PROP_DOUBLE_VALUE = "DoubleValue";
 
 	// Entity Sets
 	public static final String ES_PRODUCTS_NAME = "Products";
@@ -219,7 +224,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
-			CsdlProperty creationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_CREATION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty creationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_PUBLICATION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 			CsdlProperty evictionDate = new CsdlProperty().setName(ET_PRODUCT_PROP_EVICTION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 
 			// Add structured properties
@@ -247,18 +252,17 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			return productType;
 		} else if (entityTypeName.equals(ET_ATTRIBUTES_FQN)) {
 			// Create Attribute properties
-			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
+			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty valueType = new CsdlProperty().setName(ET_ATTRIBUTES_PROP_VALUETYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 
 			// Create CsdlPropertyRef for Key element
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
-			idRef.setName(GENERIC_PROP_ID);
+			idRef.setName(GENERIC_PROP_NAME);
 
 			// Configure Attributes entity type
 			CsdlEntityType attributesType = new CsdlEntityType();
 			attributesType.setName(ET_ATTRIBUTES_NAME);
-			attributesType.setProperties(Arrays.asList(id, contentType, contentLength));
+			attributesType.setProperties(Arrays.asList(name, valueType));
 			attributesType.setKey(Collections.singletonList(idRef));
 			
 			return attributesType;
@@ -295,6 +299,17 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			integerAttributeType.setProperties(Arrays.asList(integerValue));
 			
 			return integerAttributeType;
+		} else if (entityTypeName.equals(ET_DOUBLEATTRIBUTE_FQN)) {
+			// Create specific DoubleAttribute properties
+			CsdlProperty doubleValue = new CsdlProperty().setName(ET_DOUBLEATTRIBUTE_PROP_DOUBLE_VALUE).setType(EdmPrimitiveTypeKind.Double.getFullQualifiedName());
+			
+			// Configure DoubleAttribute entity type
+			CsdlEntityType doubleAttributeType = new CsdlEntityType();
+			doubleAttributeType.setName(ET_DOUBLEATTRIBUTE_NAME);
+			doubleAttributeType.setBaseType(ET_ATTRIBUTES_FQN);
+			doubleAttributeType.setProperties(Arrays.asList(doubleValue));
+			
+			return doubleAttributeType;
 		}
 
 		return null;

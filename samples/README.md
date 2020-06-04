@@ -62,89 +62,49 @@ prosEO sample wrapper & processor integration
 ## sample-output
 ```sh
 [dev1@gate0 samples]$ ./run.sh
-2019-10-21T13:15:48.390 sample-wrapper 00.01: [I]
+2020-06-03T13:56:36.875 Starting sample-wrapper 00.01: [I] 
 
-{"prosEO" : "A Processing System for Earth Observation Data"}
-
-2019-10-21T13:15:48.392 sample-wrapper 00.01: [I] Starting base-wrapper V00.00.01 with JobOrder file s3://internal/joborders/2b114127-7ead-4a52-8cf8-bf9268193d42.xml
-2019-10-21T13:15:48.394 sample-wrapper 00.01: [I] Checking 11 ENV_VARS...
-2019-10-21T13:15:48.431 sample-wrapper 00.01: [I] ... JOBORDER_FS_TYPE=S3
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... JOBORDER_FILE=s3://internal/joborders/2b114127-7ead-4a52-8cf8-bf9268193d42.xml
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... S3_ENDPOINT=http://localhost:9000
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... S3_ACCESS_KEY=short_access_key
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... S3_SECRET_ACCESS_KEY=short_secret_key
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... S3_STORAGE_ID_OUTPUTS=s3test
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... ALLUXIO_STORAGE_ID_OUTPUTS=alluxio1
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... INGESTOR_ENDPOINT=http://localhost:8082
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... STATE_CALLBACK_ENDPOINT=http://localhost:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob968
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... PROCESSOR_SHELL_COMMAND=java -jar proseo-sample-processor.jar
-2019-10-21T13:15:48.432 sample-wrapper 00.01: [I] ... PROCESSING_FACILITY_NAME=Lerchenhof
-2019-10-21T13:15:48.433 sample-wrapper 00.01: [I] ENV_VARS looking good...
-2019-10-21T13:15:48.433 sample-wrapper 00.01: [I] PREFIX timestamp used for JobOrderFile-Naming & Results is 1571663747
-2019-10-21T13:15:49.558 sample-wrapper 00.01: [I] Copied s3://internal/joborders/2b114127-7ead-4a52-8cf8-bf9268193d42.xml to file://joborders/2b114127-7ead-4a52-8cf8-bf9268193d42.xml
-2019-10-21T13:15:49.598 sample-wrapper 00.01: [I] Fetch Inputs & provide a valid JobOrderFile for the container-context...
-2019-10-21T13:15:49.946 sample-wrapper 00.01: [I] EPOLL_MODE is available
-2019-10-21T13:15:50.009 sample-wrapper 00.01: [I] Initialized tiered identity TieredIdentity(node=10.0.2.15, rack=null)
-WARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access by com.google.protobuf.UnsafeUtil (file:/usr/share/sample-processor/proseo-sample-wrapper.jar) to field java.nio.Buffer.address
-WARNING: Please consider reporting this to the maintainers of com.google.protobuf.UnsafeUtil
-WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-WARNING: All illegal access operations will be denied in a future release
-2019-10-21T13:15:50.483 sample-wrapper 00.01: [I] Alluxio client has loaded configuration from meta master 10.0.2.15/10.0.2.15:19998
-2019-10-21T13:15:50.491 sample-wrapper 00.01: [I] Alluxio client (version 2.0.0) is trying to load cluster level configurations
-2019-10-21T13:15:50.515 sample-wrapper 00.01: [I] Alluxio client has loaded cluster level configurations
-2019-10-21T13:15:50.515 sample-wrapper 00.01: [I] Alluxio client (version 2.0.0) is trying to load path level configurations
-2019-10-21T13:15:50.609 sample-wrapper 00.01: [I] Alluxio client has loaded path level configurations
-2019-10-21T13:15:51.158 sample-wrapper 00.01: [I] Copied alluxio:///alluxio1/3244232/file01.txt to file://inputs/alluxio1/3244232/file01.txt
-2019-10-21T13:15:51.279 sample-wrapper 00.01: [I] Copied alluxio:///alluxio1/3244232/file02.txt to file://inputs/alluxio1/3244232/file02.txt
-2019-10-21T13:15:51.309 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file03.txt to file://inputs/s3test/3244233/file03.txt
-2019-10-21T13:15:51.324 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file04.txt to file://inputs/s3test/3244233/file04.txt
-2019-10-21T13:15:51.337 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file05.txt to file://inputs/s3test/3244233/file05.txt
-2019-10-21T13:15:51.349 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file06.txt to file://inputs/s3test/3244233/file06.txt
-2019-10-21T13:15:51.425 sample-wrapper 00.01: [I] Copied alluxio:///alluxio1/3244232/file07.txt to file://inputs/alluxio1/3244232/file07.txt
-2019-10-21T13:15:51.524 sample-wrapper 00.01: [I] Copied alluxio:///alluxio1/3244232/file08.txt to file://inputs/alluxio1/3244232/file08.txt
-2019-10-21T13:15:51.542 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file09.txt to file://inputs/s3test/3244233/file09.txt
-2019-10-21T13:15:51.556 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file10.txt to file://inputs/s3test/3244233/file10.txt
-2019-10-21T13:15:51.568 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file11.txt to file://inputs/s3test/3244233/file11.txt
-2019-10-21T13:15:51.582 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file12.txt to file://inputs/s3test/3244233/file12.txt
-2019-10-21T13:15:51.600 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file13.txt to file://inputs/s3test/3244233/file13.txt
-2019-10-21T13:15:51.616 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file14.txt to file://inputs/s3test/3244233/file14.txt
-2019-10-21T13:15:51.631 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file15.txt to file://inputs/s3test/3244233/file15.txt
-2019-10-21T13:15:51.641 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file16.txt to file://inputs/s3test/3244233/file16.txt
-2019-10-21T13:15:51.653 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file16.txt to file://inputs/s3test/3244233/file16.txt
-2019-10-21T13:15:51.666 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file16.txt to file://inputs/s3test/3244233/file16.txt
-2019-10-21T13:15:51.678 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file17.txt to file://inputs/s3test/3244233/file17.txt
-2019-10-21T13:15:51.692 sample-wrapper 00.01: [I] Copied s3://s3test/3244233/file18.txt to file://inputs/s3test/3244233/file18.txt
-2019-10-21T13:15:51.695 sample-wrapper 00.01: [I] Fetched 20 Input-Files and prepared dirs for 3 Outputs -- Ready for processing using Container-JOF /usr/share/sample-processor/1571663747.xml
-2019-10-21T13:15:51.799 sample-wrapper 00.01: [I] Starting Processing using command java -jar proseo-sample-processor.jar and local JobOrderFile: /usr/share/sample-processor/1571663747.xml
-2019-10-21T13:15:52.502 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.497000 localhost sample-processor 00.01 [0000012345]: [I] Starting sample-processor V00.00.01 with JobOrder file /usr/share/sample-processor/1571663747.xml
-2019-10-21T13:15:52.541 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.539000 localhost sample-processor 00.01 [0000012345]: [D] ... input product test-read with file inputs/alluxio1/3244232/file01.txt having 1 fields
-2019-10-21T13:15:52.576 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.573000 localhost sample-processor 00.01 [0000012345]: [D] ... creating output product file 1571663747/results_A/result01.txt
-2019-10-21T13:15:52.585 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.585000 localhost sample-processor 00.01 [0000012345]: [D] ... creating output product file 1571663747/results_B/result02.txt
-2019-10-21T13:15:52.588 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.586000 localhost sample-processor 00.01 [0000012345]: [D] ... creating output product file 1571663747/results_C/result03.txt
-2019-10-21T13:15:52.589 sample-wrapper 00.01: [I] ... 2019-10-21T13:15:52.587000 localhost sample-processor 00.01 [0000012345]: [I] Leaving sample-processor with exit code 0 (OK)
-2019-10-21T13:15:52.599 sample-wrapper 00.01: [I] Processing finished with return code 0
-2019-10-21T13:15:52.600 sample-wrapper 00.01: [I] Uploading results to prosEO storage...
-2019-10-21T13:15:52.600 sample-wrapper 00.01: [I] Upload File-Pattern based on timestamp-prefix is: FS_TYPE://<product_id>/1571663747/<filename>
-2019-10-21T13:15:53.632 sample-wrapper 00.01: [I] Copied file://1571663747/results_A/result01.txt to alluxio://alluxio1/7397129831/1571663747/results_A/result01.txt
-2019-10-21T13:15:53.995 sample-wrapper 00.01: [I] Copied file://1571663747/results_B/result02.txt to alluxio://alluxio1/7397129832/1571663747/results_B/result02.txt
-2019-10-21T13:15:54.282 sample-wrapper 00.01: [I] Copied file://1571663747/results_C/result03.txt to s3://s3test/7397129833/1571663747/results_C/result03.txt
-2019-10-21T13:15:54.283 sample-wrapper 00.01: [I] Uploaded 3 results to prosEO storage...
-2019-10-21T13:15:54.283 sample-wrapper 00.01: [I] Upload summary: listing 3 Outputs of type `PushedProcessingOutput`
-2019-10-21T13:15:54.283 sample-wrapper 00.01: [I] PRODUCT_ID=7397129831, FS_TYPE=ALLUXIO, PATH=/alluxio1/7397129831/1571663747/results_A/result01.txt, REVISION=1571663747
-2019-10-21T13:15:54.283 sample-wrapper 00.01: [I] PRODUCT_ID=7397129832, FS_TYPE=ALLUXIO, PATH=/alluxio1/7397129832/1571663747/results_B/result02.txt, REVISION=1571663747
-2019-10-21T13:15:54.284 sample-wrapper 00.01: [I] PRODUCT_ID=7397129833, FS_TYPE=S3, PATH=s3test/7397129833/1571663747/results_C/result03.txt, REVISION=1571663747
-2019-10-21T13:15:54.284 sample-wrapper 00.01: [I] Trying to register 3 products with prosEO-Ingestor@http://localhost:8082
-2019-10-21T13:15:54.377 sample-wrapper 00.01: [I] POST http://localhost:8082/ingest/Lerchenhof/7397129831
-2019-10-21T13:15:54.781 sample-wrapper 00.01: [E] java.net.ConnectException: Connection refused (Connection refused)
-2019-10-21T13:15:54.784 sample-wrapper 00.01: [I] POST http://localhost:8082/ingest/Lerchenhof/7397129832
-2019-10-21T13:15:54.829 sample-wrapper 00.01: [E] java.net.ConnectException: Connection refused (Connection refused)
-2019-10-21T13:15:54.831 sample-wrapper 00.01: [I] POST http://localhost:8082/ingest/Lerchenhof/7397129833
-2019-10-21T13:15:54.891 sample-wrapper 00.01: [E] java.net.ConnectException: Connection refused (Connection refused)
-2019-10-21T13:15:54.891 sample-wrapper 00.01: [E] 0 out of 3 products have been ingested...
-2019-10-21T13:15:54.892 sample-wrapper 00.01: [I] PATCH http://localhost:8080/proseo/planner/v0.1/processingfacilities/Lerchenhof/finish/proseojob968?status=FAILURE
-2019-10-21T13:15:54.959 sample-wrapper 00.01: [E] java.net.ConnectException: Connection refused (Connection refused)
-2019-10-21T13:15:54.959 sample-wrapper 00.01: [I] Leaving base-wrapper with exit code 255 (FAILURE)
+  {"prosEO" : "A Processing System for Earth Observation Data"}
+Starting base-wrapper with JobOrder file /proseo/data/joborders/2020/6/3/13/11edeb02-05bd-4c61-9022-277c5a5dc398.xml
+2020-06-03T13:56:36.878 Starting sample-wrapper 00.01: [I] Checking 15 environment variables:
+2020-06-03T13:56:36.878 Starting sample-wrapper 00.01: [I] ... JOBORDER_FS_TYPE = POSIX
+2020-06-03T13:56:36.878 Starting sample-wrapper 00.01: [I] ... JOBORDER_FILE = /proseo/data/joborders/2020/6/3/13/11edeb02-05bd-4c61-9022-277c5a5dc398.xml
+2020-06-03T13:56:36.878 Starting sample-wrapper 00.01: [I] ... STORAGE_ENDPOINT = proseo/storage-mgr/v0.1
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... STORAGE_USER = PTM-wrapper
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... STORAGE_PASSWORD = ingest&plan
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... INGESTOR_ENDPOINT = http://host.docker.internal:8081/proseo/ingestor/v0.1
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... STATE_CALLBACK_ENDPOINT = http://host.docker.internal:8083/proseo/planner/v0.1/processingfacilities/localhost/finish/proseojob206
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... PROCESSOR_SHELL_COMMAND = java -jar /usr/share/sample-processor/proseo-sample-processor.jar
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... PROCESSING_FACILITY_NAME = localhost
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... PROSEO_USER = PTM-wrapper
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... PROSEO_PW = ingest&plan
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... LOCAL_FS_MOUNT = /proseo/data
+2020-06-03T13:56:36.879 Starting sample-wrapper 00.01: [I] ... NODE_IP = 192.168.65.3
+2020-06-03T13:56:36.880 Starting sample-wrapper 00.01: [I] ... STORAGE_MGR_SERVICE_SERVICE_HOST = 10.98.234.81
+2020-06-03T13:56:36.880 Starting sample-wrapper 00.01: [I] ... STORAGE_MGR_SERVICE_SERVICE_PORT = 3000
+2020-06-03T13:56:36.897 Starting sample-wrapper 00.01: [I] Check of environment variables passed
+2020-06-03T13:56:36.897 Starting sample-wrapper 00.01: [I] Prefix timestamp used for JobOrderFile naming and results is 1591192596
+2020-06-03T13:56:37.106 Starting sample-wrapper 00.01: [I] GET http://10.98.234.81:3000/proseo/storage-mgr/v0.1/joborders?pathInfo=%2Fproseo%2Fdata%2Fjoborders%2F2020%2F6%2F3%2F13%2F11edeb02-05bd-4c61-9022-277c5a5dc398.xml
+2020-06-03T13:56:37.437 Starting sample-wrapper 00.01: [I] Fetched 8 input files and prepared directories for 3 outputs -- Ready for processing using Container-JOF /usr/share/proseo-sample-wrapper/1591192596.xml
+2020-06-03T13:56:37.497 Starting sample-wrapper 00.01: [I] Starting Processing using command /usr/share/proseo-sample-wrapper/1591192596.xml and local JobOrderFile: {}
+2020-06-03T13:56:37.944 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:37.940000 docker-desktop sample-processor 00.01 [0000012345]: [I] Starting sample-processor V00.00.02 with JobOrder file /usr/share/proseo-sample-wrapper/1591192596.xml
+2020-06-03T13:56:37.960 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:37.960000 docker-desktop sample-processor 00.01 [0000012345]: [D] ... input product test-read with file /proseo/data/65/PTM_L0_20191104150000_20191104154500_20191104180000.RAW having 6 fields: [1234567, L0________, 2019-11-04T15:00:00Z, 2019-11-04T15:45:00Z, 2019-11-04T18:00:00Z, 1]
+2020-06-03T13:56:37.985 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:37.985000 docker-desktop sample-processor 00.01 [0000012345]: [I] ... wait 1 seconds ...
+2020-06-03T13:56:38.995 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:38.995000 docker-desktop sample-processor 00.01 [0000012345]: [D] ... creating output product file /proseo/data/1591192596/PTM_TEST_L1B________20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632/PTM_TEST_L1B_PART1_20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632.nc
+2020-06-03T13:56:39.006 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:39.006000 docker-desktop sample-processor 00.01 [0000012345]: [D] ... creating output product file /proseo/data/1591192596/PTM_TEST_L1B________20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632/PTM_TEST_L1B_PART2_20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632.nc
+2020-06-03T13:56:39.010 Starting sample-wrapper 00.01: [I] ... 2020-06-03T13:56:39.010000 docker-desktop sample-processor 00.01 [0000012345]: [I] Leaving sample-processor with exit code 0 (OK)
+2020-06-03T13:56:39.029 Starting sample-wrapper 00.01: [I] Processing finished with return code 0
+2020-06-03T13:56:39.029 Starting sample-wrapper 00.01: [I] Uploading results to Storage Manager
+2020-06-03T13:56:39.042 Starting sample-wrapper 00.01: [I] PUT http://10.98.234.81:3000/proseo/storage-mgr/v0.1/productfiles?pathInfo=%2Fproseo%2Fdata%2F1591192596%2FPTM_TEST_L1B________20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632%2FPTM_TEST_L1B_PART1_20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632.nc
+2020-06-03T13:56:39.355 Starting sample-wrapper 00.01: [I] PUT http://10.98.234.81:3000/proseo/storage-mgr/v0.1/productfiles?pathInfo=%2Fproseo%2Fdata%2F1591192596%2FPTM_TEST_L1B________20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632%2FPTM_TEST_L1B_PART2_20191104T133000_20191104T173000_00000_77_0.1.0_20200603T135632.nc
+2020-06-03T13:56:39.633 Starting sample-wrapper 00.01: [I] 2 products with 2 files uploaded to Storage Manager
+2020-06-03T13:56:39.633 Starting sample-wrapper 00.01: [I] Registering 2 products with prosEO-Ingestor http://host.docker.internal:8081/proseo/ingestor/v0.1
+2020-06-03T13:56:39.811 Starting sample-wrapper 00.01: [I] POST http://host.docker.internal:8081/proseo/ingestor/v0.1/ingest/localhost/210
+2020-06-03T13:56:40.024 Starting sample-wrapper 00.01: [I] POST http://host.docker.internal:8081/proseo/ingestor/v0.1/ingest/localhost/211
+2020-06-03T13:56:40.124 Starting sample-wrapper 00.01: [I] 2 products registered with Ingestor
+2020-06-03T13:56:40.128 Starting sample-wrapper 00.01: [I] POST http://host.docker.internal:8083/proseo/planner/v0.1/processingfacilities/localhost/finish/proseojob206?status=SUCCESS
+2020-06-03T13:56:40.225 Starting sample-wrapper 00.01: [I] Production Planner response for callback is  (200)
+2020-06-03T13:56:40.225 Starting sample-wrapper 00.01: [I] Leaving base-wrapper with exit code 0 (OK)
 ```
 
 
