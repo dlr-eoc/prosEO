@@ -10,7 +10,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -23,6 +22,7 @@ import de.dlr.proseo.model.rest.ProductController;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.UtilService;
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle products.
@@ -52,7 +52,8 @@ public class ProductControllerImpl implements ProductController {
 		// look for product
 		try {
 			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
-			de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = searchForProduct(p);
+			KubeConfig aKubeConfig = searchForProduct(p, null);
+			aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
 			if (aKubeConfig != null) {
 				KubeDispatcher kd = new KubeDispatcher(null, aKubeConfig, true);
 				kd.start();
@@ -63,13 +64,37 @@ public class ProductControllerImpl implements ProductController {
 		}
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}
-	
-	private de.dlr.proseo.planner.kubernetes.KubeConfig searchForProduct(Product p) {
-		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = null;
+
+	private KubeConfig searchForProduct(Product p, KubeConfig kubeConfig) {
+		KubeConfig aKubeConfig = kubeConfig;
+		if (p != null) {
+			aKubeConfig = searchForProductPrim(p, aKubeConfig);
+			for (Product ps : p.getComponentProducts()) {
+				aKubeConfig = searchForProduct(ps, aKubeConfig);
+			}
+		}
+		return aKubeConfig;
+	}
+
+	private KubeConfig searchForEnclosingProduct(Product p, KubeConfig kubeConfig) {
+		KubeConfig aKubeConfig = kubeConfig;
+		if (p != null) {
+			aKubeConfig = searchForProductPrim(p, aKubeConfig);
+			if (p.getEnclosingProduct() != null) {
+				aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
+			}
+		}
+		return aKubeConfig;
+	}
+
+	private KubeConfig searchForProductPrim(Product p, KubeConfig kubeConfig) {
+		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
 			if (p.getProductFile().isEmpty() && p.getJobStep() != null) {
 				if (p.getJobStep().getJob().getProcessingFacility() != null) {
-					aKubeConfig = productionPlanner.getKubeConfig(p.getJobStep().getJob().getProcessingFacility().getName());
+					if (aKubeConfig == null) {
+						aKubeConfig = productionPlanner.getKubeConfig(p.getJobStep().getJob().getProcessingFacility().getName());
+					}
 					if (aKubeConfig != null) {
 						Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(aKubeConfig.getLongId());
 						if (pfo.isPresent()) {
@@ -82,7 +107,9 @@ public class ProductControllerImpl implements ProductController {
 			} else {
 				for (ProductFile pf : p.getProductFile()) {
 					if (pf.getProcessingFacility() != null) {
-						aKubeConfig = productionPlanner.getKubeConfig(pf.getProcessingFacility().getName());
+						if (aKubeConfig == null) {
+							aKubeConfig = productionPlanner.getKubeConfig(pf.getProcessingFacility().getName());
+						}
 						if (aKubeConfig != null) {
 							Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(aKubeConfig.getLongId());
 							if (pfo.isPresent()) {
@@ -90,11 +117,6 @@ public class ProductControllerImpl implements ProductController {
 							}
 						}
 					}
-				}
-			}
-			for (Product ps : p.getComponentProducts()) {
-				if (aKubeConfig == null) {
-					aKubeConfig = searchForProduct(ps);
 				}
 			}
 		}

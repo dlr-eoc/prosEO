@@ -127,19 +127,24 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	@Override
-	public ResponseEntity<List<RestProductFS>> getRestProductFs(StorageType storageType, Long id) {
+	public ResponseEntity<List<String>> getProductFiles(StorageType storageType, String prefix) {
 		List<StorageType> stl = new ArrayList<StorageType>();
-		if (storageType == null) {
-			stl.add(StorageType.S_3);
-			stl.add(StorageType.POSIX);
-		} else {
-			stl.add(storageType);
-		}
-		List<RestProductFS> response = new ArrayList<RestProductFS>();
-		for (StorageType st : stl) {
-			listProductFiles(st, id, response);
-		}		
-		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
+		List<String> response = new ArrayList<String>();
+		try {
+			if (storageType == null) {
+				stl.add(StorageType.S_3);
+				stl.add(StorageType.POSIX);
+			} else {
+				stl.add(storageType);
+			}
+			for (StorageType st : stl) {
+				listProductFiles(st, prefix, response);
+			}	
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+		}	
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
@@ -231,19 +236,17 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
 	
-	private void listProductFiles(StorageType st, Long id, List<RestProductFS> response) {
+	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 		ProseoFile path = null;
 		FsType ft = FsType.fromValue(st.toString());
-		if (id == null) {
+		if (prefix == null) {
 			path = ProseoFile.fromType(ft, "", cfg);
 		} else {
-			path = ProseoFile.fromType(ft, String.valueOf(id) + "/", cfg);
+			path = ProseoFile.fromType(ft, prefix + "/", cfg);
 		}
 		List<ProseoFile> files = path.list();
 		for (ProseoFile f : files) {
-			RestProductFS fs = new RestProductFS();
-			fs.setTargetStorageType(TargetStorageType.fromValue(f.getFsType().toString()));
-			fs.setRegisteredFilePath(f.getFullPath());
+			String fs = f.getFsType().toString() + "|" + f.getFullPath();
 			response.add(fs);
 		}
 	}

@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.planner.dispatcher;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -155,7 +157,16 @@ public class JobDispatcher {
 
 			// read a job order file for test purposes
 			if (jobOrder != null) {
-				jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);
+				InetAddress ip;
+				try {
+					ip = InetAddress.getLocalHost();
+					String hostname = ip.getHostName();
+					if (hostname.equalsIgnoreCase("ME580")) {
+						jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);						
+					}
+				} catch (UnknownHostException e) {
+					// do nothing		
+				}
 			}
 		}
 		return jobOrder;

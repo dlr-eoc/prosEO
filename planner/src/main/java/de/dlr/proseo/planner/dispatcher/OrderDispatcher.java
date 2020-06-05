@@ -366,7 +366,8 @@ public class OrderDispatcher {
 													configuredProcessors,
 													jobSteps,
 													allJobSteps,
-													products);
+													products,
+													order.getInputProductClasses());
 										} 
 									}
 									
@@ -400,9 +401,12 @@ public class OrderDispatcher {
 		return answer;
 	}
 
-	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts) {
+	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, 
+				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
 
-
+		if (inputProducts.contains(productClass)) {
+			return;
+		}
 		JobStep jobStep = new JobStep();
 		jobStep.setJobStepState(JobStepState.INITIAL);
 		jobStep.setJob(job);
@@ -482,7 +486,8 @@ public class OrderDispatcher {
 								configuredProcessors,
 								jobStepList,
 								allJobStepList,
-								allProducts);
+								allProducts,
+								inputProducts);
 						hasUnsatisfiedInputQueries = true;
 					}
 				}
