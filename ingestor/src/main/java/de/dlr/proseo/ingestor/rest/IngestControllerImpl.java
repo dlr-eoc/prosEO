@@ -19,6 +19,7 @@ import javax.validation.Valid;
 import javax.ws.rs.ProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final int MSG_ID_INVALID_FACILITY = 2051;
 	private static final int MSG_ID_PRODUCTS_INGESTED = 2058;
 	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 2056;
+	private static final int MSG_ID_NOTIFICATION_FAILED = 2071;
 	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_EXCEPTION_THROWN = 9001;
 	
@@ -52,6 +54,7 @@ public class IngestControllerImpl implements IngestController {
 	private static final String MSG_INVALID_PROCESSING_FACILITY = "(E%d) Invalid processing facility %s for ingestion";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
+	private static final String MSG_NOTIFICATION_FAILED = "(E%d) Notification of Production Planner failed (cause: %s)";
 
 	private static final String MSG_PRODUCTS_INGESTED = "(I%d) %d products ingested in processing facility %s";
 	
@@ -70,6 +73,33 @@ public class IngestControllerImpl implements IngestController {
 	ProductIngestor productIngestor;
 	
 	/**
+	 * Create and log a formatted message at the given level
+	 * 
+	 * @param level the logging level to use
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return a formatted info mesage
+	 */
+	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
+		// Prepend message ID to parameter list
+		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+		messageParamList.add(0, messageId);
+
+		// Log the error message
+		String message = String.format(messageFormat, messageParamList.toArray());
+		if (Level.ERROR.equals(level)) {
+			logger.error(message);
+		} else if (Level.WARN.equals(level)) {
+			logger.warn(message);
+		} else {
+			logger.info(message);
+		}
+
+		return message;
+	}
+
+	/**
 	 * Create and log a formatted informational message
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
@@ -78,15 +108,7 @@ public class IngestControllerImpl implements IngestController {
 	 * @return a formatted info mesage
 	 */
 	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-		
-		return message;
+		return log(Level.INFO, messageFormat, messageId, messageParameters);
 	}
 	
 	/**
@@ -98,15 +120,7 @@ public class IngestControllerImpl implements IngestController {
 	 * @return a formatted error message
 	 */
 	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-		
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.error(message);
-		
-		return message;
+		return log(Level.ERROR, messageFormat, messageId, messageParameters);
 	}
 	
 	/**
@@ -145,7 +159,11 @@ public class IngestControllerImpl implements IngestController {
 
     /**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
-     * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated
+     * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated.
+     * 
+     * The Production Planner will be notified of all ingested products. However, notification is optional, and if it fails,
+     * the Ingestor still returns with HTTP status CREATED. We rely on a cyclical check by the Production Planner to pick up all newly
+     * ingested products, should it not have been notified.
      * 
      * @param processingFacility the processing facility to ingest products to
      * @param ingestorProducts a list of product descriptions with product file locations
@@ -186,12 +204,17 @@ public class IngestControllerImpl implements IngestController {
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
 				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");
-				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
-				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
 			} catch (ProcessingException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (IllegalArgumentException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			}
+			try {
+				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
+				if (logger.isTraceEnabled()) logger.trace("... planner notification successful");
+			} catch (Exception e) {
+				// If notification fails, log warning, but otherwise ignore
+				log(Level.WARN, MSG_NOTIFICATION_FAILED, MSG_ID_NOTIFICATION_FAILED, e.getMessage());
 			}
 		}
 		
@@ -239,6 +262,10 @@ public class IngestControllerImpl implements IngestController {
      * Create the metadata of a new product file for a product at a given processing facility (it is assumed that the
      * files themselves are already pushed to the Storage Manager)
      * 
+     * The Production Planner will be notified of the ingested product. However, notification is optional, and if it fails,
+     * the Ingestor still returns with HTTP status CREATED. We rely on a cyclical check by the Production Planner to pick up all newly
+     * ingested products, should it not have been notified.
+     * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, in which the files have been stored
      * @param productFile the REST product file to store
@@ -270,14 +297,24 @@ public class IngestControllerImpl implements IngestController {
 		// Get username and password from HTTP Authentication header for authentication with Production Planner
 		String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
 		
+		RestProductFile restProductFile = null;
 		try {
-			RestProductFile restProductFile = productIngestor.ingestProductFile(
+			restProductFile = productIngestor.ingestProductFile(
 						productId, facility, productFile, userPassword[0], userPassword[1]);
-			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile);
-			return new ResponseEntity<>(restProductFile, HttpStatus.CREATED);
+		} catch (ProcessingException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
+		
+		try {
+			productIngestor.notifyPlanner(userPassword[0], userPassword[1], restProductFile);
+		} catch (Exception e) {
+			// If notification fails, log warning, but otherwise ignore
+			log(Level.WARN, MSG_NOTIFICATION_FAILED, MSG_ID_NOTIFICATION_FAILED, e.getMessage());
+		}
+
+		return new ResponseEntity<>(restProductFile, HttpStatus.CREATED);
 	}
 
     /**
