@@ -29,8 +29,8 @@ description: |
   a fraction of second and/or a time zone, e. g. the following are valid:
   "2020-04-08", "2020-04-08T11:30+0200", "2020-04-08T11:30:45.123456Z".
   
-  For all commands except "mission show" a user login is required, all commands except "mission show", "mission create" and
-  "user create" require login to a specific mission.
+  For all commands except "mission show" a user login is required, all commands except "mission show", "mission create",
+  "user create" and all facility-related commands require login to a specific mission.
   
   Caution 1: Typing ^C (Control-C) terminates the Command Line Interface immediately.
   Caution 2: When run in non-interactive mode (e. g. with input redirection) prompts for missing mandatory attributes do not work.
@@ -529,7 +529,7 @@ commands:
           description: Commands for managing processor classes
           subcommands:
             - name: show
-              description: Show all processor classes for the current mission or a named one
+              description: Show all processor classes for the current mission and optionally a given class name
               options:
                 - name: format
                   type: string
@@ -538,7 +538,7 @@ commands:
                 - name: className
                   type: string
                   optional: true
-                  description: The name of the processor classes to show
+                  description: The name of the processor class to show
             - name: create
               description: Create a new processor class for the current mission; 
                            the user will be prompted for mandatory attributes not given on the command line
@@ -665,10 +665,10 @@ commands:
               type: string
               description: The version of the processor to delete
         - name: configuration
-          description: Commands to manage configured processors
+          description: Commands to manage configured processors (combinations of processor versions and processor class configurations)
           subcommands:
             - name: show
-              description: Show all configured processor for the current mission or only the ones identified
+              description: Show all configured processors for the current mission or only the one identified
               options:
                 - name: format
                   type: string
@@ -679,7 +679,7 @@ commands:
                   optional: true
                   description: The identifier of the configured processor
             - name: create
-              description: Create a new configured processor by combining a processor version and a configuration; 
+              description: Create a new configured processor by combining a processor version and a (processor class) configuration; 
                            the user will be prompted for mandatory attributes not given on the command line
               options:
                 - name: file
@@ -705,7 +705,7 @@ commands:
                 - name: configurationVersion
                   type: string
                   optional: true
-                  description: The version of the configuration (mandatory if not read from file)
+                  description: The version of the processor class configuration (mandatory if not read from file)
                 - name: attribute
                   type: string
                   optional: true
@@ -739,10 +739,10 @@ commands:
                   type: string
                   description: The identifier of the configured processor to delete
     - name: configuration
-      description: Commands for managing configurations
+      description: Commands for managing configurations of a specific processor class
       subcommands:
         - name: show
-          description: Show all configurations for the current mission and processor class or a named one
+          description: Show all configurations for the current mission and optionally the given processor class and configuration version
           options:
             - name: format
               type: string
@@ -751,13 +751,13 @@ commands:
             - name: className
               type: string
               optional: true
-              description: The name of the processor classes for the configurations
+              description: The name of the processor class for the configurations
             - name: configurationVersion
               type: string
               optional: true
               description: The configuration versions to show
         - name: create
-          description: Create a new configuration for the current mission and processor class; 
+          description: Create a new configuration for the given processor class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
           options:
             - name: file
@@ -782,7 +782,7 @@ commands:
               repeatable: true
               description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
         - name: update
-          description: Update a configuration for the current mission and processor class; 
+          description: Update a configuration for the given processor class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
           options:
             - name: file
@@ -810,7 +810,7 @@ commands:
               repeatable: true
               description: A configuration attribute to set in the form "<attribute name>=<attribute value>"
         - name: delete
-          description: Remove a configuration from the current mission and processor class
+          description: Remove a configuration from the given processor class in the current mission
           parameters:
             - name: className
               type: string
@@ -889,7 +889,7 @@ commands:
           description: Commands for managing selection rules
           subcommands:
             - name: show
-              description: Show all selection rules for the current mission and target product class
+              description: Show all selection rules for the current mission and the given target and source product classes
               options:
                 - name: format
                   type: string
@@ -988,7 +988,7 @@ commands:
               repeatable: true
               description: The name of the product class to show
         - name: create
-          description: Create a new product for the current mission and product class; 
+          description: Create a new product for the given product class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
           options:
             - name: file
@@ -1009,7 +1009,7 @@ commands:
               repeatable: true
               description: A product attribute to set in the form "<attribute name>=<attribute value>"
         - name: update
-          description: Update a product for the current mission and product class; 
+          description: Update a product for the given product class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line
           options:
             - name: file
