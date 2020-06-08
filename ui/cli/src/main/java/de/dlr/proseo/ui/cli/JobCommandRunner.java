@@ -866,6 +866,10 @@ public class JobCommandRunner {
 			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
 			return;
 		}
+		if (null == loginManager.getMission()) {
+			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+			return;
+		}
 		
 		/* Check argument */
 		if (!CMD_JOB.equals(command.getName())) {

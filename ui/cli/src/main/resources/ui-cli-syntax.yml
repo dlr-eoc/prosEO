@@ -3,6 +3,10 @@ title: prosEO UI Command Line Interface Syntax
 # command line program and to be returned as online help for the user.
 version: v0.1
 description: |
+  The general syntax for commands is:
+  
+    command [subcommand...] [option...] [parameter...]
+  
   Commands can be entered after the "prosEO>" command prompt. They can also be invoked on the shell command line 
   following the name of the prosEO executable (e. g. "proseo") and at least one whitespace character.
   
@@ -25,8 +29,8 @@ description: |
   a fraction of second and/or a time zone, e. g. the following are valid:
   "2020-04-08", "2020-04-08T11:30+0200", "2020-04-08T11:30:45.123456Z".
   
-  So the general syntax is:
-  command [subcommand...] [option...] [parameter...]
+  For all commands except "mission show" a user login is required, all commands except "mission show", "mission create" and
+  "user create" require login to a specific mission.
   
   Caution 1: Typing ^C (Control-C) terminates the Command Line Interface immediately.
   Caution 2: When run in non-interactive mode (e. g. with input redirection) prompts for missing mandatory attributes do not work.

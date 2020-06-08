@@ -51,7 +51,7 @@ public class CommandLineInterface implements CommandLineRunner {
 	/* Message string constants */
 	
 	/* Other string constants */
-	private static final String PROSEO_COMMAND_PROMPT = "prosEO> ";
+	private static final String PROSEO_COMMAND_PROMPT = "prosEO (%s)> ";
 	private static final String CMD_CLEAR = "clear";
 	private static final String CMD_HELP = "help";
 	private static final String CMD_LOGOUT = "logout";
@@ -305,7 +305,8 @@ public class CommandLineInterface implements CommandLineRunner {
 			try {
 				String commandLine;
 				try {
-					commandLine = userInput.readLine(PROSEO_COMMAND_PROMPT);
+					commandLine = userInput.readLine(String.format(PROSEO_COMMAND_PROMPT,
+							null == loginManager.getMission() ? "no mission" : loginManager.getMission()));
 				} catch (UserInterruptException e) {
 					String message = uiMsg(MSG_ID_USER_INTERRUPT);
 					logger.error(message);

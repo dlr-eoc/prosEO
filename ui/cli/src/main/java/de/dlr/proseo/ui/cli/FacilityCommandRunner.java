@@ -532,12 +532,8 @@ public class FacilityCommandRunner {
 		
 		/* Check that user is logged in */
 		if (null == loginManager.getUser()) {
-			if (CMD_FACILITY.equals(command.getName()) && null != command.getSubcommand() && CMD_SHOW.equals(command.getSubcommand().getName()) ) {
-				// OK, "mission show" allowed without login
-			} else {
-				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
-				return;
-			}
+			System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN, command.getName()));
+			return;
 		}
 		
 		/* Check argument */
