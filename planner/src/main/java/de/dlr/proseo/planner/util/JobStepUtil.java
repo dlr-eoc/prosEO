@@ -378,30 +378,32 @@ public class JobStepUtil {
 	@Transactional
 	public void checkJobStepQueries(JobStep js) {
 		Boolean hasUnsatisfiedInputQueries = false;
-		if (   js.getJob() != null 
-			&& (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
-			logger.trace("Looking for product queries of job step: " + js.getId());
-			for (ProductQuery pq : js.getInputProductQueries()) {
-				if (!pq.isSatisfied()) {
-					if (productQueryService.executeQuery(pq, false, false)) {
-						js.getOutputProduct().getSatisfiedProductQueries().add(pq);
-						RepositoryService.getProductQueryRepository().save(pq);
-						RepositoryService.getProductRepository().save(js.getOutputProduct());
-					} else {
-						hasUnsatisfiedInputQueries = true;
+		if (js.getJobStepState() == JobStepState.INITIAL || js.getJobStepState() == JobStepState.WAITING_INPUT) {
+			if (   js.getJob() != null 
+					&& (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
+				logger.trace("Looking for product queries of job step: " + js.getId());
+				for (ProductQuery pq : js.getInputProductQueries()) {
+					if (!pq.isSatisfied()) {
+						if (productQueryService.executeQuery(pq, false, false)) {
+							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
+							RepositoryService.getProductQueryRepository().save(pq);
+							RepositoryService.getProductRepository().save(js.getOutputProduct());
+						} else {
+							hasUnsatisfiedInputQueries = true;
+						}
 					}
 				}
-			}
-			if (hasUnsatisfiedInputQueries) {
-				if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
-					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+				if (hasUnsatisfiedInputQueries) {
+					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT) {
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
+						js.incrementVersion();
+						RepositoryService.getJobStepRepository().save(js);
+					}				
+				} else {
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
-				}				
-			} else {
-				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
-				js.incrementVersion();
-				RepositoryService.getJobStepRepository().save(js);
+				}
 			}
 		}
 	}

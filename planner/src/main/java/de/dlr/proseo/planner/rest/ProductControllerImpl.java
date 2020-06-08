@@ -55,8 +55,7 @@ public class ProductControllerImpl implements ProductController {
 			KubeConfig aKubeConfig = searchForProduct(p, null);
 			aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
 			if (aKubeConfig != null) {
-				KubeDispatcher kd = new KubeDispatcher(null, aKubeConfig, true);
-				kd.start();
+				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, null, true);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

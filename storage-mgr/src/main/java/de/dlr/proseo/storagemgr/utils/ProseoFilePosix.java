@@ -229,13 +229,21 @@ public class ProseoFilePosix extends ProseoFile {
 		ArrayList<String> result = new ArrayList<String>();
 		File srcFile = new File(this.getFullPath());
 		if (srcFile.isDirectory()) {
-			try {
-				FileUtils.deleteDirectory(srcFile);
-				result.add(getFullPath());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		    File[] files = srcFile.listFiles();
+		    if(files!=null) {  
+		        for(File f: files) {
+		            if(f.isDirectory()) {
+		    			try {
+		    				FileUtils.deleteDirectory(f);
+		    			} catch (IOException e) {
+		    				e.printStackTrace();
+		    			}
+		            } else {
+		                f.delete();
+		            }
+		        }
+		    }
+			result.add(getFullPath());
 		} else {
 			srcFile.delete();
 			result.add(getFullPath());
