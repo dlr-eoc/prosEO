@@ -29,11 +29,15 @@ proseo:
         url: http://192.168.20.155:8080/proseo/planner/v0.1
         user: wrapper
         password: ingest&plan
+        # maximum cycles to check finish of k8s proseo job 
         maxcycles: 50
-        # time in milliseconds
+        # wait time beetwen cycle in milliseconds  
         cyclewaittime: 1000
+        # wait time between test for new ready jobs
         # run once if <= 0 (at startup)
-        dispatcherwaittime: 0
+        dispatcherwaittime: 60000
+        # kubernetes configuration file, used to connect master
+        kubeconfig: empty
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: wrapper

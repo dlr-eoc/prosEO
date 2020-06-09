@@ -61,10 +61,14 @@ public class ProductionPlannerConfiguration {
 	/** The bucket to use for prosEO S3 logins */
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
-	
+
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private String productionPlannerCycleWaitTime;
+	
+	/** Kubernetes configuration file name */
+	@Value("${proseo.productionPlanner.kubeconfig}")
+	private String productionPlannerKubeConfig;
 
 	/** Maximum cycle for K8s job finish */
 	@Value("${proseo.productionPlanner.maxcycles}")
@@ -77,6 +81,20 @@ public class ProductionPlannerConfiguration {
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+
+	/**
+	 * @return the productionPlannerKubeConfig
+	 */
+	public String getProductionPlannerKubeConfig() {
+		return productionPlannerKubeConfig;
+	}
+
+	/**
+	 * @param productionPlannerKubeConfig the productionPlannerKubeConfig to set
+	 */
+	public void setProductionPlannerCubeConfig(String productionPlannerKubeConfig) {
+		this.productionPlannerKubeConfig = productionPlannerKubeConfig;
+	}
 
 	/**
 	 * @return the posixWorkerMountPoint

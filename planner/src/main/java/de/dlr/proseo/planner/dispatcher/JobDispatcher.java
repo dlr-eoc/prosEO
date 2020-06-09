@@ -7,6 +7,7 @@ package de.dlr.proseo.planner.dispatcher;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -231,7 +233,9 @@ public class JobDispatcher {
 		}
 		
 		try {
-			RestTemplate restTemplate = new RestTemplate();
+			RestTemplateBuilder rtb = new RestTemplateBuilder();
+			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000))
+					.basicAuthentication(kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword()).build();
 			String restUrl = "/joborders";
 			String b64String = jobOrder.buildBase64String(true);
 			RestJoborder jo = new RestJoborder();

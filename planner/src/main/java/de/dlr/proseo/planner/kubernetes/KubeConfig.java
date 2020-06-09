@@ -20,6 +20,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProductFile.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
@@ -268,25 +269,20 @@ public class KubeConfig {
 			return true;
 		} else {
 			kubeJobList = new HashMap<String, KubeJob>();
-
-			if (id.equalsIgnoreCase("OTC")) {
-//				try {
-//					client = Config.fromConfig("I:\\usr\\prosEO\\kubernetes\\auth\\config");
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//					return false;
-//				}
+			if (processingEngineUser != null && !processingEngineUser.isEmpty() 
+					&& processingEnginePassword != null && !processingEnginePassword.isEmpty()) {
 				client = Config.fromUserPassword(url, 
-						 "user1", 
-						 "c36ff53775d69aa6bdbfa1486d8908a2fc9c38e712e6b0b69584a4f0cd9e8006", 
+						 processingEngineUser, 
+						 processingEnginePassword, 
 						 false);
-			} else 	if (id.equalsIgnoreCase("Lerchenhof")) {
-				client = Config.fromUrl(url, false);
 			} else {
                 try {
                 	// beschreibt Kubernetes in Docker
-                    client = Config.fromConfig("kube_config");
+                	String kconf = ProductionPlanner.config.getProductionPlannerKubeConfig();
+                	if (kconf == null || kconf.isEmpty()) {
+                		kconf = "kube_config";
+                	}
+                    client = Config.fromConfig(kconf);
                 } catch (IOException e) {
                     logger.info("Cannot access Kubernetes Configuration file: " + e.getMessage());
                 }
@@ -309,7 +305,6 @@ public class KubeConfig {
 				client.setConnectTimeout(100000);
 
 				// get node info
-				getNodeInfo();
 				sync();
 			}
 			return true;
@@ -334,6 +329,7 @@ public class KubeConfig {
 	public void sync() {
 		// rebuild runtime data 
 		V1JobList k8sJobList = null;
+		getNodeInfo();
 		try {
 			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {

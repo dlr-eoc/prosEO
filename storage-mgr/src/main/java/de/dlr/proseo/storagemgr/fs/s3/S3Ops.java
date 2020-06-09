@@ -96,11 +96,16 @@ public class S3Ops {
 		} else {
 			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
 		}
-		ObjectListing objects = s3.listObjects(listObjectsRequest);
-
 		List<String> folderLike = new ArrayList<String>();
+		ObjectListing objects = s3.listObjects(listObjectsRequest);
 		for (S3ObjectSummary f : objects.getObjectSummaries()) {
 			folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
+		}
+		while (objects.isTruncated()) {
+			objects = s3.listNextBatchOfObjects(objects);
+			for (S3ObjectSummary f : objects.getObjectSummaries()) {
+				folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
+			}
 		}
 		return folderLike;
 	}
@@ -460,6 +465,11 @@ public class S3Ops {
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
 	    ObjectListing objectList = client.listObjects(bucketName, prefix );
 	    List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
+	    while (objectList.isTruncated()) {
+	    	objectList = client.listNextBatchOfObjects(objectList);
+	    	objectSummeryList.addAll(objectList.getObjectSummaries());
+	    }
+	    
 	    String[] keysList = new String[ objectSummeryList.size() ];
 	    int count = 0;
 	    for( S3ObjectSummary summery : objectSummeryList ) {

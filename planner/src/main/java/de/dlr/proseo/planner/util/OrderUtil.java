@@ -494,20 +494,30 @@ public class OrderUtil {
 				break;
 			case FAILED:
 				Boolean all = true;
+				Boolean allCompleted = true;
 				for (Job job : order.getJobs()) {
 					jobUtil.retry(job);
 				}
 				for (Job job : order.getJobs()) {
 					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
-						break;
+						if (job.getJobState() != JobState.COMPLETED) {
+							allCompleted = false;
+						}
 					}
 				}
 				if (all) {
-					order.setOrderState(OrderState.PLANNED);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					answer = Messages.ORDER_RETRIED;
+					if (allCompleted) {
+						order.setOrderState(OrderState.COMPLETED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						answer = Messages.ORDER_COMPLETED;
+					} else {
+						order.setOrderState(OrderState.PLANNED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						answer = Messages.ORDER_RETRIED;
+					}
 				} else {
 					answer = Messages.ORDER_COULD_NOT_RETRY;
 				}
