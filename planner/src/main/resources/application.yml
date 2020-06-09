@@ -34,6 +34,8 @@ proseo:
         cyclewaittime: 1000
         # run once if <= 0 (at startup)
         dispatcherwaittime: 0
+        # kubernetes configuration file, used to connect master
+        kubeconfig: empty
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
         user: wrapper

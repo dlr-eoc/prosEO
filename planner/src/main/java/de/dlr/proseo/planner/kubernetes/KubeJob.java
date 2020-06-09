@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1JobBuilder;
 import io.kubernetes.client.openapi.models.V1JobCondition;
 import io.kubernetes.client.openapi.models.V1JobSpec;
 import io.kubernetes.client.openapi.models.V1JobSpecBuilder;
+import io.kubernetes.client.openapi.models.V1LocalObjectReference;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimVolumeSource;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
@@ -327,6 +328,7 @@ public class KubeJob {
 						.addToLabels("jobgroup", jobName + "spec")
 						.endMetadata()
 						.withNewSpec()
+						.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
 						.addNewContainer()
 						.withName(containerName)
 						.withImage(imageName)

@@ -194,6 +194,21 @@ public class JobStepUtil {
 				break;
 			case WAITING_INPUT:
 			case FAILED:
+				Product jsp = js.getOutputProduct();
+				if (jsp != null) {
+					// collect output products
+					List<Product> jspList = new ArrayList<Product>();
+					collectProducts(jsp, jspList);
+					if (checkProducts(jspList)) {
+						// Product was created, due to some communication problems the wrapper process finished with errors. 
+						// 	Dicard this problem and set job step to completed
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+						js.incrementVersion();
+						RepositoryService.getJobStepRepository().save(js);
+						answer = Messages.JOBSTEP_RETRIED_COMPLETED;
+						break;
+					}		
+				}
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
@@ -258,8 +273,6 @@ public class JobStepUtil {
 					RepositoryService.getProductQueryRepository().delete(pq);
 				}
 				js.getInputProductQueries().clear();
-				// RepositoryService.getJobStepRepository().delete(js);
-
 				Messages.JOBSTEP_DELETED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
@@ -429,6 +442,7 @@ public class JobStepUtil {
     		Collection<KubeConfig> kcs = productionPlanner.getKubeConfigs();
     		if (kcs != null) {
     			for (KubeConfig kc : kcs) {
+    				kc.sync();
     				checkForJobStepsToRun(kc, null, false);
     			}
     		}
@@ -524,5 +538,39 @@ public class JobStepUtil {
 				}
 			}
 		}
+	}
+
+	@Transactional
+    private void collectProducts(Product p, List<Product> list) {
+		if (p != null) {
+			list.add(p);
+			for (Product cp : p.getComponentProducts()) {
+				collectProducts(p, list);
+			}
+		}
+	}
+	
+	@Transactional
+    private Boolean checkProducts(List<Product> list) {
+		Boolean answer = true;
+		for (Product p : list) {
+			List<Product> resultList = RepositoryService.getProductRepository()
+				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
+					p.getProductClass().getId(),
+					p.getConfiguredProcessor().getId(),
+					p.getSensingStartTime(),
+					p.getSensingStopTime());
+			if (resultList.isEmpty()) {
+				answer = false;
+				break;
+			} else {
+				for (Product rp : resultList) {
+					if (rp.getGenerationTime() == null) {
+						answer = false;
+					}
+				}
+			}
+		}
+		return answer;
 	}
 }

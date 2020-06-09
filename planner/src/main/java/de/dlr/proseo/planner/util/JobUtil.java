@@ -118,18 +118,29 @@ public class JobUtil {
 					UtilService.getJobStepUtil().retry(js);
 				}
 				Boolean all = true;
+				Boolean allCompleted = true;
 				for (JobStep js : job.getJobSteps()) {
 					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
 						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
-						break;
+						if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.COMPLETED) {
+							allCompleted = false;
+						}
+						
 					}
 				}
 				if (all) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_RETRIED;
+					if (allCompleted) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						answer = Messages.JOB_COMPLETED;
+					} else {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						answer = Messages.JOB_RETRIED;
+					}
 				} else {
 					answer = Messages.JOB_COULD_NOT_RETRY;
 				}
