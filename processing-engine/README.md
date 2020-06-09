@@ -26,6 +26,38 @@ TBD
 ## Step 4 (optional): Deploy Minio as S3 Object Storage Provider
 TBD
 
+## Step 5: Configure kubectl for acces to the new cluster
+Add a new cluster to the kubectl configuration file (usually $HOME/.kube/config):
+- With nginx proxy (assuming nginx accepts Kubernetes API calls on port 443):
+  ```
+  kubectl config set-cluster <cluster nickname> --server=<server DNS name without port> --certificate-authority=<path to nginx(!) CA file>
+  ```
+- Without nginx proxy:
+  ```
+  kubectl config set-cluster <cluster nickname> --server=<server DNS name>:6443 --certificate-authority=<path to Kubernetes CA file>
+  ```
+It may be possible that the certificate file needs to be copied from the Nginx/Kubernetes master host.
+
+Next, configure the Kubernetes API user (TODO None of this seems to work currently):
+- With certificate authentication:
+  ```
+  kubectl config set-credentials <user nickname> --client-certificate=<path/to/certfile> --client-key=<path/to/keyfile>
+  ```
+- With basic authentication (if enabled on Kubernetes API server):
+  ```
+  kubectl config set-credentials <user nickname> --username=<basic user> --password=<basic password>
+  ```
+- With a bearer token:
+  ```
+  kubectl config set-credentials <user nickname> --username=<basic user> --password=<basic password>
+  ```
+
+Configure the Kubernetes context:
+```
+kubectl config set-context <context nickname> --cluster=<cluster nickname> --user=<user nickname>
+```
+
+
 # prosEO Configuration
 Add the new storage facility to the prosEO Control Instance configuration:
 

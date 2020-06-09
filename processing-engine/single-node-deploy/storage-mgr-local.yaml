@@ -67,6 +67,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
 
+
 ---
 # The common storage area for Storage Manager and Processing Engine
 apiVersion: v1

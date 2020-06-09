@@ -2,12 +2,12 @@ prosEO k8s setup (OpenStack)
 ===========================
 deploy a k8s-cluster using terraform & kubespray
 
-### prerequisites
+## Prerequisites
 - docker engine running at your control host (local development machine)
 - ssh-keygen
 - unrestricted internet access
 
-### deploy steps
+## Deploy steps
 Perform this on your local development machine
 - create public and private ssh-key (e.g. by using ssh-keygen) and copy the keys to:
   - ssh-keys/`cluster-key.pem` (private key)
@@ -48,7 +48,7 @@ export CINDER_ENDPOINT_TYPE=publicURL
 ```
 - build deployer docker image by running `build.sh`
 
-### run deployer docker image
+### Run deployer docker image
 - cd /prosEO/processing-engine/k8s-deploy
 - `run.sh` -> this opens a shell inside the container
 
@@ -69,7 +69,7 @@ sudo systemctl restart sshd
 exit # Leave bastion host
 ```
 
-### prepare bastion host tunneling (from inside container)
+### Prepare bastion host tunneling (from inside container)
 
 Kubespray can generate a SSH configuration that lets you tunnel through the
 bastion host. Before you can run the complete kubespray setup, you need to run
@@ -89,7 +89,7 @@ cp ssh-bastion.conf ~/.ssh/config
 SSH tunnels through the bastion host will be set up when any of the cluster-
 internal IP addresses are accessed.
 
-### check ssh-connectivity between nodes (inside container)
+### Check ssh-connectivity between nodes (inside container)
 ```sh
 cd /kubespray/inventory/proseo-spray/
 ANSIBLE_HOST_KEY_CHECKING=False ansible -i hosts -m ping all
@@ -107,21 +107,21 @@ can verify this by running `ps` and seeing a lot of SSH processes. If ansible
 fails because a tunnel is not working, re-running this ping command should
 work to create them.
 
-### run kubespray (inside container)
+### Run kubespray (inside container)
 kubespray is responsible for the complete sw-config of all k8s-components
 ```sh
 cd /kubespray
 ansible-playbook -i inventory/proseo-spray/hosts --become  cluster.yml --flush-cache
 ```
 
-### run post install recipe (inside container)
+### Run post install recipe (inside container)
 the postinstall.yml is responsible for creating a stable nginx reverse proxy cfg for publishing the k8s-apis...
 ```sh
 cd /kubespray
 ansible-playbook -i inventory/proseo-spray/hosts --become  postinstall.yml --flush-cache
 ```
 
-### install k8s-dashboard (from bastion host)
+### Install k8s-dashboard (from bastion host)
 
 ```sh
 # install it...
@@ -137,9 +137,9 @@ kubectl -n default describe secret $(kubectl -n default get secret | awk '/^k8s-
 kubectl -n default describe secret $(kubectl -n default get secret | awk '/^k8s-poweruser-token-/{print $1}') | awk '$1=="token:"{print $2}'
 ```
 
-### create k8s-secret holding credentials for private registry
+### Create k8s-secret holding credentials for private registry
 
-this secret is used when k8s needs to pull images from some private registry
+This secret is used when k8s needs to pull images from some private registry
 
 ```sh
 # on some host where kubectl is configured

@@ -11,20 +11,17 @@
 # - a processing order for L3 products
 #
 
-# Create a new CLI command script
-CLI_SCRIPT=cli_data_script.txt
-echo "" >$CLI_SCRIPT
  
 # Create empty subdirectory for test data
 TEST_DATA_DIR=testfiles
 mkdir -p $TEST_DATA_DIR
-cd $TEST_DATA_DIR
-rm *
+rm $TEST_DATA_DIR/*
 
-# Create L0 input data
 # Products consist of the fields id, type, start time, stop time, generation time and revision,
 # separated by vertical bars
 # L0 products are in 45 min slices, starting with orbit 3000
+cd $TEST_DATA_DIR
+
 cat >PTM_L0_20191104090000_20191104094500_20191104120000.RAW <<EOF
 1234567|L0________|2019-11-04T09:00:00Z|2019-11-04T09:45:00Z|2019-11-04T12:00:00Z|1
 EOF
@@ -91,6 +88,15 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 # Requires "aws" (aws-cli) as a local S3 client, correctly configured with access key id and secret
 # aws s3 sync $TEST_DATA_DIR s3://<bucket> --endpoint-url https://<provider-url>
 
+
+# -------------------------
+# Create prosEO config files
+# -------------------------
+
+# Create a new CLI command script
+CLI_SCRIPT=cli_data_script.txt
+echo "" >$CLI_SCRIPT
+
 # Create a processing facility
 cat >$TEST_DATA_DIR/facility.json <<EOF
 {
@@ -101,7 +107,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "processingEnginePassword": "very-secret-password",
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
-    "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "localStorageManagerUrl": "http://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"
@@ -135,7 +141,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104090000_20191104094500_20191104120000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "50545d8ad8486dd9297014cf2e769f71"
+    	"checksum": "50545d8ad8486dd9297014cf2e769f71",
+    	"checksumTime": "2019-11-04T12:00:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -159,7 +166,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104094500_20191104103000_20191104120100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "3ca720d0d2a7dee0ba95a9b50047b5a0"
+    	"checksum": "3ca720d0d2a7dee0ba95a9b50047b5a0",
+    	"checksumTime": "2019-11-04T12:01:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -183,7 +191,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104103000_20191104111500_20191104120200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "f65f2591c400a85ced1d7557a6644138"
+    	"checksum": "f65f2591c400a85ced1d7557a6644138",
+    	"checksumTime": "2019-11-04T12:02:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -207,7 +216,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104111500_20191104120000_20191104120300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "58a029e6b09ad1e749fc1ff523dbbf80"
+    	"checksum": "58a029e6b09ad1e749fc1ff523dbbf80",
+    	"checksumTime": "2019-11-04T12:03:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -231,7 +241,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104120000_20191104124500_20191104150000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "9ecc9bbc7abb0672efd51a39e8fc2c59"
+    	"checksum": "9ecc9bbc7abb0672efd51a39e8fc2c59",
+    	"checksumTime": "2019-11-04T15:00:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -255,7 +266,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104124500_20191104133000_20191104150100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "fb720888a0d9bae6b16c1f9607c4de27"
+    	"checksum": "fb720888a0d9bae6b16c1f9607c4de27",
+    	"checksumTime": "2019-11-04T15:01:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -279,7 +291,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104133000_20191104141500_20191104150200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "4ef20d31f2e051d16cf06db2bae2c76e"
+    	"checksum": "4ef20d31f2e051d16cf06db2bae2c76e",
+    	"checksumTime": "2019-11-04T15:02:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -303,7 +316,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104141500_20191104150000_20191104150300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "8b3a2f2f386c683ce9b1c68bb52b34d2"
+    	"checksum": "8b3a2f2f386c683ce9b1c68bb52b34d2",
+    	"checksumTime": "2019-11-04T15:03:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -327,7 +341,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104150000_20191104154500_20191104180000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "6bea82661ad200b8dc8a912bbc9c89f6"
+    	"checksum": "6bea82661ad200b8dc8a912bbc9c89f6",
+    	"checksumTime": "2019-11-04T18:00:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -351,7 +366,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104154500_20191104163000_20191104180100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "a1953fa0c117f803c26902243bb0d3aa"
+    	"checksum": "a1953fa0c117f803c26902243bb0d3aa",
+    	"checksumTime": "2019-11-04T18:01:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -375,7 +391,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104163000_20191104171500_20191104180200.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "a9fb7fc052b5aced6f6dc9d753bbe790"
+    	"checksum": "a9fb7fc052b5aced6f6dc9d753bbe790",
+    	"checksumTime": "2019-11-04T18:02:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -399,7 +416,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104171500_20191104180000_20191104180300.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "b8b5304d83100a56114cd5ca6a6bc581"
+    	"checksum": "b8b5304d83100a56114cd5ca6a6bc581",
+    	"checksumTime": "2019-11-04T18:03:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -423,7 +441,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104180000_20191104184500_20191104210000.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "9211729e47c5e2487de302f1ca48f4b9"
+    	"checksum": "9211729e47c5e2487de302f1ca48f4b9",
+    	"checksumTime": "2019-11-04T21:00:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -447,7 +466,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "PTM_L0_20191104184500_20191104193000_20191104210100.RAW",
         "auxFileNames": [],
     	"fileSize": 84,
-    	"checksum": "95eb634992099c7ebb7bf5b76b243da1"
+    	"checksum": "95eb634992099c7ebb7bf5b76b243da1",
+    	"checksumTime": "2019-11-04T21:01:10.000000"
     },
     {
 		"missionCode": "PTM",
@@ -471,7 +491,8 @@ cat >$TEST_DATA_DIR/ingest_products.json <<EOF
         "productFileName": "bulletinb-380.xml",
         "auxFileNames": [],
     	"fileSize": 51090,
-    	"checksum": "b754f424e3dad8f1c107ed6b8ad9d06a"
+    	"checksum": "b754f424e3dad8f1c107ed6b8ad9d06a",
+    	"checksumTime": "2019-10-01T12:01:00.000000"
     }
 ]
 EOF

@@ -1131,6 +1131,15 @@ public class MissionCommandRunner {
 				return;
 			}
 		}
+		if (null == loginManager.getMission()) {
+			if (CMD_MISSION.equals(command.getName()) && null != command.getSubcommand() && 
+					(CMD_SHOW.equals(command.getSubcommand().getName()) || CMD_CREATE.equals(command.getSubcommand().getName())) ) {
+				// OK, "mission show" and "mission create" allowed without login to a specific mission
+			} else {
+				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
+				return;
+			}
+		}
 		
 		/* Check argument */
 		if (!CMD_MISSION.equals(command.getName()) && !CMD_ORBIT.equals(command.getName())) {

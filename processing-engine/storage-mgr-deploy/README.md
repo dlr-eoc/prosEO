@@ -2,9 +2,10 @@ prosEO-storage-mgr-deploy
 =========================
 
 ## prerequisites
-- for k8s-deployment you need a working kubectl config at your host
+- for k8s-deployment you need a working kubectl config at your host (make sure kubectl is configured with the correct credentials)
 
 ## standalone docker-image
+TODO: This section does not apply any more (no `./docker` directory), to be rewritten
 - copy file `docker/application.yml.template` to `docker/application.yml`
 - edit all relevant properties
 - build modified docker image of storage-mgr (apllication.yml is copied next to storage-mgr.jar)
@@ -34,23 +35,31 @@ docker login <registry-url>
 ```
 - re-tag our docker-image
 ```sh
-docker tag localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT-rc1 <registry-url>/<repo>/sample-integration-processor:0.0.1-SNAPSHOT-rc1
-docker push <registry-url>/<repo>/sample-integration-processor:0.0.1-SNAPSHOT-rc1
+docker tag localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT-rc1 <registry-url>/<repo>/proseo-storage-mgr:latest
+docker push <registry-url>/<repo>/proseo-storage-mgr:latest
 ```
 
 ## kubernetes
+See also: <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>
+
 - create k8s-secret holding credentials for private registry
-```sh
-# on some host where kubectl is configured
-docker login <registry-url>
-#check if docker-client file is under ~/.docker/config.json
-cat ~/.docker/config.json
-#create k8s-secret
-cd && kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=.docker/config.json --type=kubernetes.io/dockerconfigjson
-```
+  ```sh
+  # on some host where kubectl is configured (not a Docker Desktop host!)
+  docker login <registry-url>
+  # check if docker-client file is under ~/.docker/config.json, and make sure it actually contains the desired credentials
+  cat ~/.docker/config.json
+  # create k8s-secret
+  kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson
+  ```
+
 - build and push docker image (steps above)
+
 - deploy the storage-mgr service
-```sh
-cd kubernetes
-kubectl create -f storage-mgr.yaml
-```
+    ```sh
+    cd kubernetes
+    kubectl apply -f nfs-server.yaml
+    NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
+    sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
+    kubectl apply -f nfs-pv.yaml
+    kubectl apply -f storage-mgr.yaml
+    ```

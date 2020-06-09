@@ -30,6 +30,7 @@ public class UIMessages {
 	public static final int MSG_ID_OPERATION_CANCELLED = 2804;
 	public static final int MSG_ID_INVALID_TIME = 2805;
 	public static final int MSG_ID_EXCEPTION = 2806;
+	public static final int MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION = 2807;
 	public static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	// Service connection
@@ -281,6 +282,7 @@ public class UIMessages {
 		MSG_INVALID_COMMAND_NAME ("(E%d) Invalid command name %s", MSG_ID_INVALID_COMMAND_NAME),
 		MSG_SUBCOMMAND_MISSING ("(E%d) Subcommand missing for command %s", MSG_ID_SUBCOMMAND_MISSING),
 		MSG_USER_NOT_LOGGED_IN ("(E%d) User not logged in", MSG_ID_USER_NOT_LOGGED_IN),
+		MSG_USER_NOT_LOGGED_IN_TO_MISSION ("(E%d) User not logged in to any mission", MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION),
 		MSG_NOT_AUTHORIZED ("(E%d) User %s not authorized to manage %s for mission %s", MSG_ID_NOT_AUTHORIZED),
 		MSG_EXCEPTION ("(E%d) Command failed (cause: %s)", MSG_ID_EXCEPTION),
 		MSG_INVALID_TIME ("(E%d) Time format %s not parseable", MSG_ID_INVALID_TIME),
