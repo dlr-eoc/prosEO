@@ -25,6 +25,8 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 public class ProseoFilePosix extends ProseoFile {
 
@@ -79,6 +81,8 @@ public class ProseoFilePosix extends ProseoFile {
 		}
 		buildFileName();
 		pathInfo = getFullPath();	
+		
+		logger.trace("ProseoFilePosix created: {}", this);
 	}
 
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
@@ -90,6 +94,8 @@ public class ProseoFilePosix extends ProseoFile {
 		}
 		buildFileName();
 		pathInfo = getFullPath();						
+		
+		logger.trace("ProseoFilePosix created: {}", this);
 	}
 
 	@Override
@@ -146,22 +152,22 @@ public class ProseoFilePosix extends ProseoFile {
 			String targetPath = null;
 			if (srcFile.isDirectory()) {
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 				S3Ops.createFolder(s3, cfg.getS3DefaultBucket(), proFile.getRelPath());
 				result = new ArrayList<String>();
 				result.add(proFile.getFullPath());
 				if (recursive) {
 					targetPath = proFile.getRelPath();
-					if (targetPath.endsWith("/")) {
-						targetPath = targetPath.substring(0, targetPath.length() - 1);
-					}
 				}
 			} else {
 				targetPath = proFile.getRelPath();
 			}
 			if (targetPath != null) {
+				if (targetPath.endsWith("/")) {
+					targetPath = targetPath.substring(0, targetPath.length() - 1);
+				}
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 				result = S3Ops.v1Upload(
 						//the client
 						s3, 

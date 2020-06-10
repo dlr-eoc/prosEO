@@ -24,8 +24,10 @@ public class V1XferMgrProgress {
 			xfer.waitForCompletion();
 		} catch (AmazonServiceException e) {
 			logger.error("Amazon service error: " + e.getMessage());
+			throw e;
 		} catch (AmazonClientException e) {
 			logger.error("Amazon client error: " + e.getMessage());
+			throw e;
 		} catch (InterruptedException e) {
 			logger.error("Transfer interrupted: " + e.getMessage());
 		}
@@ -117,57 +119,59 @@ public class V1XferMgrProgress {
 		logger.info(erase_bar);
 	}
 
-	public static void uploadFileWithListener(String file_path, String bucket_name, String key_prefix, boolean pause) {
-		logger.info("file: " + file_path + (pause ? " (pause)" : ""));
-
-		String key_name = null;
-		if (key_prefix != null) {
-			key_name = key_prefix + '/' + file_path;
-		} else {
-			key_name = file_path;
-		}
-
-		// snippet-start:[s3.java1.s3_xfer_mgr_progress.progress_listener]
-		File f = new File(file_path);
-		TransferManager xfer_mgr = TransferManagerBuilder.standard().build();
-		try {
-			Upload u = xfer_mgr.upload(bucket_name, key_name, f);
-			// print an empty progress bar...
-			printProgressBar(0.0);
-			u.addProgressListener(new ProgressListener() {
-				public void progressChanged(ProgressEvent e) {
-					double pct = e.getBytesTransferred() * 100.0 / e.getBytes();
-					eraseProgressBar();
-					printProgressBar(pct);
-				}
-			});
-			// block with Transfer.waitForCompletion()
-			V1XferMgrProgress.waitForCompletion(u);
-			// print the final state of the transfer.
-			TransferState xfer_state = u.getState();
-			logger.info(": " + xfer_state);
-		} catch (AmazonServiceException e) {
-			logger.error(e.getErrorMessage());
-		}
-		xfer_mgr.shutdownNow();
-		// snippet-end:[s3.java1.s3_xfer_mgr_progress.progress_listener]
-	}
-
-	public static void uploadDirWithSubprogress(String dir_path, String bucket_name, String key_prefix,
-			boolean recursive, boolean pause) {
-		logger.info("directory: " + dir_path + (recursive ? " (recursive)" : "") + (pause ? " (pause)" : ""));
-
-		TransferManager xfer_mgr = TransferManagerBuilder.standard().build();
-		try {
-			MultipleFileUpload multi_upload = xfer_mgr.uploadDirectory(bucket_name, key_prefix, new File(dir_path),
-					recursive);
-			// loop with Transfer.isDone()
-			V1XferMgrProgress.showMultiUploadProgress(multi_upload);
-			// or block with Transfer.waitForCompletion()
-			V1XferMgrProgress.waitForCompletion(multi_upload);
-		} catch (AmazonServiceException e) {
-			logger.error(e.getErrorMessage());
-		}
-		xfer_mgr.shutdownNow();
-	}
+	/* --- Methods below never used --- */
+	
+//	public static void uploadFileWithListener(String file_path, String bucket_name, String key_prefix, boolean pause) {
+//		logger.info("file: " + file_path + (pause ? " (pause)" : ""));
+//
+//		String key_name = null;
+//		if (key_prefix != null) {
+//			key_name = key_prefix + '/' + file_path;
+//		} else {
+//			key_name = file_path;
+//		}
+//
+//		// snippet-start:[s3.java1.s3_xfer_mgr_progress.progress_listener]
+//		File f = new File(file_path);
+//		TransferManager xfer_mgr = TransferManagerBuilder.standard().build();
+//		try {
+//			Upload u = xfer_mgr.upload(bucket_name, key_name, f);
+//			// print an empty progress bar...
+//			printProgressBar(0.0);
+//			u.addProgressListener(new ProgressListener() {
+//				public void progressChanged(ProgressEvent e) {
+//					double pct = e.getBytesTransferred() * 100.0 / e.getBytes();
+//					eraseProgressBar();
+//					printProgressBar(pct);
+//				}
+//			});
+//			// block with Transfer.waitForCompletion()
+//			V1XferMgrProgress.waitForCompletion(u);
+//			// print the final state of the transfer.
+//			TransferState xfer_state = u.getState();
+//			logger.info(": " + xfer_state);
+//		} catch (AmazonServiceException e) {
+//			logger.error(e.getErrorMessage());
+//		}
+//		xfer_mgr.shutdownNow();
+//		// snippet-end:[s3.java1.s3_xfer_mgr_progress.progress_listener]
+//	}
+//
+//	public static void uploadDirWithSubprogress(String dir_path, String bucket_name, String key_prefix,
+//			boolean recursive, boolean pause) {
+//		logger.info("directory: " + dir_path + (recursive ? " (recursive)" : "") + (pause ? " (pause)" : ""));
+//
+//		TransferManager xfer_mgr = TransferManagerBuilder.standard().build();
+//		try {
+//			MultipleFileUpload multi_upload = xfer_mgr.uploadDirectory(bucket_name, key_prefix, new File(dir_path),
+//					recursive);
+//			// loop with Transfer.isDone()
+//			V1XferMgrProgress.showMultiUploadProgress(multi_upload);
+//			// or block with Transfer.waitForCompletion()
+//			V1XferMgrProgress.waitForCompletion(multi_upload);
+//		} catch (AmazonServiceException e) {
+//			logger.error(e.getErrorMessage());
+//		}
+//		xfer_mgr.shutdownNow();
+//	}
 }

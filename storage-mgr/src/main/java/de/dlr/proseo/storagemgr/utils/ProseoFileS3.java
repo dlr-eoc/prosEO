@@ -53,7 +53,9 @@ public class ProseoFileS3 extends ProseoFile {
 			basePath = cfg.getS3DefaultBucket();
 		}
 		buildFileName();
-		pathInfo = getFullPath();			
+		pathInfo = getFullPath();
+		
+		logger.trace("ProseoFileS3 created: {}", this);
 	}
 
 	public ProseoFileS3(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
@@ -66,6 +68,7 @@ public class ProseoFileS3 extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();						
 		
+		logger.trace("ProseoFileS3 created: {}", this);
 	}
 	
 	@Override
@@ -80,8 +83,16 @@ public class ProseoFileS3 extends ProseoFile {
 
 	@Override
 	public InputStream getDataAsInputStream() {
-		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-		return S3Ops.v2FetchStream(s3, getFullPath());
+		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
+		InputStream inputStream = null;
+		try {
+			inputStream = S3Ops.v2FetchStream(s3, getFullPath());
+			logger.info("Successfully read from {}", getFullPath());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return inputStream;
 	}
 
 	@Override
@@ -91,13 +102,20 @@ public class ProseoFileS3 extends ProseoFile {
 			// create internal buckets, if not existing
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(),
 					cfg.getS3EndPoint(), getBasePath(), cfg.getS3Region());
-			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
-			s3.putObject(PutObjectRequest.builder().bucket(getBasePath()).key(getRelPathAndFile()).build(),
-					RequestBody.fromInputStream(fis, bytes.length));
+			S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
+			boolean putOK = false;
+			try {
+				s3.putObject(PutObjectRequest.builder().bucket(getBasePath()).key(getRelPathAndFile()).build(),
+						RequestBody.fromInputStream(fis, bytes.length));
+				putOK = true;
+				logger.info("Bytes, written to {}", getFullPath());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			s3.close();
 			fis.close();
-			logger.info("Bytes, written to {}", getFullPath());
-			return true;
+			return putOK;
 		}
 		logger.warn("writeBytes, arument bytes not set");
 		return false;
@@ -114,7 +132,7 @@ public class ProseoFileS3 extends ProseoFile {
 			case S_3:
 				// create internal buckets & prefixes if not exists..
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 				result = S3Ops.v1Copy(
 						//the client
 						s3, 
@@ -129,7 +147,7 @@ public class ProseoFileS3 extends ProseoFile {
 						);
 				break;
 			case POSIX:
-				S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+				S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 				if (null==sourceKey) sourceKey="";
 				result = new ArrayList<String>();
 				// TODO recursive
@@ -170,7 +188,7 @@ public class ProseoFileS3 extends ProseoFile {
 	@Override
 	public ArrayList<String> delete() {
 		ArrayList<String> result = new ArrayList<String>();
-		AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+		AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 		try {
 			S3Ops.deleteDirectory(s3, getBasePath(), getRelPathAndFile());	
 			result.add(getFullPath());		
@@ -185,7 +203,7 @@ public class ProseoFileS3 extends ProseoFile {
 		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();				
 		try {
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
-			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 			List<String> files = S3Ops.listObjectsInBucket(s3, getBasePath(), getRelPath());			
 			for (String f : files) {
 				list.add(new ProseoFileS3(f, true, cfg));
@@ -209,7 +227,7 @@ public class ProseoFileS3 extends ProseoFile {
 		if (isDirectory()) {
 			return 0;
 		} else {
-			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint());
+			AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 			return S3Ops.getLength(s3, getBasePath(), getRelPathAndFile());
 		}
 	}
