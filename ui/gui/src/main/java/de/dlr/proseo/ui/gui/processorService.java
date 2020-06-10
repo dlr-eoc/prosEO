@@ -1,7 +1,7 @@
 package de.dlr.proseo.ui.gui;
-import com.amazonaws.services.s3.Headers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.Authentication;
@@ -15,9 +15,12 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.server.ServerRequest.Headers;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -108,7 +111,7 @@ public class processorService {
 		   
 		return webclient.build().post().uri(uri).body(BodyInserters.fromObject(map))
 				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer"))
-				.header(Headers.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
 

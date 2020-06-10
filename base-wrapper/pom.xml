@@ -3,7 +3,7 @@
 
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>base-wrapper</artifactId>
-	<version>0.1.0</version>
+	<version>0.5.0</version>
 	<name>prosEO Base Processor Wrapper</name>
 	<description>prosEO Base Processor Wrapper for externally developed, ESA-IPF-conformant processors providing procedures to execute before the start and after the end of the processor</description>
 
@@ -14,7 +14,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.1.0-SNAPSHOT</module.version>
+		<module.version>0.5.0</module.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
