@@ -30,9 +30,9 @@ proseo:
       bucket: otc-proseo01-internal
       prefix: joborders
     storageManager:
-        defaultStorageType: S3
-          
-            # Alluxio configuration values currently not in use       
+       defaultStorageType: S3
+       
+    # Alluxio configuration values currently not in use       
 #    mountpoints:
 #     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
 #      alluxio:

@@ -1,0 +1,1 @@
+../../integration-tests/stop_brain.sh

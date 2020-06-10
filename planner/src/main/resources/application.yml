@@ -12,23 +12,13 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
-    defaultuser.name: sysadm
-    defaultuser.password: sysadm
     wrapper:
+        # User and password for wrapper callbacks
         user: wrapper
         password: ingest&plan
-    userManager:
-        url: http://localhost:8086/proseo/user-mgr/v0.1
-    orderManager:
-        url: http://localhost:8082/proseo/order-mgr/v0.1
-    processorManager:
-        url: http://localhost:8084/proseo/processor-mgr/v0.1
-    productClassManager:
-        url: http://localhost:8085/proseo/productclass-mgr/v0.1
     productionPlanner:
+        # Callback URL for wrapper
         url: http://192.168.20.155:8080/proseo/planner/v0.1
-        user: wrapper
-        password: ingest&plan
         # maximum cycles to check finish of k8s proseo job 
         maxcycles: 50
         # wait time beetwen cycle in milliseconds  
@@ -38,46 +28,8 @@ proseo:
         dispatcherwaittime: 60000
         # kubernetes configuration file, used to connect master
         kubeconfig: empty
-    storageManager:
-        url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
-        user: wrapper
-        password: ingest&plan
     ingestor:
+        # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1
-        user: wrapper
-        password: ingest&plan
-    global:
-      storageIdPrefix: proseo
-    procFacility:
-      name: devel
-      url: http://localhost:9887/k8s-api-endpoint
-      descr: local env :-)
-    s3:
-      s3AccessKey: short_access_key
-      s3SecretAccessKey: short_secret_key
-      s3EndPoint: http://192.168.20.159:9000
-      s3Region: eu-de
-      s3DefaultBucket: proseo-data-001
-      s3MaxNumberOfBuckets: 50
-    alluxio:
-      alluxioUnderFsS3Bucket: internal
-      alluxioUnderFsS3BucketPrefix: underfs
-      alluxioUnderFsS3BucketEndPoint: http://192.168.20.159:9000
-      alluxioUnderFsMaxPrefixes: 500
-      alluxioUnderFsDefaultPrefix: proseo-alluxio-cache
     posix:
-      mountPoint: /proseo/data
-      workerMountPoint: /proseo/data
-    joborder:
-      bucket: internal
-      prefix: joborders
-    mountpoints:
-     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info
-      alluxio:
-        k8sNode:
-          alluxioCache: /mnt/alluxio
-          alluxioFuse: /alluxio-fuse
-      #Required for handling a mounted storage-appliance, available at every k8s-Node as POSIX-mountpoint
-      unregisteredProducts:
-        k8sNode:
-          unregisteredProducts: /mnt/some-dir
+        workerMountPoint: /proseo/data

@@ -38,30 +38,6 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
 	
-	/** The user name to use for prosEO Ingestor logins */
-	@Value("${proseo.ingestor.user}")
-	private String ingestorUser;
-
-	/** The password to use for prosEO Ingestor logins */
-	@Value("${proseo.ingestor.password}")
-	private String ingestorPassword;
-	
-	/** The URL of the prosEO S3 */
-	@Value("${proseo.s3.s3EndPoint}")
-	private String s3EndPoint;
-
-	/** The user name to use for prosEO S3 logins */
-	@Value("${proseo.s3.s3SecretAccessKey}")
-	private String s3SecretAccessKey;
-
-	/** The password to use for prosEO S3 logins */
-	@Value("${proseo.s3.s3AccessKey}")
-	private String s3AccessKey;
-	
-	/** The bucket to use for prosEO S3 logins */
-	@Value("${proseo.s3.s3DefaultBucket}")
-	private String s3DefaultBucket;
-
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private String productionPlannerCycleWaitTime;
@@ -90,31 +66,10 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
-	 * @param productionPlannerKubeConfig the productionPlannerKubeConfig to set
-	 */
-	public void setProductionPlannerCubeConfig(String productionPlannerKubeConfig) {
-		this.productionPlannerKubeConfig = productionPlannerKubeConfig;
-	}
-
-	/**
 	 * @return the posixWorkerMountPoint
 	 */
 	public String getPosixWorkerMountPoint() {
 		return posixWorkerMountPoint;
-	}
-
-	/**
-	 * @param posixWorkerMountPoint the posixWorkerMountPoint to set
-	 */
-	public void setPosixWorkerMountPoint(String posixWorkerMountPoint) {
-		this.posixWorkerMountPoint = posixWorkerMountPoint;
-	}
-
-	/**
-	 * @return the s3Url
-	 */
-	public String getS3EndPoint() {
-		return s3EndPoint;
 	}
 
 	/**
@@ -166,46 +121,10 @@ public class ProductionPlannerConfiguration {
 	}
 
 	/**
-	 * Gets the user for S3 logins
-	 * 
-	 * @return the S3 user
-	 */
-	public String getS3AccessKey() {
-		return s3AccessKey;
-	}
-
-	/**
-	 * Gets the password for S3 logins
-	 * 
-	 * @return the S3 password
-	 */
-	public String getS3SecretAccessKey() {
-		return s3SecretAccessKey;
-	}
-
-
-	public String getS3DefaultBucket() {
-		return s3DefaultBucket;
-	}
-	/**
 	 * @return the ingestorUrl
 	 */
 	public String getIngestorUrl() {
 		return ingestorUrl;
 	}
 
-	/**
-	 * @return the ingestorUser
-	 */
-	public String getIngestorUser() {
-		return ingestorUser;
-	}
-
-	/**
-	 * @return the ingestorPassword
-	 */
-	public String getIngestorPassword() {
-		return ingestorPassword;
-	}
-	
 }
