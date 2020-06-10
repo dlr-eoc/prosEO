@@ -1,0 +1,1 @@
+../../../integration-tests/stop_local_control_stack.sh

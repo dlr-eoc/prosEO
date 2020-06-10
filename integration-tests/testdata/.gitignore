@@ -1,13 +1,6 @@
 /configure_proseo_test_mission.generated.sh
-/otc-s3-access-key-id
-/otc-s3-access-key-secret
-/otc-s3-user
-/otc-s3-credentials.csv
 /testfiles/
-/init_testdata_2019-11-19.sql
-/cli_script.txt
+/cli*.txt
 /create_data.sh
-/proseo-ui-cli.jar
-/proseo-ui-cli.log
-/cli_data_script.txt
+/proseo-ui-cli.*
 /application.yml

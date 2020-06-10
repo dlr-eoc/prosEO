@@ -1,0 +1,1 @@
+../../../integration-tests/build_integration_images.sh

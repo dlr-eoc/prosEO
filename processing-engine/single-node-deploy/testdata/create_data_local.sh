@@ -168,7 +168,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "processingEnginePassword": "very-secret-password",
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
-    "localStorageManagerUrl": "http://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"

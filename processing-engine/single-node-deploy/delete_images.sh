@@ -1,1 +1,0 @@
-../../integration-tests/delete_images.sh
