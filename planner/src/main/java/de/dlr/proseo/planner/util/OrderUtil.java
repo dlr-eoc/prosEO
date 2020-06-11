@@ -23,6 +23,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
@@ -630,5 +631,48 @@ public class OrderUtil {
 		}
 		return pfList;
 	}
+	
+
+	@Transactional
+	public void updateState(ProcessingOrder order, JobState jState) {
+		if (order != null) {
+			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+			switch (order.getOrderState()) {
+			case INITIAL:
+				break;
+			case APPROVED:
+				break;
+			case PLANNED:
+				if (jState == JobState.RELEASED) {
+					order.setOrderState(OrderState.RELEASED);
+					order.incrementVersion();
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+				}	
+				break;
+			case RELEASED:
+				break;
+			case RUNNING:
+				break;
+			case SUSPENDING:
+				break;
+			case COMPLETED:
+				break;
+			case FAILED:
+				if (jState == JobState.INITIAL) {
+					order.setOrderState(OrderState.PLANNED);
+					order.incrementVersion();
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+				}
+				break;
+			case CLOSED:
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
 
 }

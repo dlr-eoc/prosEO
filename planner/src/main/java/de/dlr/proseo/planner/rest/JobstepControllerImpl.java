@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.JobstepController;
@@ -32,6 +33,7 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
+import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
 
 
@@ -118,8 +120,9 @@ public class JobstepControllerImpl implements JobstepController {
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
-			Messages msg = jobStepUtil.resume(js);
+			Messages msg = jobStepUtil.resume(js, true);
 			if (msg.isTrue()) {
+				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
 				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
 					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
 					if (kc != null) {
@@ -145,6 +148,7 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
@@ -171,6 +175,7 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
+	
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean force) {
@@ -220,9 +225,28 @@ public class JobstepControllerImpl implements JobstepController {
 
 	@Transactional
 	@Override
-	public ResponseEntity<RestJobStep> retryJobStep(String id) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NOT_IMPLEMENTED);
+	public ResponseEntity<RestJobStep> retryJobStep(String jobstepId) {
+		JobStep js = this.findJobStepByNameOrId(jobstepId);
+		if (js != null) {
+			Messages msg = jobStepUtil.retry(js);
+			if (msg.isTrue()) {
+				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			} else {
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobstepId));
+				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			}
+		}
+		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 }

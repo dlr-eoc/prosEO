@@ -31,7 +31,7 @@ proseo:
         password: ingest&plan
         # maximum cycles to check finish of k8s proseo job 
         maxcycles: 50
-        # wait time beetwen cycle in milliseconds  
+        # wait time between cycle in milliseconds  
         cyclewaittime: 1000
         # wait time between test for new ready jobs
         # run once if <= 0 (at startup)

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -201,7 +202,7 @@ public class JobUtil {
 			switch (job.getJobState()) {
 			case INITIAL:
 				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().resume(js);
+					UtilService.getJobStepUtil().resume(js, false);
 				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 				job.incrementVersion();
@@ -397,5 +398,43 @@ public class JobUtil {
 			}	
 		}
  		return answer;
+	}
+	
+	@Transactional
+	public void updateState(Job job, JobStepState jsState) {
+		// first implementation for retry
+		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
+		if (job != null) {
+			switch (job.getJobState()) {
+			case INITIAL:
+				if (jsState == JobStepState.READY || jsState == JobStepState.WAITING_INPUT) {
+					job.setJobState(JobState.RELEASED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				}
+				break;
+			case RELEASED:
+				break;
+			case ON_HOLD:
+				break;
+			case STARTED:
+				break;
+			case COMPLETED:
+				break;
+			case FAILED:
+				if (jsState == JobStepState.INITIAL || jsState == JobStepState.WAITING_INPUT) {
+					job.setJobState(JobState.INITIAL);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				}
+				break;
+			default:
+				break;
+			}	
+		}
 	}
 }

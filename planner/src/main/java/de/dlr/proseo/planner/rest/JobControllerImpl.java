@@ -220,8 +220,26 @@ public class JobControllerImpl implements JobController {
 	@Transactional
 	@Override
 	public ResponseEntity<RestJob> retryJob(String id) {
-		// TODO Auto-generated method stub
-		return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NOT_IMPLEMENTED);
+		Job j = this.findJobById(id);
+		if (j != null) {
+			Messages msg = jobUtil.retry(j);
+			if (msg.isTrue()) {
+				RestJob pj = RestUtil.createRestJob(j);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(id));
+				return new ResponseEntity<>(pj, responseHeaders, HttpStatus.OK);
+			} else {
+				RestJob pj = RestUtil.createRestJob(j);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(id));
+				return new ResponseEntity<>(pj, responseHeaders, HttpStatus.OK);
+			}
+		}
+		Messages.JOB_NOT_EXIST.log(logger, id);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(id);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	
 }

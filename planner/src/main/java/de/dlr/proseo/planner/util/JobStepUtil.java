@@ -94,7 +94,7 @@ public class JobStepUtil {
 			}
 		}
 		for (JobStep js : jobSteps) {
-			checkJobStepQueries(js);
+			checkJobStepQueries(js, false);
 		}
 	}
 
@@ -202,7 +202,7 @@ public class JobStepUtil {
 					if (checkProducts(jspList)) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// 	Dicard this problem and set job step to completed
-						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
 						answer = Messages.JOBSTEP_RETRIED_COMPLETED;
@@ -325,14 +325,14 @@ public class JobStepUtil {
 	}
 
 	@Transactional
-	public Messages resume(JobStep js) {
+	public Messages resume(JobStep js, Boolean force) {
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		if (js != null) {
 			switch (js.getJobStepState()) {
 			case INITIAL:
 			case WAITING_INPUT:
-				checkJobStepQueries(js);
+				checkJobStepQueries(js, force);
 				if (js.getJobStepState() == JobStepState.WAITING_INPUT) {
 					answer = Messages.JOBSTEP_WAITING;
 				} else {
@@ -389,11 +389,11 @@ public class JobStepUtil {
 	}
 
 	@Transactional
-	public void checkJobStepQueries(JobStep js) {
+	public void checkJobStepQueries(JobStep js, Boolean force) {
 		Boolean hasUnsatisfiedInputQueries = false;
 		if (js.getJobStepState() == JobStepState.INITIAL || js.getJobStepState() == JobStepState.WAITING_INPUT) {
 			if (   js.getJob() != null 
-					&& (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
+					&& (force || js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED)) {
 				logger.trace("Looking for product queries of job step: " + js.getId());
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
@@ -411,11 +411,13 @@ public class JobStepUtil {
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.WAITING_INPUT);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
+						em.merge(js);
 					}				
 				} else {
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
 					js.incrementVersion();
 					RepositoryService.getJobStepRepository().save(js);
+					em.merge(js);
 				}
 			}
 		}
@@ -481,7 +483,7 @@ public class JobStepUtil {
 			if (kc != null && js != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
-					checkJobStepQueries(js);
+					checkJobStepQueries(js, false);
 					if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
 						if (kc.couldJobRun()) {
 							kc.createJob(String.valueOf(js.getId()), null, null);
@@ -499,7 +501,7 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					for (JobStep js : job.getJobSteps()) {
-						checkJobStepQueries(js);
+						checkJobStepQueries(js, false);
 						if (js.getJobStepState() == JobStepState.READY) {	
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
 								if (kc.couldJobRun()) {
@@ -525,7 +527,7 @@ public class JobStepUtil {
 						List<JobStep> jobStepList = new ArrayList<JobStep>();
 						jobStepList.addAll(job.getJobSteps());
 						for (JobStep js : jobStepList) {
-							checkJobStepQueries(js);
+							checkJobStepQueries(js, false);
 							if (js.getJobStepState() == JobStepState.READY) {	
 								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
 									if (kc.couldJobRun()) {
