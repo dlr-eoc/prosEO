@@ -41,6 +41,8 @@ public class ProseoFileAlluxio extends ProseoFile {
 			basePath = cfg.getAlluxioUnderFsS3Bucket();
 		}
 		pathInfo = getFullPath();			
+		
+		logger.trace("ProseoFileAlluxio created: {}", this);
 	}
 
 	public ProseoFileAlluxio(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
@@ -51,6 +53,8 @@ public class ProseoFileAlluxio extends ProseoFile {
 			basePath = basePath.substring(1);			
 		}
 		pathInfo = getFullPath();								
+		
+		logger.trace("ProseoFileAlluxio created: {}", this);
 	}
 
 	@Override

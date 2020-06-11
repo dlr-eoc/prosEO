@@ -48,6 +48,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 /**
  * @author Hubert Asamer
@@ -97,12 +98,33 @@ public class S3Ops {
 			listObjectsRequest = new ListObjectsRequest().withBucketName(bucketName).withPrefix(prefix);
 		}
 		List<String> folderLike = new ArrayList<String>();
-		ObjectListing objects = s3.listObjects(listObjectsRequest);
+		ObjectListing objects = null;
+		try {
+			objects = s3.listObjects(listObjectsRequest);
+		} catch (AmazonServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		} catch (com.amazonaws.SdkClientException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		}
 		for (S3ObjectSummary f : objects.getObjectSummaries()) {
 			folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 		}
 		while (objects.isTruncated()) {
-			objects = s3.listNextBatchOfObjects(objects);
+			try {
+				objects = s3.listNextBatchOfObjects(objects);
+			} catch (AmazonServiceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw e;
+			} catch (com.amazonaws.SdkClientException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw e;
+			}
 			for (S3ObjectSummary f : objects.getObjectSummaries()) {
 				folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 			}
@@ -120,7 +142,14 @@ public class S3Ops {
 
 			ArrayList<String> buckets = new ArrayList<String>();
 			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
-			ListBucketsResponse listBucketsResponse = s3.listBuckets(listBucketsRequest);
+			ListBucketsResponse listBucketsResponse = null;
+			try {
+				listBucketsResponse = s3.listBuckets(listBucketsRequest);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw e;
+			}
 			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
 			return buckets;
 	}
@@ -155,11 +184,11 @@ public class S3Ops {
 	 * @param s3Endpoint
 	 * @return S3Client
 	 */
-	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint) {
+	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		try {
 
 			AwsBasicCredentials creds = AwsBasicCredentials.create(s3AccessKey, secretAccessKey);
-			S3Client s3 = S3Client.builder().region(S3_DEFAULT_REGION).endpointOverride(URI.create(s3Endpoint))
+			S3Client s3 = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3Endpoint))
 					.credentialsProvider(StaticCredentialsProvider.create(creds)).build();
 			return s3;
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
@@ -179,7 +208,7 @@ public class S3Ops {
 	 * @param s3Endpoint
 	 * @return AmazonS3
 	 */
-	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint) {
+	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		try {
 
 			BasicAWSCredentials awsCreds = new BasicAWSCredentials(s3AccessKey, secretAccessKey);
@@ -187,7 +216,7 @@ public class S3Ops {
 			clientConfiguration.setSignerOverride("AWSS3V4SignerType");
 			AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
 					.withEndpointConfiguration(
-							new AwsClientBuilder.EndpointConfiguration(s3Endpoint, S3_DEFAULT_REGION.id()))
+							new AwsClientBuilder.EndpointConfiguration(s3Endpoint, Region.of(region).id()))
 					.withPathStyleAccessEnabled(true).withClientConfiguration(clientConfiguration)
 					.withCredentials(new AWSStaticCredentialsProvider(awsCreds)).build();
 			return amazonS3;
@@ -342,7 +371,7 @@ public class S3Ops {
 		if (f != null && f.isFile()) {
 			String fn = f.getName();
 			if (targetKeyPrefix != null && !targetKeyPrefix.isEmpty()) {
-				targetKeyName = targetKeyPrefix + '/' + fn;
+				targetKeyName = targetKeyPrefix + (targetKeyPrefix.endsWith("/") ? "" : "/") + fn;
 			} else {
 				targetKeyName = fn;
 			}
@@ -421,6 +450,11 @@ public class S3Ops {
 			String destBucketName, String destObjectPrefix) {
 
 		String separator = "/";
+		
+		if (destObjectPrefix.endsWith(separator)) {
+			destObjectPrefix = destObjectPrefix.substring(0, destObjectPrefix.length() - 1);
+		}
+		
 		ArrayList<String> response = new ArrayList<String>();
 		TransferManager xfer_mgr = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
@@ -459,28 +493,63 @@ public class S3Ops {
 		        .bucket(bucketName)
 		        .key(key)
 		        .build();
-		client.putObject(putRequest, RequestBody.empty());
+		try {
+			client.putObject(putRequest, RequestBody.empty());
+		} catch (S3Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		} catch (AwsServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		} catch (SdkClientException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
-	    ObjectListing objectList = client.listObjects(bucketName, prefix );
-	    List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
-	    while (objectList.isTruncated()) {
-	    	objectList = client.listNextBatchOfObjects(objectList);
-	    	objectSummeryList.addAll(objectList.getObjectSummaries());
-	    }
-	    
-	    String[] keysList = new String[ objectSummeryList.size() ];
-	    int count = 0;
-	    for( S3ObjectSummary summery : objectSummeryList ) {
-	        keysList[count++] = summery.getKey();
-	    }
-	    DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest( bucketName ).withKeys( keysList );
-	    client.deleteObjects(deleteObjectsRequest);
+	    try {
+			ObjectListing objectList = client.listObjects(bucketName, prefix );
+			List<S3ObjectSummary> objectSummeryList =  objectList.getObjectSummaries();
+			while (objectList.isTruncated()) {
+				objectList = client.listNextBatchOfObjects(objectList);
+				objectSummeryList.addAll(objectList.getObjectSummaries());
+			}
+			
+			String[] keysList = new String[ objectSummeryList.size() ];
+			int count = 0;
+			for( S3ObjectSummary summery : objectSummeryList ) {
+			    keysList[count++] = summery.getKey();
+			}
+			DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest( bucketName ).withKeys( keysList );
+			client.deleteObjects(deleteObjectsRequest);
+		} catch (AmazonServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		} catch (com.amazonaws.SdkClientException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
-		ObjectMetadata md = client.getObjectMetadata(bucketName, key);
+		ObjectMetadata md;
+		try {
+			md = client.getObjectMetadata(bucketName, key);
+		} catch (AmazonServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		} catch (com.amazonaws.SdkClientException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw e;
+		}
 		if (md != null) {
 			return md.getContentLength();
 		}

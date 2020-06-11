@@ -136,7 +136,7 @@ is expensive (a multi-TB USB-3 disk on a laptop is not).
    ```
 
 ## Step 3: Deploy the prosEO Control Instance
-Create the prosEO Control Instance from a `docker-compose.yml` file like the following:
+Create the prosEO Control Instance from the `single-node-deploy/testdata/docker-compose.yml` file like the following:
 ```yaml
 version: '3'
 services:
@@ -234,11 +234,14 @@ export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
 docker-compose up -d
 ```
 
+The `single-node-deploy/testdata` directory contains convenience scripts for these steps
+and a prepared `docker-compose.yml` file.
+
 # Step 4: Setup the Kubernetes Cluster with Storage Manager and File System Cache
 This step requires configuring an NFS (or other) file server to serve the common storage area
 to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
 given in the example directory `single-node-deploy`, the following commands must be issued
-(also available as part of the script `single-node-deploy/create_data_local.sh`):
+(also available as part of the script `single-node-deploy/testdata/create_data_local.sh`):
 ```sh
 # Create the File System Cache
 kubectl apply -f nfs-server-local.yaml
@@ -299,4 +302,7 @@ facility create --file=facility.json
 
 You are now ready to configure your first mission. See <https://github.com/dlr-eoc/prosEO/tree/master/samples/testdata> for
 an example, which works with the prosEO Sample Processor. Test input data and processing orders
-can be generated with the above mentioned script `single-node-deploy/create_data_local.sh`.
+can be generated with the above mentioned script `single-node-deploy/testdata/create_data_local.sh`.
+Note that this script deliberately creates an order set, which does not result in a fully completed
+processing (one job will remain in `RELEASED` state due to missing input, this requires generation
+of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).

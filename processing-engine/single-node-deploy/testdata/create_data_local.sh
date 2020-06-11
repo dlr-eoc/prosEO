@@ -28,14 +28,14 @@ docker push localhost:5000/proseo-storage-mgr:latest
 # -------------------------
 
 # Create the file system cache in the local Minikube
-kubectl apply -f nfs-server-local.yaml
+kubectl apply -f ../nfs-server-local.yaml
 
 # Find the cluster IP address of the local NFS server (file system cache)
 NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
 # Update the IP address in the Persistent Volume configuration (no DNS resolution before Storage Manager pod instantiation, I'm afraid)
 sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
 # Create the Persistent Volumes
-kubectl apply -f nfs-pv.yaml
+kubectl apply -f ../nfs-pv.yaml
 
 # Find the NFS server pod
 NFS_SERVER_POD=$(kubectl get pods --no-headers=true | grep proseo-nfs-server | cut -d ' ' -f 1)
@@ -138,7 +138,7 @@ kubectl cp ${INGEST_DIR} $NFS_SERVER_POD:/exports
 # -------------------------
 
 # Create the storage manager in the local Minikube
-kubectl apply -f storage-mgr-local.yaml
+kubectl apply -f ../storage-mgr-local.yaml
 
 
 # -------------------------
@@ -146,7 +146,7 @@ kubectl apply -f storage-mgr-local.yaml
 # -------------------------
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-kubectl apply -f kubernetes-dashboard.yaml
+kubectl apply -f ../kubernetes-dashboard.yaml
 kubectl proxy --accept-hosts='.*' &
 
 
@@ -168,7 +168,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "processingEnginePassword": "very-secret-password",
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
-    "localStorageManagerUrl": "http://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"

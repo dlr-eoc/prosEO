@@ -6,31 +6,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-
-import java.util.List;
-
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
-
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
-import de.dlr.proseo.storagemgr.rest.ProductControllerImpl;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -48,7 +38,7 @@ public class StorageManagerUtils {
 	 */
 	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName, String region) throws Exception {
 
-		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint);
+		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint, region);
 		ArrayList<String> buckets = S3Ops.listBuckets(s3);
 		if (!buckets.contains(bucketName)) {
 			String  bckt = S3Ops.createBucket(s3, bucketName, region);
@@ -66,18 +56,19 @@ public class StorageManagerUtils {
 	 * @param s3AccessKey
 	 * @param s3SecretAccessKey
 	 * @param s3Endpoint
+	 * @param region TODO
 	 * @param globalStorageIdPrefix
 	 * @param alluxioUnderFsBucket
 	 * @param alluxioUnderFsS3BucketPrefix
 	 * @return
 	 * @throws Exception
 	 */
-	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix, String posixMountPoint) throws Exception{
+	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String region, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix, String posixMountPoint) throws Exception{
 		// global storages...
 		ArrayList<String[]> storages = new ArrayList<String[]>();
 
 		// fetch S3-buckets
-		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey, s3Endpoint);
+		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey, s3Endpoint, region);
 		try {
 			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
 
@@ -111,14 +102,13 @@ public class StorageManagerUtils {
 	public static Boolean getAllStoragesInto(StorageManagerConfiguration cfg, ArrayList<String> s3Storages, ArrayList<String> alluxioStorages,ArrayList<String> posixStorages) throws Exception {
 		// fetch all storageIDs
 		ArrayList<String[]> storages;
-			storages = StorageManagerUtils
-					.getAllStorages(cfg.getS3AccessKey(), 
+			storages = getAllStorages(cfg.getS3AccessKey(), 
 							cfg.getS3SecretAccessKey(), 
 							cfg.getS3EndPoint(), 
-							cfg.getStorageIdPrefix(),
-							cfg.getAlluxioUnderFsS3Bucket(), 
-							cfg.getAlluxioUnderFsS3BucketPrefix(),
-							cfg.getPosixMountPoint()
+							cfg.getS3Region(),
+							cfg.getStorageIdPrefix(), 
+							cfg.getAlluxioUnderFsS3Bucket(),
+							cfg.getAlluxioUnderFsS3BucketPrefix(), cfg.getPosixMountPoint()
 							);
 		
 

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.1.0</version>
+		<version>0.5.0</version>
 	</parent>
 
 	<artifactId>proseo-model</artifactId>
@@ -23,61 +23,10 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/test/resources/raml/model-test.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.model</raml-base-package>
-		<awssdk1.version>1.11.327</awssdk1.version>
-		<awssdk2.version>2.5.45</awssdk2.version>
-		<alluxio.version>2.0.0</alluxio.version>
 		<javax.version>8.0.1</javax.version>
 	</properties>
 
 	<dependencies>
-		<!-- AWS S3 SDK 2 -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>s3</artifactId>
-			<version>${awssdk2.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<!-- AWS S3 SDK 1 -->
-		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-s3</artifactId>
-			<version>${awssdk1.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<!-- Alluxio -->
-		<dependency>
-			<groupId>org.alluxio</groupId>
-			<artifactId>alluxio-core-client-fs</artifactId>
-			<version>${alluxio.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>

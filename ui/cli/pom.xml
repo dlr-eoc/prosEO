@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>0.1.0</version>
+		<version>0.5.0</version>
 	</parent>
 
 	<artifactId>proseo-ui-cli</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.1.0-SNAPSHOT</module.version>
+		<module.version>0.5.0</module.version>
 		<jline.version>3.13.2</jline.version>
 	</properties>
 

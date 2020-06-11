@@ -1,10 +1,2 @@
-/testfiles/
-/storage-mgr-data/
-/PTM*.json
-/PTM*.txt
-/application.yml
-/cli_data_script.txt
-/cli_script.txt
-/configure_proseo_test_mission.pl
-/proseo-ui-cli.*
 /nfs-pv.yaml
+
