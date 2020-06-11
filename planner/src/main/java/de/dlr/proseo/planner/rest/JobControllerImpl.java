@@ -109,6 +109,7 @@ public class JobControllerImpl implements JobController {
 		if (job != null) {
 			Messages msg = jobUtil.resume(job);
 			if (msg.isTrue()) {
+				UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 				if (job.getProcessingFacility() != null) {
 					KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
 					if (kc != null) {
@@ -224,6 +225,7 @@ public class JobControllerImpl implements JobController {
 		if (j != null) {
 			Messages msg = jobUtil.retry(j);
 			if (msg.isTrue()) {
+				UtilService.getOrderUtil().updateState(j.getProcessingOrder(), j.getJobState());
 				RestJob pj = RestUtil.createRestJob(j);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(id));
