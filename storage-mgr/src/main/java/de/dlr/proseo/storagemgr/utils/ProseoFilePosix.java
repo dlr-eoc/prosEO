@@ -28,10 +28,26 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
+/**
+ * Proseo file representing POSIX file system
+ * 
+ * @author melchinger
+ *
+ */
 public class ProseoFilePosix extends ProseoFile {
 
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(ProseoFilePosix.class);
 	
+	/**
+	 * Create a new posix file.
+	 * 
+	 * @param pathInfo The file path
+	 * @param fullPath Use it as full path if true, otherwise use default bucket + path info
+	 * @param cfg
+	 */
 	public ProseoFilePosix(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		this.cfg = cfg;
 		String aPath = pathInfo.trim();
@@ -85,6 +101,13 @@ public class ProseoFilePosix extends ProseoFile {
 		logger.trace("ProseoFilePosix created: {}", this);
 	}
 
+	/**
+	 * Create a new posix file.
+	 * 
+	 * @param bucket The bucket
+	 * @param pathInfo The relative path
+	 * @param cfg
+	 */
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		String aPath = pathInfo.trim();
 		relPath = aPath;
@@ -98,16 +121,25 @@ public class ProseoFilePosix extends ProseoFile {
 		logger.trace("ProseoFilePosix created: {}", this);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getFsType()
+	 */
 	@Override
 	public FsType getFsType() {
 		return FsType.POSIX;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getFullPath()
+	 */
 	@Override
 	public String getFullPath() {
 		return "/" + getBasePath() + "/" + getRelPathAndFile();
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getDataAsInputStream()
+	 */
 	@Override
 	public InputStream getDataAsInputStream() {
 		try {
@@ -118,6 +150,9 @@ public class ProseoFilePosix extends ProseoFile {
 		} 
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#writeBytes(byte[])
+	 */
 	@Override
 	public Boolean writeBytes(byte[] bytes) throws IOException {
 		if (bytes != null) {
@@ -137,6 +172,9 @@ public class ProseoFilePosix extends ProseoFile {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#copyTo(de.dlr.proseo.storagemgr.utils.ProseoFile, java.lang.Boolean)
+	 */
 	@Override
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 		if (proFile == null) {
@@ -230,6 +268,9 @@ public class ProseoFilePosix extends ProseoFile {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#delete()
+	 */
 	@Override
 	public ArrayList<String> delete() {
 		ArrayList<String> result = new ArrayList<String>();
@@ -257,6 +298,9 @@ public class ProseoFilePosix extends ProseoFile {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#list()
+	 */
 	@Override
 	public ArrayList<ProseoFile> list() {
 		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();
@@ -273,11 +317,17 @@ public class ProseoFilePosix extends ProseoFile {
 		return list;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getFileSystemResource()
+	 */
 	@Override
 	public FileSystemResource getFileSystemResource() {
 		return new FileSystemResource(getFullPath());
 	}
 
+	/* (non-Javadoc)
+	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getLength()
+	 */
 	@Override
 	public long getLength() {
 		File f = new File(getFullPath());

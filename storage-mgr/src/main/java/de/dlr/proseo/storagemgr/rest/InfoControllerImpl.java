@@ -11,12 +11,23 @@ import de.dlr.proseo.storagemgr.rest.model.Posix;
 import de.dlr.proseo.storagemgr.rest.model.Joborder;
 import de.dlr.proseo.storagemgr.rest.model.RestInfo;
 
+/**
+ * Handle information about storage manager settings.
+ * 
+ * @author melchinger
+ *
+ */
 @Component
 public class InfoControllerImpl implements InfoController{
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
 	
+	/**
+	 * Set information with configuration settings.
+	 * 
+	 * @return RestInfo
+	 */
 	@Override
 	public ResponseEntity<RestInfo> getRestInfo() {
 		

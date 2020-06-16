@@ -13,11 +13,33 @@ import org.springframework.core.io.FileSystemResource;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 
+/**
+ * Abstract definition of proseo file objects
+ * 
+ * The file definition is based on:
+ * File system type, e.g. S3, POSIX
+ * Base path, e.g. S3 bucket, POSIX mount point
+ * Relative path and file name
+ * 
+ * Example for full path:
+ * S3: "s3://bucket/somewhere/file.name"
+ * POSIX: "/mntPoint/somewhere/file.name" * 
+ * 
+ * Directories are represented by a "/" as last character
+ * 
+ * @author melchinger
+ *
+ */
 public abstract class ProseoFile {
 	
+	/**
+	 * Logger for this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(ProseoFileS3.class);
 	
-	// original path
+	/**
+	 * original path
+	 */
 	protected String pathInfo;
 	
 	/**
@@ -79,14 +101,24 @@ public abstract class ProseoFile {
 		this.fileName = fileName;
 	}
 
-	// path below bucket
+	/**
+	 * path below bucket
+	 */
 	protected String relPath;
 	
-	// bucket
+	/**
+	 * Bucket
+	 */
 	protected String basePath;
 
+	/**
+	 * Storage manager configuration used to get easily access to default settings.
+	 */
 	protected StorageManagerConfiguration cfg;
 
+	/**
+	 * Extract file name from relPath
+	 */
 	protected void buildFileName() {
 		fileName = "";	
 		if (relPath != null) {
@@ -102,6 +134,10 @@ public abstract class ProseoFile {
 			}
 		}
 	}
+	
+	/**
+	 * @return Relative path + file name
+	 */
 	public String getRelPathAndFile() {
 		if (relPath.endsWith("/") || relPath.isEmpty()) {
 			return relPath + fileName;
@@ -110,10 +146,16 @@ public abstract class ProseoFile {
 		}
 	}
 
+	/**
+	 * @return true if object represents a directory
+	 */
 	public Boolean isDirectory() {
 		return (fileName == null) || fileName.isEmpty();
 	}
 	
+	/**
+	 * @return Extension of file name 
+	 */
 	public String getExtension() {
 		if ((fileName == null) || fileName.isEmpty()) {
 			return "";
@@ -122,6 +164,13 @@ public abstract class ProseoFile {
 		}
 	}
 	
+	/**
+	 * Create a file object out of full path info. 
+	 * 
+	 * @param pathInfo Full path
+	 * @param cfg
+	 * @return The new file object
+	 */
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -139,6 +188,14 @@ public abstract class ProseoFile {
 		return null;
 	}
 	
+	/**
+	 * Create file object of aType with relative path pathInfo
+	 * 
+	 * @param aType FsType
+	 * @param pathInfo Relative path with bucket
+	 * @param cfg
+	 * @return The new file object
+	 */
 	public static ProseoFile fromType(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -157,6 +214,14 @@ public abstract class ProseoFile {
 		return null;
 	}
 
+	/**
+	 * Create file object of aType with full path pathInfo
+	 * 
+	 * @param aType FsType
+	 * @param pathInfo Full path (with type info)
+	 * @param cfg
+	 * @return The new file object
+	 */
 	public static ProseoFile fromTypeFullPath(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -175,6 +240,15 @@ public abstract class ProseoFile {
 		return null;
 	}
 	
+	/**
+	 * Create file object of aType with bucket and relative path.
+	 * 
+	 * @param aType FsType
+	 * @param bucket Bucket 
+	 * @param pathInfo Relative path
+	 * @param cfg
+	 * @return
+	 */
 	public static ProseoFile fromTypeAndBucket(FsType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -193,21 +267,59 @@ public abstract class ProseoFile {
 		return null;
 	}
 
+	/**
+	 * @return The file system type
+	 */
 	public abstract FsType getFsType();
 	
+	/**
+	 * @return Get the file system resource definition
+	 */
 	public abstract FileSystemResource getFileSystemResource();
 	
+	/**
+	 * Delete file object recursively.
+	 * 
+	 * @return String list of deleted object paths.
+	 */
 	public abstract ArrayList<String> delete();
 	
+	/**
+	 * List objects recursively.
+	 * 
+	 * @return List of file objects
+	 */
 	public abstract ArrayList<ProseoFile> list();
 	
+	/**
+	 * @return The full path including type
+	 */
 	public abstract String getFullPath();
 
+	/**
+	 * @return Input stream on file object
+	 */
 	public abstract InputStream getDataAsInputStream();
 	
+	/**
+	 * Write binary byte array to file object.
+	 * 
+	 * @param bytes Byte array
+	 * @return true after success
+	 */
 	public abstract Boolean writeBytes(byte[] bytes) throws Exception;
 	
+	/**
+	 * Copy this object to target proFile
+	 * 
+	 * @param proFile Target file object
+	 * @param recursive Copy recursively if true
+	 * @return List of copied target file names
+	 */
 	public abstract ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception;
 	
+	/**
+	 * @return Length of file object
+	 */
 	public abstract long getLength();
 }

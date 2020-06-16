@@ -61,6 +61,12 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return responseHeaders;
 	}
 
+	/**
+	 * Copy source file named pathInfo to local storage used by workers.
+	 * The local file name is: posixWorkerMountPoint + relative source file path
+	 * @param pathInfo Source file name
+	 * @return Local file name
+	 */
 	@Override
 	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
 		String response = "";
@@ -84,6 +90,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 		return new ResponseEntity<String>(response, HttpStatus.NOT_FOUND);
 	}
 
+	/** 
+	 * Copy local file named pathInfo to storage manager.
+	 * The target file path is: default mount point + productId + relative source file path
+	 * 
+	 * @param pathInfo Source file name
+	 * @param productId Product id
+	 * @return Target file name
+	 */
 	@Override
 	public ResponseEntity<String> updateProductfiles(String pathInfo, Long productId) {
 		String response = "";

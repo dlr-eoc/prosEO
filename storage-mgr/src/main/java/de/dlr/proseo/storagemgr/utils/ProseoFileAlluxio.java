@@ -10,6 +10,14 @@ import org.springframework.core.io.FileSystemResource;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.FsType;
 
+/**
+ * Proseo file representing alluxio.
+ * 
+ * !! NOT USED AND IMPLEMENTED !!
+ * 
+ * @author melchinger
+ *
+ */
 public class ProseoFileAlluxio extends ProseoFile {
 
 	private static Logger logger = LoggerFactory.getLogger(ProseoFileAlluxio.class);

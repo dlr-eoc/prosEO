@@ -25,8 +25,17 @@ import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import software.amazon.awssdk.services.s3.S3Client;
 
+/**
+ * General utility methods 
+ * 
+ * @author melchinger
+ *
+ */
 public class StorageManagerUtils {
 
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(StorageManagerUtils.class);
 
 	/**
@@ -44,84 +53,6 @@ public class StorageManagerUtils {
 			String  bckt = S3Ops.createBucket(s3, bucketName, region);
 			if (null == bckt) return false;
 		}
-		return true;
-	}
-
-	/**
-	 * List all available storages
-	 * 
-	 * @return ArrayList<String> of storageIds
-	 */
-	/**
-	 * @param s3AccessKey
-	 * @param s3SecretAccessKey
-	 * @param s3Endpoint
-	 * @param region TODO
-	 * @param globalStorageIdPrefix
-	 * @param alluxioUnderFsBucket
-	 * @param alluxioUnderFsS3BucketPrefix
-	 * @return
-	 * @throws Exception
-	 */
-	public static ArrayList<String[]> getAllStorages(String s3AccessKey, String s3SecretAccessKey, String s3Endpoint, String region, String globalStorageIdPrefix, String alluxioUnderFsBucket, String alluxioUnderFsS3BucketPrefix, String posixMountPoint) throws Exception{
-		// global storages...
-		ArrayList<String[]> storages = new ArrayList<String[]>();
-
-		// fetch S3-buckets
-		S3Client s3 = S3Ops.v2S3Client(s3AccessKey, s3SecretAccessKey, s3Endpoint, region);
-		try {
-			ArrayList<String> s3bckts = S3Ops.listBuckets(s3);
-
-			for (String b : s3bckts) {
-				if(b.startsWith(globalStorageIdPrefix)) {
-					String[] s = new String[2];
-					s[0]=b;
-					s[1]=String.valueOf(StorageType.S_3);
-					storages.add(s);
-				}
-			}
-		} catch (Exception e) {
-			logger.warn(String.format("S3 endpoint not connected: %s", s3Endpoint));
-		}
-		s3.close();
-		
-		// POSIX
-		File targetFilePath = new File(posixMountPoint);
-		if (!targetFilePath.exists()) {
-			targetFilePath.mkdirs();
-		}
-		if (targetFilePath.exists()) {
-			String[] s = new String[2];
-			s[0]=targetFilePath.getPath();
-			s[1]=String.valueOf(StorageType.POSIX);
-			storages.add(s);
-		}
-		return storages;
-	}
-
-	public static Boolean getAllStoragesInto(StorageManagerConfiguration cfg, ArrayList<String> s3Storages, ArrayList<String> alluxioStorages,ArrayList<String> posixStorages) throws Exception {
-		// fetch all storageIDs
-		ArrayList<String[]> storages;
-			storages = getAllStorages(cfg.getS3AccessKey(), 
-							cfg.getS3SecretAccessKey(), 
-							cfg.getS3EndPoint(), 
-							cfg.getS3Region(),
-							cfg.getStorageIdPrefix(), 
-							cfg.getAlluxioUnderFsS3Bucket(),
-							cfg.getAlluxioUnderFsS3BucketPrefix(), cfg.getPosixMountPoint()
-							);
-		
-
-		for (String[] entry : storages) {
-			if (entry[1].equals(String.valueOf(StorageType.S_3))) {
-				s3Storages.add(entry[0]);
-			} else if (entry[1].equals(String.valueOf(StorageType.ALLUXIO))) {
-				alluxioStorages.add(entry[0]);
-			} else if (entry[1].equals(String.valueOf(StorageType.POSIX))) {
-				posixStorages.add(entry[0]);
-			}
-		}
-
 		return true;
 	}
 	

@@ -82,6 +82,13 @@ public class ProductControllerImpl implements ProductController {
 		return responseHeaders;
 	}
 
+	/**
+	 * Copy a file from "ingest" file system to storage manager controlled prosEO cache.
+	 * Source and target are defined in the restProductFS structure
+	 * 
+	 * @param restProductFS
+	 * @return updated restProductFS
+	 */
 	@Override
 	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
 		// get node name info...
@@ -126,6 +133,13 @@ public class ProductControllerImpl implements ProductController {
 		}
 	}
 
+	/**
+	 * List the file/object contents of a repository.
+	 * 
+	 * @param storageType S2, POSIX or null
+	 * @param prefix Path information
+	 * @return list of strings
+	 */
 	@Override
 	public ResponseEntity<List<String>> getProductFiles(StorageType storageType, String prefix) {
 		List<StorageType> stl = new ArrayList<StorageType>();
@@ -147,6 +161,19 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	/**
+	 * Set the members of RestProductFS response.
+	 * 
+	 * @param response
+	 * @param restProductFS
+	 * @param storageId
+	 * @param registered
+	 * @param registeredFilePath
+	 * @param registeredFiles
+	 * @param deleted
+	 * @param msg
+	 * @return Response
+	 */
 	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
 			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
 		if (response != null && restProductFS != null) {
@@ -166,6 +193,14 @@ public class ProductControllerImpl implements ProductController {
 		return response;
 	}
 
+	/**
+	 * Retrieve the byte stream for download of a file object in repository.
+	 * 
+	 * @param pathInfo Path to object
+	 * @param fromByte Start byte, 0 if not set
+	 * @param toByte End byte, end of object data if not set
+	 * @return
+	 */
 	@Override
 	public ResponseEntity<?> getObject(String pathInfo, Long fromByte, Long toByte) {
 		if (pathInfo != null) {
@@ -213,6 +248,13 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * Delete object(s) 
+	 * 
+	 * @param pathInfo Path to object or directory
+	 * 
+	 * @return Some information about success
+	 */
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
 		RestProductFS response = new RestProductFS();
@@ -236,6 +278,13 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	}
 	
+	/**
+	 * List file objects of repository. Collect result in response.
+	 * 
+	 * @param st Storage type
+	 * @param prefix relative path to list
+	 * @param response 
+	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 		ProseoFile path = null;
 		FsType ft = FsType.fromValue(st.toString());

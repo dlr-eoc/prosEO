@@ -77,6 +77,12 @@ public class JobOrderControllerImpl implements JoborderController {
 		return responseHeaders;
 	}
 
+	/**
+	 * Create a job order file with generic name out of base64 string contained in RestJoborder. Store it into FS defined by fsType.
+	 * 
+	 * @param joborder Job order information
+	 * @return ResponseEntity as RestJoborder
+	 */
 	@Override
 	public ResponseEntity<RestJoborder> createRestJoborder(@Valid RestJoborder joborder) {
 		RestJoborder response = new RestJoborder();
@@ -135,6 +141,12 @@ public class JobOrderControllerImpl implements JoborderController {
 		return new ResponseEntity<>(response, HttpStatus.NOT_IMPLEMENTED);
 	}
 
+	/**
+	 * Retrieve contents of file named pathInfo as base64 string.
+	 * 
+	 * @param pathInfo
+	 * @return Base64 coded String
+	 */
 	@Override
 	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
 		String response = "";

@@ -482,7 +482,14 @@ public class S3Ops {
 		}
 
 	}
-	
+
+	/**
+	 * Create a folder like object in repository.
+	 * 
+	 * @param client AmazonS3 client
+	 * @param bucketName Bucket name
+	 * @param folderName Folder name
+	 */
 	public static void createFolder(S3Client client, String bucketName, String folderName) {
 	    // create meta-data for your folder and set content-length to 0
 		String key = folderName;
@@ -509,7 +516,15 @@ public class S3Ops {
 			throw e;
 		}
 	}
-	
+
+	/**
+	 * Delete object(s) in repository.
+	 * The prefix is either an object key or like a directory path 
+	 * 
+	 * @param client AmazonS3 client
+	 * @param bucketName Bucket name
+	 * @param prefix Object prefix
+	 */
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
 	    try {
 			ObjectListing objectList = client.listObjects(bucketName, prefix );
@@ -537,6 +552,14 @@ public class S3Ops {
 		}
 	}
 	
+	/**
+	 * Get the object length (file size)
+	 * 
+	 * @param client AmazonS3 client
+	 * @param bucketName Bucket name
+	 * @param key Object key
+	 * @return Length of object
+	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
 		ObjectMetadata md;
 		try {
