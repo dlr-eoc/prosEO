@@ -33,17 +33,18 @@ import de.dlr.proseo.planner.util.UtilService;
 @Component
 public class ProductControllerImpl implements ProductController {
 
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_HEADER_SUCCESS = "Success";
-	private static final String MSG_PREFIX = "199 proseo-planner ";
-	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+    
 	/**
-	 * Product created and available, sent by prosEO Ingestor
+	 * Product created and available, sent by prosEO Ingestor.
+	 * Look now for new satisfied product queries and job steps. Try to start them. 
 	 * 
 	 */
 	@Override
@@ -64,6 +65,14 @@ public class ProductControllerImpl implements ProductController {
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}
 
+	/**
+	 * Look for new satisfied product queries recursively. 
+	 * The facility is not always known directly, therefore it is returned if it could be found by product.
+	 * 
+	 * @param p Product which was new
+	 * @param kubeConfig Kube config to use 
+	 * @return Kube Config used
+	 */
 	private KubeConfig searchForProduct(Product p, KubeConfig kubeConfig) {
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
@@ -75,6 +84,14 @@ public class ProductControllerImpl implements ProductController {
 		return aKubeConfig;
 	}
 
+	/**
+	 * Look for new satisfied product queries of enclosing products. 
+	 * The facility is not always known directly, therefore it is returned if it could be found by product.
+	 * 
+	 * @param p Product which was new
+	 * @param kubeConfig Kube config to use 
+	 * @return Kube Config used
+	 */
 	private KubeConfig searchForEnclosingProduct(Product p, KubeConfig kubeConfig) {
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
@@ -86,6 +103,14 @@ public class ProductControllerImpl implements ProductController {
 		return aKubeConfig;
 	}
 
+	/**
+	 * Look for new satisfied product queries. 
+	 * The facility is not always known directly, therefore it is returned if it could be found by product.
+	 * 
+	 * @param p Product which was new
+	 * @param kubeConfig Kube config to use 
+	 * @return Kube Config used
+	 */
 	private KubeConfig searchForProductPrim(Product p, KubeConfig kubeConfig) {
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {

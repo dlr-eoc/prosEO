@@ -6,27 +6,18 @@
 
 package de.dlr.proseo.planner.kubernetes;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
@@ -34,15 +25,10 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.ProductionPlannerConfiguration;
 import de.dlr.proseo.planner.dispatcher.JobDispatcher;
-import de.dlr.proseo.planner.rest.JobControllerImpl;
 import de.dlr.proseo.planner.rest.model.PodKube;
-import de.dlr.proseo.planner.util.JobStepUtil;
-import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiException;
-import io.kubernetes.client.Copy;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.models.V1EnvVarSource;
 import io.kubernetes.client.openapi.models.V1EnvVarSourceBuilder;
@@ -52,7 +38,6 @@ import io.kubernetes.client.openapi.models.V1JobCondition;
 import io.kubernetes.client.openapi.models.V1JobSpec;
 import io.kubernetes.client.openapi.models.V1JobSpecBuilder;
 import io.kubernetes.client.openapi.models.V1LocalObjectReference;
-import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimVolumeSource;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
@@ -68,6 +53,9 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 @Component
 public class KubeJob {
 	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeJob.class);
 	
 	/**
@@ -185,14 +173,14 @@ public class KubeJob {
 	}
 	
 	/**
-	 * Instanciate a kube job
+	 * Instantiate a kube job
 	 */
 	public KubeJob () {
 		podNames = new ArrayList<String>();		
 	}
 	
 	/**
-	 * Instanciate a kube job with parameters
+	 * Instantiate a kube job with parameters
 	 * @param id The DB id
 	 * @param name The name prefix, if set
 	 * @param processor The processor image 
@@ -238,8 +226,8 @@ public class KubeJob {
 	/**
 	 * Rebuild kube job entries of processing facility after restart of planner
 	 * 
-	 * @param aKubeConfig Ther processing facility
-	 * @param aJob The kubernetes job
+	 * @param aKubeConfig The processing facility
+	 * @param aJob The Kubernetes job
 	 * @return The created kube job or null for not proseo jobs
 	 */
 	public KubeJob rebuild(KubeConfig aKubeConfig, V1Job aJob) {
@@ -263,7 +251,7 @@ public class KubeJob {
 	}
 
 	/**
-	 * Create the kubernetes job on processing facility (based on constructor parameters)
+	 * Create the Kubernetes job on processing facility (based on constructor parameters)
 	 * @param aKubeConfig The processing facility
 	 * @return The kube job
 	 */
@@ -534,6 +522,12 @@ public class KubeJob {
 		}
 	}	
 	
+	/**
+	 * Get all the information of a Kubernetes job which is stored in job step
+	 * 
+	 * @param aJobName The Kubernetes job name
+	 * @return true after success
+	 */
 	@Transactional
 	public boolean getInfo(String aJobName) {
 		boolean success = false;
@@ -616,6 +610,12 @@ public class KubeJob {
 	}
 
 	
+	/**
+	 * A Kubernetes job has finished, get and store the info, delete the Kubernetes job.
+	 * 
+	 * @param aJobName The Kubernetes job name 
+	 * @return true after success
+	 */
 	@Transactional
 	public boolean getFinishInfo(String aJobName) {
 		boolean success = false;
@@ -635,6 +635,12 @@ public class KubeJob {
 		return success;
 	}
 	
+	/**
+	 * Set the generation time of created products to genTime
+	 * 
+	 * @param product The product
+	 * @param genTime The generation time
+	 */
 	void setGenerationTime(Product product, Instant genTime) {
 		if (product != null && genTime != null) {
 			product.setGenerationTime(genTime);

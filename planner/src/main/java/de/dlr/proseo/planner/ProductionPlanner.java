@@ -87,10 +87,23 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
 	
+	/**
+	 * Get the user/pw for processing order
+	 * 
+	 * @param orderId Id of order
+	 * @return user/pw
+	 */
 	public Map<String, String> getAuth(Long orderId) {
 		return orderPwCache.get(orderId);
 	}
 	
+	/**
+	 * Set or update user/pw of a processing order
+	 * 
+	 * @param orderId
+	 * @param user 
+	 * @param pw
+	 */
 	public void updateAuth(Long orderId, String user, String pw) {
 		if (orderPwCache.containsKey(orderId)) {
 			Map<String, String> aMap = orderPwCache.get(orderId);
@@ -191,6 +204,13 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 	}
+	
+	/**
+	 * Try to connect processing facility.
+	 * Add new kube config for not connected facility, remove kube config for not connectable facility.
+	 * 
+	 * @param facilityName
+	 */
 	public void updateKubeConfig(String facilityName) {
 		boolean found = false;
 		KubeConfig kubeConfig = null;

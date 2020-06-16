@@ -44,11 +44,21 @@ import de.dlr.proseo.planner.Messages;
  */
 @Service
 public class OrderDispatcher {
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(OrderDispatcher.class);
 
 	@Autowired
 	private ProductQueryService productQueryService;
 		
+	/**
+	 * Publish an order, create jobs and job steps needed to create all products
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
 	@Transactional
 	public boolean publishOrder(ProcessingOrder order, ProcessingFacility pf) {
 		boolean answer = false;
@@ -93,6 +103,12 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * Small test of order
+	 * 
+	 * @param order
+	 * @return
+	 */
 	public boolean checkForValidOrder(ProcessingOrder order) {
 		boolean answer = true;
 		// check for needed data
@@ -111,6 +127,13 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * Create the needed job for an order of type orbit
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
 	public boolean createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf) {
 		boolean answer = true;
 		// there has to be a list of orbits
@@ -152,7 +175,14 @@ public class OrderDispatcher {
 
 		return answer;
 	}
-	
+
+	/**
+	 * Create the needed job for an order of type day
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
 	public boolean createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
 		boolean answer = true;
 
@@ -200,6 +230,13 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * Create the needed job for an order of type time slice
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
 	public boolean createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
 		boolean answer = true;
 
@@ -247,6 +284,16 @@ public class OrderDispatcher {
 		return answer;
 	}
 	
+	/**
+	 * Create job for order of orbit or start/stop time of slice
+	 * 
+	 * @param order The processing order
+	 * @param orbit The orbit 
+	 * @param startT The start time
+	 * @param stopT The stop time
+	 * @param pf The facilty to run the job
+	 * @return true after success, else false
+	 */
 	@Transactional
 	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
 		boolean answer = true;
@@ -401,6 +448,18 @@ public class OrderDispatcher {
 		return answer;
 	}
 
+	/**
+	 * Create the job step(s) to produce product(s) of a product class. 
+	 * This function creates all job steps for not existing (intermediate) products except the the products of classes contained in inputProducts. 
+	 * 
+	 * @param job The job for the job steps
+	 * @param productClass The "target" product class
+	 * @param configuredProcessors Configured processors used to create, if none is found in the list, the newest corresponding processor is used
+	 * @param jobStepList The job steps created
+	 * @param allJobStepList All job steps 
+	 * @param allProducts All products created
+	 * @param inputProducts The input products to use
+	 */
 	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, 
 				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
 
@@ -516,6 +575,21 @@ public class OrderDispatcher {
 	}
 	
 
+	/**
+	 * Helper function to create the products of a "product tree"
+	 * 
+	 * @param productClass The current product class
+	 * @param enclosingProduct The enclosing product
+	 * @param cp The configured processor
+	 * @param orbit The orbit
+	 * @param job The job
+	 * @param js The job step
+	 * @param fileClass The file class as string
+	 * @param startTime The start time 
+	 * @param stopTime The stop time
+	 * @param products List to collect all products created
+	 * @return The current created product
+	 */
 	public Product createProducts(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime, List<Product> products) {
 		Product product = createProduct(productClass, enclosingProduct, cp, orbit, job, js, fileClass, startTime, stopTime);
 		products.add(product);
@@ -526,6 +600,21 @@ public class OrderDispatcher {
 		return product;
 	}
 
+	/**
+	 * Helper function to create a single product
+	 * 
+	 * @param productClass The current product class
+	 * @param enclosingProduct The enclosing product
+	 * @param cp The configured processor
+	 * @param orbit The orbit
+	 * @param job The job
+	 * @param js The job step
+	 * @param fileClass The file class as string
+	 * @param startTime The start time 
+	 * @param stopTime The stop time
+	 * @param products List to collect all products created
+	 * @return The current created product
+	 */
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
 		Product p = new Product();
 		p.getParameters().clear();

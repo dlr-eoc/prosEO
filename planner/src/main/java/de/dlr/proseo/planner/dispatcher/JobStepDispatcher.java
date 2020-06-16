@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * 
+ * Not used yet
+ * 
  * @author Ernst Melchinger
  *
  */

@@ -43,6 +43,12 @@ import de.dlr.proseo.planner.ProductionPlanner;
 public class RestUtil {
 
 
+	/**
+	 * Build RestOrder of ProcessingOrder
+	 * 
+	 * @param order Processing order
+	 * @return RestOrder
+	 */
 	public static RestOrder createRestOrder(ProcessingOrder order) {
 		RestOrder ro = new RestOrder();
 		if (order != null) {
@@ -52,7 +58,12 @@ public class RestUtil {
 	}
 
 
-@Transactional
+	/**
+	 * Build RestJob of Job
+	 * @param job
+	 * @return RestJob
+	 */
+	@Transactional
 	public static RestJob createRestJob(Job job) {
 		RestJob rj = new RestJob();
 		if (job != null) {
@@ -87,6 +98,12 @@ public class RestUtil {
 		return rj;
 	}
 
+	/**
+	 * Build RestOrbit of Orbit
+	 * 
+	 * @param orbit
+	 * @return RestOrbit
+	 */
 	public static RestOrbit createRestOrbit(Orbit orbit) {
 		RestOrbit ro = new RestOrbit();
 		if (orbit != null) {
@@ -109,7 +126,13 @@ public class RestUtil {
 		return ro;
 	}
 
-@Transactional
+	/**
+	 * Build RestJobStep of JobStep
+	 * 
+	 * @param js
+	 * @return RestJobStep
+	 */
+	@Transactional
 	public static RestJobStep createRestJobStep(JobStep js) {
 		RestJobStep pjs = new RestJobStep();
 		if (js != null) {
@@ -150,6 +173,11 @@ public class RestUtil {
 		return pjs;
 	}
 	
+	/**
+	 * Build a List of RestParameters out of a Map of Parameters
+	 * @param paramMap
+	 * @return List of RestParameters
+	 */
 	public static List<RestParameter> createRestParameterList(Map<String, Parameter> paramMap) {
 		List<RestParameter> restParams = new ArrayList<RestParameter>();
 		if (paramMap != null) {

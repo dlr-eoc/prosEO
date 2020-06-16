@@ -8,13 +8,18 @@ package de.dlr.proseo.planner.rest.model;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import io.kubernetes.client.openapi.models.V1Job;
 /**
- * Handle a Kubernetes pod/job
+ * Handle a Kubernetes pod/job 
  * 
  * @author Ernst Melchinger
  *
  */
 public class PodKube extends PlannerPod {
 
+	/**
+	 * Set instance variables and convert data to text
+	 * 
+	 * @param job Kubernetes job
+	 */
 	public PodKube(V1Job job) {
 		super();
 		if (job != null) {
@@ -45,11 +50,20 @@ public class PodKube extends PlannerPod {
 			}
 		}
 	}
+	
+	/**
+	 * @return true if job has been completed
+	 */
 	public boolean isCompleted() {
 		return (this.hasStatus("complete") || type.equalsIgnoreCase("completed"));
 	}
+	
+	/**
+	 * @param status to look for
+	 * @return true if job state equals status or Kubernetes job state and type is completed
+	 */
 	public boolean hasStatus(String status) {
-		if (type.equalsIgnoreCase(status) || (status.equalsIgnoreCase("complete") &&type.equalsIgnoreCase("completed"))) {
+		if (type.equalsIgnoreCase(status) || (status.equalsIgnoreCase("complete") && type.equalsIgnoreCase("completed"))) {
 			return true;
 		} else {
 			return false;

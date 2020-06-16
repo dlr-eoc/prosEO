@@ -47,6 +47,9 @@ import de.dlr.proseo.planner.util.UtilService;
 @Component
 public class JobstepControllerImpl implements JobstepController {
 	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 
 	/** The Production Planner instance */
@@ -56,7 +59,7 @@ public class JobstepControllerImpl implements JobstepController {
     private JobStepUtil jobStepUtil;
     
     /**
-     * Get production planner jobsteps by status
+     * Get production planner job steps by status
      * 
      */
 	@Override
@@ -83,7 +86,7 @@ public class JobstepControllerImpl implements JobstepController {
 	}
 
     /**
-     * Get production planner jobstep
+     * Get production planner job step identified by name or id
      * 
      */
 	@Override
@@ -115,6 +118,10 @@ public class JobstepControllerImpl implements JobstepController {
 		
 	}
 
+    /**
+     * Resume a production planner job step identified by name or id
+     * 
+     */
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
@@ -148,7 +155,11 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	
+
+    /**
+     * Cancel a production planner job step identified by name or id
+     * 
+     */
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
@@ -175,7 +186,12 @@ public class JobstepControllerImpl implements JobstepController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	
+
+    /**
+     * Cancel a production planner job step identified by name or id.
+     * Kill the job step if force equals true, otherwise wait until end of Kubernetes job.
+     * 
+     */
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean force) {
@@ -203,6 +219,11 @@ public class JobstepControllerImpl implements JobstepController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * Get job step identified by name or id.
+	 * @param nameOrId
+	 * @return Job step found
+	 */
 	@Transactional
 	private JobStep findJobStepByNameOrId(String nameOrId) {
 		JobStep js = null;
@@ -223,6 +244,10 @@ public class JobstepControllerImpl implements JobstepController {
 		return js;
 	}
 
+    /**
+     * Retry a production planner job step identified by name or id.
+     * 
+     */
 	@Transactional
 	@Override
 	public ResponseEntity<RestJobStep> retryJobStep(String jobstepId) {

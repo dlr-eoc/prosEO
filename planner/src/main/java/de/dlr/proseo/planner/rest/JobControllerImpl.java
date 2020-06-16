@@ -42,6 +42,9 @@ import de.dlr.proseo.planner.util.UtilService;
 @Component
 public class JobControllerImpl implements JobController {
 	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
 	
 	/** The Production Planner instance */
@@ -59,7 +62,7 @@ public class JobControllerImpl implements JobController {
     
     
     /**
-     * Get production planner jobs by id
+     * Get production planner jobs by order id
      * 
      */
 	@Transactional
@@ -85,6 +88,11 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	
+	/* 
+	 * Get a job by job id
+	 * 
+	 * @param jobId
+	 */
 	@Transactional
 	@Override
     public ResponseEntity<RestJob> getJob(String jobId) {
@@ -102,6 +110,11 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
+	/* 
+	 * Resume the job with job id
+	 * 
+	 * @param jobId
+	 */
 	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
@@ -133,7 +146,12 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	
+
+	/* 
+	 * Cancel a job by job id
+	 * 
+	 * @param jobId
+	 */
 	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> cancelJob(String jobId){
@@ -159,6 +177,12 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
+	/* 
+	 * Suspend a job by job id
+	 * 
+	 * @param jobId
+	 * @param force If true, kill job, otherweise wait until end of job
+	 */
 	@Transactional
 	@Override 
 	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean force) {
@@ -184,6 +208,11 @@ public class JobControllerImpl implements JobController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
+	/**
+	 * Find a job by an id string, the contents could be the job DB id or the job name
+	 * @param idStr
+	 * @return The job found or null
+	 */
 	@Transactional
 	private Job findJobById(String idStr) {
 		Job j = null;
@@ -202,6 +231,13 @@ public class JobControllerImpl implements JobController {
 		return j;
 	}
 	
+	/**
+	 * Find jobs of an order with a state.
+	 * 
+	 * @param state Job state
+	 * @param orderId Order id
+	 * @return The jobs found
+	 */
 	@Transactional
 	private List<Job> findJobsByStateAndOrderId(String state, Long orderId) {
 		JobState jobState = null;
@@ -218,6 +254,11 @@ public class JobControllerImpl implements JobController {
 		return RepositoryService.getJobRepository().findAll();
 	}
 
+	/* 
+	 * Retry a job by job id
+	 * 
+	 * @param jobId
+	 */
 	@Transactional
 	@Override
 	public ResponseEntity<RestJob> retryJob(String id) {

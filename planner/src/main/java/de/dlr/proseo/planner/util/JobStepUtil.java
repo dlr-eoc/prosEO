@@ -44,10 +44,17 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
  * @author Ernst Melchinger
  *
  */
+/**
+ * @author melchinger
+ *
+ */
 @Component
 @Transactional
 public class JobStepUtil {
 	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(JobStepUtil.class);
 
 	/** JPA entity manager */
@@ -59,6 +66,13 @@ public class JobStepUtil {
 	@Autowired
 	private ProductionPlanner productionPlanner;
 	
+	/**
+	 * Search for not satisfied product queries referencing product class on processing facility and check which are now satisfied. 
+	 * Change state of job step to READY if all queries are now satisfied. 
+	 * 
+	 * @param processingFacility
+	 * @param pc Product class
+	 */
 	@Transactional
 	public void searchForJobStepsToRun(ProcessingFacility processingFacility, ProductClass pc) {
 		// Search for all job steps on processingFacility with states INITIAL, WAITING_INPUT
@@ -98,6 +112,13 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Suspend job step, kill it if force is true otherwise wait until finish.
+	 *  
+	 * @param js Job step
+	 * @param force Force 
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages suspend(JobStep js, Boolean force) {
 		Messages answer = Messages.FALSE;
@@ -149,6 +170,12 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Cancel job step
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages cancel(JobStep js) {
 		Messages answer = Messages.FALSE;
@@ -180,6 +207,12 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Retry job step
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages retry(JobStep js) {
 		Messages answer = Messages.FALSE;
@@ -222,6 +255,12 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Check job step whether job step has been finished
+	 * 
+	 * @param js Job step
+	 * @return true if finished
+	 */
 	@Transactional
 	public Boolean checkFinish(JobStep js) {
 		Boolean answer = false;
@@ -245,7 +284,13 @@ public class JobStepUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Delete job step
+	 * 
+	 * @param js Job step
+	 * @return true  if deleted
+	 */
 	@Transactional
 	public Boolean delete(JobStep js) {
 		Boolean answer = false;
@@ -286,6 +331,13 @@ public class JobStepUtil {
 		return answer;
 	}
 
+
+	/**
+	 * Delete also not finished job step
+	 * 
+	 * @param js Job step
+	 * @return true if deleted
+	 */
 	@Transactional
 	public Boolean deleteForced(JobStep js) {
 		Boolean answer = false;
@@ -324,6 +376,13 @@ public class JobStepUtil {
 		return answer;
 	}
 
+
+	/**
+	 * Resume job step
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages resume(JobStep js, Boolean force) {
 		Messages answer = Messages.FALSE;
@@ -359,6 +418,13 @@ public class JobStepUtil {
 		return answer;
 	}
 
+
+	/**
+	 * Start job step on Kubernetes cluster
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
 	@Transactional
 	public Boolean startJobStep(JobStep js) {
 		Boolean answer = false;
@@ -388,6 +454,13 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Check the queries of a job step which job is released or started.
+	 * Check all if force is true
+	 *  
+	 * @param js Job step
+	 * @param force 
+	 */
 	@Transactional
 	public void checkJobStepQueries(JobStep js, Boolean force) {
 		Boolean hasUnsatisfiedInputQueries = false;
@@ -423,6 +496,10 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Delete product tree. Used during delete of job step.
+	 * @param p
+	 */
 	@Transactional
 	private void deleteProduct(Product p) {
 		if (p!= null) {
@@ -438,6 +515,9 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Check all unsatisfied queries of all job steps on all facilities whether they can be started.
+	 */
 	@Transactional
     public void checkForJobStepsToRun() {
     	if (productionPlanner != null) {
@@ -451,6 +531,13 @@ public class JobStepUtil {
     	}
     }
 
+	/**
+	 * If onlyRun is false, check unsatisfied queries of product class on processing facility (defined in Kube config).
+	 * Start ready job steps on facility.
+	 * @param kc KubeConfig
+	 * @param pc ProductClass
+	 * @param onlyRun
+	 */
 	@Transactional
     public void checkForJobStepsToRun(KubeConfig kc, ProductClass pc, Boolean onlyRun) {
 		if (productionPlanner != null) {
@@ -477,6 +564,12 @@ public class JobStepUtil {
 		}
     }
 
+	/**
+	 * Check unsatisfied queries of job step on processing facility (defined in Kube config).
+	 * Start ready job steps on facility.
+	 * @param kc KubeConfig
+	 * @param js JobStep
+	 */
 	@Transactional
     public void checkJobStepToRun(KubeConfig kc, JobStep js) {
 		if (productionPlanner != null) {
@@ -494,6 +587,12 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Check unsatisfied queries of job steps in job on processing facility (defined in Kube config).
+	 * Start ready job steps on facility.
+	 * @param kc KubeConfig
+	 * @param job Job
+	 */
 	@Transactional
     public void checkJobToRun(KubeConfig kc, Job job) {
 		if (productionPlanner != null) {
@@ -514,7 +613,13 @@ public class JobStepUtil {
 			}
 		}
 	}
-	
+
+	/**
+	 * Check unsatisfied queries of job steps in processing order on processing facility (defined in Kube config).
+	 * Start ready job steps on facility.
+	 * @param kc KubeConfig
+	 * @param order ProcessingOrder
+	 */
 	@Transactional
     public void checkOrderToRun(KubeConfig kc, ProcessingOrder order) {
 		if (productionPlanner != null) {
@@ -542,6 +647,12 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Collect products of a ptoduct tree into list
+	 * 
+	 * @param p Root product
+	 * @param list Product list
+	 */
 	@Transactional
     private void collectProducts(Product p, List<Product> list) {
 		if (p != null) {
@@ -552,6 +663,11 @@ public class JobStepUtil {
 		}
 	}
 	
+	/**
+	 * Check whether the products of list exists and are already generated
+	 * @param list Product list
+	 * @return true if all products are generated
+	 */
 	@Transactional
     private Boolean checkProducts(List<Product> list) {
 		Boolean answer = true;

@@ -46,23 +46,71 @@ import io.kubernetes.client.util.Config;
 @Component
 public class KubeConfig {
 
+	/**
+	 * Logger of this class 
+	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeConfig.class);
 	
+	/**
+	 * Map containing the created Kubernetes jobs
+	 */
 	private HashMap<String, KubeJob> kubeJobList = null;
 	
+	/**
+	 * List of Kubernetes nodes
+	 */
 	private V1NodeList kubeNodes = null;
 	
+	/**
+	 * Number of ready Kubernetes worker nodes
+	 */
 	private int workerCnt = 0;
 	
+	/**
+	 * The Kubernetes API client
+	 */
 	private ApiClient client;
+	
+	/**
+	 * The Kubernetes core API V1 
+	 */
 	private CoreV1Api apiV1;
+	
+	/**
+	 * The Kubernetes batch API V1 
+	 */
 	private BatchV1Api batchApiV1;
+	
+	/**
+	 * The name of the facility
+	 */
 	private String id;
+	
+	/**
+	 * The id of the facility
+	 */
 	private long longId;
+	
+	/**
+	 * The facility description 
+	 */
 	private String description;
+	
+	/**
+	 * The url of the facility 
+	 */
 	private String url;
+	
+	/**
+	 * The storage manager url
+	 */
 	private String storageManagerUrl;
+	
+	/**
+	 * The default storage type 
+	 */
 	private StorageType storageType;
+	
 	/** User name for connecting to this facility's processing engine (Kubernetes instance) */
 	private String processingEngineUser;
 	
@@ -192,6 +240,12 @@ public class KubeConfig {
 	// no need to create own namespace, because only one "user" (prosEO) 
 	private String namespace = "default";
 	
+	/**
+	 * Look for the kube job of name.
+	 * 
+	 * @param name The name of a kube job
+	 * @return The kube job found or null
+	 */
 	public KubeJob getKubeJob(String name) {
 		return kubeJobList.get(name);
 	}
@@ -209,6 +263,11 @@ public class KubeConfig {
 		setFacility(pf);
 	}
 	
+	/**
+	 * Set all locally stored variables
+	 * 
+	 * @param pf The processing facility
+	 */
 	public void setFacility(ProcessingFacility pf) {
 		id = pf.getName();
 		longId = pf.getId();
@@ -277,7 +336,7 @@ public class KubeConfig {
 						 false);
 			} else {
                 try {
-                	// beschreibt Kubernetes in Docker
+                	// describes Kubernetes in Docker
                 	String kconf = ProductionPlanner.config.getProductionPlannerKubeConfig();
                 	if (kconf == null || kconf.isEmpty()) {
                 		kconf = "kube_config";
@@ -322,10 +381,18 @@ public class KubeConfig {
 	    }		
 	}
 
+	/**
+	 * Check whether a new Kubernetes job could run.
+	 * TODO At the moment simple check against worker count. Could possibly be improved
+	 * @return
+	 */
 	public boolean couldJobRun() {
 		return (kubeJobList.size() < (getWorkerCnt() + nodesDelta));
 	}
 
+	/**
+	 * Synchronize Kubernetes cluster and planner 
+	 */
 	public void sync() {
 		// rebuild runtime data 
 		V1JobList k8sJobList = null;
@@ -361,7 +428,7 @@ public class KubeConfig {
 				kubeJobList.remove(kj.getJobName());
 			}
 		}
-		// Look wheather Kubernetes job is running or has already finished without message event to Planner
+		// Look whether Kubernetes job is running or has already finished without message event to Planner
 		// Walk through Kubernetes job list (to manipulate KubeJob list)
 		for (V1Job aJob : k8sJobList.getItems()) {
 			String kName = aJob.getMetadata().getName();
@@ -416,8 +483,6 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
-		int aKey = kubeJobList.size() + 1;
-		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
 		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
 		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		if (aJob != null) {
@@ -434,8 +499,6 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
-		int aKey = kubeJobList.size() + 1;
-		// KubeJob aJob = new KubeJob(aKey, null, "centos/perl-524-centos7", "/testdata/test3.pl", "perl", null);
 		KubeJob aJob = new KubeJob(id, "/testdata/test1.pl");
 		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		if (aJob != null) {
@@ -617,6 +680,11 @@ public class KubeConfig {
 		return false;
 	}
 	
+	/**
+	 * Search ready worker nodes on Kubernetes cluster
+	 * 
+	 * @return true if at least one worker node is ready
+	 */
 	public boolean getNodeInfo() {
 		kubeNodes = null;
 		workerCnt = 0;

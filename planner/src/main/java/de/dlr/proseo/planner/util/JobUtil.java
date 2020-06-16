@@ -39,12 +39,22 @@ import de.dlr.proseo.planner.util.JobStepUtil;
 public class JobUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobUtil.class);
+	/**
+	 * Date time formatter for this class
+	 */
 	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
 	
+	/**
+	 * Suspend the job and its job steps. If force ist true, running Kubernetes jobs of are killed.
+	 *  
+	 * @param job The job
+	 * @param force 
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages suspend(Job job, Boolean force) {
 		Messages answer = Messages.FALSE;
@@ -98,6 +108,12 @@ public class JobUtil {
 		return answer;
 	}
 
+	/**
+	 * Retry a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages retry(Job job) {
 		Messages answer = Messages.FALSE;
@@ -154,6 +170,12 @@ public class JobUtil {
 		return answer;
 	}
 
+	/**
+	 * Cancel a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages cancel(Job job) {
 		Messages answer = Messages.FALSE;
@@ -193,6 +215,12 @@ public class JobUtil {
 		return answer;
 	}
 
+	/**
+	 * Resume a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages resume(Job job) {
 		Messages answer = Messages.FALSE;
@@ -231,7 +259,13 @@ public class JobUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Start a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return true after success
+	 */
 	@Transactional
 	public Boolean startJob(Job job) {
 		Boolean answer = false;
@@ -270,6 +304,12 @@ public class JobUtil {
 		return answer;
 	}
 
+	/**
+	 * Delete a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return true after success
+	 */
 	@Transactional
 	public Boolean delete(Job job) {
 		Boolean answer = false;
@@ -310,6 +350,12 @@ public class JobUtil {
  		return answer;
 	}
 
+	/**
+	 * Delete a job and its job steps except it is running.
+	 * 
+	 * @param job The job
+	 * @return true after success
+	 */
 	@Transactional
 	public Boolean deleteForced(Job job) {
 		Boolean answer = false;
@@ -348,6 +394,12 @@ public class JobUtil {
  		return answer;
 	}
 
+	/**
+	 * Check whether a job and its job steps are finished.
+	 * 
+	 * @param job The job
+	 * @return true after success
+	 */
 	@Transactional
 	public Boolean checkFinish(Job job) {
 		Boolean answer = false;	
@@ -400,6 +452,13 @@ public class JobUtil {
  		return answer;
 	}
 	
+	/**
+	 * Update the job state depending on job step state
+	 * TODO
+	 * 
+	 * @param job The job
+	 * @param jsState The job step state
+	 */
 	@Transactional
 	public void updateState(Job job, JobStepState jsState) {
 		// first implementation for retry

@@ -24,13 +24,37 @@ import de.dlr.proseo.planner.util.UtilService;
 @Transactional
 public class KubeDispatcher extends Thread {
 
+	/**
+	 * Logger for this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(KubeDispatcher.class);
 	
-    private ProductionPlanner productionPlanner;
+	/**
+	 * The planner instance 
+	 */
+	private ProductionPlanner productionPlanner;
+	
+    /**
+     * Flag to decide to run once or forever 
+     */
     private boolean runOnce;
+    
+    /**
+     * If true, search only for runnable job steps, else evaluate not satisfied queries too.  
+     */
     private boolean onlyRun;
+    
+    /**
+     * The kube config of facility
+     */
     private KubeConfig kubeConfig;
 
+	/** 
+	 * Create new KubeDispatcher for planner 
+	 * @param p The planner
+	 * @param kc The kube config of facility
+	 * @param onlyRun 
+	 */
 	public KubeDispatcher(ProductionPlanner p, KubeConfig kc, Boolean onlyRun) {
 		super((kc != null && p == null) ? "KubeDispatcherRunOnce" : "KubeDispatcher");
 		this.setDaemon(true);
@@ -40,6 +64,9 @@ public class KubeDispatcher extends Thread {
 		runOnce = (kc != null && p == null);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Thread#run()
+	 */
 	@Transactional
     public void run() {
     	int wait = 100000;

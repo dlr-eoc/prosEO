@@ -35,6 +35,9 @@ import de.dlr.proseo.planner.kubernetes.KubeJob;
 @Component
 public class ProcessingfacilityControllerImpl implements ProcessingfacilityController{
 	
+	/**
+	 * Logger of this class
+	 */
 	private static Logger logger = LoggerFactory.getLogger(ProcessingfacilityController.class);
 
 	/** The Production Planner instance */
@@ -78,13 +81,12 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	}
 
     /**
-     * Get production planner processingfacilitiy by name
+     * Get production planner processing facility by name
      * 
      */
 	@Override
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
-		// todo handle name
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
 		if (kc != null) {
 			RestProcessingFacility pf = new RestProcessingFacility(
@@ -112,13 +114,12 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 		}
 	}
     /**
-     * Get production planner processingfacilitiy by name
+     * Synchronize and run job steps of processing facility identified by name
      * 
      */
 	@Override
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
-		// todo handle name
 		productionPlanner.updateKubeConfig(name);
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
 		if (kc != null) {
@@ -148,8 +149,9 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		}
 	}
+	
     /**
-     * Pod of name has finished with state
+     * Kubernetes pod (identified by podname) and job (identified by name)  has finished with state
      * 
      */
 	@Override

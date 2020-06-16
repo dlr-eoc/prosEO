@@ -43,6 +43,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class OrderControllerImpl implements OrderController {
 	
+	/**
+	 * Logger of this class.
+	 */
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
 	
 	
@@ -82,7 +85,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Get prcessing order of id
+	 * Get processing order of id
 	 * 
 	 */
 	@Override
@@ -102,7 +105,7 @@ public class OrderControllerImpl implements OrderController {
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	/**
-	 * Approve prcessing order of id
+	 * Approve processing order of id
 	 * 
 	 */
 	@Override
@@ -134,7 +137,7 @@ public class OrderControllerImpl implements OrderController {
 
 	
 	/**
-	 * Reset prcessing order of id
+	 * Reset processing order of id
 	 * 
 	 */
 	@Override
@@ -166,7 +169,7 @@ public class OrderControllerImpl implements OrderController {
 
 	
 	/**
-	 * Delete prcessing order of id
+	 * Delete processing order of id
 	 * 
 	 */
 	@Override
@@ -267,7 +270,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Release prcessing order of id
+	 * Release processing order of id
 	 * 
 	 */
 	@Override
@@ -309,7 +312,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Cancel prcessing order of id
+	 * Cancel processing order of id
 	 * 
 	 */
 	@Override
@@ -342,7 +345,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Close prcessing order of id
+	 * Close processing order of id
 	 * 
 	 */
 	@Override
@@ -375,7 +378,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Suspend prcessing order of id
+	 * Suspend processing order of id
 	 * 
 	 */
 	@Override
@@ -406,7 +409,7 @@ public class OrderControllerImpl implements OrderController {
 	}
 	
 	/**
-	 * Retry prcessing order of id
+	 * Retry processing order of id
 	 * 
 	 */
 	@Override
@@ -437,6 +440,12 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 
+	/**
+	 * Find a processing order by DB id or identifier.
+	 * 
+	 * @param orderId DB id or identifier
+	 * @return Order found
+	 */
 	@Transactional
 	private ProcessingOrder findOrder(String orderId) {
 		Optional<ProcessingOrder> orderOpt = null;

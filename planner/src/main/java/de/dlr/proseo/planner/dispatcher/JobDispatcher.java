@@ -50,11 +50,18 @@ import de.dlr.proseo.interfaces.rest.model.RestJoborder;
  *
  */
 
+/**
+ * @author melchinger
+ *
+ */
 public class JobDispatcher {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobDispatcher.class);
 	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
 	
+	/**
+	 * The job order structure 
+	 */
 	private JobOrder jobOrder;
 	
 
@@ -64,6 +71,12 @@ public class JobDispatcher {
 	public JobDispatcher() {
 	}
 
+	/**
+	 * Create the job order of a job step
+	 * 
+	 * @param jobStep
+	 * @return The new job order
+	 */
 	public JobOrder createJobOrder(JobStep jobStep) {
 		// create the job order structure for a jobStep
 
@@ -174,6 +187,12 @@ public class JobDispatcher {
 		return jobOrder;
 	}
 	
+	/**
+	 * Add input file definition of product p recursively.
+	 * @param p Product
+	 * @param proc The Ipf_Proc
+	 * @param jobStep Job step
+	 */
 	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep) {
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
@@ -188,7 +207,14 @@ public class JobDispatcher {
 		}
 	}
 
-	
+
+	/**
+	 * Add output file definition of product p recursively.
+	 * @param p Product
+	 * @param proc The Ipf_Proc
+	 * @param jobStep Job step
+	 * @param baseDir Base directory path of output data in facility/storage manager
+	 */
 	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep, String baseDir) {
 		String fnType = p.getComponentProducts().isEmpty() ? "Physical" : "Directory"; 
 		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, "Output", String.valueOf(p.getId()));
@@ -272,220 +298,3 @@ public class JobDispatcher {
 		return jobOrder;
 	}
 }
-
-
-/*
- 
- 
-InputStream aStream;
-try {
-	aStream = new com.amazonaws.util.StringInputStream("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n" + 
-			"<Ipf_Job_Order>\r\n" + 
-			"  <Ipf_Conf>\r\n" + 
-			"    <Processor_Name>CO____</Processor_Name>\r\n" + 
-			"    <Version>01.03.01</Version>\r\n" + 
-			"    <Stdout_Log_Level>INFO</Stdout_Log_Level>\r\n" + 
-			"    <Stderr_Log_Level>WARNING</Stderr_Log_Level>\r\n" + 
-			"    <Test>false</Test>\r\n" + 
-			"    <Breakpoint_Enable>true</Breakpoint_Enable>\r\n" + 
-			"    <Processing_Station>PDGS-OP</Processing_Station>\r\n" + 
-			"    <Acquisition_Station>PDGS-GSN</Acquisition_Station>\r\n" + 
-			"    <Sensing_Time>\r\n" + 
-			"      <Start>20180105_075307000000</Start>\r\n" + 
-			"      <Stop>20180105_093437000000</Stop>\r\n" + 
-			"    </Sensing_Time>\r\n" + 
-			"    <Config_Files/>\r\n" + 
-			"    <Dynamic_Processing_Parameters>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>logging.root</Name>\r\n" + 
-			"        <Value>notice</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>logging.dumplog</Name>\r\n" + 
-			"        <Value>null</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>Threads</Name>\r\n" + 
-			"        <Value>9</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>orbit number</Name>\r\n" + 
-			"        <Value>01191</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>Processing_Mode</Name>\r\n" + 
-			"        <Value>OFFL</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"      <Processing_Parameter>\r\n" + 
-			"        <Name>Deadline_Time</Name>\r\n" + 
-			"        <Value>20190425_163530000000</Value>\r\n" + 
-			"      </Processing_Parameter>\r\n" + 
-			"    </Dynamic_Processing_Parameters>\r\n" + 
-			"  </Ipf_Conf>\r\n" + 
-			"  <List_of_Ipf_Procs count=\"1\">\r\n" + 
-			"    <Ipf_Proc>\r\n" + 
-			"      <Task_Name>TROPNLL2DP</Task_Name>\r\n" + 
-			"      <Task_Version>01.03.01</Task_Version>\r\n" + 
-			"      <List_of_Inputs count=\"18\">\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>CFG_CO____</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">/alluxio1/3244232/file01.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>CFG_CO___F</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">/alluxio1/3244232/file02.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>REF_SOLAR_</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file03.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>REF_XS__CO</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file04.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>AUX_ISRF__</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file05.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>AUX_CTMCH4</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"3\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file06.txt</File_Name>\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">/alluxio1/3244232/file07.txt</File_Name>\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">/alluxio1/3244232/file08.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_IR_SIR</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file09.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD1</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file10.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD2</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file11.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD3</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file12.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD4</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file13.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD5</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file14.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD6</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file15.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD7</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file16.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>L1B_RA_BD8</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file16.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>AUX_MET_TP</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file16.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>AUX_MET_2D</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file17.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"        <Input>\r\n" + 
-			"          <File_Type>AUX_MET_QP</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">s3://s3test/3244233/file18.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Input>\r\n" + 
-			"      </List_of_Inputs>\r\n" + 
-			"      <List_of_Outputs count=\"3\">\r\n" + 
-			"        <Output Product_ID=\"7397129831\">\r\n" + 
-			"          <File_Type>L2__CO____</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">results_A/result01.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Output>\r\n" + 
-			"        <Output Product_ID=\"7397129832\">\r\n" + 
-			"          <File_Type>L2__CO____</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"ALLUXIO\">results_B/result02.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Output>\r\n" + 
-			"        <Output Product_ID=\"7397129833\">\r\n" + 
-			"          <File_Type>L2__CO____</File_Type>\r\n" + 
-			"          <File_Name_Type>PHYSICAL</File_Name_Type>\r\n" + 
-			"          <List_of_File_Names count=\"1\">\r\n" + 
-			"            <File_Name FS_TYPE=\"S3\">results_C/result03.txt</File_Name>\r\n" + 
-			"          </List_of_File_Names>\r\n" + 
-			"        </Output>\r\n" + 
-			"      </List_of_Outputs>\r\n" + 
-			"    </Ipf_Proc>\r\n" + 
-			"  </List_of_Ipf_Procs>\r\n" + 
-			"</Ipf_Job_Order>");
-	jobOrder.readFromStream(aStream);
-} catch (UnsupportedEncodingException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-}
-
-*/

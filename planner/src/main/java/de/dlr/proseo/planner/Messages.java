@@ -120,15 +120,36 @@ public enum Messages {
 	;
 	
 	public enum MessageType {
-		I,
-		W,
-		E;
+		I, // Information
+		W, // Warning
+		E; // Error
 	}
 
+	
+	/**
+	 * The message code
+	 */
 	private final int code;
+	
+	/**
+	 * The message type
+	 */
 	private final MessageType type;
+	
+	/**
+	 * The message description 
+	 */
 	private final String description;
+	
+	/**
+	 * The message success, true or false
+	 */
 	private final boolean success;
+	
+	/**
+	 * The next message code.
+	 * At the moment the code is generated as a sequence starting at 3000 
+	 */
 	private static int nextCode = 3000;
 
 	/**

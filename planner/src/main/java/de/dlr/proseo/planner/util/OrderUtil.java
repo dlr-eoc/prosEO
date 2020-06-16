@@ -51,6 +51,12 @@ public class OrderUtil {
     @Autowired
     private OrderDispatcher orderDispatcher;
 
+	/**
+	 * Cancel the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages cancel(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -94,6 +100,12 @@ public class OrderUtil {
 		return answer;
 	}
 
+	/**
+	 * Reset the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages reset(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -158,7 +170,13 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Delete the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages delete(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -211,7 +229,13 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Approve the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages approve(ProcessingOrder order) {
 		Messages answer = Messages.ORDER_ALREADY_APPROVED;
@@ -257,6 +281,12 @@ public class OrderUtil {
 		return answer;
 	}
 
+	/**
+	 * Plan the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
 		Messages answer = Messages.FALSE;
@@ -308,6 +338,12 @@ public class OrderUtil {
 		return answer;
 	}
 
+	/**
+	 * Resume the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages resume(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -360,6 +396,12 @@ public class OrderUtil {
 		return answer;
 	}
 
+	/**
+	 * Start the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages startOrder(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -403,7 +445,13 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Suspend the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages suspend(ProcessingOrder order, Boolean force) {
 		Messages answer = Messages.FALSE;
@@ -478,6 +526,12 @@ public class OrderUtil {
 		return answer;
 	}
 
+	/**
+	 * Retry the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages retry(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -533,7 +587,13 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Close the processing order and it jobs and job steps.
+	 * 
+	 * @param order The processing Order
+	 * @return Result message
+	 */
 	@Transactional
 	public Messages close(ProcessingOrder order) {
 		Messages answer = Messages.FALSE;
@@ -566,7 +626,13 @@ public class OrderUtil {
 		}
 		return answer;
 	}
-	
+
+	/**
+	 * Check whether the processing order and it jobs and job steps are finished.
+	 * 
+	 * @param order The processing Order
+	 * @return true after success
+	 */
 	@Transactional
 	public Boolean checkFinish(ProcessingOrder order) {
 		Boolean answer = false;	
@@ -619,7 +685,14 @@ public class OrderUtil {
 		}
  		return answer;
 	}
-	
+		
+	/**
+	 * Get the processing facility(-ies) processing the order
+	 * At the moment there is normally only one facility to do so.
+	 * 
+	 * @param order The processing order
+	 * @return List of processinig facilities
+	 */
 	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
 		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
 		if (order != null) {
@@ -632,6 +705,14 @@ public class OrderUtil {
 		return pfList;
 	}
 	
+	
+	/**
+	 * Update the order state depending on job state
+	 * TODO
+	 * 
+	 * @param order The processing order
+	 * @param jState The job state
+	 */
 
 	@Transactional
 	public void updateState(ProcessingOrder order, JobState jState) {
