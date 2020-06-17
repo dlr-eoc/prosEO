@@ -42,11 +42,15 @@ public class FacmgrManager {
 	private static final int MSG_ID_FACILITY_MODIFIED = 1019;
 	private static final int MSG_ID_FACILITY_NOT_MODIFIED = 1020;
 	private static final int MSG_ID_FACILITY_CREATED = 1021;
+	private static final int MSG_ID_FACILITY_LIST_EMPTY = 1022;
+	private static final int MSG_ID_FACILITY_LIST_RETRIEVED = 1023;
+
 
 
 	/* Message string constants */
 	private static final String MSG_FACILITY_NOT_FOUND = "(E%d) No facility found for ID %d";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Facility deletion unsuccessful for ID %d";
+	private static final String MSG_FACILITY_LIST_EMPTY = "(E%d) No facilities found for search criteria";
 	private static final String MSG_FACILITY_MISSING = "(E%d) Facility not set";
 	private static final String MSG_FACILITY_DELETED = "(I%d) Facility with id %d deleted";
 	private static final String MSG_FACILITY_ID_MISSING = "(E%d) Facility ID not set";
@@ -54,6 +58,8 @@ public class FacmgrManager {
 	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
 	private static final String MSG_FACILITY_MODIFIED = "(I%d) Facility with id %d modified";
 	private static final String MSG_FACILITY_CREATED = "(I%d) Facility with identifier %s created";
+	private static final String MSG_FACILITY_LIST_RETRIEVED = "(I%d) Facility list of size %d retrieved for facility '%s'";
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -152,7 +158,12 @@ public class FacmgrManager {
 			}
 
 		}
-		
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_FACILITY_LIST_EMPTY, MSG_ID_FACILITY_LIST_EMPTY));
+			
+		}
+		logInfo(MSG_FACILITY_LIST_RETRIEVED, MSG_ID_FACILITY_LIST_RETRIEVED, result.size(), name);
+
 		return result;
 	}
 
