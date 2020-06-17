@@ -92,7 +92,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
 	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
 
-	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No facilities found for search criteria";
+	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
 
 
 	/** JPA entity manager */

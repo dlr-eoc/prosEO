@@ -173,8 +173,8 @@ public class FacmgrManager {
 	 * 
 	 * @param id the ID to look for
 	 * @return a Json object corresponding to the facility found
-	 * @throws IllegalArgumentException if no order ID was given
-	 * @throws NoResultException if no order with the given ID exists
+	 * @throws IllegalArgumentException if no facility ID was given
+	 * @throws NoResultException if no facility with the given ID exists
 	 */
 	public RestProcessingFacility getFacilityById(Long id) throws IllegalArgumentException, NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getFacilityById({})", id);
@@ -240,7 +240,7 @@ public class FacmgrManager {
 //			facilityChanged = true;
 //			modelFacility.setDefaultStorageType(changedFacility.getDefaultStorageType());
 //		}	
-		// Save order only if anything was actually changed
+		// Save facility only if anything was actually changed
 		if (facilityChanged)	{
 			modelFacility.incrementVersion();
 			modelFacility = RepositoryService.getFacilityRepository().save(modelFacility);
@@ -252,10 +252,10 @@ public class FacmgrManager {
 	}
 	
 	/**
-	 * Delete an order by ID
+	 * Delete an facility by ID
 	 * 
-	 * @param the ID of the order to delete
-	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+	 * @param the ID of the facility to delete
+	 * @throws EntityNotFoundException if the facility to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
 	public void deleteFacilityById(Long id) {
@@ -266,7 +266,7 @@ public class FacmgrManager {
 		if (modelFacility.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND));
 		}
-		// Delete the order
+		// Delete the facility
 		RepositoryService.getFacilityRepository().deleteById(id);
 
 		// Test whether the deletion was successful

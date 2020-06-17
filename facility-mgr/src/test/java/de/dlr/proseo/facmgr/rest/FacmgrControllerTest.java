@@ -50,7 +50,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 @DirtiesContext
 @AutoConfigureTestEntityManager
 public class FacmgrControllerTest {
-	/* The base URI of the Orders */
+	/* The base URI of the Facilities */
 	private static String FACILITY_BASE_URI = "/proseo/facility-mgr/v0.1";
 
 	@LocalServerPort
@@ -245,7 +245,7 @@ public class FacmgrControllerTest {
 				return null;
 			}
 		});
-		logger.info("Test OK: Delete Order By ID");
+		logger.info("Test OK: Delete facility By ID");
 	}
 	
 	/**
@@ -305,7 +305,6 @@ public class FacmgrControllerTest {
 	 */
 	@Test
 	public final void getFacilities() {
-
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -393,7 +392,7 @@ public class FacmgrControllerTest {
 			}
 		});
 
-		logger.info("Test OK: Get Orders");
+		logger.info("Test OK: Get facilities");
 	
 	}
 	/**
@@ -404,7 +403,7 @@ public class FacmgrControllerTest {
 	 */
 	
 	@Test
-	public final void testModifyOrder() {
+	public final void testModifyFacility() {
 		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
@@ -424,7 +423,7 @@ public class FacmgrControllerTest {
 			}
 		});
 			
-		// Update  order attribute/s
+		// Update  facility attribute/s
 		ProcessingFacility facilitytoModify = testFacilities.get(0);
 		facilitytoModify.setName("Modified_Name");		
 		
@@ -437,7 +436,7 @@ public class FacmgrControllerTest {
 				.patchForObject(testUrl, restFacility, RestProcessingFacility.class);
 		assertNotNull("Modified facility not set", restFacility);
 
-		// Test that the order attribute was changed as expected
+		// Test that the facility attribute was changed as expected
 		ResponseEntity<RestProcessingFacility> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, RestProcessingFacility.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());

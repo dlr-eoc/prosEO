@@ -50,7 +50,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	/**
 	 * Create a facility from the given Json object 
 	 * 
-	 * @param order the Json object to create the order from
+	 * @param facility the Json object to create the facility from
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the facility after persistence
 	 *             (with ID and version for all contained objects) or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
@@ -135,9 +135,9 @@ public class FacmgrControllerImpl implements FacilityController{
 	public ResponseEntity<RestProcessingFacility> modifyFacility(Long id, RestProcessingFacility restFacility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyFacility({})", id);
 		try {
-			RestProcessingFacility changedOrder = procFacilityManager.modifyFacility(id, restFacility);
-			HttpStatus httpStatus = (restFacility.getVersion() == changedOrder.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
-			return new ResponseEntity<>(changedOrder, httpStatus);
+			RestProcessingFacility changedFacility = procFacilityManager.modifyFacility(id, restFacility);
+			HttpStatus httpStatus = (restFacility.getVersion() == changedFacility.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedFacility, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
