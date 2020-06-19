@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.planner.dispatcher;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -264,7 +265,13 @@ public class OrderDispatcher {
 					if (configuredProcessors.isEmpty()) {
 						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
+					} else if (startT.equals(stopT)) {
+						createJobForOrbitOrTime(order, null, startT, stopT, pf);
 					} else {
+						if (Duration.ZERO.equals(order.getSliceDuration())) {
+							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
+							answer = false;
+						}
 						// create jobs
 						// for each orbit
 						while (startT.isBefore(stopT)) {
@@ -335,6 +342,8 @@ public class OrderDispatcher {
 							}
 							job.setStopTime(stopT);
 							job.setProcessingOrder(order);
+							job = RepositoryService.getJobRepository().save(job);
+							order.getJobs().add(job);
 							job.setProcessingFacility(pf);
 							List <JobStep> allJobSteps = new ArrayList<JobStep>();
 							// for each product class
@@ -343,6 +352,8 @@ public class OrderDispatcher {
 								JobStep jobStep = new JobStep();
 								jobStep.setJobStepState(JobStepState.INITIAL);
 								jobStep.setJob(job);
+								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+								job.getJobSteps().add(jobStep);
 
 								// create output product
 								// if product class has sub products or is sub product, create all related products to be created
@@ -391,6 +402,7 @@ public class OrderDispatcher {
 									for (Product p : products) {
 										for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
 											ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+											pq = RepositoryService.getProductQueryRepository().save(pq);
 											if (!jobStep.getInputProductQueries().contains(pq)) {
 												jobStep.getInputProductQueries().add(pq);
 											}
@@ -469,6 +481,8 @@ public class OrderDispatcher {
 		JobStep jobStep = new JobStep();
 		jobStep.setJobStepState(JobStepState.INITIAL);
 		jobStep.setJob(job);
+		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+		job.getJobSteps().add(jobStep);
 		// create output product
 		// if product class has sub products or is sub product, create all related products to be created
 		List<ProductClass> productClassesToCreate = new ArrayList<ProductClass>();
@@ -523,6 +537,7 @@ public class OrderDispatcher {
 				for (Product p : products) {
 					for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
 						ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+						pq = RepositoryService.getProductQueryRepository().save(pq);
 						if (!jobStep.getInputProductQueries().contains(pq)) {
 							jobStep.getInputProductQueries().add(pq);
 						}
@@ -631,6 +646,7 @@ public class OrderDispatcher {
 		p.setSensingStartTime(startTime);
 		p.setSensingStopTime(stopTime);
 		p.setEnclosingProduct(enclosingProduct);
+		p = RepositoryService.getProductRepository().save(p);
 		
 		return p;
 	}
