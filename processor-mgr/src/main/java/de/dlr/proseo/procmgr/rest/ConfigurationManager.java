@@ -371,7 +371,7 @@ public class ConfigurationManager {
 				changedInputFile.setFileNameType(restInputFile.getFileNameType());
 				changedInputFile.getFileNames().addAll(restInputFile.getFileNames());
 				newInputFiles.add(changedInputFile);
-				break;
+				continue;
 			}
 			ConfigurationInputFile modelInputFile = null;
 			for (ConfigurationInputFile inputFile: modelConfiguration.getStaticInputFiles()) {
