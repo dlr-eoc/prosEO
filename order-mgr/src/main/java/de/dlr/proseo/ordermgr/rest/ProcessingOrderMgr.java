@@ -65,6 +65,8 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_DUPLICATE_ORDER_IDENTIFIER = 1022;
 	private static final int MSG_ID_ORDER_TIME_INTERVAL_MISSING = 1023;
 	private static final int MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING = 1024;
+	private static final int MSG_ID_ORDER_LIST_EMPTY = 1025;
+	private static final int MSG_ID_ORDER_LIST_RETRIEVED = 1026;
 	
 
 	/* Message string constants */
@@ -88,6 +90,10 @@ public class ProcessingOrderMgr {
 	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists";
 	private static final String MSG_ORDER_TIME_INTERVAL_MISSING = "(E%d) Time interval (orbit or time range) missing for order %s";
 	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
+	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
+
+	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
+
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -616,6 +622,11 @@ public class ProcessingOrderMgr {
 			}
 
 		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_ORDER_LIST_EMPTY, MSG_ID_ORDER_LIST_EMPTY));
+			
+		}
+		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), result.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return result;
 
 	}

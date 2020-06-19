@@ -28,7 +28,6 @@ public class FacmgrUtil {
 		restFacility.setId(modelFacility.getId());
 
 		restFacility.setVersion(Long.valueOf(modelFacility.getVersion()));
-		logger.info("Coming here");
 		if (null != modelFacility.getName()) {
 			restFacility.setName(modelFacility.getName());
 
@@ -69,7 +68,6 @@ public class FacmgrUtil {
 			restFacility.setDefaultStorageType(modelFacility.getDefaultStorageType().toString());
 		}
 		
-		logger.info("Coming here till the end");
 
 		return restFacility;
 		
@@ -96,7 +94,7 @@ public class FacmgrUtil {
 				modelFacility.incrementVersion();
 			} 
 		}
-		
+
 		if (null != restFacility.getName()) {
 			modelFacility.setName(restFacility.getName());
 
@@ -136,7 +134,7 @@ public class FacmgrUtil {
 		if (null != restFacility.getDefaultStorageType()) {		
 			modelFacility.setDefaultStorageType(StorageType.valueOf(restFacility.getDefaultStorageType()));
 		}		
-		
+
 		return modelFacility;
 		
 		
