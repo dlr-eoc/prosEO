@@ -3,6 +3,8 @@
 # create_data_local.sh
 # --------------------
 #
+# Usage: create_data_local.sh <Storage Manager image tag> <path to shared storage>
+#
 # Create Kubernetes services on a local Docker Desktop instance
 # and dynamic test data for the prosEO test mission:
 # - L0 input data
@@ -13,13 +15,19 @@
 #
 
 # -------------------------
-# Tag Storage Manager image
+# Check parameters
 # -------------------------
 STORAGE_MGR_TAG=$1
-if [ x$STORAGE_MGR_TAG = x ] ; then
-	echo "Usage: $0 <Storage Manager image tag>"
+SHARED_STORAGE_PATH=$2
+
+if [ x$STORAGE_MGR_TAG = x -o x$SHARED_STORAGE_PATH = x ] ; then
+	echo "Usage: $0 <Storage Manager image tag> <path to shared storage>"
 	exit 1
 fi
+
+# -------------------------
+# Tag Storage Manager image
+# -------------------------
 docker tag localhost:5000/proseo-storage-mgr:$STORAGE_MGR_TAG localhost:5000/proseo-storage-mgr:latest
 docker push localhost:5000/proseo-storage-mgr:latest
 
@@ -27,24 +35,17 @@ docker push localhost:5000/proseo-storage-mgr:latest
 # Prepare local file server
 # -------------------------
 
-# Create the file system cache in the local Minikube
-kubectl apply -f ../nfs-server-local.yaml
-
-# Find the cluster IP address of the local NFS server (file system cache)
-NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
-# Update the IP address in the Persistent Volume configuration (no DNS resolution before Storage Manager pod instantiation, I'm afraid)
-sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
+# File server is on "hostPath"
+# Update the path in the Persistent Volume configuration
+sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../nfs-pv.yaml.template >../nfs-pv.yaml
 # Create the Persistent Volumes
 kubectl apply -f ../nfs-pv.yaml
 
-# Find the NFS server pod
-NFS_SERVER_POD=$(kubectl get pods --no-headers=true | grep proseo-nfs-server | cut -d ' ' -f 1)
-
 # Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
-kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/proseodata
+mkdir -p ${SHARED_STORAGE_PATH}/proseodata
 
 # Simulated "external" mount point for product ingestion (must correspond to the specs in nfs-server-local.yaml)
-kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/transfer
+mkdir -p ${SHARED_STORAGE_PATH}/transfer
 
 # Ingest mount point in storage manager (must correspond to the specs in storage-mgr-local.yaml)
 INGEST_MOUNT_POINT=/mnt
@@ -56,7 +57,7 @@ INGEST_MOUNT_POINT=/mnt
 # Create empty subdirectory for test data
 TEST_DATA_DIR=testfiles
 mkdir -p $TEST_DATA_DIR
-rm $TEST_DATA_DIR/*
+rm -rf $TEST_DATA_DIR/*
 
 INGEST_DIR=$TEST_DATA_DIR/transfer
 FILE_PATH=import/products
@@ -129,8 +130,8 @@ cd -
 # Using bulletinb-380.xml
 cp -p bulletinb-380.xml ${INGEST_DIR}/${FILE_PATH}
 
-# Copy test data into NFS server
-kubectl cp ${INGEST_DIR} $NFS_SERVER_POD:/exports
+# Copy test data into file server
+cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 
 
 # -------------------------

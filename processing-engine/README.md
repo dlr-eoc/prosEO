@@ -238,22 +238,22 @@ The `single-node-deploy/testdata` directory contains convenience scripts for the
 and a prepared `docker-compose.yml` file.
 
 # Step 4: Setup the Kubernetes Cluster with Storage Manager and File System Cache
-This step requires configuring an NFS (or other) file server to serve the common storage area
+This step requires configuring a "host path" file server to serve the common storage area
 to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
 given in the example directory `single-node-deploy`, the following commands must be issued
 (also available as part of the script `single-node-deploy/testdata/create_data_local.sh`):
 ```sh
-# Create the File System Cache
-kubectl apply -f nfs-server-local.yaml
+# Define actual path to storage area
+SHARED_STORAGE_PATH=<path on Docker Desktop host>
 
-# Create Persistent Volumes
-NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
-sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
-kubectl apply -f nfs-pv.yaml 
+# Update the path in the Persistent Volume configuration
+sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <nfs-pv.yaml.template >nfs-pv.yaml
+
+# Create the Persistent Volumes
+kubectl apply -f nfs-pv.yaml
 
 # Create the export directories
-NFS_SERVER_POD=$(kubectl get pods --no-headers=true | grep proseo-nfs-server | cut -d ' ' -f 1)
-kubectl exec $NFS_SERVER_POD -- mkdir -p /exports/proseodata /exports/transfer
+mkdir -p ${SHARED_STORAGE_PATH}/proseodata ${SHARED_STORAGE_PATH}/transfer
 
 # Create the Storage Manager
 kubectl apply -f storage-mgr-local.yaml

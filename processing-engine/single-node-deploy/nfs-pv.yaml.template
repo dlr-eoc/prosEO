@@ -10,11 +10,11 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 5Gi
+    storage: 50Gi
   persistentVolumeReclaimPolicy: Retain 
-  nfs:
-    server: proseo-nfs-server.default.svc.cluster.local
-    path: /exports/transfer
+  hostPath:
+    path: %SHARED_STORAGE_PATH%/transfer
+    type: Directory
 
 ---
 # The common storage area for Storage Manager and Processing Engine
@@ -28,8 +28,8 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 5Gi
+    storage: 50Gi
   persistentVolumeReclaimPolicy: Retain 
-  nfs:
-    server: proseo-nfs-server.default.svc.cluster.local
-    path: /exports/proseodata
+  hostPath:
+    path: %SHARED_STORAGE_PATH%/proseodata
+    type: Directory
