@@ -320,7 +320,7 @@ public class KubeJob {
 						.addNewContainer()
 						.withName(containerName)
 						.withImage(imageName)
-						// .withImagePullPolicy("Never")
+						.withImagePullPolicy("Always")
 						.addNewEnv()
 						.withName("NODE_IP")
 						.withValueFrom(es)

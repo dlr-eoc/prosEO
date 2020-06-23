@@ -351,6 +351,7 @@ public class OrderDispatcher {
 								// create job step(s)
 								JobStep jobStep = new JobStep();
 								jobStep.setJobStepState(JobStepState.INITIAL);
+								jobStep.setProcessingMode(order.getProcessingMode());
 								jobStep.setJob(job);
 								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 								job.getJobSteps().add(jobStep);
@@ -389,7 +390,8 @@ public class OrderDispatcher {
 								for (Product p : productsToCreate) {
 									// check if product exists
 									// use configured processor, product class, sensing start and stop time, orbit (if set)
-									if (RepositoryService.getProductRepository()
+									// TODO NOTE TB: This seems redundant, since p was just created above ...
+									if (!RepositoryService.getProductRepository()
 										   .findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
 												p.getProductClass().getId(),
 												p.getConfiguredProcessor().getId(),
@@ -639,14 +641,17 @@ public class OrderDispatcher {
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);
 		p.setJobStep(js);
-		if (js != null) {
-			js.setOutputProduct(p);
-		}
 		p.setFileClass(fileClass);
 		p.setSensingStartTime(startTime);
 		p.setSensingStopTime(stopTime);
+		if (null != js) {
+			p.setMode(js.getProcessingMode());
+		}
 		p.setEnclosingProduct(enclosingProduct);
 		p = RepositoryService.getProductRepository().save(p);
+		if (js != null) {
+			js.setOutputProduct(p);
+		}
 		
 		return p;
 	}
