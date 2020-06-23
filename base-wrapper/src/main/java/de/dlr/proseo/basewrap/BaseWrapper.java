@@ -65,6 +65,8 @@ public class BaseWrapper {
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
 	/** Directory prefix of produced output data */
 	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
+	/** Constant for file name type "Physical" in JOF */
+	private static final String FILENAME_TYPE_PHYSICAL = "Physical";
 	/** Constant for file name type "Directory" in JOF */
 	protected static final String FILENAME_TYPE_DIRECTORY = "Directory";
 	/** Constant for file name type "Archive" in JOF (non-standard extension!) */
@@ -101,6 +103,7 @@ public class BaseWrapper {
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
+	private static final String MSG_SKIPPING_INPUT_ENTRY = "Skipping input entry of type {} with filename type {}";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -173,8 +176,6 @@ public class BaseWrapper {
 	 */
 	private String ENV_STORAGE_MGR_SERVICE_SERVICE_HOST = System.getenv(ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_HOST.toString());
 	
-	/** Own node IP address to be inserted in %NODE_IP% variable in Storage Manager endpoint */
-	private String ENV_NODE_IP = System.getenv(ENV_VARS.NODE_IP.toString());
 	/** User name for local Storage Manager */
 	private String ENV_STORAGE_USER = System.getenv(ENV_VARS.STORAGE_USER.toString());
 	/** Password for local Storage Manager */
@@ -397,6 +398,11 @@ public class BaseWrapper {
 		for(Proc item : jo.getListOfProcs()) {
 			// Loop all Input
 			for (InputOutput io: item.getListOfInputs()) {
+				if (!FILENAME_TYPE_PHYSICAL.equals(io.getFileNameType())) {
+					// Only download "Physical" files
+					logger.info(MSG_SKIPPING_INPUT_ENTRY, io.getFileType(), io.getFileNameType());
+					continue;
+				}
 				// Loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
 					Boolean done = false;
@@ -840,10 +846,27 @@ public class BaseWrapper {
 	/**
 	 * Main routine: Run BaseWrapper
 	 * 
-	 * @param args not used due environment variable-based invocation
+	 * @param args first string argument is class name of actual Wrapper class (must be a subclass of BaseWrapper or BaseWrapper
+	 *        itself; default is to use BaseWrapper)
 	 */
 	public static void main(String[] args) {
-		System.exit((new BaseWrapper()).run());
+		Class<?> clazz = null;;
+		try {
+			clazz = ( 0 == args.length ? BaseWrapper.class : ClassLoader.getSystemClassLoader().loadClass(args[0]) );
+		} catch (ClassNotFoundException e) {
+			logger.error("Requested wrapper class {} not found", args[0]);
+			System.exit(EXIT_CODE_FAILURE);
+		}
+		if (!BaseWrapper.class.isAssignableFrom(clazz)) {
+			logger.error("Requested wrapper class {} is not a subclass of BaseWrapper", clazz.getName());
+			System.exit(EXIT_CODE_FAILURE);
+		}
+		try {
+			System.exit(((BaseWrapper) clazz.getDeclaredConstructor().newInstance()).run());
+		} catch (Exception e) {
+			logger.error("Requested wrapper class {} cannot be launched (cause: {})", clazz.getName(), e.getMessage());
+			System.exit(EXIT_CODE_FAILURE);
+		}
 	}
 
 }
