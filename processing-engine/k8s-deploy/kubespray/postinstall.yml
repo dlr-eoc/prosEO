@@ -52,6 +52,15 @@
     #FIREWALLD OFF
     - name: disable firewalld
       service: name=firewalld state=stopped enabled=no
+    #NFS SERVER
+    - name: exports file
+      blockinfile:
+        dest: /etc/exports
+        create: yes
+        block: |
+          /exports 192.168.0.0/24 (rw,sync)
+    - name: enable local nfs
+      service: name=nfs state=started enabled=yes
     #KUBECTL-PROXY
     - name: run kubectl proxy as systemd
       blockinfile:

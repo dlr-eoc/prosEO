@@ -57,9 +57,7 @@ See also: <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-p
 - deploy the storage-mgr service
     ```sh
     cd kubernetes
-    kubectl apply -f nfs-server.yaml
-    NFS_CLUSTER_IP=$(kubectl get service proseo-nfs-server --no-headers=true | cut -d ' ' -f 7)
-    sed "s/proseo-nfs-server.default.svc.cluster.local/${NFS_CLUSTER_IP}/" <nfs-pv.yaml.template >nfs-pv.yaml
+    sed "s/proseo-nfs-server.default.svc.cluster.local/<bastion host IP>/" <nfs-pv.yaml.template >nfs-pv.yaml
     kubectl apply -f nfs-pv.yaml
     kubectl apply -f storage-mgr.yaml
     ```

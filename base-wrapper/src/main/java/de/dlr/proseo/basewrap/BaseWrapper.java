@@ -506,7 +506,7 @@ public class BaseWrapper {
 	private Boolean runProcessor(String jofPath) {
 		if (logger.isTraceEnabled()) logger.trace(">>> runProcessor({}, {})", jofPath);
 
-		logger.info(MSG_STARTING_PROCESSOR, jofPath);
+		logger.info(MSG_STARTING_PROCESSOR, ENV_PROCESSOR_SHELL_COMMAND, jofPath);
 
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.redirectErrorStream(true); 
