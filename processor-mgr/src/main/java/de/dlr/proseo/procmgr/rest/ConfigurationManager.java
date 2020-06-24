@@ -437,13 +437,10 @@ public class ConfigurationManager {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_ID_MISSING, MSG_ID_CONFIGURATION_ID_MISSING));
 		}
 		
-		// Test whether the product id is valid
+		// Test whether the configuration id is valid
 		Optional<Configuration> modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
 		if (modelConfiguration.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND,
-					modelConfiguration.get().getProcessorClass().getMission().getCode(),
-					modelConfiguration.get().getProcessorClass().getProcessorName(),
-					modelConfiguration.get().getConfigurationVersion()));
+			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id));
 		}
 		
 		// Check whether there are configured processors for this configuration

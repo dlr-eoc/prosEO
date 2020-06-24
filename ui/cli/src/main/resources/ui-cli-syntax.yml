@@ -1037,7 +1037,6 @@ commands:
           parameters:
             - name: id
               type: integer
-              optional: true
               description: The database ID of the product to delete
     - name: ingest
       description: Ingest all products into the storage manager of the given processing facility

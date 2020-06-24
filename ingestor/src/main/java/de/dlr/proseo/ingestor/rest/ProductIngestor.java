@@ -212,8 +212,10 @@ public class ProductIngestor {
 		String storageManagerUrl = facility.getStorageManagerUrl() + URL_STORAGE_MANAGER_REGISTER;
 		if (logger.isDebugEnabled()) logger.debug("Calling Storage Manager with URL " + storageManagerUrl + " and data " + postData);
 		
-		RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000)).basicAuthentication(
-				facility.getStorageManagerUser(), facility.getStorageManagerPassword()).build();
+		RestTemplate restTemplate = rtb
+				.setConnectTimeout(Duration.ofMillis(ingestorConfig.getStorageManagerTimeout()))
+				.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
+				.build();
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<Map> responseEntity = null;
 		try {
@@ -565,7 +567,10 @@ public class ProductIngestor {
 			String productionPlannerUrl = ingestorConfig.getProductionPlannerUrl() + String.format(URL_PLANNER_NOTIFY, ingestorProduct.getId());
 
 			
-			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000)).basicAuthentication(user, password).build();
+			RestTemplate restTemplate = rtb
+					.setConnectTimeout(Duration.ofMillis(ingestorConfig.getProductionPlannerTimeout()))
+					.basicAuthentication(user, password)
+					.build();
 			ResponseEntity<String> response = restTemplate.getForEntity(productionPlannerUrl, String.class);
 			if (!HttpStatus.OK.equals(response.getStatusCode())) {
 				throw new ProcessingException(logError(MSG_ERROR_NOTIFYING_PLANNER, MSG_ID_ERROR_NOTIFYING_PLANNER,

@@ -164,7 +164,7 @@ public class ProductManager {
 		// Test whether the product id is valid
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
 		if (modelProduct.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND));
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
 		}
 		
 		// Make sure product does not exist on any Processing Facility
@@ -239,10 +239,10 @@ public class ProductManager {
 				}
 			}
 			if (null != startTimeFrom) {
-				query.setParameter("startTimeFrom", startTimeFrom);
+				query.setParameter("startTimeFrom",startTimeFrom.toInstant());
 			}
 			if (null != startTimeTo) {
-				query.setParameter("startTimeTo", startTimeTo);
+				query.setParameter("startTimeTo", startTimeTo.toInstant());
 			}
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof Product) {

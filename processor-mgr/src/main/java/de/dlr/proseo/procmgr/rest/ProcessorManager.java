@@ -404,10 +404,7 @@ public class ProcessorManager {
 		// Test whether the product id is valid
 		Optional<Processor> modelProcessor = RepositoryService.getProcessorRepository().findById(id);
 		if (modelProcessor.isEmpty()) {
-			throw new EntityNotFoundException(logError(MSG_PROCESSOR_NOT_FOUND, MSG_ID_PROCESSOR_NOT_FOUND,
-					modelProcessor.get().getProcessorClass().getMission().getCode(),
-					modelProcessor.get().getProcessorClass().getProcessorName(),
-					modelProcessor.get().getProcessorVersion()));
+			throw new EntityNotFoundException(logError(MSG_PROCESSOR_ID_NOT_FOUND, MSG_ID_PROCESSOR_ID_NOT_FOUND, id));
 		}
 		
 		// Check whether there are configured processors for this processor
