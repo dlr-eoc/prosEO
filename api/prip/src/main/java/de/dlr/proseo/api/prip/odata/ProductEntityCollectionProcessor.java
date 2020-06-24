@@ -299,7 +299,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			httpResponseEntity = restTemplate.getForEntity(requestUrl, List.class);
-		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+		} catch (HttpClientErrorException.NotFound e) {
+			// According to PRIP API specification an empty list is returned
+			return productsCollection;
+		} catch (HttpClientErrorException.BadRequest e) {
 			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
@@ -400,6 +403,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		// Check $count option
 		CountOption countOption = uriInfo.getCountOption();
 		if (null != countOption && countOption.getValue()) {
+		    if (logger.isTraceEnabled()) logger.trace("... returning result size {} due to $count option", productList.size());
 		    productsCollection.setCount(productList.size());
 		}
 
@@ -490,6 +494,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		// [3] Check for system query options
 		SelectOption selectOption = uriInfo.getSelectOption();
 		ExpandOption expandOption = uriInfo.getExpandOption();
+		CountOption countOption = uriInfo.getCountOption();
 		
 		// [4] Create a serializer based on the requested format (json)
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
@@ -503,7 +508,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 
 		final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
 		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with()
-				.id(id).contextURL(contextUrl).expand(expandOption).select(selectOption).build();
+				.id(id).contextURL(contextUrl).expand(expandOption).select(selectOption).count(countOption).build();
 		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 		InputStream serializedContent = serializerResult.getContent();
 
