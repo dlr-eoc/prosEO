@@ -57,10 +57,6 @@ public class JobOrder {
 	 * The file name where job order is stored
 	 */
 	private String fileName;
-	/**
-	 * The file system type where job order is stored
-	 */
-	private String fsType;
 
 	/**
 	 * The IPF_Conf part of the Job Order
@@ -82,18 +78,6 @@ public class JobOrder {
 	 */
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
-	}
-	/**
-	 * @return the fsType
-	 */
-	public String getFsType() {
-		return fsType;
-	}
-	/**
-	 * @param fsType the fsType to set
-	 */
-	public void setFsType(String fsType) {
-		this.fsType = fsType;
 	}
 	
 	/**

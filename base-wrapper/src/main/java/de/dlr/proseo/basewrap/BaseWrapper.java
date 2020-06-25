@@ -108,39 +108,25 @@ public class BaseWrapper {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
 
-	/**
-	 *  Enumeration with possible FileSystem-Types.
-	 *  FS_TYPE is set within a Joborder-File at Input/Output File level 
-	 *  <ul>
-	 *  <li>{@link #S3} API-based FileStorage - object storage aka SimpleStorageService - S3</li>
-	 *  <li>{@link #POSIX} a POSIX FileSystem</li>
-	 *  <li>{@link #ALLUXIO} an in-memory/SSD backed/tiered ditributed FileSystem (aka hadoop)</li>
-	 *  </ul>
-	 */
-	enum FS_TYPE {
-		S3
-		, POSIX
-		, ALLUXIO
-	}
-
 	/** Enumeration with valid environment variable names.
 	 *  At runtime-start the BaseWrapper checks the presence and values of each variable.
 	 *  <ul>
-	 *  <li>{@link #JOBORDER_FS_TYPE} FileSystem-Type (one of FS_TYPE) of referenced JobOrder File ({@link #JOBORDER_FILE})</li>
 	 *  <li>{@link #JOBORDER_FILE} URI of valid JobOrder-File</li>
-	 *  <li>{@link #STORAGE_ENDPOINT} S3-API Endpoint URL (<i>Set via k8s-configMap!</i>)</li>
-	 *  <li>{@link #STORAGE_USER} S3-API access key (<i>Set via k8s-configMap!</i>)</li>
-	 *  <li>{@link #STORAGE_PASSWORD} S3-API secret access key (<i>Set via k8s-configMap!</i>)</li>
-	 *  <li>{@link #INGESTOR_ENDPOINT} public API-Endpoint URL of prosEO-Ingestor</li>
-	 *  <li>{@link #STATE_CALLBACK_ENDPOINT} public API-Endpoint URL of prosEO-Planner for submitting the final state of the wrapper-run.</li>
+	 *  <li>{@link #STORAGE_ENDPOINT} public API endpoint URL of prosEO Storage Manager</li>
+	 *  <li>{@link #STORAGE_USER} username for connection to Storage Manager</li>
+	 *  <li>{@link #STORAGE_PASSWORD} password for connection to Storage Manager</li>
+	 *  <li>{@link #INGESTOR_ENDPOINT} public API endpoint URL of prosEO-Ingestor</li>
+	 *  <li>{@link #STATE_CALLBACK_ENDPOINT} public API endpoint URL of prosEO-Planner for submitting the final state of the wrapper-run.</li>
 	 *  <li>{@link #PROCESSOR_SHELL_COMMAND} the processor shell command to be invoked by the wrapper</li>
 	 *  <li>{@link #PROCESSING_FACILITY_NAME} name of the processing-facility this wrapper runs in.</li>
+	 *  <li>{@link #PROSEO_USER} username for connection to Planner and Ingestor</li>
+	 *  <li>{@link #PROSEO_PW} password for connection to Planner and Ingestor</li>
+	 *  <li>{@link #LOCAL_FS_MOUNT} the mount point within the container, where the shared storage is mounted</li>
 	 *  </ul>
 	 *  
 	 */
 	enum ENV_VARS {
-		JOBORDER_FS_TYPE
-		, JOBORDER_FILE
+		JOBORDER_FILE
 		, STORAGE_ENDPOINT
 		, STORAGE_USER
 		, STORAGE_PASSWORD
@@ -151,30 +137,16 @@ public class BaseWrapper {
 		, PROSEO_USER
 		, PROSEO_PW
 		, LOCAL_FS_MOUNT
-		, NODE_IP
-		, STORAGE_MGR_SERVICE_SERVICE_HOST
-		, STORAGE_MGR_SERVICE_SERVICE_PORT
 	}
 
 	// Environment Variables from Container (set via run-invocation or directly from docker-image)
 	
 	// Variables to be provided by Production Planner during invocation
-	/** File system type for the Job Order File */
-	private String ENV_JOBORDER_FS_TYPE = System.getenv(ENV_VARS.JOBORDER_FS_TYPE.toString());
 	/** Path to Job Order File, format according to file system type */
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
 	
 	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
-	
-	/**
-	 * Cluster port of storage manager
-	 */
-	private String ENV_STORAGE_MGR_SERVICE_SERVICE_PORT = System.getenv(ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_PORT.toString());
-	/**
-	 * Cluster IP of storage manager
-	 */
-	private String ENV_STORAGE_MGR_SERVICE_SERVICE_HOST = System.getenv(ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_HOST.toString());
 	
 	/** User name for local Storage Manager */
 	private String ENV_STORAGE_USER = System.getenv(ENV_VARS.STORAGE_USER.toString());
@@ -243,12 +215,6 @@ public class BaseWrapper {
 		}
 
 		boolean envOK = true;
-		try {
-			FS_TYPE.valueOf(ENV_JOBORDER_FS_TYPE);
-		} catch (Exception e) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FS_TYPE);
-			envOK = false;
-		}
 		if (ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);
 			envOK = false;
@@ -293,36 +259,6 @@ public class BaseWrapper {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOCAL_FS_MOUNT);
 			envOK = false;
 		}
-//		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
-//			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
-//			envOK = false;
-//		} else {
-//			// set local storage manager end point
-//			String replaced = ENV_STORAGE_ENDPOINT.replaceFirst("%NODE_IP%", ENV_NODE_IP);
-//			ENV_STORAGE_ENDPOINT = replaced;
-//		}
-		if(ENV_STORAGE_MGR_SERVICE_SERVICE_HOST==null || ENV_STORAGE_MGR_SERVICE_SERVICE_HOST.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_HOST);
-			envOK = false;
-		}
-		if(ENV_STORAGE_MGR_SERVICE_SERVICE_PORT==null || ENV_STORAGE_MGR_SERVICE_SERVICE_PORT.isEmpty()) {
-			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STORAGE_MGR_SERVICE_SERVICE_PORT);
-			envOK = false;
-		}
-//		if(ENV_NODE_IP==null || ENV_NODE_IP.isEmpty()) {
-//			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.NODE_IP);
-//			envOK = false;
-//		}
-		// Build storage endpoint
-		if (envOK) {
-			// use storage manager env settings of Kubernetes if endpont doesn't start with http 
-			if (!ENV_STORAGE_ENDPOINT.toLowerCase().startsWith("http")) {
-				// set local storage manager end point
-				String replaced = "http://" + ENV_STORAGE_MGR_SERVICE_SERVICE_HOST + ":" + ENV_STORAGE_MGR_SERVICE_SERVICE_PORT + 
-						(ENV_STORAGE_ENDPOINT.startsWith("/")?"":("/")) + ENV_STORAGE_ENDPOINT;
-				ENV_STORAGE_ENDPOINT = replaced;
-			}
-		}
 
 		if (envOK) {
 			logger.info(MSG_ENVIRONMENT_CHECK_PASSED);
@@ -331,9 +267,9 @@ public class BaseWrapper {
 		return envOK;
 	}
 	/**
-	 * provide initial JobOrderFile as local File. Fetch JobOrderFile from Storage (according to FS_TYPE) and return as local file.
+	 * Fetch Job Order file from Storage Manager
 	 * 
-	 * @return the JobOrder file as String
+	 * @return the Job Order file as String
 	 */
 	private String provideInitialJOF() {
 		if (logger.isTraceEnabled()) logger.trace(">>> provideInitialJOF()");
@@ -384,7 +320,7 @@ public class BaseWrapper {
 	}
 
 	/**
-	 * Fetch remote input-data to container-workdir(based on FS_TYPE) and return valid JobOrder object for container-runtime-context. (=remapped file-pathes)
+	 * Fetch remote input-data to container-workdir and return valid JobOrder object for container-runtime-context. (=remapped file-pathes)
 	 * 
 	 * @param jo the JobOrder file to parse
 	 * @return JobOrder object valid for container-context
@@ -405,30 +341,28 @@ public class BaseWrapper {
 				}
 				// Loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
-					Boolean done = false;
 					// Fill original filename with current val of `File_Name` --> for later use...
 					fn.setOriginalFileName(fn.getFileName());
-					if (fn.getFSType().equals(FS_TYPE.POSIX.toString())) {
-						File f = new File(fn.getFileName());
-						if (f.exists()) {
-							// nothing to do
-							done = true;
-						} 
-					}
-					if (!done) {
-						// Request input file from Storage Manager
-						Map<String,String> params = new HashMap<>();
-						params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
-						HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
-								"/productfiles", null, params, RestOps.HttpMethod.GET);
+					
+					// Test local availability of input file
+					File f = new File(fn.getFileName());
+					if (f.exists()) {
+						// nothing to do
+						continue;
+					} 
 
-						if (200 != responseInfo.gethttpCode()) {
-							logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
-							return null;
-						}
+					// Request input file from Storage Manager
+					Map<String,String> params = new HashMap<>();
+					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
+					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
+							"/productfiles", null, params, RestOps.HttpMethod.GET);
 
-						fn.setFileName(responseInfo.gethttpResponse());
+					if (200 != responseInfo.gethttpCode()) {
+						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
+						return null;
 					}
+
+					fn.setFileName(responseInfo.gethttpResponse());
 					++numberOfInputs;
 				}
 			}

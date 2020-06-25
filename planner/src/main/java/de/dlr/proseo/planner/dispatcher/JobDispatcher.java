@@ -285,7 +285,6 @@ public class JobDispatcher {
 
 			if (response != null && response.getBody() != null && response.getBody().getUploaded()) {
 				jobOrder.setFileName(response.getBody().getPathInfo());
-				jobOrder.setFsType(response.getBody().getFsType().value());
 			} else {
 				return null;
 			}		
