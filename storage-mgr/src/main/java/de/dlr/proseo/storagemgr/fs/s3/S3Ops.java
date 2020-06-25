@@ -469,7 +469,7 @@ public class S3Ops {
 				String key = o.getKey();
 				Copy xfer = xfer_mgr.copy(sourceBucketName, key, destBucketName, destObjectPrefix+separator+key);
 				V1XferMgrProgress.waitForCompletion(xfer);
-				response.add(" s3://"+destBucketName+"/"+destObjectPrefix+"/"+key);
+				response.add("s3://" + destBucketName + "/" + destObjectPrefix + "/" + key);
 				logger.info("Copied s3://{}/{} to s3://{}/{}/{}", sourceBucketName, key, destBucketName, destObjectPrefix,key);
 			}
 
