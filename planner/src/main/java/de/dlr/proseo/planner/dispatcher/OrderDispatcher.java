@@ -342,9 +342,11 @@ public class OrderDispatcher {
 							}
 							job.setStopTime(stopT);
 							job.setProcessingOrder(order);
+							job.getFilterConditions().putAll(order.getFilterConditions());
+							job.getOutputParameters().putAll(order.getOutputParameters());
+							job.setProcessingFacility(pf);
 							job = RepositoryService.getJobRepository().save(job);
 							order.getJobs().add(job);
-							job.setProcessingFacility(pf);
 							List <JobStep> allJobSteps = new ArrayList<JobStep>();
 							// for each product class
 							for (ProductClass productClass : productClasses) {
@@ -353,6 +355,7 @@ public class OrderDispatcher {
 								jobStep.setJobStepState(JobStepState.INITIAL);
 								jobStep.setProcessingMode(order.getProcessingMode());
 								jobStep.setJob(job);
+								jobStep.getOutputParameters().putAll(job.getOutputParameters());
 								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 								job.getJobSteps().add(jobStep);
 

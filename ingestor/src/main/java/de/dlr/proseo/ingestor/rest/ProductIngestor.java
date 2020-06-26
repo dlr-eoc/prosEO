@@ -383,7 +383,7 @@ public class ProductIngestor {
 			}
 		}
 		if (null == modelProductFile) {
-			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility));
+			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility.getName()));
 		}
 		
 		// Remove the product from the processing facility storage: Delete all files individually by path name

@@ -30,12 +30,6 @@ import javax.persistence.Table;
 @Table(indexes = @Index(unique = true, columnList = "product_id, processing_facility_id"))
 public class ProductFile extends PersistentObject {
 	
-	// the path separator string
-	// at the moment there is no specialized handling for path strings
-	// TODO is it guaranteed that all components are working at the same manner?
-	
-	private static final String pathSeparator = "/";
-
 	/** The product this data file belongs to */
 	@ManyToOne
 	private Product product;
@@ -308,22 +302,6 @@ public class ProductFile extends PersistentObject {
 		this.zipChecksumTime = zipChecksumTime;
 	}
 
-	/**
-	 * Return a product file path consisting of file path and product file name
-	 * 
-	 * @return generated file name path
-	 */
-	public String getProductFilePathName() {
-		String pn = "";
-		if (filePath != null && !filePath.isBlank()) {
-			pn += filePath + pathSeparator;
-		}
-		if (productFileName != null && !filePath.isBlank()) {
-			pn += productFileName;
-		}
-		return pn;
-	}
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

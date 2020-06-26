@@ -197,7 +197,9 @@ public class JobDispatcher {
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
 				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
-				sio.getFileNames().add(new IpfFileName(pf.getProductFilePathName(), pf.getStorageType().name()));
+				String filePath = pf.getFilePath();
+				String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
+				sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
 				proc.getListOfInputs().add(sio);
 			}
 		} else {

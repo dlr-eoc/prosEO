@@ -261,160 +261,162 @@ public class KubeJob {
 		
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
-		if (aKubeConfig.isConnected()) {
-			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
-			if (!js.isEmpty()) {
-				JobStep jobStep = js.get();
-				if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
-					jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
-				} else if (jobStep.getStdoutLogLevel() == null) {
-					jobStep.setStdoutLogLevel(StdLogLevel.INFO);
-				}
-				if (stderrLogLevel != null && !stderrLogLevel.isEmpty()) {
-					jobStep.setStderrLogLevel(JobStep.StdLogLevel.valueOf(stderrLogLevel));
-				} else if (jobStep.getStdoutLogLevel() == null) {
-					jobStep.setStderrLogLevel(StdLogLevel.INFO);
-				}
-				Instant genTime = Instant.now();
-				setGenerationTime(jobStep.getOutputProduct(), genTime);
-				JobDispatcher jd = new JobDispatcher();
-				jobOrder = jd.createJobOrder(jobStep);
-				if (jobOrder == null) {
-					logger.error("Creation of job order for job step {} failed", jobStep.getId());
-					// todo Exception
-					return null;
-				}
-				jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
-				if (jobOrder == null) {
-					logger.error("Sending of job order to Storage Manager failed for job step {}", jobStep.getId());
-					// todo Exception
-					return null;
-				}
-				// wrapper user and PW
-				String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
-				String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
-				
-				imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
-				
-				String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
-				
-				// Use Java style Map (as opposed to Scala's Map class)
-				
-				// Build a ResourceRequirements object
-				V1ResourceRequirements reqs = new V1ResourceRequirements();
-				String cpus = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("cpu", "1");
-				String mem = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("memory", "1500Mi");
-				reqs.putRequestsItem("cpu", new Quantity(cpus))
-					.putRequestsItem("memory", new Quantity(mem));
-				V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
-				String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
-
-				V1JobSpec jobSpec = new V1JobSpecBuilder()
-						.withNewTemplate()
-						.withNewMetadata()
-						.withName(jobName + "spec")
-						.addToLabels("jobgroup", jobName + "spec")
-						.endMetadata()
-						.withNewSpec()
-						.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
-						.addNewContainer()
-						.withName(containerName)
-						.withImage(imageName)
-						.withImagePullPolicy("Always")
-						.addNewEnv()
-						.withName("NODE_IP")
-						.withValueFrom(es)
-						.endEnv()
-						.addNewEnv()
-						.withName("JOBORDER_FILE")
-						.withValue(jobOrder.getFileName())
-						.endEnv()
-						.addNewEnv()
-						.withName("STORAGE_ENDPOINT")
-						.withValue(localStorageManagerUrl)
-						.endEnv()
-						.addNewEnv()
-						.withName("STORAGE_USER")
-						.withValue(wrapUser)
-						.endEnv()
-						.addNewEnv()
-						.withName("STORAGE_PASSWORD")
-						.withValue(ProductionPlanner.config.getWrapperPassword())
-						.endEnv()
-						.addNewEnv()
-						.withName("STATE_CALLBACK_ENDPOINT")
-						.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
-						.endEnv()
-						.addNewEnv()
-						.withName("PROCESSING_FACILITY_NAME")
-						.withValue(kubeConfig.getId())
-						.endEnv()
-						.addNewEnv()
-						.withName("INGESTOR_ENDPOINT")
-						.withValue(ProductionPlanner.config.getIngestorUrl())
-						.endEnv()
-						.addNewEnv()
-						.withName("PROSEO_USER")
-						.withValue(wrapUser)
-						.endEnv()
-						.addNewEnv()
-						.withName("PROSEO_PW")
-						.withValue(ProductionPlanner.config.getWrapperPassword())
-						.endEnv()
-						.addNewEnv()
-						.withName("LOCAL_FS_MOUNT")
-						.withValue(localMountPoint)
-						.endEnv()
-						.addNewVolumeMount()
-						.withName("proseo-mnt")
-						.withMountPath(localMountPoint)
-						.endVolumeMount()
-						.withResources(reqs)
-						.endContainer()
-						.addNewVolume()
-						.withName("proseo-mnt")		
-						.withNewPersistentVolumeClaim()
-						.withClaimName("proseo-nfs")
-						.endPersistentVolumeClaim()
-						.endVolume()
-						.withRestartPolicy("Never")
-						.withHostNetwork(true)
-						.withDnsPolicy("ClusterFirstWithHostNet")
-						.endSpec()
-						.endTemplate()
-						.withBackoffLimit(0)
-						.build();			
-				V1Job job = new V1JobBuilder()
-						.withNewMetadata()
-						.withName(jobName)
-						.addToLabels("jobgroup", jobName + "spec")
-						.endMetadata()
-						.withSpec(jobSpec)
-						.build();
-				try {
-					logger.info("Creating job {}", job.toString());
-					job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
-					logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
-					searchPod();
-					UtilService.getJobStepUtil().startJobStep(jobStep);
-					Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
-				} catch (ApiException e1) {
-					// TODO Auto-generated catch block
-					logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
-					e1.printStackTrace();
-					return null;
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
-					e.printStackTrace();
-					return null;
-				}
-			}
-			return this;
-		} else {
+		if (!aKubeConfig.isConnected()) {
 			logger.warn("Kubernetes configuration {} not connected", aKubeConfig);
 			return null;
 		}
+		
+		Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
+		if (js.isEmpty()) {
+			return this;
+		}
+		
+		JobStep jobStep = js.get();
+		if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
+			jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
+		} else if (jobStep.getStdoutLogLevel() == null) {
+			jobStep.setStdoutLogLevel(StdLogLevel.INFO);
+		}
+		if (stderrLogLevel != null && !stderrLogLevel.isEmpty()) {
+			jobStep.setStderrLogLevel(JobStep.StdLogLevel.valueOf(stderrLogLevel));
+		} else if (jobStep.getStdoutLogLevel() == null) {
+			jobStep.setStderrLogLevel(StdLogLevel.INFO);
+		}
+		Instant genTime = Instant.now();
+		setGenerationTime(jobStep.getOutputProduct(), genTime);
+		JobDispatcher jd = new JobDispatcher();
+		jobOrder = jd.createJobOrder(jobStep);
+		if (jobOrder == null) {
+			logger.error("Creation of job order for job step {} failed", jobStep.getId());
+			// todo Exception
+			return null;
+		}
+		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
+		if (jobOrder == null) {
+			logger.error("Sending of job order to Storage Manager failed for job step {}", jobStep.getId());
+			// todo Exception
+			return null;
+		}
+		// wrapper user and PW
+		String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
+		String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
+		
+		imageName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getDockerImage();
+		
+		String localMountPoint = ProductionPlanner.config.getPosixWorkerMountPoint();
+		
+		// Use Java style Map (as opposed to Scala's Map class)
+		
+		// Build a ResourceRequirements object
+		V1ResourceRequirements reqs = new V1ResourceRequirements();
+		String cpus = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("cpu", "1");
+		String mem = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("memory", "1500Mi");
+		reqs.putRequestsItem("cpu", new Quantity(cpus))
+			.putRequestsItem("memory", new Quantity(mem));
+		V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
+		String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
+
+		V1JobSpec jobSpec = new V1JobSpecBuilder()
+				.withNewTemplate()
+				.withNewMetadata()
+				.withName(jobName + "spec")
+				.addToLabels("jobgroup", jobName + "spec")
+				.endMetadata()
+				.withNewSpec()
+				.addToImagePullSecrets(new V1LocalObjectReference().name("proseo-regcred"))
+				.addNewContainer()
+				.withName(containerName)
+				.withImage(imageName)
+				.withImagePullPolicy("Always")
+				.addNewEnv()
+				.withName("NODE_IP")
+				.withValueFrom(es)
+				.endEnv()
+				.addNewEnv()
+				.withName("JOBORDER_FILE")
+				.withValue(jobOrder.getFileName())
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_ENDPOINT")
+				.withValue(localStorageManagerUrl)
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_USER")
+				.withValue(wrapUser)
+				.endEnv()
+				.addNewEnv()
+				.withName("STORAGE_PASSWORD")
+				.withValue(ProductionPlanner.config.getWrapperPassword())
+				.endEnv()
+				.addNewEnv()
+				.withName("STATE_CALLBACK_ENDPOINT")
+				.withValue(ProductionPlanner.config.getProductionPlannerUrl() +"/processingfacilities/" + kubeConfig.getId() + "/finish/" + jobName)
+				.endEnv()
+				.addNewEnv()
+				.withName("PROCESSING_FACILITY_NAME")
+				.withValue(kubeConfig.getId())
+				.endEnv()
+				.addNewEnv()
+				.withName("INGESTOR_ENDPOINT")
+				.withValue(ProductionPlanner.config.getIngestorUrl())
+				.endEnv()
+				.addNewEnv()
+				.withName("PROSEO_USER")
+				.withValue(wrapUser)
+				.endEnv()
+				.addNewEnv()
+				.withName("PROSEO_PW")
+				.withValue(ProductionPlanner.config.getWrapperPassword())
+				.endEnv()
+				.addNewEnv()
+				.withName("LOCAL_FS_MOUNT")
+				.withValue(localMountPoint)
+				.endEnv()
+				.addNewVolumeMount()
+				.withName("proseo-mnt")
+				.withMountPath(localMountPoint)
+				.endVolumeMount()
+				.withResources(reqs)
+				.endContainer()
+				.addNewVolume()
+				.withName("proseo-mnt")		
+				.withNewPersistentVolumeClaim()
+				.withClaimName("proseo-nfs")
+				.endPersistentVolumeClaim()
+				.endVolume()
+				.withRestartPolicy("Never")
+				.withHostNetwork(true)
+				.withDnsPolicy("ClusterFirstWithHostNet")
+				.endSpec()
+				.endTemplate()
+				.withBackoffLimit(0)
+				.build();			
+		V1Job job = new V1JobBuilder()
+				.withNewMetadata()
+				.withName(jobName)
+				.addToLabels("jobgroup", jobName + "spec")
+				.endMetadata()
+				.withSpec(jobSpec)
+				.build();
+		try {
+			logger.info("Creating job {}", job.toString());
+			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
+			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
+			searchPod();
+			UtilService.getJobStepUtil().startJobStep(jobStep);
+			Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
+		} catch (ApiException e1) {
+			// TODO Auto-generated catch block
+			logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
+			e1.printStackTrace();
+			return null;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+		return this;
 	}	
 	
 	/**
