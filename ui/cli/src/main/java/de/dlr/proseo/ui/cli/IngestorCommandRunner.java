@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.dlr.proseo.model.rest.model.RestProduct;
+import de.dlr.proseo.model.rest.model.RestProductFile;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
@@ -45,6 +50,7 @@ public class IngestorCommandRunner {
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
+	private static final String CMD_FILE = "file";
 	public static final String CMD_INGEST = "ingest";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
@@ -58,6 +64,7 @@ public class IngestorCommandRunner {
 	private static final String URI_PATH_PRODUCTS = "/products";
 	
 	private static final String PRODUCTS = "products";
+	private static final String PRODUCTFILES = "product files";
 	
 	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
@@ -90,7 +97,7 @@ public class IngestorCommandRunner {
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case CMD_FILE:
 				productFile = new File(option.getValue());
 				break;
 			case "format":
@@ -248,10 +255,14 @@ public class IngestorCommandRunner {
 		
 		/* Check command options */
 		String productOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
 			case "format":
 				productOutputFormat = option.getValue().toUpperCase();
+				break;
+			case "verbose":
+				isVerbose = true;
 				break;
 			}
 		}
@@ -295,15 +306,31 @@ public class IngestorCommandRunner {
 			return;
 		}
 		
-		/* Display the product(s) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, productOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the product(s) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, productOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of products
+			ObjectMapper objectMapper = new ObjectMapper();
+			for (Object resultObject: objectMapper.convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					@SuppressWarnings("unchecked")
+					Map<String, Object> product = (Map<String, Object>) resultObject;
+					System.out.println(String.format("%10d   %s   %s  %s", 
+							product.get("id"),
+							product.get("uuid"),
+							product.get("sensingStartTime"),
+							product.get("sensingStopTime")));
+				}
+			}
 		}
 	}
 	
@@ -321,7 +348,7 @@ public class IngestorCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case CMD_FILE:
 				productFile = new File(option.getValue());
 				break;
 			case "format":
@@ -534,7 +561,7 @@ public class IngestorCommandRunner {
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case CMD_FILE:
 				productFile = new File(option.getValue());
 				break;
 			case "format":
@@ -593,6 +620,170 @@ public class IngestorCommandRunner {
 	}
 	
 	/**
+	 * Show the product file specified in the command parameters or options
+	 * 
+	 * @param showCommand the parsed "product file show" command
+	 */
+	private void showProductFile(ParsedCommand showCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> showProductFile({})", (null == showCommand ? "null" : showCommand.getName()));
+		
+		/* Check command options */
+		String productOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
+		for (ParsedOption option: showCommand.getOptions()) {
+			switch(option.getName()) {
+			case "format":
+				productOutputFormat = option.getValue().toUpperCase();
+				break;
+			case "verbose":
+				isVerbose = true;
+				break;
+			}
+		}
+		
+		/* Check command parameters */
+		Long productId = null;
+		String facilityName = null;
+		for (int i = 0; i < showCommand.getParameters().size(); ++i) {
+			ParsedParameter param = showCommand.getParameters().get(i);
+			if (0 == i) {
+				// First parameter is database ID
+				try {
+					productId = Long.parseLong(param.getValue());
+				} catch (NumberFormatException e) {
+					System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, param.getValue()));
+					return;
+				}
+			} else {
+				// Only one more parameter possible: processing facility
+				facilityName = param.getValue();
+				isVerbose = true;
+			}
+		}
+		
+		/* Prepare request URI */
+		String requestURI = URI_PATH_PRODUCTS + "/" + productId;
+		
+		/* Get the product information from the Ingestor */
+		RestProduct product = null;
+		try {
+			product = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
+					requestURI, RestProduct.class, loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, productId);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Filter by processing facility, if given */
+		List<RestProductFile> resultList = new ArrayList<>();
+		if (null == facilityName) {
+			resultList.addAll(product.getProductFile());
+		} else {
+			for (RestProductFile productFile: product.getProductFile()) {
+				if (facilityName.equals(productFile.getProcessingFacilityName())) {
+					resultList.add(productFile);
+				}
+			}
+		}
+		if (resultList.isEmpty()) {
+			if (null == facilityName) {
+				System.err.println(uiMsg(MSG_ID_PRODUCT_HAS_NO_FILES, productId));
+			} else {
+				System.err.println(uiMsg(MSG_ID_PRODUCTFILE_NOT_FOUND, productId, facilityName));
+			}
+			return;
+		}
+		
+		if (isVerbose) {
+			/* Display the product(s) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, productOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			for (RestProductFile productFile: resultList) {
+				System.out.println(String.format("%-20s %s",
+						productFile.getProcessingFacilityName(), productFile.getProductFileName()));
+			}
+		}
+	}
+	
+	/**
+	 * Delete the given product file
+	 * 
+	 * @param deleteCommand the parsed "product file delete" command
+	 */
+	private void deleteProductFile(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Get product database ID and processing facility from command parameters */
+		if (2 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_PRODUCT_ID_OR_FACILITY_MISSING));
+			return;
+		}
+		String productIdString = deleteCommand.getParameters().get(0).getValue();
+		Long productId = null;
+		try {
+			productId = Long.parseLong(productIdString);
+		} catch (NumberFormatException e) {
+			System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productIdString));
+			return;
+		}
+		String facilityName = deleteCommand.getParameters().get(1).getValue();
+		
+		/* Delete product using Ingestor service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(),
+					URI_PATH_INGESTOR + "/" + facilityName + "/" + productIdString, 
+					loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_PRODUCTFILE_NOT_FOUND, productId, facilityName);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_PRODUCTFILE_DELETED, productId, facilityName);
+		logger.info(message);
+		System.out.println(message);
+	}
+	
+	/**
 	 * Run the given command
 	 * 
 	 * @param command the command to execute
@@ -617,12 +808,14 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Make sure a subcommand is given */
-		if (CMD_PRODUCT.equals(command.getName()) && (null == command.getSubcommand() || null == command.getSubcommand().getName())) {
+		ParsedCommand subcommand = command.getSubcommand();
+
+		if (CMD_PRODUCT.equals(command.getName()) && (null == subcommand || null == subcommand.getName())) {
 			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 		
-		/* Execute the (sub)command */
+		/* Execute the "ingest" command */
 		if (CMD_INGEST.equals(command.getName())) {
 			if (command.isHelpRequested()) {
 				command.getSyntaxCommand().printHelp(System.out);
@@ -632,19 +825,45 @@ public class IngestorCommandRunner {
 			return;
 		}
 		
+		/* Remainder of method handles "product" command */
+		
 		/* Check for subcommand help request */
-		ParsedCommand subcommand = command.getSubcommand();
 		if (subcommand.isHelpRequested()) {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
 		
-		/* Execute subcommand */
+		/* Make sure a sub-subcommand is given for "product file" */
+		ParsedCommand subsubcommand = subcommand.getSubcommand();
+		if ((CMD_PRODUCT.equals(subcommand.getName()) || CMD_FILE.equals(subcommand.getName()))
+				&& null == subcommand.getSubcommand()) {
+			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, subcommand.getName()));
+			return;
+		}
+
+		/* Check for sub-subcommand help request */
+		if (null != subsubcommand && subsubcommand.isHelpRequested()) {
+			subsubcommand.getSyntaxCommand().printHelp(System.out);
+			return;
+		} 
+		
+		/* Execute (sub-)subcommand */
+		COMMAND:
 		switch(subcommand.getName()) {
 		case CMD_CREATE:	createProduct(subcommand); break;
 		case CMD_SHOW:		showProduct(subcommand); break;
 		case CMD_UPDATE:	updateProduct(subcommand); break;
 		case CMD_DELETE:	deleteProduct(subcommand); break;
+		case CMD_FILE:
+			// Handle commands for product files
+			switch (subsubcommand.getName()) {
+			case CMD_SHOW:		showProductFile(subsubcommand); break COMMAND;
+			case CMD_DELETE:	deleteProductFile(subsubcommand); break COMMAND;
+			default:
+				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, 
+						command.getName() + " " + subcommand.getName() + " " + subsubcommand.getName()));
+				return;
+			}
 		default:
 			System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 			return;

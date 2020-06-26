@@ -982,6 +982,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product details, otherwise show database ID, UUID and validity period only
+              shortForm: v
           parameters:
             - name: className
               type: string
@@ -1038,6 +1042,57 @@ commands:
             - name: id
               type: integer
               description: The database ID of the product to delete
+        - name: file
+          description: Commands for managing individual product files at a processing facility
+          subcommands:
+            - name: show
+              description: Show the product files for a given product, optionally restricted to a processing facility
+              options:
+                - name: format
+                  type: string
+                  description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give product file details, otherwise show processing facility and product filenames only
+                               (setting processing facility parameter implies verbose)
+                  shortForm: v
+              parameters:
+                - name: productId
+                  type: integer
+                  description: The database ID of the product, to which the product files belong
+                - name: processingFacility
+                  type: string
+                  optional: true
+                  description: The processing facility, at which a product file is stored
+#            - name: update
+#              description: Update a product file for a given product and processing facility
+#              options:
+#                - name: file
+#                  type: string
+#                  description: Path to file to read the product file definition from
+#                  shortForm: f
+#                - name: format
+#                  type: string
+#                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
+#                - name: delete-attributes
+#                  type: boolean
+#                  description: Delete attributes not given in the product file definition file and/or the command parameters
+#              parameters:
+#                - name: productId
+#                  type: integer
+#                  description: The database ID of the product, to which the product files belong
+#                - name: processingFacility
+#                  type: string
+#                  description: The processing facility, at which the product file is stored
+            - name: delete
+              description: Delete a product file for a given product and processing facility
+              parameters:
+                - name: productId
+                  type: integer
+                  description: The database ID of the product, to which the product files belong
+                - name: processingFacility
+                  type: string
+                  description: The processing facility, at which the product file is stored
     - name: ingest
       description: Ingest all products into the storage manager of the given processing facility
       options:

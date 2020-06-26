@@ -188,6 +188,10 @@ public class UIMessages {
 	public static final int MSG_ID_PROCESSING_FACILITY_MISSING = 2958;
 	public static final int MSG_ID_PRODUCTS_INGESTED = 2959;
 	public static final int MSG_ID_PRODUCT_DATA_INVALID = 2960;
+	public static final int MSG_ID_PRODUCT_ID_OR_FACILITY_MISSING = 2961;
+	public static final int MSG_ID_PRODUCTFILE_NOT_FOUND = 2962;
+	public static final int MSG_ID_PRODUCTFILE_DELETED = 2963;
+	public static final int MSG_ID_PRODUCT_HAS_NO_FILES = 2964;
 	
 	// Processor CLI
 	public static final int MSG_ID_NO_PROCESSORCLASSES_FOUND = 2970;
@@ -367,6 +371,9 @@ public class UIMessages {
 		MSG_INGESTION_FILE_MISSING ("(E%d) No file for product ingestion given", MSG_ID_INGESTION_FILE_MISSING),
 		MSG_PROCESSING_FACILITY_MISSING ("(E%d) No processing facility to ingest to given", MSG_ID_PROCESSING_FACILITY_MISSING),
 		MSG_PRODUCT_DATA_INVALID ("(E%d) Product data invalid (cause: %s)", MSG_ID_PRODUCT_DATA_INVALID),
+		MSG_PRODUCT_ID_OR_FACILITY_MISSING ("(E%d) Product database ID or processing facility missing", MSG_ID_PRODUCT_ID_OR_FACILITY_MISSING),
+		MSG_PRODUCTFILE_NOT_FOUND ("(E%d) No product file found for product database ID %d and processing facility %s", MSG_ID_PRODUCTFILE_NOT_FOUND),
+		MSG_PRODUCT_HAS_NO_FILES ("(E%d) Product with database ID %d has no files", MSG_ID_PRODUCT_HAS_NO_FILES),
 		
 		// Processor CLI
 		MSG_NO_PROCESSORCLASSES_FOUND ("(E%d) No processor classes found for given search criteria", MSG_ID_NO_PROCESSORCLASSES_FOUND),
@@ -515,6 +522,7 @@ public class UIMessages {
 		MSG_PRODUCT_UPDATED ("(I%d) Product with database ID %d updated (new version %d)", MSG_ID_PRODUCT_UPDATED),
 		MSG_PRODUCT_DELETED ("(I%d) Product with database ID %d deleted", MSG_ID_PRODUCT_DELETED),
 		MSG_PRODUCTS_INGESTED ("(I%d) %d products ingested to processing facility %s", MSG_ID_PRODUCTS_INGESTED),
+		MSG_PRODUCTFILE_DELETED ("(I%d) Product file for product database ID %d and processing facility %s deleted", MSG_ID_PRODUCTFILE_DELETED),
 
 		// User/group CLI
 		MSG_USER_CREATED ("(I%d) User account %s created", MSG_ID_USER_CREATED),
