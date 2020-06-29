@@ -90,6 +90,7 @@ public class RestUtil {
 				rj.setStopTime(Date.from(job.getStopTime()));
 			}
 			rj.setVersion(Long.valueOf(job.getVersion()));
+			rj.setFilterConditions(RestUtil.createRestParameterList(job.getFilterConditions()));
 			rj.setOutputParameters(RestUtil.createRestParameterList(job.getOutputParameters()));
 			if (job.getProcessingOrder() != null) {
 				rj.setOrderIdentifier(job.getProcessingOrder().getIdentifier());
@@ -144,6 +145,7 @@ public class RestUtil {
 			}
 			pjs.setVersion((long) js.getVersion());
 			pjs.setProcessingMode(js.getProcessingMode());
+			pjs.setOutputParameters(RestUtil.createRestParameterList(js.getOutputParameters()));
 			if (js.getProcessingStartTime() != null) { 
 				pjs.setProcessingStartTime(Date.from(js.getProcessingStartTime()));
 			}

@@ -486,6 +486,7 @@ public class OrderDispatcher {
 		JobStep jobStep = new JobStep();
 		jobStep.setJobStepState(JobStepState.INITIAL);
 		jobStep.setJob(job);
+		jobStep.getOutputParameters().putAll(job.getOutputParameters());
 		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 		job.getJobSteps().add(jobStep);
 		// create output product
