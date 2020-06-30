@@ -44,5 +44,55 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+    <reporting>
+        <plugins>
+            <plugin>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.0.0</version>
+                <reportSets>
+                    <reportSet>
+                        <inherited>true</inherited>
+                        <reports>
+                            <report>index</report>
+                            <report>modules</report>
+                            <report>scm</report>
+                            <report>summary</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <!-- Create Javadoc files for the main and test classes -->
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.1.0</version>
+                <reportSets>
+                    <reportSet>
+                        <id>javadocs</id>
+                        <reports>
+                            <report>aggregate</report>
+                            <report>test-aggregate</report>
+                        </reports>
+                        <inherited>true</inherited>
+                        <configuration>
+                            <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                            <failOnError>false</failOnError>
+                            <quiet>true</quiet>
+                        </configuration>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.7.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

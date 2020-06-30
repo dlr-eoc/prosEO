@@ -27,6 +27,9 @@
       defaultSliceDuration?:
         type: integer
         description: Duration of a slice in seconds (only if defaultSlicingType == "TIME_SLICE")
+      productFileTemplate?:
+        type: string
+        description: Template for the generation of product files, overrides file naming convention for mission
       componentClasses?:
         type: string[]
         description: Set of component product classes

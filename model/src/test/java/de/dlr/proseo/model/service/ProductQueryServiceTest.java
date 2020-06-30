@@ -28,6 +28,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.InputFilter;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
@@ -41,6 +42,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.ProcessingOrder;
 
 /**
  * Test class for ProductQueryService
@@ -195,7 +197,13 @@ public class ProductQueryServiceTest {
 		
 		logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
+		ProcessingOrder order = new ProcessingOrder();
+		InputFilter inputFilter = new InputFilter();
+		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
+		order.getInputFilters().put(sourceProdClass, inputFilter);
+		
 		Job jobEarly = new Job();
+		jobEarly.setProcessingOrder(order);
 		jobEarly.setProcessingFacility(facility);
 		jobEarly.setStartTime(TEST_START_TIME_EARLY);
 		jobEarly.setStopTime(TEST_STOP_TIME_EARLY);
@@ -204,10 +212,10 @@ public class ProductQueryServiceTest {
 		jobStepEarly.setProcessingMode(TEST_MODE);
 		
 		Job jobLate = new Job();
+		jobLate.setProcessingOrder(order);
 		jobLate.setProcessingFacility(facility);
 		jobLate.setStartTime(TEST_START_TIME_LATE);
 		jobLate.setStopTime(TEST_STOP_TIME_LATE);
-		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		JobStep jobStepLate = new JobStep();
 		jobStepLate.setJob(jobLate);
 		jobStepLate.setProcessingMode(TEST_MODE);
@@ -229,13 +237,13 @@ public class ProductQueryServiceTest {
 		assertTrue("Product query 1 fails unexpectedly for SQL", queryService.executeSqlQuery(query, true));
 		
 		// Test first product query with additional filter condition "revision:2" --> fails
-		jobLate.getFilterConditions().clear();
-		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 2));
+		inputFilter.getFilterConditions().clear();
+		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 2));
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
 		logger.trace("Starting test for product query 1 with filters " + query.getFilterConditions());
 		assertTrue("Product query 1 succeeds unexpectedly for filter 'revision:2'", !queryService.executeQuery(query, true));
-		jobLate.getFilterConditions().clear();
-		jobLate.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
+		inputFilter.getFilterConditions().clear();
+		inputFilter.getFilterConditions().put("revision", (new Parameter()).init(ParameterType.INTEGER, 1));
 		
 		// Test second product query with MINCOVER --> satisfied for early interval, not satisfied for late interval
 		try {

@@ -10,38 +10,73 @@
         "stopTime": "2019-07-31T12:00:00",
         "slicingType": "ORBIT",
         "sliceOverlap": 0,
-        "filterConditions": [
+        "inputFilters": [
             {
-                "key": "copernicusCollection",
-                "parameterType": "STRING",
-                "parameterValue": "01"
-            },
-            {
-                "key": "revision",
-                "parameterType": "INTEGER",
-                "parameterValue": "13"
-            },
-            {
-                "key": "fileClass",
-                "parameterType": "STRING",
-                "parameterValue": "OFFL"
+                "productClass": "L1B",
+                "filterConditions": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "01"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "13"
+                    },
+                    {
+                        "key": "fileClass",
+                        "parameterType": "STRING",
+                        "parameterValue": "OFFL"
+                    }
+                ]
             }
         ],
-        "outputParameters": [
+        "parameterizedOutputs": [
             {
-                "key": "copernicusCollection",
-                "parameterType": "STRING",
-                "parameterValue": "02"
+                "productClass": "O3",
+                "outputParameters": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "02"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "14"
+                    }
+                ]
             },
             {
-                "key": "revision",
-                "parameterType": "INTEGER",
-                "parameterValue": "14"
+                "productClass": "CLOUD",
+                "outputParameters": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "02"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "14"
+                    }
+                ]
             },
             {
-                "key": "fileClass",
-                "parameterType": "STRING",
-                "parameterValue": "RPRO"
+                "productClass": "FRESCO",
+                "outputParameters": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "02"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "14"
+                    }
+                ]
             }
         ],
         "configuredProcessors": [ "KNMI L2 01.03.02 2019-07-03", "DLR L2 01.01.05 2019-07-03" ],
@@ -49,7 +84,6 @@
             { "spacecraftCode": "S5P", "orbitNumberFrom": 4567, "orbitNumberTo": 5330 },
             { "spacecraftCode": "S5P", "orbitNumberFrom": 5421, "orbitNumberTo": 5678 }
         ],
-        "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
         "inputProductClasses": [ "L1B" ],
         "outputFileClass": "RPRO",
         "processingMode": "OFFL"
@@ -67,40 +101,64 @@
         "slicingType": "TIME_SLICE",
         "sliceDuration": 300,
         "sliceOverlap": 60,
-        "filterConditions": [
+        "inputFilters": [
             {
-                "key": "copernicusCollection",
-                "parameterType": "STRING",
-                "parameterValue": "01"
-            },
-            {
-                "key": "revision",
-                "parameterType": "INTEGER",
-                "parameterValue": "13"
-            },
-            {
-                "key": "fileClass",
-                "parameterType": "STRING",
-                "parameterValue": "OFFL"
+                "productClass": "L1B",
+                "filterConditions": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "01"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "13"
+                    },
+                    {
+                        "key": "fileClass",
+                        "parameterType": "STRING",
+                        "parameterValue": "OFFL"
+                    }
+                ]
             }
         ],
-        "outputParameters": [
+        "parameterizedOutputs": [
             {
-                "key": "copernicusCollection",
-                "parameterType": "STRING",
-                "parameterValue": "99"
+                "productClass": "AAI",
+                "outputParameters": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "99"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "14"
+                    }
+                ]
             },
             {
-                "key": "revision",
-                "parameterType": "INTEGER",
-                "parameterValue": "14"
+                "productClass": "FRESCO",
+                "outputParameters": [
+                    {
+                        "key": "copernicusCollection",
+                        "parameterType": "STRING",
+                        "parameterValue": "99"
+                    },
+                    {
+                        "key": "revision",
+                        "parameterType": "INTEGER",
+                        "parameterValue": "14"
+                    }
+                ]
             }
         ],
         "configuredProcessors": [ "KNMI L2 02.01.00 2019-11-17" ],
         "orbits": [
             { "spacecraftCode": "S5P", "orbitNumberFrom": 4711, "orbitNumberTo": 4711 }
         ],
-        "requestedProductClasses": [ "FRESCO", "AAI" ],
         "inputProductClasses": [ ],
         "outputFileClass": "NRTI",
         "processingMode": "NRTI"

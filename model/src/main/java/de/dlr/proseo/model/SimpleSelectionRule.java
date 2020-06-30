@@ -159,7 +159,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	/**
 	 * Gets the additional filtering conditions
 	 * 
-	 * @return the filterConditions
+	 * @return the outputParameters
 	 */
 	public Map<String, Parameter> getFilterConditions() {
 		return filterConditions;
@@ -168,7 +168,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	/**
 	 * Sets the additional filtering conditions
 	 * 
-	 * @param filterConditions the filterConditions to set
+	 * @param outputParameters the outputParameters to set
 	 */
 	public void setFilterConditions(Map<String, Parameter> filterConditions) {
 		this.filterConditions = filterConditions;

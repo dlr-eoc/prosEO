@@ -37,6 +37,7 @@ import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductionType;
 
 /**
  * Representation of a data product
@@ -86,6 +87,10 @@ public class Product extends PersistentObject {
 	/** Product generation time */
 	@Column(name = "generation_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant generationTime;
+	
+	/** Type of production process generating this product */
+	@Enumerated(EnumType.STRING)
+	private ProductionType productionType;
 	
 	/** Set of component products */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "enclosingProduct")
@@ -490,11 +495,9 @@ public class Product extends PersistentObject {
 	 * @throws EvaluationException if the filename template could not be evaluated
 	 */
 	public String generateFilename() throws IllegalStateException, ParseException, EvaluationException {
-		// Get the filename template from the mission
-		String template = null;
-		try {
-			template = productClass.getMission().getProductFileTemplate();
-		} catch(NullPointerException e) {
+		// Get the filename template from the product class or the mission
+		String template = productClass.getProductFileTemplate();
+		if (null == template) {
 			throw new IllegalStateException(MSG_FILENAME_TEMPLATE_NOT_FOUND);
 		}
 		

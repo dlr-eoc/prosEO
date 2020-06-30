@@ -104,7 +104,8 @@ public class ProductQuery extends PersistentObject {
 		productQuery.requestedProductClass = selectionRule.getSourceProductClass();
 		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
-		productQuery.filterConditions.putAll(jobStep.getJob().getFilterConditions());
+		productQuery.filterConditions.putAll(
+				jobStep.getJob().getProcessingOrder().getInputFilters().get(selectionRule.getSourceProductClass()).getFilterConditions());
 		
 		return productQuery;
 	}
@@ -202,7 +203,7 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Gets the additional filtering conditions
 	 * 
-	 * @return the filterConditions
+	 * @return the outputParameters
 	 */
 	public Map<String, Parameter> getFilterConditions() {
 		return filterConditions;
@@ -211,7 +212,7 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Sets the additional filtering conditions
 	 * 
-	 * @param filterConditions the filterConditions to set
+	 * @param outputParameters the outputParameters to set
 	 */
 	public void setFilterConditions(Map<String, Parameter> filterConditions) {
 		this.filterConditions = filterConditions;
@@ -363,7 +364,7 @@ public class ProductQuery extends PersistentObject {
 	public String toString() {
 		return "ProductQuery [jobStep=" + jobStep + ", generatingRule=" + generatingRule + ", requestedProductClass="
 				+ requestedProductClass + ", jpqlQueryCondition=" + jpqlQueryCondition + ", sqlQueryCondition=" + sqlQueryCondition
-				+ ", filterConditions=" + filterConditions + ", minimumCoverage=" + minimumCoverage + ", isSatisfied=" + isSatisfied
+				+ ", outputParameters=" + filterConditions + ", minimumCoverage=" + minimumCoverage + ", isSatisfied=" + isSatisfied
 				+ ", satisfyingProducts=" + satisfyingProducts + "]";
 	}
 }

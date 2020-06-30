@@ -127,7 +127,7 @@ public class ProductTest {
 		mission.setProductFileTemplate(TEST_FILENAME_TEMPLATE);
 		assertEquals("Unexpected resolution of filename template", EXPECTED_FILENAME, product.generateFilename());
 		
-		mission.setProductFileTemplate(TEST_EXPRESSION_ONLY_TEMPLATE);
+		productClass.setProductFileTemplate(TEST_EXPRESSION_ONLY_TEMPLATE);
 		assertEquals("Unexpected resolution of filename template", EXPECTED_EXPRESSION_ONLY_NAME, product.generateFilename());
 		
 		logger.info("OK: Test for Product#generateFileName() completed");

@@ -45,6 +45,12 @@ public class ConfiguredProcessor extends PersistentObject {
 	/** The configuration file version */
 	@ManyToOne
 	private Configuration configuration;
+	
+	/**
+	 * A job step using this configured processor for the generation of its output product can only be started,
+	 * if the processor is enabled
+	 */
+	private Boolean enabled = true;
 
 	/**
 	 * Gets the identifier of the configured processor
@@ -116,6 +122,24 @@ public class ConfiguredProcessor extends PersistentObject {
 	 */
 	public void setConfiguration(Configuration configuration) {
 		this.configuration = configuration;
+	}
+
+	/**
+	 * Gets the enabled status
+	 * 
+	 * @return true, if the configured processor is enabled, false otherwise
+	 */
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Sets the enabled status
+	 * 
+	 * @param enabled the enabled status to set
+	 */
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
 	}
 
 	@Override

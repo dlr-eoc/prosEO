@@ -24,12 +24,6 @@
       stopTime?:
         type: datetime-only
         description: The end time of the time interval to process
-      filterConditions:
-        type: RestParameter[]
-        description: A set of additional conditions to apply to selected products.
-      outputParameters:
-        type: RestParameter[]
-        description: A set of parameters to set for the generated products.
       priority:
         type: integer
         description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0)

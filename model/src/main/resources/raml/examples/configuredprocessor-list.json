@@ -17,6 +17,7 @@
         "missionCode": "S5P",
         "processorName": "KNMI L2",
         "processorVersion": "01.03.02",
-        "configurationVersion": "2019-04-27"
+        "configurationVersion": "2019-04-27",
+        "enabled": false
     }
 ]

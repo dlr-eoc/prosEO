@@ -74,6 +74,9 @@ public class JobStep extends PersistentObject {
 	/** The standard error output of the processing job */
 	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String processingStdErr;
+	
+	/** The filename of the Job Order file in the associated processing facility */
+	private String jobOrderFilename;
 
 	/**
 	 * The log level of stdout
@@ -301,6 +304,24 @@ public class JobStep extends PersistentObject {
 	 */
 	public void setProcessingStdErr(String processingStdErr) {
 		this.processingStdErr = processingStdErr;
+	}
+
+	/**
+	 * Gets the Job Order filename
+	 * 
+	 * @return the Job Order filename
+	 */
+	public String getJobOrderFilename() {
+		return jobOrderFilename;
+	}
+
+	/**
+	 * Sets the Job Order filename
+	 * 
+	 * @param jobOrderFilename the Job Order filename to set
+	 */
+	public void setJobOrderFilename(String jobOrderFilename) {
+		this.jobOrderFilename = jobOrderFilename;
 	}
 
 	@Override

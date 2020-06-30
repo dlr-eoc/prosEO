@@ -4,9 +4,9 @@ import java.time.DateTimeException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -14,14 +14,16 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.rest.model.RestParameterizedOutput;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Parameter.ParameterType;
 
 public class OrderUtil {
 	/** A logger for this class */
@@ -80,54 +82,59 @@ public class OrderUtil {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 
-		if (null != processingOrder.getFilterConditions()) {
-			
-			for (String paramKey: processingOrder.getFilterConditions().keySet()) {
-				restOrder.getFilterConditions().add(
-					new RestParameter(paramKey,
-							processingOrder.getFilterConditions().get(paramKey).getParameterType().toString(),
-							processingOrder.getFilterConditions().get(paramKey).getParameterValue()));
+		if (null != processingOrder.getInputFilters()) {
+			for (ProductClass sourceClass: processingOrder.getInputFilters().keySet()) {
+				RestInputFilter restInputFilter = new RestInputFilter();
+				restInputFilter.setProductClass(sourceClass.getProductType());
+				Map<String, Parameter> filterConditions = processingOrder.getInputFilters().get(sourceClass).getFilterConditions();
+				for (String paramKey : filterConditions.keySet()) {
+					restInputFilter.getFilterConditions()
+							.add(new RestParameter(paramKey,
+									filterConditions.get(paramKey).getParameterType().toString(),
+									filterConditions.get(paramKey).getParameterValue()));
+				}
+				restOrder.getInputFilters().add(restInputFilter);
 			}
 			
 		}
-		if(null != processingOrder.getOutputParameters()) {
-			
-			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
-				restOrder.getOutputParameters().add(
-					new RestParameter(paramKey,
-							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
-							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
+		
+		if(null != processingOrder.getParameterizedOutputs()) {
+			for (ProductClass targetClass: processingOrder.getParameterizedOutputs().keySet()) {
+				RestParameterizedOutput restParameterizedOutput = new RestParameterizedOutput();
+				restParameterizedOutput.setProductClass(targetClass.getProductType());
+				Map<String, Parameter> outputParameters = processingOrder.getParameterizedOutputs().get(targetClass).getOutputParameters();
+				for (String paramKey : outputParameters.keySet()) {
+					restParameterizedOutput.getOutputParameters()
+							.add(new RestParameter(paramKey,
+									outputParameters.get(paramKey).getParameterType().toString(),
+									outputParameters.get(paramKey).getParameterValue()));
+				}
+				restOrder.getParameterizedOutputs().add(restParameterizedOutput);
 			}
 		}
-		if (null != processingOrder.getRequestedProductClasses()) {
-			
-			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {
-				restOrder.getRequestedProductClasses().add(productClass.getProductType());
-			}
-			
-		}
+		
 		if (null != processingOrder.getInputProductClasses()) {
-			
 			for (ProductClass productClass : processingOrder.getInputProductClasses()) {
 				restOrder.getInputProductClasses().add(productClass.getProductType());
 			}
 			
 		}
+		
 		if(null != processingOrder.getOutputFileClass()) {
 			restOrder.setOutputFileClass(processingOrder.getOutputFileClass());
 		}
+		
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
-
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
 				restOrder.getConfiguredProcessors().add(toAddProcessor.getIdentifier());
 			}
 		}	
 		
-		//The orbit range should be altered to accommodate more ranges than just everything in between min and max
+		// Create orbit ranges from orbits with contiguous orbit numbers
 		if (null != processingOrder.getRequestedOrbits()) {
 			
 			List<RestOrbitQuery> orbitQueries = new ArrayList<RestOrbitQuery>();
@@ -224,20 +231,6 @@ public class OrderUtil {
 			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
 
 		}
-		
-		//The following section needs to be verified
-		for (RestParameter restParam : restOrder.getFilterConditions()) {
-			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
-			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-			processingOrder.getFilterConditions().put(restParam.getKey(), modelParam);
-		}
-		
-		for (RestParameter restParam: restOrder.getOutputParameters()) {
-			de.dlr.proseo.model.Parameter modelParam = new de.dlr.proseo.model.Parameter();
-			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-			processingOrder.getOutputParameters().put(restParam.getKey(), modelParam);
-		}
-		
 		if (null != restOrder.getOutputFileClass()) {
 			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
 		}

@@ -42,21 +42,18 @@
       sliceOverlap:
         type: integer
         description: Overlap between adjacent slices in seconds
-      filterConditions:
-        type: RestParameter[]
-        description: A set of additional conditions to apply to selected products.
-      outputParameters:
-        type: RestParameter[]
-        description: A set of parameters to set for the generated products.
+      inputFilters:
+        type: RestInputFilter[]
+        description: Filter conditions to apply to input products
+      parameterizedOutputs:
+        type: RestParameterizedOutput[]
+        description: Product classes for output products with optional set of parameters to apply to the generated product
       configuredProcessors:
         type: string[]
         description: List of identifiers of the configured processors
       orbits:
         type: RestOrbitQuery[]
         description: List of orbit ranges, identified by spacecraft code and orbit number from/to
-      requestedProductClasses:
-        type: string[]
-        description: List of internal product types requested as output from the order
       inputProductClasses:
         type: string[]
         description: List of internal product types given as input to the order

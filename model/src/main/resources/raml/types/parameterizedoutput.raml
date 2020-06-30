@@ -1,0 +1,10 @@
+#%RAML 1.0 DataType
+#  RestParameterizedOutput:
+    type: object
+    properties:
+      productClass:
+        type: string
+        description: The product class to generate as output
+      outputParameters:
+        type: RestParameter[]
+        description: Set of parameters to apply to the generated products (may be empty)

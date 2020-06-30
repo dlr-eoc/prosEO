@@ -19,7 +19,6 @@ import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -103,20 +102,18 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	private Duration sliceOverlap = Duration.ZERO;
 	
-	/** A set of additional conditions to apply to selected products.
-	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required. */
-	@ElementCollection
-	private Map<String, Parameter> filterConditions = new HashMap<>();
-	
-	/** A set of parameters to set for the generated products.
-	 * Note: For Sentinel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
+	/**
+	 * Filter conditions to apply to input products of a specific product class in addition to filter conditions contained
+	 * in the applicable selection rule
 	 */
-	@ElementCollection
-	private Map<String, Parameter> outputParameters = new HashMap<>();
-	
-	/** Set of requested product classes */
 	@ManyToMany
-	private Set<ProductClass> requestedProductClasses = new HashSet<>();
+	private Map<ProductClass, InputFilter> inputFilters = new HashMap<>();
+	
+	/**
+	 * Product classes for output products with optional set of parameters to apply to the generated product
+	 */
+	@ManyToMany
+	private Map<ProductClass, ParameterizedOutput> parameterizedOutputs = new HashMap<>();
 	
 	/** Set of product classes provided as input data (processing job steps must not be generated) */
 	@ManyToMany
@@ -334,57 +331,39 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
-	 * Gets the filter conditions
+	 * Gets the input filters
 	 * 
-	 * @return the filterConditions
+	 * @return the input filters
 	 */
-	public Map<String, Parameter> getFilterConditions() {
-		return filterConditions;
+	public Map<ProductClass, InputFilter> getInputFilters() {
+		return inputFilters;
 	}
 
 	/**
-	 * Sets the filter conditions
+	 * Sets the input filters
 	 * 
-	 * @param filterConditions the filterConditions to set
+	 * @param inputFilters the input filters to set
 	 */
-	public void setFilterConditions(Map<String, Parameter> filterConditions) {
-		this.filterConditions = filterConditions;
+	public void setInputFilters(Map<ProductClass, InputFilter> inputFilters) {
+		this.inputFilters = inputFilters;
 	}
 
 	/**
-	 * Gets the output parameters
+	 * Gets the parameterized outputs
 	 * 
-	 * @return the outputParameters
+	 * @return the parameterized outputs
 	 */
-	public Map<String, Parameter> getOutputParameters() {
-		return outputParameters;
+	public Map<ProductClass, ParameterizedOutput> getParameterizedOutputs() {
+		return parameterizedOutputs;
 	}
 
 	/**
-	 * Sets the output parameters
+	 * Sets the parameterized outputs
 	 * 
-	 * @param outputParameters the outputParameters to set
+	 * @param parameterizedOutputs the parameterized outputs to set
 	 */
-	public void setOutputParameters(Map<String, Parameter> outputParameters) {
-		this.outputParameters = outputParameters;
-	}
-
-	/**
-	 * Gets the requested product classes
-	 * 
-	 * @return the requestedProductClasses
-	 */
-	public Set<ProductClass> getRequestedProductClasses() {
-		return requestedProductClasses;
-	}
-
-	/**
-	 * Sets the requested product classes
-	 * 
-	 * @param requestedProductClasses the requestedProductClasses to set
-	 */
-	public void setRequestedProductClasses(Set<ProductClass> requestedProductClasses) {
-		this.requestedProductClasses = requestedProductClasses;
+	public void setParameterizedOutputs(Map<ProductClass, ParameterizedOutput> parameterizedOutputs) {
+		this.parameterizedOutputs = parameterizedOutputs;
 	}
 
 	/**
@@ -520,7 +499,7 @@ public class ProcessingOrder extends PersistentObject {
 		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
 				+ ", orderState=" + orderState + ", executionTime=" + executionTime
 				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
-				+ sliceDuration + ", filterConditions=" + filterConditions + ", outputParameters=" + outputParameters
+				+ sliceDuration + ", inputFilters=" + inputFilters + ", parameterizedOutputs=" + parameterizedOutputs
 				+ ", processingMode=" + processingMode + "]";
 	}
 }

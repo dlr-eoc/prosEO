@@ -68,20 +68,6 @@ public class Job extends PersistentObject {
 	@Column(columnDefinition = "TIMESTAMP(6)")
 	private Instant stopTime;
 	
-	/** 
-	 * A set of additional conditions to apply to selected products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
-	 */
-	@ElementCollection
-	private Map<String, Parameter> filterConditions = new HashMap<>();
-	
-	/**
-	 * A set of parameters to set for the generated products.
-	 * Note: For Sentnel-5P at least the parameters "copernicusCollection", "fileClass" and "revision" are required.
-	 */
-	@ElementCollection
-	private Map<String, Parameter> outputParameters = new HashMap<>();
-	
 	/**
 	 * A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0).
 	 */
@@ -191,42 +177,6 @@ public class Job extends PersistentObject {
 	}
 
 	/**
-	 * Gets the filtering conditions
-	 * 
-	 * @return the filterConditions
-	 */
-	public Map<String, Parameter> getFilterConditions() {
-		return filterConditions;
-	}
-
-	/**
-	 * Sets the filtering conditions
-	 * 
-	 * @param filterConditions the filterConditions to set
-	 */
-	public void setFilterConditions(Map<String, Parameter> filterConditions) {
-		this.filterConditions = filterConditions;
-	}
-
-	/**
-	 * Gets the parameters for output products
-	 * 
-	 * @return the outputParameters
-	 */
-	public Map<String, Parameter> getOutputParameters() {
-		return outputParameters;
-	}
-
-	/**
-	 * Sets the parameters for output products
-	 * 
-	 * @param outputParameters the outputParameters to set
-	 */
-	public void setOutputParameters(Map<String, Parameter> outputParameters) {
-		this.outputParameters = outputParameters;
-	}
-
-	/**
 	 * Gets the processing priority
 	 * 
 	 * @return the priority
@@ -304,9 +254,8 @@ public class Job extends PersistentObject {
 	@Override
 	public String toString() {
 		return "Job [jobState=" + jobState + ", orbit=" + orbit + ", startTime="
-				+ startTime + ", stopTime=" + stopTime + ", filterConditions=" + filterConditions + ", outputParameters="
-				+ outputParameters + ", priority=" + priority + ", processingFacility=" + processingFacility + ", jobSteps="
-				+ jobSteps + "]";
+				+ startTime + ", stopTime=" + stopTime + ", priority=" + priority + ", processingFacility=" + processingFacility 
+				+ ", jobSteps=" + jobSteps + "]";
 	};
 
 }

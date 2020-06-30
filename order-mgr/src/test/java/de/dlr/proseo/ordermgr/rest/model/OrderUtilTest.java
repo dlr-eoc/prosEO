@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -154,9 +155,17 @@ public class OrderUtilTest {
 		assertEquals("Unexpected stop time: ",modelOrder.getStopTime(), copiedModelOrder.getStopTime());
 
 		assertEquals("Unexpected processing Mode: ", modelOrder.getProcessingMode(), copiedModelOrder.getProcessingMode());
-		assertEquals("Unexpected filter conditions: ", modelOrder.getFilterConditions(), copiedModelOrder.getFilterConditions());
-		assertEquals("Unexpected Output Parameters: ", modelOrder.getOutputParameters(), copiedModelOrder.getOutputParameters());
-
+		assertEquals("Unexpected size of input filters: ", modelOrder.getInputFilters().size(), copiedModelOrder.getInputFilters().size());
+		for (ProductClass productClass: modelOrder.getInputFilters().keySet()) {
+			assertEquals("Unexpected filter conditions: ", modelOrder.getInputFilters().get(productClass),
+					copiedModelOrder.getInputFilters().get(productClass));
+		}
+		assertEquals("Unexpected size of parameterized outputs: ", modelOrder.getParameterizedOutputs().size(), 
+				copiedModelOrder.getParameterizedOutputs().size());
+		for (ProductClass productClass: modelOrder.getParameterizedOutputs().keySet()) {
+			assertEquals("Unexpected output parameters: ", modelOrder.getParameterizedOutputs().get(productClass),
+					copiedModelOrder.getParameterizedOutputs().get(productClass));
+		}
 		logger.info("Test copy REST to model OK");
 
 

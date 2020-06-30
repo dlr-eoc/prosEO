@@ -367,7 +367,7 @@ public class ProductIngestor {
     */
 	public void deleteProductFile(Long productId, ProcessingFacility facility) throws 
 			EntityNotFoundException, RuntimeException, ProcessingException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility.getName());
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
@@ -407,8 +407,9 @@ public class ProductIngestor {
 			} 
 		}
 		
-		// Delete the product file metadata
-		RepositoryService.getProductFileRepository().deleteById(modelProductFile.getId());
+		// TODO Delete the product file metadata  --> Test with .delete(entity)
+		if (logger.isTraceEnabled()) logger.trace("... deleting product file with ID " + modelProductFile.getId());
+		RepositoryService.getProductFileRepository().delete(modelProductFile);
 
 		// Test whether the deletion was successful
 		if (!RepositoryService.getProductFileRepository().findById(modelProductFile.getId()).isEmpty()) {

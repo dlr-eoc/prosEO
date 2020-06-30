@@ -7,15 +7,10 @@ spring:
         url: jdbc:postgresql://localhost:5432/proseo
         username: postgres
         password: sequel09Master
-    packagesToScan: de.dlr.proseo.model
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
 proseo:
-    user:
-        name: user
-        password: password
-
+    defaultuser.name: sysadm
+    defaultuser.password: sysadm

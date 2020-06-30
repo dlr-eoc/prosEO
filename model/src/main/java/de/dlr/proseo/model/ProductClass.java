@@ -58,6 +58,12 @@ public class ProductClass extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private OrderSlicingType defaultSlicingType;
 	
+	/**
+	 * Template for the generation of product files, indicating variable parts using Spring Expression Language;
+	 * overrides file naming convention set in the Mission object.
+	 */
+	private String productFileTemplate;
+	
 	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */
 	private Duration defaultSliceDuration;
 	
@@ -188,6 +194,29 @@ public class ProductClass extends PersistentObject {
 	 */
 	public void setDefaultSliceDuration(Duration defaultSliceDuration) {
 		this.defaultSliceDuration = defaultSliceDuration;
+	}
+
+	/**
+	 * Gets the template for product file naming for this product class
+	 * (if no template is set, returns the template of the associated mission)
+	 * 
+	 * @return the productFileTemplate
+	 */
+	public String getProductFileTemplate() {
+		if (null == productFileTemplate) {
+			return mission.getProductFileTemplate();
+		} else {
+			return productFileTemplate;
+		}
+	}
+
+	/**
+	 * Sets the template for product file naming for this product class (will override template from Mission)
+	 * 
+	 * @param productFileTemplate the productFileTemplate to set
+	 */
+	public void setProductFileTemplate(String productFileTemplate) {
+		this.productFileTemplate = productFileTemplate;
 	}
 
 	/**
