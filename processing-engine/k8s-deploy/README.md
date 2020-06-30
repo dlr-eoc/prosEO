@@ -1,4 +1,4 @@
-Initial Setup
+t cInitial Setup
 =============
 
 There are two ways you can set up for your k8s deployment: directly on a
@@ -14,6 +14,7 @@ version we're deploying kubernetes in.
 UNIX-like OS
 ------------
 
+1. Initialize git submodules: `$ git pull && git submodule update --init`
 1. Install a current version of [Python](https://www.python.org/).
 1. Install `pipenv`: `$ python3 -m pip install --user -U pipenv`
 1. Install Python-based tools via `$ pipenv install`
@@ -21,6 +22,7 @@ UNIX-like OS
 1. Enter the pip environment. Due to it's support for the `.env` file, you
    automatically enter an environment in which go packages can be installed.
    `$ pipenv shell`
+1. Install kubespray dependencies: `$ pip install -r kubespray/requirements.txt`
 1. Install Go-based tools via `$ go get $(cat gopackages.txt)`
 
 After this is done, in order to have your tools available, all you need
@@ -29,7 +31,19 @@ to do is run `$ pipenv shell` again.
 ### Upgrading
 
 1. Inside or outside of the pip environment, run `$ pipenv update`
+1. If necessary, re-run `$ pip install -r kubespray/requirements.txt`
+  inside the pip environment.
 1. Inside the pip environment, run `$ go get -u $(cat gopackages.txt)`
+
+If you want to use a newer version of kubespray:
+
+```bash
+$ cd kubespray
+$ git checkout <version-tag>
+$ cd ..
+$ git add kubespray
+$ git commit -m "Bumped kubespray to <version-tag>"
+```
 
 Docker
 ------
