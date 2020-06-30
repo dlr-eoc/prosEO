@@ -408,6 +408,7 @@ public class ProcessingOrderMgr {
 		if (null != order.getInputFilters()) {
 			for (RestInputFilter restInputFilter : order.getInputFilters()) {
 				InputFilter inputFilter = new InputFilter();
+				inputFilter = RepositoryService.getInputFilterRepository().save(inputFilter);
 				for (RestParameter restParam : restInputFilter.getFilterConditions()) {
 					Parameter modelParam = new Parameter();
 					modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
@@ -442,6 +443,7 @@ public class ProcessingOrderMgr {
 		}
 		for (RestParameterizedOutput restParameterizedOutput: order.getParameterizedOutputs()) {
 			ParameterizedOutput parameterizedOutput = new ParameterizedOutput();
+			parameterizedOutput = RepositoryService.getParameterizedOutputRepository().save(parameterizedOutput);
 			for (RestParameter restParam : restParameterizedOutput.getOutputParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
