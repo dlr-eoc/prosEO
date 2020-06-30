@@ -31,6 +31,7 @@ import javax.persistence.Table;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
 
 /**
  * A customer order to process a specific set of ProductClasses for a specific period of time using a specific set of
@@ -124,6 +125,10 @@ public class ProcessingOrder extends PersistentObject {
 	
 	/** The processing mode to run the processor(s) in (one of the modes specified for the mission) */
 	private String processingMode;
+	
+	/** Production type context, in which the order is running */
+	@Enumerated(EnumType.STRING)
+	private ProductionType productionType = ProductionType.ON_DEMAND_DEFAULT;
 	
 	/** The processor configurations for processing the products */
 	@ManyToMany
@@ -418,6 +423,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setProcessingMode(String processingMode) {
 		this.processingMode = processingMode;
+	}
+
+	/**
+	 * Gets the production type context
+	 * 
+	 * @return the production type
+	 */
+	public ProductionType getProductionType() {
+		return productionType;
+	}
+
+	/**
+	 * Sets the production type context
+	 * 
+	 * @param productionType the production type to set
+	 */
+	public void setProductionType(ProductionType productionType) {
+		this.productionType = productionType;
 	}
 
 	/**

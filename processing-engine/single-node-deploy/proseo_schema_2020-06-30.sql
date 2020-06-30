@@ -401,6 +401,7 @@ CREATE TABLE public.processing_order (
     order_state character varying(255),
     output_file_class character varying(255),
     processing_mode character varying(255),
+    production_type character varying(255),
     slice_duration bigint,
     slice_overlap bigint,
     slicing_type character varying(255),

@@ -18,6 +18,7 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -128,6 +129,10 @@ public class OrderUtil {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
 		}
 		
+		if (null != processingOrder.getProductionType()) {
+			restOrder.setProductionType(processingOrder.getProductionType().toString());
+		}
+		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
 				restOrder.getConfiguredProcessors().add(toAddProcessor.getIdentifier());
@@ -174,7 +179,7 @@ public class OrderUtil {
 	 * @return a (roughly) equivalent model order
 	 * @throws IllegalArgumentException if the REST order violates syntax rules for date, enum or numeric values
 	 */
-	public static ProcessingOrder toModelOrder(RestOrder restOrder) {
+	public static ProcessingOrder toModelOrder(RestOrder restOrder) throws IllegalArgumentException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelOrder({})", (null == restOrder ? "MISSING" : restOrder.getId()));
 		
@@ -236,6 +241,9 @@ public class OrderUtil {
 		}
 		if (null != restOrder.getProcessingMode()) {
 			processingOrder.setProcessingMode(restOrder.getProcessingMode());
+		}
+		if (null != restOrder.getProductionType()) {
+			processingOrder.setProductionType(ProductionType.valueOf(restOrder.getProductionType()));
 		}
 		
 		
