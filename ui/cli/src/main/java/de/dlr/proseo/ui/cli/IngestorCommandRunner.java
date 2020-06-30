@@ -446,6 +446,9 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getGenerationTime()) {
 			restProduct.setGenerationTime(updatedProduct.getGenerationTime());
 		}
+		if (isDeleteAttributes || null != updatedProduct.getProductionType()) {
+			restProduct.setProductionType(updatedProduct.getProductionType());
+		}
 		if (isDeleteAttributes || !updatedProduct.getComponentProductIds().isEmpty()) {
 			restProduct.setComponentProductIds(updatedProduct.getComponentProductIds());
 		}

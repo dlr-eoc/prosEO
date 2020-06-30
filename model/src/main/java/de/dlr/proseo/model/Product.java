@@ -120,14 +120,14 @@ public class Product extends PersistentObject {
 	@ManyToOne
 	private ConfiguredProcessor configuredProcessor;
 	
-	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(Product.class);
-	
 	/**
 	 * A collection of mission-specific parameters for this object
 	 */
 	@ElementCollection
 	private Map<String, Parameter> parameters = new HashMap<>();
+	
+	/** The logger for this class */
+	private static final Logger logger = LoggerFactory.getLogger(Product.class);
 	
 	/**
 	 * Gets the universally unique product identifier

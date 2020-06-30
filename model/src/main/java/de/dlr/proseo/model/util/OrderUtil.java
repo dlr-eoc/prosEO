@@ -78,9 +78,6 @@ public class OrderUtil {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
-		if(null != processingOrder.getProcessingMode()) {
-			restOrder.setProcessingMode(processingOrder.getProcessingMode());
-		}
 
 		if (null != processingOrder.getInputFilters()) {
 			for (ProductClass sourceClass: processingOrder.getInputFilters().keySet()) {

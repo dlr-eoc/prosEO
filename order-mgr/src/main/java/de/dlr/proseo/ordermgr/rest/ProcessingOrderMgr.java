@@ -428,6 +428,10 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setSliceOverlap(changedOrder.getSliceOverlap());
 		}
+		if (!modelOrder.getProductionType().equals(changedOrder.getProductionType())) {
+			orderChanged = true;
+			modelOrder.setProductionType(changedOrder.getProductionType());
+		}
 		
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
