@@ -121,7 +121,7 @@ public class OrderDispatcher {
 			answer = false;
 			Messages.ORDER_REQ_PROC_NOT_SET.log(logger, order.getIdentifier());
 		}
-		if (order.getRequestedProductClasses().isEmpty()) {
+		if (order.getParameterizedOutputs().isEmpty()) {
 			answer = false;
 			Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 		}
@@ -148,7 +148,7 @@ public class OrderDispatcher {
 				// set order start time and stop time
 				// we need			
 				// product class
-				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -200,7 +200,7 @@ public class OrderDispatcher {
 				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
-				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -254,7 +254,7 @@ public class OrderDispatcher {
 				startT = order.getStartTime();
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(order.getSliceDuration());
-				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -315,7 +315,7 @@ public class OrderDispatcher {
 				// set order start time and stop time
 				// we need			
 				// product class
-				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -342,8 +342,6 @@ public class OrderDispatcher {
 							}
 							job.setStopTime(stopT);
 							job.setProcessingOrder(order);
-							job.getFilterConditions().putAll(order.getFilterConditions());
-							job.getOutputParameters().putAll(order.getOutputParameters());
 							job.setProcessingFacility(pf);
 							job = RepositoryService.getJobRepository().save(job);
 							order.getJobs().add(job);
@@ -355,7 +353,9 @@ public class OrderDispatcher {
 								jobStep.setJobStepState(JobStepState.INITIAL);
 								jobStep.setProcessingMode(order.getProcessingMode());
 								jobStep.setJob(job);
-								jobStep.getOutputParameters().putAll(job.getOutputParameters());
+								if (order.getParameterizedOutputs().get(productClass) != null) {
+									jobStep.getOutputParameters().putAll(order.getParameterizedOutputs().get(productClass).getOutputParameters());
+								}
 								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 								job.getJobSteps().add(jobStep);
 
@@ -486,9 +486,11 @@ public class OrderDispatcher {
 		JobStep jobStep = new JobStep();
 		jobStep.setJobStepState(JobStepState.INITIAL);
 		jobStep.setJob(job);
-		jobStep.getOutputParameters().putAll(job.getOutputParameters());
 		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 		job.getJobSteps().add(jobStep);
+		if (job.getProcessingOrder().getParameterizedOutputs().get(productClass) != null) {
+			jobStep.getOutputParameters().putAll(job.getProcessingOrder().getParameterizedOutputs().get(productClass).getOutputParameters());
+		}
 		// create output product
 		// if product class has sub products or is sub product, create all related products to be created
 		List<ProductClass> productClassesToCreate = new ArrayList<ProductClass>();
@@ -509,6 +511,8 @@ public class OrderDispatcher {
 		}
 		if (configuredProcessor == null ) {
 			Messages.ORDERDISP_NO_CONF_PROC.log(logger, rootProductClass.getProductType());
+			job.getJobSteps().remove(jobStep);
+			RepositoryService.getJobStepRepository().delete(jobStep);
 			jobStep = null;
 		} else {
 			Boolean found = false;
@@ -519,6 +523,8 @@ public class OrderDispatcher {
 				}
 			}
 			if (found) {
+				job.getJobSteps().remove(jobStep);
+				RepositoryService.getJobStepRepository().delete(jobStep);
 				jobStep = null;
 			} else {
 				jobStepList.add(jobStep);
@@ -640,7 +646,9 @@ public class OrderDispatcher {
 		Product p = new Product();
 		p.getParameters().clear();
 		p.setUuid(UUID.randomUUID());
-		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters());
+		if (job.getProcessingOrder().getParameterizedOutputs().get(productClass) != null) {
+			p.getParameters().putAll(job.getProcessingOrder().getParameterizedOutputs().get(productClass).getOutputParameters());
+		}
 		p.setProductClass(productClass);
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);

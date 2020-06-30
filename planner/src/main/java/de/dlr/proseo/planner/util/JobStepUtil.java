@@ -273,8 +273,13 @@ public class JobStepUtil {
 				break;
 			case RUNNING:
 			case COMPLETED:
+				em.merge(js);
+				UtilService.getJobUtil().checkFinish(js.getJob());
+				answer = true;
+				break;
 			case FAILED:
 				em.merge(js);
+				UtilService.getJobUtil().updateState(js.getJob(), JobStepState.FAILED);
 				UtilService.getJobUtil().checkFinish(js.getJob());
 				answer = true;
 				break;
