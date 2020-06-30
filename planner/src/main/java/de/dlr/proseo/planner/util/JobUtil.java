@@ -333,7 +333,6 @@ public class JobUtil {
 					job.getJobSteps().remove(js);
 				}
 				job.setProcessingOrder(null);
-				job.getOutputParameters().clear();
 				Messages.JOB_DELETED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
@@ -381,7 +380,6 @@ public class JobUtil {
 					RepositoryService.getJobStepRepository().delete(js);
 				}
 				job.setProcessingOrder(null);
-				job.getOutputParameters().clear();
 				Messages.JOB_DELETED.log(logger, String.valueOf(job.getId()));
 				answer = true;
 				break;
@@ -475,10 +473,16 @@ public class JobUtil {
 				}
 				break;
 			case RELEASED:
+			case STARTED:
+				if (jsState == JobStepState.FAILED) {
+					job.setJobState(JobState.FAILED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				}
 				break;
 			case ON_HOLD:
-				break;
-			case STARTED:
 				break;
 			case COMPLETED:
 				break;

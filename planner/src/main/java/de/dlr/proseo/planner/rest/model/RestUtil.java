@@ -90,8 +90,6 @@ public class RestUtil {
 				rj.setStopTime(Date.from(job.getStopTime()));
 			}
 			rj.setVersion(Long.valueOf(job.getVersion()));
-			rj.setFilterConditions(RestUtil.createRestParameterList(job.getFilterConditions()));
-			rj.setOutputParameters(RestUtil.createRestParameterList(job.getOutputParameters()));
 			if (job.getProcessingOrder() != null) {
 				rj.setOrderIdentifier(job.getProcessingOrder().getIdentifier());
 			}
