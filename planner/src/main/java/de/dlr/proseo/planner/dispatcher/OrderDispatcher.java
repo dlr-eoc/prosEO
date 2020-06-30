@@ -121,7 +121,7 @@ public class OrderDispatcher {
 			answer = false;
 			Messages.ORDER_REQ_PROC_NOT_SET.log(logger, order.getIdentifier());
 		}
-		if (order.getParameterizedOutputs().isEmpty()) {
+		if (order.getRequestedProductClasses().isEmpty()) {
 			answer = false;
 			Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 		}
@@ -148,7 +148,7 @@ public class OrderDispatcher {
 				// set order start time and stop time
 				// we need			
 				// product class
-				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -200,7 +200,7 @@ public class OrderDispatcher {
 				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
-				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -254,7 +254,7 @@ public class OrderDispatcher {
 				startT = order.getStartTime();
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(order.getSliceDuration());
-				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -315,7 +315,7 @@ public class OrderDispatcher {
 				// set order start time and stop time
 				// we need			
 				// product class
-				Set<ProductClass> productClasses = order.getParameterizedOutputs().keySet();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
@@ -354,6 +354,7 @@ public class OrderDispatcher {
 								jobStep.setProcessingMode(order.getProcessingMode());
 								jobStep.setJob(job);
 								if (order.getParameterizedOutputs().get(productClass) != null) {
+// TODO
 									jobStep.getOutputParameters().putAll(order.getParameterizedOutputs().get(productClass).getOutputParameters());
 								}
 								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
@@ -394,7 +395,7 @@ public class OrderDispatcher {
 									// check if product exists
 									// use configured processor, product class, sensing start and stop time, orbit (if set)
 									// TODO NOTE TB: This seems redundant, since p was just created above ...
-									if (!RepositoryService.getProductRepository()
+									if (RepositoryService.getProductRepository()
 										   .findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
 												p.getProductClass().getId(),
 												p.getConfiguredProcessor().getId(),
@@ -488,6 +489,7 @@ public class OrderDispatcher {
 		jobStep.setJob(job);
 		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
 		job.getJobSteps().add(jobStep);
+// TODO
 		if (job.getProcessingOrder().getParameterizedOutputs().get(productClass) != null) {
 			jobStep.getOutputParameters().putAll(job.getProcessingOrder().getParameterizedOutputs().get(productClass).getOutputParameters());
 		}
@@ -646,6 +648,7 @@ public class OrderDispatcher {
 		Product p = new Product();
 		p.getParameters().clear();
 		p.setUuid(UUID.randomUUID());
+// TODO
 		if (job.getProcessingOrder().getParameterizedOutputs().get(productClass) != null) {
 			p.getParameters().putAll(job.getProcessingOrder().getParameterizedOutputs().get(productClass).getOutputParameters());
 		}

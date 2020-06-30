@@ -90,6 +90,7 @@ public class RestUtil {
 				rj.setStopTime(Date.from(job.getStopTime()));
 			}
 			rj.setVersion(Long.valueOf(job.getVersion()));
+
 			if (job.getProcessingOrder() != null) {
 				rj.setOrderIdentifier(job.getProcessingOrder().getIdentifier());
 			}

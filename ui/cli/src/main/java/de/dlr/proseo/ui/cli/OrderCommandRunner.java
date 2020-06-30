@@ -357,16 +357,15 @@ public class OrderCommandRunner {
 			restOrder.setOutputFileClass(response);
 		}
 		// Get requested product classes
-// TODO update to new DB model
-//		if (restOrder.getRequestedProductClasses().isEmpty()) {
-//			System.out.print(PROMPT_PRODUCT_CLASSES);
-//			String response = System.console().readLine();
-//			if ("".equals(response)) {
-//				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
-//				return;
-//			}
-//			restOrder.setRequestedProductClasses(Arrays.asList(response.split(",")));
-//		}
+		if (restOrder.getRequestedProductClasses().isEmpty()) {
+			System.out.print(PROMPT_PRODUCT_CLASSES);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restOrder.setRequestedProductClasses(Arrays.asList(response.split(",")));
+		}
 		
 		/* Create order */
 		try {
@@ -610,6 +609,9 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || !updatedOrder.getParameterizedOutputs().isEmpty()) {
 			restOrder.setParameterizedOutputs(updatedOrder.getParameterizedOutputs());
 		}
+		if (isDeleteAttributes || !updatedOrder.getOutputParameters().isEmpty()) {
+			restOrder.setOutputParameters(updatedOrder.getOutputParameters());
+		}
 		if (isDeleteAttributes || !updatedOrder.getConfiguredProcessors().isEmpty()) {
 			restOrder.setConfiguredProcessors(updatedOrder.getConfiguredProcessors());
 		}
@@ -617,10 +619,9 @@ public class OrderCommandRunner {
 				|| !updatedOrder.getOrbits().isEmpty()) {
 			restOrder.setOrbits(updatedOrder.getOrbits());
 		}
-// TODO is this correct to remove?
-//		if (!updatedOrder.getRequestedProductClasses().isEmpty()) { // mandatory
-//			restOrder.setRequestedProductClasses(updatedOrder.getRequestedProductClasses());
-//		}
+		if (!updatedOrder.getRequestedProductClasses().isEmpty()) { // mandatory
+			restOrder.setRequestedProductClasses(updatedOrder.getRequestedProductClasses());
+		}
 		if (isDeleteAttributes || !updatedOrder.getInputProductClasses().isEmpty()) {
 			restOrder.setInputProductClasses(updatedOrder.getInputProductClasses());
 		}
