@@ -15,15 +15,16 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.rest.model.RestParameterizedOutput;
 import de.dlr.proseo.model.ProductClass;
 
 public class OrderUtil {
@@ -73,11 +74,9 @@ public class OrderUtil {
 		if(null != processingOrder.getSlicingType()) {
 			restOrder.setSlicingType(processingOrder.getSlicingType().name());
 		}
-		//To be verified
 		if(null != processingOrder.getSliceDuration()) {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
-		//to be added Slice Overlap
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
 		if(null != processingOrder.getProcessingMode()) {
 			restOrder.setProcessingMode(processingOrder.getProcessingMode());
@@ -99,21 +98,37 @@ public class OrderUtil {
 			
 		}
 		
-		if(null != processingOrder.getParameterizedOutputs()) {
-			for (ProductClass targetClass: processingOrder.getParameterizedOutputs().keySet()) {
-				RestParameterizedOutput restParameterizedOutput = new RestParameterizedOutput();
-				restParameterizedOutput.setProductClass(targetClass.getProductType());
-				Map<String, Parameter> outputParameters = processingOrder.getParameterizedOutputs().get(targetClass).getOutputParameters();
+		if(null != processingOrder.getClassOutputParameters()) {
+			for (ProductClass targetClass: processingOrder.getClassOutputParameters().keySet()) {
+				RestClassOutputParameter restClassOutputParameter = new RestClassOutputParameter();
+				restClassOutputParameter.setProductClass(targetClass.getProductType());
+				Map<String, Parameter> outputParameters = processingOrder.getClassOutputParameters().get(targetClass).getOutputParameters();
 				for (String paramKey : outputParameters.keySet()) {
-					restParameterizedOutput.getOutputParameters()
+					restClassOutputParameter.getOutputParameters()
 							.add(new RestParameter(paramKey,
 									outputParameters.get(paramKey).getParameterType().toString(),
 									outputParameters.get(paramKey).getParameterValue()));
 				}
-				restOrder.getParameterizedOutputs().add(restParameterizedOutput);
+				restOrder.getClassOutputParameters().add(restClassOutputParameter);
 			}
 		}
 		
+		if(null != processingOrder.getOutputParameters()) {
+			
+			for (String paramKey: processingOrder.getOutputParameters().keySet()) {
+				restOrder.getOutputParameters().add(
+					new RestParameter(paramKey,
+							processingOrder.getOutputParameters().get(paramKey).getParameterType().toString(),
+							processingOrder.getOutputParameters().get(paramKey).getParameterValue()));
+			}
+		}
+		if (null != processingOrder.getRequestedProductClasses()) {
+			
+			for (ProductClass productClass : processingOrder.getRequestedProductClasses()) {
+				restOrder.getRequestedProductClasses().add(productClass.getProductType());
+			}
+			
+		}
 		if (null != processingOrder.getInputProductClasses()) {
 			for (ProductClass productClass : processingOrder.getInputProductClasses()) {
 				restOrder.getInputProductClasses().add(productClass.getProductType());
@@ -223,7 +238,6 @@ public class OrderUtil {
 		if (null != restOrder.getOutputFileClass()) {
 			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
 		}
-		//To be verified
 		if (null != restOrder.getSlicingType()) {
 			processingOrder.setSlicingType(OrderSlicingType.valueOf(restOrder.getSlicingType()));	
 
@@ -236,6 +250,13 @@ public class OrderUtil {
 			processingOrder.setSliceOverlap(Duration.ofSeconds(restOrder.getSliceOverlap()));
 
 		}
+		
+		for (RestParameter restParam: restOrder.getOutputParameters()) {
+			Parameter modelParam = new Parameter();
+			modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
+			processingOrder.getOutputParameters().put(restParam.getKey(), modelParam);
+		}
+		
 		if (null != restOrder.getOutputFileClass()) {
 			processingOrder.setOutputFileClass(restOrder.getOutputFileClass());
 		}

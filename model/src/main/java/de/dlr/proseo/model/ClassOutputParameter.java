@@ -1,5 +1,5 @@
 /**
- * ParameterizedOutput.java
+ * ClassOutputParameter.java
  * 
  * (C) 2020 Dr. Bassler & Co. Managementberatung GmbH
  */
@@ -19,7 +19,7 @@ import javax.persistence.Entity;
  *
  */
 @Entity
-public class ParameterizedOutput extends PersistentObject {
+public class ClassOutputParameter extends PersistentObject {
 
 	/**
 	 * Output parameters consisting of a key (attribute or parameter name) and a value to set on a generated product 
@@ -55,9 +55,9 @@ public class ParameterizedOutput extends PersistentObject {
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (!(obj instanceof ParameterizedOutput))
+		if (!(obj instanceof ClassOutputParameter))
 			return false;
-		ParameterizedOutput other = (ParameterizedOutput) obj;
+		ClassOutputParameter other = (ClassOutputParameter) obj;
 		return Objects.equals(outputParameters, other.outputParameters);
 	}
 }

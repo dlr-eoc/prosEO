@@ -1,12 +1,12 @@
 /**
- * ParameterizedOutputRepository.java
+ * ClassOutputParameterRepository.java
  */
 package de.dlr.proseo.model.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import de.dlr.proseo.model.ParameterizedOutput;
+import de.dlr.proseo.model.ClassOutputParameter;
 
 /**
  * Data Access Object for the Task class
@@ -15,6 +15,6 @@ import de.dlr.proseo.model.ParameterizedOutput;
  *
  */
 @Repository
-public interface ParameterizedOutputRepository extends JpaRepository<ParameterizedOutput, Long> {
+public interface ClassOutputParameterRepository extends JpaRepository<ClassOutputParameter, Long> {
 
 }

@@ -17,7 +17,7 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
-import de.dlr.proseo.model.dao.ParameterizedOutputRepository;
+import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
@@ -106,9 +106,9 @@ public class RepositoryService {
 	@Autowired
     private InputFilterRepository inputFilterRepository;
 
-	/** The repository for the ParameterizedOutput class */
+	/** The repository for the ClassOutputParameter class */
 	@Autowired
-    private ParameterizedOutputRepository parameterizedOutputRepository;
+    private ClassOutputParameterRepository classOutputParameterRepository;
 
 	/**
 	 * Singleton constructor
@@ -272,12 +272,12 @@ public class RepositoryService {
 	}
 
 	/**
-	 * Gets the repository for the ParameterizedOutput class
+	 * Gets the repository for the ClassOutputParameter class
 	 * 
-	 * @return the parameterizedOutputRepository
+	 * @return the classOutputParameterRepository
 	 */
-	public static ParameterizedOutputRepository getParameterizedOutputRepository() {
-		return theRepositoryService.parameterizedOutputRepository;
+	public static ClassOutputParameterRepository getClassOutputParameterRepository() {
+		return theRepositoryService.classOutputParameterRepository;
 	}
 
 }

@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -111,10 +112,20 @@ public class ProcessingOrder extends PersistentObject {
 	private Map<ProductClass, InputFilter> inputFilters = new HashMap<>();
 	
 	/**
-	 * Product classes for output products with optional set of parameters to apply to the generated product
+	 * Set of parameters to apply to a generated product of the referenced product class replacing the general output parameters
 	 */
 	@ManyToMany
-	private Map<ProductClass, ParameterizedOutput> parameterizedOutputs = new HashMap<>();
+	private Map<ProductClass, ClassOutputParameter> classOutputParameters = new HashMap<>();
+	
+	/**
+	 * Parameters to set for the generated products
+	 */
+	@ElementCollection
+	private Map<String, Parameter> outputParameters = new HashMap<>();
+	
+	/** Set of requested product classes */
+	@ManyToMany
+	private Set<ProductClass> requestedProductClasses = new HashSet<>();
 	
 	/** Set of product classes provided as input data (processing job steps must not be generated) */
 	@ManyToMany
@@ -354,21 +365,71 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
-	 * Gets the parameterized outputs
+	 * Gets the class-specific output parameters
 	 * 
-	 * @return the parameterized outputs
+	 * @return the class-specific output parameters
 	 */
-	public Map<ProductClass, ParameterizedOutput> getParameterizedOutputs() {
-		return parameterizedOutputs;
+	public Map<ProductClass, ClassOutputParameter> getClassOutputParameters() {
+		return classOutputParameters;
 	}
 
 	/**
-	 * Sets the parameterized outputs
+	 * Sets the class-specific output parameters
 	 * 
-	 * @param parameterizedOutputs the parameterized outputs to set
+	 * @param classOutputParameters the class-specific output parameters to set
 	 */
-	public void setParameterizedOutputs(Map<ProductClass, ParameterizedOutput> parameterizedOutputs) {
-		this.parameterizedOutputs = parameterizedOutputs;
+	public void setClassOutputParameters(Map<ProductClass, ClassOutputParameter> classOutputParameters) {
+		this.classOutputParameters = classOutputParameters;
+	}
+
+	/**
+	 * Gets the output parameters
+	 * 
+	 * @return the outputParameters
+	 */
+	public Map<String, Parameter> getOutputParameters() {
+		return outputParameters;
+	}
+
+	/**
+	 * Gets the output parameters for a specific product class (class-specific, if available, general otherwise)
+	 * 
+	 * @param productClass the product class to get the parameters for
+	 * @return the output parameters
+	 */
+	public Map<String, Parameter> getOutputParameters(ProductClass productClass) {
+		if (null == classOutputParameters.get(productClass)) {
+			return outputParameters;
+		} else {
+			return classOutputParameters.get(productClass).getOutputParameters();
+		}
+	}
+
+	/**
+	 * Sets the output parameters
+	 * 
+	 * @param outputParameters the outputParameters to set
+	 */
+	public void setOutputParameters(Map<String, Parameter> outputParameters) {
+		this.outputParameters = outputParameters;
+	}
+
+	/**
+	 * Gets the requested product classes
+	 * 
+	 * @return the requestedProductClasses
+	 */
+	public Set<ProductClass> getRequestedProductClasses() {
+		return requestedProductClasses;
+	}
+
+	/**
+	 * Sets the requested product classes
+	 * 
+	 * @param requestedProductClasses the requestedProductClasses to set
+	 */
+	public void setRequestedProductClasses(Set<ProductClass> requestedProductClasses) {
+		this.requestedProductClasses = requestedProductClasses;
 	}
 
 	/**
@@ -520,9 +581,9 @@ public class ProcessingOrder extends PersistentObject {
 	@Override
 	public String toString() {
 		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
-				+ ", orderState=" + orderState + ", executionTime=" + executionTime
+				+ ", orderState=" + orderState + ", executionTime=" + executionTime + ", requestedProductClasses=" + requestedProductClasses
 				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
-				+ sliceDuration + ", inputFilters=" + inputFilters + ", parameterizedOutputs=" + parameterizedOutputs
-				+ ", processingMode=" + processingMode + "]";
+				+ sliceDuration + ", inputFilters=" + inputFilters + ", outputParameters=" + outputParameters
+				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode + "]";
 	}
 }

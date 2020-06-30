@@ -5,6 +5,33 @@
 --
 
 --
+-- Name: class_output_parameter; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.class_output_parameter (
+    id bigint NOT NULL,
+    version integer NOT NULL
+);
+
+
+ALTER TABLE public.class_output_parameter OWNER TO postgres;
+
+--
+-- Name: class_output_parameter_output_parameters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.class_output_parameter_output_parameters (
+    class_output_parameter_id bigint NOT NULL,
+    parameter_type character varying(255) NOT NULL,
+    parameter_value character varying(255),
+    output_parameters_key character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.class_output_parameter_output_parameters OWNER TO postgres;
+
+
+--
 -- Name: configured_processor; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -65,33 +92,6 @@ ALTER TABLE public.job_step
     
 
 --
--- Name: parameterized_output; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.parameterized_output (
-    id bigint NOT NULL,
-    version integer NOT NULL
-);
-
-
-ALTER TABLE public.parameterized_output OWNER TO postgres;
-
---
--- Name: parameterized_output_output_parameters; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.parameterized_output_output_parameters (
-    parameterized_output_id bigint NOT NULL,
-    parameter_type character varying(255) NOT NULL,
-    parameter_value character varying(255),
-    output_parameters_key character varying(255) NOT NULL
-);
-
-
-ALTER TABLE public.parameterized_output_output_parameters OWNER TO postgres;
-
-
---
 -- Name: processing_order; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -99,6 +99,20 @@ ALTER TABLE public.processing_order
     ADD COLUMN production_type character varying(255);
 
 UPDATE public.processing_order SET production_type = 'ON_DEMAND_DEFAULT';
+
+
+--
+-- Name: processing_order_class_output_parameters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.processing_order_class_output_parameters (
+    processing_order_id bigint NOT NULL,
+    class_output_parameters_id bigint NOT NULL,
+    class_output_parameters_key bigint NOT NULL
+);
+
+
+ALTER TABLE public.processing_order_class_output_parameters OWNER TO postgres;
 
 
 --
@@ -116,20 +130,6 @@ ALTER TABLE public.processing_order_input_filters OWNER TO postgres;
 
 
 --
--- Name: processing_order_parameterized_outputs; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.processing_order_parameterized_outputs (
-    processing_order_id bigint NOT NULL,
-    parameterized_outputs_id bigint NOT NULL,
-    parameterized_outputs_key bigint NOT NULL
-);
-
-
-ALTER TABLE public.processing_order_parameterized_outputs OWNER TO postgres;
-
-
---
 -- Copy data from old tables into new ones as best possible (using a DUMMY product class for input filter conditions)
 --
 DO $$
@@ -137,10 +137,8 @@ DECLARE
     current_mission_id bigint;
     dummy_product_class_id bigint;
     input_filter_id bigint;
-    parameterized_output_id bigint;
     current_order_id bigint;
     filter_condition_count integer;
-    current_product_class RECORD;
 BEGIN
 	FOR current_mission_id IN SELECT id FROM mission LOOP
         -- Create a dummy product class for each mission for input filters
@@ -174,23 +172,6 @@ BEGIN
                     FROM processing_order_filter_conditions WHERE processing_order_id = current_order_id;
         END LOOP;
         
-        -- Copy old output parameters to parameterized output for each old requested product class
-        FOR current_product_class IN SELECT processing_order_id, requested_product_classes_id
-                FROM processing_order_requested_product_classes
-                WHERE processing_order_id IN (SELECT id FROM processing_order WHERE mission_id = current_mission_id)
-        LOOP
-            parameterized_output_id = nextval('hibernate_sequence');
-            INSERT INTO public.processing_order_parameterized_outputs VALUES (
-                current_product_class.processing_order_id,
-                parameterized_output_id,
-                current_product_class.requested_product_classes_id
-            );
-            INSERT INTO public.parameterized_output VALUES (parameterized_output_id, 1);
-            INSERT INTO public.parameterized_output_output_parameters
-                SELECT parameterized_output_id, parameter_type, parameter_value, output_parameters_key
-                    FROM public.processing_order_output_parameters
-                    WHERE processing_order_id = current_product_class.processing_order_id;
-        END LOOP;
     END LOOP;
 END
 $$;
@@ -200,20 +181,6 @@ $$;
 --
 
 DROP TABLE public.processing_order_filter_conditions;
-
-
---
--- Name: processing_order_output_parameters; Type: TABLE; Schema: public; Owner: postgres
---
-
-DROP TABLE public.processing_order_output_parameters;
-
-
---
--- Name: processing_order_requested_product_classes; Type: TABLE; Schema: public; Owner: postgres
---
-
-DROP TABLE public.processing_order_requested_product_classes;
 
 
 --
@@ -235,6 +202,22 @@ ALTER TABLE public.product_class
 
 
 --
+-- Name: class_output_parameter_output_parameters class_output_parameter_output_parameters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.class_output_parameter_output_parameters
+    ADD CONSTRAINT class_output_parameter_output_parameters_pkey PRIMARY KEY (class_output_parameter_id, output_parameters_key);
+
+
+--
+-- Name: class_output_parameter class_output_parameter_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.class_output_parameter
+    ADD CONSTRAINT class_output_parameter_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: input_filter_filter_conditions input_filter_filter_conditions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -251,19 +234,11 @@ ALTER TABLE ONLY public.input_filter
 
 
 --
--- Name: parameterized_output_output_parameters parameterized_output_output_parameters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: processing_order_class_output_parameters processing_order_class_output_parameters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.parameterized_output_output_parameters
-    ADD CONSTRAINT parameterized_output_output_parameters_pkey PRIMARY KEY (parameterized_output_id, output_parameters_key);
-
-
---
--- Name: parameterized_output parameterized_output_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.parameterized_output
-    ADD CONSTRAINT parameterized_output_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.processing_order_class_output_parameters
+    ADD CONSTRAINT processing_order_class_output_parameters_pkey PRIMARY KEY (processing_order_id, class_output_parameters_key);
 
 
 --
@@ -275,35 +250,11 @@ ALTER TABLE ONLY public.processing_order_input_filters
 
 
 --
--- Name: processing_order_parameterized_outputs processing_order_parameterized_outputs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.processing_order_parameterized_outputs
-    ADD CONSTRAINT processing_order_parameterized_outputs_pkey PRIMARY KEY (processing_order_id, parameterized_outputs_key);
-
-
---
 -- Name: processing_order_input_filters fk1u9dj81sg3vcueaprup3hasqi; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.processing_order_input_filters
     ADD CONSTRAINT fk1u9dj81sg3vcueaprup3hasqi FOREIGN KEY (input_filters_id) REFERENCES public.input_filter(id);
-
-
---
--- Name: parameterized_output_output_parameters fk8ui9alofyquuvso69amgcohy2; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.parameterized_output_output_parameters
-    ADD CONSTRAINT fk8ui9alofyquuvso69amgcohy2 FOREIGN KEY (parameterized_output_id) REFERENCES public.parameterized_output(id);
-
-
---
--- Name: processing_order_parameterized_outputs fkckmc7llemva6id4drv0557957; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.processing_order_parameterized_outputs
-    ADD CONSTRAINT fkckmc7llemva6id4drv0557957 FOREIGN KEY (processing_order_id) REFERENCES public.processing_order(id);
 
 
 --
@@ -323,6 +274,14 @@ ALTER TABLE ONLY public.processing_order_input_filters
 
 
 --
+-- Name: processing_order_class_output_parameters fk7m4kynfbpfam8fvs66fpk6elk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.processing_order_class_output_parameters
+    ADD CONSTRAINT fk7m4kynfbpfam8fvs66fpk6elk FOREIGN KEY (class_output_parameters_id) REFERENCES public.class_output_parameter(id);
+
+
+--
 -- Name: input_filter_filter_conditions fkjqbbl8slm6j7oco6vfg88duq2; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -331,18 +290,26 @@ ALTER TABLE ONLY public.input_filter_filter_conditions
 
 
 --
--- Name: processing_order_parameterized_outputs fkn7ht4uc5k0cxaj6u5bo5wideh; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: class_output_parameter_output_parameters fkeyipsy3fwc5pwmym1lypkrkh3; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.processing_order_parameterized_outputs
-    ADD CONSTRAINT fkn7ht4uc5k0cxaj6u5bo5wideh FOREIGN KEY (parameterized_outputs_key) REFERENCES public.product_class(id);
+ALTER TABLE ONLY public.class_output_parameter_output_parameters
+    ADD CONSTRAINT fkeyipsy3fwc5pwmym1lypkrkh3 FOREIGN KEY (class_output_parameter_id) REFERENCES public.class_output_parameter(id);
 
 
 --
--- Name: processing_order_parameterized_outputs fkq7qvx4ad5y95nsd20hu57veld; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: processing_order_class_output_parameters fkf2c8fjwehnwek6aqehkdyig4r; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.processing_order_parameterized_outputs
-    ADD CONSTRAINT fkq7qvx4ad5y95nsd20hu57veld FOREIGN KEY (parameterized_outputs_id) REFERENCES public.parameterized_output(id);
+ALTER TABLE ONLY public.processing_order_class_output_parameters
+    ADD CONSTRAINT fkf2c8fjwehnwek6aqehkdyig4r FOREIGN KEY (class_output_parameters_key) REFERENCES public.product_class(id);
+
+
+--
+-- Name: processing_order_class_output_parameters fklxehk5y7wbwpi3gxj00eg3p89; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.processing_order_class_output_parameters
+    ADD CONSTRAINT fklxehk5y7wbwpi3gxj00eg3p89 FOREIGN KEY (processing_order_id) REFERENCES public.processing_order(id);
 
 
