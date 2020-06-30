@@ -24,9 +24,9 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Spacecraft;
@@ -35,12 +35,12 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.ordermgr.OrderManager;
-import de.dlr.proseo.ordermgr.OrdermgrSecurityConfig;
+import de.dlr.proseo.ordermgr.rest.OrdermgrTestConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = OrderManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@DirtiesContext
+//@DirtiesContext
 //@Transactional
 @AutoConfigureTestEntityManager
 public class MissionControllerTest {
@@ -60,7 +60,11 @@ public class MissionControllerTest {
 	
 	/** The security environment for this test */
 	//@Autowired
-	OrdermgrSecurityConfig ordermgrSecurityConfig;
+	//OrdermgrSecurityConfig ordermgrSecurityConfig;
+	
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
 	
 	/** REST template builder */
 	@Autowired
@@ -83,7 +87,6 @@ public class MissionControllerTest {
 	 * @param testData an array of Strings representing the mission to create
 	 * @return a mission with its attributes set to the input data
 	 */
-	
 	private Mission createMission(String[] testData) {
 		Mission testMission = RepositoryService.getMissionRepository().findByCode(testData[2]);
 		if (null != testMission) {
@@ -144,9 +147,8 @@ public class MissionControllerTest {
 	 * @param testMissions a list of test missions to delete 
 	 */
 	private void deleteTestMissions(List<Mission> testMissions) {
-		Session session = emf.unwrap(SessionFactory.class).openSession();
 		for (Mission testMission: testMissions) {
-			testMission = (Mission) session.merge(testMission);
+			testMission = RepositoryService.getMissionRepository().findByCode(testMission.getCode());
 			RepositoryService.getSpacecraftRepository().deleteAll(testMission.getSpacecrafts());
 			RepositoryService.getMissionRepository().deleteById(testMission.getId());
 		}
@@ -160,7 +162,12 @@ public class MissionControllerTest {
 //	@Test
 	public final void testCreateMission() {
 		// Create a mission in the database
-		Mission missionToCreate = createMission(testMissionData[1]);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		Mission missionToCreate = transactionTemplate.execute((status) -> {
+			return createMission(testMissionData[1]);
+		});
+
 		RestMission restMission = MissionUtil.toRestMission(missionToCreate);
 
 		String testUrl = "http://localhost:" + this.port + MISSION_BASE_URI + "/missions";
@@ -182,7 +189,10 @@ public class MissionControllerTest {
 		// Clean up database
 		ArrayList<Mission> testMission = new ArrayList<>();
 		testMission.add(missionToCreate);
-		deleteTestMissions(testMission);
+		transactionTemplate.execute((status) -> {
+			deleteTestMissions(testMission);
+			return null;
+		});
 
 		logger.info("Test OK: Create mission");		
 	}	
@@ -196,7 +206,12 @@ public class MissionControllerTest {
 	@Test
 	public final void testGetMissions() {
 		// Make sure test missions exist
-		List<Mission> testMissions = createTestMissions();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<Mission> testMissions = transactionTemplate.execute((status) -> {
+			return createTestMissions();
+		});
+				
 		// Get missions using different selection criteria (also combined)
 		String testUrl = "http://localhost:" + this.port + MISSION_BASE_URI + "/missions";
 		logger.info("Testing URL {} / GET, no params, with user {} and password {}", testUrl, config.getUserName(), config.getUserPassword());
@@ -236,7 +251,10 @@ public class MissionControllerTest {
 		// TODO Tests with different selection criteria
 		
 		// Clean up database
-		deleteTestMissions(testMissions);
+		transactionTemplate.execute((status) -> {
+			deleteTestMissions(testMissions);
+			return null;
+		});
 
 		logger.info("Test OK: Get Missions");
 	}
@@ -250,7 +268,12 @@ public class MissionControllerTest {
 //	@Test
 	public final void testGetMissionById() {
 		// Make sure test missions exist
-		List<Mission> testMissions = createTestMissions();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<Mission> testMissions = transactionTemplate.execute((status) -> {
+			return createTestMissions();
+		});
+				
 		Mission missionToFind = testMissions.get(0);
 
 		// Test that a mission can be read
@@ -263,7 +286,10 @@ public class MissionControllerTest {
 		assertEquals("Wrong mission ID: ", missionToFind.getId(), getEntity.getBody().getId().longValue());
 		
 		// Clean up database
-		deleteTestMissions(testMissions);
+		transactionTemplate.execute((status) -> {
+			deleteTestMissions(testMissions);
+			return null;
+		});
 
 		logger.info("Test OK: Get Mission By ID");
 	}
@@ -309,8 +335,13 @@ public class MissionControllerTest {
 //	@Test
 	public final void testModifyMission() {
 		// Make sure test missions exist
-		List<de.dlr.proseo.model.Mission> testMissions = createTestMissions();
-		de.dlr.proseo.model.Mission missionToModify = testMissions.get(0);
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		
+		List<Mission> testMissions = transactionTemplate.execute((status) -> {
+			return createTestMissions();
+		});
+
+		Mission missionToModify = testMissions.get(0);
 	
 		// Update a mission attribute and a spacecraft attribute
 		missionToModify.setCode("MOD Code");
@@ -341,7 +372,10 @@ public class MissionControllerTest {
 		assertEquals("Wrong Code: ", missionToModify.getCode(), getEntity.getBody().getCode());
 		
 		// Clean up database
-		deleteTestMissions(testMissions);
+		transactionTemplate.execute((status) -> {
+			deleteTestMissions(testMissions);
+			return null;
+		});
 
 		logger.info("Test OK: Modify mission");
 	}

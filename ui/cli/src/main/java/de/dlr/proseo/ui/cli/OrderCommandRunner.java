@@ -606,8 +606,8 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || !updatedOrder.getInputFilters().isEmpty()) {
 			restOrder.setInputFilters(updatedOrder.getInputFilters());
 		}
-		if (isDeleteAttributes || !updatedOrder.getParameterizedOutputs().isEmpty()) {
-			restOrder.setParameterizedOutputs(updatedOrder.getParameterizedOutputs());
+		if (isDeleteAttributes || !updatedOrder.getClassOutputParameters().isEmpty()) {
+			restOrder.setClassOutputParameters(updatedOrder.getClassOutputParameters());
 		}
 		if (isDeleteAttributes || !updatedOrder.getOutputParameters().isEmpty()) {
 			restOrder.setOutputParameters(updatedOrder.getOutputParameters());
