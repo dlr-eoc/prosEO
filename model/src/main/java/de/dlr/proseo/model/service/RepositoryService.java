@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 import de.dlr.proseo.model.dao.ConfigurationRepository;
 import de.dlr.proseo.model.dao.ConfiguredProcessorRepository;
 import de.dlr.proseo.model.dao.FacilityRepository;
+import de.dlr.proseo.model.dao.InputFilterRepository;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
+import de.dlr.proseo.model.dao.ParameterizedOutputRepository;
 import de.dlr.proseo.model.dao.ProcessorClassRepository;
 import de.dlr.proseo.model.dao.ProcessorRepository;
 import de.dlr.proseo.model.dao.ProductClassRepository;
@@ -99,6 +101,14 @@ public class RepositoryService {
 	/** The repository for the Spacecraft class */
 	@Autowired
     private TaskRepository taskRepository;
+
+	/** The repository for the InputFilter class */
+	@Autowired
+    private InputFilterRepository inputFilterRepository;
+
+	/** The repository for the ParameterizedOutput class */
+	@Autowired
+    private ParameterizedOutputRepository parameterizedOutputRepository;
 
 	/**
 	 * Singleton constructor
@@ -250,6 +260,24 @@ public class RepositoryService {
 	 */
 	public static TaskRepository getTaskRepository() {
 		return theRepositoryService.taskRepository;
+	}
+
+	/**
+	 * Gets the repository for the InputFilter class
+	 * 
+	 * @return the inputFilterRepository
+	 */
+	public static InputFilterRepository getInputFilterRepository() {
+		return theRepositoryService.inputFilterRepository;
+	}
+
+	/**
+	 * Gets the repository for the ParameterizedOutput class
+	 * 
+	 * @return the parameterizedOutputRepository
+	 */
+	public static ParameterizedOutputRepository getParameterizedOutputRepository() {
+		return theRepositoryService.parameterizedOutputRepository;
 	}
 
 }
