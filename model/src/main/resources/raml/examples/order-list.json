@@ -161,6 +161,7 @@
         ],
         "inputProductClasses": [ ],
         "outputFileClass": "NRTI",
-        "processingMode": "NRTI"
+        "processingMode": "NRTI",
+        "productionType": "SYSTEMATIC"
     }  
 ]
