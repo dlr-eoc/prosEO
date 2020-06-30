@@ -37,11 +37,11 @@ import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrderUtil;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.rest.model.RestParameterizedOutput;
 
 
 /**
@@ -77,6 +77,8 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING = 1024;
 	private static final int MSG_ID_ORDER_LIST_EMPTY = 1025;
 	private static final int MSG_ID_ORDER_LIST_RETRIEVED = 1026;
+	private static final int MSG_ID_INVALID_MISSION_CODE = 1027;
+	private static final int MSG_ID_INVALID_OUTPUT_CLASS = 1028;
 	
 
 	/* Message string constants */
@@ -103,6 +105,8 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
 
 	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
+	private static final String MSG_INVALID_MISSION_CODE = "(E%d) No mission found for mission code %s";
+	private static final String MSG_INVALID_OUTPUT_CLASS = "(E%d) Output product class %s is not defined for mission %s";
 
 
 	/** JPA entity manager */
@@ -189,6 +193,9 @@ public class ProcessingOrderMgr {
 		
 		//Find the  mission for the mission code given in the rest Order
 		Mission mission = RepositoryService.getMissionRepository().findByCode(order.getMissionCode());
+		if (null == mission) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_MISSION_CODE, MSG_ID_INVALID_MISSION_CODE, order.getMissionCode()));
+		}
 		modelOrder.setMission(mission);	
 		
 		// Identify the order time interval, either by orbit range queries if given, or by start and stop time
@@ -239,37 +246,56 @@ public class ProcessingOrderMgr {
 			modelOrder.getInputFilters().put(productClass, inputFilter);
 		}
 		
-		// Create requested output classes (mandatory) and their parameters (optional)
-		if (order.getParameterizedOutputs().isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, 
-					modelOrder.getIdentifier()));
-		}
-		for (RestParameterizedOutput restParameterizedOutput: order.getParameterizedOutputs()) {
-			ClassOutputParameter parameterizedOutput = new ClassOutputParameter();
-			parameterizedOutput = RepositoryService.getClassOutputParameterRepository().save(parameterizedOutput);
-			for (RestParameter restParam : restParameterizedOutput.getOutputParameters()) {
+		for (RestClassOutputParameter restClassOutputParameter: order.getClassOutputParameters()) {
+			ClassOutputParameter classOutputParameter = new ClassOutputParameter();
+			classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
+			for (RestParameter restParam : restClassOutputParameter.getOutputParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-				parameterizedOutput.getOutputParameters().put(restParam.getKey(), modelParam);
+				classOutputParameter.getOutputParameters().put(restParam.getKey(), modelParam);
 			} 
 			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
-					mission.getCode(), restParameterizedOutput.getProductClass());
+					mission.getCode(), restClassOutputParameter.getProductClass());
 			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS, 
-						restParameterizedOutput.getProductClass(), mission.getCode()));
+				throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
+						restClassOutputParameter.getProductClass(), mission.getCode()));
 			}
-			modelOrder.getClassOutputParameters().put(productClass, parameterizedOutput);
+			modelOrder.getClassOutputParameters().put(productClass, classOutputParameter);
 		}
 		
+		// Make sure requested product classes are set (mandatory)
+		if (order.getRequestedProductClasses().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, modelOrder.getIdentifier()));
+		} else {
+			modelOrder.getRequestedProductClasses().clear();
+			for (String productType: order.getRequestedProductClasses()) {
+				ProductClass productClass = RepositoryService.getProductClassRepository()
+						.findByMissionCodeAndProductType(mission.getCode(), productType);
+				if (null == productClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS,
+							productType, mission.getCode()));
+				}
+				modelOrder.getRequestedProductClasses().add(productClass);
+			} 
+		}
 		modelOrder.getInputProductClasses().clear();
-		for (String prodClass : order.getInputProductClasses()) {
-			for(ProductClass product : RepositoryService.getProductClassRepository().findByProductType(prodClass)) {
-				modelOrder.getInputProductClasses().add(product);
+		for (String productType : order.getInputProductClasses()) {
+			ProductClass productClass = RepositoryService.getProductClassRepository()
+					.findByMissionCodeAndProductType(mission.getCode(), productType);
+			if (null == productClass) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+						productType, mission.getCode()));
 			}
+			modelOrder.getInputProductClasses().add(productClass);
 		}		
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
-			modelOrder.getRequestedConfiguredProcessors().add(RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier));
+			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier);
+			if (null == configuredProcessor) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
+						identifier));
+			}
+			modelOrder.getRequestedConfiguredProcessors().add(configuredProcessor);
 		}
 	
 		// Everything OK, store new order in database
@@ -436,38 +462,67 @@ public class ProcessingOrderMgr {
 		}
 		
 		// Check for changes in requested output products and their parameters
-		Map<ProductClass, ClassOutputParameter> newParameterizedOutputs = new HashMap<>();
-		if (order.getParameterizedOutputs().isEmpty()) {
-			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, 
-					modelOrder.getIdentifier()));
-		}
-		for (RestParameterizedOutput restParameterizedOutput: order.getParameterizedOutputs()) {
-			ClassOutputParameter parameterizedOutput = new ClassOutputParameter();
-			parameterizedOutput = RepositoryService.getClassOutputParameterRepository().save(parameterizedOutput);
-			for (RestParameter restParam : restParameterizedOutput.getOutputParameters()) {
+		Map<ProductClass, ClassOutputParameter> newClassOutputParameters = new HashMap<>();
+		for (RestClassOutputParameter restClassOutputParameter: order.getClassOutputParameters()) {
+			ClassOutputParameter classOutputParameter = new ClassOutputParameter();
+			classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
+			for (RestParameter restParam : restClassOutputParameter.getOutputParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-				parameterizedOutput.getOutputParameters().put(restParam.getKey(), modelParam);
+				classOutputParameter.getOutputParameters().put(restParam.getKey(), modelParam);
 			} 
 			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
-					mission.getCode(), restParameterizedOutput.getProductClass());
+					mission.getCode(), restClassOutputParameter.getProductClass());
 			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS, 
-						restParameterizedOutput.getProductClass(), mission.getCode()));
+				throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
+						restClassOutputParameter.getProductClass(), mission.getCode()));
 			}
-			if (parameterizedOutput.equals(modelOrder.getClassOutputParameters().get(productClass))) {
-				newParameterizedOutputs.put(productClass, modelOrder.getClassOutputParameters().get(productClass));
+			if (classOutputParameter.equals(modelOrder.getClassOutputParameters().get(productClass))) {
+				newClassOutputParameters.put(productClass, modelOrder.getClassOutputParameters().get(productClass));
 			} else {
 				orderChanged = true;
-				newParameterizedOutputs.put(productClass, parameterizedOutput);
+				newClassOutputParameters.put(productClass, classOutputParameter);
 			}
+		}
+		// Check for new requested product classes
+		Set<ProductClass> newRequestedProductClasses = new HashSet<>();
+		if (null != order.getRequestedProductClasses()) {
+			REQUESTED_CLASSES:
+			for (String requestedProductClass: order.getRequestedProductClasses()) {
+				for (ProductClass modelRequestedClass: modelOrder.getRequestedProductClasses()) {
+					if (modelRequestedClass.getProductType().equals(requestedProductClass)) {
+						// Already present
+						newRequestedProductClasses.add(modelRequestedClass);
+						continue REQUESTED_CLASSES;
+					}
+				}
+				// New component class
+				orderChanged = true;
+				ProductClass newRequestedClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(order.getMissionCode(), requestedProductClass);
+				if (null == newRequestedClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS,
+							requestedProductClass, order.getMissionCode()));
+				}
+				newRequestedProductClasses.add(newRequestedClass);
+			}
+		}
+		if (!modelOrder.getOutputParameters().equals(changedOrder.getOutputParameters())) {
+			orderChanged = true;
+			modelOrder.setOutputParameters(changedOrder.getOutputParameters());
 		}
 		// Check for removed output products
 		for (ProductClass productClass: modelOrder.getClassOutputParameters().keySet()) {
-			if (null == newParameterizedOutputs.get(productClass)) {
+			if (null == newClassOutputParameters.get(productClass)) {
+				orderChanged = true;
+			}
+		}		// Check for removed requested product classes
+		for (ProductClass modelRequestedClass: modelOrder.getRequestedProductClasses()) {
+			if (!newRequestedProductClasses.contains(modelRequestedClass)) {
+				// Component class removed
 				orderChanged = true;
 			}
 		}
+
 		
 		// Check for new input product classes
 		Set<ProductClass> newInputProductClasses = new HashSet<>();
@@ -582,10 +637,12 @@ public class ProcessingOrderMgr {
 			modelOrder.incrementVersion();
 			
 			// Update the lists and sets
+			modelOrder.getRequestedProductClasses().clear();
+			modelOrder.getRequestedProductClasses().addAll(newRequestedProductClasses);
 			modelOrder.getInputFilters().clear();
 			modelOrder.getInputFilters().putAll(newInputFilters);
 			modelOrder.getClassOutputParameters().clear();
-			modelOrder.getClassOutputParameters().putAll(newParameterizedOutputs);
+			modelOrder.getClassOutputParameters().putAll(newClassOutputParameters);
 			modelOrder.getInputProductClasses().clear();
 			modelOrder.getInputProductClasses().addAll(newInputProductClasses);
 			modelOrder.getRequestedConfiguredProcessors().clear();
