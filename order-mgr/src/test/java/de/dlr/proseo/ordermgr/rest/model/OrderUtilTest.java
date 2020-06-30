@@ -160,11 +160,11 @@ public class OrderUtilTest {
 			assertEquals("Unexpected filter conditions: ", modelOrder.getInputFilters().get(productClass),
 					copiedModelOrder.getInputFilters().get(productClass));
 		}
-		assertEquals("Unexpected size of parameterized outputs: ", modelOrder.getParameterizedOutputs().size(), 
-				copiedModelOrder.getParameterizedOutputs().size());
-		for (ProductClass productClass: modelOrder.getParameterizedOutputs().keySet()) {
-			assertEquals("Unexpected output parameters: ", modelOrder.getParameterizedOutputs().get(productClass),
-					copiedModelOrder.getParameterizedOutputs().get(productClass));
+		assertEquals("Unexpected size of parameterized outputs: ", modelOrder.getClassOutputParameters().size(), 
+				copiedModelOrder.getClassOutputParameters().size());
+		for (ProductClass productClass: modelOrder.getClassOutputParameters().keySet()) {
+			assertEquals("Unexpected output parameters: ", modelOrder.getClassOutputParameters().get(productClass),
+					copiedModelOrder.getClassOutputParameters().get(productClass));
 		}
 		logger.info("Test copy REST to model OK");
 

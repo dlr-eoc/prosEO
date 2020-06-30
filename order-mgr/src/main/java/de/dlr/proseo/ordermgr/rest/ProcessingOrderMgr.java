@@ -33,7 +33,7 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.Parameter.ParameterType;
-import de.dlr.proseo.model.ParameterizedOutput;
+import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.util.OrderUtil;
@@ -245,8 +245,8 @@ public class ProcessingOrderMgr {
 					modelOrder.getIdentifier()));
 		}
 		for (RestParameterizedOutput restParameterizedOutput: order.getParameterizedOutputs()) {
-			ParameterizedOutput parameterizedOutput = new ParameterizedOutput();
-			parameterizedOutput = RepositoryService.getParameterizedOutputRepository().save(parameterizedOutput);
+			ClassOutputParameter parameterizedOutput = new ClassOutputParameter();
+			parameterizedOutput = RepositoryService.getClassOutputParameterRepository().save(parameterizedOutput);
 			for (RestParameter restParam : restParameterizedOutput.getOutputParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
@@ -258,7 +258,7 @@ public class ProcessingOrderMgr {
 				throw new IllegalArgumentException(logError(MSG_INVALID_REQUESTED_CLASS, MSG_ID_INVALID_REQUESTED_CLASS, 
 						restParameterizedOutput.getProductClass(), mission.getCode()));
 			}
-			modelOrder.getParameterizedOutputs().put(productClass, parameterizedOutput);
+			modelOrder.getClassOutputParameters().put(productClass, parameterizedOutput);
 		}
 		
 		modelOrder.getInputProductClasses().clear();
@@ -436,14 +436,14 @@ public class ProcessingOrderMgr {
 		}
 		
 		// Check for changes in requested output products and their parameters
-		Map<ProductClass, ParameterizedOutput> newParameterizedOutputs = new HashMap<>();
+		Map<ProductClass, ClassOutputParameter> newParameterizedOutputs = new HashMap<>();
 		if (order.getParameterizedOutputs().isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_REQUESTED_PRODUCTCLASSES_MISSING, MSG_ID_REQUESTED_PRODUCTCLASSES_MISSING, 
 					modelOrder.getIdentifier()));
 		}
 		for (RestParameterizedOutput restParameterizedOutput: order.getParameterizedOutputs()) {
-			ParameterizedOutput parameterizedOutput = new ParameterizedOutput();
-			parameterizedOutput = RepositoryService.getParameterizedOutputRepository().save(parameterizedOutput);
+			ClassOutputParameter parameterizedOutput = new ClassOutputParameter();
+			parameterizedOutput = RepositoryService.getClassOutputParameterRepository().save(parameterizedOutput);
 			for (RestParameter restParam : restParameterizedOutput.getOutputParameters()) {
 				Parameter modelParam = new Parameter();
 				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
@@ -455,15 +455,15 @@ public class ProcessingOrderMgr {
 				throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS, 
 						restParameterizedOutput.getProductClass(), mission.getCode()));
 			}
-			if (parameterizedOutput.equals(modelOrder.getParameterizedOutputs().get(productClass))) {
-				newParameterizedOutputs.put(productClass, modelOrder.getParameterizedOutputs().get(productClass));
+			if (parameterizedOutput.equals(modelOrder.getClassOutputParameters().get(productClass))) {
+				newParameterizedOutputs.put(productClass, modelOrder.getClassOutputParameters().get(productClass));
 			} else {
 				orderChanged = true;
 				newParameterizedOutputs.put(productClass, parameterizedOutput);
 			}
 		}
 		// Check for removed output products
-		for (ProductClass productClass: modelOrder.getParameterizedOutputs().keySet()) {
+		for (ProductClass productClass: modelOrder.getClassOutputParameters().keySet()) {
 			if (null == newParameterizedOutputs.get(productClass)) {
 				orderChanged = true;
 			}
@@ -584,8 +584,8 @@ public class ProcessingOrderMgr {
 			// Update the lists and sets
 			modelOrder.getInputFilters().clear();
 			modelOrder.getInputFilters().putAll(newInputFilters);
-			modelOrder.getParameterizedOutputs().clear();
-			modelOrder.getParameterizedOutputs().putAll(newParameterizedOutputs);
+			modelOrder.getClassOutputParameters().clear();
+			modelOrder.getClassOutputParameters().putAll(newParameterizedOutputs);
 			modelOrder.getInputProductClasses().clear();
 			modelOrder.getInputProductClasses().addAll(newInputProductClasses);
 			modelOrder.getRequestedConfiguredProcessors().clear();
