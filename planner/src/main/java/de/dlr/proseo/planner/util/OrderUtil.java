@@ -732,13 +732,8 @@ public class OrderUtil {
 				}	
 				break;
 			case RELEASED:
+				break;
 			case RUNNING:
-				if (jState == JobState.FAILED) {
-					order.setOrderState(OrderState.FAILED);
-					order.incrementVersion();
-					RepositoryService.getOrderRepository().save(order);
-					em.merge(order);
-				}
 				break;
 			case SUSPENDING:
 				break;

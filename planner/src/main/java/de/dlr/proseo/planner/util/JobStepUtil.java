@@ -287,7 +287,7 @@ public class JobStepUtil {
 				break;
 			case FAILED:
 				em.merge(js);
-				UtilService.getJobUtil().updateState(js.getJob(), JobStepState.FAILED);
+				// TODO propagate failed
 				UtilService.getJobUtil().checkFinish(js.getJob());
 				answer = true;
 				break;

@@ -473,14 +473,8 @@ public class JobUtil {
 				}
 				break;
 			case RELEASED:
+				break;
 			case STARTED:
-				if (jsState == JobStepState.FAILED) {
-					job.setJobState(JobState.FAILED);
-					job.incrementVersion();
-					RepositoryService.getJobRepository().save(job);
-					em.merge(job);
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-				}
 				break;
 			case ON_HOLD:
 				break;

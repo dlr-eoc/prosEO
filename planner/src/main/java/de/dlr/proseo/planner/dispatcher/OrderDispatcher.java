@@ -32,6 +32,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -83,6 +84,9 @@ public class OrderDispatcher {
 					Messages.ORDER_SLICING_TYPE_NOT_SET.log(logger, order.getIdentifier());
 					break;
 
+				}
+				if (order.getJobs().isEmpty()) {
+					order.setOrderState(OrderState.COMPLETED);
 				}
 				break;
 			}
@@ -386,7 +390,11 @@ public class OrderDispatcher {
 										products);
 								// now we have to create the product queries for job step.
 
-								if (!products.isEmpty()) {
+								if (products.isEmpty()) {
+									job.getJobSteps().remove(jobStep);
+									RepositoryService.getJobStepRepository().delete(jobStep);
+									jobStep = null;
+								} else {
 									for (Product p : products) {
 										for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
 											ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
@@ -437,7 +445,11 @@ public class OrderDispatcher {
 									}
 								}
 							}
-						
+							if (job.getJobSteps().isEmpty()) {
+								order.getJobs().remove(job);							
+								RepositoryService.getJobRepository().delete(job);	
+								job = null;
+							}
 					}
 				}
 			}
@@ -509,8 +521,6 @@ public class OrderDispatcher {
 				RepositoryService.getJobStepRepository().delete(jobStep);
 				jobStep = null;
 			} else {
-				jobStepList.add(jobStep);
-				allJobStepList.add(jobStep);
 				// now we have all product classes, create related products
 				// also create job steps with queries related to product class
 				// collect created products
@@ -527,41 +537,45 @@ public class OrderDispatcher {
 						job.getStopTime(), 
 						products);
 				// now we have to create the product queries for job step.
+				if (jobStep.getOutputProduct() == null) {
+					job.getJobSteps().remove(jobStep);
+					RepositoryService.getJobStepRepository().delete(jobStep);
+					jobStep = null;
+				} else {
+					jobStepList.add(jobStep);
+					allJobStepList.add(jobStep);
+					for (Product p : products) {
+						for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
+							ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+							pq = RepositoryService.getProductQueryRepository().save(pq);
+							if (!jobStep.getInputProductQueries().contains(pq)) {
+								jobStep.getInputProductQueries().add(pq);
+							}
+						}
+					}
+					allProducts.addAll(products);
+					// this means also to create new job steps for products which are not satisfied
+					// check all queries for existing product definition (has not to be created!)
 
-				for (Product p : products) {
-					for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
-						ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
-						pq = RepositoryService.getProductQueryRepository().save(pq);
-						if (!jobStep.getInputProductQueries().contains(pq)) {
-							jobStep.getInputProductQueries().add(pq);
+					Boolean hasUnsatisfiedInputQueries = false;
+					for (ProductQuery pq : jobStep.getInputProductQueries()) {
+						if (productQueryService.executeQuery(pq, false, true)) {
+							// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
+						} else {
+							// create job step to build product.
+							// todo how to find configured processor?
+
+							createJobStepForProduct(job,
+									pq.getRequestedProductClass(),
+									configuredProcessors,
+									jobStepList,
+									allJobStepList,
+									allProducts,
+									inputProducts);
+							hasUnsatisfiedInputQueries = true;
 						}
 					}
 				}
-				allProducts.addAll(products);
-				// this means also to create new job steps for products which are not satisfied
-				// check all queries for existing product definition (has not to be created!)
-
-				Boolean hasUnsatisfiedInputQueries = false;
-				for (ProductQuery pq : jobStep.getInputProductQueries()) {
-					if (productQueryService.executeQuery(pq, false, true)) {
-						// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
-					} else {
-						// create job step to build product.
-						// todo how to find configured processor?
-
-						createJobStepForProduct(job,
-								pq.getRequestedProductClass(),
-								configuredProcessors,
-								jobStepList,
-								allJobStepList,
-								allProducts,
-								inputProducts);
-						hasUnsatisfiedInputQueries = true;
-					}
-				}
-				//			if (hasUnsatisfiedInputQueries) {
-				//				jobStep.setJobStepState(JobStepState.WAITING_INPUT);
-				//			}
 			}
 		}
 	}
