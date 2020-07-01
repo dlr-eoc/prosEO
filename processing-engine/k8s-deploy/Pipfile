@@ -8,4 +8,3 @@ verify_ssl = true
 [packages]
 
 [requires]
-python_version = "3.8"
