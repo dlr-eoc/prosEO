@@ -104,8 +104,10 @@ public class ProductQuery extends PersistentObject {
 		productQuery.requestedProductClass = selectionRule.getSourceProductClass();
 		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
-		productQuery.filterConditions.putAll(
-				jobStep.getJob().getProcessingOrder().getInputFilters().get(selectionRule.getSourceProductClass()).getFilterConditions());
+		InputFilter inputFilter = jobStep.getJob().getProcessingOrder().getInputFilters().get(selectionRule.getSourceProductClass());
+		if (inputFilter != null) {
+			productQuery.filterConditions.putAll(inputFilter.getFilterConditions());
+		}		
 		
 		return productQuery;
 	}
