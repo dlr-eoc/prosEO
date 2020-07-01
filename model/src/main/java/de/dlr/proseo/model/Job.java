@@ -73,6 +73,9 @@ public class Job extends PersistentObject {
 	 */
 	private Integer priority;
 	
+	/** Indicates whether at least one of the job steps for this job is in state FAILED */
+	private Boolean hasFailedJobSteps = false;
+	
 	/** The processing facility this job runs on */
 	@ManyToOne
 	private ProcessingFacility processingFacility;
@@ -195,6 +198,33 @@ public class Job extends PersistentObject {
 	}
 
 	/**
+	 * Checks whether the job has failed steps
+	 * 
+	 * @return true, if at least one job step is in FAILED state, false otherwise
+	 */
+	public Boolean getHasFailedJobSteps() {
+		return hasFailedJobSteps;
+	}
+
+	/**
+	 * Checks whether the job has failed steps (convenience method for getHasFailedJobSteps())
+	 * 
+	 * @return true, if at least one job step is in FAILED state, false otherwise
+	 */
+	public Boolean hasFailedJobSteps() {
+		return hasFailedJobSteps;
+	}
+
+	/**
+	 * Sets whether the job has failed steps
+	 * 
+	 * @param hasFailedJobSteps set to true, when a step of this job fails
+	 */
+	public void setHasFailedJobSteps(Boolean hasFailedJobSteps) {
+		this.hasFailedJobSteps = hasFailedJobSteps;
+	}
+
+	/**
 	 * Gets the processing facility for this job
 	 * 
 	 * @return the processingFacility
@@ -254,8 +284,8 @@ public class Job extends PersistentObject {
 	@Override
 	public String toString() {
 		return "Job [jobState=" + jobState + ", orbit=" + orbit + ", startTime="
-				+ startTime + ", stopTime=" + stopTime + ", priority=" + priority + ", processingFacility=" + processingFacility 
-				+ ", jobSteps=" + jobSteps + "]";
+				+ startTime + ", stopTime=" + stopTime + ", priority=" + priority + ", hasFailedJobSteps=" + hasFailedJobSteps
+				+ ", processingFacility=" + processingFacility + ", jobSteps=" + jobSteps + "]";
 	};
 
 }

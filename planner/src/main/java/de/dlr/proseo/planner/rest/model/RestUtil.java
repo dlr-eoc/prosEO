@@ -80,6 +80,9 @@ public class RestUtil {
 			if (job.getPriority() != null) {
 				rj.setPriority(Long.valueOf(job.getPriority()));
 			}
+			if (job.getHasFailedJobSteps() != null) {
+				rj.setHasFailedJobSteps(job.getHasFailedJobSteps());
+			}
 			if (job.getProcessingFacility() != null) {
 				rj.setProcessingFacilityName(job.getProcessingFacility().getName());
 			}

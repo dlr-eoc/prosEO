@@ -68,5 +68,6 @@
     "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
     "inputProductClasses": [ "L1B" ],
     "outputFileClass": "RPRO",
-    "processingMode": "OFFL"
+    "processingMode": "OFFL",
+    "hasFailedJobSteps": false
 }

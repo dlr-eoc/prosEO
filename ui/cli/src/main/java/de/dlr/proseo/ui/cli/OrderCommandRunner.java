@@ -633,6 +633,9 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getProductionType()) { // mandatory
 			restOrder.setProductionType(updatedOrder.getProductionType());
 		}
+		if (null != updatedOrder.getHasFailedJobSteps()) { // mandatory
+			restOrder.setHasFailedJobSteps(updatedOrder.getHasFailedJobSteps());
+		}
 		
 		/* Update order using Order Manager service */
 		try {

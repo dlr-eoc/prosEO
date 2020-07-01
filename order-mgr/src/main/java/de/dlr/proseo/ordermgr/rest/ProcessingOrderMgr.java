@@ -432,6 +432,10 @@ public class ProcessingOrderMgr {
 			orderChanged = true;
 			modelOrder.setProductionType(changedOrder.getProductionType());
 		}
+		if (!modelOrder.getHasFailedJobSteps().equals(changedOrder.getHasFailedJobSteps())) {
+			orderChanged = true;
+			modelOrder.setHasFailedJobSteps(changedOrder.getHasFailedJobSteps());
+		}
 		
 		// Check for changes in input filters
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();

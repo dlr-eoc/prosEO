@@ -144,6 +144,9 @@ public class OrderUtil {
 		if (null != processingOrder.getProductionType()) {
 			restOrder.setProductionType(processingOrder.getProductionType().toString());
 		}
+		if (null != processingOrder.hasFailedJobSteps()) {
+			restOrder.setHasFailedJobSteps(processingOrder.hasFailedJobSteps());
+		}
 		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
 			for (ConfiguredProcessor toAddProcessor: processingOrder.getRequestedConfiguredProcessors()) {
@@ -263,7 +266,9 @@ public class OrderUtil {
 		if (null != restOrder.getProductionType()) {
 			processingOrder.setProductionType(ProductionType.valueOf(restOrder.getProductionType()));
 		}
-		
+		if (null != restOrder.getHasFailedJobSteps()) {
+			processingOrder.setHasFailedJobSteps(restOrder.getHasFailedJobSteps());
+		}
 		
 		return processingOrder;
 	}
