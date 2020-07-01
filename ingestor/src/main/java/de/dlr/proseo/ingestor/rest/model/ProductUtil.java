@@ -19,6 +19,7 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -35,14 +36,16 @@ public class ProductUtil {
 	private static final int MSG_ID_INVALID_PRODUCT_GENERATION_TIME = 2047;
 	private static final int MSG_ID_INVALID_SENSING_STOP_TIME = 2046;
 	private static final int MSG_ID_INVALID_SENSING_START_TIME = 2045;
+	private static final int MSG_ID_INVALID_PRODUCTION_TYPE = 2050;
 
 	/* Message string constants */
 	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
-	private static final String MSG_INVALID_PARAMETER_VALUE = "Invalid parameter value '%s' for type '%s'";
-	private static final String MSG_INVALID_PARAMETER_TYPE = "Invalid parameter type '%s'";
-	private static final String MSG_INVALID_PRODUCT_GENERATION_TIME = "Invalid product generation time '%s'";
-	private static final String MSG_INVALID_SENSING_STOP_TIME = "Invalid sensing stop time '%s'";
-	private static final String MSG_INVALID_SENSING_START_TIME = "Invalid sensing start time '%s'";
+	private static final String MSG_INVALID_PARAMETER_VALUE = "(E%d) Invalid parameter value '%s' for type '%s'";
+	private static final String MSG_INVALID_PARAMETER_TYPE = "(E%d) Invalid parameter type '%s'";
+	private static final String MSG_INVALID_PRODUCT_GENERATION_TIME = "(E%d) Invalid product generation time '%s'";
+	private static final String MSG_INVALID_SENSING_STOP_TIME = "(E%d) Invalid sensing stop time '%s'";
+	private static final String MSG_INVALID_SENSING_START_TIME = "(E%d) Invalid sensing start time '%s'";
+	private static final String MSG_INVALID_PRODUCTION_TYPE = "(E%d) Invalid production type '%s'";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
@@ -105,6 +108,9 @@ public class ProductUtil {
 		}
 		if (null != modelProduct.getGenerationTime()) {
 			restProduct.setGenerationTime(OrbitTimeFormatter.format(modelProduct.getGenerationTime()));
+		}
+		if (null != modelProduct.getProductionType()) {
+			restProduct.setProductionType(modelProduct.getProductionType().toString());
 		}
 		for (Product componentProduct: modelProduct.getComponentProducts()) {
 			restProduct.getComponentProductIds().add(componentProduct.getId());
@@ -196,6 +202,14 @@ public class ProductUtil {
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
 					restProduct.getGenerationTime()));
+		}
+		if (null != restProduct.getProductionType()) {
+			try {
+				modelProduct.setProductionType(ProductionType.valueOf(restProduct.getProductionType()));
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCTION_TYPE, MSG_ID_INVALID_PRODUCTION_TYPE,
+						restProduct.getProductionType()));
+			}
 		}
 		for (RestParameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();

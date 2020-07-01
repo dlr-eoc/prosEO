@@ -263,6 +263,22 @@ public class Product extends PersistentObject {
 	}
 	
 	/**
+	 * Gets the production type of the product
+	 * 
+	 * @return the production type
+	 */
+	public ProductionType getProductionType() {
+		return productionType;
+	}
+	/**
+	 * Sets the production type of the product
+	 * 
+	 * @param productionType the production type to set
+	 */
+	public void setProductionType(ProductionType productionType) {
+		this.productionType = productionType;
+	}
+	/**
 	 * Gets the sub-products of this product
 	 * 
 	 * @return the componentProducts
