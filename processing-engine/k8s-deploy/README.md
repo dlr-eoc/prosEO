@@ -28,11 +28,13 @@ are, however, bound to a particular version of the tooling.
 Cluster Management
 ==================
 
-In order to manage multiple clusters, cluster-specific configuration is added
-to the `clusters` directory, in a subdirectory per cluster. All commands assume
-that your working directory is one of those cluster directories.
-
 We use kubespray to provision machines with a kubernetes installation.
+Kubespray is fine with managing multiple clusters. Each cluster configuration
+lives in its own subdirectory in `kubespray/inventory`, e.g.
+`kubespray/inventory/foo`.
+
+All detail guides assume that this is your working directory.
+
 Kubespray knows how to integrate with tools that set up VMs, such as
 terraform. It also is capable of provisioning a cluster through a bastion
 host. In fact, this is the setup we're going for here. You can safely
@@ -41,20 +43,22 @@ skip sections that do not apply to you.
 Choosing a Cluster
 ------------------
 
-Simply `$ cd clusters/<yourcluster>` and run commands from there.
+Simply `$ cd kybespray/inventory/<yourcluster>` and run commands from there.
 
 Creating a new Cluster
 ----------------------
 
-1. Make a cluster directory: `$ mkdir clusters/<yourcluster>`
-1. Copy the autoenv template into this directory:
-  `$ cp templates/autoenv clusters/<yourcluster>/.autoenv`
-1. Make a config directory: `$ mkdir clusters/<yourcluster>/config`
-1. Create a file: `clusters/<yourcluster>/config/clustername.sh`:
+1. Make a cluster directory:
    ```bash
-   export PROSEO_CLUSTER_NAME=foo
+   $ make_cluster.sh <clustername>
    ```
 1. Change to the new cluster directory.
+1. Create SSH keys for this cluster (feel free to change the paramters to
+   the key generation):
+   ```bash
+   $ mkdir ssh-keys
+   $ ssh-keygen -t ed25519 -f ssh-keys/cluster-key
+   ```
 
 **Notes:**
 - The `.autoenv` file gets executed whenever you enter the directory it
