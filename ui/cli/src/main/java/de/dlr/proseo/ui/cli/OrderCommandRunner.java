@@ -9,7 +9,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -630,6 +629,12 @@ public class OrderCommandRunner {
 		}
 		if (null != updatedOrder.getProcessingMode()) { // mandatory
 			restOrder.setProcessingMode(updatedOrder.getProcessingMode());
+		}
+		if (null != updatedOrder.getProductionType()) { // mandatory
+			restOrder.setProductionType(updatedOrder.getProductionType());
+		}
+		if (null != updatedOrder.getHasFailedJobSteps()) { // mandatory
+			restOrder.setHasFailedJobSteps(updatedOrder.getHasFailedJobSteps());
 		}
 		
 		/* Update order using Order Manager service */

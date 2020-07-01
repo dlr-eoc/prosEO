@@ -1631,8 +1631,7 @@ public class ProcessorCommandRunner {
 		}
 		
 		/* Read original configured processor from Processor Manager service */
-		if (null == updatedConfiguredProcessor.getProcessorName() || 0 == updatedConfiguredProcessor.getProcessorName().length()
-				|| null == updatedConfiguredProcessor.getIdentifier() || 0 == updatedConfiguredProcessor.getIdentifier().length()) {
+		if (null == updatedConfiguredProcessor.getIdentifier() || 0 == updatedConfiguredProcessor.getIdentifier().length()) {
 			// No identifying value given
 			System.err.println(uiMsg(MSG_ID_NO_CONFIGUREDPROCESSOR_IDENTIFIER_GIVEN));
 			return;
@@ -1677,6 +1676,9 @@ public class ProcessorCommandRunner {
 		// No modification of ID, version, mission code or processor class name allowed
 		if (null != updatedConfiguredProcessor.getIdentifier() && 0 != updatedConfiguredProcessor.getIdentifier().length()) {
 			restConfiguredProcessor.setIdentifier(updatedConfiguredProcessor.getIdentifier());
+		}
+		if (null != updatedConfiguredProcessor.getEnabled()) {
+			restConfiguredProcessor.setEnabled(updatedConfiguredProcessor.getEnabled());
 		}
 		if (null != updatedConfiguredProcessor.getProcessorVersion() && 0 != updatedConfiguredProcessor.getProcessorVersion().length()) {
 			restConfiguredProcessor.setProcessorVersion(updatedConfiguredProcessor.getProcessorVersion());

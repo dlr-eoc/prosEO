@@ -65,6 +65,8 @@ public class JobCommandRunner {
 	
 	private static final String JOBS = "jobs";
 	private static final String JOBSTEPS = "job steps";
+
+	private static final String MSG_FAILED_JOB_STEPS = "(WARNING: Failed job steps!)";
 	
 	/** The user manager used by all command runners */
 	@Autowired
@@ -316,11 +318,12 @@ public class JobCommandRunner {
 			for (Object listObject: resultList) {
 				if (listObject instanceof Map) {
 					Map<?, ?> jobMap = (Map<?, ?>) listObject;
-					System.out.println(String.format("%16s %-25s %-25s %s",
+					System.out.println(String.format("%16s %-25s %-25s %s %s",
 						jobMap.get("id").toString(),
 						jobMap.get("startTime"),
 						jobMap.get("stopTime"),
-						jobMap.get("jobState")));
+						jobMap.get("jobState"),
+						("true".equals(jobMap.get("hasFailedJobSteps")) ? MSG_FAILED_JOB_STEPS : "")));
 				}
 			}
 		} 

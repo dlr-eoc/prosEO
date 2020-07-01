@@ -141,6 +141,9 @@ public class ProcessingOrder extends PersistentObject {
 	@Enumerated(EnumType.STRING)
 	private ProductionType productionType = ProductionType.ON_DEMAND_DEFAULT;
 	
+	/** Indicates whether at least one of the job steps for this order is in state FAILED */
+	private Boolean hasFailedJobSteps = false;
+	
 	/** The processor configurations for processing the products */
 	@ManyToMany
 	private Set<ConfiguredProcessor> requestedConfiguredProcessors = new HashSet<>();
@@ -398,8 +401,8 @@ public class ProcessingOrder extends PersistentObject {
 	 * @return the output parameters
 	 */
 	public Map<String, Parameter> getOutputParameters(ProductClass productClass) {
-		if (null == classOutputParameters.get(productClass)) {
-			return outputParameters;
+		if (null == productClass || null == classOutputParameters.get(productClass)) {
+			return getOutputParameters();
 		} else {
 			return classOutputParameters.get(productClass).getOutputParameters();
 		}
@@ -505,6 +508,33 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
+	 * Checks whether the order has failed job steps
+	 * 
+	 * @return true, if at least one job step is in FAILED state, false otherwise
+	 */
+	public Boolean getHasFailedJobSteps() {
+		return hasFailedJobSteps;
+	}
+
+	/**
+	 * Checks whether the order has failed job steps (convenience method for getHasFailedJobSteps())
+	 * 
+	 * @return true, if at least one job step is in FAILED state, false otherwise
+	 */
+	public Boolean hasFailedJobSteps() {
+		return getHasFailedJobSteps();
+	}
+
+	/**
+	 * Sets whether the order has failed job steps
+	 * 
+	 * @param hasFailedJobSteps set to true, when a job step for this order fails
+	 */
+	public void setHasFailedJobSteps(Boolean hasFailedJobSteps) {
+		this.hasFailedJobSteps = hasFailedJobSteps;
+	}
+
+	/**
 	 * Gets the requested configured processors
 	 * 
 	 * @return the requestedConfiguredProcessors
@@ -582,8 +612,10 @@ public class ProcessingOrder extends PersistentObject {
 	public String toString() {
 		return "ProcessingOrder [mission=" + (null == mission ? "null" : mission.getCode()) + ", identifier=" + identifier 
 				+ ", orderState=" + orderState + ", executionTime=" + executionTime + ", requestedProductClasses=" + requestedProductClasses
-				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", slicingType=" + slicingType + ", sliceDuration="
-				+ sliceDuration + ", inputFilters=" + inputFilters + ", outputParameters=" + outputParameters
-				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode + "]";
+				+ ", startTime=" + startTime + ", stopTime=" + stopTime + ", requestedOrbits=" + requestedOrbits
+				+ ", slicingType=" + slicingType + ", sliceDuration=" + sliceDuration + ", sliceOverlap=" + sliceOverlap
+				+ ", inputFilters=" + inputFilters + ", outputParameters=" + outputParameters
+				+ ", classOutputParameters=" + classOutputParameters + ", processingMode=" + processingMode
+				+ ", productionType=" + productionType + ", hasFailedJobSteps=" + hasFailedJobSteps + "]";
 	}
 }

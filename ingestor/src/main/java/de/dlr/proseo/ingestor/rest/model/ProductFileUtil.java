@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.ingestor.rest.model;
 
-import java.time.DateTimeException;
 import java.time.Instant;
 
 import org.slf4j.Logger;

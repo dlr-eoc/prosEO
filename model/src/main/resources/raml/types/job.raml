@@ -27,6 +27,9 @@
       priority:
         type: integer
         description: A processing priority (lower numbers indicate lower priority, higher numbers higher priority; the default value is 0)
+      hasFailedJobSteps?:
+        type: boolean
+        description: Indicates whether at least one of the job steps for this job is in state FAILED
       processingFacilityName:
         type: string
         description: The name of the processing facility this job runs on

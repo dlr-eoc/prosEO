@@ -69,7 +69,8 @@
         "requestedProductClasses": [ "O3", "CLOUD", "FRESCO", "AAI" ],
         "inputProductClasses": [ "L1B" ],
         "outputFileClass": "RPRO",
-        "processingMode": "OFFL"
+        "processingMode": "OFFL",
+        "hasFailedJobSteps": false
     },
     {
         "id": 12346,
@@ -143,6 +144,7 @@
         "inputProductClasses": [ ],
         "outputFileClass": "NRTI",
         "processingMode": "NRTI",
-        "productionType": "SYSTEMATIC"
+        "productionType": "SYSTEMATIC",
+        "hasFailedJobSteps": true
     }  
 ]

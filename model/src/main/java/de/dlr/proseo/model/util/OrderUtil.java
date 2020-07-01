@@ -78,9 +78,6 @@ public class OrderUtil {
 			restOrder.setSliceDuration(processingOrder.getSliceDuration().getSeconds());
 		}
 		restOrder.setSliceOverlap(processingOrder.getSliceOverlap().getSeconds());
-		if(null != processingOrder.getProcessingMode()) {
-			restOrder.setProcessingMode(processingOrder.getProcessingMode());
-		}
 
 		if (null != processingOrder.getInputFilters()) {
 			for (ProductClass sourceClass: processingOrder.getInputFilters().keySet()) {
@@ -146,6 +143,9 @@ public class OrderUtil {
 		
 		if (null != processingOrder.getProductionType()) {
 			restOrder.setProductionType(processingOrder.getProductionType().toString());
+		}
+		if (null != processingOrder.hasFailedJobSteps()) {
+			restOrder.setHasFailedJobSteps(processingOrder.hasFailedJobSteps());
 		}
 		
 		if (null != processingOrder.getRequestedConfiguredProcessors()) {
@@ -266,7 +266,9 @@ public class OrderUtil {
 		if (null != restOrder.getProductionType()) {
 			processingOrder.setProductionType(ProductionType.valueOf(restOrder.getProductionType()));
 		}
-		
+		if (null != restOrder.getHasFailedJobSteps()) {
+			processingOrder.setHasFailedJobSteps(restOrder.getHasFailedJobSteps());
+		}
 		
 		return processingOrder;
 	}

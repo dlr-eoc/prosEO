@@ -478,6 +478,10 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
 		}
+		if (!modelProduct.getProductionType().equals(changedProduct.getProductionType())) {
+			productChanged = true;
+			modelProduct.setProductionType(changedProduct.getProductionType());
+		}
 		
 		// Update orbit relationship
 		if (null == modelProduct.getOrbit() && null == product.getOrbit()) {
@@ -486,7 +490,8 @@ public class ProductManager {
 			// Orbit was set, but is no more
 			productChanged = true;
 			modelProduct.setOrbit(null);
-		} else if (null == modelProduct.getOrbit() || !modelProduct.getOrbit().getOrbitNumber().equals(changedProduct.getOrbit().getOrbitNumber())) {
+		} else if (null == modelProduct.getOrbit() 
+				|| !modelProduct.getOrbit().getOrbitNumber().equals(product.getOrbit().getOrbitNumber().intValue())) {
 			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
 					product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
@@ -590,7 +595,7 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setConfiguredProcessor(null);
 		} else if (null == modelProduct.getConfiguredProcessor() 
-				|| !modelProduct.getConfiguredProcessor().getIdentifier().equals(changedProduct.getConfiguredProcessor().getIdentifier())) {
+				|| !modelProduct.getConfiguredProcessor().getIdentifier().equals(product.getConfiguredProcessor().getIdentifier())) {
 			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
 					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
 			if (null == configuredProcessor) {

@@ -43,6 +43,7 @@ public class ConfiguredProcessorUtil {
 		restConfiguredProcessor.setProcessorVersion(modelConfiguredProcessor.getProcessor().getProcessorVersion());
 		restConfiguredProcessor.setConfigurationVersion(modelConfiguredProcessor.getConfiguration().getConfigurationVersion());
 		restConfiguredProcessor.setIdentifier(modelConfiguredProcessor.getIdentifier());
+		restConfiguredProcessor.setEnabled(modelConfiguredProcessor.getEnabled());
 		if (null != modelConfiguredProcessor.getUuid()) {
 			restConfiguredProcessor.setUuid(modelConfiguredProcessor.getUuid().toString());
 		}
@@ -71,6 +72,7 @@ public class ConfiguredProcessorUtil {
 			} 
 		}
 		modelConfiguredProcessor.setIdentifier(restConfiguredProcessor.getIdentifier());
+		modelConfiguredProcessor.setEnabled(restConfiguredProcessor.getEnabled());
 		if (null != restConfiguredProcessor.getUuid()) {
 			modelConfiguredProcessor.setUuid(UUID.fromString(restConfiguredProcessor.getUuid()));
 		}

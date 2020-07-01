@@ -332,6 +332,10 @@ public class ConfiguredProcessorManager {
 			configuredProcessorChanged = true;
 			modelConfiguredProcessor.setIdentifier(changedConfiguredProcessor.getIdentifier());
 		}
+		if (!modelConfiguredProcessor.getEnabled().equals(changedConfiguredProcessor.getEnabled())) {
+			configuredProcessorChanged = true;
+			modelConfiguredProcessor.setEnabled(changedConfiguredProcessor.getEnabled());
+		}
 
 		Processor changedProcessor = RepositoryService.getProcessorRepository()
 				.findByMissionCodeAndProcessorNameAndProcessorVersion(
@@ -371,6 +375,7 @@ public class ConfiguredProcessorManager {
 
 		// Save configured processor only if anything was actually changed
 		if (configuredProcessorChanged) {
+			modelConfiguredProcessor.incrementVersion();
 			modelConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().save(modelConfiguredProcessor);
 			logInfo(MSG_CONFIGURED_PROCESSOR_MODIFIED, MSG_ID_CONFIGURED_PROCESSOR_MODIFIED, id);
 		} else {

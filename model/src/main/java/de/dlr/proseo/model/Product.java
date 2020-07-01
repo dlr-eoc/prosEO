@@ -120,14 +120,14 @@ public class Product extends PersistentObject {
 	@ManyToOne
 	private ConfiguredProcessor configuredProcessor;
 	
-	/** The logger for this class */
-	private static final Logger logger = LoggerFactory.getLogger(Product.class);
-	
 	/**
 	 * A collection of mission-specific parameters for this object
 	 */
 	@ElementCollection
 	private Map<String, Parameter> parameters = new HashMap<>();
+	
+	/** The logger for this class */
+	private static final Logger logger = LoggerFactory.getLogger(Product.class);
 	
 	/**
 	 * Gets the universally unique product identifier
@@ -262,6 +262,22 @@ public class Product extends PersistentObject {
 		this.generationTime = generationTime;
 	}
 	
+	/**
+	 * Gets the production type of the product
+	 * 
+	 * @return the production type
+	 */
+	public ProductionType getProductionType() {
+		return productionType;
+	}
+	/**
+	 * Sets the production type of the product
+	 * 
+	 * @param productionType the production type to set
+	 */
+	public void setProductionType(ProductionType productionType) {
+		this.productionType = productionType;
+	}
 	/**
 	 * Gets the sub-products of this product
 	 * 

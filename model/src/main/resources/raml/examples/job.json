@@ -6,6 +6,7 @@
     "filterConditions": [],
     "outputParameters": [],
     "priority": 10,
+    "hasFailedJobSteps": true,
     "processingFacilityName": "PF1",
     "jobSteps": [
         {
