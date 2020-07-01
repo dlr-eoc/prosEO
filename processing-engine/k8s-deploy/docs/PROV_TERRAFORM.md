@@ -45,4 +45,7 @@ its job. You can see which environment variables are required by
    ```bash
    $ terraform apply -var-file=cluster.tfvars ../../kubespray/contrib/terraform/openstack
    ```
-
+1. Check your configuration with:
+   ```bash
+   $ ./hosts --hostfile
+   ```
