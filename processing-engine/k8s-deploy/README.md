@@ -1,5 +1,5 @@
-t cInitial Setup
-=============
+Kubernetes Deployment of proSEO
+===============================
 
 There are two ways you can set up for your k8s deployment: directly on a
 UNIX-like operating system, or in a Docker container.
@@ -11,46 +11,65 @@ configuration data must be kept in the repository.
 The exception to this up-to-date tooling is `kubectl` - that we want in the
 version we're deploying kubernetes in.
 
-UNIX-like OS
-------------
+See [Initial Setup](docs/SETUP.md) for initial setup instructions. You may need
+to re-run these if you upgrade the tooling, but for merely deploying a cluster,
+it is not necessary.
 
-1. Initialize git submodules: `$ git pull && git submodule update --init`
-1. Install a current version of [Python](https://www.python.org/).
-1. Install `pipenv`: `$ python3 -m pip install --user -U pipenv`
-1. Install Python-based tools via `$ pipenv install`
-1. Install a current version of [Go](https://golang.org/)
-1. Enter the pip environment. Due to it's support for the `.env` file, you
-   automatically enter an environment in which go packages can be installed.
-   `$ pipenv shell`
-1. Install kubespray dependencies: `$ pip install -r kubespray/requirements.txt`
-1. Install Go-based tools via `$ go get $(cat gopackages.txt)`
+Entering a Deployment Environment
+---------------------------------
 
-After this is done, in order to have your tools available, all you need
-to do is run `$ pipenv shell` again.
+As outlined in the setup document, you can enter your deployment environment
+either by running `$ pipenv shell`, or by running `$ docker/run.sh`.
 
-### Upgrading
+Either deployment environment is not bound to a particular cluster
+configuration; you can administer multiple different clusters with them. They
+are, however, bound to a particular version of the tooling.
 
-1. Inside or outside of the pip environment, run `$ pipenv update`
-1. If necessary, re-run `$ pip install -r kubespray/requirements.txt`
-  inside the pip environment.
-1. Inside the pip environment, run `$ go get -u $(cat gopackages.txt)`
+Cluster Management
+==================
 
-If you want to use a newer version of kubespray:
+In order to manage multiple clusters, cluster-specific configuration is added
+to the `clusters` directory, in a subdirectory per cluster. All commands assume
+that your working directory is one of those cluster directories.
 
-```bash
-$ cd kubespray
-$ git checkout <version-tag>
-$ cd ..
-$ git add kubespray
-$ git commit -m "Bumped kubespray to <version-tag>"
-```
+We use kubespray to provision machines with a kubernetes installation.
+Kubespray knows how to integrate with tools that set up VMs, such as
+terraform. It also is capable of provisioning a cluster through a bastion
+host. In fact, this is the setup we're going for here. You can safely
+skip sections that do not apply to you.
 
-Docker
-------
+Choosing a Cluster
+------------------
 
-1. Run `$ docker build` - the script will reproduce all the above steps in
-   a docker image.
+Simply `$ cd clusters/<yourcluster>` and run commands from there.
 
-After this is done, in order to have your tools available, all you need
-to do is run `$ docker shell`. It starts the docker container and enters a
-shell within it.
+Creating a new Cluster
+----------------------
+
+1. Make a cluster directory: `$ mkdir clusters/<yourcluster>`
+1. Copy the autoenv template into this directory:
+  `$ cp templates/autoenv clusters/<yourcluster>/.autoenv`
+1. Make a config directory: `$ mkdir clusters/<yourcluster>/config`
+1. Create a file: `clusters/<yourcluster>/config/clustername.sh`:
+   ```bash
+   export PROSEO_CLUSTER_NAME=foo
+   ```
+1. Change to the new cluster directory.
+
+**Notes:**
+- The `.autoenv` file gets executed whenever you enter the directory it
+  lives in. The file reads bash configurations from `config/*.sh`, and
+  sets up a bash prompt.
+- We make use of this automatic configuration loading; when switching
+  between clusters, this helps re-set the environment of the cluster
+  we're managing.
+- The `clustername.sh` file is entirely optional, but it sets the bash
+  prompt, indicating which cluster's environment is currently loaded.
+
+### VM Provisioning
+
+How you would set up machines is specific to the hosting provider you're
+using. We can collect guides here, though for now there is only one for
+terraform.
+
+- [Terraform VM Provisioning](docs/PROV_TERRAFORM.md)

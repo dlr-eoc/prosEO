@@ -3,5 +3,13 @@ cluster-key.*
 *.pem
 *.retry
 .ostackrc
-gospace
+
+# Cluster configuration
+clusters/
+
+# Tool directories
+bin/
+gospace/
+
+# Temporary files
 .*.sw*
