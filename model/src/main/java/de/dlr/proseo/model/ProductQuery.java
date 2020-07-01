@@ -328,6 +328,9 @@ public class ProductQuery extends PersistentObject {
 		for (String filterKey: filterConditions.keySet()) {
 			try {
 				Field filterField = Product.class.getDeclaredField(filterKey);
+				if (!filterField.canAccess(product)) {
+					filterField.setAccessible(true);
+				}
 				Object productField = filterField.get(product);
 				success = success && filterConditions.get(filterKey).getParameterValue().equals(productField.toString());
 			} catch (NoSuchFieldException e) {
