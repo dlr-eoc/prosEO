@@ -12,13 +12,17 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Job;
@@ -65,6 +69,10 @@ public class JobStepUtil {
 	private ProductQueryService productQueryService;
 	@Autowired
 	private ProductionPlanner productionPlanner;
+	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
 	
 	/**
 	 * Search for not satisfied product queries referencing product class on processing facility and check which are now satisfied. 
@@ -308,6 +316,8 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
+					deleteJOF(js);
+					js.setJobOrderFilename(null);
 				};
 				// fall through intended
 			case COMPLETED:
@@ -355,6 +365,8 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
+					deleteJOF(js);
+					js.setJobOrderFilename(null);
 				};
 			case RUNNING:
 			case COMPLETED:
@@ -695,5 +707,27 @@ public class JobStepUtil {
 			}
 		}
 		return answer;
+	}
+	
+	private Boolean deleteJOF(JobStep js) {
+		if (js != null && js.getJobOrderFilename() != null) {
+			ProcessingFacility facility = js.getJob().getProcessingFacility();
+			String storageManagerUrl = facility.getStorageManagerUrl()
+					+ String.format("/products?pathInfo=%s", js.getJobOrderFilename()); 
+
+			RestTemplate restTemplate = rtb
+					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
+					.build();
+			try {
+				restTemplate.delete(storageManagerUrl);
+				Messages.JOF_DELETED.log(logger, js.getJobOrderFilename());
+				return true;
+			} catch (RestClientException e) {
+				Messages.JOF_DELETING_ERROR.log(logger, js.getJobOrderFilename(), facility.getName(), e.getMessage());
+				return false;
+			} 
+		} else {
+			return false;
+		}
 	}
 }

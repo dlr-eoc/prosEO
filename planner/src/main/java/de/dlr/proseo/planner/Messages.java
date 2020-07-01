@@ -98,6 +98,8 @@ public enum Messages {
 	JOBSTEP_ALREADY_FAILED			(false, MessageType.W, "Job step '%s' already failed"), 
 	JOBSTEP_COULD_NOT_RETRY			(false, MessageType.E, "Job step '%s' has to be in state FAILED to retry"), 
 	JOBSTEP_NOT_EXIST				(false, MessageType.E, "Job step '%s' does not exist"),
+	JOF_DELETED						(true, MessageType.I, "Job Order File '%s' deleted"), 
+	JOF_DELETING_ERROR				(false, MessageType.E, "Error deleting Job Order File '%s' from processing facility '%s' (cause: %s)"),
 	JOBS_FOR_ORDER_NOT_EXIST		(false, MessageType.E, "Job(s) for processing order '%s' do not exist"),
 	PARAM_ID_FACILITY_NOT_SET		(false, MessageType.E, "Parameter id and facility are not set"),
 	PARAM_FACILITY_NOT_SET			(false, MessageType.E, "Parameter facility is not set"),

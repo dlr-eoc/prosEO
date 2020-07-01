@@ -372,7 +372,7 @@ public class OrderDispatcher {
 								// now we have all product classes, create related products
 								// also create job steps with queries related to product class
 								// collect created products
-								List <Product> productsToCreate = new ArrayList<Product>();
+								List <Product> products = new ArrayList<Product>();
 
 								Product rootProduct = createProducts(rootProductClass, 
 										null, 
@@ -383,23 +383,9 @@ public class OrderDispatcher {
 										order.getOutputFileClass(), 
 										job.getStartTime(), 
 										job.getStopTime(), 
-										productsToCreate);
+										products);
 								// now we have to create the product queries for job step.
 
-								List <Product> products = new ArrayList<Product>();
-								for (Product p : productsToCreate) {
-									// check if product exists
-									// use configured processor, product class, sensing start and stop time, orbit (if set)
-									// TODO NOTE TB: This seems redundant, since p was just created above ...
-									if (RepositoryService.getProductRepository()
-										   .findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
-												p.getProductClass().getId(),
-												p.getConfiguredProcessor().getId(),
-												p.getSensingStartTime(),
-												p.getSensingStopTime()).isEmpty()) {
-										products.add(p);
-									}
-								}
 								if (!products.isEmpty()) {
 									for (Product p : products) {
 										for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
@@ -615,10 +601,14 @@ public class OrderDispatcher {
 	 */
 	public Product createProducts(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime, List<Product> products) {
 		Product product = createProduct(productClass, enclosingProduct, cp, orbit, job, js, fileClass, startTime, stopTime);
-		products.add(product);
+		if (product != null) {
+			products.add(product);
+		}
 		for (ProductClass pc : productClass.getComponentClasses()) {
 			Product p = createProducts(pc, product, cp, orbit, job, null, fileClass, startTime, stopTime, products);
-			product.getComponentProducts().add(p);			
+			if (p != null) {
+				product.getComponentProducts().add(p);
+			}
 		}
 		return product;
 	}
@@ -639,10 +629,21 @@ public class OrderDispatcher {
 	 * @return The current created product
 	 */
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
+		// check if product exists
+		// use configured processor, product class, sensing start and stop time
+		if (!RepositoryService.getProductRepository()
+				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
+						productClass.getId(),
+						cp.getId(),
+						startTime,
+						stopTime).isEmpty()) {
+			// it exists, nothing to do
+			return null;
+		}
 		Product p = new Product();
 		p.getParameters().clear();
 		p.setUuid(UUID.randomUUID());
-		p.getParameters().putAll(js.getOutputParameters());
+		p.getParameters().putAll(job.getProcessingOrder().getOutputParameters(productClass));
 		p.setProductClass(productClass);
 		p.setConfiguredProcessor(cp);
 		p.setOrbit(orbit);

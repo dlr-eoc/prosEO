@@ -297,6 +297,7 @@ public class KubeJob {
 			// todo Exception
 			return null;
 		}
+		jobStep.setJobOrderFilename(jobOrder.getFileName());
 		// wrapper user and PW
 		String missionCode = jobStep.getJob().getProcessingOrder().getMission().getCode();
 		String wrapUser = missionCode + "-" + ProductionPlanner.config.getWrapperUser();
@@ -327,7 +328,8 @@ public class KubeJob {
 				.addNewContainer()
 				.withName(containerName)
 				.withImage(imageName)
-				.withImagePullPolicy("Always")
+				// .withImagePullPolicy("Always")
+				.withImagePullPolicy("Never")
 				.addNewEnv()
 				.withName("NODE_IP")
 				.withValueFrom(es)
