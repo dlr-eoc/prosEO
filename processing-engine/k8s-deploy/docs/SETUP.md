@@ -29,6 +29,10 @@ UNIX-like OS
 After this is done, in order to have your tools available, all you need
 to do is run `$ pipenv shell` again.
 
+### Prerequisites
+
+- unrestricted internet access
+
 ### Upgrading
 
 1. Inside or outside of the pip environment, run `$ pipenv update`
@@ -56,6 +60,11 @@ Docker
 After this is done, in order to have your tools available, all you need
 to do is run `$ docker/run.sh`. It starts the docker container and enters a
 shell within it.
+
+### Prerequisites
+
+- Docker engine running at your control host
+- unrestricted internet access
 
 ### Upgrading
 
