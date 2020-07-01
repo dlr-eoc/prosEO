@@ -104,8 +104,10 @@ public class ProductQuery extends PersistentObject {
 		productQuery.requestedProductClass = selectionRule.getSourceProductClass();
 		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime());
-		productQuery.filterConditions.putAll(
-				jobStep.getJob().getProcessingOrder().getInputFilters().get(selectionRule.getSourceProductClass()).getFilterConditions());
+		InputFilter inputFilter = jobStep.getJob().getProcessingOrder().getInputFilters().get(selectionRule.getSourceProductClass());
+		if (null != inputFilter) {
+			productQuery.filterConditions.putAll(inputFilter.getFilterConditions());
+		}
 		
 		return productQuery;
 	}
@@ -332,6 +334,11 @@ public class ProductQuery extends PersistentObject {
 					filterField.setAccessible(true);
 				}
 				Object productField = filterField.get(product);
+				if (null == productField) {
+					// A "null" field never matches
+					success = false;
+					break;
+				}
 				success = success && filterConditions.get(filterKey).getParameterValue().equals(productField.toString());
 			} catch (NoSuchFieldException e) {
 				success = success &&  filterConditions.get(filterKey).equals(product.getParameters().get(filterKey));

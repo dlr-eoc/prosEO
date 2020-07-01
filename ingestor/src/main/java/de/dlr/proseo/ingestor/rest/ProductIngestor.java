@@ -386,7 +386,7 @@ public class ProductIngestor {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility.getName()));
 		}
 		
-		// Remove the product from the processing facility storage: Delete all files individually by path name
+		// Remove the product file from the processing facility storage: Delete all files individually by path name
 		List<String> allFiles = new ArrayList<>(modelProductFile.getAuxFileNames());
 		allFiles.add(modelProductFile.getProductFileName());
 		if (null != modelProductFile.getZipFileName()) {
@@ -407,8 +407,10 @@ public class ProductIngestor {
 			} 
 		}
 		
-		// TODO Delete the product file metadata  --> Test with .delete(entity)
-		if (logger.isTraceEnabled()) logger.trace("... deleting product file with ID " + modelProductFile.getId());
+		// Remove the product file from the product
+		product.get().getProductFile().remove(modelProductFile);
+		
+		// Delete the product file metadata
 		RepositoryService.getProductFileRepository().delete(modelProductFile);
 
 		// Test whether the deletion was successful

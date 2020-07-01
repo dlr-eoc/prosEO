@@ -568,17 +568,54 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
     "orderState": "INITIAL",
     "slicingType": "ORBIT",
     "sliceOverlap": 0,
-    "filterConditions": [
-        {
-            "key": "revision",
-            "parameterType": "INTEGER",
-            "parameterValue": "1"
-        },
-        {
-            "key": "fileClass",
-            "parameterType": "STRING",
-            "parameterValue": "OPER"
-        }
+    "inputFilters": [
+    	{
+    		"productClass": "L0________",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "1"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "OPER"
+		        }
+		    ]
+	    },
+    	{
+    		"productClass": "L1B_PART1",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "2"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+	    }
+    ],
+    "classOutputParameters": [
+    	{
+    		"productClass": "L1B_PART1",
+    		"outputParameters": [
+    			{
+    				"key": "revision",
+    				"parameterType": "INTEGER",
+    				"parameterValue": "2"
+    			},
+		        {
+		            "key": "copernicusCollection",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "77"
+		        }
+    		]
+    	}
     ],
     "outputParameters": [
         {
@@ -615,17 +652,37 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "slicingType": "TIME_SLICE",
     "sliceDuration": 14400,
     "sliceOverlap": 0,
-    "filterConditions": [
-        {
-            "key": "revision",
-            "parameterType": "INTEGER",
-            "parameterValue": "99"
-        },
-        {
-            "key": "fileClass",
-            "parameterType": "STRING",
-            "parameterValue": "TEST"
-        }
+    "inputFilters": [
+    	{
+    		"productClass": "PTM_L2A",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "99"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+    	},
+    	{
+    		"productClass": "PTM_L2B",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "99"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+    	}
     ],
     "outputParameters": [
         {
