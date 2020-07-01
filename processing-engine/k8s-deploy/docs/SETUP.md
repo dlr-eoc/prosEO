@@ -100,5 +100,6 @@ available:
 ```bash
 $ terraform --version
 $ ansible --version
+$ openstack --version
 $ kubectl
 ```
