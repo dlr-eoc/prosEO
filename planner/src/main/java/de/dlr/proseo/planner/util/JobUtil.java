@@ -131,8 +131,12 @@ public class JobUtil {
 				break;
 			case ON_HOLD:
 			case FAILED:
+				job.setHasFailedJobSteps(false);
 				for (JobStep js : job.getJobSteps()) {
 					UtilService.getJobStepUtil().retry(js);
+					if (js.getJobStepState() == JobStepState.FAILED) {
+						job.setHasFailedJobSteps(true);
+					}
 				}
 				Boolean all = true;
 				Boolean allCompleted = true;
@@ -492,6 +496,23 @@ public class JobUtil {
 			default:
 				break;
 			}	
+		}
+	}
+	
+	/**
+	 * Set the job to failed
+	 * 
+	 * @param job The job
+	 * @param failed
+	 */
+	@Transactional
+	public void setHasFailedJobSteps(Job job, Boolean failed) {
+		if (failed && !job.getHasFailedJobSteps()) {
+			job.setHasFailedJobSteps(failed);
+			job.incrementVersion();
+			RepositoryService.getJobRepository().save(job);
+			em.merge(job);
+			UtilService.getOrderUtil().setHasFailedJobSteps(job.getProcessingOrder(), failed);
 		}
 	}
 }

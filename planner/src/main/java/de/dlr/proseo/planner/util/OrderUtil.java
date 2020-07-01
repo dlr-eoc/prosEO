@@ -118,6 +118,7 @@ public class OrderUtil {
 			case APPROVED:
 				// jobs are in initial state, no change
 				order.setOrderState(OrderState.INITIAL);
+				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
@@ -141,6 +142,7 @@ public class OrderUtil {
 					}
 				}
 				order.setOrderState(OrderState.INITIAL);
+				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
@@ -550,6 +552,7 @@ public class OrderUtil {
 			case FAILED:
 				Boolean all = true;
 				Boolean allCompleted = true;
+				order.setHasFailedJobSteps(false);
 				for (Job job : order.getJobs()) {
 					jobUtil.retry(job);
 				}
@@ -559,6 +562,9 @@ public class OrderUtil {
 						if (job.getJobState() != JobState.COMPLETED) {
 							allCompleted = false;
 						}
+					}
+					if (job.getHasFailedJobSteps()) {
+						order.setHasFailedJobSteps(true);
 					}
 				}
 				if (all) {
@@ -752,6 +758,23 @@ public class OrderUtil {
 			default:
 				break;
 			}
+		}
+	}
+	
+
+	/**
+	 * Set the job to failed
+	 * 
+	 * @param job The job
+	 * @param failed
+	 */
+	@Transactional
+	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {
+		if (failed && !order.getHasFailedJobSteps()) {
+			order.setHasFailedJobSteps(failed);
+			order.incrementVersion();
+			RepositoryService.getOrderRepository().save(order);
+			em.merge(order);
 		}
 	}
 
