@@ -7,16 +7,33 @@ These instructions are to be run in the `k8s-deploy` directory, where
 UNIX-like OS
 ------------
 
-1. Initialize git submodules: `$ git pull && git submodule update --init`
+1. Initialize git submodules:
+   ```bash
+   $ git pull && git submodule update --init
+   ```
 1. Install a current version of [Python](https://www.python.org/).
-1. Install `pipenv`: `$ python3 -m pip install --user -U pipenv`
-1. Install Python-based tools via `$ pipenv install`
+1. Install `pipenv`:
+   ```bash
+   $ python3 -m pip install --user -U pipenv
+   ```
+1. Install Python-based tools:
+   ```bash
+   $ pipenv install
+   ```
 1. Install a current version of [Go](https://golang.org/)
-1. Install kubespray dependencies: `$ pipenv install -r kubespray/requirements.txt`
+1. Install kubespray dependencies:
+   ```bash
+   $ pipenv install -r kubespray/requirements.txt
+   ```
 1. Enter the pip environment. Due to it's support for the `.env` file, you
    automatically enter an environment in which go packages can be installed.
-   `$ pipenv shell`
-1. Install Go-based tools via `$ go get $(cat tools/gopackages.txt)`
+   ```bash
+   $ pipenv shell
+   ```
+1. Install Go-based tools:
+   ```bash
+   $ go get $(cat tools/gopackages.txt)
+   ```
 1. Install kubectl:
   ```bash
   $ mkdir bin
