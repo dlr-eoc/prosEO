@@ -27,7 +27,8 @@ its job. You can see which environment variables are required by
    ```
 1. Modify the configuration to include your username, password, etc.
 1. Create your `cluster.tfvars` configuration file. This is outside of the scope
-   of this guide.
+   of this guide. See [the variables file](kubespray/contrib/terraform/openstack/variables.tf)
+   for some information on what configuration varaibles exist.
 1. Optionally upgrade kubespray's openstack configuration. You will know if
    you need to do this when the next step fails. In fact, the next step will
    output the *exact* commands to use, so treat the following as an example
