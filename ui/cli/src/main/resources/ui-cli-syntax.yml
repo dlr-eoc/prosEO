@@ -985,12 +985,17 @@ commands:
             - name: verbose
               type: boolean
               description: If set, give product details, otherwise show database ID, UUID and validity period only
+                           (verbose is assumed if product database ID is given as parameter)
               shortForm: v
           parameters:
             - name: className
               type: string
               repeatable: true
               description: The name of the product class to show
+            - name: id
+              type: integer
+              optional: true
+              description: The database ID of the product to show (overrides "from" and "to" parameters)
         - name: create
           description: Create a new product for the given product class in the current mission; 
                        the user will be prompted for mandatory attributes not given on the command line

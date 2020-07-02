@@ -192,6 +192,7 @@ public class UIMessages {
 	public static final int MSG_ID_PRODUCTFILE_NOT_FOUND = 2962;
 	public static final int MSG_ID_PRODUCTFILE_DELETED = 2963;
 	public static final int MSG_ID_PRODUCT_HAS_NO_FILES = 2964;
+	public static final int MSG_ID_PRODUCT_CLASS_MISMATCH = 2965;
 	
 	// Processor CLI
 	public static final int MSG_ID_NO_PROCESSORCLASSES_FOUND = 2970;
@@ -374,6 +375,7 @@ public class UIMessages {
 		MSG_PRODUCT_ID_OR_FACILITY_MISSING ("(E%d) Product database ID or processing facility missing", MSG_ID_PRODUCT_ID_OR_FACILITY_MISSING),
 		MSG_PRODUCTFILE_NOT_FOUND ("(E%d) No product file found for product database ID %d and processing facility %s", MSG_ID_PRODUCTFILE_NOT_FOUND),
 		MSG_PRODUCT_HAS_NO_FILES ("(E%d) Product with database ID %d has no files", MSG_ID_PRODUCT_HAS_NO_FILES),
+		MSG_PRODUCT_CLASS_MISMATCH ("(E%d) Product with database ID %d is not of requested class %s", MSG_ID_PRODUCT_CLASS_MISMATCH),
 		
 		// Processor CLI
 		MSG_NO_PROCESSORCLASSES_FOUND ("(E%d) No processor classes found for given search criteria", MSG_ID_NO_PROCESSORCLASSES_FOUND),

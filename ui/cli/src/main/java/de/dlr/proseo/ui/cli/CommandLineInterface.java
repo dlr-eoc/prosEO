@@ -161,7 +161,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			} else {
 				command.getSyntaxCommand().printHelp(System.out);
 			}
-			if (logger.isTraceEnabled()) logger.trace("<<< executeCommand({})");
+			if (logger.isTraceEnabled()) logger.trace("<<< executeCommand()");
 			return;
 		}
 		
@@ -229,7 +229,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			}
 		}
 		
-		if (logger.isTraceEnabled()) logger.trace("<<< executeCommand({})");
+		if (logger.isTraceEnabled()) logger.trace("<<< executeCommand()");
 	}
 	
 	/**

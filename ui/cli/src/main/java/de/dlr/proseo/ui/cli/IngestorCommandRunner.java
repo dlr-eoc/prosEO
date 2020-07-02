@@ -13,6 +13,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -268,24 +269,46 @@ public class IngestorCommandRunner {
 		}
 		
 		/* Prepare request URI */
-		String requestURI = URI_PATH_PRODUCTS + "?mission=" + loginManager.getMission();
+		String requestURI = URI_PATH_PRODUCTS;
 		
-		for (ParsedOption option: showCommand.getOptions()) {
-			if ("from".equals(option.getName())) {
-				requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
-			} else if ("to".equals(option.getName())) {
-				requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+		if (1 == showCommand.getParameters().size()) {
+			requestURI += "?mission=" + loginManager.getMission();
+			for (ParsedOption option: showCommand.getOptions()) {
+				if ("from".equals(option.getName())) {
+					requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+				} else if ("to".equals(option.getName())) {
+					requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+				}
 			}
-		}
-		for (ParsedParameter parameter: showCommand.getParameters()) {
-			requestURI += "&productClass=" + parameter.getValue();
+			requestURI += "&productClass=" + showCommand.getParameters().get(0).getValue();
+		} else {
+			String productId = showCommand.getParameters().get(1).getValue();
+			try {
+				Long.parseLong(productId);
+			} catch (NumberFormatException e) {
+				System.err.println(uiMsg(MSG_ID_INVALID_DATABASE_ID, productId));
+				return;
+			}
+			requestURI += "/" + productId;
+			isVerbose = true;
 		}
 		
 		/* Get the product information from the Ingestor */
 		List<?> resultList = null;
 		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
-					requestURI, List.class, loginManager.getUser(), loginManager.getPassword());
+			if (1 == showCommand.getParameters().size()) {
+				resultList = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), requestURI, List.class,
+						loginManager.getUser(), loginManager.getPassword());
+			} else {
+				RestProduct restProduct = serviceConnection.getFromService(serviceConfig.getIngestorUrl(), requestURI,
+						RestProduct.class, loginManager.getUser(), loginManager.getPassword());
+				if (!restProduct.getProductClass().equals(showCommand.getParameters().get(0).getValue())) {
+					System.err.println(uiMsg(MSG_ID_PRODUCT_CLASS_MISMATCH, restProduct.getId(),
+							showCommand.getParameters().get(0).getValue()));
+					return;
+				}
+				resultList = Arrays.asList(restProduct);
+			}
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
