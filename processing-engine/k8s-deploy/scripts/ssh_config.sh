@@ -6,6 +6,7 @@ SSH_KEY_PATH="${PWD}/ssh-keys"
 SSH_KEY_FILE="${SSH_KEY_PATH}/cluster-key"
 SSH_KEY_TYPE="ed25519"
 SSH_CONFIG="${SSH_KEY_PATH}/ssh_config"
+SSH_ENVFILE="${PWD}/config/ssh.sh"
 
 if [ ! -z "$1" ] ; then
   SSH_KEY_TYPE="$1"
@@ -47,4 +48,13 @@ EOF
     rm "${SSH_CONFIG}.tmp"
     echo "No hosts found, maybe you need to generate an inventory first?"
   fi
+fi
+
+if [ ! -f "${SSH_ENVFILE}" ] ; then
+  echo "Creating SSH alias..."
+  echo "alias ssh='ssh -F \"${SSH_CONFIG}\"'" >"${SSH_ENVFILE}"
+  echo "done."
+  echo "The alias will activate the next time you enter the deploy environment."
+  echo "In the meantime, you can run the following:"
+  echo "$ source ${SSH_ENVFILE}"
 fi
