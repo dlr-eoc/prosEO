@@ -93,6 +93,8 @@ $ ./hosts --hostfile
 $ ssh <hostname|ip>
 ```
 
+If you have bastion hosts, you need to run the following section first.
+
 #### Bastion Hosts
 
 If your configuration includes bastion hosts, then after the VMs are
@@ -100,7 +102,7 @@ provisioned, you need to enable SSH forwarding on those hosts. SSH into
 the bastion:
 
 ```bash
-(bastion) $ sudo sed -i 's/^#* *AllowTcpForwarding *no/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
+(bastion) $ sudo sed -i 's/^#* *AllowTcpForwarding.*/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
 ```
 
 The file `/etc/ssh/sshd_config` should contain the line `AllowTcpForwarding yes`.
