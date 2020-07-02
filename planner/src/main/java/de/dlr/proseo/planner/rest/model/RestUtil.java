@@ -139,7 +139,6 @@ public class RestUtil {
 	public static RestJobStep createRestJobStep(JobStep js) {
 		RestJobStep pjs = new RestJobStep();
 		if (js != null) {
-			pjs = new RestJobStep();
 			pjs.setId(Long.valueOf(js.getId()));
 			pjs.setName(ProductionPlanner.jobNamePrefix + js.getId());
 			if (js.getJobStepState() != null) {
@@ -160,6 +159,9 @@ public class RestUtil {
 			}
 			if (js.getProcessingStdErr() != null) {
 				pjs.setProcessingStdErr(js.getProcessingStdErr());
+			}
+			if (js.getJobOrderFilename() != null) {
+				pjs.setJobOrderFilename(js.getJobOrderFilename());
 			}
 			pjs.setStderrLogLevel(StderrLogLevel.fromValue(js.getStderrLogLevel().toString()));
 			pjs.setStdoutLogLevel(StdoutLogLevel.fromValue(js.getStdoutLogLevel().toString()));

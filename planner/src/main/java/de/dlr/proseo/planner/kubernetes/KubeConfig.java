@@ -594,6 +594,9 @@ public class KubeConfig {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
+			} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
+				// pod not found
+				return null;
 			} else {
 				e. printStackTrace();
 				return null;

@@ -316,12 +316,12 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
-					deleteJOF(js);
-					js.setJobOrderFilename(null);
 				};
 				// fall through intended
 			case COMPLETED:
 			case FAILED:
+				deleteJOF(js);
+				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
 					js.getOutputProduct().setJobStep(null);
 				}
@@ -365,12 +365,13 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
-					deleteJOF(js);
-					js.setJobOrderFilename(null);
 				};
+				// Fall through intended
 			case RUNNING:
 			case COMPLETED:
 			case FAILED:
+				deleteJOF(js);
+				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
 					js.getOutputProduct().setJobStep(null);
 				}

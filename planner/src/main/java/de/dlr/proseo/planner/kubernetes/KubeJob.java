@@ -532,12 +532,16 @@ public class KubeJob {
 		boolean success = false;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
+			if (aJob == null) {
+				// job not found, try to remove
+				return true;
+			}
 			if (podNames.isEmpty()) {
 				searchPod();
 			}
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
-			
-			if (aJob != null) {
+
+			if (aPod != null) {
 				PodKube aPlan = new PodKube(aJob);
 				String cn = this.getContainerName();
 				if (cn != null && !podNames.isEmpty()) {
