@@ -50,3 +50,10 @@ its job. You can see which environment variables are required by
    ```bash
    $ ./hosts --hostfile
    ```
+
+### Open Telekom Cloud
+
+In the OTC, a Virtual Private Cloud will be configured for this set of VMs,
+called `proseo-<cluster>-router`. You need to manually switch *on* the
+"Shared SNAT" toggle before any of the VMs can reach the outside world, e.g.
+for downloading packages to install.

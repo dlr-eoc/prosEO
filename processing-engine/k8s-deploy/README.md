@@ -57,6 +57,7 @@ Creating a new Cluster
    ```bash
    $ ../../../scripts/ssh_config.sh
    ```
+1. TODO: the previous step could be done as part of the `make_cluster.sh` script.
 
 **Notes:**
 - The `.autoenv` file gets executed whenever you enter the directory it
@@ -130,8 +131,7 @@ It's best to download some K8S components from the prosEO registry:
    ```
 1. Add download URLs for packages:
    ```bash
-   $ cat >>group_vars/all/all.yml <<EOF
-
+   $ cat >group_vars/all/proseo.yml <<EOF
 # Use prosEO registry for downloads
 etcd_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/etcd-v3.3.10-linux-amd64.tar.gz"
 cni_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/cni-plugins-linux-amd64-v0.8.1.tgz"
@@ -139,6 +139,7 @@ calicoctl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/c
 crictl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/critest-v1.16.1-linux-amd64.tar.gz"
 EOF
    ```
+1. TODO: these could be done as part of the `make_cluster.sh` script.
 
 Now it's up to kubespray to configure all VMs for running a K8S cluster. We
 need to run commands from the kubespray directory now, and specify the cluster
