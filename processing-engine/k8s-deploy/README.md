@@ -76,17 +76,73 @@ terraform.
 
 - [Terraform VM Provisioning](docs/PROV_TERRAFORM.md)
 
-After the VMs are provisioned, you should be able to generate an SSH
-config file suitable for connecting to the bastion host(s):
+It's best to re-run the SSH configuration script after this step is done.
+It will configure the deploy environment with regards to SSH settings.
 
 ```bash
 $ ../../../scripts/ssh_config.sh
 ```
 
-Running the script again will *not* re-generate existing configuration,
-but rather complete it. It should write a `ssh-keys/ssh_config` file with
-configuration for the bastion hosts at this stage.
+Amongst other things, this will create a configuration for the `ssh` command
+and an alias that uses this configuration that should allow you to SSH into
+any of the provisioned VMs, so that the below should work:
 
 ```bash
-$ ssh -F ssh-keys/ssh_config <clusterprefix>-bastion-1
+$ ./hosts --hostfile
+# Pick any hostname/IP
+$ ssh <hostname|ip>
+```
+
+#### Bastion Hosts
+
+If your configuration includes bastion hosts, then after the VMs are
+provisioned, you need to enable SSH forwarding on those hosts. SSH into
+the bastion:
+
+```bash
+(bastion) $ sudo sed -i 's/^#* *AllowTcpForwarding *no/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
+```
+
+The file `/etc/ssh/sshd_config` should contain the line `AllowTcpForwarding yes`.
+If not, edit it manually. Then:
+
+```bash
+(bastion) $ sudo systemctl restart sshd
+```
+
+### K8S Deployment
+
+Once the VMs are fully provisioned, and optional bastion hosts are configured,
+ansible should be able to connect to all hosts in the cluster. You can find out
+whether this works by running:
+
+```bash
+$ ansible -i hosts -m ping all
+```
+
+It's best to download some K8S components from the prosEO registry:
+
+1. Don't validate certs:
+   ```bash
+   $ sed -i 's/^#* *download_validate_certs:.*/download_validate_certs: False/g' group_vars/all/all.yml
+   ```
+1. Add download URLs for packages:
+   ```bash
+   $ cat >>group_vars/all/all.yml <<EOF
+
+# Use prosEO registry for downloads
+etcd_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/etcd-v3.3.10-linux-amd64.tar.gz"
+cni_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/cni-plugins-linux-amd64-v0.8.1.tgz"
+calicoctl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/calicoctl-linux-amd64"
+crictl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/critest-v1.16.1-linux-amd64.tar.gz"
+EOF
+   ```
+
+Now it's up to kubespray to configure all VMs for running a K8S cluster. We
+need to run commands from the kubespray directory now, and specify the cluster
+inventory.
+
+```
+$ cd ../..  # /kubespray directory
+$ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
 ```

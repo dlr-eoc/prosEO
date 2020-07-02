@@ -2,11 +2,16 @@
 
 set -e
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SOURCE_DIR="${SCRIPT_DIR}/../"
+
 SSH_KEY_PATH="${PWD}/ssh-keys"
 SSH_KEY_FILE="${SSH_KEY_PATH}/cluster-key"
 SSH_KEY_TYPE="ed25519"
 SSH_CONFIG="${SSH_KEY_PATH}/ssh_config"
 SSH_ENVFILE="${PWD}/config/ssh.sh"
+SSH_AGENT_ENVFILE="${PWD}/config/ssh_agent.sh"
+SSH_ANSIBLE_ENVFILE="${PWD}/config/ansible.sh"
 
 if [ ! -z "$1" ] ; then
   SSH_KEY_TYPE="$1"
@@ -15,11 +20,13 @@ fi
 if [ ! -d "${SSH_KEY_PATH}" ] ; then
   echo "Creating SSH key directory..."
   mkdir -p "${SSH_KEY_PATH}"
+  echo "done."
 fi
 
 if [ ! -f "${SSH_KEY_FILE}" ] ; then
   echo "Generating SSH key..."
   ssh-keygen -t "${SSH_KEY_TYPE}" -f "${SSH_KEY_NAME}"
+  echo "done."
 fi
 
 if [ ! -f "${SSH_CONFIG}" ] ; then
@@ -89,7 +96,19 @@ if [ ! -f "${SSH_ENVFILE}" ] ; then
   echo "Creating SSH alias..."
   echo "alias ssh='ssh -F \"${SSH_CONFIG}\"'" >"${SSH_ENVFILE}"
   echo "done."
-  echo "The alias will activate the next time you enter the deploy environment."
-  echo "In the meantime, you can run the following:"
-  echo "$ source ${SSH_ENVFILE}"
 fi
+
+if [ ! -f "${SSH_AGENT_ENVFILE}" ] ; then
+  echo "Creating SSH agent environment..."
+  cp "${SOURCE_DIR}/templates/ssh_agent.sh" "${SSH_AGENT_ENVFILE}"
+  echo "done."
+fi
+
+if [ ! -f "${SSH_ANSIBLE_ENVFILE}" ] ; then
+  echo "Creating SSH settings for ansible..."
+  cat >"${SSH_ANSIBLE_ENVFILE}" <<EOF
+export ANSIBLE_HOST_KEY_CHECKING=False
+EOF
+  echo "done."
+fi
+
