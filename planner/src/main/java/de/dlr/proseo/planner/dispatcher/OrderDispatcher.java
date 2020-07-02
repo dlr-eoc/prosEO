@@ -643,17 +643,6 @@ public class OrderDispatcher {
 	 * @return The current created product
 	 */
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
-		// check if product exists
-		// use configured processor, product class, sensing start and stop time
-		if (!RepositoryService.getProductRepository()
-				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
-						productClass.getId(),
-						cp.getId(),
-						startTime,
-						stopTime).isEmpty()) {
-			// it exists, nothing to do
-			return null;
-		}
 		Product p = new Product();
 		p.getParameters().clear();
 		p.setUuid(UUID.randomUUID());
@@ -665,10 +654,25 @@ public class OrderDispatcher {
 		p.setFileClass(fileClass);
 		p.setSensingStartTime(startTime);
 		p.setSensingStopTime(stopTime);
+		p.setProductionType(job.getProcessingOrder().getProductionType());
 		if (null != js) {
 			p.setMode(js.getProcessingMode());
 		}
-		p.setEnclosingProduct(enclosingProduct);
+		p.setEnclosingProduct(enclosingProduct);		
+		// check if product exists
+		// use configured processor, product class, sensing start and stop time
+		for (Product foundProduct : RepositoryService.getProductRepository()
+				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
+						productClass.getId(),
+						cp.getId(),
+						startTime,
+						stopTime)) {
+			if (foundProduct.equals(p)) {
+				// it exists, nothing to do
+				return null;
+			}
+		}
+
 		p = RepositoryService.getProductRepository().save(p);
 		if (js != null) {
 			js.setOutputProduct(p);
