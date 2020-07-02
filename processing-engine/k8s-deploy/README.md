@@ -53,11 +53,9 @@ Creating a new Cluster
    $ make_cluster.sh <clustername>
    ```
 1. Change to the new cluster directory.
-1. Create SSH keys for this cluster (feel free to change the paramters to
-   the key generation):
+1. Create SSH keys for this cluster:
    ```bash
-   $ mkdir ssh-keys
-   $ ssh-keygen -t ed25519 -f ssh-keys/cluster-key
+   $ ../../../scripts/ssh_config.sh
    ```
 
 **Notes:**
@@ -77,3 +75,18 @@ using. We can collect guides here, though for now there is only one for
 terraform.
 
 - [Terraform VM Provisioning](docs/PROV_TERRAFORM.md)
+
+After the VMs are provisioned, you should be able to generate an SSH
+config file suitable for connecting to the bastion host(s):
+
+```bash
+$ ../../../scripts/ssh_config.sh
+```
+
+Running the script again will *not* re-generate existing configuration,
+but rather complete it. It should write a `ssh-keys/ssh_config` file with
+configuration for the bastion hosts at this stage.
+
+```bash
+$ ssh -F ssh-keys/ssh_config <clusterprefix>-bastion-1
+```
