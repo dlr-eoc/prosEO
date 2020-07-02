@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -556,9 +557,61 @@ public class Product extends PersistentObject {
 	@Override
 	public String toString() {
 		return "Product [productClass=" + (null == productClass ? "null" : productClass.getProductType()) 
-				+ ", mode=" + mode + ", sensingStartTime=" + sensingStartTime
-				+ ", sensingStopTime=" + sensingStopTime + ", generationTime=" + generationTime + ", productFile=" + productFile
-				+ ", parameters=" + parameters + "]";
+				+ ", configuredProcessor=" + (null == configuredProcessor ? "null" : configuredProcessor.getIdentifier())
+				+ ", sensingStartTime=" + sensingStartTime + ", sensingStopTime=" + sensingStopTime
+				+ ", generationTime=" + generationTime
+				+ ", mode=" + mode + ", fileClass=" + fileClass + ", productQuality=" + productQuality
+				+ ", productionType=" + productionType + ", parameters=" + parameters + "]";
+	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Objects.hash(configuredProcessor, fileClass, mode, parameters, productClass,
+				productQuality, productionType, sensingStartTime, sensingStopTime);
+		return result;
+	}
+	/**
+	 * Tests equality of products based on their attribute values. Returns true if either of the following alternatives holds:
+	 * <ol>
+	 *   <li>The database IDs are equal</li>
+	 *   <li>The UUIDs are equal</li>
+	 *   <li>All of the following attributes are equal:
+	 *     <ul>
+	 *       <li>Product class</li>
+	 *       <li>Configured processor</li>
+	 *       <li>Sensing start/stop times</li>
+	 *       <li>Processing mode</li>
+	 *       <li>File class</li>
+	 *       <li>Product quality</li>
+	 *       <li>Production type</li>
+	 *       <li>All product parameters</li>
+	 *     </ul>
+	 *   </li>
+	 * </ol>
+	 * Note that the generation time is not considered relevant for product equality, because two processings with the
+	 * same set of attributes as listed above are expected to produce the same output.
+	 * 
+	 * @param obj the object to compare to
+	 * @return true, if the two objects are equal, false otherwise
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (super.equals(obj))
+			return true;
+		if (!(obj instanceof Product))
+			return false;
+		Product other = (Product) obj;
+		if (uuid.equals(other.uuid))
+			return true;
+		return Objects.equals(configuredProcessor, other.configuredProcessor) && Objects.equals(fileClass, other.fileClass)
+				&& Objects.equals(mode, other.mode)
+				&& Objects.equals(parameters, other.parameters) && Objects.equals(productClass, other.productClass)
+				&& productQuality == other.productQuality && productionType == other.productionType
+				&& Objects.equals(sensingStartTime, other.sensingStartTime)
+				&& Objects.equals(sensingStopTime, other.sensingStopTime);
 	}
 
 }
