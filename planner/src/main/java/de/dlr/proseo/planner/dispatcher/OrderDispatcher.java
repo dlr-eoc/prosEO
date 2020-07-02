@@ -325,7 +325,13 @@ public class OrderDispatcher {
 				} else {
 
 					// configured processor
-					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
+					Set<ConfiguredProcessor> allConfiguredProcessors = order.getRequestedConfiguredProcessors();
+					List<ConfiguredProcessor> configuredProcessors = new ArrayList<ConfiguredProcessor>();
+					for (ConfiguredProcessor aCP : allConfiguredProcessors) {
+						if (aCP.getEnabled()) {
+							configuredProcessors.add(aCP);
+						}
+					}
 					if (configuredProcessors.isEmpty()) {
 						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
@@ -473,7 +479,7 @@ public class OrderDispatcher {
 	 * @param allProducts All products created
 	 * @param inputProducts The input products to use
 	 */
-	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, 
+	public void createJobStepForProduct(Job job, ProductClass productClass, List<ConfiguredProcessor> configuredProcessors, 
 				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
 
 		if (inputProducts.contains(productClass)) {
@@ -698,7 +704,13 @@ public class OrderDispatcher {
 			if (productClass.getProcessorClass() != null) {
 				// search newest processor
 				for (Processor p : productClass.getProcessorClass().getProcessors()) {
-					if (!p.getConfiguredProcessors().isEmpty()) {
+					List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
+					for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
+						if (cp.getEnabled()) {
+							cplist.add(cp);
+						}
+					}
+					if (!cplist.isEmpty()) {
 						if (pFound == null) {
 							pFound = p;
 						} else {
@@ -710,16 +722,17 @@ public class OrderDispatcher {
 				}
 				// search configured processor with newest configuration
 				for (ConfiguredProcessor cp : pFound.getConfiguredProcessors()) {
-					if (cpFound == null) {
-						cpFound = cp;
-					} else {
-						if (cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
+					if (cp.getEnabled()) {
+						if (cpFound == null) {
 							cpFound = cp;
+						} else {
+							if (cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
+								cpFound = cp;
+							}
 						}
 					}
 				}
 			}
-
 		}
 		
 		return cpFound;
