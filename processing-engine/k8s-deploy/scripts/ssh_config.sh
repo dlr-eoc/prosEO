@@ -25,7 +25,15 @@ fi
 if [ ! -f "${SSH_CONFIG}" ] ; then
   echo "Trying to genreate SSH config..."
 
-  echo >"${SSH_CONFIG}.tmp"
+  if [ -f ~/.ssh/config ] ; then
+    echo "Including user config."
+    cat >"${SSH_CONFIG}.tmp" <<EOF
+Include ~/.ssh/config
+EOF
+  else
+    echo >"${SSH_CONFIG}.tmp"
+  fi
+
   while IFS= read -r HOSTLINE ; do
     BASTION_IP=$(echo ${HOSTLINE} | cut -d' ' -f1)
     BASTION_HOST=$(echo ${HOSTLINE} | cut -d' ' -f2)
@@ -41,7 +49,7 @@ EOF
 
   done < <(./hosts --hostfile | grep bastion-)
 
-  if [ "$(wc -l "${SSH_CONFIG}.tmp" | cut -d' ' -f1)" -gt 1 ] ; then
+  if grep -q Host "${SSH_CONFIG}.tmp" ; then
     mv "${SSH_CONFIG}.tmp" "${SSH_CONFIG}"
     echo "done: ${SSH_CONFIG}"
   else
