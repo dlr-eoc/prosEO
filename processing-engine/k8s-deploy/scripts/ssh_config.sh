@@ -25,30 +25,57 @@ fi
 if [ ! -f "${SSH_CONFIG}" ] ; then
   echo "Trying to genreate SSH config..."
 
+  # Include user config
   if [ -f ~/.ssh/config ] ; then
     echo "Including user config."
     cat >"${SSH_CONFIG}.tmp" <<EOF
 Include ~/.ssh/config
+
 EOF
   else
     echo >"${SSH_CONFIG}.tmp"
   fi
 
+  # Bastion hosts
   while IFS= read -r HOSTLINE ; do
     BASTION_IP=$(echo ${HOSTLINE} | cut -d' ' -f1)
     BASTION_HOST=$(echo ${HOSTLINE} | cut -d' ' -f2)
 
     cat >>"${SSH_CONFIG}.tmp" <<EOF
-Host ${BASTION_HOST}
+Host ${BASTION_HOST} ${BASTION_IP}
   HostName ${BASTION_IP}
-  User linux
-  IdentityFile ${SSH_KEY_FILE}
-  TCPKeepAlive yes
   IdentitiesOnly yes
-EOF
+  IdentityFile ${SSH_KEY_FILE}
+  User linux
+  StrictHostKeyChecking no
+  ControlMaster auto
+  ControlPath ~/.ssh/ansible-%r@%h:%p
+  ControlPersist 5m
+  TCPKeepAlive yes
 
+EOF
   done < <(./hosts --hostfile | grep bastion-)
 
+  # Other hosts - if there is a bastion host
+  if [ ! -z "${BASTION_HOST}" ] ; then
+    while IFS= read -r HOSTLINE ; do
+      IP=$(echo ${HOSTLINE} | cut -d' ' -f1)
+      HOST=$(echo ${HOSTLINE} | cut -d' ' -f2)
+
+      echo $HOST - $IP
+      cat >>"${SSH_CONFIG}.tmp" <<EOF
+Host ${HOST} ${IP}
+  HostName ${IP}
+  IdentitiesOnly yes
+  IdentityFile ${SSH_KEY_FILE}
+  User linux
+  ProxyJump ${BASTION_HOST}
+
+EOF
+    done < <(./hosts --hostfile | grep -v bastion- | grep -v '^#')
+  fi
+
+  # Move into place
   if grep -q Host "${SSH_CONFIG}.tmp" ; then
     mv "${SSH_CONFIG}.tmp" "${SSH_CONFIG}"
     echo "done: ${SSH_CONFIG}"
