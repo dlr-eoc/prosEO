@@ -55,9 +55,6 @@ Host ${BASTION_HOST} ${BASTION_IP}
   IdentityFile ${SSH_KEY_FILE}
   User linux
   StrictHostKeyChecking no
-  ControlMaster auto
-  ControlPath ~/.ssh/ansible-%r@%h:%p
-  ControlPersist 5m
   TCPKeepAlive yes
 
 EOF
