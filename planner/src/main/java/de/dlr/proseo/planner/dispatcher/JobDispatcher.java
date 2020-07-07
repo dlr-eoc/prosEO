@@ -170,7 +170,7 @@ public class JobDispatcher {
 				jobOrder = null;
 			}
 
-			// read a job order file for test purposes
+			// write a job order file for test purposes
 			if (jobOrder != null) {
 				InetAddress ip;
 				try {

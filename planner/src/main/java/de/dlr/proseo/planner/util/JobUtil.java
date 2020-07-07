@@ -144,10 +144,10 @@ public class JobUtil {
 					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
 						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
-						if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.COMPLETED) {
-							allCompleted = false;
-						}
 						
+					}
+					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.COMPLETED) {
+						allCompleted = false;
 					}
 				}
 				if (all) {
@@ -155,11 +155,13 @@ public class JobUtil {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
 						answer = Messages.JOB_COMPLETED;
 					} else {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
 						answer = Messages.JOB_RETRIED;
 					}
 				} else {

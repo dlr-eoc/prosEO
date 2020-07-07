@@ -559,9 +559,9 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
-						if (job.getJobState() != JobState.COMPLETED) {
-							allCompleted = false;
-						}
+					}
+					if (job.getJobState() != JobState.COMPLETED) {
+						allCompleted = false;
 					}
 					if (job.getHasFailedJobSteps()) {
 						order.setHasFailedJobSteps(true);

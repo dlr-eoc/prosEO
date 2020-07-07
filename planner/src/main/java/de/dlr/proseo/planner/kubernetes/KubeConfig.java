@@ -484,7 +484,11 @@ public class KubeConfig {
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
@@ -500,7 +504,11 @@ public class KubeConfig {
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		KubeJob aJob = new KubeJob(id, "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
