@@ -227,7 +227,7 @@ public class RestUtil {
 				String pt = pq.getRequestedProductClass().getProductType();
 				List<JobStep> pre = new ArrayList<JobStep>();
 				for (JobStep preJobStep : jsl) {
-					if (preJobStep.getOutputProduct().getProductClass().getProductType().equals(pt)) {
+					if (jobStepProduces(preJobStep.getOutputProduct().getProductClass(), pt)) {
 						if (!pre.contains(preJobStep)) {
 							RestId ri = new RestId();
 							ri.setId(preJobStep.getId());
