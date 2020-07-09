@@ -29,6 +29,7 @@ import de.dlr.proseo.interfaces.rest.model.RestParameter;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -67,12 +68,11 @@ public class ProductUtil {
 		RestProductFile restProductFile = restProduct.getProductFile().get(0);
 		
 		// Determine production type
-		// TODO Derive from Product.productionType
-		String productQuality = restProduct.getProductQuality();
+		String restProductionType = restProduct.getProductionType();
 		int productionType;
-		if (ProductQuality.SYSTEMATIC.name().equals(productQuality)) {
+		if (ProductionType.SYSTEMATIC.name().equals(restProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL;
-		} else if (ProductQuality.NOMINAL.name().equals(productQuality)) {
+		} else if (ProductionType.ON_DEMAND_DEFAULT.name().equals(restProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
 		} else {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
