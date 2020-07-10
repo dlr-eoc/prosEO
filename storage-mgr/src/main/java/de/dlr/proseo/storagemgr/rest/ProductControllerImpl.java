@@ -6,7 +6,6 @@
  */
 package de.dlr.proseo.storagemgr.rest;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,7 +18,6 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
@@ -28,12 +26,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
-import de.dlr.proseo.storagemgr.rest.model.SourceStorageType;
-import de.dlr.proseo.storagemgr.rest.model.StorageType;
-import de.dlr.proseo.storagemgr.rest.model.TargetStorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
 /**
@@ -110,13 +105,13 @@ public class ProductControllerImpl implements ProductController {
 
 		ArrayList<String> transferSum = new ArrayList<String>();
 
-		ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(restProductFS.getTargetStorageType().toString()),
+		ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(restProductFS.getTargetStorageType()),
 				pref, cfg);
 
 		try {
 			for (String fileOrDir : restProductFS.getSourceFilePaths()) {
 				ProseoFile sourceFile = ProseoFile.fromTypeFullPath(
-						FsType.fromValue(restProductFS.getSourceStorageType().toString()), fileOrDir, cfg);
+						StorageType.valueOf(restProductFS.getSourceStorageType()), fileOrDir, cfg);
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, true);
 				if (logger.isDebugEnabled()) logger.debug("Files transferred: {}", transfered);
 				if (transfered != null) {
@@ -141,15 +136,15 @@ public class ProductControllerImpl implements ProductController {
 	 * @return list of strings
 	 */
 	@Override
-	public ResponseEntity<List<String>> getProductFiles(StorageType storageType, String prefix) {
+	public ResponseEntity<List<String>> getProductFiles(String storageType, String prefix) {
 		List<StorageType> stl = new ArrayList<StorageType>();
 		List<String> response = new ArrayList<String>();
 		try {
 			if (storageType == null) {
-				stl.add(StorageType.S_3);
+				stl.add(StorageType.S3);
 				stl.add(StorageType.POSIX);
 			} else {
-				stl.add(storageType);
+				stl.add(StorageType.valueOf(storageType));
 			}
 			for (StorageType st : stl) {
 				listProductFiles(st, prefix, response);
@@ -267,7 +262,7 @@ public class ProductControllerImpl implements ProductController {
 					response.setDeleted(true);
 					response.setRegistered(false);
 					response.setSourceFilePaths(deleted);
-					response.setSourceStorageType(SourceStorageType.fromValue(sourceFile.getFsType().toString()));
+					response.setSourceStorageType(sourceFile.getFsType().toString());
 					return new ResponseEntity<>(response, HttpStatus.OK);
 				}
 			} catch (Exception e) {
@@ -287,11 +282,10 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 		ProseoFile path = null;
-		FsType ft = FsType.fromValue(st.toString());
 		if (prefix == null) {
-			path = ProseoFile.fromType(ft, "", cfg);
+			path = ProseoFile.fromType(st, "", cfg);
 		} else {
-			path = ProseoFile.fromType(ft, prefix + "/", cfg);
+			path = ProseoFile.fromType(st, prefix + "/", cfg);
 		}
 		List<ProseoFile> files = path.list();
 		for (ProseoFile f : files) {

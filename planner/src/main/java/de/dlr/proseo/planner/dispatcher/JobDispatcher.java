@@ -40,8 +40,8 @@ import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.interfaces.rest.model.FsType;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
@@ -269,12 +269,12 @@ public class JobDispatcher {
 			RestJoborder jo = new RestJoborder();
 			switch (kubeConfig.getStorageType()) {
 			case S3:
-				jo.setFsType(FsType.S_3);
+				jo.setFsType(StorageType.S3.toString());
 				break;
 			case POSIX:
 				// fall through intended
 			default:
-				jo.setFsType(FsType.POSIX);
+				jo.setFsType(StorageType.POSIX.toString());
 				break;					
 			}
 			

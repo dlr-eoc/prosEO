@@ -1,17 +1,15 @@
 package de.dlr.proseo.storagemgr.utils;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * Abstract definition of proseo file objects
@@ -191,17 +189,17 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with relative path pathInfo
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param pathInfo Relative path with bucket
 	 * @param cfg
 	 * @return The new file object
 	 */
-	public static ProseoFile fromType(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromType(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(aPath, false, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(aPath, false, cfg);
@@ -217,17 +215,17 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with full path pathInfo
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param pathInfo Full path (with type info)
 	 * @param cfg
 	 * @return The new file object
 	 */
-	public static ProseoFile fromTypeFullPath(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromTypeFullPath(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(aPath, true, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(aPath, true, cfg);
@@ -243,18 +241,18 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with bucket and relative path.
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param bucket Bucket 
 	 * @param pathInfo Relative path
 	 * @param cfg
 	 * @return
 	 */
-	public static ProseoFile fromTypeAndBucket(FsType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromTypeAndBucket(StorageType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(bucket, aPath, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(bucket, aPath, cfg);
@@ -270,7 +268,7 @@ public abstract class ProseoFile {
 	/**
 	 * @return The file system type
 	 */
-	public abstract FsType getFsType();
+	public abstract StorageType getFsType();
 	
 	/**
 	 * @return Get the file system resource definition

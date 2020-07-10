@@ -2,7 +2,6 @@ package de.dlr.proseo.storagemgr.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +16,10 @@ import com.amazonaws.services.s3.AmazonS3;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.AmazonS3URI;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * Proseo file representing S3 file system
@@ -95,8 +94,8 @@ public class ProseoFileS3 extends ProseoFile {
 	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getFsType()
 	 */
 	@Override
-	public FsType getFsType() {
-		return FsType.S_3;
+	public StorageType getFsType() {
+		return StorageType.S3;
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +163,7 @@ public class ProseoFileS3 extends ProseoFile {
 			String sourceBucket = s3uri.getBucket();
 			String sourceKey = s3uri.getKey();
 			switch (proFile.getFsType()) {
-			case S_3:
+			case S3:
 				// create internal buckets & prefixes if not exists..
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
 				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());

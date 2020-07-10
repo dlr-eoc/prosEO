@@ -13,8 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
-import de.dlr.proseo.storagemgr.rest.model.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
 /**
@@ -116,7 +115,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 				relPath = aPath;
 			}
 			// replace top relPath directory
-			ProseoFile targetFile = ProseoFile.fromType(FsType.fromValue(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
+			ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
 			try {
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 				if (transfered != null && !transfered.isEmpty()) {

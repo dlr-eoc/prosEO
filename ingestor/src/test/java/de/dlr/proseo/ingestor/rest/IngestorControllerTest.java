@@ -47,7 +47,7 @@ import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
-import de.dlr.proseo.ingestor.rest.model.SourceStorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -303,7 +303,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
 		ingestorProduct.setGenerationTime(TEST_GEN_TIME_TEXT);
 		File productFile = new File(TEST_PRODUCT_PATH_2);
-		ingestorProduct.setSourceStorageType(SourceStorageType.S_3);
+		ingestorProduct.setSourceStorageType(StorageType.S3);
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());

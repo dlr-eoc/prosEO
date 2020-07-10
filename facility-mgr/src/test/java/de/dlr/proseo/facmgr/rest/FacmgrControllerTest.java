@@ -42,7 +42,7 @@ import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 
 @RunWith(SpringJUnit4ClassRunner.class)

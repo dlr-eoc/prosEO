@@ -1,7 +1,6 @@
 package de.dlr.proseo.storagemgr.utils;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,11 +18,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
-import de.dlr.proseo.storagemgr.rest.model.StorageType;
 import software.amazon.awssdk.services.s3.S3Client;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * General utility methods 
@@ -111,21 +108,21 @@ public class StorageManagerUtils {
 	}
 
 	/**
-	 * Get FsType of path
+	 * Get StorageType of path
 	 * 
 	 * @param pathInfo
-	 * @return FsType
+	 * @return StorageType
 	 */
-	public static FsType getFsType(String pathInfo) {
-		FsType storageType = null;
+	public static StorageType getFsType(String pathInfo) {
+		StorageType storageType = null;
 		if (pathInfo != null) {
 			// Find storage type
 			if (pathInfo.startsWith("s3:") || pathInfo.startsWith("S3:")) {
-				storageType = FsType.S_3;
+				storageType = StorageType.S3;
 			} else if (pathInfo.startsWith("alluxio:")) {
-				storageType = FsType.ALLUXIO;
+				storageType = StorageType.ALLUXIO;
 			} else if (pathInfo.startsWith("/")) {
-				storageType = FsType.POSIX;
+				storageType = StorageType.POSIX;
 			}
 		}
 		return storageType;

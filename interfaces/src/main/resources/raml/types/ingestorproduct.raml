@@ -4,8 +4,9 @@
     description: Variant of the RestProduct type with a reference to the data file location
     properties:
       sourceStorageType:
-        enum: [S3, ALLUXIO, POSIX]
+        type: string
         description: The type of the storage to ingest the data from
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       mountPoint:
         type: string
         description: The S3/POSIX/ALLUXIO mount point of the storage system to ingest from

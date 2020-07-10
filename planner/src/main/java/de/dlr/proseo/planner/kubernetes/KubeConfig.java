@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
