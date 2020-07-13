@@ -19,3 +19,5 @@ proseo:
         url: http://localhost:8090/castlemock/mock/rest/project/eW2ujU/application/79M2j9
     productClassManager:
         url: http://proseo-productclass-mgr:8080/proseo/productclass-mgr/v0.1
+    userManager:
+        url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
