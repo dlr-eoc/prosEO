@@ -46,6 +46,10 @@ public class ServiceConfiguration {
 	@Value("${proseo.facilityManager.url}")
 	private String facilityManagerUrl;
 	
+	/** Timeout for HTTP connections */
+	@Value("${proseo.http.timeout}")
+	private Long httpTimeout;
+	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -107,6 +111,15 @@ public class ServiceConfiguration {
 	 */
 	public String getFacilityManagerUrl() {
 		return facilityManagerUrl;
+	}
+
+	/**
+	 * Gets the default timeout for HTTP connections
+	 * 
+	 * @return the httpTimeout
+	 */
+	public Long getHttpTimeout() {
+		return httpTimeout;
 	}
 
 }

@@ -309,6 +309,10 @@ public class SimplePolicy extends PersistentObject {
 		for (SelectionItem item: items) {
 			if (item.startTime.isBefore(selectionStopTime) && item.stopTime.isAfter(selectionStartTime)) {
 				selectedItems.add(item);
+			} else if (startTime.equals(stopTime) &&
+					(item.startTime.equals(startTime) || item.stopTime.equals(stopTime))) {
+				// Special case of "point-in-time" products
+				selectedItems.add(item);
 			}
 		}
 		return selectedItems;
@@ -331,6 +335,12 @@ public class SimplePolicy extends PersistentObject {
 		// Test each of the items against the time interval and select the one with the latest generation time
 		for (SelectionItem item: items) {
 			if (item.startTime.isBefore(selectionStopTime) && item.stopTime.isAfter(selectionStartTime)) {
+				if (null == latestItem || item.generationTime.isAfter(latestItem.generationTime)) {
+					latestItem = item;
+				}
+			} else if (startTime.equals(stopTime) &&
+					(item.startTime.equals(startTime) || item.stopTime.equals(stopTime))) {
+				// Special case of "point-in-time" products
 				if (null == latestItem || item.generationTime.isAfter(latestItem.generationTime)) {
 					latestItem = item;
 				}

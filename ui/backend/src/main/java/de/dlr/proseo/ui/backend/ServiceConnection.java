@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 
 import org.apache.commons.io.IOUtils;
@@ -18,6 +19,7 @@ import org.apache.http.Header;
 import org.apache.http.auth.AUTH;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -57,6 +59,10 @@ public class ServiceConnection {
 	@Autowired
 	private RestTemplateBuilder rtb;
 	
+	/** Service configuration parameters */
+	@Autowired
+	private ServiceConfiguration config;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ServiceConnection.class);
 	
@@ -79,7 +85,9 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
 			String requestUrl = serviceUrl + requestPath;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
@@ -131,7 +139,9 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
 			RequestEntity<Void> requestEntity = RequestEntity.put(new URI(serviceUrl + requestPath)).build();
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
@@ -185,7 +195,9 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
 			String requestUrl = serviceUrl + requestPath;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
@@ -243,6 +255,7 @@ public class ServiceConnection {
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_ABSENT);
 		HttpClient httpclient = HttpClientBuilder.create().build();
 		HttpPatch req = new HttpPatch();
+		req.setConfig(RequestConfig.custom().setConnectTimeout(config.getHttpTimeout().intValue()).build());
 		try {
 			req.setURI(new URI(serviceUrl + requestPath));
 		} catch (URISyntaxException e) {
@@ -320,7 +333,9 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<Object> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
 			String requestUrl = serviceUrl + requestPath;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with DELETE", requestUrl);
 			//restTemplate.delete(requestUrl);

@@ -41,7 +41,7 @@ public class processorService {
  * @return list of processorClasses
  */
 	public Mono<ClientResponse> get(String mission, String processorName) {
-		String uri = "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
+		String uri = config.getProcessorManager() + "/processorclasses";
 		if(null != mission && null != processorName) {
 			uri += "?mission=" + mission + "&processorName=" + processorName;
 		} else if (null != processorName) {
@@ -60,11 +60,11 @@ public class processorService {
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
-		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getName(), ((UserDetails) auth.getPrincipal()).getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(mission + "-" + auth.getName(), ((UserDetails) auth.getPrincipal()).getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
 	public Mono<ClientResponse> getById(String id) {
-		String uri = "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
+		String uri = config.getProcessorManager() + "/processorclasses";
 		if(null != id ) {
 			uri += id;
 		} 
@@ -91,7 +91,7 @@ public class processorService {
 		String uri ="";
 		Map<String,Object> map = new HashMap<>();
 		if(null != mission  && null != processorClassName  && null != processorClassProductClass) {
-		uri += "https://proseo-registry.eoc.dlr.de/proseo/processor-mgr/v0.1/processorclasses";
+		uri += config.getProcessorManager() + "/processorclasses";
 		logger.trace("URI " + uri);
 		map.put("missionCode", mission);
 		map.put("processorName", processorClassName);
