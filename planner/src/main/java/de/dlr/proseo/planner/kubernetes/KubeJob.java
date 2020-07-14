@@ -263,17 +263,21 @@ public class KubeJob {
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
 		if (!aKubeConfig.isConnected()) {
-			logger.warn("Kubernetes configuration {} not connected", aKubeConfig);
+			Messages.KUBERNETES_NOT_CONNECTED.log(logger, aKubeConfig.getProcessingFacility().toString());
 			return null;
 		}
 		
 		Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
 		if (js.isEmpty()) {
-			// TODO message and return null?
-			return this;
+			Messages.JOB_STEP_NOT_FOUND.log(logger, this.getJobId());
+			return null;
 		}
 		
 		JobStep jobStep = js.get();
+		if (!jobStep.getOutputProduct().getConfiguredProcessor().getEnabled()) {
+			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
+			return null;
+		}
 		if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
 			jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
 		} else if (jobStep.getStdoutLogLevel() == null) {
@@ -402,7 +406,9 @@ public class KubeJob {
 				.withSpec(jobSpec)
 				.build();
 		try {
-			logger.info("Creating job {}", job.toString());
+			if (logger.isDebugEnabled()) {
+				logger.info("Creating job {}", job.toString());
+			}
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 			searchPod();

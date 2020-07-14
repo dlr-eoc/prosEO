@@ -30,6 +30,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.OrderState;
@@ -328,9 +329,7 @@ public class OrderDispatcher {
 					Set<ConfiguredProcessor> allConfiguredProcessors = order.getRequestedConfiguredProcessors();
 					List<ConfiguredProcessor> configuredProcessors = new ArrayList<ConfiguredProcessor>();
 					for (ConfiguredProcessor aCP : allConfiguredProcessors) {
-						if (aCP.getEnabled()) {
-							configuredProcessors.add(aCP);
-						}
+						configuredProcessors.add(aCP);
 					}
 					if (configuredProcessors.isEmpty()) {
 						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
@@ -674,8 +673,14 @@ public class OrderDispatcher {
 						startTime,
 						stopTime)) {
 			if (foundProduct.equals(p)) {
-				// it exists, nothing to do
-				return null;
+				if (!foundProduct.getProductFile().isEmpty()) {
+					for (ProductFile foundFile : foundProduct.getProductFile()) {
+						if (foundFile.getProcessingFacility().equals(job.getProcessingFacility())) {
+							// it exists, nothing to do
+							return null;
+						}
+					}
+				}
 			}
 		}
 
@@ -706,9 +711,7 @@ public class OrderDispatcher {
 				for (Processor p : productClass.getProcessorClass().getProcessors()) {
 					List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
 					for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
-						if (cp.getEnabled()) {
-							cplist.add(cp);
-						}
+						cplist.add(cp);
 					}
 					if (!cplist.isEmpty()) {
 						if (pFound == null) {
@@ -722,13 +725,11 @@ public class OrderDispatcher {
 				}
 				// search configured processor with newest configuration
 				for (ConfiguredProcessor cp : pFound.getConfiguredProcessors()) {
-					if (cp.getEnabled()) {
-						if (cpFound == null) {
+					if (cpFound == null) {
+						cpFound = cp;
+					} else {
+						if (cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
 							cpFound = cp;
-						} else {
-							if (cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
-								cpFound = cp;
-							}
 						}
 					}
 				}
