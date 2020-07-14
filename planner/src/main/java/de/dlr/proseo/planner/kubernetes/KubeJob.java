@@ -278,6 +278,13 @@ public class KubeJob {
 			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
 			return null;
 		}
+		Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
+		if (execTime != null) { 
+			if (Instant.now().isBefore(execTime)) {
+				if (logger.isTraceEnabled()) logger.trace(">>> execution time of order is after now.");
+				return null;
+			}
+		}
 		if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
 			jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
 		} else if (jobStep.getStdoutLogLevel() == null) {
