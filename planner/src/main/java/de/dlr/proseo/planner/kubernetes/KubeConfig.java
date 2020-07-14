@@ -349,7 +349,9 @@ public class KubeConfig {
                     client = Config.fromUrl(url, false);
                 }
 			}
-			client.setDebugging(true);
+			if (logger.isDebugEnabled()) {
+				client.setDebugging(true);
+			}
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();

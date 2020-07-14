@@ -247,7 +247,7 @@ public class SampleProcessor {
 				return false;
 			}
 			NodeList inputFileNames = ((Element) inputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME);
-			if (1 != inputFileNames.getLength()) {
+			if (1 > inputFileNames.getLength()) {
 				logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES, inputFileNames.getLength());
 				return false;
 			}
@@ -285,7 +285,7 @@ public class SampleProcessor {
 		}
 
 		NodeList configFileNames = ((Element) configurationFiles.item(0)).getElementsByTagName(JOF_TAG_CONFIG_FILE_NAME);
-		if (1 != configFileNames.getLength()) {
+		if (1 > configFileNames.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_CONFIGURATION_FILE_NAMES, configFileNames.getLength());
 			return false;
 		}
@@ -380,7 +380,7 @@ public class SampleProcessor {
 				return null;
 			}
 			NodeList inputFileNames = ((Element) inputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME);
-			if (1 != inputFileNames.getLength()) {
+			if (1 > inputFileNames.getLength()) {
 				logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES, inputFileNames.getLength());
 				return null;
 			}

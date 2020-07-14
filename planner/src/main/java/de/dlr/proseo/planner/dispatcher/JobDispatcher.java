@@ -10,6 +10,9 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +31,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Task;
@@ -155,11 +159,14 @@ public class JobDispatcher {
 						proc.getListOfInputs().add(sio);
 					}
 					// dynamic input files calculated by input products
+					// create IpfInput for each product class
+					Map<ProductClass, List<Product>> productClasses = new HashMap<ProductClass, List<Product>>();
 					for (ProductQuery pq : jobStep.getOutputProduct().getSatisfiedProductQueries()) {
 						for (Product p : pq.getNewestSatisfyingProducts()) {
-							addIpfIOInput(p, proc, jobStep);
+							addProductToMap(p, productClasses);
 						}
 					}
+					addIpfIOInput(productClasses, proc, jobStep);
 					Product p = jobStep.getOutputProduct();
 					addIpfIOOutput(p, proc, jobStep, ""); 
 					jobOrder.getListOfProcs().add(proc);
@@ -186,7 +193,7 @@ public class JobDispatcher {
 		}
 		return jobOrder;
 	}
-	
+
 	/**
 	 * Add input file definition of product p recursively.
 	 * @param p Product
@@ -205,6 +212,54 @@ public class JobDispatcher {
 		} else {
 			for (Product sp : p.getComponentProducts()) {
 				addIpfIOInput(sp, proc, jobStep);
+			}
+		}
+	}
+
+
+	/**
+	 * Add input file definition of product p recursively.
+	 * @param p Product
+	 * @param proc The Ipf_Proc
+	 * @param jobStep Job step
+	 */
+	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep) {
+		for (ProductClass pc : productClasses.keySet()) {
+			InputOutput sio = new InputOutput(pc.getProductType(), "Physical", "Input", null);
+			for (Product p : productClasses.get(pc)) {
+				if (p.getComponentProducts().isEmpty()) {
+					for (ProductFile pf : p.getProductFile()) {
+						String filePath = pf.getFilePath();
+						String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
+						sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
+					}
+				} else {
+					// not possible, because the product structure is flattened by addProductToMap
+				}
+			}
+			proc.getListOfInputs().add(sio);
+		}
+	}
+	
+	/**
+	 * Add the product to map productClasses. Collect all products of same class into one map element.
+	 * Don't add products with components (these products are seen as directory and are not handled by wrapper/processor.
+	 * 
+	 * @param p The Product
+	 * @param productClasses The map
+	 */
+	private void addProductToMap(Product p, Map<ProductClass, List<Product>> productClasses) {
+		if (p.getComponentProducts().isEmpty()) {
+			if (productClasses.containsKey(p.getProductClass())) {
+				productClasses.get(p.getProductClass()).add(p);
+			} else {
+				List<Product> plist = new ArrayList<Product>();
+				plist.add(p);
+				productClasses.put(p.getProductClass(), plist);
+			}
+		} else {
+			for (Product sp : p.getComponentProducts()) {
+				addProductToMap(sp, productClasses);
 			}
 		}
 	}
