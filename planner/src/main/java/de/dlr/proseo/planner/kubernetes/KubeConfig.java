@@ -349,7 +349,7 @@ public class KubeConfig {
                     client = Config.fromUrl(url, false);
                 }
 			}
-			if (logger.isDebugEnabled()) {
+			if (logger.isTraceEnabled()) {
 				client.setDebugging(true);
 			}
 			Configuration.setDefaultApiClient(client);

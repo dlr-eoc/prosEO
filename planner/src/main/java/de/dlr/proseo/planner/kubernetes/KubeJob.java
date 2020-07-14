@@ -413,7 +413,7 @@ public class KubeJob {
 				.withSpec(jobSpec)
 				.build();
 		try {
-			if (logger.isDebugEnabled()) {
+			if (logger.isTraceEnabled()) {
 				logger.info("Creating job {}", job.toString());
 			}
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
