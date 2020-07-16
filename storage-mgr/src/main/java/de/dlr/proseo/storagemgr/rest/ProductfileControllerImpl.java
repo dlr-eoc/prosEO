@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
 /**

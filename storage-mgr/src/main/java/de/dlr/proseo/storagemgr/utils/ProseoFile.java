@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.storagemgr.utils.StorageType;
 
 /**
  * Abstract definition of proseo file objects

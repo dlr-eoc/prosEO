@@ -19,7 +19,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.services.s3.S3Client;
-import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.storagemgr.utils.StorageType;
 
 /**
  * Proseo file representing POSIX file system
