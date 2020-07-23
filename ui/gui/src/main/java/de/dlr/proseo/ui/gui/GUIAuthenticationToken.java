@@ -30,6 +30,12 @@ public class GUIAuthenticationToken implements Authentication {
 		return principal.getUsername();
 	}
 
+	public String getPassword() {
+		return principal.getPassword();
+	}
+	public String getProseoName() {
+		return this.getMission() + "-" + this.getName();
+	}
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		// TODO Auto-generated method stub
@@ -50,6 +56,9 @@ public class GUIAuthenticationToken implements Authentication {
 	}
 	public void setDetails(String mission) {
 		this.mission = mission;
+	}
+	public String getMission() {
+		return mission;
 	}
 
 	@Override

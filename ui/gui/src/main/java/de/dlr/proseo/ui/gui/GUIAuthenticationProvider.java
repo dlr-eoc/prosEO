@@ -26,7 +26,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		Object principal = authentication.getPrincipal();
 		if (principal instanceof String) {
-			String[] userNameParts = ((String) principal).split("\\\\"); // --> regex "\\" --> matches "\"
+			String[] userNameParts = ((String) principal).split("/"); // --> regex "\\" --> matches "\"
 			if (userNameParts.length != 2) {
 				logger.error("Invalid Username (mission missing?): " + userNameParts);
 				throw new BadCredentialsException("Invalid Username (mission missing?)");

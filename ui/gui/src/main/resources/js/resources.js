@@ -48,9 +48,7 @@ var resources = {
 		close: 'Schließen',
 		rule: 'Regeln'
 	}
-		
-		
-	}
+}
 		
 		
 		

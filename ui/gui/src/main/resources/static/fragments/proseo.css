@@ -1,0 +1,234 @@
+body {
+  font-size: .875rem;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+/*
+ * Sidebar
+ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0 0; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+@media (max-width: 767.98px) {
+  .sidebar {
+    top: 5rem;
+  }
+}
+
+.sidebar-sticky {
+  position: relative;
+  top: 0;
+  height: calc(100vh - 48px);
+  padding-top: .5rem;
+  overflow-x: hidden;
+  overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+}
+
+@supports ((position: -webkit-sticky) or (position: sticky)) {
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+dropdown-item {
+  font-size: .875rem;
+}
+
+.navbar .nav-link,
+.sidebar .nav-link {
+  font-weight: 500;
+  color: #333;
+}
+
+.navbar .nav-link .feather,
+.sidebar .nav-link .feather {
+  margin-right: 4px;
+  color: #999;
+}
+
+.navbar .nav-link.active,
+.sidebar .nav-link.active {
+  color: #007bff;
+}
+
+.navbar .nav-link:hover,
+.sidebar .nav-link:hover {
+  color: #007bff;
+}
+
+.navbar .nav-link:hover .feather,
+.navbar .nav-link.active .feather,
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+  color: inherit;
+}
+
+.navbar-heading
+.sidebar-heading {
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+/*
+ * Navbar
+ */
+
+.navbar-brand {
+  font-size: 1rem;
+  background-color: rgba(0, 0, 0, .25);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+}
+
+.navbar .navbar-toggler {
+  top: .25rem;
+  right: 1rem;
+}
+
+.navbar .form-control {
+  padding: .75rem 1rem;
+  border-width: 0;
+  border-radius: 0;
+}
+
+.form-control-dark {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .1);
+}
+
+.form-control-dark:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+
+
+.p-breadcrumb-item {
+  display: -ms-flexbox;
+  display: flex;
+  color: #333;
+  font-weight: 500;
+}
+
+.p-breadcrumb-item + .p-breadcrumb-item {
+  padding-left: 0.5rem;
+  font-weight: 500;
+}
+
+.p-breadcrumb-item + .p-breadcrumb-item::before {
+  display: inline-block;
+  padding-right: 0.5rem;
+  color: #333;
+  content: "/";
+}
+
+.p-breadcrumb-item.active {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.bread-link {
+  color: #333;
+  font-weight: 500;
+}
+
+.bread-link:hover, .bread-link:focus {
+  text-decoration: none;
+  color: #007bff;
+}
+
+.bd-placeholder-img {
+	font-size: 1.125rem;
+	text-anchor: middle;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+@media ( min-width : 768px) {
+	.bd-placeholder-img-lg {
+		font-size: 3.5rem;
+	}
+}
+
+.navbar {
+  padding-top: 0rem;
+  padding-left 0px !important;
+}
+
+.navbar-left {
+  padding-left: 1.75rem;
+}
+
+.navbar-brand  {
+  padding-top: 0px !important;
+  padding-bottom: 2px !important;
+}
+
+.flag-icon-background {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+}
+.flag-icon {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  position: relative;
+  display: inline-block;
+  width: 1.33333333em;
+  line-height: 1em;
+}
+.flag-icon:before {
+  content: "\00a0";
+}
+.flag-icon.flag-icon-squared {
+  width: 1em;
+}
+.flag-icon-de {
+  background-image: url(../flags/4x3/de.svg);
+}
+.flag-icon-de.flag-icon-squared {
+  background-image: url(../flags/1x1/de.svg);
+}
+.flag-icon-gb {
+  background-image: url(../flags/4x3/gb.svg);
+}
+.flag-icon-gb.flag-icon-squared {
+  background-image: url(../flags/1x1/gb.svg);
+}
+.flag-icon-en {
+  background-image: url(../flags/4x3/gb.svg);
+}
+.flag-icon-en.flag-icon-squared {
+  background-image: url(../flags/1x1/gb.svg);
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 0.25rem !important;
+}
+
+.table td, 
+.table th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 0.25rem !important;
+}
+

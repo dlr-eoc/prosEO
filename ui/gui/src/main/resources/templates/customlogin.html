@@ -61,25 +61,15 @@
   	</div>
   	<fieldset class="form-group">
   	<div class="row">
-  	<legend class="col-form-label col-sm-2 pt-0"><span th:text="#{missions}"></span></legend>
-  	<div class="col-sm-10">
-    	<div class="form-check">
-    	<input class="form-check-input" type="radio" name="missionRadio" id="mission1" value="Sentinel-5P" checked>
-    	<label class="form-check-label" for="mission1">
-    	Sentinel-5P
-    	</label>
-    	</div>
-    	<div class="form-check">  
-    	<input class="form-check-input" type="radio" name="missionRadio" id="mission2" value="TerraSAR-X">
-    	<label class="form-check-label" for="mission2">
-    	TerraSAR-X
-    	</label>
-    	</div> 
-    	<div class="form-check">  
-    	<input class="form-check-input" type="radio" name="missionRadio" id="mission3" value="TanDEM-X">
-    	<label class="form-check-label" for="mission3">
-    	TanDEM-X
-    	</label>
+  	<label  class="col-form-label col-sm-2 pt-0">
+  	  <span th:text="#{missions}"></span>
+    </label>
+    <div class="col-sm-10">
+      <select name="mission" id="mission">
+        <option th:each="miss : ${missions}" th:text="${miss}" th:label="${miss}"></option>
+      </select>
+    </div>
+      
     	</div>
     	</div>
     	</div>

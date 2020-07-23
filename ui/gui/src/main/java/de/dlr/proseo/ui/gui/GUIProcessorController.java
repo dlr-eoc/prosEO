@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 
-public class GUIProcessorController {
+public class GUIProcessorController extends GUIBaseController {
 	
     
     @RequestMapping(value = "/processor-show")

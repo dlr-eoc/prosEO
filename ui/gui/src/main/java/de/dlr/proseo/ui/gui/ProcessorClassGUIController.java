@@ -20,16 +20,17 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
+import de.dlr.proseo.ui.gui.service.ProcessorService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Controller
-public class ProcessorClassGUIController {
+public class ProcessorClassGUIController extends GUIBaseController {
 
 
 	/** WebClient-Service-Builder */
 	@Autowired
-	private processorService processorService;
+	private ProcessorService processorService;
 	/** List for query Results */
 	private List<String> procs1 = new ArrayList<>();
 

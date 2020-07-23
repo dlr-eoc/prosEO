@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 
-public class GUISettingsController {
+public class GUISettingsController extends GUIBaseController {
 	
     
     
