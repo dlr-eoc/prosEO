@@ -49,11 +49,6 @@ public class GUIController {
         
     }
 
-	@GetMapping("/freemarker") 
-	public String index(Model model) {
-		return "home.html";
-
-	}
     @GetMapping("/customlogin") 
     public String index12(Model model) {
     	return "customlogin.html";

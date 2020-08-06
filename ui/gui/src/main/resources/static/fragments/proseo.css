@@ -232,3 +232,101 @@ td, th {
   padding: 0.25rem !important;
 }
 
+.first-row {  
+  border-top: 2px solid #dddddd;
+}
+
+.select-up {
+  white-space: nowrap;
+}
+
+.select-up::after {
+  content: ' ↓';
+}
+.select-down::after {
+  content: ' ↑';
+}
+
+.cursorpointer {
+   cursor: pointer;
+}
+
+dialog {
+  display: none;
+  position: relative;
+  z-index:1002;
+
+}
+
+dialog[open="open"] {
+    display: block;
+}
+
+dialog::backdrop, #backdrop {      
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);    
+}
+
+.selectfacility {
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+
+.dialogtitle {  
+  font-size: 1rem;
+  font-weight: 550;
+}
+
+.order-menu-link {
+  padding: 0 0 !important;
+}
+.order-menu-img {
+  height: 75%;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.p-in-td {
+  margin-bottom: 0 !important;
+}
+
+.filtercontent {
+  display: none;
+}
+
+.emptycol {
+  width: 1em;
+  
+}
+
+code {
+  font-family: monospace;
+  white-space: pre;
+  color: inherit;
+}
+
+.code {
+  font-family: monospace;
+  white-space: pre;
+  color: inherit;
+  width: 100%;
+}
+
+.plandialog {
+  width: 15em;
+}
+
+
+.table .thead-proseo th {
+  color: #1b1e21;
+  background-color: #d6d8d9;
+  border-color: #c6c8ca;
+  font-weight: 500 !important;
+}

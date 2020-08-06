@@ -49,7 +49,7 @@
 
 					<div class="input-group mb-3">
 						<p class="text-left">
-							<label for="orderid"><span th:text="#{order-id}"></span></label>
+							<label><span th:text="#{order-id}"></span></label>
 							<input type="text" class="form-control" id="orderid">
 						</p>
 					</div>
@@ -68,7 +68,7 @@
 						</p>
 					</div>
 					<div class="input-group mb-3">
-						<button type="button" onclick="retrieveData();"
+						<button id="orderselect" type="button" onclick="retrieveData();"
 							class="btn btn-primary mb-2">
 							<span th:text="#{order-show}"></span>
 						</button>
@@ -81,15 +81,18 @@
 					<span th:text="#{order}"></span>
 				</h2>
 
-				<div id="content" name="content">
+				<div id="orderscontent" name="orderscontent">
 					<table class="table table-hover" id="orderTable">
-						<thead class="thead-dark">
+						<thead class="thead-light">
 							<tr>
-								<th><span th:text="#{order-id}"></span></th>
-								<th><span th:text="#{processing-order}"></span></th>
-								<th><span th:text="#{orderstate}"></span></th>
-								<th><span th:text="#{orbit}"></span></th>
-                <th><span th:text="#{product}"></span></th>
+								<th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
+								    class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
+								<th onclick="selectOrder('select-identifier', ['select-id', 'select-state'])" 
+								    class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
+								<th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
+								    class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+								<th><span th:text="#{orbit}">orbit</span></th>
+                <th><span th:text="#{product}">product</span></th>
                 <th><span>&nbsp;</span></th>
 							</tr>
 						</thead>
@@ -99,6 +102,7 @@
 							<!-- 				  table-warning  - light sand -->
 							<!-- 				  table-success  - light green -->
 							<tr th:each="ord : ${orders}"
+							  th:id="${ord?.id}"
 								th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
 					                ? 'table-danger' 
 					                : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
@@ -108,31 +112,13 @@
 					                        : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
 					                            ? 'table-warning' 
 					                            : 'table-danger')))">
-								<td><button type="button" class="collapsible"
-										th:text="${ord?.id}"></button></td>
+								<td><a th:href="'/order?id=' + ${ord?.id}"
+										th:text="${ord?.id}"></a></td>
 								<td th:text="${ord?.identifier}"></td>
-								<td th:text="${ord?.state}"></td>
+								<td th:text="${ord?.orderState}"></td>
 								<td th:text="${ord?.orbits}"></td>
                 <td th:text="${ord?.requestedProductClasses}"></td>
-								<td><div class="dropdown">
-										<a class="nav-link " data-toggle="dropdown"
-											aria-haspopup="true" aria-expanded="false" role="button"><img
-											alt="Menu" src="more-vertical.svg"></span></a>
-										<div class="dropdown-menu">
-                      <a class="dropdown-item" href="#"><span th:text="#{approve}">approve</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{plan}">plan</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{release}">release</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{suspend}">suspend</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{suspendforce}">suspendforce</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{resume}">resume</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{reset}">reset</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{cancel}">cancel</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{close}">close</span></a>
-                      <a class="dropdown-item" href="#"><span th:text="#{delete}">delete</span></a>
-											<div class="dropdown-divider"></div>
-											<a class="dropdown-item" href="#">Separated link</a>
-										</div>
-									</div></td>
+								<td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
 							</tr>
 						</tbody>
 						<!--  <tr class = "table-danger">
@@ -165,32 +151,223 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
+<script>
+  var input = document.getElementById("orderid");
+  input.addEventListener("keyup", function(event) {
+    if (event.keyCode === 13) {
+      event.preventDefault();
+      document.getElementById("orderselect").click();
+    }
+  });
+</script>
   <script type="text/javascript">
+    function selectOrder(ele, others) {
+      var elem = $("#" + ele);
+      var sel = "select-down";
+      var newsel = "select-up";
+      var styles = $(elem).attr("class");
+      if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+            var s = styless[i];
+          if (s == "select-up") {
+            sel = "select-up";
+            newsel = "select-down";
+            break;
+          } else if (s == "select-down") {
+            sel = "select-down";
+            newsel = "select-up";
+            break;
+          }
+        }
+      }
+      $(elem).removeClass(sel);
+      $(elem).addClass(newsel);
+      for (i = 0; i < others.length; i++) {
+    	  var e = others[i];
+      var eleidentifier = $("#" + e);
+        $(eleidentifier).removeClass("select-up");
+        $(eleidentifier).removeClass("select-down");
+      }
+      retrieveData();
+    };
+ 
+    function plan(oId, state) {
+      var dialog = document.getElementById('plan' + oId);
+      var ok = document.getElementById('ok' + oId);
+      var cancel = document.getElementById('cancel' + oId);
+      if (!dialog.hasAttribute('open')) {
+    	    // show the dialog 
+          var div = document.createElement('div');
+          div.id = 'backdrop';
+          document.body.appendChild(div); 
+    	    dialog.setAttribute('open','open');
+    	    ok.addEventListener('click', 
+    	    	function () {
+    	    	  var menu = document.getElementById('facilities' + oId);
+    	    	  var facility = menu.options[menu.selectedIndex].value;
+    	    	  doPlan(oId, facility);
+    	          var dialog = document.getElementById('plan' + oId);
+    	          dialog.removeAttribute('open');  
+    	          var div = document.querySelector('#backdrop');
+                  if (div != null) {
+                      div.parentNode.removeChild(div);
+                    }
+    	      }
+    	    );
+    	    cancel.addEventListener('click',  
+            function () {
+                var dialog = document.getElementById('plan' + oId);
+                dialog.removeAttribute('open');  
+                var div = document.querySelector('#backdrop');
+                if (div != null) {
+                	div.parentNode.removeChild(div);
+                }
+            }
+          );
+      }
+    };
+
+    function doPlan(oId, facility) {
+      var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
+      var row = document.getElementById(oId);
+      
+      $.ajax({
+        url : url,
+        method : "POST",
+        success : function(res) {
+          retrieveData();
+        },
+        fail : function(err) {
+          console.log(err);
+          prop.innerHTML = "Fehler!" + err;
+        }
+      });
+    };
+    
+    function setState(oId, state) {
+        var url = "/order-state/post?id=" + oId + "&state=" + state;
+        var row = document.getElementById(oId);
+
+        var method = 'POST';
+        if (state == 'DELETE') {
+           method = 'DELETE';
+        } else {
+        }
+        $.ajax({
+          url : url,
+          method : method,
+          success : function() {
+            retrieveData();
+          },
+          fail : function(err) {
+            console.log(err);
+            prop.innerHTML = "Fehler!" + err;
+          },
+          complete: function() {
+              if (state == 'DELETE') {
+            	  retrieveData();                  
+              }
+          }
+        });
+      };
+    
     function retrieveData() {
       var tableRows = $("orderTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("orderTable > tbody").empty();
       }
-      var mission = document.getElementById('orderid').value;
-      if (mission == null) {
-        mission = "";
+      var url = "/order-show/get"
+      var divider = "?";
+      var ident = document.getElementById('orderid').value;
+      var sortcol = "id";
+      var up = true;
+      var done = false;
+      var elem = $("#select-identifier");
+      var styles = $(elem).attr("class");
+      if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+        	var s = styless[i];
+          if (s == "select-up") {
+            done = true;
+            sortcol = "identifier";
+            up = true;
+            break;
+          } else if (s == "select-down") {
+            done = true;
+            sortcol = "identifier";
+            up = false;
+            break;
+          }
+        }
       }
-      var url = "/order-show/get?identifier=" + mission;
+      if (!done) {
+      var elem = $("#select-id");
+      styles = $(elem).attr("class");
+      if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+            var s = styless[i];
+          if (s == "select-up") {
+            done = true;
+            sortcol = "id";
+            up = true;
+            break;
+          } else if (s == "select-down") {
+            done = true;
+            sortcol = "id";
+            up = false;
+            break;
+          }
+        }
+        }
+      }
+      if (!done) {
+      var elem = $("#select-state");
+      styles = $(elem).attr("class");
+      if (styles != null) {
+        var styless = styles.split(" ");
+        for (i = 0; i < styless.length; i++) {
+            var s = styless[i];
+          if (s == "select-up") {
+            done = true;
+            sortcol = "orderState";
+            up = true;
+            break;
+          } else if (s == "select-down") {
+            done = true;
+            sortcol = "orderState";
+            up = false;
+            break;
+          }
+        }
+        }
+      }
+      
+      if (ident != null) {
+        url = url + divider + "identifier=" + ident.trim();
+        divider = "&";
+      }
+        url = url + divider + "sortby=" + sortcol;
+        divider = "&";
+        url = url + divider + "up=" + up;
+        divider = "&";
       var prop = document.getElementById('test');
 
       $.ajax({
         url : url,
         method : "GET",
         success : function(res) {
-          $("#content").html(res);
+          $("#orderscontent").html(res);
         },
         fail : function(err) {
           console.log(err);
           prop.innerHTML = "Fehler!" + err;
         }
-
       });
     };
+    
   </script>
 <script>
     window.onload = function () {
@@ -198,6 +375,7 @@
      var elem = document.getElementById('sb-order');
      $(elem).addClass('active');
      feather.replace();
+     var myid = getURLParam('id');
      retrieveData();
      
     }

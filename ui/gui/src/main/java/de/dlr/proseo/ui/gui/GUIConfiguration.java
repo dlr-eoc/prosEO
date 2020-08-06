@@ -25,7 +25,18 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	/** The base URI for the prosEO Order Manager */
 	@Value("${proseo.orderManager.url}")
 	private String orderManager;
+
+	/** The base URI for the prosEO Planner */
+	@Value("${proseo.productionPlanner.url}")
+	private String productionPlanner;
 	
+	/**
+	 * @return the productionPlanner
+	 */
+	public String getProductionPlanner() {
+		return productionPlanner;
+	}
+
 	/**
 	 * @return the orderManager
 	 */

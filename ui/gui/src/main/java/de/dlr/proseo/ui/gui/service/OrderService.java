@@ -50,4 +50,103 @@ public class OrderService {
 		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
+
+	public Mono<ClientResponse> getId(String id) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = config.getOrderManager() + "/orders";
+		// get one order identified by id.
+		if(null != id && !id.trim().isEmpty()) {
+			uri += "/" + id.trim();
+		} else {
+			uri += "/0";
+		}
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+
+	}
+	
+	public Mono<ClientResponse> getJobsOfOrder(String id) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = config.getProductionPlanner() + "/jobs";
+		// get one order identified by id.
+		if(null != id && !id.trim().isEmpty()) {
+			uri += "?orderid=" + id.trim();
+		}
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+
+	}
+	
+	public Mono<ClientResponse> setState(String orderId, String state, String facility) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = config.getProductionPlanner() + "/orders";
+		String method = "patch";
+		if (state.equalsIgnoreCase("approve")) {
+			uri += "/approve/" + orderId;
+		} else if (state.equalsIgnoreCase("plan")) {
+			uri += "/plan/" + orderId;
+			uri += "?facility=" + facility;
+			method = "put";
+		} else if (state.equalsIgnoreCase("release")) {
+			uri += "/release/" + orderId;
+		} else if (state.equalsIgnoreCase("suspend")) {
+			uri += "/suspend/" + orderId;
+		} else if (state.equalsIgnoreCase("suspendforce")) {
+			uri += "/suspend/" + orderId + "?force=true";
+		} else if (state.equalsIgnoreCase("resume")) {
+			uri += "/resume/" + orderId;
+		} else if (state.equalsIgnoreCase("reset")) {
+			uri += "/reset/" + orderId;
+		} else if (state.equalsIgnoreCase("cancel")) {
+			uri += "/cancel/" + orderId;
+		} else if (state.equalsIgnoreCase("retry")) {
+			uri += "/retry/" + orderId;
+		} else if (state.equalsIgnoreCase("close")) {
+			uri += "/close/" + orderId;
+		} else if (state.equalsIgnoreCase("delete")) {
+			uri += "/" + orderId;
+			method = "delete";
+		} 
+			
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		Mono<ClientResponse> answer = null;
+		if (method.equals("patch")) {
+			answer = webclient.build().patch().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("put")) {
+			answer = webclient.build().put().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("delete")) {
+			answer = webclient.build().delete().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		}
+		return answer;
+	}
 }

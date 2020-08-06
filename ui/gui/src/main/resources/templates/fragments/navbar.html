@@ -1,0 +1,39 @@
+
+<div th:fragment="navbarLeft">
+      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+        href="/"><img src="proseo_logo.png" class="rounded" width="50"
+        height="50"></a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button" data-toggle="collapse" data-target="#sidebarMenu"
+        aria-controls="sidebarMenu" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+</div>
+
+<div th:fragment="navbarRight">
+      <ul class="nav navbar-nav px-3 navbar-right">
+        <li class="nav-item text-nowrap">
+        <li class="nav-item dropdown text-nowrap"><a
+          class="nav-link dropdown-toggle" id="dropdown09"
+          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+            data-feather="user"></span><span th:text="${user}"> user</span></a>
+          <div class="dropdown-menu  dropdown-menu-right">
+            <a class="dropdown-item" href="/customlogin"><span
+              data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
+            </a>
+          </div></li>
+        <li class="nav-item dropdown text-nowrap"><a
+          class="nav-link dropdown-toggle" id="dropdown09"
+          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+            class="flag-icon flag-icon-de"
+            th:class="'flag-icon flag-icon-' + ${#locale}"> </span> <span
+            th:text="#{${#locale}}"> language</span></a>
+          <div class="dropdown-menu  dropdown-menu-right">
+            <a class="dropdown-item" onclick="selectLang('DE')"><span
+              class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
+            </a> <a class="dropdown-item" onclick="selectLang('EN')"><span
+              class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
+          </div></li>
+      </ul>
+</div>
