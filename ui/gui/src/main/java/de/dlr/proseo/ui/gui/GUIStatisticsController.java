@@ -90,7 +90,7 @@ public class GUIStatisticsController extends GUIBaseController {
 					// now we have to add order id to create a reference
 					for (Object o : failedjobsteps) {
 						if (o instanceof HashMap) {
-							HashMap h = (HashMap) o;
+							HashMap<String, Object> h = (HashMap<String, Object>) o;
 							String jobId = h.get("jobId").toString();
 							String ordIdent = statisticsService.getOrderIdentifierOfJob(jobId, auth);
 							String ordId = statisticsService.getOrderIdOfIdentifier(ordIdent, auth);
@@ -114,6 +114,7 @@ public class GUIStatisticsController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
+	
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/completedjobsteps/get")
 	public DeferredResult<String> getCompletedJobsteps(
@@ -123,6 +124,7 @@ public class GUIStatisticsController extends GUIBaseController {
 		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED");
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -146,7 +148,17 @@ public class GUIStatisticsController extends GUIBaseController {
 					} else {
 						completedjobsteps = jobsteps;
 					}
-					 
+					// now we have to add order id to create a reference
+					for (Object o : completedjobsteps) {
+						if (o instanceof HashMap) {
+							HashMap<String, Object> h = (HashMap<String, Object>) o;
+							String jobId = h.get("jobId").toString();
+							String ordIdent = statisticsService.getOrderIdentifierOfJob(jobId, auth);
+							String ordId = statisticsService.getOrderIdOfIdentifier(ordIdent, auth);
+							h.put("orderIdentifier", ordIdent);
+							h.put("orderId", ordId);
+						}
+					}					 
 					model.addAttribute("completedjobsteps", completedjobsteps);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + completedjobsteps.toString());

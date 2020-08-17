@@ -101,7 +101,7 @@ public class StatisticsService {
 		String jobId = "";
 		try {
 			result = serviceConnection.getFromService(config.getOrderManager(),
-					"/orders?identifier=id", HashMap.class, auth.getProseoName(), auth.getPassword());
+					"/orders?identifier=" + id, List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -121,9 +121,11 @@ public class StatisticsService {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			return jobId;
 		}
-
-		if (result instanceof HashMap) {
-			jobId = (String) ((HashMap)result).get("id").toString();
+		if (result instanceof List) {
+			List res = (List) result;
+			if (res.size() == 1) {
+				jobId = (String) ((HashMap)(res.get(0))).get("id").toString();
+			}
 		}
 		return jobId;
 	}

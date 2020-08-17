@@ -301,6 +301,7 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -316,10 +317,60 @@ public class GUIOrderController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobList -> {
 					jobs.addAll(jobList);
+					for (Object o : jobs) {
+						if (o instanceof HashMap) {
+							HashMap<String, Object> h = (HashMap<String, Object>) o;
+							String jobId = h.get("id").toString();
+							HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
+							h.put("graph", result);
+						}
+					}
 					model.addAttribute("jobs", jobs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());
 					deferredResult.setResult("order :: #jobscontent");
+					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+				});
+			}
+			logger.trace(">>>>MODEL" + model.toString());
+
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>>MONO" + jobs.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		return deferredResult;
+	}
+
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/jobs/graph")
+	public DeferredResult<String> getGraphOfJob(
+			@RequestParam(required = true, value = "jobid") String id,
+			Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getId({}, model)", id);
+		Mono<ClientResponse> mono = orderService.getGraphOfJob(id);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<Object> jobs = new ArrayList<>();
+		mono.subscribe(clientResponse -> {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().is5xxServerError()) {
+				logger.trace(">>>Server side error (HTTP status 500)");
+				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				deferredResult.setResult("order :: #jobscontent");
+				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is4xxClientError()) {
+				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				deferredResult.setResult("order :: #jobscontent");
+				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				clientResponse.bodyToMono(HashMap.class).subscribe(jobgraph -> {
+					jobs.add(jobgraph);
+					model.addAttribute("jobgraph", jobs);
+					logger.trace(model.toString() + "MODEL TO STRING");
+					logger.trace(">>>>MONO" + jobs.toString());
+					deferredResult.setResult("order :: #jobgraph");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
 			}

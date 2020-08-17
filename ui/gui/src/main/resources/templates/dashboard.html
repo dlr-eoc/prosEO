@@ -13,6 +13,86 @@
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+            <style>
+              .bd-placeholder-img {
+              font-size: 1.125rem;
+              text-anchor: middle;
+              -webkit-user-select: none;
+              -moz-user-select: none;
+              -ms-user-select: none;
+              user-select: none;
+              }
+
+              .progress {
+              width: 150px;
+              height: 150px;
+              background: none;
+              position: relative;
+              }
+
+              .progress::after {
+              content: "";
+              width: 100%;
+              height: 100%;
+              border-radius: 50%;
+              border: 6px solid #eee;
+              position: absolute;
+              top: 0;
+              left: 0;
+              }
+
+              .progress>span {
+              width: 50%;
+              height: 100%;
+              overflow: hidden;
+              position: absolute;
+              top: 0;
+              z-index: 1;
+              }
+
+              .progress .progress-left {
+              left: 0;
+              }
+
+              .progress .progress-bar {
+              width: 100%;
+              height: 100%;
+              background: none;
+              border-width: 6px;
+              border-style: solid;
+              position: absolute;
+              top: 0;
+              }
+
+              .progress .progress-left .progress-bar {
+              left: 100%;
+              border-top-right-radius: 80px;
+              border-bottom-right-radius: 80px;
+              border-left: 0;
+              -webkit-transform-origin: center left;
+              transform-origin: center left;
+              }
+
+              .progress .progress-right {
+              right: 0;
+              }
+
+              .progress .progress-right .progress-bar {
+              left: -100%;
+              border-top-left-radius: 80px;
+              border-bottom-left-radius: 80px;
+              border-right: 0;
+              -webkit-transform-origin: center right;
+              transform-origin: center right;
+              }
+
+              .progress .progress-value {
+              position: absolute;
+              top: 0;
+              left: 0;
+              }
+
+            </style>
   </head>
 
   <body>
@@ -31,9 +111,8 @@
         <ul class="navbar-nav mr-auto navbar-left">
           <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
                 th:text="${missioncode}">mission</span></a></li>
-          <li class="p-breadcrumb-item"><a class="bread-link" href="/order-show"><span
-                th:text="#{order}">order</span></a></li>
-          <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-name"></span></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span
+                th:text="#{dashboard}">dashboard</span></li>
         </ul>
         <div th:replace="fragments/navbar.html :: navbarRight"></div>
       </div>
@@ -43,7 +122,10 @@
       <div class="row">
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">       
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4"> 
+        <h5>
+          <span th:text="#{lastfailed}"></span> <span th:text="#{jobsteps}"></span>
+        </h5>
           <div id="failedjs" name="failedjs">
             <div th:unless="${#arrays.isEmpty(failedjobsteps)}">
               <table class="table table-hover">
@@ -51,9 +133,9 @@
                 <tbody>
                   <div th:each="jobstep : ${failedjobsteps}">
                     <tr class="table-danger">
-                      <td><a th:href="'order?id=' + ${jobStep?orderId} + '&sh=true&jsh=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&sh=true&jsh=' + ${jobstep?.jobId} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
                       <td><span th:text="${jobstep?.jobStepState}"></span></td>
-                      <td><span th:text="${jobstep?.orderIdentifier}"></span></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
                       <td><span th:text="${jobstep?.inputProductClasses}"></span></td>
                       <td><span th:text="${jobstep?.outputProductClass}"></span></td>
@@ -68,6 +150,9 @@
             </div>
           </div>
           
+        <h5>
+          <span th:text="#{lastcompleted}"></span> <span th:text="#{jobsteps}"></span>
+        </h5>
           <div id="completedjs" name="completedjs">
             <div th:unless="${#arrays.isEmpty(completedjobsteps)}">
               <table class="table table-hover" th:unless="${#arrays.isEmpty(completedjobsteps)}">
@@ -75,9 +160,9 @@
                 <tbody>
                   <div th:each="jobstep : ${completedjobsteps}">
                     <tr class="table-success">
-                      <td><span th:text="${jobstep?.id}"></span></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&sh=true&jsh=' + ${jobstep?.jobId} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
                       <td><span th:text="${jobstep?.jobStepState}"></span></td>
-                      <td><span th:text="${jobstep?.version}"></span></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
                       <td><span th:text="${jobstep?.inputProductClasses}"></span></td>
                       <td><span th:text="${jobstep?.outputProductClass}"></span></td>
@@ -90,7 +175,41 @@
                 </tbody>
               </table>
             </div>
-          </div>
+          </div>           
+            <div class="row">
+              <div class="col-md-3">
+                <div class="bg-white rounded-lg p-5 shadow">
+                  <h2 class="h6 font-weight-bold text-center mb-4">Completed Orders</h2>
+
+                  <div class="progress mx-auto" data-value='80'>
+                    <span class="progress-left"> <span
+                        class="progress-bar border-primary"></span>
+                    </span> <span class="progress-right"> <span
+                        class="progress-bar border-primary"></span>
+                    </span>
+                    <div
+                      class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                      <div class="h2 font-weight-bold">
+                        80<sup class="small">%</sup>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="row text-center mt-4">
+                    <div class="col-6 border-right">
+                      <div class="h4 font-weight-bold mb-0">30%</div>
+                      <span class="small text-gray">Last 3 days</span>
+                    </div>
+                    <div class="col-6">
+                      <div class="h4 font-weight-bold mb-0">80%</div>
+                      <span class="small text-gray">Last Week</span>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+                    
           <div th:insert="fragments/footer.html :: footer"></div>
         </main>
       </div>
@@ -179,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 	  getFailedJobSteps(10);
     getCompletedJobSteps(10);
   }, 
-  5000);
+  30000);
 });
 
 $(function() {

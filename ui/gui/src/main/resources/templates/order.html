@@ -234,7 +234,7 @@
                   </tr>
                   <tr>
                     <td class="emptycol"></td>
-                    <td colspan="8">
+                    <td colspan="7">
                       <table class="table table-hover" th:id="'jobsteps' + ${job?.id}">
                         <thead class="thead-proseo">
                           <tr>
@@ -284,6 +284,8 @@
                           </div>
                         </tbody>
                       </table>
+                    </td>
+                    <td><span  class="filtercontent code" th:id="'togglejsg' + ${job?.id}" th:utext="${job?.graph}"></span>
                     </td>
                   </tr>
                 </div>
@@ -348,12 +350,14 @@
   function toggleJS(id) {
       var eleshow = document.getElementById("jss" + id);
       var elehide = document.getElementById("jsh" + id);
-    var content = document.getElementById("togglejsb" + id);
+      var content = document.getElementById("togglejsb" + id);
+      var graph = document.getElementById("togglejsg" + id);
     var secondhead = document.getElementById("togglejsh2" + id);
     var thirdhead = document.getElementById("togglejsh3" + id);
     $(secondhead).toggleClass("filtercontent");   
     $(thirdhead).toggleClass("filtercontent");   
     $(content).toggleClass("filtercontent");
+    $(graph).toggleClass("filtercontent");
     if ($(content).css("display") === "none") {
         $(eleshow).show();
         $(elehide).hide();
@@ -534,6 +538,10 @@
               var jsh = getURLParams('jsh'); 
               for (var i = 0; i < jsh.length; i++) {
                   toggleJS(jsh[i]);
+              }
+              var t = getURLParams('t'); 
+              for (var i = 0; i < t.length; i++) {
+            	  window.location.href = '#' + t[i];
               }
             },
             fail : function(err) {
