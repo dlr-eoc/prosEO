@@ -13,8 +13,8 @@
 
 <div th:fragment="navbarRight">
       <ul class="nav navbar-nav px-3 navbar-right">
-        <li class="nav-item text-nowrap">
-        <li class="nav-item dropdown text-nowrap"><a
+        
+        <li class="nav-item dropdown text-nowrap btn"><a
           class="nav-link dropdown-toggle" id="dropdown09"
           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
             data-feather="user"></span><span th:text="${user}"> user</span></a>
@@ -23,16 +23,16 @@
               data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
             </a>
           </div></li>
-        <li class="nav-item dropdown text-nowrap"><a
+        <li class="nav-item dropdown text-nowrap btn"><a
           class="nav-link dropdown-toggle" id="dropdown09"
           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
             class="flag-icon flag-icon-de"
             th:class="'flag-icon flag-icon-' + ${#locale}"> </span> <span
             th:text="#{${#locale}}"> language</span></a>
           <div class="dropdown-menu  dropdown-menu-right">
-            <a class="dropdown-item" onclick="selectLang('DE')"><span
+            <a class="dropdown-item btn" onclick="selectLang('DE')"><span
               class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
-            </a> <a class="dropdown-item" onclick="selectLang('EN')"><span
+            </a> <a class="dropdown-item btn" onclick="selectLang('EN')"><span
               class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
           </div></li>
       </ul>
