@@ -40,15 +40,19 @@ public class ProcessorService {
  * @param processorName to get
  * @return list of processorClasses
  */
-	public Mono<ClientResponse> get(String mission, String processorName) {
+	public Mono<ClientResponse> get(String processorName) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
 		String uri = config.getProcessorManager() + "/processorclasses";
-		if(null != mission && null != processorName) {
-			uri += "?mission=" + mission + "&processorName=" + processorName;
-		} else if (null != processorName) {
-			uri += "?processorName=" + processorName;
-		} else if (null != mission) { 
-			uri += "?mission=" + mission;
+		String divider = "?";
+		if(null != mission && !mission.isEmpty()) {
+			uri += divider + "mission=" + mission;
+			divider = "&";
 		} 
+		if (null != processorName && !processorName.isEmpty()) {
+			uri += divider + "processorName=" + processorName;
+			divider = "&";
+		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {
@@ -56,7 +60,6 @@ public class ProcessorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );

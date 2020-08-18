@@ -140,11 +140,11 @@
                   <div th:each="ifilt : ${ord?.inputFilters}">
                     <div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
                       <tr th:if="${iterStat.first} == true" class="first-row">
-                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}"><span th:text="#{inputfilter}">inputfilter</span></td>
-                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}"><span th:text="${ifilt?.productClass}"></span></td>
-                        <td><span th:text="${fcond?.key}"></span></td>
-                        <td><span th:text="${fcond?.parameterType}"></span></td>
-                        <td><span th:text="${fcond?.parameterValue}"></span></td>
+                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="#{inputfilter}">inputfilter</span></td>
+                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="${ifilt?.productClass}"></span></td>
+                        <td class="first-row"><span th:text="${fcond?.key}"></span></td>
+                        <td class="first-row"><span th:text="${fcond?.parameterType}"></span></td>
+                        <td class="first-row"><span th:text="${fcond?.parameterValue}"></span></td>
                       </tr>
                       <tr th:if="${iterStat.first} == false">
                         <td><span th:text="${fcond?.key}"></span></td>
@@ -156,11 +156,11 @@
                   <div th:each="params : ${ord?.classOutputParameters}">
                     <div th:each="p,iterStat : ${params?.outputParameters}">
                       <tr th:if="${iterStat.first} == true" class="first-row">
-                        <td th:rowspan="${#lists.size(params?.outputParameters)}"><span th:text="#{classoutparams}">classoutparams</span></td>
-                        <td th:rowspan="${#lists.size(params?.outputParameters)}"><span th:text="${params?.productClass}"></span></td>
-                        <td><span th:text="${p?.key}"></span></td>
-                        <td><span th:text="${p?.parameterType}"></span></td>
-                        <td><span th:text="${p?.parameterValue}"></span></td>
+                        <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="#{classoutparams}">classoutparams</span></td>
+                        <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="${params?.productClass}"></span></td>
+                        <td class="first-row"><span th:text="${p?.key}"></span></td>
+                        <td class="first-row"><span th:text="${p?.parameterType}"></span></td>
+                        <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
                       </tr>
                       <tr th:if="${iterStat.first} == false">
                         <td><span th:text="${p?.key}"></span></td>
@@ -171,11 +171,11 @@
                   </div>
                   <div th:each="p,iterStat : ${ord?.outputParameters}">
                     <tr th:if="${iterStat.first} == true" class="first-row">
-                      <td th:rowspan="${#lists.size(ord?.outputParameters)}"><span th:text="#{outparams}">outparams</span></td>
-                      <td th:rowspan="${#lists.size(ord?.outputParameters)}"><span th:text="#{allclasses}">allclasses</span></td>
-                      <td><span th:text="${p?.key}"></span></td>
-                      <td><span th:text="${p?.parameterType}"></span></td>
-                      <td><span th:text="${p?.parameterValue}"></span></td>
+                      <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{outparams}">outparams</span></td>
+                      <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
+                      <td class="first-row"><span th:text="${p?.key}"></span></td>
+                      <td class="first-row"><span th:text="${p?.parameterType}"></span></td>
+                      <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
                     </tr>
                     <tr th:if="${iterStat.first} == false">
                       <td><span th:text="${p?.key}"></span></td>

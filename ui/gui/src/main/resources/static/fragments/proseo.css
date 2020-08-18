@@ -233,7 +233,7 @@ td, th {
 }
 
 .first-row {  
-  border-top: 2px solid #dddddd;
+  border-top: 2px solid #aaaaaa !important;
 }
 
 .select-up {
@@ -329,4 +329,13 @@ code {
   background-color: #d6d8d9;
   border-color: #c6c8ca;
   font-weight: 500 !important;
+}
+
+.proseo-list-item + .proseo-list-item::before {
+  display: inline-block;
+  content: ", ";
+}
+
+.proseo-row-divider {
+  border-bottom: 2px solid #ffffff !important;
 }
