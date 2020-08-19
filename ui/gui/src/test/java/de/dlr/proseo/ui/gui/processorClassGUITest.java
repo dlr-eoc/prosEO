@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
+
+import de.dlr.proseo.ui.gui.service.ProcessorService;
+
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Flux;
@@ -19,7 +22,7 @@ import reactor.netty.http.client.HttpClient;
 
 public class processorClassGUITest {
 	@Autowired
-	private processorService processorService;
+	private ProcessorService processorService;
 	@Test
 	public void testGetProcessorClassName() {
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

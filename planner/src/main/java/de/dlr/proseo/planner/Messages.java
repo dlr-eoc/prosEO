@@ -117,6 +117,9 @@ public enum Messages {
 	KUBECONFIG_JOB_NOT_FOUND		(false, MessageType.E, "Job '%s' not found, is it already finished?"),
 	KUBEJOB_CREATED					(true, MessageType.I, "Kubernetes job '%s/%s' created"),
 	KUBEJOB_FINISHED				(true, MessageType.I, "Kubernetes job '%s/%s' finished"),
+	KUBERNETES_NOT_CONNECTED        (false, MessageType.E, "Kubernetes configuration %s not connected"),
+	JOB_STEP_NOT_FOUND              (false, MessageType.E, "No job step found for id %d"),
+	CONFIG_PROC_DISABLED            (false, MessageType.W, "Configured processor %s is disabled"), 
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;

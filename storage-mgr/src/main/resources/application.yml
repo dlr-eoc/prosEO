@@ -2,8 +2,8 @@ logging:
     level:
         root: INFO
         de.dlr.proseo: TRACE
-        org.apache.http: DEBUG
-        org.springframework.web.client: DEBUG
+ #       org.apache.http: DEBUG
+ #       org.springframework.web.client: DEBUG
 proseo:
     global:
       storageIdPrefix: proseo
@@ -42,4 +42,6 @@ proseo:
 #          alluxioCache: /mnt/alluxio
 #          alluxioFuse: /alluxio-fuse
           
+    # Connection timeout in ms
+    http.timeout: 10000
         

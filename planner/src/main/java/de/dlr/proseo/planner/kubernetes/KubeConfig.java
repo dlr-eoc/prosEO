@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -349,7 +349,9 @@ public class KubeConfig {
                     client = Config.fromUrl(url, false);
                 }
 			}
-			client.setDebugging(true);
+			if (logger.isTraceEnabled()) {
+				client.setDebugging(true);
+			}
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
@@ -484,7 +486,11 @@ public class KubeConfig {
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
 		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
@@ -500,7 +506,11 @@ public class KubeConfig {
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
 		KubeJob aJob = new KubeJob(id, "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}

@@ -1,0 +1,12 @@
+{
+    "id": 23785526,
+    "jobState": "INITIAL",
+    "jobSteps": [
+        {
+            "id": 23785527,
+            "jobStepState": "INITIAL",
+            "outputProductClass": "CH4",
+            "predecessors": []
+        }
+    ]
+}

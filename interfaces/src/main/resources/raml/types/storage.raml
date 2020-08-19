@@ -5,5 +5,7 @@
       id:
         pattern: ^proseo-[a-z0-9-]{10,50}+$
       storageType:
-        enum: [S3, ALLUXIO, POSIX]
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       description?: string

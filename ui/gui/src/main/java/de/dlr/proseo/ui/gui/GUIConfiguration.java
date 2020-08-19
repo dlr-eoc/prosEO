@@ -17,11 +17,33 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 @ConfigurationProperties(prefix="proseo")
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class GUIConfiguration implements WebMvcConfigurer {
-	
+
 	/** The base URI for the prosEO Processor Manager */
 	@Value("${proseo.processorManager.url}")
 	private String processorManager;
+
+	/** The base URI for the prosEO Order Manager */
+	@Value("${proseo.orderManager.url}")
+	private String orderManager;
+
+	/** The base URI for the prosEO Planner */
+	@Value("${proseo.productionPlanner.url}")
+	private String productionPlanner;
 	
+	/**
+	 * @return the productionPlanner
+	 */
+	public String getProductionPlanner() {
+		return productionPlanner;
+	}
+
+	/**
+	 * @return the orderManager
+	 */
+	public String getOrderManager() {
+		return orderManager;
+	}
+
 	/**
 	 * Gets the Processor Manager base URI
 	 * 
@@ -47,6 +69,6 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(localChangeInterceptor());
 	}
-	
+
 
 }

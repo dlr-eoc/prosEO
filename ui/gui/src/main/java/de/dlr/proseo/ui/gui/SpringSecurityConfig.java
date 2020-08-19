@@ -10,13 +10,16 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
-	
+
 	@Autowired
 	private GUIAuthenticationProvider authenticationProvider;
 	
 	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/resources/**").permitAll().antMatchers("/background.jpg").permitAll()
+	protected void configure(HttpSecurity http) throws Exception {	   
+		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
+		authenticationFilter.setAuthenticationManager(authenticationManagerBean());
+		authenticationFilter.setFilterProcessesUrl("/customlogin");
+		http.addFilter(authenticationFilter).authorizeRequests().antMatchers("/resources/**").permitAll().antMatchers("/background.jpg").permitAll()
 				.anyRequest().authenticated().and().formLogin().loginPage("/customlogin")
 				.failureUrl("/customlogin?error").permitAll().and().logout().logoutUrl("/logout")
 				.logoutSuccessUrl("/customlogin?logout").permitAll().and().csrf().disable();

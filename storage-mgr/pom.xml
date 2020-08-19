@@ -90,6 +90,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
+<!--     <dependency> -->
+<!--       <groupId>de.dlr.proseo</groupId> -->
+<!--       <artifactId>proseo-model</artifactId> -->
+<!--       <version>${project.version}</version> -->
+<!--     </dependency> -->
+<!--     <dependency> -->
+<!--       <groupId>de.dlr.proseo</groupId> -->
+<!--       <artifactId>proseo-interfaces</artifactId> -->
+<!--       <version>${project.version}</version> -->
+<!--     </dependency> -->
 <!-- 		<dependency> -->
 <!-- 			<groupId>com.h2database</groupId> -->
 <!-- 			<artifactId>h2</artifactId> -->

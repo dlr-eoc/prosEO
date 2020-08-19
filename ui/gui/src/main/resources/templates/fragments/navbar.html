@@ -1,193 +1,39 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>DLR Mission Welcome</title>
-    <!-- Bootstrap core CSS -->
-    <!-- Bootstrap core CSS -->
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
+<div th:fragment="navbarLeft">
+      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+        href="/"><img src="proseo_logo.png" class="rounded" width="50"
+        height="50"></a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button" data-toggle="collapse" data-target="#sidebarMenu"
+        aria-controls="sidebarMenu" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+</div>
 
-    <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-    </style>
-    <!-- Custom styles for this template -->
-    <link href="signin.css" rel="stylesheet">
-  </head>
-<body>
-<div th:fragment="navigation-bar">
- <div class="container-fluid">
- 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" id="mission" href="/"><img src="proseo_logo.png" class="rounded" width="80" height="80"</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-  <ul class="navbar-nav mr-auto">
-    <li class="nav-item dropdown">
-        <a class="nav-item dropdown" href="" id="navbarDropdown" data-toggle="dropdown" aria-haspopup="false" aria-expanded="false">
-        </a>
-    <ul class="navbar-nav mr-auto">
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <font size="+2"><span th:text="#{order}"></span></font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="order-show"><span th:text="#{show}"></span></a>
-		  <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="order-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="order-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="order-delete"><span th:text="#{deleteLabel}"></span></a>
-  		  <a class="dropdown-item" href="order-release"><span th:text="#{release}"></span></a>
-		  <a class="dropdown-item" href="order-plan"><span th:text="#{plan}"></span></a>
-		  <a class="dropdown-item" href="order-suspend"><span th:text="#{suspend}"></span></a>
-		  <a class="dropdown-item" href="order-resume"><span th:text="#{resume}"></span></a>
-		  <a class="dropdown-item" href="order-close"><span th:text="#{close}"></span></a>
-
-        </div>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <font size="+2"><span th:text="#{spacecraft}"></span></font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="spacecraft-add"><span th:text="#{add}"></span></a>
-          <a class="dropdown-item" href="spacecraft-remove"><span th:text="#{remove}"></span></a>
-        </div>
-      </li>
-<li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="orbit" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <font size="+2"><span th:text="#{orbit}"></span></font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="orbit-show"><span th:text="#{show}"></span></a>
-		  <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="orbit-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="orbit-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="orbit-delete"><span th:text="#{deleteLabel}"></span></a>
-        </div>
-      </li>
-<li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-         <font size="+2"> <span th:text="#{product}"></span> </font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="product-show"><span th:text="#{show}"></span></a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="product-create"><span th:text="#{update}"></span></a>
-          <a class="dropdown-item" href="product-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="product-delete"><span th:text="#{deleteLabel}"></span></a>
-		  <div class="dropdown-divider"></div>
-		  <a class="dropdown-item" href="product-ingest"><span th:text="#{ingest}"></span></a>
-		  </div>
-      </li>
-      
-	<li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-         <font size="+2"> <span th:text="#{processor}"></span> </font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<div th:fragment="navbarRight">
+      <ul class="nav navbar-nav px-3 navbar-right">
         
-          <a class="dropdown-item" href="processor-show"><span th:text="#{show}"></span></a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="processor-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="processor-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="processor-delete"><span th:text="#{deleteLabel}"></span></a>
-		    <div class="dropdown-divider"></div>
-		    <div class="dropdown-header"><span th:text="#{processor-class}"></span></div>
-		    <a class="dropdown-item" href="processor-class-show"><span th:text="#{show}"></span></a>
-		    <a class="dropdown-item" href="processor-class-show-id"><span th:text="#{show-id}"></span></a>
-		    <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="processor-class-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="processor-class-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="processor-class-delete"><span th:text="#{deleteLabel}"></span></a>
-		    <div class="dropdown-divider"></div>
-		   <div class="dropdown-header"><span th:text="#{configuration}"></span></div>
-		      <a class="dropdown-item" href="processor-configuration-show"><span th:text="#{show}"></span></a>
-		      <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="processor-configuration-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="processor-configuration-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="processor-configuration-delete"><span th:text="#{deleteLabel}"></span></a>
-		  
-  		  
-
-        </div>
-      </li>
-<li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-         <font size="+2"> <span th:text="#{configuration}"></span> </font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="configuration-show"><span th:text="#{show}"></span></a>
-		  <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="configuration-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="configuration-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="configuration-delete"><span th:text="#{deleteLabel}"></span></a>
-
-        </div>
-      </li>
-<li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <font size="+2"> <span th:text="#{productclass}"></span> </font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="productclass-show"><span th:text="#{show}"></span></a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="productclass-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="productclass-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="productclass-delete"><span th:text="#{deleteLabel}"></span></a>
-		    <div class="dropdown-divider"></div>
-		    <div class="dropdown-header"><span th:text="#{rule}"></span></div>
-		    <a class="dropdown-item" href="productclass-rule-show"><span th:text="#{show}"></span></a>
-		    <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="productclass-rule-create"><span th:text="#{create}"></span></a>
-          <a class="dropdown-item" href="productclass-rule-update"><span th:text="#{update}"></span></a>
-		  <a class="dropdown-item" href="productclass-rule-delete"><span th:text="#{deleteLabel}"></span></a>
-        </div>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <font size="+2">  <span th:text="#{user}"></span> </font>
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="settings-global"><span th:text="#{settings_global}"></span></a>
-          <a class="dropdown-item" href="settings-personal"><span th:text="#{settings_local}"></span></a>
-          <a class="dropdown-item" href="?logout"><span th:text="#{logout}"></span></a>
-        </div>
-      </li>
-      <li class="nav-item dropdown">
-               <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown09" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <font size="+2"><span th:text="#{lang}"></span> </font></a>
-           <div class="dropdown-menu" aria-labelledby="dropdown09">
-            <a class="dropdown-item" href="?lang=de"><span class="flag-icon flag-icon-de"> </span> <span th:text="#{de}"></span> </a>
-        <a class="dropdown-item" href="?lang=en"><span class="flag-icon flag-icon-gb-eng"> </span> <span th:text="#{en}"></span></a>       
-         </div>
-	</li>
-    </ul>
-  </div>
-</nav>  
-</div>	
-	
-</div>	
-	
-	
-	
-</body>
-</html>
-  
+        <li class="nav-item dropdown text-nowrap btn"><a
+          class="nav-link dropdown-toggle" id="dropdown09"
+          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+            data-feather="user"></span><span th:text="${user}"> user</span></a>
+          <div class="dropdown-menu  dropdown-menu-right">
+            <a class="dropdown-item" href="/customlogin"><span
+              data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
+            </a>
+          </div></li>
+        <li class="nav-item dropdown text-nowrap btn"><a
+          class="nav-link dropdown-toggle" id="dropdown09"
+          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
+            class="flag-icon flag-icon-de"
+            th:class="'flag-icon flag-icon-' + ${#locale}"> </span> <span
+            th:text="#{${#locale}}"> language</span></a>
+          <div class="dropdown-menu  dropdown-menu-right">
+            <a class="dropdown-item btn" onclick="selectLang('DE')"><span
+              class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
+            </a> <a class="dropdown-item btn" onclick="selectLang('EN')"><span
+              class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
+          </div></li>
+      </ul>
+</div>

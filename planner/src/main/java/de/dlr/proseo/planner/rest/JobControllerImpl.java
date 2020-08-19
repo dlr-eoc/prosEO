@@ -22,6 +22,7 @@ import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
+import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -99,6 +100,29 @@ public class JobControllerImpl implements JobController {
 		Job job = this.findJobById(jobId);
 		if (job != null) {
 			RestJob rj = RestUtil.createRestJob(job);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
+			return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);
+		}
+		Messages.JOB_NOT_EXIST.log(logger, jobId);
+		String message = Messages.JOB_NOT_EXIST.formatWithPrefix(jobId);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	
+	/* 
+	 * Get a job by job id
+	 * 
+	 * @param jobId
+	 */
+	@Transactional
+	@Override
+    public ResponseEntity<RestJobGraph> graphJobSteps(String jobId) {
+		Job job = this.findJobById(jobId);
+		if (job != null) {
+			RestJobGraph rj = null;
+			rj = RestUtil.createRestJobGraph(job);
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
 			return new ResponseEntity<>(rj, responseHeaders, HttpStatus.OK);

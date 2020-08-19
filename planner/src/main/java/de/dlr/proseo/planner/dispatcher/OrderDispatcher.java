@@ -30,6 +30,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.OrderState;
@@ -325,7 +326,11 @@ public class OrderDispatcher {
 				} else {
 
 					// configured processor
-					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
+					Set<ConfiguredProcessor> allConfiguredProcessors = order.getRequestedConfiguredProcessors();
+					List<ConfiguredProcessor> configuredProcessors = new ArrayList<ConfiguredProcessor>();
+					for (ConfiguredProcessor aCP : allConfiguredProcessors) {
+						configuredProcessors.add(aCP);
+					}
 					if (configuredProcessors.isEmpty()) {
 						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
@@ -473,7 +478,7 @@ public class OrderDispatcher {
 	 * @param allProducts All products created
 	 * @param inputProducts The input products to use
 	 */
-	public void createJobStepForProduct(Job job, ProductClass productClass, Set<ConfiguredProcessor> configuredProcessors, 
+	public void createJobStepForProduct(Job job, ProductClass productClass, List<ConfiguredProcessor> configuredProcessors, 
 				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
 
 		if (inputProducts.contains(productClass)) {
@@ -668,8 +673,14 @@ public class OrderDispatcher {
 						startTime,
 						stopTime)) {
 			if (foundProduct.equals(p)) {
-				// it exists, nothing to do
-				return null;
+				if (!foundProduct.getProductFile().isEmpty()) {
+					for (ProductFile foundFile : foundProduct.getProductFile()) {
+						if (foundFile.getProcessingFacility().equals(job.getProcessingFacility())) {
+							// it exists, nothing to do
+							return null;
+						}
+					}
+				}
 			}
 		}
 
@@ -698,7 +709,11 @@ public class OrderDispatcher {
 			if (productClass.getProcessorClass() != null) {
 				// search newest processor
 				for (Processor p : productClass.getProcessorClass().getProcessors()) {
-					if (!p.getConfiguredProcessors().isEmpty()) {
+					List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
+					for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
+						cplist.add(cp);
+					}
+					if (!cplist.isEmpty()) {
 						if (pFound == null) {
 							pFound = p;
 						} else {
@@ -719,7 +734,6 @@ public class OrderDispatcher {
 					}
 				}
 			}
-
 		}
 		
 		return cpFound;

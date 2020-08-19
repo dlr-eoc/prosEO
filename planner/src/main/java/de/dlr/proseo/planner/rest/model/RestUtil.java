@@ -24,8 +24,11 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.rest.model.JobState;
 import de.dlr.proseo.model.rest.model.JobStepState;
+import de.dlr.proseo.model.rest.model.RestId;
 import de.dlr.proseo.model.rest.model.RestJob;
+import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.rest.model.RestJobStep;
+import de.dlr.proseo.model.rest.model.RestJobStepGraph;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
@@ -97,6 +100,28 @@ public class RestUtil {
 			if (job.getProcessingOrder() != null) {
 				rj.setOrderIdentifier(job.getProcessingOrder().getIdentifier());
 			}
+		}
+		return rj;
+	}
+
+	/**
+	 * Build RestJobGraph of Job
+	 * @param job
+	 * @return RestJobGraph
+	 */
+	@Transactional
+	public static RestJobGraph createRestJobGraph(Job job) {
+		RestJobGraph rj = new RestJobGraph();
+		if (job != null) {
+			rj.setId(Long.valueOf(job.getId()));
+			if (job.getJobState() != null) {
+				rj.setJobState(JobState.valueOf(job.getJobState().toString()));
+			}
+			List<RestJobStepGraph> jobSteps = new ArrayList<RestJobStepGraph>();
+			for (JobStep js : job.getJobSteps()) {
+				jobSteps.add(RestUtil.createRestJobStepGraph(js));
+			}
+			rj.setJobSteps(jobSteps);
 		}
 		return rj;
 	}
@@ -177,6 +202,54 @@ public class RestUtil {
 			}
 		} 
 		return pjs;
+	}
+
+	/**
+	 * Build RestJobStep of JobStep
+	 * 
+	 * @param js
+	 * @return RestJobStep
+	 */
+	@Transactional
+	public static RestJobStepGraph createRestJobStepGraph(JobStep js) {
+		RestJobStepGraph pjs = new RestJobStepGraph();
+		if (js != null) {
+			pjs.setId(Long.valueOf(js.getId()));
+			if (js.getJobStepState() != null) {
+				pjs.setJobStepState(JobStepState.valueOf(js.getJobStepState().toString()));
+			}
+			if (js.getOutputProduct() != null && js.getOutputProduct().getProductClass() != null && js.getOutputProduct().getProductClass().getProductType() != null) {
+				pjs.setOutputProductClass(js.getOutputProduct().getProductClass().getProductType());
+			}
+			List<JobStep> jsl = new ArrayList<JobStep>();
+			jsl.addAll(js.getJob().getJobSteps());
+			for (ProductQuery pq : js.getInputProductQueries()) {
+				String pt = pq.getRequestedProductClass().getProductType();
+				List<JobStep> pre = new ArrayList<JobStep>();
+				for (JobStep preJobStep : jsl) {
+					if (jobStepProduces(preJobStep.getOutputProduct().getProductClass(), pt)) {
+						if (!pre.contains(preJobStep)) {
+							RestId ri = new RestId();
+							ri.setId(preJobStep.getId());
+							pjs.getPredecessors().add(ri);
+						}
+					}
+				}
+			}
+		} 
+		return pjs;
+	}
+	
+	private static Boolean jobStepProduces(ProductClass pc, String pt) {
+		if (pc.getProductType().equals(pt)) {
+			return true;
+		}
+		for (ProductClass child : pc.getComponentClasses()) {
+			if (jobStepProduces(child, pt)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**

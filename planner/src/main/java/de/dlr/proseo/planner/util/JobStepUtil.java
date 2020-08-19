@@ -32,6 +32,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.dao.ProductRepository;
@@ -142,6 +143,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_SUSPENDED;
 				break;
 			case RUNNING:
@@ -160,6 +162,7 @@ public class JobStepUtil {
 					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
 					RepositoryService.getJobStepRepository().save(js);
+					em.merge(js);
 				} else {
 					answer = Messages.JOBSTEP_ALREADY_RUNNING;
 				}
@@ -196,6 +199,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_CANCELED;
 				break;
 			case RUNNING:
@@ -240,12 +244,13 @@ public class JobStepUtil {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
 					collectProducts(jsp, jspList);
-					if (checkProducts(jspList)) {
+					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
-						// 	Dicard this problem and set job step to completed
+						// Discard this problem and set job step to completed
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
+						em.merge(js);
 						answer = Messages.JOBSTEP_RETRIED_COMPLETED;
 						break;
 					}		
@@ -253,6 +258,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_RETRIED;
 				break;
 			default:
@@ -457,6 +463,7 @@ public class JobStepUtil {
 				js.setJobStepState(JobStepState.RUNNING);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				Messages.JOBSTEP_STARTED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
@@ -684,26 +691,27 @@ public class JobStepUtil {
 	/**
 	 * Check whether the products of list exists and are already generated
 	 * @param list Product list
+	 * @param pf ProcessingFacility
 	 * @return true if all products are generated
 	 */
 	@Transactional
-    private Boolean checkProducts(List<Product> list) {
+    private Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
 		Boolean answer = true;
 		for (Product p : list) {
-			List<Product> resultList = RepositoryService.getProductRepository()
-				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
-					p.getProductClass().getId(),
-					p.getConfiguredProcessor().getId(),
-					p.getSensingStartTime(),
-					p.getSensingStopTime());
-			if (resultList.isEmpty()) {
+			if (p.getProductFile().isEmpty()) {
 				answer = false;
 				break;
 			} else {
-				for (Product rp : resultList) {
-					if (rp.getGenerationTime() == null) {
-						answer = false;
+				Boolean onPF = false;
+				for (ProductFile f : p.getProductFile()) {
+					if (f.getProcessingFacility().equals(pf)) {
+						onPF = true;
+						break;
 					}
+				}
+				if (!onPF) {
+					answer = false;
+					break;
 				}
 			}
 		}

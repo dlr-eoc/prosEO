@@ -20,16 +20,17 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import de.dlr.proseo.model.rest.model.RestProcessorClass;
+import de.dlr.proseo.ui.gui.service.ProcessorService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Controller
-public class ProcessorClassGUIController {
+public class ProcessorClassGUIController extends GUIBaseController {
 
 
 	/** WebClient-Service-Builder */
 	@Autowired
-	private processorService processorService;
+	private ProcessorService processorService;
 	/** List for query Results */
 	private List<String> procs1 = new ArrayList<>();
 
@@ -46,34 +47,10 @@ public class ProcessorClassGUIController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/processor-class-show/get")
 	public DeferredResult<String> getProcessorClassName(
-			@RequestParam(required = false, value = "mission") String mission,
 			@RequestParam(required = false, value = "processorclassName") String processorClassName, Model model) {
 		if (logger.isTraceEnabled())
-			logger.trace(">>> getProcessorClassName({}, {}, model)", mission, processorClassName);
-//		Flux<RestProcessorClass> mono = processorService.get(mission, processorclassname)
-//				.onStatus(HttpStatus::is4xxClientError,
-//						clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
-//				.onStatus(HttpStatus::is5xxServerError,
-//						clientResponse -> Mono.error(new HttpClientErrorException(clientResponse.statusCode())))
-//				.bodyToFlux(RestProcessorClass.class);
-//
-//		DeferredResult<String> deferredResult = new DeferredResult<String>();
-//		List<RestProcessorClass> procs = new ArrayList<>();
-//
-//		mono.subscribe(processorClassList -> {
-//			logger.trace("Now in Consumer::accept({})", processorClassList);
-//			procs.add(processorClassList);
-//			model.addAttribute("procs", procs);
-//			logger.trace(model.toString() + "MODEL TO STRING");
-//			logger.trace(">>>> WRAPPER MONO: " + procs1.toString());
-//			logger.trace(">>>>MONO" + procs.toString());
-//			logger.trace(">>>>MODEL" + model.toString());
-//			deferredResult.setResult("processor-class-show :: #content");
-//		});
-//
-//		logger.trace("Immediately returning deferred result");
-//		return deferredResult;
-		Mono<ClientResponse> mono = processorService.get(mission, processorClassName);
+			logger.trace(">>> getProcessorClassName({}, {}, model)", processorClassName);
+		Mono<ClientResponse> mono = processorService.get(processorClassName);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> procs = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -81,12 +58,12 @@ public class ProcessorClassGUIController {
 			if (clientResponse.statusCode().is5xxServerError()) {
 				logger.trace(">>>Server side error (HTTP status 500)");
 				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("processor-class-show :: #content");
+				deferredResult.setResult("processor-class-show :: #processorclasscontent");
 				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is4xxClientError()) {
 				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("processor-class-show :: #content");
+				deferredResult.setResult("processor-class-show :: #processorclasscontent");
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(processorClassList -> {
@@ -94,7 +71,7 @@ public class ProcessorClassGUIController {
 					model.addAttribute("procs", procs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());
-					deferredResult.setResult("processor-class-show :: #content");
+					deferredResult.setResult("processor-class-show :: #processorclasscontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
 			}
@@ -147,19 +124,19 @@ public class ProcessorClassGUIController {
 				logger.trace(">>>Server side error (HTTP status 500)");
 				//model.addAttribute("errormsg", "Server side error (HTTP status 500)");
 				model.addAttribute("errormsg", uiMsg(MSG_ID_EXCEPTION, clientResponse.statusCode().getReasonPhrase()));
-				deferredResult.setResult("processor-class-show-id :: #content");
+				deferredResult.setResult("processor-class-show-id :: #processorclasscontent");
 				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is4xxClientError()) {
 				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("processor-class-show-id :: #content");
+				deferredResult.setResult("processor-class-show-id :: #processorclasscontent");
 			} else {
 				clientResponse.bodyToMono(RestProcessorClass.class).subscribe(processorClass -> {
 					procs.add(processorClass);
 					model.addAttribute("procs", procs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());
-					deferredResult.setResult("processor-class-show-id :: #content");
+					deferredResult.setResult("processor-class-show-id :: #processorclasscontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
 			}

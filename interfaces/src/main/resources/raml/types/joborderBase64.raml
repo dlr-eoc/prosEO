@@ -7,6 +7,8 @@
         maxLength: 1000000
       uploaded?: boolean
       fsType?:
-        enum: [S3,ALLUXIO,POSIX]
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       pathInfo?: string
       message?: string

@@ -14,7 +14,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.Table;
 
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * A processing facility for running prosEO jobs and storing prosEO product files,  e. g. at a cloud service provider.

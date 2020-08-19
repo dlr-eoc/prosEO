@@ -33,17 +33,17 @@
  <div th:insert="fragments/navbar.html :: navigation-bar"></div>
 <ul class="breadcrumb">
 	<li class="breadcrumb-item"><a href="/"><span th:text="#{mission}"></span></a></li>
-	<li class="breadcrumb-item active" aria-current="page"><span th:text="#{order_update}"></span></li>
+	<li class="breadcrumb-item active" aria-current="page"><span th:text="#{order-update}"></span></li>
 </ul>
 <div class="container-fluid">
 <form name = "ord-susp" action="/order-suspend?">
 
 <div class="input-group mb-3">
-<label for="orderid"><span th:text="#{order_id}"></span></label>
+<label for="orderid"><span th:text="#{order-id}"></span></label>
 	<p class="text-left"><input type="text" class="form-control" id="orderid"></p>
 </div>
   <div class="input-group mb-3">
-  <button type="submit" class="btn btn-warning mb-2"><span th:text="#{order_suspend}"></span></button>
+  <button type="submit" class="btn btn-warning mb-2"><span th:text="#{order-suspend}"></span></button>
   </div>
 </form>     
       

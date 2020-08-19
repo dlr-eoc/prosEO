@@ -66,6 +66,7 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:
+			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
 				}
@@ -74,9 +75,6 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
-			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
-				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -122,7 +120,8 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
-				break;				
+				break;		
+			case RELEASED:		
 			case PLANNED:
 				// remove jobs and jobsteps
 				HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
@@ -147,9 +146,6 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;	
-			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
-				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -559,9 +555,9 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
-						if (job.getJobState() != JobState.COMPLETED) {
-							allCompleted = false;
-						}
+					}
+					if (job.getJobState() != JobState.COMPLETED) {
+						allCompleted = false;
 					}
 					if (job.getHasFailedJobSteps()) {
 						order.setHasFailedJobSteps(true);

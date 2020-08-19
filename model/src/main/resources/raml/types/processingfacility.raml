@@ -38,4 +38,5 @@
         description: Password for connecting to the Storage Manager (locally and from external services)
       defaultStorageType:
         type: string
-        description: The default storage type (S3, POSIX, ...) to use in this facility.
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$

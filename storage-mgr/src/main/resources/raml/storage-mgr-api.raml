@@ -56,7 +56,9 @@ resourceTypes:
     displayName: getProductFiles
     queryParameters:
       storageType?:
-        enum: [S3, ALLUXIO, POSIX]
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       prefix?:
         type: string
     responses:

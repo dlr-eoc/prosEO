@@ -18,6 +18,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * The data file and pertinent auxiliary files for a product at a given processing facility. Each product has at most one
@@ -75,11 +76,6 @@ public class ProductFile extends PersistentObject {
 	@Column(name = "zip_checksum_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant zipChecksumTime;
 	
-	/**
-	 * The available storage types 
-	 */
-	public enum StorageType { S3, POSIX, ALLUXIO, OTHER }
-
 	/**
 	 * Gets the associated product
 	 * @return the product

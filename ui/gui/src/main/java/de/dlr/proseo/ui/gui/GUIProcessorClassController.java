@@ -2,8 +2,9 @@ package de.dlr.proseo.ui.gui;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+
 @Controller
-public class GUIProcessorClassController {
+public class GUIProcessorClassController extends GUIBaseController {
 	
 	   @RequestMapping(value="/test")
 	   public ProcessorClassGUIController test() {
@@ -28,7 +29,7 @@ public class GUIProcessorClassController {
 	    }
 	    @RequestMapping(value = "/processor-class-show")
 	    public String showProcessorClass() {
-
+// hallo Welt
 	    return "processor-class-show";
 	    }
 	    @RequestMapping(value = "/processor-class-show-id")
@@ -56,6 +57,7 @@ public class GUIProcessorClassController {
 	    
 	    return "processor-configuration-show";
 	    }
+	    
 	}
 
 

@@ -1,4 +1,4 @@
-package de.dlr.proseo.ui.gui;
+package de.dlr.proseo.ui.gui.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -15,12 +15,12 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.server.ServerRequest.Headers;
+import de.dlr.proseo.ui.gui.GUIAuthenticationToken;
+import de.dlr.proseo.ui.gui.GUIConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -28,8 +28,8 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Service
-public class processorService {
-	private static Logger logger = LoggerFactory.getLogger(processorService.class);
+public class ProcessorService {
+	private static Logger logger = LoggerFactory.getLogger(ProcessorService.class);
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -40,15 +40,19 @@ public class processorService {
  * @param processorName to get
  * @return list of processorClasses
  */
-	public Mono<ClientResponse> get(String mission, String processorName) {
+	public Mono<ClientResponse> get(String processorName) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
 		String uri = config.getProcessorManager() + "/processorclasses";
-		if(null != mission && null != processorName) {
-			uri += "?mission=" + mission + "&processorName=" + processorName;
-		} else if (null != processorName) {
-			uri += "?processorName=" + processorName;
-		} else if (null != mission) { 
-			uri += "?mission=" + mission;
+		String divider = "?";
+		if(null != mission && !mission.isEmpty()) {
+			uri += divider + "mission=" + mission;
+			divider = "&";
 		} 
+		if (null != processorName && !processorName.isEmpty()) {
+			uri += divider + "processorName=" + processorName;
+			divider = "&";
+		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {
@@ -56,11 +60,10 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		logger.trace("Found authentication: " + auth);
 		logger.trace("... with username " + auth.getName());
 		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
-		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(mission + "-" + auth.getName(), ((UserDetails) auth.getPrincipal()).getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
 	public Mono<ClientResponse> getById(String id) {
@@ -75,7 +78,8 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		return webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).exchange();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)(SecurityContextHolder.getContext().getAuthentication());
+		return webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
 	}
 	/**
@@ -108,9 +112,10 @@ public class processorService {
                 })
         ));
 		   
-		   
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		return webclient.build().post().uri(uri).body(BodyInserters.fromObject(map))
-				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer"))
+				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword()))
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.accept(MediaType.APPLICATION_JSON)
 				.exchange();
@@ -134,10 +139,11 @@ public class processorService {
                 })
         ));
 		   
-		   
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		return webclient.build().patch().uri(uri).body(
 				BodyInserters.fromFormData(map))
-				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
+				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).retrieve();
 
 	}
 	/**
@@ -157,8 +163,9 @@ public class processorService {
                     return HttpResponseStatus.FOUND.equals(res.status());
                 })
         ));
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		return webclient.build().delete().uri(uri)
-				.headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
+				.headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).retrieve();
 		}
 	/**
 	 * 
@@ -183,7 +190,8 @@ public class processorService {
 					return HttpResponseStatus.FOUND.equals(res.status());
 				})
 			));
-		ResponseSpec responseSpec = webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth("s5p-proseo", "sieb37.Schlaefer")).accept(MediaType.APPLICATION_JSON).retrieve();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		ResponseSpec responseSpec = webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).retrieve();
 		return responseSpec;
 
 	}
