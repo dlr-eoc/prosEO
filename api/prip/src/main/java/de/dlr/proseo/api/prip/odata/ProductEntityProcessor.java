@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
+import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
@@ -39,6 +40,8 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
+import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -368,13 +371,12 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throws ODataApplicationException, ODataLibraryException {
 		if (logger.isTraceEnabled()) logger.trace(">>> readEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 		
-		// 1st we have retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
+		// [1] Retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first segment is the EntitySet
 		EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
 
-		// 2nd: fetch the data from backend for this requested EntitySetName
-		// it has to be delivered as Entity object
+		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as Entity object)
 	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
 	    
 		Entity entity;
@@ -411,14 +413,26 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 		if (logger.isDebugEnabled()) logger.debug("... preparing data for response");
 		
-		// 3rd: create a serializer based on the requested format (json)
+		// [3] Check for system query options
+		SelectOption selectOption = uriInfo.getSelectOption();
+		ExpandOption expandOption = uriInfo.getExpandOption();
+
+		// [4] Create a serializer based on the requested format (json)
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
-		// 4th: Now serialize the content: transform from the EntitySet object to InputStream
+		// [5] Now serialize the content: transform from the Entity object to InputStream
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+		ContextURL contextUrl = ContextURL.with()
+				.entitySet(edmEntitySet)
+				.selectList(odata.createUriHelper().buildContextURLSelectList(edmEntityType, expandOption, selectOption))
+				.suffix(Suffix.ENTITY)
+				.build();
 
-		EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl).build();
+		EntitySerializerOptions opts = EntitySerializerOptions.with()
+				.contextURL(contextUrl)
+				.expand(expandOption)
+				.select(selectOption)
+				.build();
 		SerializerResult serializerResult = serializer.entity(serviceMetadata, edmEntityType, entity, opts);
 		InputStream serializedContent = serializerResult.getContent();
 

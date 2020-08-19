@@ -504,11 +504,19 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntityType,
 				expandOption, selectOption);
 
-		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).selectList(selectList).build();
+		ContextURL contextUrl = ContextURL.with()
+				.entitySet(edmEntitySet)
+				.selectList(selectList)
+				.build();
 
 		final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
 		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with()
-				.id(id).contextURL(contextUrl).expand(expandOption).select(selectOption).count(countOption).build();
+				.id(id)
+				.contextURL(contextUrl)
+				.expand(expandOption)
+				.select(selectOption)
+				.count(countOption)
+				.build();
 		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
 		InputStream serializedContent = serializerResult.getContent();
 
