@@ -192,7 +192,11 @@ public class CommandLineInterface implements CommandLineRunner {
 				parser.getSyntax().printHelp(System.out);
 				break;
 			case CMD_CLEAR:
-				System.out.print(CLEAR_SCREEN_SEQUENCE);
+				if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+					Runtime.getRuntime().exec("cls");
+				} else {
+					System.out.print(CLEAR_SCREEN_SEQUENCE);
+				}
 				break;
 			case OrderCommandRunner.CMD_ORDER:
 				orderCommandRunner.executeCommand(command);

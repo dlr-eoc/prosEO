@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
 import java.util.List;
@@ -50,7 +51,7 @@ public class CLIUtil {
 	public static final String FILE_FORMAT_JSON = "JSON";
 	/** XML file format */
 	public static final String FILE_FORMAT_XML = "XML";
-
+	
 	/** Lenient date/time parsing pattern */
 	private static Pattern dateTimePattern = Pattern.compile(
 			"(?<year>\\d\\d\\d\\d)-(?<month>\\d\\d)-(?<day>\\d\\d)" + 	// date (groups 1-3)
@@ -132,7 +133,7 @@ public class CLIUtil {
 			mapper = new ObjectMapper();
 			break;
 		case FILE_FORMAT_XML:
-			mapper = new XmlMapper();
+			mapper = (new XmlMapper()).enable(ToXmlGenerator.Feature.WRITE_XML_1_1);
 			break;
 		case FILE_FORMAT_YAML:
 			mapper = new ObjectMapper(new YAMLFactory());
