@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport"
 	content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>DLR Mission</title>
+<title th:text="#{proseo}">proseo</title>
 <!-- Bootstrap core CSS -->
 <link rel="stylesheet"
   href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,8 +16,9 @@
 </head>
 
 <body>
-	<nav
-		class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
+  <div style="display:none;" id="loader"></div>
+	<nav     
+		class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
 		<div class="container-fluid pl-0 pr-0">
       <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
         href="/"><img src="proseo_logo.png" class="rounded" width="50"
@@ -76,14 +77,15 @@
 				</form>
 
 			</div>
-			<div class="container">
+			<div>
+       <div class="container-fluid">
 				<h5>
 					<span th:text="#{order}"></span>
 				</h5>
 
 				<div id="orderscontent" name="orderscontent">
 					<table class="table table-hover" id="orderTable">
-						<thead class="thead-light">
+						<thead class="thead-proseo">
 							<tr>
 								<th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
 								    class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
@@ -127,7 +129,8 @@
 
 					</table>
 				</div>
-			</div>
+      </div>
+      </div>
 			<div th:insert="fragments/footer.html :: footer"></div>
 			</main>
 		</div>
@@ -273,6 +276,7 @@
       };
     
     function retrieveData() {
+        showLoader();
       var tableRows = $("orderTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("orderTable > tbody").empty();
@@ -360,8 +364,11 @@
         method : "GET",
         success : function(res) {
           $("#orderscontent").html(res);
+          hideLoader();
+          document.title = "[[#{order}]]" + " | " + "[[#{proseo}]]";
         },
         fail : function(err) {
+            hideLoader();
           console.log(err);
           prop.innerHTML = "Fehler!" + err;
         }

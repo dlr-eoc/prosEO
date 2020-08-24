@@ -1,6 +1,7 @@
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -71,6 +72,7 @@ public class GUIProductController extends GUIBaseController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/product/get")
 	public DeferredResult<String> getProducts(
+			@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "productClass") String productClass,
 			@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
@@ -78,7 +80,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProducs({}, {}, {}, model)", productClass, startTimeFrom, startTimeTo);
-		Mono<ClientResponse> mono = get(productClass, startTimeFrom, startTimeTo);
+		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> products = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -94,15 +96,25 @@ public class GUIProductController extends GUIBaseController {
 				deferredResult.setResult("order-show :: #orderscontent");
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
-				clientResponse.bodyToMono(List.class).subscribe(pList -> {
-					products.addAll(pList);
-				
-					model.addAttribute("products", products);
-					if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
-					if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
-					deferredResult.setResult("product-show :: #productcontent");
-					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-				});
+				if (id != null && id > 0) {
+					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
+						products.add(p);
+						model.addAttribute("products", products);
+						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
+						deferredResult.setResult("product-show :: #productcontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					});
+				} else {
+					clientResponse.bodyToMono(List.class).subscribe(pList -> {
+						products.addAll(pList);
+						model.addAttribute("products", products);
+						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
+						deferredResult.setResult("product-show :: #productcontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					});
+				}
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
@@ -114,21 +126,27 @@ public class GUIProductController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	public Mono<ClientResponse> get(String productClass, String startTimeFrom, String startTimeTo) {
+	public Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";
-		String divider = "?";
-		uri += divider + "mission=" + mission;
-		divider ="&";
-		if (productClass != null && !productClass.isEmpty()) {
-			uri += divider + "productClass=" + productClass;
-		}
-		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
-			uri += divider + "startTimeFrom=" + startTimeFrom;
-		}
-		if (startTimeTo != null && !startTimeTo.isEmpty()) {
-			uri += divider + "startTimeTo=" + startTimeTo;
+		if (id != null && id > 0) {
+			uri += "/" + id.toString();
+		} else {
+			String divider = "?";
+			if (productClass != mission && !mission.isEmpty()) {
+				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			if (productClass != null && !productClass.isEmpty()) {
+				uri += divider + "productClass=" + productClass;
+			}
+			if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
+				uri += divider + "startTimeFrom=" + startTimeFrom;
+			}
+			if (startTimeTo != null && !startTimeTo.isEmpty()) {
+				uri += divider + "startTimeTo=" + startTimeTo;
+			}
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

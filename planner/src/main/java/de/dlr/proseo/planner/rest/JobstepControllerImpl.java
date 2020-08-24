@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
@@ -55,23 +57,35 @@ public class JobstepControllerImpl implements JobstepController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+    
     @Autowired
     private JobStepUtil jobStepUtil;
     
+   
     /**
      * Get production planner job steps by status
      * 
      */
 	@Override
 	@Transactional
-    public ResponseEntity<List<RestJobStep>> getJobSteps(
-            @Valid
-            Status status) {
-		
+    public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {		
 		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
-		Iterable<JobStep> it;
+		List<JobStep> it ;
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
+		} else if (mission != null) {
+			JobStepState state = JobStepState.valueOf(status.toString());
+			//it = new ArrayList<JobStep>();
+			if (last != null && last > 0) {
+				List<JobStep> itall = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
+				if (last < itall.size()) {
+					it = itall.subList(0, last.intValue());
+				} else {
+					it = itall;
+				}
+			} else {
+				it = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
+			}
 		} else {
 			JobStepState state = JobStepState.valueOf(status.toString());
 			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);

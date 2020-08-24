@@ -43,11 +43,14 @@ public class StatisticsService {
 	@Autowired
 	private ServiceConnection serviceConnection;
 
-	public Mono<ClientResponse> getJobsteps(String status) {
+	public Mono<ClientResponse> getJobsteps(String status, Long last) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = config.getProductionPlanner() + "/jobsteps?status=" + status;
-
+		uri += "&mission=" +mission;
+		if (last != null && last > 0) {
+			uri += "&last=" + last;
+		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {

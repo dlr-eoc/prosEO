@@ -4,7 +4,7 @@
     <meta charset="utf-8">
       <meta name="viewport"
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>DLR Mission</title>
+        <title th:text="#{product-class} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,6 +16,7 @@
   </head>
 
   <body>
+    <div style="display:none;" id="loader"></div>
     <nav
       class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
@@ -83,7 +84,7 @@
                     <td th:text="${class?.productFileTemplate}"></td>
                     <td><a th:each="comp : ${class?.componentClasses}" class="proseo-list-item" th:href="'#' + ${comp}"><span th:text="${comp}"></span></a></td>
                     <td><a th:href="'#' + ${class?.enclosingClass}"><span th:text="${class?.enclosingClass}"></span></a></td>
-                    <td th:text="${class?.selectionRule}"></td>
+                    <td><span class="code" th:text="${class?.prettyPrintSelRules}"></span></td>
                   </tr>
             </div>
                 </tbody>
@@ -115,6 +116,7 @@
   <script type="text/javascript"> 
 
     function retrieveData() {
+        showLoader();
       var tableRows = $("productclassTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("productclassTable > tbody").empty();
@@ -130,8 +132,10 @@
             for (var i = 0; i < t.length; i++) {
               window.location.href = '#' + t[i];
             }
+            hideLoader();
           },
           fail : function(err) {
+              hideLoader();
             console.log(err);
             prop.innerHTML = "Fehler!" + err;
           }

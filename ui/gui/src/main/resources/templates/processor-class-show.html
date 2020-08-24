@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
       <meta name="viewport"
 	content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <title>DLR Mission</title>
+        <title th:text="#{processor-class} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
 	href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,6 +16,7 @@
   </head>
 
 <body>
+    <div style="display:none;" id="loader"></div>
   <nav
     class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
     <div class="container-fluid pl-0 pr-0">
@@ -95,6 +96,7 @@
 
 <script type="text/javascript">
 	function retrieveData() {
+        showLoader();
 	  var tableRows = $("processorTable").rows;
 	  if(tableRows > 1 && tableRows != null) {
 	  $("processorTable > tbody").empty();
@@ -106,8 +108,10 @@
 	    method: "GET",
 	    success: function (res) {
 	        $("#processorclasscontent").html(res);
+	        hideLoader();
 	    },
 	    fail: function (err) {
+	          hideLoader();
 	        console.log(err);
 	        prop.innerHTML = "Fehler!" + err;
 	    }

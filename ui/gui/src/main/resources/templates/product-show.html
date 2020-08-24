@@ -4,7 +4,7 @@
     <meta charset="utf-8">
       <meta name="viewport"
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>DLR Mission</title>
+        <title th:text="#{product} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,6 +16,7 @@
   </head>
 
   <body>
+    <div style="display:none;" id="loader"></div>
     <nav
       class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
@@ -75,7 +76,7 @@
             <div th:each="elem : ${products}">
                   <tr>
                     <td th:id="${elem?.id}" colspan="2" th:text="${elem?.id}" class="first-row"></td>
-                    <td th:text="${elem?.productClass}" class="first-row"></td>
+                    <td class="first-row"><a th:href="'/productclass-show?pc=' + ${elem?.productClass}"  th:text="${elem?.productClass}"></a></td>
                     <td th:text="${elem?.version}" class="first-row"></td>
                     <td th:text="${elem?.missionCode}" class="first-row"></td>
                     <td th:text="${elem?.fileClass}" class="first-row"></td>
@@ -126,7 +127,8 @@
 
   <script type="text/javascript"> 
 
-    function retrieveData(productClass, startTimeFrom, startTimeTo) {
+    function retrieveData(id, productClass, startTimeFrom, startTimeTo) {
+      showLoader();
       var tableRows = $("productTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("productTable > tbody").empty();
@@ -145,13 +147,19 @@
           url = url + divider + "startTimeTo=" + startTimeTo.toString().trim();
           divider = "&";
     }
+      if (id != null) {
+          url = url + divider + "id=" + id.toString().trim();
+          divider = "&";
+    }
         $.ajax({
           url : url,
           method : "GET",
           success : function(res) {
             $("#productcontent").html(res);
+            hideLoader();
           },
           fail : function(err) {
+            hideLoader();
             console.log(err);
             prop.innerHTML = "Fehler!" + err;
           }
@@ -168,7 +176,8 @@
      var productClass = getURLParam('productClass');
      var startTimeFrom = getURLParam('startTimeFrom');
      var startTimeTo = getURLParam('startTimeTo');
-     retrieveData(productClass, startTimeFrom, startTimeTo);
+     var id = getURLParam('id');
+     retrieveData(id, productClass, startTimeFrom, startTimeTo);
     }
 </script>
 

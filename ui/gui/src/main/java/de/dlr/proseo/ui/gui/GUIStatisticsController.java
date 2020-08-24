@@ -60,7 +60,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			@RequestParam(required = true, value = "latest") Integer count, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
-		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED");
+		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -121,7 +121,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			@RequestParam(required = false, value = "latest") Integer count, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
-		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED");
+		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -144,7 +144,7 @@ public class GUIStatisticsController extends GUIBaseController {
 					jobsteps.sort(oc);
 					List<Object> completedjobsteps = null;
 					if (jobsteps.size() > count) {
-						completedjobsteps = jobsteps.subList(0, count - 1);
+						completedjobsteps = jobsteps.subList(0, count);
 					} else {
 						completedjobsteps = jobsteps;
 					}

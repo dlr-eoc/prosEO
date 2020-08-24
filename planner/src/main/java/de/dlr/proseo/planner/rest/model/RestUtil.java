@@ -200,6 +200,9 @@ public class RestUtil {
 					pjs.getInputProductClasses().add(pt);
 				}
 			}
+			if (js.getOutputProduct() != null) {
+				pjs.setOutputProduct(js.getOutputProduct().getId());
+			}
 		} 
 		return pjs;
 	}

@@ -317,14 +317,12 @@ public class GUIOrderController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobList -> {
 					jobs.addAll(jobList);
-					for (Object o : jobs) {
-						if (o instanceof HashMap) {
-							HashMap<String, Object> h = (HashMap<String, Object>) o;
-							String jobId = h.get("id").toString();
-							HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
-							h.put("graph", result);
-						}
-					}
+					/*
+					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h
+					 * = (HashMap<String, Object>) o; String jobId = h.get("id").toString();
+					 * HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
+					 * h.put("graph", result); } }
+					 */		
 					model.addAttribute("jobs", jobs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());

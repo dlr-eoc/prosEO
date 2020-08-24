@@ -75,6 +75,18 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
+    public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
+    	String query = "select js from JobStep js " + 
+        		" inner join Job j on js.job.id = j.id " + 
+        		" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
+        		" inner join Mission m on o.mission.id = m.id " + 
+        		" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+        return em.createQuery(query,
+          JobStep.class)
+        		.setMaxResults(limit)
+        		.getResultList();
+    }
+    
 	/**
 	 * Search for not satisfied product queries referencing product class on processing facility and check which are now satisfied. 
 	 * Change state of job step to READY if all queries are now satisfied. 

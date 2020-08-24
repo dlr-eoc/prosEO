@@ -67,6 +67,8 @@ public class ProductClassUtil {
 		for (ProductClass componentClass: modelProductClass.getComponentClasses()) {
 			restProductClass.getComponentClasses().add(componentClass.getProductType());
 		}
+		String selRules = "";
+		Boolean first = true;
 		for (SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
 			RestSimpleSelectionRule restSimpleSelectionRule = new RestSimpleSelectionRule();
 			restSimpleSelectionRule.setId(simpleSelectionRule.getId());
@@ -96,7 +98,14 @@ public class ProductClassUtil {
 				restSimpleSelectionRule.getSimplePolicies().add(restSimplePolicy);
 			}
 			restProductClass.getSelectionRule().add(restSimpleSelectionRule);
+			if (first) {
+				first = false;
+			} else {
+				selRules += ";\n";
+			}
+			selRules += simpleSelectionRule.toString();
 		}
+		restProductClass.setPrettyPrintSelRules(selRules);
 		
 		return restProductClass;
 	}
