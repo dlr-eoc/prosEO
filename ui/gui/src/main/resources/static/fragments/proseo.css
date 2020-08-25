@@ -326,11 +326,18 @@ code {
 .thead-proseo {
   position: -webkit-sticky !Important;
   position: sticky !Important;
-  top: 52px !Important;
+  top: 54px !Important;
   z-index: 1020;
 }
   
 .table .thead-proseo th {
+  color: #1b1e21;
+  background-color: #d6d8d9;
+  border-color: #c6c8ca;
+  font-weight: 500 !important;  
+}
+  
+.table .thead-proseo-order th {
   color: #1b1e21;
   background-color: #d6d8d9;
   border-color: #c6c8ca;

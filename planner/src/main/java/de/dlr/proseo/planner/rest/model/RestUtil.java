@@ -203,6 +203,8 @@ public class RestUtil {
 			if (js.getOutputProduct() != null) {
 				pjs.setOutputProduct(js.getOutputProduct().getId());
 			}
+			pjs.setOrderIdentifier(js.getJob().getProcessingOrder().getIdentifier());
+			pjs.setOrderId(js.getJob().getProcessingOrder().getId());
 		} 
 		return pjs;
 	}

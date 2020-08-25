@@ -47,7 +47,7 @@ public class StatisticsService {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = config.getProductionPlanner() + "/jobsteps?status=" + status;
-		uri += "&mission=" +mission;
+		uri += "&mission=" + mission;
 		if (last != null && last > 0) {
 			uri += "&last=" + last;
 		}

@@ -49,7 +49,7 @@
           <div id="ordercontent" name="ordercontent">
             <div th:each="ord : ${orders}">
               <table class="table table-hover" id="orderTable">
-                <thead class="thead-proseo">
+                <thead class="thead-proseo-order">
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
@@ -126,7 +126,7 @@
                 </tbody>
               </table>
               <table class="table table-hover" id="orderfilters">
-                <thead class="thead-proseo">
+                <thead class="thead-proseo-order">
                   <tr>
                     <th id="togglefilter" class="cursorpointer" onclick="toggleFilter()"><div id="filterhide"><span
                           data-feather="minus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div><div id="filtershow"><span
@@ -191,7 +191,7 @@
           
           <div id="jobscontent" name="jobscontent">
             <table class="table table-hover" id="jobs" th:unless="${#arrays.isEmpty(jobs)}">
-              <thead class="thead-proseo">
+              <thead class="thead-proseo-order">
                 <tr>
                   <th colspan="2" id="togglejobs" class="cursorpointer emptycol" onclick="toggleJobs()"><div id="jobshide"><span
                         data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobs}">jobs</span></div><div id="jobsshow"><span
@@ -237,7 +237,7 @@
                     <td class="emptycol"></td>
                     <td colspan="7">
                       <table class="table table-hover" th:id="'jobsteps' + ${job?.id}">
-                        <thead class="thead-proseo">
+                        <thead class="thead-proseo-order">
                           <tr>
                             <th th:id="'togglejs' + ${job?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${job?.id} + ')'"><div class="jshide" th:id="'jsh' + ${job?.id}"><span
                                   data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobsteps}">jobsteps</span></div><div class="jsshow" th:id="'jss' + ${job?.id}"><span
@@ -408,6 +408,7 @@
     };
 
     function doPlan(oId, facility) {
+      showLoader();
       var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
       var row = document.getElementById(oId);
       
@@ -415,6 +416,7 @@
         url : url,
         method : "POST",
         success : function(res) {
+          hideLoader();
           retrieveData(oId);
         },
         fail : function(err) {
@@ -425,6 +427,7 @@
     };
     
     function setState(oId, state) {
+        showLoader();
         var url = "/order-state/post?id=" + oId + "&state=" + state;
         var row = document.getElementById(oId);
         var method = 'POST';
@@ -436,6 +439,7 @@
             url : url,
             method : method,
             success : function() {
+              hideLoader();
               if (state == 'DELETE') {
                 location.href = location.origin + '/order-show';  
               } else if (state == 'RESET') {
@@ -572,6 +576,12 @@
      if (myid != null) {
        retrieveData(myid);
      }
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        window.scrollBy(0, -110);
+      };
+      window.addEventListener('popstate', handler);
     }
 </script>
 

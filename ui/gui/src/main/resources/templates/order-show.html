@@ -232,6 +232,7 @@
     };
 
     function doPlan(oId, facility) {
+        showLoader();
       var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
       var row = document.getElementById(oId);
       
@@ -239,9 +240,11 @@
         url : url,
         method : "POST",
         success : function(res) {
+            hideLoader();
           retrieveData();
         },
         fail : function(err) {
+            hideLoader();
           console.log(err);
           prop.innerHTML = "Fehler!" + err;
         }
@@ -249,6 +252,7 @@
     };
     
     function setState(oId, state) {
+        showLoader();
         var url = "/order-state/post?id=" + oId + "&state=" + state;
         var row = document.getElementById(oId);
 
@@ -261,13 +265,16 @@
           url : url,
           method : method,
           success : function() {
+              hideLoader();
             retrieveData();
           },
           fail : function(err) {
+              hideLoader();
             console.log(err);
             prop.innerHTML = "Fehler!" + err;
           },
           complete: function() {
+              hideLoader();
               if (state == 'DELETE') {
             	  retrieveData();                  
               }
@@ -383,6 +390,12 @@
      $(elem).addClass('active');
      feather.replace();
      retrieveData();
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        window.scrollBy(0, -110);
+      };
+      window.addEventListener('popstate', handler);
      
     }
 </script>

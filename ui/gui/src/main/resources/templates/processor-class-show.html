@@ -127,6 +127,12 @@
      feather.replace();
      retrieveData();
      
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        window.scrollBy(0, -110);
+      };
+      window.addEventListener('popstate', handler);
+     
     }
 </script>
 

@@ -81,6 +81,7 @@ public class JobStepUtil {
         		" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
         		" inner join Mission m on o.mission.id = m.id " + 
         		" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+    	// em.createNativeQ
         return em.createQuery(query,
           JobStep.class)
         		.setMaxResults(limit)
