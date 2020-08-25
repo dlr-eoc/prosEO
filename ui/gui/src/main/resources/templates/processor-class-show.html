@@ -59,8 +59,8 @@
 						</thead>
 						<tbody th:unless="${procs} == null">
 							<tr th:each="processor : ${procs}">
-								<td th:text="${processor?.id}"></td>
-                <td th:text="${processor?.processorName}"></td>
+								<td th:id="${processor?.processorName}" th:text="${processor?.id}"></td>
+                <td><a th:href="'/processor-show?processorName=' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
 								<td th:text="${processor?.version}"></td>
 								<td th:text="${processor?.missionCode}"></td>
 								<td><a th:each="comp : ${processor?.productClasses}" 

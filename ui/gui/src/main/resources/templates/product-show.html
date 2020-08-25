@@ -90,8 +90,9 @@
                     <td th:text="${elem?.uuid}"></td>
                     <td th:text="${elem?.generationTime}"></td>
                     <td th:text="${elem?.productionType}"></td>
-                    <td><a th:each="comp : ${elem?.componentProductIds}" class="proseo-list-item" th:href="'#' + ${comp}"><span th:text="${comp}"></span></a></td>
-                    <td><a th:href="'#' + ${elem?.enclosingProductId}"><span th:text="${elem?.enclosingProductId}"></span></a></td>
+                    <td><a th:each="comp : ${elem?.componentProductIds}" class="proseo-list-item href" 
+                           th:onclick="'productref(' + ${comp} + ')'"><span th:text="${comp}"></span></a></td>
+                    <td><a class="href" th:onclick="'productref(' + ${elem?.enclosingProductId} + ')'"><span th:text="${elem?.enclosingProductId}"></span></a></td>
                     <td th:text="${elem?.orbit}"></td>
                     <td th:text="${elem?.configuredProcessor}"></td>
                     <td><span th:each="comp : ${elem?.parameters}" 
@@ -126,7 +127,15 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
   <script type="text/javascript"> 
-
+  function productref(ref) {
+	  var id = getURLParam('id');
+	  var pc = getURLParam('productClass');
+	  if (pc == null && id == null) {
+		  window.location.href = '#' + ref;
+	  } else {
+		  window.location.href = '/product-show?id=' + ref;
+	  }
+  }
     function retrieveData(id, productClass, startTimeFrom, startTimeTo) {
       showLoader();
       var tableRows = $("productTable").rows;

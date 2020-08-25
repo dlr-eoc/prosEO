@@ -63,11 +63,12 @@ public class GUIProcessorController extends GUIBaseController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/processor-show/get")
 	public DeferredResult<String> getProcessors(
+			@RequestParam(required = false, value = "processorName") String processorName,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProducs(model)");
-		Mono<ClientResponse> mono = get();
+		Mono<ClientResponse> mono = get(processorName);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> processors = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -103,13 +104,16 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	public Mono<ClientResponse> get() {
+	public Mono<ClientResponse> get(String processorName) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getProcessorManagerUrl() + "/processors";
 		String divider = "?";
 		uri += divider + "mission=" + mission;
 		divider ="&";
+		if (processorName != null) {
+			uri += divider + "processorName=" + processorName;
+		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {

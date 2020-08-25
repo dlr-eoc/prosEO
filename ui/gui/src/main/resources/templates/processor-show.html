@@ -77,7 +77,7 @@
               <div th:each="processor : ${processors}">
               <tr>
                 <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
-                <td class="first-row" th:text="${processor?.processorName}"></td>
+                <td class="first-row"> <a th:href="'/processor-class-show#' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
                 <td class="first-row" th:text="${processor?.processorVersion}"></td>
                 <td class="first-row" th:text="${processor?.version}"></td>
                 <td class="first-row" th:text="${processor?.missionCode}"></td>
@@ -87,10 +87,17 @@
                 <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
                 <td class="first-row"><a th:each="comp : ${processor?.configuredProcessors}" 
                        class="proseo-list-item"  
-                       th:href="'/configuration-show?c=' + ${comp}" th:text="${comp}"></a></td>
+                       th:href="'/configured-processor-show?c=' + ${comp}" th:text="${comp}"></a></td>
                 <td class="first-row" th:text="${processor?.dockerImage}"></td>
-                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}"><span th:each="comp : ${processor?.dockerRunParameters}" 
-                       class="proseo-list-item" th:text="${comp}"></span></td>
+                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}">
+                <table class="table">
+                  <tbody>
+                    <tr th:each="elem : ${processor?.dockerRunParameters}">
+                      <td th:text="${elem?.key}"></td>
+                      <td th:text="${elem?.value}"></td>
+                    </tr>
+                  </tbody>
+                </table></td>
               </tr>
                 <tr th:each="task : ${processor?.tasks}">
                     <td th:text="${task?.taskName}"></td>
@@ -128,13 +135,19 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript">
-  function retrieveData() {
+  function retrieveData(processorName) {
       showLoader();
     var tableRows = $("processorTable").rows;
     if(tableRows > 1 && tableRows != null) {
     $("processorTable > tbody").empty();
     }
       var url = "/processor-show/get";      
+
+      var divider = "?";
+      if (processorName != null) {
+          url = url + divider + "processorName=" + processorName.toString().trim();
+          divider = "&";
+      }
       
       $.ajax({
       url: url,
@@ -158,7 +171,8 @@
      var elem = document.getElementById('sb-processor');
      $(elem).addClass('active');
      feather.replace();
-     retrieveData();
+     var processorName = getURLParam('processorName');
+     retrieveData(processorName);
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

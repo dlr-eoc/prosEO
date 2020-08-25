@@ -23,6 +23,8 @@ proseo:
         url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     facilityManager:
         url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
-
+    gui:
+        timeout: 240000
+        
     # Connection timeout in ms
     http.timeout: 10000
