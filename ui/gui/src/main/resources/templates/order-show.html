@@ -1,142 +1,146 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport"
-	content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title th:text="#{proseo}">proseo</title>
-<!-- Bootstrap core CSS -->
-<link rel="stylesheet"
-  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-  integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
-  crossorigin="anonymous">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{order} + ' | ' + #{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
 
-<!-- Custom styles for prosEO -->
-<link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css"/>
-</head>
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css"/>
+  </head>
 
-<body>
-  <div style="display:none;" id="loader"></div>
-	<nav     
-		class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
-		<div class="container-fluid pl-0 pr-0">
-      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
-        href="/"><img src="proseo_logo.png" class="rounded" width="50"
-        height="50"></a>
-      <button class="navbar-toggler position-absolute d-md-none collapsed"
-        type="button" data-toggle="collapse" data-target="#sidebarMenu"
-        aria-controls="sidebarMenu" aria-expanded="false"
-        aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-			<ul class="navbar-nav mr-auto navbar-left">
-				<li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
-						th:text="${missioncode}">mission</span></a></li>
-				<li class="p-breadcrumb-item" aria-current="page"><span
-					th:text="#{order-show}">show</span></li>
-			</ul>
-      <div th:replace="fragments/navbar.html :: navbarRight"></div>
-		</div>
-	</nav>
-
-	<div class="container-fluid">
-    <div class="row">
-      <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
-
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-			<div class="container-fluid">
-				<form name="ord-shw" id="ord-shw" action="/order-show/get"
-					method="get">
-
-					<div class="input-group mb-3">
-						<p class="text-left">
-							<label><span th:text="#{order-id}"></span></label>
-							<input type="text" class="form-control" id="orderid">
-						</p>
-					</div>
-					<div class="input-group mb-3">
-						<p class="text-left">
-							<label for="fromDate"><span th:text="#{start-date}"></span></label>
-						</p>
-						<p class="text-left">
-							<input type="date" class="form-control" id="fromDate">
-						</p>
-						<p class="text-left">
-							<label for="toDate"><span th:text="#{end-date}"></span></label>
-						</p>
-						<p class="text-left">
-							<input type="date" class="form-control" id="toDate">
-						</p>
-					</div>
-					<div class="input-group mb-3">
-						<button id="orderselect" type="button" onclick="retrieveData();"
-							class="btn btn-primary mb-2">
-							<span th:text="#{order-show}"></span>
-						</button>
-					</div>
-				</form>
-
-			</div>
-			<div>
-       <div class="container-fluid">
-				<h5>
-					<span th:text="#{order}"></span>
-				</h5>
-
-				<div id="orderscontent" name="orderscontent">
-					<table class="table table-hover" id="orderTable">
-						<thead class="thead-proseo">
-							<tr>
-								<th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
-								    class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
-								<th onclick="selectOrder('select-identifier', ['select-id', 'select-state'])" 
-								    class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
-								<th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
-								    class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
-								<th><span th:text="#{orbit}">orbit</span></th>
-                <th><span th:text="#{product}">product</span></th>
-                <th><span>&nbsp;</span></th>
-							</tr>
-						</thead>
-						<tbody th:unless="${orders} == null">
-							<!-- 				  table-danger   - dark rose -->
-							<!-- 				  table-info     - light blue -->
-							<!-- 				  table-warning  - light sand -->
-							<!-- 				  table-success  - light green -->
-							<tr th:each="ord : ${orders}"
-							  th:id="${ord?.id}"
-								th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-					                ? 'table-danger' 
-					                : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-					                    ? 'table-success' 
-					                    : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-					                        ? 'table-info' 
-					                        : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-					                            ? 'table-warning' 
-					                            : 'table-danger')))">
-								<td><a th:href="'/order?id=' + ${ord?.id}"
-										th:text="${ord?.id}"></a></td>
-								<td th:text="${ord?.identifier}"></td>
-								<td th:text="${ord?.orderState}"></td>
-								<td th:text="${ord?.orbits}"></td>
-                <td th:text="${ord?.requestedProductClasses}"></td>
-								<td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
-							</tr>
-						</tbody>
-						<!--  <tr class = "table-danger">
-  <tr class="table-info">
-  <tr class="table-success"> -->
-
-					</table>
-				</div>
+  <body>
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"     
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+      <div class="container-fluid pl-0 pr-0">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span
+              th:text="#{order-show}">show</span></li>
+        </ul>
+        <div th:replace="fragments/navbar.html :: navbarRight"></div>
       </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+          <div class="container-fluid">
+            <form name="ord-shw" id="ord-shw" action="/order-show/get"
+              method="get">
+
+              <div class="input-group mb-3">
+                <p class="text-left">
+                  <label><span th:text="#{order-id}"></span></label>
+                  <input type="text" class="form-control" id="orderid">
+                </p>
+              </div>
+              <div class="input-group mb-3">
+                <p class="text-left">
+                  <label for="fromDate"><span th:text="#{start-date}"></span></label>
+                </p>
+                <p class="text-left">
+                  <input type="date" class="form-control" id="fromDate">
+                </p>
+                <p class="text-left">
+                  <label for="toDate"><span th:text="#{end-date}"></span></label>
+                </p>
+                <p class="text-left">
+                  <input type="date" class="form-control" id="toDate">
+                </p>
+              </div>
+              <div class="input-group mb-3">
+                <button id="orderselect" type="button" onclick="retrieveData();"
+                  class="btn btn-primary mb-2">
+                  <span th:text="#{order-show}"></span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+          <div>
+            <div class="container-fluid">
+              <h5>
+                <span th:text="#{order}"></span>
+              </h5>
+
+              <div id="orderscontent" name="orderscontent">
+                <table class="table table-hover" id="orderTable">
+                  <thead class="thead-proseo" id="proseo-thead">
+                    <tr>
+                      <th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
+                        class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
+                      <th onclick="selectOrder('select-identifier', ['select-id', 'select-state'])" 
+                        class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
+                      <th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
+                        class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+                      <th><span th:text="#{orbit}">orbit</span></th>
+                      <th><span th:text="#{product}">product</span></th>
+                      <th><span>&nbsp;</span></th>
+                    </tr>
+                  </thead>
+                  <tbody th:unless="${orders} == null">
+                    <!-- 				  table-danger   - dark rose -->
+                    <!-- 				  table-info     - light blue -->
+                    <!-- 				  table-warning  - light sand -->
+                    <!-- 				  table-success  - light green -->
+                    <tr th:each="ord : ${orders}"
+                      th:id="${ord?.id}"
+                      th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
+                      ? 'table-danger' 
+                      : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
+                      ? 'table-success' 
+                      : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
+                      ? 'table-info' 
+                      : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
+                      ? 'table-warning' 
+                      : 'table-danger')))">
+                      <td><a th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.id}"></a></td>
+                      <td><a th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.identifier}"></a></td>
+                      <td th:text="${ord?.orderState}"></td>
+                      <td th:text="${ord?.orbits}"></td>
+                      <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
+                    </tr>
+                  </tbody>
+                  <!--  <tr class = "table-danger">
+                  <tr class="table-info">
+                  <tr class="table-success"> -->
+
+                </table>
+              </div>
+            </div>
+          </div>
+          <div th:insert="fragments/footer.html :: footer"></div>
+        </main>
       </div>
-			<div th:insert="fragments/footer.html :: footer"></div>
-			</main>
-		</div>
     </div>
 	</div>
-</body>
+  </body>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.js"
@@ -164,225 +168,224 @@
   });
 </script>
   <script type="text/javascript">
-    function selectOrder(ele, others) {
-      var elem = $("#" + ele);
-      var sel = "select-down";
-      var newsel = "select-up";
-      var styles = $(elem).attr("class");
-      if (styles != null) {
-        var styless = styles.split(" ");
-        for (i = 0; i < styless.length; i++) {
-            var s = styless[i];
-          if (s == "select-up") {
-            sel = "select-up";
-            newsel = "select-down";
-            break;
-          } else if (s == "select-down") {
-            sel = "select-down";
-            newsel = "select-up";
-            break;
-          }
-        }
-      }
-      $(elem).removeClass(sel);
-      $(elem).addClass(newsel);
-      for (i = 0; i < others.length; i++) {
-    	  var e = others[i];
-      var eleidentifier = $("#" + e);
-        $(eleidentifier).removeClass("select-up");
-        $(eleidentifier).removeClass("select-down");
-      }
-      retrieveData();
-    };
- 
-    function plan(oId, state) {
-      var dialog = document.getElementById('plan' + oId);
-      var ok = document.getElementById('ok' + oId);
-      var cancel = document.getElementById('cancel' + oId);
-      if (!dialog.hasAttribute('open')) {
-    	    // show the dialog 
-          var div = document.createElement('div');
-          div.id = 'backdrop';
-          document.body.appendChild(div); 
-    	    dialog.setAttribute('open','open');
-    	    ok.addEventListener('click', 
-    	    	function () {
-    	    	  var menu = document.getElementById('facilities' + oId);
-    	    	  var facility = menu.options[menu.selectedIndex].value;
-    	    	  doPlan(oId, facility);
-    	          var dialog = document.getElementById('plan' + oId);
-    	          dialog.removeAttribute('open');  
-    	          var div = document.querySelector('#backdrop');
-                  if (div != null) {
-                      div.parentNode.removeChild(div);
-                    }
-    	      }
-    	    );
-    	    cancel.addEventListener('click',  
-            function () {
-                var dialog = document.getElementById('plan' + oId);
-                dialog.removeAttribute('open');  
-                var div = document.querySelector('#backdrop');
-                if (div != null) {
-                	div.parentNode.removeChild(div);
-                }
-            }
-          );
-      }
-    };
 
-    function doPlan(oId, facility) {
-        showLoader();
-      var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
-      var row = document.getElementById(oId);
-      
-      $.ajax({
-        url : url,
-        method : "POST",
-        success : function(res) {
-            hideLoader();
-          retrieveData();
-        },
-        fail : function(err) {
-            hideLoader();
-          console.log(err);
-          prop.innerHTML = "Fehler!" + err;
-        }
-      });
-    };
-    
-    function setState(oId, state) {
-        showLoader();
-        var url = "/order-state/post?id=" + oId + "&state=" + state;
-        var row = document.getElementById(oId);
+			function selectOrder(ele, others) {
+				var elem = $("#" + ele);
+				var sel = "select-down";
+				var newsel = "select-up";
+				var styles = $(elem).attr("class");
+				if (styles != null) {
+					var styless = styles.split(" ");
+					for (i = 0; i < styless.length; i++) {
+						var s = styless[i];
+						if (s == "select-up") {
+							sel = "select-up";
+							newsel = "select-down";
+							break;
+						} else if (s == "select-down") {
+							sel = "select-down";
+							newsel = "select-up";
+							break;
+						}
+					}
+				}
+				$(elem).removeClass(sel);
+				$(elem).addClass(newsel);
+				for (i = 0; i < others.length; i++) {
+					var e = others[i];
+					var eleidentifier = $("#" + e);
+					$(eleidentifier).removeClass("select-up");
+					$(eleidentifier).removeClass("select-down");
+				}
+				retrieveData();
+			};
 
-        var method = 'POST';
-        if (state == 'DELETE') {
-           method = 'DELETE';
-        } else {
-        }
-        $.ajax({
-          url : url,
-          method : method,
-          success : function() {
-              hideLoader();
-            retrieveData();
-          },
-          fail : function(err) {
-              hideLoader();
-            console.log(err);
-            prop.innerHTML = "Fehler!" + err;
-          },
-          complete: function() {
-              hideLoader();
-              if (state == 'DELETE') {
-            	  retrieveData();                  
-              }
-          }
-        });
-      };
-    
-    function retrieveData() {
-        showLoader();
-      var tableRows = $("orderTable").rows;
-      if (tableRows > 1 && tableRows != null) {
-        $("orderTable > tbody").empty();
-      }
-      var url = "/order-show/get"
-      var divider = "?";
-      var ident = document.getElementById('orderid').value;
-      var sortcol = "id";
-      var up = true;
-      var done = false;
-      var elem = $("#select-identifier");
-      var styles = $(elem).attr("class");
-      if (styles != null) {
-        var styless = styles.split(" ");
-        for (i = 0; i < styless.length; i++) {
-        	var s = styless[i];
-          if (s == "select-up") {
-            done = true;
-            sortcol = "identifier";
-            up = true;
-            break;
-          } else if (s == "select-down") {
-            done = true;
-            sortcol = "identifier";
-            up = false;
-            break;
-          }
-        }
-      }
-      if (!done) {
-      var elem = $("#select-id");
-      styles = $(elem).attr("class");
-      if (styles != null) {
-        var styless = styles.split(" ");
-        for (i = 0; i < styless.length; i++) {
-            var s = styless[i];
-          if (s == "select-up") {
-            done = true;
-            sortcol = "id";
-            up = true;
-            break;
-          } else if (s == "select-down") {
-            done = true;
-            sortcol = "id";
-            up = false;
-            break;
-          }
-        }
-        }
-      }
-      if (!done) {
-      var elem = $("#select-state");
-      styles = $(elem).attr("class");
-      if (styles != null) {
-        var styless = styles.split(" ");
-        for (i = 0; i < styless.length; i++) {
-            var s = styless[i];
-          if (s == "select-up") {
-            done = true;
-            sortcol = "orderState";
-            up = true;
-            break;
-          } else if (s == "select-down") {
-            done = true;
-            sortcol = "orderState";
-            up = false;
-            break;
-          }
-        }
-        }
-      }
-      
-      if (ident != null) {
-        url = url + divider + "identifier=" + ident.trim();
-        divider = "&";
-      }
-        url = url + divider + "sortby=" + sortcol;
-        divider = "&";
-        url = url + divider + "up=" + up;
-        divider = "&";
-      var prop = document.getElementById('test');
 
-      $.ajax({
-        url : url,
-        method : "GET",
-        success : function(res) {
-          $("#orderscontent").html(res);
-          hideLoader();
-          document.title = "[[#{order}]]" + " | " + "[[#{proseo}]]";
-        },
-        fail : function(err) {
-            hideLoader();
-          console.log(err);
-          prop.innerHTML = "Fehler!" + err;
-        }
-      });
-    };
-    
-  </script>
+			function plan(oId, state) {
+				var dialog = document.getElementById('plan' + oId);
+				var ok = document.getElementById('ok' + oId);
+				var cancel = document.getElementById('cancel' + oId);
+				if (!dialog.hasAttribute('open')) {
+					// show the dialog 
+					var div = document.createElement('div');
+					div.id = 'backdrop';
+					document.body.appendChild(div);
+					dialog.setAttribute('open', 'open');
+					ok.addEventListener('click', function() {
+						var menu = document.getElementById('facilities' + oId);
+						var facility = menu.options[menu.selectedIndex].value;
+						doPlan(oId, facility);
+						var dialog = document.getElementById('plan' + oId);
+						dialog.removeAttribute('open');
+						var div = document.querySelector('#backdrop');
+						if (div != null) {
+							div.parentNode.removeChild(div);
+						}
+					});
+					cancel.addEventListener('click', function() {
+						var dialog = document.getElementById('plan' + oId);
+						dialog.removeAttribute('open');
+						var div = document.querySelector('#backdrop');
+						if (div != null) {
+							div.parentNode.removeChild(div);
+						}
+					});
+				}
+			};
+
+			function doPlan(oId, facility) {
+				showLoader();
+				var url = "/order-state/post?id=" + oId
+						+ "&state=PLAN&facility=" + facility;
+				var row = document.getElementById(oId);
+
+				$.ajax({
+					url : url,
+					method : "POST",
+					success : function(res) {
+						hideLoader();
+						retrieveData();
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					}
+				});
+			};
+
+			function setState(oId, state) {
+				showLoader();
+				var url = "/order-state/post?id=" + oId + "&state=" + state;
+				var row = document.getElementById(oId);
+
+				var method = 'POST';
+				if (state == 'DELETE') {
+					method = 'DELETE';
+				} else {
+				}
+				$.ajax({
+					url : url,
+					method : method,
+					success : function() {
+						hideLoader();
+						retrieveData();
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					},
+					complete : function() {
+						hideLoader();
+						if (state == 'DELETE') {
+							retrieveData();
+						}
+					}
+				});
+			};
+
+			function retrieveData() {
+				showLoader();
+				var tableRows = $("orderTable").rows;
+				if (tableRows > 1 && tableRows != null) {
+					$("orderTable > tbody").empty();
+				}
+				var url = "/order-show/get"
+				var divider = "?";
+				var ident = document.getElementById('orderid').value;
+				var sortcol = "id";
+				var up = true;
+				var done = false;
+				var elem = $("#select-identifier");
+				var styles = $(elem).attr("class");
+				if (styles != null) {
+					var styless = styles.split(" ");
+					for (i = 0; i < styless.length; i++) {
+						var s = styless[i];
+						if (s == "select-up") {
+							done = true;
+							sortcol = "identifier";
+							up = true;
+							break;
+						} else if (s == "select-down") {
+							done = true;
+							sortcol = "identifier";
+							up = false;
+							break;
+						}
+					}
+				}
+				if (!done) {
+					var elem = $("#select-id");
+					styles = $(elem).attr("class");
+					if (styles != null) {
+						var styless = styles.split(" ");
+						for (i = 0; i < styless.length; i++) {
+							var s = styless[i];
+							if (s == "select-up") {
+								done = true;
+								sortcol = "id";
+								up = true;
+								break;
+							} else if (s == "select-down") {
+								done = true;
+								sortcol = "id";
+								up = false;
+								break;
+							}
+						}
+					}
+				}
+				if (!done) {
+					var elem = $("#select-state");
+					styles = $(elem).attr("class");
+					if (styles != null) {
+						var styless = styles.split(" ");
+						for (i = 0; i < styless.length; i++) {
+							var s = styless[i];
+							if (s == "select-up") {
+								done = true;
+								sortcol = "orderState";
+								up = true;
+								break;
+							} else if (s == "select-down") {
+								done = true;
+								sortcol = "orderState";
+								up = false;
+								break;
+							}
+						}
+					}
+				}
+
+				if (ident != null) {
+					url = url + divider + "identifier=" + ident.trim();
+					divider = "&";
+				}
+				url = url + divider + "sortby=" + sortcol;
+				divider = "&";
+				url = url + divider + "up=" + up;
+				divider = "&";
+				var prop = document.getElementById('test');
+
+				$.ajax({
+					url : url,
+					method : "GET",
+					success : function(res) {
+						$("#orderscontent").html(res);
+						hideLoader();
+						document.title = "[[#{order}]]" + " | "
+								+ "[[#{proseo}]]";
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					}
+				});
+			};
+		</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();
@@ -392,10 +395,12 @@
      retrieveData();
      
      // correct scroll due to "sticky" elements
-//      var handler = function ( ) {
-//         window.scrollBy(0, -110);
-//       };
-//       window.addEventListener('popstate', handler);
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+        window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
      
     }
 </script>

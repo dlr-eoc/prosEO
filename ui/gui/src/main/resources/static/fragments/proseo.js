@@ -142,4 +142,11 @@
     }
     function hideLoader() {
         document.getElementById("loader").style.display = "none";
-      }
+    }
+    
+
+    function correctScrollPos() {
+    	var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			+ document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	window.scrollBy(0, h);
+    };

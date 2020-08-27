@@ -17,12 +17,12 @@
 
   <body>
     <div style="display:none;" id="loader"></div>
-    <nav
-      class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
           href="/"><img src="proseo_logo.png" class="rounded" width="50"
-            height="50"></a>
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
         <button class="navbar-toggler position-absolute d-md-none collapsed"
           type="button" data-toggle="collapse" data-target="#sidebarMenu"
           aria-controls="sidebarMenu" aria-expanded="false"
@@ -33,7 +33,7 @@
           <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
                 th:text="${missioncode}">mission</span></a></li>
           <li class="p-breadcrumb-item"><span
-                th:text="#{product}">product</span></li>
+              th:text="#{product}">product</span></li>
         </ul>
         <div th:replace="fragments/navbar.html :: navbarRight"></div>
       </div>
@@ -42,43 +42,43 @@
     <div class="container-fluid">
       <div class="row">
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
           
           <div id="productcontent" name="productcontent">
-              <table class="table table-hover" id="productTable" th:if="${products != null and (not #lists.isEmpty(products))}">
-                <thead class="thead-proseo">
-                  <tr>
-                    <th colspan="2"><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{product-class}">product-class</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
-                    <th><span th:text="#{fileclass}">fileclass</span></th>
-                    <th><span th:text="#{mode}">mode</span></th>
-                    <th><span th:text="#{productqualitiy}">productqualitiy</span></th>
-                    <th><span th:text="#{sensingstarttime}">sensingstarttime</span></th>
-                    <th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
-                  </tr>
-                  <tr>
-                    <th><span>&nbsp;</span></th>
-                    <th><span th:text="#{uuid}">uuid</span></th>
-                    <th><span th:text="#{generationtime}">generationtime</span></th>
-                    <th><span th:text="#{productiontype}">productiontype</span></th>
-                    <th><span th:text="#{componentproductids}">componentproductids</span></th>
-                    <th><span th:text="#{enclosingproductids}">componentproductids</span></th>
-                    <th><span th:text="#{orbit}">orbit</span></th>
-                    <th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-                    <th><span th:text="#{parameters}">parameters</span></th>
-                    <th><span th:text="#{productfile}">productfile</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-            <div th:each="elem : ${products}">
+            <table class="table table-hover" id="productTable" th:if="${products != null and (not #lists.isEmpty(products))}">
+              <thead class="thead-proseo" id="proseo-thead">
+                <tr>
+                  <th colspan="2"><span th:text="#{id}">id</span></th>
+                  <th><span th:text="#{product-class}">product-class</span></th>
+                  <th><span th:text="#{version}">version</span></th>
+                  <th><span th:text="#{generationtime}">generationtime</span></th>
+                  <th><span th:text="#{fileclass}">fileclass</span></th>
+                  <th><span th:text="#{mode}">mode</span></th>
+                  <th><span th:text="#{productqualitiy}">productqualitiy</span></th>
+                  <th><span th:text="#{sensingstarttime}">sensingstarttime</span></th>
+                  <th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
+                </tr>
+                <tr>
+                  <th><span>&nbsp;</span></th>
+                  <th><span th:text="#{uuid}">uuid</span></th>
+                  <th><span th:text="#{productiontype}">productiontype</span></th>
+                  <th><span th:text="#{componentproductids}">componentproductids</span></th>
+                  <th><span th:text="#{enclosingproductids}">componentproductids</span></th>
+                  <th><span th:text="#{orbit}">orbit</span></th>
+                  <th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+                  <th><span th:text="#{parameters}">parameters</span></th>
+                  <th colspan="2"><span th:text="#{productfile}">productfile</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <div th:each="elem : ${products}">
                   <tr>
                     <td th:id="${elem?.id}" colspan="2" th:text="${elem?.id}" class="first-row"></td>
                     <td class="first-row"><a th:href="'/productclass-show?pc=' + ${elem?.productClass}"  th:text="${elem?.productClass}"></a></td>
                     <td th:text="${elem?.version}" class="first-row"></td>
-                    <td th:text="${elem?.missionCode}" class="first-row"></td>
+                    <td th:text="${elem?.generationTime}" class="first-row"></td>
                     <td th:text="${elem?.fileClass}" class="first-row"></td>
                     <td th:text="${elem?.mode}" class="first-row"></td>
                     <td th:text="${elem?.productQuality}" class="first-row"></td>
@@ -88,20 +88,28 @@
                   <tr class="proseo-row-divider">
                     <td>&nbsp;</td>
                     <td th:text="${elem?.uuid}"></td>
-                    <td th:text="${elem?.generationTime}"></td>
                     <td th:text="${elem?.productionType}"></td>
                     <td><a th:each="comp : ${elem?.componentProductIds}" class="proseo-list-item href" 
-                           th:onclick="'productref(' + ${comp} + ')'"><span th:text="${comp}"></span></a></td>
+                        th:onclick="'productref(' + ${comp} + ')'"><span th:text="${comp}"></span></a></td>
                     <td><a class="href" th:onclick="'productref(' + ${elem?.enclosingProductId} + ')'"><span th:text="${elem?.enclosingProductId}"></span></a></td>
                     <td th:text="${elem?.orbit}"></td>
-                    <td th:text="${elem?.configuredProcessor}"></td>
-                    <td><span th:each="comp : ${elem?.parameters}" 
-                       class="proseo-list-item" th:text="${comp}"></span></td>
-                    <td th:text="${elem?.productFile}"></td>
+                    <td><a th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}" th:text="${elem?.configuredProcessor.identifier}"></a></td>
+                    <td>
+                      <table class="table">
+                        <tbody>
+                          <tr th:each="comp : ${elem?.parameters}">
+                            <td th:text="${comp?.key}"></td>
+                            <td th:text="${comp?.parameterType}"></td>
+                            <td th:text="${comp?.parameterValue}"></td>
+                          </tr>
+                        </tbody>
+                      </table></td>
+                    <td colspan="2"><a th:each="comp : ${elem?.productFile}" class="proseo-list-item" 
+                        th:href="'/productfile-show?p=' + ${elem?.id}"><span th:text="${comp?.productFileName}"></span></a></td>
                   </tr>
-            </div>
-                </tbody>
-              </table>
+                </div>
+              </tbody>
+            </table>
           </div>
           
           <div th:insert="fragments/footer.html :: footer"></div>
@@ -131,7 +139,7 @@
 	  var id = getURLParam('id');
 	  var pc = getURLParam('productClass');
 	  if (pc == null && id == null) {
-		  window.location.href = '#' + ref;
+		  window.location.hash = '#' + ref;
 	  } else {
 		  window.location.href = '/product-show?id=' + ref;
 	  }
@@ -190,9 +198,11 @@
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
-        window.scrollBy(0, -140);
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
       };
-      window.addEventListener('popstate', handler);
+      window.addEventListener('hashchange', handler);
     }
 </script>
 

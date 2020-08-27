@@ -97,12 +97,12 @@
 
   <body>
     <div style="display:none;" id="loader"></div>
-    <nav
-      class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
           href="/"><img src="proseo_logo.png" class="rounded" width="50"
-            height="50"></a>
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
         <button class="navbar-toggler position-absolute d-md-none collapsed"
           type="button" data-toggle="collapse" data-target="#sidebarMenu"
           aria-controls="sidebarMenu" aria-expanded="false"
@@ -122,15 +122,29 @@
     <div class="container-fluid">
       <div class="row">
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4"> 
         <h5>
           <span th:text="#{lastfailed}"></span> <span th:text="#{jobsteps}"></span>
         </h5>
           <div id="failedjs" name="failedjs">
-            <div th:unless="${#arrays.isEmpty(failedjobsteps)}">
-              <table class="table table-hover">
-                
+            <div>
+              <table class="table table-hover">                
+                        <thead class="thead-proseo-order">
+                          <tr>
+                            <th><span th:text="#{id}">id</span></div></th>
+                            <th><span th:text="#{state}">state</span></th>
+                            <th><span th:text="#{order}">order</span></th>
+                            <th><span th:text="#{processingmode}">processingmode</span></th>
+                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                            <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+                            <th><span th:text="#{starttime}">starttime</span></th>
+                            <th><span th:text="#{completiontime}">completiontime</span></th>
+                            <th><span th:text="#{outloglevel}">outloglevel</span></th>
+                            <th><span th:text="#{errloglevel}">errloglevel</span></th>
+                          </tr>
+                        </thead>
                 <tbody>
                   <div th:each="jobstep : ${failedjobsteps}">
                     <tr class="table-danger">
@@ -138,8 +152,11 @@
                       <td><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
-                      <td><span th:text="${jobstep?.inputProductClasses}"></span></td>
-                      <td><span th:text="${jobstep?.outputProductClass}"></span></td>
+                      <td><a th:each="comp : ${jobstep?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td><a 
+                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><span th:text="${jobstep?.processingStartTime}"></span></td>
                       <td><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                       <td><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
@@ -155,9 +172,22 @@
           <span th:text="#{lastcompleted}"></span> <span th:text="#{jobsteps}"></span>
         </h5>
           <div id="completedjs" name="completedjs">
-            <div th:unless="${#arrays.isEmpty(completedjobsteps)}">
-              <table class="table table-hover" th:unless="${#arrays.isEmpty(completedjobsteps)}">
-                
+            <div>
+              <table class="table table-hover">              
+                        <thead class="thead-proseo-order">
+                          <tr>
+                            <th><span th:text="#{id}">id</span></div></th>
+                            <th><span th:text="#{state}">state</span></th>
+                            <th><span th:text="#{order}">order</span></th>
+                            <th><span th:text="#{processingmode}">processingmode</span></th>
+                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                            <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+                            <th><span th:text="#{starttime}">starttime</span></th>
+                            <th><span th:text="#{completiontime}">completiontime</span></th>
+                            <th><span th:text="#{outloglevel}">outloglevel</span></th>
+                            <th><span th:text="#{errloglevel}">errloglevel</span></th>
+                          </tr>
+                        </thead>
                 <tbody>
                   <div th:each="jobstep : ${completedjobsteps}">
                     <tr class="table-success">
@@ -165,8 +195,11 @@
                       <td><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
-                      <td><span th:text="${jobstep?.inputProductClasses}"></span></td>
-                      <td><span th:text="${jobstep?.outputProductClass}"></span></td>
+                      <td><a th:each="comp : ${jobstep?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td><a 
+                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><span th:text="${jobstep?.processingStartTime}"></span></td>
                       <td><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                       <td><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
@@ -300,9 +333,11 @@
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {
-        window.scrollBy(0, -110);
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
       };
-      window.addEventListener('popstate', handler);
+      window.addEventListener('hashchange', handler);
      
     }
 </script>

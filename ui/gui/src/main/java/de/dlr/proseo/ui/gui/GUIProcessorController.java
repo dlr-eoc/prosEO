@@ -40,24 +40,14 @@ public class GUIProcessorController extends GUIBaseController {
 	private ServiceConfiguration serviceConfig;
     
     @RequestMapping(value = "/processor-show")
-    public String showProduct() {
+    public String showProcessor() {
    
     return "processor-show";
     }
-    @RequestMapping(value = "/processor-create")
-    public String createProduct() {
+    @RequestMapping(value = "/configured-processor-show")
+    public String showConfiguredProcessor() {
    
-    return "processor-create";
-    }
-    @RequestMapping(value = "/processor-update")
-    public String updateProduct() {
-   
-    return "processor-update";
-    }
-    @RequestMapping(value = "/processor-delete")
-    public String deleteProduct() {
-   
-    return "processor-delete";
+    return "configured-processor-show";
     }
 
 	@SuppressWarnings("unchecked")
@@ -67,7 +57,7 @@ public class GUIProcessorController extends GUIBaseController {
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
-		logger.trace(">>> getProducs(model)");
+		logger.trace(">>> getProcessors(model)");
 		Mono<ClientResponse> mono = get(processorName);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> processors = new ArrayList<>();
@@ -76,12 +66,12 @@ public class GUIProcessorController extends GUIBaseController {
 			if (clientResponse.statusCode().is5xxServerError()) {
 				logger.trace(">>>Server side error (HTTP status 500)");
 				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order-show :: #orderscontent");
+				deferredResult.setResult("processor-show :: #processorcontent");
 				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is4xxClientError()) {
 				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order-show :: #orderscontent");
+				deferredResult.setResult("processor-show :: #processorcontent");
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(pList -> {
@@ -104,6 +94,50 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/configuredprocessor/get")
+	public DeferredResult<String> getConfiguredProcessors(
+			@RequestParam(required = false, value = "processorName") String processorName,
+			@RequestParam(required = false, value = "sortby") String sortby,
+			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+		
+		logger.trace(">>> getConfiguredProcessors(model)");
+		Mono<ClientResponse> mono = getCP(processorName);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<Object> configuredprocessors = new ArrayList<>();
+		mono.subscribe(clientResponse -> {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().is5xxServerError()) {
+				logger.trace(">>>Server side error (HTTP status 500)");
+				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				deferredResult.setResult("configured-processor-show :: #configuredprocessorcontent");
+				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is4xxClientError()) {
+				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				deferredResult.setResult("configured-processor-show :: #configuredprocessorcontent");
+				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				clientResponse.bodyToMono(List.class).subscribe(pList -> {
+					configuredprocessors.addAll(pList);
+				
+					model.addAttribute("configuredprocessors", configuredprocessors);
+					if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+					if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + configuredprocessors.toString());
+					deferredResult.setResult("configured-processor-show :: #configuredprocessorcontent");
+					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+				});
+			}
+			logger.trace(">>>>MODEL" + model.toString());
+
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>>MONO" + configuredprocessors.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		return deferredResult;
+	}
+	
 	public Mono<ClientResponse> get(String processorName) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -113,6 +147,30 @@ public class GUIProcessorController extends GUIBaseController {
 		divider ="&";
 		if (processorName != null) {
 			uri += divider + "processorName=" + processorName;
+		}
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+
+	}
+
+	public Mono<ClientResponse> getCP(String processorName) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = serviceConfig.getProcessorManagerUrl() + "/configuredprocessors";
+		String divider = "?";
+		uri += divider + "mission=" + mission;
+		divider ="&";
+		if (processorName != null) {
+			uri += divider + "identifier=" + processorName;
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

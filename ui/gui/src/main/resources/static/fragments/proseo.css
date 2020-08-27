@@ -285,7 +285,7 @@ dialog::backdrop, #backdrop {
   padding: 0 0 !important;
 }
 .order-menu-img {
-  height: 75%;
+  height: 1.2em;
 }
 
 p {
@@ -412,4 +412,9 @@ code {
 
 .menu {
   z-index: 1030 !important;
+}
+
+.proseo-top-div {
+  height: 55px;
+  width: 100%;
 }
