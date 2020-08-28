@@ -5,6 +5,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +175,7 @@ public class GUIOrderController extends GUIBaseController {
 			logger.trace(">>> setState({}, {}, model)", id, state, facility);
 		Mono<ClientResponse> mono = orderService.setState(id, state, facility);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
-		mono.subscribe(clientResponse -> {
+		mono.timeout(Duration.ofMillis(config.getTimeout())).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
 				logger.trace(">>>Server side error (HTTP status 500)");
@@ -190,7 +191,7 @@ public class GUIOrderController extends GUIBaseController {
 				if (clientResponse.statusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
 					deferredResult.setResult("no content");
 				} else {
-					clientResponse.bodyToMono(HashMap.class).subscribe(orderList -> {
+					clientResponse.bodyToMono(HashMap.class).timeout(Duration.ofMillis(config.getTimeout())).subscribe(orderList -> {
 						model.addAttribute("ord", orderList);
 						logger.trace(model.toString() + "MODEL TO STRING");
 						logger.trace(">>>>MONO" + orderList.toString());
@@ -317,14 +318,12 @@ public class GUIOrderController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobList -> {
 					jobs.addAll(jobList);
-					for (Object o : jobs) {
-						if (o instanceof HashMap) {
-							HashMap<String, Object> h = (HashMap<String, Object>) o;
-							String jobId = h.get("id").toString();
-							HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
-							h.put("graph", result);
-						}
-					}
+					/*
+					 * for (Object o : jobs) { if (o instanceof HashMap) { HashMap<String, Object> h
+					 * = (HashMap<String, Object>) o; String jobId = h.get("id").toString();
+					 * HashMap<String, Object> result = orderService.getGraphOfJob(jobId, auth);
+					 * h.put("graph", result); } }
+					 */		
 					model.addAttribute("jobs", jobs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());

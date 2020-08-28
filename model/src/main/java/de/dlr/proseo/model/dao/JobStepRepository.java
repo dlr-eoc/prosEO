@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,9 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 
 	@Query("select js from JobStep js where js.job.processingFacility.id = ?1 and js.jobStepState in ?2")
 	public List<JobStep> findAllByProcessingFacilityAndJobStepStateIn(long id, List<JobStepState> jobStepStates);
+
+	@Query("select js from JobStep js where js.jobStepState = ?1 and js.job.processingOrder.mission.code = ?2 order by js.processingCompletionTime desc")
+	public List<JobStep> findAllByJobStepStateAndMissionOrderByDate(JobStepState jobStepState, String mission);
 
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState NOT IN ('COMPLETED', 'FAILED')")
 	public int countJobStepNotFinishedByJobId(long id);

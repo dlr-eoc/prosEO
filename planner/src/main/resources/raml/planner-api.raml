@@ -262,6 +262,8 @@ resourceTypes:
       status?:
         type: string
         enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+      mission?: string
+      last?: integer
     responses:
       200:
         body:

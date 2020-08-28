@@ -241,10 +241,10 @@ td, th {
 }
 
 .select-up::after {
-  content: ' ↓';
+  content: ' ∧';
 }
 .select-down::after {
-  content: ' ↑';
+  content: ' ∨';
 }
 
 .cursorpointer {
@@ -285,7 +285,7 @@ dialog::backdrop, #backdrop {
   padding: 0 0 !important;
 }
 .order-menu-img {
-  height: 75%;
+  height: 1.2em;
 }
 
 p {
@@ -323,12 +323,24 @@ code {
   width: 15em;
 }
 
-
+.thead-proseo {
+  position: -webkit-sticky !Important;
+  position: sticky !Important;
+  top: 54px !Important;
+}
+  
 .table .thead-proseo th {
   color: #1b1e21;
   background-color: #d6d8d9;
   border-color: #c6c8ca;
-  font-weight: 500 !important;
+  font-weight: 500 !important;  
+}
+  
+.table .thead-proseo-order th {
+  color: #1b1e21;
+  background-color: #d6d8d9;
+  border-color: #c6c8ca;
+  font-weight: 500 !important;  
 }
 
 .proseo-list-item + .proseo-list-item::before {
@@ -338,4 +350,71 @@ code {
 
 .proseo-row-divider {
   border-bottom: 2px solid #ffffff !important;
+}
+
+/* Center the loader */
+#loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+/* Add animation to "page content" */
+.animate-bottom {
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 1s
+}
+
+@-webkit-keyframes animatebottom {
+  from { bottom:-100px; opacity:0 } 
+  to { bottom:0px; opacity:1 }
+}
+
+@keyframes animatebottom { 
+  from{ bottom:-100px; opacity:0 } 
+  to{ bottom:0; opacity:1 }
+}
+
+.href {
+  color: #007bff !important;
+  text-decoration: none !important;
+  background-color: transparent !important;
+}
+
+.href:hover {
+  color: #0056b3 !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+
+.menu {
+  z-index: 1030 !important;
+}
+
+.proseo-top-div {
+  height: 55px;
+  width: 100%;
 }

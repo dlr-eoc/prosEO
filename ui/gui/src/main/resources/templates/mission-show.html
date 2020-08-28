@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
       <meta name="viewport"
   content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <title th:text="#{orbit} + ' | ' + #{proseo}">proseo</title>
+        <title th:text="#{mission} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
   href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -33,7 +33,7 @@
         <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
             th:text="${missioncode}">mission</span></a></li>
         <li class="p-breadcrumb-item" aria-current="page"><span
-          th:text="#{orbit}">orbit</span></li>
+          th:text="#{mission}">mission</span></li>
       </ul>
       <div th:replace="fragments/navbar.html :: navbarRight"></div>
     </div>
@@ -47,29 +47,49 @@
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
 
-        <div id="orbitcontent" name="orbitcontent">
-          <table class="table" id="orbitTable" name="orbitTable">
+        <div id="missioncontent" name="missioncontent">
+          <table class="table" id="missionTable" name="missionTable">
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
-                    <th><span th:text="#{spacecraft}">spacecraft</span></th>
-                    <th><span th:text="#{number}">number</span></th>
-                    <th><span th:text="#{starttime}">starttime</span></th>
-                    <th><span th:text="#{stoptime}">stoptime</span></th>
+                    <th><span th:text="#{code}">code</span></th>
+                    <th><span th:text="#{name}">name</span></th>
+                    <th><span th:text="#{fileclasses}">fileclasses</span></th>
+                    <th><span th:text="#{processingmodes}">processingmodes</span></th>
+                    <th><span th:text="#{spacecrafts}">spacecrafts</span></th>
+              </tr>
+              <tr>   
+              <th>&nbsp;</th>           
+              <th colspan="6"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
               </tr>
             </thead>
-            <tbody th:unless="${orbits} == null">
-              <div th:each="orbit : ${orbits}">
+            <tbody th:unless="${missions} == null">
+              <div th:each="mission : ${missions}">
               <tr>
-                <td th:id="${orbit?.id}" class="first-row" th:text="${orbit?.id}"></td>
-                <td class="first-row" th:text="${orbit?.version}"></td>
-                <td class="first-row"> <a th:href="'/mission-show?m=' + ${orbit?.missionCode}" th:text="${orbit?.missionCode}"></a></td>
-                <td class="first-row" th:text="${orbit?.spacecraftCode}"></td>
-                <td class="first-row" th:text="${orbit?.orbitNumber}"></td>
-                <td class="first-row" th:text="${orbit?.startTime}"></td>
-                <td class="first-row" th:text="${orbit?.stopTime}"></td>
+                <td th:id="${mission?.code}" th:rowspan="2" class="first-row" th:text="${mission?.id}"></td>
+                <td class="first-row" th:text="${mission?.version}"></td>
+                <td class="first-row" th:text="${mission?.code}"></td>
+                <td class="first-row" th:text="${mission?.name}"></td>
+                <td class="first-row"><span th:each="comp : ${mission?.fileClasses}" 
+                       class="proseo-list-item"  
+                       th:text="${comp}"></span></td>
+                <td class="first-row"><span th:each="comp : ${mission?.processingModes}" 
+                       class="proseo-list-item"  
+                       th:text="${comp}"></span></td>
+                <td class="first-row">                
+                <table class="table">
+                  <tbody>
+                    <tr th:each="elem : ${mission?.spacecrafts}">
+                      <td ><a th:href="'/orbit-show?sp=' + ${elem?.code}" th:text="${elem?.code}"></a></td>
+                      <td ><a th:href="'/orbit-show?sp=' + ${elem?.code}" th:text="${elem?.name}"></a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </tr>
+              <tr>              
+              <td colspan="6"  th:text="${mission?.productFileTemplate}">
+              </td>    
               </tr>
               </div>
             </tbody>
@@ -98,25 +118,19 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript">
-  function retrieveData(sp) {
+  function retrieveData() {
       showLoader();
-    var tableRows = $("orbitTable").rows;
+    var tableRows = $("missionTable").rows;
     if(tableRows > 1 && tableRows != null) {
-    $("orbitTable > tbody").empty();
+    $("missionTable > tbody").empty();
     }
-      var url = "/orbits/get";      
-      var divider = "?";
-      
-      if (sp != null) {
-        url = url + divider + "spacecraft=" + sp.toString().trim();
-        divider = "&";
-      }
+      var url = "/missions/get";      
       
       $.ajax({
       url: url,
       method: "GET",
       success: function (res) {
-          $("#orbitcontent").html(res);
+          $("#missioncontent").html(res);
           hideLoader();
       },
       fail: function (err) {
@@ -131,11 +145,10 @@
 <script>
     window.onload = function () {
      // $('.collapse').collapse();
-     var elem = document.getElementById('sb-orbit');
+     var elem = document.getElementById('sb-mission');
      $(elem).addClass('active');
      feather.replace();
-     var myid = getURLParam('sp');
-     retrieveData(myid);
+     retrieveData();
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

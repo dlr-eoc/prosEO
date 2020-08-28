@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
       <meta name="viewport"
   content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <title>DLR Mission</title>
+        <title th:text="#{processor} + ' | ' + #{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
   href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,12 +16,13 @@
   </head>
 
 <body>
-  <nav
-    class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
+  <div style="display:none;" id="loader"></div>
+  <nav id="proseo-nav"
+    class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
     <div class="container-fluid pl-0 pr-0">
       <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
         href="/"><img src="proseo_logo.png" class="rounded" width="50"
-        height="50"></a>
+        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
       <button class="navbar-toggler position-absolute d-md-none collapsed"
         type="button" data-toggle="collapse" data-target="#sidebarMenu"
         aria-controls="sidebarMenu" aria-expanded="false"
@@ -42,12 +43,13 @@
   <div class="container-fluid">
     <div class="row">
       <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
 
         <div id="processorcontent" name="processorcontent">
           <table class="table" id="processorTable" name="processorTable">
-            <thead class="thead-proseo">
+            <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
@@ -75,8 +77,8 @@
             <tbody th:unless="${processors} == null">
               <div th:each="processor : ${processors}">
               <tr>
-                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
-                <td class="first-row" th:text="${processor?.processorName}"></td>
+                <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
+                <td class="first-row"> <a th:href="'/processor-class-show#' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
                 <td class="first-row" th:text="${processor?.processorVersion}"></td>
                 <td class="first-row" th:text="${processor?.version}"></td>
                 <td class="first-row" th:text="${processor?.missionCode}"></td>
@@ -86,10 +88,17 @@
                 <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
                 <td class="first-row"><a th:each="comp : ${processor?.configuredProcessors}" 
                        class="proseo-list-item"  
-                       th:href="'/configuration-show?c=' + ${comp}" th:text="${comp}"></a></td>
+                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
                 <td class="first-row" th:text="${processor?.dockerImage}"></td>
-                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}"><span th:each="comp : ${processor?.dockerRunParameters}" 
-                       class="proseo-list-item" th:text="${comp}"></span></td>
+                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}">
+                <table class="table">
+                  <tbody>
+                    <tr th:each="elem : ${processor?.dockerRunParameters}">
+                      <td th:text="${elem?.key}"></td>
+                      <td th:text="${elem?.value}"></td>
+                    </tr>
+                  </tbody>
+                </table></td>
               </tr>
                 <tr th:each="task : ${processor?.tasks}">
                     <td th:text="${task?.taskName}"></td>
@@ -127,20 +136,29 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript">
-  function retrieveData() {
+  function retrieveData(processorName) {
+      showLoader();
     var tableRows = $("processorTable").rows;
     if(tableRows > 1 && tableRows != null) {
     $("processorTable > tbody").empty();
     }
       var url = "/processor-show/get";      
+
+      var divider = "?";
+      if (processorName != null) {
+          url = url + divider + "processorName=" + processorName.toString().trim();
+          divider = "&";
+      }
       
       $.ajax({
       url: url,
       method: "GET",
       success: function (res) {
           $("#processorcontent").html(res);
+          hideLoader();
       },
       fail: function (err) {
+          hideLoader();
           console.log(err);
           prop.innerHTML = "Fehler!" + err;
       }
@@ -154,7 +172,16 @@
      var elem = document.getElementById('sb-processor');
      $(elem).addClass('active');
      feather.replace();
-     retrieveData();
+     var processorName = getURLParam('processorName');
+     retrieveData(processorName);
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
      
     }
 </script>

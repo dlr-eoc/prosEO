@@ -29,7 +29,18 @@ public class GUIConfiguration implements WebMvcConfigurer {
 	/** The base URI for the prosEO Planner */
 	@Value("${proseo.productionPlanner.url}")
 	private String productionPlanner;
+
+	/** The timeout used for long order actions */
+	@Value("${proseo.gui.timeout}")
+	private Long timeout;
 	
+	/**
+	 * @return the timeout
+	 */
+	public Long getTimeout() {
+		return timeout;
+	}
+
 	/**
 	 * @return the productionPlanner
 	 */

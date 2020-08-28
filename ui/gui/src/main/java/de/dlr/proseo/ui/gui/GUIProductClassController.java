@@ -94,12 +94,12 @@ public class GUIProductClassController extends GUIBaseController {
 				if (clientResponse.statusCode().is5xxServerError()) {
 					logger.trace(">>>Server side error (HTTP status 500)");
 					model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-					deferredResult.setResult("order-show :: #orderscontent");
+					deferredResult.setResult("productclass-show :: #productclasscontent");
 					logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 				} else if (clientResponse.statusCode().is4xxClientError()) {
 					logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 					model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					deferredResult.setResult("order-show :: #orderscontent");
+					deferredResult.setResult("productclass-show :: #productclasscontent");
 					logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 				} else if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {

@@ -60,7 +60,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			@RequestParam(required = true, value = "latest") Integer count, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
-		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED");
+		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -79,24 +79,11 @@ public class GUIStatisticsController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobstepList -> {
 					jobsteps.addAll(jobstepList);
-					JobStepComparator oc = new JobStepComparator("processingCompletionTime", false);
-					jobsteps.sort(oc);
 					List<Object> failedjobsteps = null;
 					if (jobsteps.size() > count) {
 						failedjobsteps = jobsteps.subList(0, count - 1);
 					} else {
 						failedjobsteps = jobsteps;
-					}
-					// now we have to add order id to create a reference
-					for (Object o : failedjobsteps) {
-						if (o instanceof HashMap) {
-							HashMap<String, Object> h = (HashMap<String, Object>) o;
-							String jobId = h.get("jobId").toString();
-							String ordIdent = statisticsService.getOrderIdentifierOfJob(jobId, auth);
-							String ordId = statisticsService.getOrderIdOfIdentifier(ordIdent, auth);
-							h.put("orderIdentifier", ordIdent);
-							h.put("orderId", ordId);
-						}
 					}
 					model.addAttribute("failedjobsteps", failedjobsteps);
 					logger.trace(model.toString() + "MODEL TO STRING");
@@ -121,7 +108,7 @@ public class GUIStatisticsController extends GUIBaseController {
 			@RequestParam(required = false, value = "latest") Integer count, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, model)", count);
-		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED");
+		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -140,25 +127,12 @@ public class GUIStatisticsController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobstepList -> {
 					jobsteps.addAll(jobstepList);
-					JobStepComparator oc = new JobStepComparator("processingCompletionTime", false);
-					jobsteps.sort(oc);
 					List<Object> completedjobsteps = null;
 					if (jobsteps.size() > count) {
-						completedjobsteps = jobsteps.subList(0, count - 1);
+						completedjobsteps = jobsteps.subList(0, count);
 					} else {
 						completedjobsteps = jobsteps;
 					}
-					// now we have to add order id to create a reference
-					for (Object o : completedjobsteps) {
-						if (o instanceof HashMap) {
-							HashMap<String, Object> h = (HashMap<String, Object>) o;
-							String jobId = h.get("jobId").toString();
-							String ordIdent = statisticsService.getOrderIdentifierOfJob(jobId, auth);
-							String ordId = statisticsService.getOrderIdOfIdentifier(ordIdent, auth);
-							h.put("orderIdentifier", ordIdent);
-							h.put("orderId", ordId);
-						}
-					}					 
 					model.addAttribute("completedjobsteps", completedjobsteps);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + completedjobsteps.toString());

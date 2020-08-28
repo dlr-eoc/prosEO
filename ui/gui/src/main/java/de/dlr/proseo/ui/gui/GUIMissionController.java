@@ -24,10 +24,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 @Controller
-public class GUIConfigurationController extends GUIBaseController {
+public class GUIMissionController extends GUIBaseController {
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(GUIConfigurationController.class);
+	private static Logger logger = LoggerFactory.getLogger(GUIMissionController.class);
 
 	/** The GUI configuration */
 	@Autowired
@@ -38,43 +38,43 @@ public class GUIConfigurationController extends GUIBaseController {
 	private ServiceConfiguration serviceConfig;
 		
 	    
-	    @RequestMapping(value = "/configuration-show")
+	    @RequestMapping(value = "/mission-show")
 	    public String showConfiguration() {
 	    
-	    return "configuration-show";
+	    return "mission-show";
 	    }
 	    
 
 		@SuppressWarnings("unchecked")
-		@RequestMapping(value = "/configurations/get")
-		public DeferredResult<String> getConfigurations(
+		@RequestMapping(value = "/missions/get")
+		public DeferredResult<String> getMissions(
 				@RequestParam(required = false, value = "sortby") String sortby,
 				@RequestParam(required = false, value = "up") Boolean up, Model model) {
 			if (logger.isTraceEnabled())
-				logger.trace(">>> getConfigurations(model)");
+				logger.trace(">>> getMissions(model)");
 			Mono<ClientResponse> mono = get();
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
-			List<Object> configurations = new ArrayList<>();
+			List<Object> missions = new ArrayList<>();
 			mono.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
 				if (clientResponse.statusCode().is5xxServerError()) {
 					logger.trace(">>>Server side error (HTTP status 500)");
 					model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-					deferredResult.setResult("configuration-show :: #configurationcontent");
+					deferredResult.setResult("mission-show :: #missioncontent");
 					logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 				} else if (clientResponse.statusCode().is4xxClientError()) {
 					logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 					model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					deferredResult.setResult("configuration-show :: #configurationcontent");
+					deferredResult.setResult("mission-show :: #missioncontent");
 					logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 				} else if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
-						configurations.addAll(pcList);
+						missions.addAll(pcList);
 					
-						model.addAttribute("configurations", configurations);
+						model.addAttribute("missions", missions);
 						logger.trace(model.toString() + "MODEL TO STRING");
-						logger.trace(">>>>MONO" + configurations.toString());
-						deferredResult.setResult("configuration-show :: #configurationcontent");
+						logger.trace(">>>>MONO" + missions.toString());
+						deferredResult.setResult("mission-show :: #missioncontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
 				}
@@ -82,7 +82,7 @@ public class GUIConfigurationController extends GUIBaseController {
 
 			});
 			logger.trace(model.toString() + "MODEL TO STRING");
-			logger.trace(">>>>MONO" + configurations.toString());
+			logger.trace(">>>>MONO" + missions.toString());
 			logger.trace(">>>>MODEL" + model.toString());
 			logger.trace("DEREFFERED STRING: {}", deferredResult);
 			return deferredResult;
@@ -91,7 +91,7 @@ public class GUIConfigurationController extends GUIBaseController {
 		public Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
-			String uri = serviceConfig.getProcessorManagerUrl() + "/configurations";
+			String uri = serviceConfig.getOrderManagerUrl() + "/missions";
 			uri += "?mission=" + mission;
 			logger.trace("URI " + uri);
 			Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

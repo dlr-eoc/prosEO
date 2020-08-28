@@ -2,7 +2,7 @@
 <div th:fragment="navbarLeft">
       <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
         href="/"><img src="proseo_logo.png" class="rounded" width="50"
-        height="50"></a>
+        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
       <button class="navbar-toggler position-absolute d-md-none collapsed"
         type="button" data-toggle="collapse" data-target="#sidebarMenu"
         aria-controls="sidebarMenu" aria-expanded="false"
@@ -12,27 +12,26 @@
 </div>
 
 <div th:fragment="navbarRight">
-      <ul class="nav navbar-nav px-3 navbar-right">
-        
-        <li class="nav-item dropdown text-nowrap btn"><a
+      <ul class="nav navbar-nav px-3 navbar-right">        
+        <li class="nav-item dropdown text-nowrap btn menu"><a
           class="nav-link dropdown-toggle" id="dropdown09"
           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
             data-feather="user"></span><span th:text="${user}"> user</span></a>
-          <div class="dropdown-menu  dropdown-menu-right">
-            <a class="dropdown-item" href="/customlogin"><span
+          <div class="dropdown-menu menu dropdown-menu-right menu">
+            <a class="dropdown-item menu" href="/customlogin"><span
               data-feather="log-out"></span> <span th:text="#{logout}">logout</span>
             </a>
           </div></li>
-        <li class="nav-item dropdown text-nowrap btn"><a
+        <li class="nav-item dropdown text-nowrap btn menu"><a
           class="nav-link dropdown-toggle" id="dropdown09"
           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span
             class="flag-icon flag-icon-de"
-            th:class="'flag-icon flag-icon-' + ${#locale}"> </span> <span
-            th:text="#{${#locale}}"> language</span></a>
-          <div class="dropdown-menu  dropdown-menu-right">
-            <a class="dropdown-item btn" onclick="selectLang('DE')"><span
+            th:class="'flag-icon flag-icon-' + ${#locale.language}"> </span> <span
+            th:text="#{${#locale.language}}"> language</span></a>
+          <div class="dropdown-menu menu dropdown-menu-right">
+            <a class="dropdown-item btn menu" onclick="selectLang('DE')"><span
               class="flag-icon flag-icon-de"> </span> <span th:text="#{de}">de</span>
-            </a> <a class="dropdown-item btn" onclick="selectLang('EN')"><span
+            </a> <a class="dropdown-item btn menu" onclick="selectLang('EN')"><span
               class="flag-icon flag-icon-en"> </span> <span th:text="#{en}">en</span></a>
           </div></li>
       </ul>

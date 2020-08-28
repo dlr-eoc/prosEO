@@ -17,7 +17,8 @@
             "outputParameters": [],
             "processingMode": "OFFL",
             "inputProductClasses": [ "L1B" ],
-            "outputProductClass": "CH4"
+            "outputProductClass": "CH4",
+            "outputProduct": 1234
         }
     ]
 }

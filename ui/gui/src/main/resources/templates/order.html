@@ -4,7 +4,7 @@
     <meta charset="utf-8">
       <meta name="viewport"
         content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>DLR Mission</title>
+        <title th:text="#{proseo}">proseo</title>
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
@@ -16,12 +16,13 @@
   </head>
 
   <body>
-    <nav
-      class="navbar bg-light sticky-top flex-md-nowrap p-0 shadow navbar-expand-md">
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
           href="/"><img src="proseo_logo.png" class="rounded" width="50"
-            height="50"></a>
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
         <button class="navbar-toggler position-absolute d-md-none collapsed"
           type="button" data-toggle="collapse" data-target="#sidebarMenu"
           aria-controls="sidebarMenu" aria-expanded="false"
@@ -42,13 +43,14 @@
     <div class="container-fluid">
       <div class="row">
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
           
           <div id="ordercontent" name="ordercontent">
             <div th:each="ord : ${orders}">
               <table class="table table-hover" id="orderTable">
-                <thead class="thead-proseo">
+                <thead class="thead-proseo-order">
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
@@ -125,7 +127,7 @@
                 </tbody>
               </table>
               <table class="table table-hover" id="orderfilters">
-                <thead class="thead-proseo">
+                <thead class="thead-proseo-order">
                   <tr>
                     <th id="togglefilter" class="cursorpointer" onclick="toggleFilter()"><div id="filterhide"><span
                           data-feather="minus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div><div id="filtershow"><span
@@ -190,7 +192,7 @@
           
           <div id="jobscontent" name="jobscontent">
             <table class="table table-hover" id="jobs" th:unless="${#arrays.isEmpty(jobs)}">
-              <thead class="thead-proseo">
+              <thead class="thead-proseo-order">
                 <tr>
                   <th colspan="2" id="togglejobs" class="cursorpointer emptycol" onclick="toggleJobs()"><div id="jobshide"><span
                         data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobs}">jobs</span></div><div id="jobsshow"><span
@@ -215,14 +217,14 @@
               <tbody class="filtercontent" id="togglejobsbody">
                 <div th:each="job : ${jobs}">
                   <tr>
-                    <td class="emptycol" colspan="2"><span th:text="${job?.id}"></span></td>
-                    <td><span th:text="${job?.version}"></span></td>
-                    <td><span th:text="${job?.jobState}"></span></td>
-                    <td><span th:text="${job?.processingFacilityName}"></span></td>
-                    <td><span th:text="${job?.startTime}"></span></td>
-                    <td><span th:text="${job?.orbit?.id}"></span></td>
-                    <td><span th:text="${job?.orbit?.missionCode}"></span></td>
-                    <td><span th:text="${job?.orbit?.orbitNumber}"></span></td>
+                    <td class="emptycol first-row" colspan="2"><span th:text="${job?.id}"></span></td>
+                    <td class="first-row"><span th:text="${job?.version}"></span></td>
+                    <td class="first-row"><span th:text="${job?.jobState}"></span></td>
+                    <td class="first-row"><span th:text="${job?.processingFacilityName}"></span></td>
+                    <td class="first-row"><span th:text="${job?.startTime}"></span></td>
+                    <td class="first-row"><span th:text="${job?.orbit?.id}"></span></td>
+                    <td class="first-row"><span th:text="${job?.orbit?.missionCode}"></span></td>
+                    <td class="first-row"><span th:text="${job?.orbit?.orbitNumber}"></span></td>
                   </tr>
                   <tr>
                     <td class="emptycol" colspan="2"></td>
@@ -236,7 +238,7 @@
                     <td class="emptycol"></td>
                     <td colspan="7">
                       <table class="table table-hover" th:id="'jobsteps' + ${job?.id}">
-                        <thead class="thead-proseo">
+                        <thead class="thead-proseo-order">
                           <tr>
                             <th th:id="'togglejs' + ${job?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${job?.id} + ')'"><div class="jshide" th:id="'jsh' + ${job?.id}"><span
                                   data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobsteps}">jobsteps</span></div><div class="jsshow" th:id="'jss' + ${job?.id}"><span
@@ -244,12 +246,13 @@
                             <th><span th:text="#{version}">version</span></th>
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
+                            <th><span th:text="#{product}">product</span></th>
                             <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
-                            <th><span th:text="#{errloglevel}">outloglevel</span></th>
+                            <th><span th:text="#{errloglevel}">errloglevel</span></th>
                           </tr>
                           <tr class="filtercontent" th:id="'togglejsh2' + ${job?.id}">
                             <th colspan="10"><span th:text="#{joffilename}">joffilename</span></th>
@@ -261,16 +264,17 @@
                         <tbody class="filtercontent" th:id="'togglejsb' + ${job?.id}">
                           <div th:each="jobstep : ${job?.jobSteps}">
                             <tr>
-                              <td th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
-                              <td><span th:text="${jobstep?.version}"></span></td>
-                              <td><span th:text="${jobstep?.jobStepState}"></span></td>
-                              <td><span th:text="${jobstep?.processingMode}"></span></td>
-                              <td><span th:text="${jobstep?.inputProductClasses}"></span></td>
-                              <td><span th:text="${jobstep?.outputProductClass}"></span></td>
-                              <td><span th:text="${jobstep?.processingStartTime}"></span></td>
-                              <td><span th:text="${jobstep?.processingCompletionTime}"></span></td>
-                              <td><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
-                              <td><span th:text="${jobstep?.stderrLogLevel}"></span></td>
+                              <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.version}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.jobStepState}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
+                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProduct}"></span></a></td>
+                              <td class="first-row"><span th:text="${jobstep?.inputProductClasses}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.outputProductClass}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.stderrLogLevel}"></span></td>
                             </tr>
                             <tr>
                               <td colspan="10"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
@@ -285,7 +289,7 @@
                         </tbody>
                       </table>
                     </td>
-                    <td><span  class="filtercontent code" th:id="'togglejsg' + ${job?.id}" th:utext="${job?.graph}"></span>
+                    <td><span  class="filtercontent code" th:id="'togglejsg' + ${job?.id}"></span> <!-- th:utext="${job?.graph}" --> 
                     </td>
                   </tr>
                 </div>
@@ -405,6 +409,7 @@
     };
 
     function doPlan(oId, facility) {
+      showLoader();
       var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
       var row = document.getElementById(oId);
       
@@ -412,6 +417,7 @@
         url : url,
         method : "POST",
         success : function(res) {
+          hideLoader();
           retrieveData(oId);
         },
         fail : function(err) {
@@ -422,6 +428,7 @@
     };
     
     function setState(oId, state) {
+        showLoader();
         var url = "/order-state/post?id=" + oId + "&state=" + state;
         var row = document.getElementById(oId);
         var method = 'POST';
@@ -433,6 +440,7 @@
             url : url,
             method : method,
             success : function() {
+              hideLoader();
               if (state == 'DELETE') {
                 location.href = location.origin + '/order-show';  
               } else if (state == 'RESET') {
@@ -457,6 +465,7 @@
       };
     
     function retrieveData(id) {
+    	showLoader();
       var tableRows = $("orderTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("orderTable > tbody").empty();
@@ -475,7 +484,8 @@
             $("#ordercontent").html(res);
             var on = document.getElementById('order-name');
             var br = document.getElementById('breadcrumb-order-name');
-            br.textContent = on.textContent;  
+            br.textContent = on.textContent; 
+            document.title = on.textContent + " | " + "[[#{proseo}]]";
             var eleshow = document.getElementById("filtershow");
             var elehide = document.getElementById("filterhide");
             $(eleshow).show();
@@ -487,17 +497,20 @@
                 toggleFilter();
               }
             }
+            hideLoader();
             retrieveJobs(id); 
           },
           fail : function(err) {
             console.log(err);
             prop.innerHTML = "Fehler!" + err;
+            hideLoader();
           }
         });
       }
     };
     
     function retrieveJobs(id) {
+        showLoader();
         var tableRows = $("jobs").rows;
         if (tableRows > 1 && tableRows != null) {
           $("jobs > tbody").empty();
@@ -514,6 +527,7 @@
             method : "GET",
             success : function(res) {
               $("#jobscontent").html(res);
+              hideLoader();
               var eleshow = document.getElementById("jobsshow");
               var elehide = document.getElementById("jobshide");
               $(eleshow).show();
@@ -541,10 +555,11 @@
               }
               var t = getURLParams('t'); 
               for (var i = 0; i < t.length; i++) {
-            	  window.location.href = '#' + t[i];
+            	  window.location.hash = '#' + t[i];
               }
             },
             fail : function(err) {
+                hideLoader();
               console.log(err);
               prop.innerHTML = "Fehler!" + err;
             }
@@ -562,6 +577,13 @@
      if (myid != null) {
        retrieveData(myid);
      }
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
     }
 </script>
 

@@ -1,6 +1,8 @@
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -37,40 +39,21 @@ public class GUIProductController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
-	
-    @RequestMapping(value = "/product-show")
-    public String showProduct(
-    		@RequestParam(value="id", required= false) Long id,
-    Model model ){
-   model.addAttribute("id", id);
-   // model.addAttribute("products", );
-    return "product-show";
-    }
-   
-    @RequestMapping(value = "/product-create")
-    public String createProduct() {
-   
-    return "product-create";
-    }
-    @RequestMapping(value = "/product-update")
-    public String updateProduct() {
-   
-    return "product-update";
-    }
-    @RequestMapping(value = "/product-delete")
-    public String deleteProduct() {
-   
-    return "product-delete";
-    }
-    @RequestMapping(value="/product-ingest")
-    public String ingestProduct() {
-    	
-    return "product-ingest";
-    }
 
+    @RequestMapping(value = "/product-show")
+    public String showProduct(){
+    	return "product-show";
+    }
+    
+    @RequestMapping(value = "/productfile-show")
+    public String showProductFile(){
+    	return "productfile-show";
+    }
+   
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/product/get")
 	public DeferredResult<String> getProducts(
+			@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "productClass") String productClass,
 			@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
@@ -78,7 +61,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProducs({}, {}, {}, model)", productClass, startTimeFrom, startTimeTo);
-		Mono<ClientResponse> mono = get(productClass, startTimeFrom, startTimeTo);
+		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> products = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -86,23 +69,33 @@ public class GUIProductController extends GUIBaseController {
 			if (clientResponse.statusCode().is5xxServerError()) {
 				logger.trace(">>>Server side error (HTTP status 500)");
 				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order-show :: #orderscontent");
+				deferredResult.setResult("product-show :: #productcontent");
 				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is4xxClientError()) {
 				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
 				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order-show :: #orderscontent");
+				deferredResult.setResult("product-show :: #productcontent");
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
-				clientResponse.bodyToMono(List.class).subscribe(pList -> {
-					products.addAll(pList);
-				
-					model.addAttribute("products", products);
-					if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
-					if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
-					deferredResult.setResult("product-show :: #productcontent");
-					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
-				});
+				if (id != null && id > 0) {
+					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
+						products.add(p);
+						model.addAttribute("products", products);
+						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
+						deferredResult.setResult("product-show :: #productcontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					});
+				} else {
+					clientResponse.bodyToMono(List.class).subscribe(pList -> {
+						products.addAll(pList);
+						model.addAttribute("products", products);
+						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
+						deferredResult.setResult("product-show :: #productcontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					});
+				}
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
@@ -114,21 +107,72 @@ public class GUIProductController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	public Mono<ClientResponse> get(String productClass, String startTimeFrom, String startTimeTo) {
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/productfile/get")
+	public DeferredResult<String> getProductFiles(
+			@RequestParam(required = false, value = "id") Long id,
+			@RequestParam(required = false, value = "sortby") String sortby,
+			@RequestParam(required = false, value = "up") Boolean up, Model model) {
+		
+		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
+		Mono<ClientResponse> mono = get(id, null, null, null);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<Object> productfiles = new ArrayList<>();
+		mono.subscribe(clientResponse -> {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().is5xxServerError()) {
+				logger.trace(">>>Server side error (HTTP status 500)");
+				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				deferredResult.setResult("productfile-show :: #productfilecontent");
+				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is4xxClientError()) {
+				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				deferredResult.setResult("productfile-show :: #productfilecontent");
+				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				if (id != null && id > 0) {
+					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
+						productfiles.addAll((Collection<? extends Object>) p.get("productFile"));
+						model.addAttribute("productfiles", productfiles);
+						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
+						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + productfiles.toString());
+						deferredResult.setResult("productfile-show :: #productfilecontent");
+						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+					});
+				}
+			}
+			logger.trace(">>>>MODEL" + model.toString());
+
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>>MONO" + productfiles.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		return deferredResult;
+	}
+
+	public Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";
-		String divider = "?";
-		uri += divider + "mission=" + mission;
-		divider ="&";
-		if (productClass != null && !productClass.isEmpty()) {
-			uri += divider + "productClass=" + productClass;
-		}
-		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
-			uri += divider + "startTimeFrom=" + startTimeFrom;
-		}
-		if (startTimeTo != null && !startTimeTo.isEmpty()) {
-			uri += divider + "startTimeTo=" + startTimeTo;
+		if (id != null && id > 0) {
+			uri += "/" + id.toString();
+		} else {
+			String divider = "?";
+			if (productClass != mission && !mission.isEmpty()) {
+				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			if (productClass != null && !productClass.isEmpty()) {
+				uri += divider + "productClass=" + productClass;
+			}
+			if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
+				uri += divider + "startTimeFrom=" + startTimeFrom;
+			}
+			if (startTimeTo != null && !startTimeTo.isEmpty()) {
+				uri += divider + "startTimeTo=" + startTimeTo;
+			}
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

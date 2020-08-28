@@ -85,11 +85,16 @@ public class KubeConfig {
 	 * The name of the facility
 	 */
 	private String id;
-	
+
 	/**
 	 * The id of the facility
 	 */
 	private long longId;
+
+	/**
+	 * The version of the facility
+	 */
+	private long version;
 	
 	/**
 	 * The facility description 
@@ -271,6 +276,7 @@ public class KubeConfig {
 	public void setFacility(ProcessingFacility pf) {
 		id = pf.getName();
 		longId = pf.getId();
+		version = pf.getVersion();
 		description = pf.getDescription();
 		url = pf.getProcessingEngineUrl();
 		storageManagerUrl = pf.getStorageManagerUrl();
@@ -634,6 +640,13 @@ public class KubeConfig {
 	 */
 	public long getLongId() {
 		return longId;
+	}
+
+	/**
+	 * @return version
+	 */
+	public long getVersion() {
+		return version;
 	}
 	
 	/**

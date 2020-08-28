@@ -31,6 +31,9 @@
       outputProductClass:
         type: string
         description: The product type of the output product of this job step
+      outputProduct?:
+        type: integer
+        description: The id of the output product of this job step
       processingStartTime?:
         type: datetime-only
         description: The start time of the processing job
@@ -52,3 +55,10 @@
       jobOrderFilename?:
         type: string
         description: The filename of the Job Order file in the associated processing facility
+      orderId?:
+        type: integer
+        format: long
+        description: The id of the order
+      orderIdentifier?:
+        type: string
+        description: The identifier of the order
