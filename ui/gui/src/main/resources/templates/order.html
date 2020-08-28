@@ -134,7 +134,6 @@
                           data-feather="plus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div></th>
                     <th><span th:text="#{productclass}">productclass</span></th>
                     <th><span th:text="#{key}">key</span></th>
-                    <th><span th:text="#{type}">type</span></th>
                     <th><span th:text="#{value}">value</span></th>
                   </tr>
                 </thead>
@@ -145,12 +144,10 @@
                         <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="#{inputfilter}">inputfilter</span></td>
                         <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="${ifilt?.productClass}"></span></td>
                         <td class="first-row"><span th:text="${fcond?.key}"></span></td>
-                        <td class="first-row"><span th:text="${fcond?.parameterType}"></span></td>
                         <td class="first-row"><span th:text="${fcond?.parameterValue}"></span></td>
                       </tr>
                       <tr th:if="${iterStat.first} == false">
                         <td><span th:text="${fcond?.key}"></span></td>
-                        <td><span th:text="${fcond?.parameterType}"></span></td>
                         <td><span th:text="${fcond?.parameterValue}"></span></td>
                       </tr>
                     </div>
@@ -161,12 +158,10 @@
                         <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="#{classoutparams}">classoutparams</span></td>
                         <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="${params?.productClass}"></span></td>
                         <td class="first-row"><span th:text="${p?.key}"></span></td>
-                        <td class="first-row"><span th:text="${p?.parameterType}"></span></td>
                         <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
                       </tr>
                       <tr th:if="${iterStat.first} == false">
                         <td><span th:text="${p?.key}"></span></td>
-                        <td><span th:text="${p?.parameterType}"></span></td>
                         <td><span th:text="${p?.parameterValue}"></span></td>
                       </tr>
                     </div>
@@ -176,12 +171,10 @@
                       <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{outparams}">outparams</span></td>
                       <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
                       <td class="first-row"><span th:text="${p?.key}"></span></td>
-                      <td class="first-row"><span th:text="${p?.parameterType}"></span></td>
                       <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
                     </tr>
                     <tr th:if="${iterStat.first} == false">
                       <td><span th:text="${p?.key}"></span></td>
-                      <td><span th:text="${p?.parameterType}"></span></td>
                       <td><span th:text="${p?.parameterValue}"></span></td>
                     </tr>
                   </div>
@@ -553,9 +546,11 @@
               for (var i = 0; i < jsh.length; i++) {
                   toggleJS(jsh[i]);
               }
-              var t = getURLParams('t'); 
-              for (var i = 0; i < t.length; i++) {
-            	  window.location.hash = '#' + t[i];
+              if (!scrollToHash()) {
+                var t = getURLParams('t'); 
+                for (var i = 0; i < t.length; i++) {
+            	    scrollToElem(t[i]);
+                }
               }
             },
             fail : function(err) {

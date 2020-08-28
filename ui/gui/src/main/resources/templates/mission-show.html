@@ -88,7 +88,10 @@
                 </table>
               </tr>
               <tr>              
-              <td colspan="6"  th:text="${mission?.productFileTemplate}">
+              <td colspan="6"><textarea class="mission-template" readonly wrap="soft"
+                                  th:style="${#strings.isEmpty(mission?.productFileTemplate)?'height:1em':'height:10em'}"
+                                  th:rows="${#strings.isEmpty(mission?.productFileTemplate)?'0':'6'}"
+                                  th:text="${mission?.productFileTemplate}"></textarea>
               </td>    
               </tr>
               </div>
@@ -131,6 +134,7 @@
       method: "GET",
       success: function (res) {
           $("#missioncontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

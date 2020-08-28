@@ -117,6 +117,7 @@
       method: "GET",
       success: function (res) {
           $("#orbitcontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

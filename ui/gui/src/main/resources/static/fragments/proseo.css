@@ -319,6 +319,12 @@ code {
   width: 100%;
 }
 
+.mission-template {
+  font-family: monospace;
+  color: inherit;
+  width: 100%;
+}
+
 .plandialog {
   width: 15em;
 }

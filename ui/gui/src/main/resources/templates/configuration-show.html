@@ -93,7 +93,6 @@
                   <tbody>
                     <tr th:each="elem : ${configuration?.dynProcParameters}">
                       <td th:text="${elem?.key}"></td>
-                      <td th:text="${elem?.parameterType}"></td>
                       <td th:text="${elem?.parameterValue}"></td>
                     </tr>
                   </tbody>
@@ -163,6 +162,7 @@
       method: "GET",
       success: function (res) {
           $("#configurationcontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

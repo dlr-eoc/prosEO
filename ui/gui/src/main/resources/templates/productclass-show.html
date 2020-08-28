@@ -128,9 +128,11 @@
           method : "GET",
           success : function(res) {
             $("#productclasscontent").html(res);
-            var t = getURLParams('pc'); 
-            for (var i = 0; i < t.length; i++) {
-              window.location.hash = '#' + t[i];
+            if (!scrollToHash()) {
+              var t = getURLParams('pc'); 
+              for (var i = 0; i < t.length; i++) {
+            	  scrollToElem(t[i]);
+              }
             }
             hideLoader();
           },
