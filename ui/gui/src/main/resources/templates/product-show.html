@@ -99,7 +99,6 @@
                         <tbody>
                           <tr th:each="comp : ${elem?.parameters}">
                             <td th:text="${comp?.key}"></td>
-                            <td th:text="${comp?.parameterType}"></td>
                             <td th:text="${comp?.parameterValue}"></td>
                           </tr>
                         </tbody>
@@ -138,11 +137,11 @@
   function productref(ref) {
 	  var id = getURLParam('id');
 	  var pc = getURLParam('productClass');
-	  if (pc == null && id == null) {
-		  window.location.hash = '#' + ref;
-	  } else {
-		  window.location.href = '/product-show?id=' + ref;
-	  }
+	    if (pc == null && id == null) {
+		    scrollToElem(ref);
+ 	    } else {
+		    window.location.href = '/product-show?id=' + ref;
+	    }
   }
     function retrieveData(id, productClass, startTimeFrom, startTimeTo) {
       showLoader();

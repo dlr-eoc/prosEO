@@ -119,6 +119,7 @@
       method: "GET",
       success: function (res) {
           $("#configuredprocessorcontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

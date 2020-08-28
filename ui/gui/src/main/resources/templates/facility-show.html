@@ -126,6 +126,7 @@
       method: "GET",
       success: function (res) {
           $("#facilitycontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

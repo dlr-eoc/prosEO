@@ -155,6 +155,7 @@
       method: "GET",
       success: function (res) {
           $("#processorcontent").html(res);
+          scrollToHash();
           hideLoader();
       },
       fail: function (err) {

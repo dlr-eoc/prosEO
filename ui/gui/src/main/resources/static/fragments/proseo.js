@@ -17,6 +17,15 @@
     	}
     	return null;
     };
+    function getURLHash() {
+    	var value = location.hash;
+    	if (value != null) {
+      	  value = unescape(value).replace("+", " ");
+      	  value = value.replace("#", "");
+      	  return value;
+    	}
+    	return null;
+    };
     
     function getURLParams(param) {
     	var paramstring = location.search.slice(1);
@@ -146,7 +155,33 @@
     
 
     function correctScrollPos() {
-    	var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			+ document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	var head = document.getElementById('proseo-thead');
+    	var nav = document.getElementById('proseo-nav');
+    	var h1 = 0;
+    	var h2 = 0;
+    	if (head != null) {
+    		h1 = head.getBoundingClientRect().height;
+    	}
+    	if (nav != null) {
+    		h2 = nav.getBoundingClientRect().height;
+    	}
+    	var h = (h1 + h2) * (-1);
     	window.scrollBy(0, h);
     };
+    
+    function scrollToElem(id) {
+    	var ele = document.getElementById(id);
+    	if (ele != null) {
+    		ele.scrollIntoView();
+    		correctScrollPos();
+    	}
+    };
+    
+    function scrollToHash() {
+        var hash = getURLHash();
+        if (hash != null && hash != "") {
+            scrollToElem(hash);
+            return true;
+        }
+        return false;
+    }
