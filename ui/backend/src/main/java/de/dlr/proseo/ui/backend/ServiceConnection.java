@@ -88,7 +88,7 @@ public class ServiceConnection {
 			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
 					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 					.build();
-			String requestUrl = serviceUrl + requestPath;
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -142,7 +142,7 @@ public class ServiceConnection {
 			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
 					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 					.build();
-			RequestEntity<Void> requestEntity = RequestEntity.put(new URI(serviceUrl + requestPath)).build();
+			RequestEntity<Void> requestEntity = RequestEntity.put(URI.create(serviceUrl + requestPath)).build();
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -198,7 +198,7 @@ public class ServiceConnection {
 			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
 					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 					.build();
-			String requestUrl = serviceUrl + requestPath;
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -257,8 +257,8 @@ public class ServiceConnection {
 		HttpPatch req = new HttpPatch();
 		req.setConfig(RequestConfig.custom().setConnectTimeout(config.getHttpTimeout().intValue()).build());
 		try {
-			req.setURI(new URI(serviceUrl + requestPath));
-		} catch (URISyntaxException e) {
+			req.setURI(URI.create(serviceUrl + requestPath));
+		} catch (IllegalArgumentException e) {
 			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
@@ -336,10 +336,10 @@ public class ServiceConnection {
 			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
 					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
 					.build();
-			String requestUrl = serviceUrl + requestPath;
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with DELETE", requestUrl);
 			//restTemplate.delete(requestUrl);
-			entity = restTemplate.exchange(new URI(requestUrl), HttpMethod.DELETE, null, Object.class);
+			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = e.getResponseHeaders().getFirst("Warning");
 			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
@@ -353,7 +353,7 @@ public class ServiceConnection {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
-		} catch (URISyntaxException e) {
+		} catch (IllegalArgumentException e) {
 			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);

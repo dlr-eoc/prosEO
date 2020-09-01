@@ -148,6 +148,21 @@ commands:
               repeatable: true
               description: A mission attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the mission definition file
+        - name: delete
+          description: Delete the named mission (optionally including configured items and stored products)
+          options:
+            - name: force
+              type: boolean
+              description: Also delete all configured items (spacecrafts, orbits, processor classes, 
+                           processors, configurations, configured processors and product classes) for this mission, but no products
+            - name: delete-products
+              type: boolean
+              description: Also delete all products for this mission (this will also remove the products from any processing facility),
+                           valid only if "force" is specified, too (both options need to be specified to avoid unintended data loss)
+          parameters:
+            - name: missionCode
+              type: string
+              description: The code of the mission to delete
         - name: spacecraft
           description: Commands to manage the spacecrafts for a mission
           subcommands:

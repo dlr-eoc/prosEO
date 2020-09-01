@@ -9,6 +9,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -208,7 +210,7 @@ public class ProcessorCommandRunner {
 		
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only processor name allowed as parameter
-			requestURI += "&processorName=" + showCommand.getParameters().get(0).getValue();
+			requestURI += "&processorName=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());
 		}
 		
 		/* Get the processor class information from the Processor Manager service */
@@ -309,7 +311,8 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" + updatedProcessorClass.getProcessorName(),
+					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" 
+							+ URLEncoder.encode(updatedProcessorClass.getProcessorName(), Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -399,7 +402,8 @@ public class ProcessorCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
-					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" + processorName, 
+					URI_PATH_PROCESSORCLASSES + "?mission=" + loginManager.getMission() + "&processorName=" 
+							+ URLEncoder.encode(processorName, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -651,10 +655,10 @@ public class ProcessorCommandRunner {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
 				// First parameter is processor name
-				requestURI += "&processorName=" + paramValue;
+				requestURI += "&processorName=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (1 == i) {
 				// Second parameter is processor version
-				requestURI += "&processorVersion=" + paramValue;
+				requestURI += "&processorVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
 		
@@ -765,7 +769,8 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission() 
-						+ "&processorName=" + updatedProcessor.getProcessorName() + "&processorVersion=" + updatedProcessor.getProcessorVersion(),
+						+ "&processorName=" + URLEncoder.encode(updatedProcessor.getProcessorName(), Charset.defaultCharset()) 
+						+ "&processorVersion=" + URLEncoder.encode(updatedProcessor.getProcessorVersion(), Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -878,7 +883,8 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
 					URI_PATH_PROCESSORS + "?mission=" + loginManager.getMission()
-						+ "&processorName=" + processorName + "&processorVersion=" + processorVersion, 
+						+ "&processorName=" + URLEncoder.encode(processorName, Charset.defaultCharset()) 
+						+ "&processorVersion=" + URLEncoder.encode(processorVersion, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -1079,10 +1085,10 @@ public class ProcessorCommandRunner {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
 				// First parameter is processor name
-				requestURI += "&processorName=" + paramValue;
+				requestURI += "&processorName=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			} else if (1 == i) {
 				// Second parameter is configuration version
-				requestURI += "&configurationVersion=" + paramValue;
+				requestURI += "&configurationVersion=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
 		
@@ -1193,7 +1199,8 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_CONFIGURATIONS + "?mission=" + loginManager.getMission() 
-						+ "&processorName=" + updatedConfiguration.getProcessorName() + "&configurationVersion=" + updatedConfiguration.getConfigurationVersion(),
+						+ "&processorName=" + URLEncoder.encode(updatedConfiguration.getProcessorName(), Charset.defaultCharset()) 
+						+ "&configurationVersion=" + URLEncoder.encode(updatedConfiguration.getConfigurationVersion(), Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -1302,7 +1309,8 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
 					URI_PATH_CONFIGURATIONS + "?mission=" + loginManager.getMission()
-						+ "&processorName=" + processorName + "&configurationVersion=" + configurationVersion, 
+						+ "&processorName=" + URLEncoder.encode(processorName, Charset.defaultCharset()) 
+						+ "&configurationVersion=" + URLEncoder.encode(configurationVersion, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -1536,7 +1544,7 @@ public class ProcessorCommandRunner {
 			String paramValue = showCommand.getParameters().get(i).getValue();
 			if (0 == i) {
 				// First parameter is configured processor identifier
-				requestURI += "&identifier=" + paramValue;
+				requestURI += "&identifier=" + URLEncoder.encode(paramValue, Charset.defaultCharset());
 			}
 		}
 		
@@ -1640,7 +1648,7 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
 					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission() 
-						+ "&identifier=" + updatedConfiguredProcessor.getIdentifier(),
+						+ "&identifier=" + URLEncoder.encode(updatedConfiguredProcessor.getIdentifier(), Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -1742,7 +1750,7 @@ public class ProcessorCommandRunner {
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(), 
 					URI_PATH_CONFIGUREDPROCESSORS + "?mission=" + loginManager.getMission()
-						+ "&identifier=" + identifier, 
+						+ "&identifier=" + URLEncoder.encode(identifier, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

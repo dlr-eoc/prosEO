@@ -9,6 +9,9 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -22,9 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import android.net.Uri;
 import de.dlr.proseo.model.rest.model.RestProduct;
 import de.dlr.proseo.model.rest.model.RestProductFile;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -781,7 +786,7 @@ public class IngestorCommandRunner {
 		/* Delete product using Ingestor service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + facilityName + "/" + productIdString, 
+					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) + "/" + productIdString, 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

@@ -118,6 +118,10 @@ public class ProductFileRepositoryTest {
 		List<ProductFile> queryList = RepositoryService.getProductFileRepository().findByProductId(product.getId());
 		assertFalse("Find by product id failed for ProductFile", queryList.isEmpty());
 		
+		// Test findByProcessingFacilityId
+		queryList = RepositoryService.getProductFileRepository().findByProcessingFacilityId(facility.getId());
+		assertFalse("Find by processing facility id failed for ProductFile", queryList.isEmpty());
+		
 		logger.info("OK: Test for findByProductId completed");
 		
 	}

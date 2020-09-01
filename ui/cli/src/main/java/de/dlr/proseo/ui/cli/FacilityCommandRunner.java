@@ -9,6 +9,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +81,7 @@ public class FacilityCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(),
-					URI_PATH_FACILITIES + "?name=" + facilityName, List.class, loginManager.getUser(), loginManager.getPassword());
+					URI_PATH_FACILITIES + "?name=" + URLEncoder.encode(facilityName, Charset.defaultCharset()), List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				String message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
 				logger.error(message);
@@ -100,7 +102,7 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, loginManager.getMission());
+				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

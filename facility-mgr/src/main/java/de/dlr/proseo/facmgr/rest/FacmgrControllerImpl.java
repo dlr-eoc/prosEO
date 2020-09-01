@@ -106,8 +106,10 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * Delete a facility by ID
 	 * 
 	 * @param the ID of the facility to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the facility did not
-	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful,
+	 * 		"BAD_REQUEST", if the facility still has stored products,
+	 * 		"NOT_FOUND", if the facility did not exist, or 
+	 * 		"NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteFacilityById(Long id) {
@@ -119,6 +121,8 @@ public class FacmgrControllerImpl implements FacilityController{
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

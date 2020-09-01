@@ -809,8 +809,8 @@ public class SelectionRuleTest {
 		// Test special case with point-in-time item (start time == stop time)
 		SelectionItem pointInTimeItem = new SelectionItem(
 				TEST_PRODUCT_TYPE,
-				Instant.parse("2016-11-01T12:00:00Z"),
-				Instant.parse("2016-11-01T12:00:00Z"),
+				Instant.parse("2016-11-02T00:00:00Z"),
+				Instant.parse("2016-11-02T00:00:00Z"),
 				Instant.parse("2016-11-24T16:21:00Z"),
 				itemObjects[0]
 			);

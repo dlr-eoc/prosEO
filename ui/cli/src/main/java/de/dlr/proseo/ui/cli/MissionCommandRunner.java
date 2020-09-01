@@ -9,7 +9,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -416,6 +415,82 @@ public class MissionCommandRunner {
 		System.out.println(message);
 	}
 
+	/**
+	 * Delete the given mission (optionally removing all configured items and all products, too)
+	 * 
+	 * @param deleteCommand the parsed "mission delete" command
+	 */
+	private void deleteMission(ParsedCommand deleteCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteMission({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
+
+		/* Check command options */
+		boolean forcedDelete = false;
+		boolean deleteProducts = false;
+		for (ParsedOption option: deleteCommand.getOptions()) {
+			switch(option.getName()) {
+			case "force":
+				forcedDelete = true;
+				break;
+			case "delete-products":
+				deleteProducts = true;
+				break;
+			}
+		}
+		if (deleteProducts && !forcedDelete) {
+			// "delete-products" only allowed with "force" to avoid unintentional data loss
+			System.err.println(uiMsg(MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE));
+			return;
+		}
+		
+		/* Get mission code from command parameters */
+		if (deleteCommand.getParameters().isEmpty()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_MISSION_CODE_GIVEN));
+			return;
+		}
+		String missionCode = deleteCommand.getParameters().get(0).getValue();
+		
+		/* Retrieve the mission using Order Manager service */
+		RestMission mission = retrieveMissionByCode(missionCode);
+		if (null == mission) {
+			return;
+		}
+		
+		/* Delete mission using Order Manager service */
+		try {
+			serviceConnection.deleteFromService(serviceConfig.getOrderManagerUrl(), 
+					URI_PATH_MISSIONS + "/" + mission.getId() +
+					(forcedDelete ? "?force=true" : "") +
+					(deleteProducts ? "&delete-products=true" : ""), 
+				loginManager.getUser(), loginManager.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, missionCode);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, missionCode);
+				break;
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				message = uiMsg(MSG_ID_MISSION_DELETE_FAILED, missionCode, e.getMessage());
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return;
+		} catch (Exception e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return;
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_MISSION_DELETED, missionCode);
+		logger.info(message);
+		System.out.println(message);
+	}
+	
 	/**
 	 * Add a new spacecraft to a mission; if the input is not from a file, the user will be prompted for mandatory attributes
 	 * not given on the command line
@@ -1133,8 +1208,9 @@ public class MissionCommandRunner {
 		}
 		if (null == loginManager.getMission()) {
 			if (CMD_MISSION.equals(command.getName()) && null != command.getSubcommand() && 
-					(CMD_SHOW.equals(command.getSubcommand().getName()) || CMD_CREATE.equals(command.getSubcommand().getName())) ) {
-				// OK, "mission show" and "mission create" allowed without login to a specific mission
+					(CMD_SHOW.equals(command.getSubcommand().getName()) || CMD_CREATE.equals(command.getSubcommand().getName())
+							|| CMD_DELETE.equals(command.getSubcommand().getName())) ) {
+				// OK, "mission show", "mission create" and "mission delete" allowed without login to a specific mission
 			} else {
 				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 				return;
@@ -1193,6 +1269,7 @@ public class MissionCommandRunner {
 			case CMD_CREATE:	createMission(subcommand); break COMMAND;
 			case CMD_SHOW:		showMission(subcommand); break COMMAND;
 			case CMD_UPDATE:	updateMission(subcommand); break COMMAND;
+			case CMD_DELETE:	deleteMission(subcommand); break COMMAND;
 			default:
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;

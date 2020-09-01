@@ -15,7 +15,9 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
-    user:
-        name: user
-        password: password
-
+    ingestor:
+        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
+        # Connection timeout in ms
+        timeout: 1000
+        user: <user>
+        password: <password>

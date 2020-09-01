@@ -9,6 +9,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -110,7 +112,7 @@ public class UserCommandRunner {
 		RestUser restUser = null;
 		try {
 			restUser = serviceConnection.getFromService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + username,
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(username, Charset.defaultCharset()),
 					RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -146,7 +148,7 @@ public class UserCommandRunner {
 		
 		try {
 			restUser = serviceConnection.patchToService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + restUser.getUsername(),
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(restUser.getUsername(), Charset.defaultCharset()),
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -623,7 +625,7 @@ public class UserCommandRunner {
 		/* Delete user using User Manager service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + restUser.getUsername(), 
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(restUser.getUsername(), Charset.defaultCharset()), 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

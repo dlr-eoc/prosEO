@@ -9,6 +9,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -129,7 +131,7 @@ public class OrderCommandRunner {
 		try {
 			List<?> resultList = null;
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					URI_PATH_ORDERS + "?identifier=" + orderIdentifier,
+					URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(orderIdentifier, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -428,7 +430,7 @@ public class OrderCommandRunner {
 				}
 			}
 		} else {
-			requestURI += "&identifier=" + showCommand.getParameters().get(0).getValue();  // only one parameter expected
+			requestURI += "&identifier=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());  // only one parameter expected
 		}
 		
 		/* Get the order information from the Order Manager */
@@ -536,7 +538,7 @@ public class OrderCommandRunner {
 				// Read order by user-defined identifier
 				List<?> resultList = null;
 				resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-						URI_PATH_ORDERS + "?identifier=" + updatedOrder.getIdentifier(),
+						URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(updatedOrder.getIdentifier(), Charset.defaultCharset()),
 						List.class, loginManager.getUser(), loginManager.getPassword());
 				if (resultList.isEmpty()) {
 					throw new HttpClientErrorException(HttpStatus.NOT_FOUND);

@@ -13,6 +13,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.util.UriUtils;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
@@ -303,7 +305,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
 		ingestorProduct.setGenerationTime(TEST_GEN_TIME_TEXT);
 		File productFile = new File(TEST_PRODUCT_PATH_2);
-		ingestorProduct.setSourceStorageType(StorageType.S3);
+		ingestorProduct.setSourceStorageType(StorageType.S3.toString());
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());
@@ -340,12 +342,7 @@ public class IngestorControllerTest {
 		}
 		
 		// Perform REST API call
-		try {
-			testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + URLEncoder.encode(TEST_NAME, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
+		testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + TEST_NAME; // URL path segment encoding is handled by TestTemplate!
 		logger.info("Testing URL {} / POST", testUrl);
 
 		@SuppressWarnings("rawtypes")

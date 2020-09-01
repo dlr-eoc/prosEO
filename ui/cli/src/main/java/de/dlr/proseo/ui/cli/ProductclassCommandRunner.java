@@ -13,6 +13,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,7 +118,8 @@ public class ProductclassCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), 
-					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() + "&productType=" + productType, 
+					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() 
+						+ "&productType=" + URLEncoder.encode(productType, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -313,7 +316,7 @@ public class ProductclassCommandRunner {
 		
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only product class name allowed as parameter
-			requestURI += "&productType=" + showCommand.getParameters().get(0).getValue();
+			requestURI += "&productType=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());
 		}
 		
 		/* Get the product class information from the Product Class Manager service */

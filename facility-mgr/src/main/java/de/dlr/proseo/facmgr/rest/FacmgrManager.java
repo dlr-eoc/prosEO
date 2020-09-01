@@ -45,6 +45,7 @@ public class FacmgrManager {
 	private static final int MSG_ID_FACILITY_LIST_EMPTY = 1022;
 	private static final int MSG_ID_FACILITY_LIST_RETRIEVED = 1023;
 	private static final int MSG_ID_DUPLICATE_FACILITY = 1024;
+	private static final int MSG_ID_FACILITY_HAS_PRODUCTS = 1025;
 
 
 	/* Message string constants */
@@ -55,6 +56,7 @@ public class FacmgrManager {
 	private static final String MSG_FACILITY_DELETED = "(I%d) Facility with id %d deleted";
 	private static final String MSG_FACILITY_ID_MISSING = "(E%d) Facility ID not set";
 	private static final String MSG_DUPLICATE_FACILITY = "(E%d) Facility %s exists already";
+	private static final String MSG_FACILITY_HAS_PRODUCTS = "(E%d) Cannot delete facility %s due to existing products";
 
 	private static final String MSG_FACILITY_RETRIEVED = "(I%d) Facility with ID %s retrieved";
 	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
@@ -232,20 +234,47 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setName(changedFacility.getName());
 		}
-		// TODO Catch null value for description
-		if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
+		if (null == modelFacility.getDescription()) {
+			if (null == changedFacility.getDescription()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setDescription(changedFacility.getDescription());
+			}
+		} else if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
 			facilityChanged = true;
 			modelFacility.setDescription(changedFacility.getDescription());
 		}	
-		if (!modelFacility.getProcessingEngineUrl().equals(changedFacility.getProcessingEngineUrl())) {
+		if (null == modelFacility.getProcessingEngineUrl()) {
+			if (null == changedFacility.getProcessingEngineUrl()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
+			}
+		} else if (!modelFacility.getProcessingEngineUrl().equals(changedFacility.getProcessingEngineUrl())) {
 			facilityChanged = true;
 			modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
 		}	
-		if (!modelFacility.getProcessingEngineUser().equals(changedFacility.getProcessingEngineUser())) {
+		if (null == modelFacility.getProcessingEngineUser()) {
+			if (null == changedFacility.getProcessingEngineUser()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setProcessingEngineUser(changedFacility.getProcessingEngineUser());
+			}
+		} else if (!modelFacility.getProcessingEngineUser().equals(changedFacility.getProcessingEngineUser())) {
 			facilityChanged = true;
 			modelFacility.setProcessingEngineUser(changedFacility.getProcessingEngineUser());
 		}	
-		if (!modelFacility.getProcessingEnginePassword().equals(changedFacility.getProcessingEnginePassword())) {
+		if (null == modelFacility.getProcessingEnginePassword()) {
+			if (null == changedFacility.getProcessingEnginePassword()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setProcessingEnginePassword(changedFacility.getProcessingEnginePassword());
+			}
+		} else if (!modelFacility.getProcessingEnginePassword().equals(changedFacility.getProcessingEnginePassword())) {
 			facilityChanged = true;
 			modelFacility.setProcessingEnginePassword(changedFacility.getProcessingEnginePassword());
 		}	
@@ -253,7 +282,14 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
 		}	
-		if (!modelFacility.getLocalStorageManagerUrl().equals(changedFacility.getLocalStorageManagerUrl())) {
+		if (null == modelFacility.getLocalStorageManagerUrl()) {
+			if (null == changedFacility.getLocalStorageManagerUrl()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setLocalStorageManagerUrl(changedFacility.getLocalStorageManagerUrl());
+			}
+		} else if (!modelFacility.getLocalStorageManagerUrl().equals(changedFacility.getLocalStorageManagerUrl())) {
 			facilityChanged = true;
 			modelFacility.setLocalStorageManagerUrl(changedFacility.getLocalStorageManagerUrl());
 		}	
@@ -285,9 +321,10 @@ public class FacmgrManager {
 	 * 
 	 * @param the ID of the facility to delete
 	 * @throws EntityNotFoundException if the facility to delete does not exist in the database
+	 * @throws IllegalArgumentException if the facility to delete still has stored products
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	public void deleteFacilityById(Long id) {
+	public void deleteFacilityById(Long id) throws EntityNotFoundException, IllegalArgumentException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteFacilityById({})", id);
 
 		// Test whether the facility id is valid
@@ -295,6 +332,13 @@ public class FacmgrManager {
 		if (modelFacility.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_FACILITY_NOT_FOUND, MSG_ID_FACILITY_NOT_FOUND));
 		}
+		
+		// Test whether the facility still has stored products
+		if (!RepositoryService.getProductFileRepository().findByProcessingFacilityId(modelFacility.get().getId()).isEmpty()) {
+			throw new IllegalArgumentException(
+					logError(MSG_FACILITY_HAS_PRODUCTS, MSG_ID_FACILITY_HAS_PRODUCTS, modelFacility.get().getName()));
+		};
+		
 		// Delete the facility
 		RepositoryService.getFacilityRepository().deleteById(id);
 

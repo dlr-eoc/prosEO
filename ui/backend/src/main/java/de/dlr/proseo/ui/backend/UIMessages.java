@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.ui.backend;
 
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -108,6 +110,10 @@ public class UIMessages {
 	public static final int MSG_ID_ORBIT_DELETE_FAILED = 2857;
 	public static final int MSG_ID_ORBITS_DELETED = 2858;
 	public static final int MSG_ID_MISSION_CREATED = 2859;
+	public static final int MSG_ID_NO_MISSION_CODE_GIVEN = 2780;
+	public static final int MSG_ID_MISSION_DELETED = 2781;
+	public static final int MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE = 2782;
+	public static final int MSG_ID_MISSION_DELETE_FAILED = 2783;
 	
 	// Product class CLI
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
@@ -309,7 +315,10 @@ public class UIMessages {
 		
 		// Mission CLI
 		MSG_NO_MISSIONS_FOUND ("(E%d) No missions found for given search criteria", MSG_ID_NO_MISSIONS_FOUND),
+		MSG_NO_MISSION_CODE_GIVEN ("(E%d) Mission code missing", MSG_ID_NO_MISSION_CODE_GIVEN),
+		MSG_DELETE_PRODUCTS_WITHOUT_FORCE ("(E%d) Option 'delete-products' not valid without option 'force'", MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE),
 		MSG_MISSION_NOT_READABLE ("(E%d) Mission %s not readable (cause: %s)", MSG_ID_MISSION_NOT_READABLE),
+		MSG_MISSION_DELETE_FAILED ("(E%d) Deletion of mission %s failed (cause: %s)", MSG_ID_MISSION_DELETE_FAILED),
 		MSG_SPACECRAFT_EXISTS ("(E%d) Spacecraft %s exists in mission %s", MSG_ID_SPACECRAFT_EXISTS),
 		MSG_NO_SPACECRAFT_CODE_GIVEN ("(E%d) No spacecraft code given", MSG_ID_NO_SPACECRAFT_CODE_GIVEN),
 		MSG_SPACECRAFT_NOT_FOUND ("(E%d) Spacecraft %s not found in mission %s", MSG_ID_SPACECRAFT_NOT_FOUND),
@@ -320,7 +329,7 @@ public class UIMessages {
 		MSG_ORBIT_NOT_FOUND ("(E%d) Orbit number %d not found for spacecraft %s", MSG_ID_ORBIT_NOT_FOUND),
 		MSG_ORBIT_NOT_FOUND_BY_ID ("(E%d) Orbit with database ID %d not found", MSG_ID_ORBIT_NOT_FOUND_BY_ID),
 		MSG_ORBIT_DELETE_FAILED ("(E%d) Deletion of orbit %d for spacecraft %s failed (cause: %s)", MSG_ID_ORBIT_DELETE_FAILED),
-		
+				
 		// Order CLI
 		MSG_NO_ORDERS_FOUND ("(E%d) No orders found for given search criteria", MSG_ID_NO_ORDERS_FOUND),
 		MSG_INVALID_SLICING_TYPE ("(E%d) Invalid order slicing type %s", MSG_ID_INVALID_SLICING_TYPE),
@@ -483,6 +492,7 @@ public class UIMessages {
 		// Mission CLI
 		MSG_MISSION_CREATED ("(I%d) Mission %s created (database ID %d)", MSG_ID_MISSION_CREATED),
 		MSG_MISSION_UPDATED ("(I%d) Mission %s updated (new version %d)", MSG_ID_MISSION_UPDATED),
+		MSG_MISSION_DELETED ("(I%d) Mission %s deleted", MSG_ID_MISSION_DELETED),
 		MSG_SPACECRAFT_ADDED ("(I%d) Spacecraft %s added (database ID %d)", MSG_ID_SPACECRAFT_ADDED),
 		MSG_SPACECRAFT_REMOVED ("(I%d) Spacecraft %s removed from mission %s", MSG_ID_SPACECRAFT_REMOVED),
 		MSG_ORBITS_CREATED ("(I%d) %d orbits created", MSG_ID_ORBITS_CREATED),

@@ -50,6 +50,8 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 			.authorizeRequests()
 				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
+				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole("ROOT")
+				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole("ROOT")
 				.anyRequest().authenticated()
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
