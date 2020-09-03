@@ -33,7 +33,7 @@ public abstract class ProseoFile {
 	/**
 	 * Logger for this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(ProseoFileS3.class);
+	private static Logger logger = LoggerFactory.getLogger(ProseoFile.class);
 	
 	/**
 	 * original path
