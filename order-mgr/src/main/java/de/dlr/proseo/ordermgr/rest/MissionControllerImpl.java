@@ -48,6 +48,7 @@ import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -489,22 +490,27 @@ public class MissionControllerImpl implements MissionController {
 		
 		long missionId = mission.getId();
 
-		// Delete all processing orders, jobs, job steps and product queries (by cascade)
-		String jpqlQuery = "select po from ProcessingOrder po where po.mission.id = " + missionId;
-		Query query = em.createQuery(jpqlQuery);
-		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof ProcessingOrder)
-				RepositoryService.getOrderRepository().deleteById(((ProcessingOrder) resultObject).getId());
-		}
-		
 		// Delete all products and product files (by cascade; also remove product files from Storage Manager)
 		deleteProductFiles(mission);
 		
-		jpqlQuery = "select p from Product p where p.productClass.mission.id = " + missionId;
+		String jpqlQuery = "select p from Product p where p.productClass.mission.id = " + missionId;
+		Query query = em.createQuery(jpqlQuery);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof Product) {
+				Product product = (Product) resultObject;
+				for (ProductQuery satisfiedQuery: product.getSatisfiedProductQueries()) {
+					satisfiedQuery.getSatisfyingProducts().remove(product);
+				}
+				RepositoryService.getProductRepository().deleteById(((Product) resultObject).getId());
+			}
+		}
+		
+		// Delete all processing orders, jobs, job steps and product queries (by cascade)
+		jpqlQuery = "select po from ProcessingOrder po where po.mission.id = " + missionId;
 		query = em.createQuery(jpqlQuery);
 		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof Product)
-				RepositoryService.getProductRepository().deleteById(((Product) resultObject).getId());
+			if (resultObject instanceof ProcessingOrder)
+				RepositoryService.getOrderRepository().deleteById(((ProcessingOrder) resultObject).getId());
 		}
 		
 		// Delete all product classes and selection rules (by cascade)
