@@ -110,7 +110,7 @@ public class Product extends PersistentObject {
 	private Set<ProductFile> productFile = new HashSet<>();
 	
 	/** Product queries satisfied by this product */
-	@ManyToMany
+	@ManyToMany(mappedBy = "satisfyingProducts")
 	private Set<ProductQuery> satisfiedProductQueries = new HashSet<>();
 	
 	/** Job step that produced this product (if any) */

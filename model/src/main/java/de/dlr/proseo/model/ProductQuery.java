@@ -87,7 +87,7 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Products satisfying this query condition
 	 */
-	@ManyToMany(mappedBy = "satisfiedProductQueries")
+	@ManyToMany
 	private Set<Product> satisfyingProducts = new HashSet<>();
 
 	/**
