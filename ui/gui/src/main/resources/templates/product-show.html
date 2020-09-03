@@ -93,7 +93,7 @@
                         th:onclick="'productref(' + ${comp} + ')'"><span th:text="${comp}"></span></a></td>
                     <td><a class="href" th:onclick="'productref(' + ${elem?.enclosingProductId} + ')'"><span th:text="${elem?.enclosingProductId}"></span></a></td>
                     <td th:text="${elem?.orbit}"></td>
-                    <td><a th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}" th:text="${elem?.configuredProcessor.identifier}"></a></td>
+                    <td><a th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}" th:text="${elem?.configuredProcessor.identifier}" th:if="null != ${elem?.configuredProcessor}"></a></td>
                     <td>
                       <table class="table">
                         <tbody>
