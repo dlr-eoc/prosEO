@@ -367,6 +367,11 @@ public class OrderDispatcher {
 
 								// create output product
 								// if product class has sub products or is sub product, create all related products to be created
+								// TODO: This is not quite correct: Processor classes may be anywhere in the product class tree,
+								//       but not necessarily on the root product class, approach would be to find the topmost class
+								//       in the product tree, for which a processor class is defined.
+								//       (Note that it may happen that for this processor class no configured processor exists, so we
+								//       actually cannot create a job step at all)
 								List<ProductClass> productClassesToCreate = new ArrayList<ProductClass>();
 								ProductClass rootProductClass = getRootProductClass(productClass);
 								productClassesToCreate.add(rootProductClass);
