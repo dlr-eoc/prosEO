@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -396,7 +394,7 @@ public class ProductIngestor {
 		}
 		for (String fileName: allFiles) {
 			String storageManagerUrl = facility.getStorageManagerUrl()
-					+ String.format(URL_STORAGE_MANAGER_DELETE, URLEncoder.encode(modelProductFile.getFilePath() + "/" + fileName, Charset.defaultCharset())); // file separator is always '/' in Storage Manager
+					+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
 			
 			RestTemplate restTemplate = rtb
 					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
