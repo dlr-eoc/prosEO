@@ -48,7 +48,6 @@ import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
-import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -70,6 +69,13 @@ public class MissionControllerImpl implements MissionController {
 	private static final int MSG_ID_PRODUCTCLASSES_EXIST = 1007;
 	private static final int MSG_ID_PROCESSORCLASSES_EXIST = 1008;
 	private static final int MSG_ID_DELETING_PRODUCT_FILES = 1009;
+	private static final int MSG_ID_MISSION_DELETED = 1010;
+	private static final int MSG_ID_MISSION_UPDATED = 1011;
+	private static final int MSG_ID_MISSION_RETRIEVED = 1012;
+	private static final int MSG_ID_MISSION_CREATED = 1013;
+	private static final int MSG_ID_MISSIONS_RETRIEVED = 1014;
+	private static final int MSG_ID_MISSION_EXISTS = 1015;
+	private static final int MSG_ID_SPACECRAFT_EXISTS = 1016;
 
 	/* Message string constants */
 	private static final String MSG_NO_MISSIONS_FOUND = "(E%d) No missions found";
@@ -79,7 +85,15 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_PRODUCTS_EXIST = "(E%d) Cannot delete mission %s due to existing products";
 	private static final String MSG_PRODUCTCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing product classes";
 	private static final String MSG_PROCESSORCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing processor classes";
+	private static final String MSG_MISSION_EXISTS = "(E%d) Mission with mission code %s already exists";
+	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists";
+
 	private static final String MSG_DELETING_PRODUCT_FILES = "(I%d) Deleting product files for product with database ID %d";
+	private static final String MSG_MISSION_DELETED = "(I%d) Mission with database ID %d deleted";
+	private static final String MSG_MISSION_UPDATED = "(I%d) Mission %s updated";
+	private static final String MSG_MISSION_RETRIEVED = "(I%d) Mission %s retrieved";
+	private static final String MSG_MISSION_CREATED = "(I%d) Mission %s created";
+	private static final String MSG_MISSIONS_RETRIEVED = "(I%d) All missions retrieved";
 	
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
@@ -157,6 +171,8 @@ public class MissionControllerImpl implements MissionController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+		logger.info(String.format(MSG_MISSIONS_RETRIEVED, MSG_ID_MISSIONS_RETRIEVED));
+		
 		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 
@@ -169,7 +185,7 @@ public class MissionControllerImpl implements MissionController {
 	 */
 	@Override
 	public ResponseEntity<RestMission> createMission(@Valid RestMission mission) {
-		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getClass());
+		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getCode());
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
@@ -178,31 +194,20 @@ public class MissionControllerImpl implements MissionController {
 			restMission = transactionTemplate.execute((status) -> {
 				Mission modelMission = MissionUtil.toModelMission(mission);
 
-				// The following does not make sense: ...getMission() cannot return the modelMission, as this is to be created!
-				// Should any of the following succeed, it would mean that the mission already exists.
-				//				modelMission.getProcessorClasses().clear();
-				//				for (ProcessorClass procClass : RepositoryService.getProcessorClassRepository().findAll()) {			
-				//					if(procClass.getMission().getCode().equals(modelMission.getCode())) {
-				//						modelMission.getProcessorClasses().add(procClass);
-				//					}		
-				//				}
-				//				
-				//				modelMission.getProductClasses().clear();
-				//				for (ProductClass prodClass : RepositoryService.getProductClassRepository().findByMissionCode(modelMission.getCode())) {
-				//						modelMission.getProductClasses().add(prodClass);
-				//				}
-				// TODO throw exception, if mission exists
+				// Check, whether mission exists already
+				if (null != RepositoryService.getMissionRepository().findByCode(mission.getCode())) {
+					throw new IllegalArgumentException(String.format(MSG_MISSION_EXISTS, MSG_ID_MISSION_EXISTS, mission.getCode()));
+				}
 
 				modelMission = RepositoryService.getMissionRepository().save(modelMission);
 
-				//Code to add spacecraft details
+				// Add spacecraft details
 				modelMission.getSpacecrafts().clear();
 				for (RestSpacecraft restSpacecraft : mission.getSpacecrafts()) {
 					Spacecraft modelSpacecraft = new Spacecraft();
 					if (null != RepositoryService.getSpacecraftRepository().findByCode(restSpacecraft.getCode())) {
-						// does not make sense: if such a spacecraft would be found, it would already belong to a different mission!
-						//						modelSpacecraft = RepositoryService.getSpacecraftRepository().findByCode(restSpacecraft.getCode());
-						// TODO throw exception here
+						// If such a spacecraft would be found, it would already belong to a different mission!
+						throw new IllegalArgumentException(String.format(MSG_SPACECRAFT_EXISTS, MSG_ID_SPACECRAFT_EXISTS, restSpacecraft.getCode()));
 					}
 					else {
 						modelSpacecraft.setCode(restSpacecraft.getCode());
@@ -217,13 +222,16 @@ public class MissionControllerImpl implements MissionController {
 
 				return MissionUtil.toRestMission(modelMission);
 			});
+		} catch (IllegalArgumentException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (TransactionException e) {
-			// TODO catch all exceptions created above
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-
+		logger.info(String.format(MSG_MISSION_CREATED, MSG_ID_MISSION_CREATED, restMission.getCode()));
+		
 		return new ResponseEntity<>(restMission, HttpStatus.CREATED);
 
 	}
@@ -260,6 +268,8 @@ public class MissionControllerImpl implements MissionController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+		logger.info(String.format(MSG_MISSION_RETRIEVED, MSG_ID_MISSION_RETRIEVED, restMission.getCode()));
+		
 		return new ResponseEntity<>(restMission, HttpStatus.OK);
 	}
 
@@ -374,6 +384,8 @@ public class MissionControllerImpl implements MissionController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+		logger.info(String.format(MSG_MISSION_UPDATED, MSG_ID_MISSION_UPDATED, restMission.getCode()));
+		
 		return new ResponseEntity<>(restMission, HttpStatus.OK);
 
 	}
@@ -397,12 +409,14 @@ public class MissionControllerImpl implements MissionController {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		try {
+			// Transaction to check the delete preconditions
 			transactionTemplate.execute((status) -> {
 				// Test whether the mission id is valid
 				Optional<de.dlr.proseo.model.Mission> modelMission = RepositoryService.getMissionRepository().findById(id);
 				if (modelMission.isEmpty()) {
 					throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, id));
 				}
+				Mission mission = modelMission.get();
 				
 				// Check execution options
 				if (deleteProducts && !force) {
@@ -417,7 +431,7 @@ public class MissionControllerImpl implements MissionController {
 					Object result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PRODUCTS_EXIST, MSG_ID_PRODUCTS_EXIST, modelMission.get().getCode()));
+							throw new IllegalArgumentException(String.format(MSG_PRODUCTS_EXIST, MSG_ID_PRODUCTS_EXIST, mission.getCode()));
 						}
 					}
 				}
@@ -431,7 +445,7 @@ public class MissionControllerImpl implements MissionController {
 					Object result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PRODUCTCLASSES_EXIST, MSG_ID_PRODUCTCLASSES_EXIST, modelMission.get().getCode()));
+							throw new IllegalArgumentException(String.format(MSG_PRODUCTCLASSES_EXIST, MSG_ID_PRODUCTCLASSES_EXIST, mission.getCode()));
 						}
 					}
 					// Check processor classes (processors, configurations etc. are configured with reference to processor classes)
@@ -441,20 +455,40 @@ public class MissionControllerImpl implements MissionController {
 					result = query.getSingleResult();
 					if (result instanceof Long) {
 						if (0 != ((Long) result)) {
-							throw new IllegalArgumentException(String.format(MSG_PROCESSORCLASSES_EXIST, MSG_ID_PROCESSORCLASSES_EXIST,  modelMission.get().getCode()));
+							throw new IllegalArgumentException(String.format(MSG_PROCESSORCLASSES_EXIST, MSG_ID_PROCESSORCLASSES_EXIST,  mission.getCode()));
 						}
 					}
 				}
 
+				return null;
+			});
+
+			// Delete all product files (also remove product files from Storage Manager);
+			// this is done through the prosEO Ingestor AND CANNOT BE ROLLED BACK (!), therefore it is done in a separate transaction
+			transactionTemplate.execute((status) -> {
+				// Test whether the mission id is valid
+				Mission mission = RepositoryService.getMissionRepository().findById(id).get();
+
+				if (force) {
+					deleteProductFiles(mission);
+				}
+	
+				return null;
+			});
+			
+			// Transaction to perform the metadata deletion
+			transactionTemplate.execute((status) -> {
+				// Test whether the mission id is valid
+				Mission mission = RepositoryService.getMissionRepository().findById(id).get();
+
 				// Delete the mission
 				if (force) {
-					deleteMissionDependentObjects(modelMission.get());
+					deleteMissionDependentObjects(mission);
 				}
 				RepositoryService.getMissionRepository().deleteById(id);
 
 				// Test whether the deletion was successful
-				modelMission = RepositoryService.getMissionRepository().findById(id);
-				if (!modelMission.isEmpty()) {
+				if (!RepositoryService.getMissionRepository().findById(id).isEmpty()) {
 					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 				}
 
@@ -474,6 +508,8 @@ public class MissionControllerImpl implements MissionController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 
+		logger.info(String.format(MSG_MISSION_DELETED, MSG_ID_MISSION_DELETED, id));
+		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
 	}
@@ -489,21 +525,17 @@ public class MissionControllerImpl implements MissionController {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteMissionDependentObjects({})", mission.getCode());
 		
 		long missionId = mission.getId();
-
-		// Delete all products and product files (by cascade; also remove product files from Storage Manager)
-		deleteProductFiles(mission);
 		
+		// Delete all products
 		String jpqlQuery = "select p from Product p where p.productClass.mission.id = " + missionId;
 		Query query = em.createQuery(jpqlQuery);
+		List<Long> deletedProductIds = new ArrayList<>();
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
-				Product product = (Product) resultObject;
-				for (ProductQuery satisfiedQuery: product.getSatisfiedProductQueries()) {
-					satisfiedQuery.getSatisfyingProducts().remove(product);
-				}
-				RepositoryService.getProductRepository().deleteById(((Product) resultObject).getId());
+				deleteProduct((Product) resultObject, deletedProductIds);
 			}
 		}
+		if (logger.isDebugEnabled()) logger.debug("... products deleted");
 		
 		// Delete all processing orders, jobs, job steps and product queries (by cascade)
 		jpqlQuery = "select po from ProcessingOrder po where po.mission.id = " + missionId;
@@ -512,6 +544,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof ProcessingOrder)
 				RepositoryService.getOrderRepository().deleteById(((ProcessingOrder) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... processing orders deleted");
 		
 		// Delete all product classes and selection rules (by cascade)
 		jpqlQuery = "select pc from ProductClass pc where pc.mission.id = " + missionId;
@@ -520,6 +553,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof ProductClass)
 				RepositoryService.getProductClassRepository().deleteById(((ProductClass) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... product classes deleted");
 		
 		// Delete all configured processors
 		jpqlQuery = "select cp from ConfiguredProcessor cp where cp.processor.processorClass.mission.id = " + missionId;
@@ -528,6 +562,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof ConfiguredProcessor)
 				RepositoryService.getConfiguredProcessorRepository().deleteById(((ConfiguredProcessor) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... configured processors deleted");
 		
 		// Delete all processors and tasks (by cascade)
 		jpqlQuery = "select p from Processor p where p.processorClass.mission.id = " + missionId;
@@ -536,6 +571,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof Processor)
 				RepositoryService.getProcessorRepository().deleteById(((Processor) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... processors deleted");
 		
 		// Delete all configurations and configuration input files (by cascade)
 		jpqlQuery = "select c from Configuration c where c.processorClass.mission.id = " + missionId;
@@ -544,6 +580,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof Configuration)
 				RepositoryService.getConfigurationRepository().deleteById(((Configuration) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... configurations deleted");
 		
 		// Delete all processor classes
 		jpqlQuery = "select pc from ProcessorClass pc where pc.mission.id = " + missionId;
@@ -552,6 +589,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof ProcessorClass)
 				RepositoryService.getProcessorClassRepository().deleteById(((ProcessorClass) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... processor classes deleted");
 		
 		// Delete all spacecrafts and orbits (by cascade)
 		jpqlQuery = "select s from Spacecraft s where s.mission.id = " + missionId;
@@ -560,6 +598,7 @@ public class MissionControllerImpl implements MissionController {
 			if (resultObject instanceof Spacecraft)
 				RepositoryService.getSpacecraftRepository().deleteById(((Spacecraft) resultObject).getId());
 		}
+		if (logger.isDebugEnabled()) logger.debug("... spacecrafts deleted");
 		
 		// Delete all user-group associations for this mission (bulk delete using Native SQL, since we have no implicit joins, and the User object is not mapped)
 		String sqlQuery = "delete from users_group_memberships where users_username like '" + mission.getCode() + "-%'";
@@ -571,14 +610,7 @@ public class MissionControllerImpl implements MissionController {
 		sqlQuery = "delete from group_members where username like '" + mission.getCode() + "-%'";
 		query = em.createNativeQuery(sqlQuery);
 		query.executeUpdate();
-		
-		// Delete all users for this mission (bulk delete using Native SQL, since we have no implicit joins, and the User object is not mapped)
-		sqlQuery = "delete from authorities where username like '" + mission.getCode() + "-%'";
-		query = em.createNativeQuery(sqlQuery);
-		query.executeUpdate();
-		sqlQuery = "delete from users where username like '" + mission.getCode() + "-%'";
-		query = em.createNativeQuery(sqlQuery);
-		query.executeUpdate();
+		if (logger.isDebugEnabled()) logger.debug("... group memberships deleted");
 		
 		// Delete all groups for this mission (bulk delete using Native SQL, since we have no implicit joins, and the Group object is not mapped)
 		sqlQuery = "delete from group_authorities where group_id in (select id from groups where group_name like '" + mission.getCode() + "-%')";
@@ -587,7 +619,40 @@ public class MissionControllerImpl implements MissionController {
 		sqlQuery = "delete from groups where group_name like '" + mission.getCode() + "-%'";
 		query = em.createNativeQuery(sqlQuery);
 		query.executeUpdate();
+		if (logger.isDebugEnabled()) logger.debug("... groups deleted");
 		
+		// Delete all users for this mission (bulk delete using Native SQL, since we have no implicit joins, and the User object is not mapped)
+		sqlQuery = "delete from authorities where username like '" + mission.getCode() + "-%'";
+		query = em.createNativeQuery(sqlQuery);
+		query.executeUpdate();
+		sqlQuery = "delete from users where username like '" + mission.getCode() + "-%'";
+		query = em.createNativeQuery(sqlQuery);
+		query.executeUpdate();
+		if (logger.isDebugEnabled()) logger.debug("... users deleted");
+		
+	}
+
+	/**
+	 * Delete product, after all component products have been deleted (this would have happened through the CASCADE annotation
+	 * anyway, but in the bulk delete this is error-prone, therefore we control it programmatically)
+	 * 
+	 * @param product the product to delete
+	 * @param deletedProductIds the products deleted so far (may contain the current product!!)
+	 */
+	private void deleteProduct(Product product, List<Long> deletedProductIds) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProduct({}, [...])", product.getId());
+		
+		if (deletedProductIds.contains(product.getId())) {
+			return;
+		}
+		
+		for (Product componentProduct: product.getComponentProducts()) {
+			deleteProduct(componentProduct, deletedProductIds);
+		}
+		
+		deletedProductIds.add(product.getId());
+		
+		RepositoryService.getProductRepository().deleteById(product.getId());
 	}
 
 	/**
@@ -598,7 +663,7 @@ public class MissionControllerImpl implements MissionController {
 	private void deleteProductFiles(Mission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFiles({})", mission.getCode());
 		
-		// Find all products for this mission with product files
+		// Find all products for this mission with product files (dirty read on database!)
 		String jpqlQuery = "select p from Product p where p.productClass.mission.id = " + mission.getId() + " and p.productFile is not empty";
 		Query query = em.createQuery(jpqlQuery);
 		for (Object resultObject: query.getResultList()) {
