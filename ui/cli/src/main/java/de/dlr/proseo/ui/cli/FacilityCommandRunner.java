@@ -50,6 +50,9 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_FACILITY_NAME = "Facility name (empty field cancels): ";
 	private static final String PROMPT_PROCENG_URL = "Processing engine URL (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_URL = "Storage manager URL (empty field cancels): ";
+	private static final String PROMPT_STORAGEMGR_USER = "Storage manager username (empty field cancels): ";
+	private static final String PROMPT_STORAGEMGR_PASSWD = "Storage manager password (empty field cancels): ";
+	private static final String PROMPT_LOCAL_STORAGEMGR_URL = "Kubernetes-local storage manager URL (empty field cancels): ";
 	private static final String PROMPT_STORAGE_TYPE = "Default storage type (empty field cancels): ";
 	
 	private static final String URI_PATH_FACILITIES = "/facilities";
@@ -204,6 +207,33 @@ public class FacilityCommandRunner {
 				return;
 			}
 			restFacility.setStorageManagerUrl(response);
+		}
+		if (null == restFacility.getStorageManagerUser() || restFacility.getStorageManagerUser().isBlank()) {
+			System.out.print(PROMPT_STORAGEMGR_USER);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setStorageManagerUser(response);
+		}
+		if (null == restFacility.getStorageManagerPassword() || restFacility.getStorageManagerPassword().isBlank()) {
+			System.out.print(PROMPT_STORAGEMGR_PASSWD);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setStorageManagerPassword(response);
+		}
+		if (null == restFacility.getLocalStorageManagerUrl() || restFacility.getLocalStorageManagerUrl().isBlank()) {
+			System.out.print(PROMPT_LOCAL_STORAGEMGR_URL);
+			String response = System.console().readLine();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setLocalStorageManagerUrl(response);
 		}
 		if (null == restFacility.getDefaultStorageType() || restFacility.getDefaultStorageType().isBlank()) {
 			System.out.print(PROMPT_STORAGE_TYPE);
