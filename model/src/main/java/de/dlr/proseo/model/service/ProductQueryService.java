@@ -58,7 +58,8 @@ public class ProductQueryService {
 	}
 	
 	/**
-	 * Execute the query of the given product query and check additional conditions (e. g. selection time interval coverage)
+	 * Execute the query of the given product query and check additional conditions (e. g. selection time interval coverage).
+	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
 	 * @param productQuery the product query to execute
 	 * @param useNativeSQL set to true, if native SQL is to be used, and to false for JPQL

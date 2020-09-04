@@ -495,6 +495,10 @@ public class KubeConfig {
 		try {
 			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {
+			if (e instanceof RuntimeException) {
+				// We did not throw this one!
+				logger.error("Job creation failed with exception: " + e.getMessage(), e);
+			}
 			aJob = null;
 		}
 		if (aJob != null) {

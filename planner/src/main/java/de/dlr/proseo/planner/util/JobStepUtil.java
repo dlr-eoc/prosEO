@@ -12,14 +12,11 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.ProcessingException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -27,7 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
@@ -35,7 +31,6 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -509,9 +504,13 @@ public class JobStepUtil {
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
 						if (productQueryService.executeQuery(pq, false, false)) {
-							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
 							RepositoryService.getProductQueryRepository().save(pq);
-							RepositoryService.getProductRepository().save(js.getOutputProduct());
+							for (Product p: pq.getSatisfyingProducts()) {
+								RepositoryService.getProductRepository().save(p);
+							}
+							// The following removed - it is the *input* product queries that matter!
+//							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
+//							RepositoryService.getProductRepository().save(js.getOutputProduct());
 						} else {
 							hasUnsatisfiedInputQueries = true;
 						}
