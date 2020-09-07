@@ -325,6 +325,7 @@ public class IngestControllerImpl implements IngestController {
      * @param httpHeaders the HTTP request headers (injected)
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
+	 *         HTTP status "BAD_REQUEST", if the product currently satisfies a product query for the given processing facility, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
@@ -352,6 +353,8 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ProcessingException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (RuntimeException e) {

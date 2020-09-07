@@ -77,6 +77,7 @@ public class ProductIngestor {
 	private static final int MSG_ID_PRODUCT_FILE_DELETED = 2068;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
+	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
 
 	// Same as in ProductManager
 	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
@@ -96,6 +97,7 @@ public class ProductIngestor {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product file for product ID %d and processing facility %s has been modified since retrieval by the client";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
 	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
+	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s (cause: %s)";
 
 	// Same as in ProductManager
 	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
@@ -364,9 +366,10 @@ public class ProductIngestor {
      * @throws EntityNotFoundException if the product or the product file could not be found
      * @throws RuntimeException if the deletion failed
  	 * @throws ProcessingException if the communication with the Storage Manager fails
+ 	 * @throws IllegalArgumentException if the product currently satisfies a product query for the given processing facility
     */
 	public void deleteProductFile(Long productId, ProcessingFacility facility) throws 
-			EntityNotFoundException, RuntimeException, ProcessingException {
+			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility.getName());
 
 		// Find the product with the given ID
@@ -384,6 +387,13 @@ public class ProductIngestor {
 		}
 		if (null == modelProductFile) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility.getName()));
+		}
+		
+		// Do not delete product file, if the product is currently satisfying some product query for the same processing facility
+		for (ProductQuery productQuery: product.get().getSatisfiedProductQueries()) {
+			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS, productId, facility.getName()));
+			}
 		}
 		
 		// Remove the product file from the processing facility storage: Delete all files individually by path name
