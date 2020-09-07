@@ -150,8 +150,8 @@ public class Proc {
 				case "list_of_inputs" : 
 					Node iele = child.getFirstChild();
 					while (iele != null) {
-						if (iele.getNodeName().equalsIgnoreCase("Input")) {
-							InputOutput io = new InputOutput("Input");
+						if (iele.getNodeName().equalsIgnoreCase(InputOutput.IO_TYPE_INPUT)) {
+							InputOutput io = new InputOutput(InputOutput.IO_TYPE_INPUT);
 							io.read(iele);
 							this.getListOfInputs().add(io);
 						}
@@ -161,8 +161,8 @@ public class Proc {
 				case "list_of_outputs" : 
 					Node oele = child.getFirstChild();
 					while (oele != null) {
-						if (oele.getNodeName().equalsIgnoreCase("Output")) {
-							InputOutput io = new InputOutput("Output");
+						if (oele.getNodeName().equalsIgnoreCase(InputOutput.IO_TYPE_OUTPUT)) {
+							InputOutput io = new InputOutput(InputOutput.IO_TYPE_OUTPUT);
 							io.read(oele);
 							this.getListOfOutputs().add(io);
 						}
