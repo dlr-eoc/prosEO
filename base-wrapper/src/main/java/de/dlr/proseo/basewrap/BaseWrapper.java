@@ -65,12 +65,6 @@ public class BaseWrapper {
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
 	/** Directory prefix of produced output data */
 	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
-	/** Constant for file name type "Physical" in JOF */
-	private static final String FILENAME_TYPE_PHYSICAL = "Physical";
-	/** Constant for file name type "Directory" in JOF */
-	protected static final String FILENAME_TYPE_DIRECTORY = "Directory";
-	/** Constant for file name type "Archive" in JOF (non-standard extension!) */
-	protected static final String FILENAME_TYPE_ARCHIVE = "Archive";
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -334,7 +328,7 @@ public class BaseWrapper {
 		for(Proc item : jo.getListOfProcs()) {
 			// Loop all Input
 			for (InputOutput io: item.getListOfInputs()) {
-				if (!FILENAME_TYPE_PHYSICAL.equals(io.getFileNameType())) {
+				if (!InputOutput.FN_TYPE_PHYSICAL.equals(io.getFileNameType())) {
 					// Only download "Physical" files
 					logger.info(MSG_SKIPPING_INPUT_ENTRY, io.getFileType(), io.getFileNameType());
 					continue;
@@ -382,7 +376,7 @@ public class BaseWrapper {
 
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
-					if (FILENAME_TYPE_DIRECTORY.equals(io.getFileNameType())) {
+					if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 						if (Files.exists(filePath)) {
 							if (!Files.isDirectory(filePath)) {
 								logger.error(MSG_NOT_A_DIRECTORY, fn.getFileName());
@@ -469,7 +463,7 @@ public class BaseWrapper {
 	 * <ol>
 	 *   <li>Adding additional output files to the output list as desired (e. g. log files, job order file)</li>
 	 *   <li>Packaging multiple files into a single ZIP file for delivery via the PRIP if desired (add an output file
-	 *       with File_Name_Type "Archive", using Java constant FILENAME_TYPE_ARCHIVE)</li>
+	 *       with File_Name_Type "Archive", using Java constant InputOutput.FN_TYPE_ARCHIVE)</li>
 	 * </ol>
 	 * Note: The first (non-archive) output file is taken as the (main) product file, subsequent files are interpreted as
 	 * auxiliary files.
@@ -501,7 +495,7 @@ public class BaseWrapper {
 			// Loop all Outputs
 			for (InputOutput io: item.getListOfOutputs()) {
 				// Ignore directories (cannot be pushed)
-				if (FILENAME_TYPE_DIRECTORY.equals(io.getFileNameType())) {
+				if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 					continue;
 				}
 				
@@ -559,7 +553,7 @@ public class BaseWrapper {
 					}
 					
 					// Create metadata for this file
-					if (FILENAME_TYPE_ARCHIVE.equals(io.getFileNameType())) {
+					if (InputOutput.FN_TYPE_ARCHIVE.equals(io.getFileNameType())) {
 						// Extension to JOF specification, only to be used in "postProcessingHook()" to identify ZIP archives,
 						// must only be used once
 						if (null != productFile.getZipFileName()) {
