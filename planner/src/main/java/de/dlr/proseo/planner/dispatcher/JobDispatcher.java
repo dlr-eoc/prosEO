@@ -121,13 +121,13 @@ public class JobDispatcher {
 					Proc proc = new Proc(t.getTaskName(), t.getTaskVersion());
 					// add config files
 					for (ConfigurationFile cf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getConfigurationFiles()) {
-						InputOutput sio = new InputOutput("processing_configuration", "Physical", "Input", null);
+						InputOutput sio = new InputOutput("processing_configuration", InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
 						sio.getFileNames().add(new IpfFileName(cf.getFileName()));
 						proc.getListOfInputs().add(sio);				
 					}
 					// add static config files first
 					for (ConfigurationInputFile scf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getStaticInputFiles()) {
-						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), "Input", null);
+						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), InputOutput.IO_TYPE_INPUT, null);
 						for (String sioFName: scf.getFileNames()) {
 							sio.getFileNames().add(new IpfFileName(sioFName));
 						}
@@ -180,7 +180,8 @@ public class JobDispatcher {
 
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
-				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
+				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), InputOutput.FN_TYPE_PHYSICAL, 
+						InputOutput.IO_TYPE_INPUT, String.valueOf(p.getId()));
 				String filePath = pf.getFilePath();
 				String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
 				sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
@@ -205,7 +206,7 @@ public class JobDispatcher {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {})", proc.getTaskName(), jobStep.getId());
 
 		for (ProductClass pc : productClasses.keySet()) {
-			InputOutput sio = new InputOutput(pc.getProductType(), "Physical", "Input", null);
+			InputOutput sio = new InputOutput(pc.getProductType(), InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
 			for (Product p : productClasses.get(pc)) {
 				if (p.getComponentProducts().isEmpty()) {
 					for (ProductFile pf : p.getProductFile()) {
@@ -260,13 +261,13 @@ public class JobDispatcher {
 	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep, String baseDir) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOOutput({}, {}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId(), baseDir);
 
-		String fnType = p.getComponentProducts().isEmpty() ? "Physical" : "Directory"; 
-		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, "Output", String.valueOf(p.getId()));
+		String fnType = p.getComponentProducts().isEmpty() ? InputOutput.FN_TYPE_PHYSICAL : InputOutput.FN_TYPE_DIRECTORY; 
+		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, InputOutput.IO_TYPE_OUTPUT, String.valueOf(p.getId()));
 		String storageType = jobStep.getJob().getProcessingFacility().getDefaultStorageType().toString();
 		String fn = "";
 		if (p.getGenerationTime() != null) {
 			fn = p.generateFilename();
-			if (fnType.equals("Directory")) {
+			if (fnType.equals(InputOutput.FN_TYPE_DIRECTORY)) {
 				int i = fn.lastIndexOf('.');
 				if (i > 0) {
 					fn = fn.substring(0, i);

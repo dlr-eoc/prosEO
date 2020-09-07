@@ -63,6 +63,8 @@ public class OrderDispatcher {
 	 */
 	@Transactional
 	public boolean publishOrder(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> publishOrder({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
 		boolean answer = false;
 		if (order != null) {
 			switch (order.getOrderState()) {
@@ -115,6 +117,8 @@ public class OrderDispatcher {
 	 * @return
 	 */
 	public boolean checkForValidOrder(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkForValidOrder({}, {})", (null == order ? "null": order.getIdentifier()));
+		
 		boolean answer = true;
 		// check for needed data
 		if (order.getMission() == null) {
@@ -122,6 +126,8 @@ public class OrderDispatcher {
 			Messages.ORDER_MISSION_NOT_SET.log(logger, order.getIdentifier());
 		}
 		if (order.getRequestedConfiguredProcessors().isEmpty()) {
+			// TODO: This is not an error. If a configured processor is set, it overrides the lookup of the most recent 
+			//       configured processor for that processor class, but it is fine to not set such an override
 			answer = false;
 			Messages.ORDER_REQ_PROC_NOT_SET.log(logger, order.getIdentifier());
 		}
@@ -140,6 +146,8 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	public boolean createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForOrbit({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
 		boolean answer = true;
 		// there has to be a list of orbits
 		List<Orbit> orbits = order.getRequestedOrbits();
@@ -189,6 +197,8 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	public boolean createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForDay({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
 		boolean answer = true;
 
 		Instant startT = null;
@@ -243,6 +253,8 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	public boolean createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForTimeSlices({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
 		boolean answer = true;
 
 		Instant startT = null;
@@ -307,6 +319,10 @@ public class OrderDispatcher {
 	 */
 	@Transactional
 	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobForOrbitOrTime({}, {}, {}, {}, {})",
+				(null == order ? "null": order.getIdentifier()), (null == orbit ? "null" : orbit.getOrbitNumber()), startT, stopT,
+				(null == pf ? "null" : pf.getName()));
+		
 		boolean answer = true;
 		// there has to be a list of orbits
 
@@ -356,15 +372,6 @@ public class OrderDispatcher {
 							List <JobStep> allJobSteps = new ArrayList<JobStep>();
 							// for each product class
 							for (ProductClass productClass : productClasses) {
-								// create job step(s)
-								JobStep jobStep = new JobStep();
-								jobStep.setJobStepState(JobStepState.INITIAL);
-								jobStep.setProcessingMode(order.getProcessingMode());
-								jobStep.setJob(job);
-								jobStep.getOutputParameters().putAll(order.getOutputParameters(productClass));
-								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
-								job.getJobSteps().add(jobStep);
-
 								// create output product
 								// if product class has sub products or is sub product, create all related products to be created
 								// TODO: This is not quite correct: Processor classes may be anywhere in the product class tree,
@@ -383,12 +390,28 @@ public class OrderDispatcher {
 										configuredProcessor = cp;
 									}
 								}
+								// Do not create output product or job step, if no configured processor was found
+								if (null == configuredProcessor) {
+									Messages.ORDERDISP_NO_CONF_PROC.log(logger, productClass.getProductType());
+									continue;
+								}
+
+								// create job step(s)
+								JobStep jobStep = new JobStep();
+								jobStep.setJobStepState(JobStepState.INITIAL);
+								jobStep.setProcessingMode(order.getProcessingMode());
+								jobStep.setJob(job);
+								jobStep.getOutputParameters().putAll(order.getOutputParameters(productClass));
+								jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+								job.getJobSteps().add(jobStep);
+
+
 								// now we have all product classes, create related products
 								// also create job steps with queries related to product class
 								// collect created products
 								List <Product> products = new ArrayList<Product>();
 
-								Product rootProduct = createProducts(rootProductClass, 
+								createProducts(rootProductClass, 
 										null, 
 										configuredProcessor, 
 										orbit, 
@@ -485,7 +508,9 @@ public class OrderDispatcher {
 	 */
 	public void createJobStepForProduct(Job job, ProductClass productClass, List<ConfiguredProcessor> configuredProcessors, 
 				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
-
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobStepForProduct({}, {}, [...], [...], [...], [...], [...])",
+				(null == job ? "null": job.getId()), (null == productClass ? "null" : productClass.getProductType()));
+		
 		if (inputProducts.contains(productClass)) {
 			return;
 		}
@@ -591,6 +616,8 @@ public class OrderDispatcher {
 	}
 
 	public ProductClass getRootProductClass(ProductClass pc) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getRootProductClass({})", (null == pc ? "null" : pc.getProductType()));
+		
 		ProductClass rootProductClass = pc;
 		while (rootProductClass.getEnclosingClass() != null) {
 			rootProductClass = rootProductClass.getEnclosingClass();
@@ -599,6 +626,8 @@ public class OrderDispatcher {
 	}
 	
 	public List<ProductClass> getAllComponentClasses(ProductClass pc) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAllComponentClasses({})", (null == pc ? "null" : pc.getProductType()));
+		
 		List<ProductClass> productClasses = new ArrayList<ProductClass>();
 		productClasses.addAll(pc.getComponentClasses());
 		for (ProductClass subPC : pc.getComponentClasses()) {
@@ -623,7 +652,13 @@ public class OrderDispatcher {
 	 * @param products List to collect all products created
 	 * @return The current created product
 	 */
-	public Product createProducts(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime, List<Product> products) {
+	public Product createProducts(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js,
+				String fileClass, Instant startTime, Instant stopTime, List<Product> products) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, [...])",
+				(null == productClass ? "null" : productClass.getProductType()), (null == enclosingProduct ? "null" : enclosingProduct.getId()),
+				(null == cp ? "null" : cp.getIdentifier()), (null == orbit ? "null" : orbit.getOrbitNumber()),
+				(null == job ? "null" : job.getId()), (null == js ? "null" : js), fileClass, startTime, stopTime);
+		
 		Product product = createProduct(productClass, enclosingProduct, cp, orbit, job, js, fileClass, startTime, stopTime);
 		if (product != null) {
 			products.add(product);
@@ -652,7 +687,13 @@ public class OrderDispatcher {
 	 * @param products List to collect all products created
 	 * @return The current created product
 	 */
-	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job, JobStep js, String fileClass, Instant startTime, Instant stopTime) {
+	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job,
+				JobStep js, String fileClass, Instant startTime, Instant stopTime) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({}, {}, {}, {}, {}, {}, {}, {}, {})",
+				(null == productClass ? "null" : productClass.getProductType()), (null == enclosingProduct ? "null" : enclosingProduct.getId()),
+				(null == cp ? "null" : cp.getIdentifier()), (null == orbit ? "null" : orbit.getOrbitNumber()),
+				(null == job ? "null" : job.getId()), (null == js ? "null" : js), fileClass, startTime, stopTime);
+		
 		Product p = new Product();
 		p.getParameters().clear();
 		p.setUuid(UUID.randomUUID());
@@ -707,6 +748,8 @@ public class OrderDispatcher {
 	 * @return Configured processor found or null
 	 */
 	public ConfiguredProcessor searchConfiguredProcessorForProductClass(ProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchConfiguredProcessorForProductClass({})", (null == productClass ? "null" : productClass.getProductType()));
+		
 		ConfiguredProcessor cpFound = null;
 		Processor pFound = null;
 		

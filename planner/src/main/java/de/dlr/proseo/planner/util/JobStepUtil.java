@@ -695,7 +695,7 @@ public class JobStepUtil {
 		if (p != null) {
 			list.add(p);
 			for (Product cp : p.getComponentProducts()) {
-				collectProducts(p, list);
+				collectProducts(cp, list);
 			}
 		}
 	}
