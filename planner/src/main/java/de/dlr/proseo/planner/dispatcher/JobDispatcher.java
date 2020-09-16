@@ -137,7 +137,9 @@ public class JobDispatcher {
 					// create IpfInput for each product class
 					Map<ProductClass, List<Product>> productClasses = new HashMap<ProductClass, List<Product>>();
 					for (ProductQuery pq : jobStep.getInputProductQueries()) {
-						for (Product p : pq.getNewestSatisfyingProducts()) {
+						// Replaced "getNewestSatisfyingProducts" by "getSatisfyingProducts" --> older ones are allowed!
+						// If this is a problem with some test cases, check test cases
+						for (Product p : pq.getSatisfyingProducts()) {
 							addProductToMap(p, productClasses);
 						}
 					}

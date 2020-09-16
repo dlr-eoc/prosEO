@@ -429,12 +429,14 @@ public class OrderDispatcher {
 									jobStep = null;
 								} else {
 									for (Product p : products) {
-										for (SimpleSelectionRule selectionRule : p.getProductClass().getRequiredSelectionRules()) {
-											ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
-											pq = RepositoryService.getProductQueryRepository().save(pq);
-											if (!jobStep.getInputProductQueries().contains(pq)) {
-												jobStep.getInputProductQueries().add(pq);
-											}
+										try {
+											findOrCreateProductQuery(jobStep, p.getProductClass());
+										} catch (IllegalArgumentException e) {
+											logger.error(e.getMessage());
+											job.getJobSteps().remove(jobStep);
+											RepositoryService.getJobStepRepository().delete(jobStep);
+											jobStep = null;
+											throw e;
 										}
 									}
 
@@ -486,12 +488,48 @@ public class OrderDispatcher {
 					}
 				}
 			}
+		} catch (IllegalArgumentException ex) {
+			answer = false;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			answer = false;
 		}
 
 		return answer;
+	}
+
+	/**
+	 * Check whether the given job step already has product queries for the source product classes of the given product class,
+	 * if not, create them
+	 * 
+	 * @param jobStep the job step to check
+	 * @param productClass the product class to check against
+	 * @throws IllegalArgumentException if the job step has a product query for a source product class, 
+	 *         but it does not match the selection rules of the given product class
+	 */
+	private void findOrCreateProductQuery(JobStep jobStep, ProductClass productClass) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrCreateSelectionRule({}, {})",
+				(null == jobStep ? "null": jobStep.getId()), (null == productClass ? "null" : productClass.getProductType()));
+		
+		
+		for (SimpleSelectionRule selectionRule : productClass.getRequiredSelectionRules()) {
+			// Check whether job step already has a product query for the given product class
+			for (ProductQuery productQuery: jobStep.getInputProductQueries()) {
+				if (productQuery.getGeneratingRule().getSourceProductClass().equals(selectionRule.getSourceProductClass())) {
+					// Make sure selection rules match
+					if (!selectionRule.toString().equals(productQuery.getGeneratingRule().toString())) {
+						throw new IllegalArgumentException(
+							String.format("Selection rule %s from product query does not match selection rule %s from product class %s",
+									productQuery.getGeneratingRule().toString(), selectionRule.toString(), productClass.getProductType()));
+					}
+					// OK, product query already exists
+					return;
+				}
+			}
+			ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+			pq = RepositoryService.getProductQueryRepository().save(pq);
+			jobStep.getInputProductQueries().add(pq);
+		}
 	}
 
 	/**
@@ -504,14 +542,14 @@ public class OrderDispatcher {
 	 * @param jobStepList The job steps created
 	 * @param allJobStepList All job steps 
 	 * @param allProducts All products created
-	 * @param inputProducts The input products to use
+	 * @param inputProductClasses The input product classes to use
 	 */
 	public void createJobStepForProduct(Job job, ProductClass productClass, List<ConfiguredProcessor> configuredProcessors, 
-				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProducts) {
+				List<JobStep> jobStepList, List<JobStep> allJobStepList, List<Product> allProducts, Set<ProductClass> inputProductClasses) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobStepForProduct({}, {}, [...], [...], [...], [...], [...])",
 				(null == job ? "null": job.getId()), (null == productClass ? "null" : productClass.getProductType()));
 		
-		if (inputProducts.contains(productClass)) {
+		if (inputProductClasses.contains(productClass)) {
 			return;
 		}
 		JobStep jobStep = new JobStep();
@@ -561,7 +599,7 @@ public class OrderDispatcher {
 				// collect created products
 				List <Product> products = new ArrayList<Product>();
 
-				Product rootProduct = createProducts(rootProductClass, 
+				createProducts(rootProductClass, 
 						null, 
 						configuredProcessor, 
 						job.getOrbit(), 
@@ -592,7 +630,6 @@ public class OrderDispatcher {
 					// this means also to create new job steps for products which are not satisfied
 					// check all queries for existing product definition (has not to be created!)
 
-					Boolean hasUnsatisfiedInputQueries = false;
 					for (ProductQuery pq : jobStep.getInputProductQueries()) {
 						if (productQueryService.executeQuery(pq, false, true)) {
 							// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
@@ -606,8 +643,7 @@ public class OrderDispatcher {
 									jobStepList,
 									allJobStepList,
 									allProducts,
-									inputProducts);
-							hasUnsatisfiedInputQueries = true;
+									inputProductClasses);
 						}
 					}
 				}

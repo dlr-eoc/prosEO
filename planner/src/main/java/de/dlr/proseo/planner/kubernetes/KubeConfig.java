@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -558,6 +559,14 @@ public class KubeConfig {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
+			} else if (e instanceof ApiException) {
+				if (((ApiException) e).getCode() == HttpStatus.NOT_FOUND.value()) {
+					// Already gone (for whatever reason, maybe Kubernetes breakdown, maybe manual intervention)
+					return true;
+				} else {
+					e.printStackTrace();
+					return false;
+				}
 			} else {
 				e. printStackTrace();
 				return false;
