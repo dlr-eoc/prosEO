@@ -39,7 +39,7 @@ public class InputOutput {
 	/** File name type for directories */
 	public final static String FN_TYPE_DIRECTORY = "Directory";
 	/** File name type for ZIP archives (non-standard extension!) */
-	protected static final String FN_TYPE_ARCHIVE = "Archive";
+	public static final String FN_TYPE_ARCHIVE = "Archive";
 	
 	/**
 	 * The type of element (Input/Output)

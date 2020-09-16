@@ -249,6 +249,8 @@ public class OrbitControllerImpl implements OrbitController {
 				for(RestOrbit tomodelOrbit : orbit) {
 					Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
 					
+					// TODO Check for existing orbits and update them!
+					
 					//Adding spacecraft object to modelOrbit
 					Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
 					modelOrbit.setSpacecraft(spacecraft);
