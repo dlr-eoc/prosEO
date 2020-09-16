@@ -1,3 +1,3 @@
-FROM localhost:5000/proseo-order-mgr:0.5.1
+FROM localhost:5000/proseo-order-mgr:0.5.2
 ADD application.yml /usr/share/proseo-order-mgr/application.yml
 WORKDIR /usr/share/proseo-order-mgr/
