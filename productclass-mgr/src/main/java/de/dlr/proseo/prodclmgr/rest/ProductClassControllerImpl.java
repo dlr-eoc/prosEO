@@ -265,7 +265,8 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param id the database ID of the product class
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the if the selection rule to delete or the product class do not exist in the database, or
-	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given
+	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given, or the rule
+     *             cannot be deleted due to existing product queries
      */
 	@Override
 	public ResponseEntity<?> deleteSelectionrule(Long ruleid, Long id) {

@@ -106,6 +106,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_PROCESSOR_REMOVED = 2145;
 	private static final int MSG_ID_PRODUCT_CLASS_HAS_PROCESSOR = 2146;
 	private static final int MSG_ID_PRODUCT_CLASS_HAS_PRODUCTS = 2147;
+	private static final int MSG_ID_PRODUCT_QUERIES_EXIST = 2148;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -144,6 +145,7 @@ public class ProductClassManager {
 	private static final String MSG_DUPLICATE_RULE = "(E%d) Product class %s already contains selection rule for source class %s, mode %s and configured processor %s";
 	private static final String MSG_PRODUCT_CLASS_HAS_PROCESSOR = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it is referenced by a processor class";
 	private static final String MSG_PRODUCT_CLASS_HAS_PRODUCTS = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it has products";
+	private static final String MSG_PRODUCT_QUERIES_EXIST = "(E%d) Rule '%s' for product class %s cannot be deleted, because it is used in product queries";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -917,11 +919,14 @@ public class ProductClassManager {
 				SimpleSelectionRule changedSimpleRule = changedSimpleRules.get(0);
 				if (!modelRule.toString().equals(changedRule.toString())) {
 					ruleChanged = true;
-					modelRule.setFilterConditions(changedSimpleRule.getFilterConditions());
+					modelRule.getFilterConditions().clear();
+					modelRule.getFilterConditions().putAll(changedSimpleRule.getFilterConditions());
 					modelRule.setFilteredSourceProductType(changedSimpleRule.getFilteredSourceProductType());
 					modelRule.setIsMandatory(changedSimpleRule.getIsMandatory());
-					modelRule.setSimplePolicies(changedSimpleRule.getSimplePolicies());
+					modelRule.getSimplePolicies().clear();
+					modelRule.getSimplePolicies().addAll(changedSimpleRule.getSimplePolicies());
 					modelRule.setSourceProductClass(changedSimpleRule.getSourceProductClass());
+					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 				}
 				// Check mode change
 				if (!modelRule.getMode().equals(selectionRuleString.getMode())) {
@@ -981,7 +986,8 @@ public class ProductClassManager {
      * @param ruleid the database ID of the simple selection rule to delete
      * @param id the database ID of the product class
      * @throws EntityNotFoundException if the selection rule to delete or the product class do not exist in the database
-     * @throws IllegalArgumentException if the ID of the product class or the selection rule was not given
+     * @throws IllegalArgumentException if the ID of the product class or the selection rule was not given, or the rule
+     *             cannot be deleted due to existing product queries
      */
 	public void deleteSelectionrule(Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionrule({}, {})", ruleid, id);
@@ -1013,6 +1019,14 @@ public class ProductClassManager {
 		if (null == modelRuleToDelete) {
 			throw new EntityNotFoundException(
 					logError(MSG_SELECTION_RULE_ID_NOT_FOUND, MSG_ID_SELECTION_RULE_ID_NOT_FOUND, ruleid, id));
+		}
+		
+		// Make sure rule is not used in any product query
+		Query query = em.createQuery("select pq from ProductQuery pq where pq.generatingRule = :rule")
+				.setParameter("rule", modelRuleToDelete);
+		if (!query.getResultList().isEmpty()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERIES_EXIST, MSG_ID_PRODUCT_QUERIES_EXIST,
+					modelRuleToDelete.toString(), modelProductClass.get().getProductType()));
 		}
 		
 		modelProductClass.get().getRequiredSelectionRules().remove(modelRuleToDelete);
