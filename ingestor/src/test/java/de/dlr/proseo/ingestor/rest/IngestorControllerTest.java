@@ -280,6 +280,7 @@ public class IngestorControllerTest {
 				facility.setStorageManagerUrl(config.getStorageManagerUrl());
 				facility.setStorageManagerUser("testuser");
 				facility.setStorageManagerPassword("testpwd");
+				facility.setDefaultStorageType("POSIX");
 				facility = RepositoryService.getFacilityRepository().save(facility);
 
 				return null;

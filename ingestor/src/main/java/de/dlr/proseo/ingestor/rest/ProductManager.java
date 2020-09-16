@@ -19,10 +19,14 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
@@ -71,6 +75,7 @@ public class ProductManager {
 	private static final int MSG_ID_DUPLICATE_PRODUCT_UUID = 2024;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND = 2025;
 	private static final int MSG_ID_PRODUCT_HAS_FILES = 2026;
+	private static final int MSG_ID_PRODUCT_EXISTS = 2027;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -94,6 +99,7 @@ public class ProductManager {
 	private static final String MSG_DUPLICATE_PRODUCT_UUID = "(E%d) Duplicate product UUID %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found";
 	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d has existing files and cannot be deleted";
+	private static final String MSG_PRODUCT_EXISTS = "(E%d) Product with equal characteristics already exists with ID %d";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -274,8 +280,25 @@ public class ProductManager {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_MISSING, MSG_ID_PRODUCT_MISSING));
 		}
 
-		// Create a database model product
 		Product modelProduct = ProductUtil.toModelProduct(product);
+		
+		// Check metadata database for product with same characteristics
+		TypedQuery<Product> query = em.createQuery("select p from Product p where "
+				+ "p.productClass.mission.code = :missionCode and "
+				+ "p.productClass.productType = :productType and "
+				+ "p.sensingStartTime = :sensingStart and "
+				+ "p.sensingStopTime = :sensingStop", Product.class)
+			.setParameter("missionCode", product.getMissionCode())
+			.setParameter("productType", product.getProductClass())
+			.setParameter("sensingStart", modelProduct.getSensingStartTime())
+			.setParameter("sensingStop", modelProduct.getSensingStopTime());
+		for (Product candidateProduct: query.getResultList()) {
+			if (candidateProduct.equals(modelProduct)) {
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_EXISTS, MSG_ID_PRODUCT_EXISTS, candidateProduct.getId()));
+			}
+		}
+
+		// Create a database model product
 		if (null == modelProduct.getUuid()) {
 			modelProduct.setUuid(UUID.randomUUID());
 		} else {
@@ -672,4 +695,5 @@ public class ProductManager {
 		
 		return ProductUtil.toRestProduct(product);
 	}
+
 }
