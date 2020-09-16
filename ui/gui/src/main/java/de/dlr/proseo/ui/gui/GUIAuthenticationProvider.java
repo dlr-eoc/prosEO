@@ -35,7 +35,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 			String userName = userNameParts[1];
 			String password = (String) authentication.getCredentials();
 
-			if (loginManager.doLogin(userName, password, mission)) {
+			if (loginManager.doLogin(userName, password, mission, false)) {
 				GUIAuthenticationToken newAuthentication = new GUIAuthenticationToken();
 				UserDetails newPrincipal = new User(userName, password, authentication.getAuthorities());
 				newAuthentication.setPrincipal(newPrincipal);

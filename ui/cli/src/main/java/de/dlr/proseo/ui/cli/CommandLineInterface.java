@@ -20,6 +20,7 @@ import org.jline.reader.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -89,6 +90,9 @@ public class CommandLineInterface implements CommandLineRunner {
 	@Autowired
 	private FacilityCommandRunner facilityCommandRunner;
 	
+	/** Indicator for interactive mode vs. running from input redirection */
+	public static boolean isInteractiveMode = true;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CommandLineInterface.class);
 	
@@ -104,8 +108,8 @@ public class CommandLineInterface implements CommandLineRunner {
 	 *     <li>the mission to execute the command for</li>
 	 *  </ol>
 	 */
-	private List<String> checkArguments(String[] args) {
-		if (logger.isTraceEnabled()) logger.trace(">>> checkArguments({}, out username, out password, out mission)", Arrays.toString(args));
+	private static List<String> checkArguments(String[] args) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkArguments({})", Arrays.toString(args));
 		
 		StringBuilder commandBuilder = new StringBuilder();
 		String username = null;
@@ -183,7 +187,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();
 				}
-				loginManager.doLogin(username, password, mission);
+				loginManager.doLogin(username, password, mission, true);
 				break;
 			case CMD_LOGOUT:
 				loginManager.doLogout();
@@ -273,7 +277,7 @@ public class CommandLineInterface implements CommandLineRunner {
 					System.err.println(message);
 					return;
 				}
-				if (!loginManager.doLogin(username, password, mission)) {
+				if (!loginManager.doLogin(username, password, mission, isInteractiveMode)) {
 					// Already logged
 					return;
 				}
@@ -309,8 +313,9 @@ public class CommandLineInterface implements CommandLineRunner {
 			try {
 				String commandLine;
 				try {
-					commandLine = userInput.readLine(String.format(PROSEO_COMMAND_PROMPT,
-							null == loginManager.getMission() ? "no mission" : loginManager.getMission()));
+					commandLine = userInput.readLine(isInteractiveMode ?
+						String.format(PROSEO_COMMAND_PROMPT, null == loginManager.getMission() ? "no mission" : loginManager.getMission())
+						: "");
 				} catch (UserInterruptException e) {
 					String message = uiMsg(MSG_ID_USER_INTERRUPT);
 					logger.error(message);
@@ -350,8 +355,18 @@ public class CommandLineInterface implements CommandLineRunner {
 	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
+		// Check availability of console or prosEO command to determine interactive mode
+		Banner.Mode bannerMode = Banner.Mode.CONSOLE;
+		
+		if (null == System.console() || !checkArguments(args).get(0).isBlank()) {
+			isInteractiveMode = false;
+			bannerMode = Banner.Mode.OFF;
+		}
+		
 		try {
-			SpringApplication.run(CommandLineInterface.class, args);
+			SpringApplication cli = new SpringApplication(CommandLineInterface.class);
+			cli.setBannerMode(bannerMode);
+			cli.run(args);
 			System.exit(0);
 		} catch (Exception e) {
 			String message = uiMsg(MSG_ID_UNCAUGHT_EXCEPTION, e.getMessage());

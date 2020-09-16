@@ -933,6 +933,16 @@ public class ProductclassCommandRunner {
 			restSelectionRule.getConfiguredProcessors().clear();
 			restSelectionRule.getConfiguredProcessors().addAll(updatedSelectionRule.getConfiguredProcessors());
 		}
+		if (FORMAT_PLAIN.equals(selectionRuleFileFormat) &&
+				(null == updatedSelectionRule.getSelectionRule() || 0 == updatedSelectionRule.getSelectionRule().length())) {
+			System.out.println(PROMPT_SELECTION_RULE);
+			String response = readTextFromConsole();
+			if ("".equals(response)) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restSelectionRule.setSelectionRule(response);
+		} 
 		
 		/* Update selection rule using Product Class Manager service */
 		try {

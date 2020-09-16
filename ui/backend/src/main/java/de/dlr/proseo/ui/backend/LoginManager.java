@@ -96,10 +96,20 @@ public class LoginManager {
 	 * @param username the user name for login (without mission prefix; optional, will be requested from standard input, if not set)
 	 * @param password the password for login (optional, will be requested from standard input, if not set)
 	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
+	 * @param showLoginMessage if true, show a message upon successful login
 	 * @return true, if the login was successful, false otherwise
 	 */
-	public boolean doLogin(String username, String password, String mission) {
+	public boolean doLogin(String username, String password, String mission, boolean showLoginMessage) {
 		if (logger.isTraceEnabled()) logger.trace(">>> doLogin({}, ********, {})", username, mission);
+		
+		// Catch missing arguments in non-interactive mode
+		if (null == System.console() && (null == username || username.isBlank() || null == password || password.isBlank())) {
+			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
+			logger.error(message);
+			System.err.println(message);
+			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
+			return false;
+		}
 		
 		// Ask for username, if not set
 		if (null == username || "".equals(username)) {
@@ -137,7 +147,9 @@ public class LoginManager {
 			String message = uiMsg(MSG_ID_LOGGED_IN, username);
 			logger.info(message);
 			if (logger.isDebugEnabled()) logger.debug("... with authorities: " + Arrays.toString(grantedAuthorities.toArray()));
-			System.out.println(message);
+			if (showLoginMessage) {
+				System.out.println(message);
+			}
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return true;
 		}

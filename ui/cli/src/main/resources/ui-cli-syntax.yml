@@ -131,8 +131,7 @@ commands:
               description: A mission attribute to update in the form "<attribute name>=<attribute value>",
                            overrides values given in the mission definition file
         - name: update
-          description: Update the mission attributes; if the input is not from a file,
-                       the user will be prompted for mandatory attributes not given on the command line
+          description: Update the mission attributes
           options:
             - name: file
               type: string

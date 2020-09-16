@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,13 +119,16 @@ public class CLIUtil {
 	}
 	
 	/**
-	 * Print the given object to the given output stream according to the requested file format
+	 * Print the given object to the given output stream according to the requested file format; if the object is a list or set
+	 * of size 1, then the single element of the collection is printed, not the list/set itself
+	 * 
 	 * @param out the output stream to print to
 	 * @param object the object to print
 	 * @param fileFormat the file format requested (one of JSON, XML, YAML)
 	 * @throws IllegalArgumentException if the file format is not one of the above, or if a formatting error occurs during printing
 	 * @throws IOException if an I/O error occurs during printing
 	 */
+	@SuppressWarnings("rawtypes")
 	public static void printObject(PrintStream out, Object object, String fileFormat) throws IllegalArgumentException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> printObject({}, object, {})", out, object, fileFormat);
 		
@@ -146,7 +151,13 @@ public class CLIUtil {
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		
 		try {
-			out.println(mapper.writeValueAsString(object));
+			Object objectToPrint = object;
+			if (object instanceof List && 1 == ((List) object).size()) {
+				objectToPrint = ((List) object).get(0);
+			} else if (object instanceof Set && 1 == ((Set) object).size()) {
+				objectToPrint = ((Set) object).iterator().next();
+			}
+			out.println(mapper.writeValueAsString(objectToPrint));
 		} catch (JsonGenerationException e) {
 			String message = uiMsg(MSG_ID_GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
 			logger.error(message);

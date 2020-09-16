@@ -521,9 +521,9 @@ public class FacilityCommandRunner {
 			return;
 		}
 		
-		/* Delete processor using Processor Manager service */
+		/* Delete facility using Facility Manager service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+			serviceConnection.deleteFromService(serviceConfig.getFacilityManagerUrl(),
 					URI_PATH_FACILITIES + "/" + restFacility.getId(), 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
