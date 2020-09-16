@@ -114,9 +114,7 @@ public class ProductQueryService {
 		
 		// Filter products available at the requested processing facility
 		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
-		List<Product> productsAtFacility = new ArrayList<>();
-		getProductsAtFacility(productsAtFacility, products, facility, false);
-		products = productsAtFacility;
+		products = getProductsAtFacility(products, facility);
 		
 		// Check if all conditions of the selection rule are met
 		List<Object> selectedItems = null;
@@ -163,36 +161,43 @@ public class ProductQueryService {
 				productQuery.getSatisfyingProducts().add(product);
 			}
 			productQuery.setIsSatisfied(true);
+			if (logger.isTraceEnabled()) logger.trace("Number of products satisfying product query: " + productQuery.getSatisfyingProducts().size());
 		}		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 		return true;
 	}
 	
-	private boolean getProductsAtFacility(List<Product> productsAtFacility, List<Product> products, ProcessingFacility facility, Boolean inComponent) {
-		Boolean answer = true; 
+	/**
+	 * Check, which of the products given (or all of their component products) are present at the given processing facility
+	 * 
+	 * @param products the list of products to check
+	 * @param facility the processing facility
+	 * 
+	 * @return list of products available at the facility
+	 */
+	private List<Product> getProductsAtFacility(final List<Product> products, final ProcessingFacility facility) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductsAtFacility([...], {})", facility);
+
+		List<Product> productsAtFacility = new ArrayList<>();
 		for (Product product: products) {
-			if (product.getComponentProducts().isEmpty()) { 
-				Boolean found = false;
+			if (product.getComponentProducts().isEmpty()) {
+				// Add product without component products to result list, if any of its product files is present at the facility
 				for (ProductFile productFile: product.getProductFile()) {
 					if (facility.equals(productFile.getProcessingFacility())) {
-						if (!inComponent) {
-							productsAtFacility.add(product);
-						}
-						found = true;
+						productsAtFacility.add(product);
 						break;
 					}
 				}
-				answer &= found; 
 			} else {
 				List<Product> componentProducts = new ArrayList<Product>();
 				componentProducts.addAll(product.getComponentProducts());
-				answer &= getProductsAtFacility(productsAtFacility, componentProducts, facility, true);
-				if (answer) {
+				// Add product to result list, if all (!) component products are present at the facility
+				if (getProductsAtFacility(componentProducts, facility).size() == componentProducts.size()) {
 					productsAtFacility.add(product);
 				}
 			}
 		}
-		return answer;
+		return productsAtFacility;
 	}
 	
 	/**

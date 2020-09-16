@@ -277,37 +277,40 @@ public class ProductQuery extends PersistentObject {
 	/**
 	 * Get the newest products satisfying this query
 	 * 
+	 * This should not be necessary. If "newest" is intended, then the correct selection method (e. g. LatestValidity) should
+	 * be used!
+	 * 
 	 * @return the newestProduct
 	 */
-	public List<Product> getNewestSatisfyingProducts() {
-		HashMap<Instant, HashMap<Instant, Product>> newestProducts = new HashMap<Instant, HashMap<Instant, Product>>();
-		for (Product p : satisfyingProducts) {
-			if ((p.getProductFile() != null && !p.getProductFile().isEmpty())
-					|| !p.getComponentProducts().isEmpty()) {
-				if (newestProducts.get(p.getSensingStartTime()) == null) {
-					HashMap<Instant, Product> stopMap = new HashMap<Instant, Product>();
-					stopMap.put(p.getSensingStopTime(), p);
-					newestProducts.put(p.getSensingStartTime(), stopMap);
-				} else {
-					Product product = newestProducts.get(p.getSensingStartTime()).get(p.getSensingStopTime());
-					if (   product != null) {
-						if (product.getGenerationTime() != null 	
-								&& p.getGenerationTime() != null 
-								&& p.getGenerationTime().isAfter(product.getGenerationTime())) {
-							newestProducts.get(p.getSensingStartTime()).replace(p.getSensingStartTime(), p);
-						}
-					} else {
-						newestProducts.get(p.getSensingStartTime()).put(p.getSensingStopTime(), p);
-					}
-				}
-			}
-		}
-		List<Product> retProducts = new ArrayList<Product>();
-		for (HashMap<Instant, Product> map : newestProducts.values()) {
-			retProducts.addAll(map.values());
-		}
-		return retProducts;
-	}
+//	public List<Product> getNewestSatisfyingProducts() {
+//		HashMap<Instant, HashMap<Instant, Product>> newestProducts = new HashMap<Instant, HashMap<Instant, Product>>();
+//		for (Product p : satisfyingProducts) {
+//			if ((p.getProductFile() != null && !p.getProductFile().isEmpty())
+//					|| !p.getComponentProducts().isEmpty()) {
+//				if (newestProducts.get(p.getSensingStartTime()) == null) {
+//					HashMap<Instant, Product> stopMap = new HashMap<Instant, Product>();
+//					stopMap.put(p.getSensingStopTime(), p);
+//					newestProducts.put(p.getSensingStartTime(), stopMap);
+//				} else {
+//					Product product = newestProducts.get(p.getSensingStartTime()).get(p.getSensingStopTime());
+//					if (   product != null) {
+//						if (product.getGenerationTime() != null 	
+//								&& p.getGenerationTime() != null 
+//								&& p.getGenerationTime().isAfter(product.getGenerationTime())) {
+//							newestProducts.get(p.getSensingStartTime()).replace(p.getSensingStartTime(), p);
+//						}
+//					} else {
+//						newestProducts.get(p.getSensingStartTime()).put(p.getSensingStopTime(), p);
+//					}
+//				}
+//			}
+//		}
+//		List<Product> retProducts = new ArrayList<Product>();
+//		for (HashMap<Instant, Product> map : newestProducts.values()) {
+//			retProducts.addAll(map.values());
+//		}
+//		return retProducts;
+//	}
 
 	/**
 	 * Set the products satisfying this query
