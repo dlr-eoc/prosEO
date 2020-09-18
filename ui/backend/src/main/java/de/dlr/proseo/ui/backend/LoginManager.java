@@ -56,7 +56,8 @@ public class LoginManager {
 	 * @param username the username to login with (including mission prefix)
 	 * @param password the password to login with
 	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
-	 * @return a list of strings denoting authorities granted to the user for the given mission (may be empty)
+	 * @return a list of strings denoting authorities granted to the user for the given mission
+	 * 		   (may be empty, meaning access is denied)
 	 */
 	private List<String> login(String username, String password, String mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> login({}, ********, {})", username, mission);
@@ -73,16 +74,13 @@ public class LoginManager {
 			};
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
-			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
 				break;
 			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			}
-			System.err.println(message);
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage()));
 		}
@@ -104,7 +102,7 @@ public class LoginManager {
 		
 		// Catch missing arguments in non-interactive mode
 		if (null == System.console() && (null == username || username.isBlank() || null == password || password.isBlank())) {
-			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
+			String message = uiMsg(MSG_ID_INSUFFICIENT_CREDENTIALS);
 			logger.error(message);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
@@ -132,7 +130,9 @@ public class LoginManager {
 		List<String> grantedAuthorities = login(missionUsername, password, mission);
 		if (grantedAuthorities.isEmpty()) {
 			// Report failure
-			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
+			String message = null == mission ? 
+					uiMsg(MSG_ID_LOGIN_WITHOUT_MISSION_FAILED, username) : 
+					uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
 			logger.error(message);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");

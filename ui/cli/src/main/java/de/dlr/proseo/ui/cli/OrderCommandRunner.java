@@ -11,9 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -230,7 +230,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getIdentifier() || 0 == restOrder.getIdentifier().length()) {
 			System.out.print(PROMPT_IDENTIFIER);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -257,7 +257,7 @@ public class OrderCommandRunner {
 				&& (null == restOrder.getSliceDuration() || 0 == restOrder.getSliceDuration())) {
 			System.out.print(PROMPT_SLICE_DURATION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -273,26 +273,26 @@ public class OrderCommandRunner {
 			while (null == restOrder.getStartTime()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrder.setStartTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			}
 			while (null == restOrder.getStopTime()) {
 				System.out.print(PROMPT_STOP_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrder.setStopTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			} 
@@ -341,7 +341,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getProcessingMode() || 0 == restOrder.getProcessingMode().length()) {
 			System.out.print(PROMPT_PROCESSING_MODE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -351,7 +351,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getOutputFileClass() || 0 == restOrder.getOutputFileClass().length()) {
 			System.out.print(PROMPT_FILE_CLASS);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -361,7 +361,7 @@ public class OrderCommandRunner {
 		if (restOrder.getRequestedProductClasses().isEmpty()) {
 			System.out.print(PROMPT_PRODUCT_CLASSES);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -423,10 +423,15 @@ public class OrderCommandRunner {
 		/* Check whether order ID is given (overrides --from and --to options) or --from and/or --to parameters are set */
 		if (showCommand.getParameters().isEmpty()) {
 			for (ParsedOption option: showCommand.getOptions()) {
-				if ("from".equals(option.getName())) {
-					requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
-				} else if ("to".equals(option.getName())) {
-					requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+				try {
+					if ("from".equals(option.getName())) {
+						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					} else if ("to".equals(option.getName())) {
+						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					}
+				} catch (DateTimeException e) {
+					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
+					return;
 				}
 			}
 		} else {

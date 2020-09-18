@@ -239,7 +239,7 @@ public class ProductclassCommandRunner {
 		if (null == restProductClass.getProductType() || 0 == restProductClass.getProductType().length()) {
 			System.out.print(PROMPT_PRODUCT_TYPE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -648,7 +648,7 @@ public class ProductclassCommandRunner {
 			if (null == restSelectionRule.getSelectionRule() || 0 == restSelectionRule.getSelectionRule().length()) {
 				System.out.println(PROMPT_SELECTION_RULE);
 				String response = readTextFromConsole();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -903,7 +903,7 @@ public class ProductclassCommandRunner {
 			while (null == restSelectionRule) {
 				System.out.print("Select rule (empty field cancels): ");
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -937,7 +937,7 @@ public class ProductclassCommandRunner {
 				(null == updatedSelectionRule.getSelectionRule() || 0 == updatedSelectionRule.getSelectionRule().length())) {
 			System.out.println(PROMPT_SELECTION_RULE);
 			String response = readTextFromConsole();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}

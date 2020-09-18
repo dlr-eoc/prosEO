@@ -341,7 +341,7 @@ public class UserCommandRunner {
 		if (null == restUser.getUsername() || restUser.getUsername().isEmpty()) {
 			System.out.print(PROMPT_USER_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -350,7 +350,7 @@ public class UserCommandRunner {
 		while (null == restUser.getPassword() || restUser.getPassword().isEmpty()) {
 			System.out.print(PROMPT_PASSWORD);
 			String response = new String(System.console().readPassword());
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -897,7 +897,7 @@ public class UserCommandRunner {
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isEmpty()) {
 			System.out.print(PROMPT_GROUP_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}

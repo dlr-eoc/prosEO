@@ -259,17 +259,17 @@ commands:
                            only allowed if no orbit file is given (i. e. a single orbit is updated)
         - name: delete
           description: Deletes orbits in a given orbit range
-          options:
+          parameters:
+            - name: spacecraftCode
+              type: string
+              description: The code of the spacecraft the orbits belong to
             - name: from
               type: integer
               description: Lower bound of orbit range
             - name: to
               type: integer
+              optional: true
               description: Upper bound of orbit range
-          parameters:
-            - name: spacecraftCode
-              type: string
-              description: The code of the spacecraft the orbits belong to
     - name: order
       description: Commands for managing processing orders; some commands can only be issued, if the order is in the correct status.
                    Order status sequence is Initial - Approved - Planned - Released - Running - Completed/Failed - Closed.

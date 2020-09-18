@@ -149,7 +149,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessorClass.getProcessorName() || 0 == restProcessorClass.getProcessorName().length()) {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -532,7 +532,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessor.getProcessorName() || 0 == restProcessor.getProcessorName().length()) {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -541,7 +541,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessor.getProcessorVersion() || 0 == restProcessor.getProcessorVersion().length()) {
 			System.out.print(PROMPT_PROCESSOR_VERSION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -550,7 +550,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessor.getTasks() || restProcessor.getTasks().isEmpty()) {
 			System.out.print(PROMPT_TASKS);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -561,7 +561,7 @@ public class ProcessorCommandRunner {
 				restTask.setTaskName(task);
 				System.out.print(String.format(PROMPT_TASK_VERSION, task));
 				response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -570,7 +570,7 @@ public class ProcessorCommandRunner {
 					while (null == restTask.getCriticalityLevel()) {
 						System.out.print(String.format(PROMPT_CRITICALITY_LEVEL, task));
 						response = System.console().readLine();
-						if ("".equals(response)) {
+						if (response.isBlank()) {
 							System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 							return;
 						}
@@ -592,7 +592,7 @@ public class ProcessorCommandRunner {
 		if (null == restProcessor.getDockerImage() || 0 == restProcessor.getDockerImage().length()) {
 			System.out.print(PROMPT_DOCKER_IMAGE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1013,7 +1013,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguration.getProcessorName() || 0 == restConfiguration.getProcessorName().length()) {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1022,7 +1022,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguration.getConfigurationVersion() || 0 == restConfiguration.getConfigurationVersion().length()) {
 			System.out.print(PROMPT_CONFIGURATION_VERSION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1450,7 +1450,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguredProcessor.getIdentifier() || 0 == restConfiguredProcessor.getIdentifier().length()) {
 			System.out.print(PROMPT_CONFIGUREDPROCESSOR_IDENTIFIER);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1459,7 +1459,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguredProcessor.getProcessorName() || 0 == restConfiguredProcessor.getProcessorName().length()) {
 			System.out.print(PROMPT_PROCESSOR_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1468,7 +1468,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguredProcessor.getProcessorVersion() || 0 == restConfiguredProcessor.getProcessorVersion().length()) {
 			System.out.print(PROMPT_PROCESSOR_VERSION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -1477,7 +1477,7 @@ public class ProcessorCommandRunner {
 		if (null == restConfiguredProcessor.getConfigurationVersion() || 0 == restConfiguredProcessor.getConfigurationVersion().length()) {
 			System.out.print(PROMPT_CONFIGURATION_VERSION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}

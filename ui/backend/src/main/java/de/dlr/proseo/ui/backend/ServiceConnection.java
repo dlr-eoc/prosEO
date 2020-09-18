@@ -96,7 +96,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -150,7 +150,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -206,7 +206,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw HttpClientErrorException.create(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"), e.getResponseHeaders(), e.getResponseBodyAsByteArray(), null);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -347,7 +347,7 @@ public class ServiceConnection {
 			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());

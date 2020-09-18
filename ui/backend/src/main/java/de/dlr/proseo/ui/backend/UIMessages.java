@@ -5,7 +5,8 @@
  */
 package de.dlr.proseo.ui.backend;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_INSUFFICIENT_CREDENTIALS;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_LOGIN_WITHOUT_MISSION_FAILED;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +52,8 @@ public class UIMessages {
 	public static final int MSG_ID_LOGIN_CANCELLED = 2824;
 	public static final int MSG_ID_MISSION_NOT_FOUND = 2825;
 	public static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 2826;
+	public static final int MSG_ID_INSUFFICIENT_CREDENTIALS = 2827;
+	public static final int MSG_ID_LOGIN_WITHOUT_MISSION_FAILED = 2828;
 	
 	// CLIUtil
 	public static final int MSG_ID_INVALID_FILE_TYPE = 2830;
@@ -103,7 +106,7 @@ public class UIMessages {
 	public static final int MSG_ID_ORBIT_DATA_INVALID = 2850;
 	public static final int MSG_ID_ORBITS_CREATED = 2851;
 	public static final int MSG_ID_NO_ORBITS_FOUND = 2852;
-	public static final int MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN = 2853;
+	public static final int MSG_ID_NO_ORBIT_NUMBER_GIVEN = 2853;
 	public static final int MSG_ID_ORBIT_NOT_FOUND = 2854;
 	public static final int MSG_ID_ORBIT_NOT_FOUND_BY_ID = 2855;
 	public static final int MSG_ID_ORBITS_UPDATED = 2856;
@@ -114,6 +117,7 @@ public class UIMessages {
 	public static final int MSG_ID_MISSION_DELETED = 2781;
 	public static final int MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE = 2782;
 	public static final int MSG_ID_MISSION_DELETE_FAILED = 2783;
+	public static final int MSG_ID_LOGGED_IN_TO_MISSION = 2784;
 	
 	// Product class CLI
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
@@ -304,6 +308,8 @@ public class UIMessages {
 		MSG_MISSION_NOT_FOUND ("(E%d) Mission %s not found", MSG_ID_MISSION_NOT_FOUND),
 		MSG_LOGIN_FAILED ("(E%d) Login for user %s failed", MSG_ID_LOGIN_FAILED),
 		MSG_NOT_AUTHORIZED_FOR_MISSION ("(E%d) User %s not authorized for mission %s", MSG_ID_NOT_AUTHORIZED_FOR_MISSION),
+		MSG_INSUFFICIENT_CREDENTIALS ("(E%d) Insufficient credentials given for non-interactive login", MSG_ID_INSUFFICIENT_CREDENTIALS),
+		MSG_LOGIN_WITHOUT_MISSION_FAILED ("(E%d) User %s not authorized to login without a mission", MSG_ID_LOGIN_WITHOUT_MISSION_FAILED),
 		
 		// Service connection
 		MSG_HTTP_REQUEST_FAILED ("(E%d) HTTP request failed (cause: %s)", MSG_ID_HTTP_REQUEST_FAILED),
@@ -325,10 +331,11 @@ public class UIMessages {
 		MSG_ORBIT_NUMBER_INVALID ("(E%d) Orbit number %s not numeric", MSG_ID_ORBIT_NUMBER_INVALID),
 		MSG_ORBIT_DATA_INVALID ("(E%d) Orbit data invalid (cause: %s)", MSG_ID_ORBIT_DATA_INVALID),
 		MSG_NO_ORBITS_FOUND ("(E%d) No orbits found for given search criteria", MSG_ID_NO_ORBITS_FOUND),
-		MSG_NO_ORBIT_IDENTIFIER_GIVEN ("(E%d) Spacecraft code and/or orbit number missing", MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN),
+		MSG_NO_ORBIT_NUMBER_GIVEN ("(E%d) No orbit number given", MSG_ID_NO_ORBIT_NUMBER_GIVEN),
 		MSG_ORBIT_NOT_FOUND ("(E%d) Orbit number %d not found for spacecraft %s", MSG_ID_ORBIT_NOT_FOUND),
 		MSG_ORBIT_NOT_FOUND_BY_ID ("(E%d) Orbit with database ID %d not found", MSG_ID_ORBIT_NOT_FOUND_BY_ID),
 		MSG_ORBIT_DELETE_FAILED ("(E%d) Deletion of orbit %d for spacecraft %s failed (cause: %s)", MSG_ID_ORBIT_DELETE_FAILED),
+		MSG_LOGGED_IN_TO_MISSION ("(E%d) Operation not allowed, when already logged in to a mission (currently logged in to %s)", MSG_ID_LOGGED_IN_TO_MISSION),
 				
 		// Order CLI
 		MSG_NO_ORDERS_FOUND ("(E%d) No orders found for given search criteria", MSG_ID_NO_ORDERS_FOUND),

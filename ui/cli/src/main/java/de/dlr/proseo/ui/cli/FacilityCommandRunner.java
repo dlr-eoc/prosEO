@@ -184,7 +184,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getName() || restFacility.getName().isBlank()) {
 			System.out.print(PROMPT_FACILITY_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -193,7 +193,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getProcessingEngineUrl() || restFacility.getProcessingEngineUrl().isBlank()) {
 			System.out.print(PROMPT_PROCENG_URL);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -202,7 +202,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getStorageManagerUrl() || restFacility.getStorageManagerUrl().isBlank()) {
 			System.out.print(PROMPT_STORAGEMGR_URL);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -211,7 +211,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getStorageManagerUser() || restFacility.getStorageManagerUser().isBlank()) {
 			System.out.print(PROMPT_STORAGEMGR_USER);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -220,7 +220,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getStorageManagerPassword() || restFacility.getStorageManagerPassword().isBlank()) {
 			System.out.print(PROMPT_STORAGEMGR_PASSWD);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -229,7 +229,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getLocalStorageManagerUrl() || restFacility.getLocalStorageManagerUrl().isBlank()) {
 			System.out.print(PROMPT_LOCAL_STORAGEMGR_URL);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -238,7 +238,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getDefaultStorageType() || restFacility.getDefaultStorageType().isBlank()) {
 			System.out.print(PROMPT_STORAGE_TYPE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}

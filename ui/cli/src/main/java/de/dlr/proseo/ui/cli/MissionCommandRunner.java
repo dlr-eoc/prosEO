@@ -9,7 +9,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.format.DateTimeParseException;
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +54,7 @@ public class MissionCommandRunner {
 	private static final String CMD_REMOVE = "remove";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
+	private static final String PROMPT_MISSION_CODE = "Mission code (empty field cancels): ";
 	private static final String PROMPT_MISSION_NAME = "Mission name (empty field cancels): ";
 	private static final String PROMPT_FILE_TEMPLATE = "Product file name template (empty field cancels): ";
 	private static final String PROMPT_SPACECRAFT_CODE = "Spacecraft code (empty field cancels): ";
@@ -146,6 +147,12 @@ public class MissionCommandRunner {
 	private void createMission(ParsedCommand createCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", (null == createCommand ? "null" : createCommand.getName()));
 		
+		/* Only allowed when not logged in to a mission! */
+		if (null != loginManager.getMission()) {
+			System.err.println(uiMsg(MSG_ID_LOGGED_IN_TO_MISSION, loginManager.getMission()));
+			return;
+		}
+		
 		/* Check command options */
 		File missionFile = null;
 		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
@@ -192,10 +199,19 @@ public class MissionCommandRunner {
 		
 		/* Prompt user for missing mandatory attributes */
 		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null == restMission.getCode() || restMission.getCode().isBlank()) {
+			System.out.print(PROMPT_MISSION_CODE);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restMission.setCode(response);
+		}
 		if (null == restMission.getName() || restMission.getName().isBlank()) {
 			System.out.print(PROMPT_MISSION_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -204,7 +220,7 @@ public class MissionCommandRunner {
 		if (null == restMission.getProductFileTemplate() || restMission.getProductFileTemplate().isBlank()) {
 			System.out.print(PROMPT_FILE_TEMPLATE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -423,6 +439,12 @@ public class MissionCommandRunner {
 	private void deleteMission(ParsedCommand deleteCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteMission({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
+		/* Only allowed when not logged in to a mission! */
+		if (null != loginManager.getMission()) {
+			System.err.println(uiMsg(MSG_ID_LOGGED_IN_TO_MISSION, loginManager.getMission()));
+			return;
+		}
+		
 		/* Check command options */
 		boolean forcedDelete = false;
 		boolean deleteProducts = false;
@@ -549,7 +571,7 @@ public class MissionCommandRunner {
 		if (null == restSpacecraft.getCode() || 0 == restSpacecraft.getCode().length()) {
 			System.out.print(PROMPT_SPACECRAFT_CODE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -558,7 +580,7 @@ public class MissionCommandRunner {
 		if (null == restSpacecraft.getName() || 0 == restSpacecraft.getName().length()) {
 			System.out.print(PROMPT_SPACECRAFT_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -759,7 +781,7 @@ public class MissionCommandRunner {
 			if (null == restOrbit.getSpacecraftCode() || 0 == restOrbit.getSpacecraftCode().length()) {
 				System.out.print(PROMPT_SPACECRAFT_CODE);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -768,7 +790,7 @@ public class MissionCommandRunner {
 			while (null == restOrbit.getOrbitNumber() || 0 == restOrbit.getOrbitNumber().longValue()) {
 				System.out.print(PROMPT_ORBIT_NUMBER);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -781,26 +803,26 @@ public class MissionCommandRunner {
 			while (null == restOrbit.getStartTime() || 0 == restOrbit.getStartTime().length()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrbit.setStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			}
 			while (null == restOrbit.getStopTime() || 0 == restOrbit.getStopTime().length()) {
 				System.out.print(PROMPT_STOP_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrbit.setStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			}
@@ -987,12 +1009,17 @@ public class MissionCommandRunner {
 			RestOrbit updatedOrbit = mapper.convertValue(listObject, RestOrbit.class);
 			
 			/* Read original orbit from Order Manager service */
-			if ((null == updatedOrbit.getId() || 0 == updatedOrbit.getId().longValue())
-					&& (null == updatedOrbit.getSpacecraftCode() || 0 == updatedOrbit.getSpacecraftCode().length()
-					|| null == updatedOrbit.getOrbitNumber() || 0 == updatedOrbit.getOrbitNumber().longValue())) {
-				// No identifying value given
-				System.err.println(uiMsg(MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN));
-				return;
+			if (null == updatedOrbit.getId() || 0 == updatedOrbit.getId().longValue()) {
+				// No database ID given, check for natural keys
+				if (null == updatedOrbit.getSpacecraftCode() || updatedOrbit.getSpacecraftCode().isBlank()) {
+					// No spacecraft code given
+					System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
+					return;
+				} else if (null == updatedOrbit.getOrbitNumber() || 0 == updatedOrbit.getOrbitNumber().longValue()) {
+					// No orbit number given
+					System.err.println(uiMsg(MSG_ID_NO_ORBIT_NUMBER_GIVEN));
+					return;
+				}
 			}
 			RestOrbit restOrbit = null;
 			try {
@@ -1094,29 +1121,20 @@ public class MissionCommandRunner {
 
 		/* Get spacecraft code from command parameters */
 		if (1 > deleteCommand.getParameters().size()) {
-			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
 		String spacecraftCode = deleteCommand.getParameters().get(0).getValue();
-		
-		/* Get orbit range from command options */
-		Integer fromOrbit = null;
-		Integer toOrbit = null;
-		for (ParsedOption option: deleteCommand.getOptions()) {
-			switch(option.getName()) {
-			case "from":
-				fromOrbit = Integer.parseInt(option.getValue());
-				break;
-			case "to":
-				toOrbit = Integer.parseInt(option.getValue());
-				break;
-			}
-		}
-		if (null == fromOrbit || null == toOrbit) {
-			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN));
+		/* Get "from" orbit from command parameters */
+		if (2 > deleteCommand.getParameters().size()) {
+			System.err.println(uiMsg(MSG_ID_NO_ORBIT_NUMBER_GIVEN));
 			return;
+		}
+		Integer fromOrbit = Integer.parseInt(deleteCommand.getParameters().get(1).getValue());
+		/* Check for "to" orbit in command parameters (optional) */
+		Integer toOrbit = null;
+		if (3 == deleteCommand.getParameters().size()) {
+			toOrbit = Integer.parseInt(deleteCommand.getParameters().get(2).getValue());
 		}
 		
 		/* Retrieve the orbits using Order Manager service */
