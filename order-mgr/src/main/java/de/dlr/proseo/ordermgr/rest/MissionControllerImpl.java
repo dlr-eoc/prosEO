@@ -76,6 +76,7 @@ public class MissionControllerImpl implements MissionController {
 	private static final int MSG_ID_MISSIONS_RETRIEVED = 1014;
 	private static final int MSG_ID_MISSION_EXISTS = 1015;
 	private static final int MSG_ID_SPACECRAFT_EXISTS = 1016;
+	private static final int MSG_ID_MISSION_CODE_MISSING = 1017;
 
 	/* Message string constants */
 	private static final String MSG_NO_MISSIONS_FOUND = "(E%d) No missions found";
@@ -87,6 +88,7 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_PROCESSORCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing processor classes";
 	private static final String MSG_MISSION_EXISTS = "(E%d) Mission with mission code %s already exists";
 	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists";
+	private static final String MSG_MISSION_CODE_MISSING = "(E%d) No mission code given";
 
 	private static final String MSG_DELETING_PRODUCT_FILES = "(I%d) Deleting product files for product with database ID %d";
 	private static final String MSG_MISSION_DELETED = "(I%d) Mission with database ID %d deleted";
@@ -182,10 +184,16 @@ public class MissionControllerImpl implements MissionController {
 	 * @param mission the Json object to create the mission from
 	 * @return a response containing a Json object corresponding to the mission after persistence (with ID and version for all 
 	 * 		   contained objects) and HTTP status "CREATED"
+	 * @throws IllegalArgumentException if any of the input data is invalid
 	 */
 	@Override
-	public ResponseEntity<RestMission> createMission(@Valid RestMission mission) {
+	public ResponseEntity<RestMission> createMission(@Valid RestMission mission) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createMission({})", mission.getCode());
+		
+		// Check valid mission code
+		if (null == mission.getCode() || mission.getCode().isBlank()) {
+			throw new IllegalArgumentException(String.format(MSG_MISSION_CODE_MISSING, MSG_ID_MISSION_CODE_MISSING, mission.getCode()));
+		}
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 

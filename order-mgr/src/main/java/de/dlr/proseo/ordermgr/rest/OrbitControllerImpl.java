@@ -48,15 +48,19 @@ public class OrbitControllerImpl implements OrbitController {
 	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	private static final int MSG_ID_ORBIT_MISSING = 1006;
 	private static final int MSG_ID_ORBIT_INCOMPLETE = 1007;
+	private static final int MSG_ID_NO_ORBITS_FOUND = 1008;
+	private static final int MSG_ID_SPACECRAFT_NOT_FOUND = 1009;
 
 
 	/* Message string constants */
-	private static final String MSG_ORBIT_NOT_FOUND = "No orbit found for ID %d (%d)";
-	private static final String MSG_DELETION_UNSUCCESSFUL = "Orbit deletion unsuccessful for ID %d (%d)";
+	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) No orbit found for ID %d";
+	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Orbit deletion unsuccessful for ID %d";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-orbitcontroller ";
 	private static final String MSG_ORBIT_MISSING = "(E%d) Orbit not set";
-	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft Code not set in the search";
+	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft code not set in the search";
+	private static final String MSG_NO_ORBITS_FOUND = "(E%d) No orbits found for given search criteria";
+	private static final String MSG_SPACECRAFT_NOT_FOUND = "(E%d) Spacecraft %s not found";
 
 
 	/** Transaction manager for transaction control */
@@ -135,8 +139,10 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumber To
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
-	 * @return HTTP status "OK" and a list of products or
-	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 * @return HTTP status "OK" and a list of orbits or
+	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
+	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception
 	 */
 	
 	@Override
@@ -211,8 +217,14 @@ public class OrbitControllerImpl implements OrbitController {
 					}
 					
 				}
+				if (result.isEmpty()) {
+					throw new NoResultException(String.format(MSG_NO_ORBITS_FOUND, MSG_ID_NO_ORBITS_FOUND));
+				}
 				return result;
 			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -242,31 +254,36 @@ public class OrbitControllerImpl implements OrbitController {
 		List<RestOrbit> restOrbitList = null;
 		try {
 			restOrbitList = transactionTemplate.execute((status) -> {
-				List<Orbit> modelOrbits = new ArrayList<de.dlr.proseo.model.Orbit> ();
-				
-				List<RestOrbit> restOrbits = new ArrayList<RestOrbit> ();
+				List<RestOrbit> restOrbits = new ArrayList<>();
 				//Insert every valid Rest orbit into the DB
 				for(RestOrbit tomodelOrbit : orbit) {
 					Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
 					
-					// TODO Check for existing orbits and update them!
-					
-					//Adding spacecraft object to modelOrbit
-					Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
-					modelOrbit.setSpacecraft(spacecraft);
-					
+					// Check for existing orbits and update them!
+					Orbit updateOrbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
+							tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getOrbitNumber().intValue());
+					if (null == updateOrbit) {
+						//Adding spacecraft object to modelOrbit
+						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
+						if (null == spacecraft) {
+							throw new IllegalArgumentException(String.format(
+									MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, tomodelOrbit.getSpacecraftCode()));
+						}
+						modelOrbit.setSpacecraft(spacecraft);
+					} else {
+						updateOrbit.setStartTime(modelOrbit.getStartTime());
+						updateOrbit.setStopTime(modelOrbit.getStopTime());
+						modelOrbit = updateOrbit;
+					}
 					modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
-					modelOrbits.add(modelOrbit);
+					restOrbits.add(OrbitUtil.toRestOrbit(modelOrbit));
 				}
 				 
-				//Return every inserted orbit 
-				for(Orbit torestOrbit : modelOrbits ) {
-					RestOrbit restOrbit = OrbitUtil.toRestOrbit(torestOrbit);
-					restOrbits.add(restOrbit);
-				}
-				
 				return restOrbits;
 			});
+		} catch (IllegalArgumentException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -294,7 +311,7 @@ public class OrbitControllerImpl implements OrbitController {
 				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				
 				if (modelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
 				}
 				
 				return OrbitUtil.toRestOrbit(modelOrbit.get());
@@ -331,7 +348,7 @@ public class OrbitControllerImpl implements OrbitController {
 				Optional<Orbit> optModelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				
 				if (optModelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
 				}
 				Orbit modelOrbit = optModelOrbit.get();
 				
@@ -402,7 +419,7 @@ public class OrbitControllerImpl implements OrbitController {
 				// Test whether the orbit id is valid
 				Optional<Orbit> modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				if (modelOrbit.isEmpty()) {
-					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, id, MSG_ID_ORBIT_NOT_FOUND));
+					throw new NoResultException(String.format(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND, id));
 				}		
 				// Delete the orbit
 				RepositoryService.getOrbitRepository().deleteById(id);
@@ -410,7 +427,7 @@ public class OrbitControllerImpl implements OrbitController {
 				// Test whether the deletion was successful
 				modelOrbit = RepositoryService.getOrbitRepository().findById(id);
 				if (!modelOrbit.isEmpty()) {
-					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, id, MSG_ID_DELETION_UNSUCCESSFUL));
+					throw new RuntimeException(String.format(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 				}
 				
 				return null;
