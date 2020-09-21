@@ -107,6 +107,8 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_CLASS_HAS_PROCESSOR = 2146;
 	private static final int MSG_ID_PRODUCT_CLASS_HAS_PRODUCTS = 2147;
 	private static final int MSG_ID_PRODUCT_QUERIES_EXIST = 2148;
+	private static final int MSG_ID_NO_RULES_FOUND = 2149;
+	private static final int MSG_ID_NO_RULES_FOUND_FOR_SOURCE = 2150;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -146,6 +148,8 @@ public class ProductClassManager {
 	private static final String MSG_PRODUCT_CLASS_HAS_PROCESSOR = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it is referenced by a processor class";
 	private static final String MSG_PRODUCT_CLASS_HAS_PRODUCTS = "(E%d) Product class for mission %s with product type %s cannot be deleted, because it has products";
 	private static final String MSG_PRODUCT_QUERIES_EXIST = "(E%d) Rule '%s' for product class %s cannot be deleted, because it is used in product queries";
+	private static final String MSG_NO_RULES_FOUND = "(E%d) No selection rules found for product class %s";
+	private static final String MSG_NO_RULES_FOUND_FOR_SOURCE = "(E%d) No selection rules found for target product class %s and source product class %s";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -699,6 +703,10 @@ public class ProductClassManager {
 		if (modelProductClass.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
 		}
+		if (modelProductClass.get().getRequiredSelectionRules().isEmpty()) {
+			throw new NoResultException(logError(MSG_NO_RULES_FOUND, MSG_ID_NO_RULES_FOUND,
+					modelProductClass.get().getProductType()));
+		}
 		
 		// Find the correct simple selection rules
 		List<SelectionRuleString> result = new ArrayList<>();
@@ -715,6 +723,10 @@ public class ProductClassManager {
 				}
 				result.add(restRule);
 			}
+		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_NO_RULES_FOUND_FOR_SOURCE, MSG_ID_NO_RULES_FOUND_FOR_SOURCE,
+					modelProductClass.get().getProductType(), sourceClass));
 		}
 		
 		logInfo(MSG_SELECTION_RULE_LIST_RETRIEVED, MSG_ID_SELECTION_RULE_LIST_RETRIEVED, modelProductClass.get().getProductType(), sourceClass);
