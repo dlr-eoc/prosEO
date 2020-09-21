@@ -95,7 +95,7 @@ public class FacilityCommandRunner {
 				try {
 					return mapper.convertValue(resultList.get(0), RestProcessingFacility.class);
 				} catch (Exception e) {
-					String message = uiMsg(MSG_ID_FACILITY_NOT_READABLE, loginManager.getMission(), e.getMessage());
+					String message = uiMsg(MSG_ID_FACILITY_NOT_READABLE, facilityName, e.getMessage());
 					logger.error(message);
 					System.err.println(message);
 					return null;
@@ -298,7 +298,7 @@ public class FacilityCommandRunner {
 			}
 		}
 		
-		/* If facility name is set, show just the requested mission */
+		/* If facility name is set, show just the requested facility */
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only facility name allowed as parameter
 			RestProcessingFacility restFacility = retrieveFacilityByName(showCommand.getParameters().get(0).getValue());

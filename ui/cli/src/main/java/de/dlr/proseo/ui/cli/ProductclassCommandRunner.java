@@ -736,7 +736,9 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+				message = null == sourceClass ?
+						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass) :
+						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE, targetClass, sourceClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

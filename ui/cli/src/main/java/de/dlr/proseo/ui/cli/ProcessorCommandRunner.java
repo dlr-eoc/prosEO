@@ -52,7 +52,7 @@ public class ProcessorCommandRunner {
 	private static final String CMD_DELETE = "delete";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
-	private static final String PROMPT_PROCESSOR_NAME = "Processor name (empty field cancels): ";
+	private static final String PROMPT_PROCESSOR_NAME = "Processor class name (empty field cancels): ";
 	private static final String PROMPT_PROCESSOR_VERSION = "Processor version (empty field cancels): ";
 	private static final String PROMPT_TASKS = "Task names (comma-separated list; empty field cancels): ";
 	private static final String PROMPT_TASK_VERSION = "Task version for %s (empty field cancels): ";

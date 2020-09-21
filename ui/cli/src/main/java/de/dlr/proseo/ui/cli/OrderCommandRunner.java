@@ -832,7 +832,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_ORDER_OR_FACILITY_NOT_FOUND, restOrder.getIdentifier(), processingFacility);
+				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, processingFacility);
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());

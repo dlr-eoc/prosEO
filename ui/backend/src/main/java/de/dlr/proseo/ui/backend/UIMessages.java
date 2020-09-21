@@ -5,9 +5,6 @@
  */
 package de.dlr.proseo.ui.backend;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_INSUFFICIENT_CREDENTIALS;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_LOGIN_WITHOUT_MISSION_FAILED;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -133,6 +130,7 @@ public class UIMessages {
 	public static final int MSG_ID_SELECTION_RULE_DATA_INVALID = 2870;
 	public static final int MSG_ID_SELECTION_RULES_CREATED = 2871;
 	public static final int MSG_ID_NO_SELECTION_RULES_FOUND = 2872;
+	public static final int MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE = 2755;
 	public static final int MSG_ID_INPUT_OUT_OF_BOUNDS = 2873;
 	public static final int MSG_ID_INPUT_NOT_NUMERIC = 2874;
 	public static final int MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID = 2875;
@@ -162,7 +160,6 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
 	public static final int MSG_ID_ORDER_RESET = 2947;
 	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
-	public static final int MSG_ID_ORDER_OR_FACILITY_NOT_FOUND = 2949;
 	public static final int MSG_ID_RETRYING_ORDER = 2759;
 
 	// Job/job step CLI
@@ -348,7 +345,6 @@ public class UIMessages {
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
 		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
-		MSG_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_OR_FACILITY_NOT_FOUND),
 		
 		// Job and job step CLI
 		MSG_NO_JOBS_FOUND ("(E%d) No jobs found for given search criteria", MSG_ID_NO_JOBS_FOUND),
@@ -373,6 +369,7 @@ public class UIMessages {
 		MSG_FILE_NOT_FOUND ("(E%d) Selection rule file %s not found or not readable", MSG_ID_FILE_NOT_FOUND),
 		MSG_SELECTION_RULE_DATA_INVALID ("(E%d) Selection rule data invalid (cause: %s)", MSG_ID_SELECTION_RULE_DATA_INVALID),
 		MSG_NO_SELECTION_RULES_FOUND ("(E%d) No selection rules found for product class %s", MSG_ID_NO_SELECTION_RULES_FOUND),
+		MSG_NO_SELECTION_RULES_FOUND_FOR_SOURCE ("(E%d) No selection rules found for target product class %s and source product class %s", MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE),
 		MSG_NO_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
 		MSG_NO_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
 		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),

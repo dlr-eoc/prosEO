@@ -328,7 +328,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the order definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
           parameters:
             - name: orderId
               type: string
@@ -549,7 +549,7 @@ commands:
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
               parameters:
-                - name: className
+                - name: processorClass
                   type: string
                   optional: true
                   description: The name of the processor class to show
@@ -565,7 +565,7 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
-                - name: className
+                - name: processorClass
                   type: string
                   optional: true
                   description: The name of the processor class to create (mandatory if not read from file)
@@ -586,7 +586,7 @@ commands:
                   type: string
                   description: The file format (one of { JSON, XML, YAML }; default value JSON)
               parameters:
-                - name: className
+                - name: processorClass
                   type: string
                   optional: true
                   description: The name of the processor classes to update (mandatory if not read from file)
@@ -598,7 +598,7 @@ commands:
             - name: delete
               description: Remove the named processor class from the current mission
               parameters:
-                - name: className
+                - name: processorClass
                   type: string
                   description: The name of the processor classes to update (mandatory if not read from file)
         - name: show
@@ -608,7 +608,7 @@ commands:
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The class name of the processor to show
@@ -628,7 +628,7 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The class name of the processor to create (mandatory if not read from file)
@@ -654,9 +654,9 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the order definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The class name of the processor to update (mandatory if not read from file)
@@ -672,7 +672,7 @@ commands:
         - name: delete
           description: Delete a processor version from the current mission
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               description: The class name of the processor to delete
             - name: processorVersion
@@ -708,7 +708,7 @@ commands:
                   type: string
                   optional: true
                   description: The identifier of the configured processor
-                - name: className
+                - name: processorClass
                   type: string
                   optional: true
                   description: The class name of the processor (mandatory if not read from file)
@@ -762,7 +762,7 @@ commands:
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The name of the processor class for the configurations
@@ -782,7 +782,7 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The name of the processor class (mandatory if not read from file)
@@ -808,9 +808,9 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the order definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the order definition file and/or the command parameters
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               optional: true
               description: The name of the processor class (mandatory if not read from file)
@@ -826,7 +826,7 @@ commands:
         - name: delete
           description: Remove a configuration from the given processor class in the current mission
           parameters:
-            - name: className
+            - name: processorClass
               type: string
               description: The name of the processor class
             - name: configurationVersion
@@ -844,7 +844,7 @@ commands:
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
           parameters:
-            - name: className
+            - name: productClass
               type: string
               optional: true
               description: The name of the product class to show
@@ -860,7 +860,7 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
-            - name: className
+            - name: productClass
               type: string
               optional: true
               description: The name of the product class name to create (mandatory if not read from file)
@@ -882,9 +882,9 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the product class definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the product class definition file and/or the command parameters
           parameters:
-            - name: className
+            - name: productClass
               type: string
               optional: true
               description: The name of the product class name to update (mandatory if not read from file)
@@ -896,7 +896,7 @@ commands:
         - name: delete
           description: Delete the named product class from the current mission
           parameters:
-            - name: className
+            - name: productClass
               type: string
               description: The name of the product class to delete
         - name: rule
@@ -957,7 +957,7 @@ commands:
                                Note. Only PLAIN format is implemented for the time being.
                 - name: delete-attributes
                   type: boolean
-                  description: Delete attributes not given in the selection rule definition file and/or the command parameters
+                  description: Delete non-mandatory attributes not given in the selection rule definition file and/or the command parameters
               parameters:
                 - name: targetProductClass
                   type: string
@@ -969,11 +969,10 @@ commands:
                   repeatable: true
                   description: A selection rule attribute to set in the form "<attribute name>=<attribute value>"
             - name: delete
-              description: Delete the selection rule for the given target class
+              description: Delete the selection rule(s) for the given target class
               parameters:
                 - name: targetProductClass
                   type: string
-                  optional: true
                   description: The product class name of the selection rule
                 - name: ruleId
                   type: string
@@ -1002,7 +1001,7 @@ commands:
                            (verbose is assumed if product database ID is given as parameter)
               shortForm: v
           parameters:
-            - name: className
+            - name: productClass
               type: string
               repeatable: true
               description: The name of the product class to show
@@ -1022,7 +1021,7 @@ commands:
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
           parameters:
-            - name: className
+            - name: productClass
               type: string
               optional: true
               description: The class name of the product to create (mandatory if not read from file)
@@ -1044,7 +1043,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the product definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the product definition file and/or the command parameters
           parameters:
             - name: id
               type: integer
@@ -1095,7 +1094,7 @@ commands:
 #                  description: The file format (one of { JSON, XML, YAML }; default value JSON)
 #                - name: delete-attributes
 #                  type: boolean
-#                  description: Delete attributes not given in the product file definition file and/or the command parameters
+#                  description: Delete non-mandatory attributes not given in the product file definition file and/or the command parameters
 #              parameters:
 #                - name: productId
 #                  type: integer
@@ -1187,7 +1186,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the user account definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the user account definition file and/or the command parameters
           parameters:
             - name: userName
               type: string
@@ -1306,7 +1305,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the user group definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the user group definition file and/or the command parameters
           parameters:
             - name: groupName
               type: string
@@ -1444,7 +1443,7 @@ commands:
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
             - name: delete-attributes
               type: boolean
-              description: Delete attributes not given in the processing facility definition file and/or the command parameters
+              description: Delete non-mandatory attributes not given in the processing facility definition file and/or the command parameters
           parameters:
             - name: facilityName
               type: string
