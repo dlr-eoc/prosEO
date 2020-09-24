@@ -297,6 +297,16 @@ public class ProcessingOrderMgr {
 			}
 			modelOrder.getRequestedConfiguredProcessors().add(configuredProcessor);
 		}
+		
+		// Make sure processing mode and file class are OK
+		if (!mission.getProcessingModes().contains(order.getProcessingMode())) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+					order.getProcessingMode(), mission.getCode()));
+		}
+		if (!mission.getFileClasses().contains(order.getOutputFileClass())) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_FILE_CLASS, MSG_ID_INVALID_FILE_CLASS,
+					order.getOutputFileClass(), mission.getCode()));
+		}
 	
 		// Everything OK, store new order in database
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);

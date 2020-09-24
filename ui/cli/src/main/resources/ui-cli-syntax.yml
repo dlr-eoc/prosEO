@@ -954,7 +954,6 @@ commands:
                 - name: format
                   type: string
                   description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
-                               Note. Only PLAIN format is implemented for the time being.
                 - name: delete-attributes
                   type: boolean
                   description: Delete non-mandatory attributes not given in the selection rule definition file and/or the command parameters
