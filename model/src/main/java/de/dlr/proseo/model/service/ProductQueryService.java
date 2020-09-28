@@ -115,6 +115,11 @@ public class ProductQueryService {
 		// Filter products available at the requested processing facility
 		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
 		products = getProductsAtFacility(products, facility);
+		if (logger.isTraceEnabled()) logger.trace("Number of products after check of processing facility: " + products.size());
+		if (products.isEmpty()) {
+			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
+			return testOptionalSatisfied(productQuery, checkOnly);
+		}
 		
 		// Check if all conditions of the selection rule are met
 		List<Object> selectedItems = null;
@@ -123,10 +128,16 @@ public class ProductQueryService {
 					SelectionItem.asSelectionItems(products), 
 					productQuery.getJobStep().getJob().getStartTime(),
 					productQuery.getJobStep().getJob().getStopTime());
+			if (null == selectedItems) {
+				// No items selected, but rule is optional
+				if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
+				return testOptionalSatisfied(productQuery, checkOnly);
+			}
 		} catch (NoSuchElementException e) {
+			// No items selected and rule is mandatory
 			if (logger.isTraceEnabled()) logger.trace("selectItems() throws NoSuchElementException");
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery, checkOnly);
+			return false;
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		

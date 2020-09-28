@@ -799,6 +799,7 @@ public class BaseWrapper {
 		try {
 			System.exit(((BaseWrapper) clazz.getDeclaredConstructor().newInstance()).run());
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error("Requested wrapper class {} cannot be launched (cause: {})", clazz.getName(), e.getMessage());
 			System.exit(EXIT_CODE_FAILURE);
 		}
