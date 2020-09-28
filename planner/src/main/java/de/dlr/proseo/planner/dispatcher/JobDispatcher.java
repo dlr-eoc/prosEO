@@ -119,13 +119,7 @@ public class JobDispatcher {
 				// list of ipf procs
 				for (Task t : jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getTasks()) {
 					Proc proc = new Proc(t.getTaskName(), t.getTaskVersion());
-					// add config files
-					for (ConfigurationFile cf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getConfigurationFiles()) {
-						InputOutput sio = new InputOutput("processing_configuration", InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
-						sio.getFileNames().add(new IpfFileName(cf.getFileName()));
-						proc.getListOfInputs().add(sio);				
-					}
-					// add static config files first
+					// add static input files first
 					for (ConfigurationInputFile scf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getStaticInputFiles()) {
 						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), InputOutput.IO_TYPE_INPUT, null);
 						for (String sioFName: scf.getFileNames()) {

@@ -68,14 +68,14 @@ public class ProductQueryService {
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	public boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL, boolean checkOnly) throws IllegalArgumentException {
+	private boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL, boolean checkOnly) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> executeQuery(useNativeSQL = " + useNativeSQL + ")");
 
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		// Check arguments
 		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getJpqlQueryCondition()) {
-			String message = String.format("Incomplete product query %s", productQuery.toString());
+			String message = String.format("Incomplete product query %s", null == productQuery ? "null" : productQuery.toString());
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
@@ -202,6 +202,7 @@ public class ProductQueryService {
 	
 	/**
 	 * Execute the JPQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
+	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
 	 * @param productQuery the product query to execute
 	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
@@ -215,6 +216,7 @@ public class ProductQueryService {
 
 	/**
 	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
+	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
 	 * @param productQuery the product query to execute
 	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products

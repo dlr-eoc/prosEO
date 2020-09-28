@@ -546,8 +546,8 @@ public class SimplePolicy extends PersistentObject {
 		
 		switch (policyType) {
 		case LatestValidity:
-			simplePolicyQuery.append("p.sensingStartTime >= all ")
-					.append("(select p2.sensingStartTime from Product p2 where p2.productClass.id = ")
+			simplePolicyQuery.append("p.sensingStartTime >= ")
+					.append("(select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = ")
 					.append(sourceProductClass.getId()).append(")");
 			break;
 		case LatestValidityClosest:
@@ -558,12 +558,12 @@ public class SimplePolicy extends PersistentObject {
 			Instant selectionCentre = selectionStartTime.plusSeconds(selectionDuration.getSeconds() / 2);
 			String selectionCentreString = DATEFORMAT_SQL.format(selectionCentre);
 			simplePolicyQuery.append("(p.sensingStartTime <= '").append(selectionCentreString)
-				.append("' and p.sensingStartTime >= all ")
-				.append("(select p2.sensingStartTime from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
+				.append("' and p.sensingStartTime >= ")
+				.append("(select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
 				.append(" and p2.sensingStartTime <= '").append(selectionCentreString).append("') ")
 				.append("or p.sensingStartTime > '").append(selectionCentreString)
-				.append("' and p.sensingStartTime < all ")
-				.append("(select p2.sensingStartTime from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
+				.append("' and p.sensingStartTime < ")
+				.append("(select min(p2.sensingStartTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
 				.append(" and p2.sensingStartTime > '").append(selectionCentreString).append("'))");
 			break;
 		case LatestValCover:
@@ -571,8 +571,8 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(startTime.minusSeconds(getDeltaTimeT0().toSeconds())))
 				.append("' and p.sensingStopTime >= '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusSeconds(getDeltaTimeT1().toSeconds())))
-				.append("' and p.generationTime >= all ")
-				.append("(select p2.generationTime from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
+				.append("' and p.generationTime >= ")
+				.append("(select max(p2.generationTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
 				.append(" and p2.sensingStartTime <= '")
 				.append(DATEFORMAT_SQL.format(startTime.minusSeconds(getDeltaTimeT0().toSeconds())))
 				.append("' and p2.sensingStopTime >= '")
@@ -591,8 +591,8 @@ public class SimplePolicy extends PersistentObject {
 				.append(DATEFORMAT_SQL.format(stopTime.plusSeconds(getDeltaTimeT1().toSeconds())))
 				.append("' and p.sensingStopTime >= '")
 				.append(DATEFORMAT_SQL.format(startTime.minusSeconds(getDeltaTimeT0().toSeconds())))
-				.append("' and p.generationTime >= all ")
-				.append("(select p2.generationTime from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
+				.append("' and p.generationTime >= ")
+				.append("(select max(p2.generationTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
 				.append(" and p2.sensingStartTime <= '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusSeconds(getDeltaTimeT1().toSeconds())))
 				.append("' and p2.sensingStopTime >= '")

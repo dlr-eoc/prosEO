@@ -98,6 +98,7 @@ public class BaseWrapper {
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
 	private static final String MSG_SKIPPING_INPUT_ENTRY = "Skipping input entry of type {} with filename type {}";
+	private static final String MSG_WARNING_INPUT_FILENAME_MISSING = "Skipping input entry of type {} without filename";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -335,6 +336,12 @@ public class BaseWrapper {
 				}
 				// Loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
+					// Ensure file name exists and is not blank
+					if (null == fn.getFileName() || fn.getFileName().isBlank()) {
+						logger.warn(MSG_WARNING_INPUT_FILENAME_MISSING, io.getFileType());
+						continue;
+					}
+
 					// Fill original filename with current val of `File_Name` --> for later use...
 					fn.setOriginalFileName(fn.getFileName());
 					
@@ -343,8 +350,8 @@ public class BaseWrapper {
 					if (f.exists()) {
 						// nothing to do
 						continue;
-					} 
-
+					}
+					
 					// Request input file from Storage Manager
 					Map<String,String> params = new HashMap<>();
 					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));

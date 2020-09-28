@@ -503,7 +503,7 @@ public class JobStepUtil {
 				logger.trace("Looking for product queries of job step: " + js.getId());
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
-						if (productQueryService.executeQuery(pq, false, false)) {
+						if (productQueryService.executeQuery(pq, false)) {
 							RepositoryService.getProductQueryRepository().save(pq);
 							for (Product p: pq.getSatisfyingProducts()) {
 								RepositoryService.getProductRepository().save(p);

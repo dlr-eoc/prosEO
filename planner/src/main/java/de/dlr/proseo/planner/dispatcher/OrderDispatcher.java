@@ -342,11 +342,8 @@ public class OrderDispatcher {
 				} else {
 
 					// configured processor
-					Set<ConfiguredProcessor> allConfiguredProcessors = order.getRequestedConfiguredProcessors();
 					List<ConfiguredProcessor> configuredProcessors = new ArrayList<ConfiguredProcessor>();
-					for (ConfiguredProcessor aCP : allConfiguredProcessors) {
-						configuredProcessors.add(aCP);
-					}
+					configuredProcessors.addAll(order.getRequestedConfiguredProcessors());
 					if (configuredProcessors.isEmpty()) {
 						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
 						answer = false;
@@ -446,7 +443,7 @@ public class OrderDispatcher {
 									jobSteps.add(jobStep);
 									allJobSteps.add(jobStep);
 									for (ProductQuery pq : jobStep.getInputProductQueries()) {
-										if (productQueryService.executeQuery(pq, false, true)) {
+										if (productQueryService.executeQuery(pq, true)) {
 											// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);							
 										} else {
 											// otherwise create job step to build product.
@@ -631,7 +628,7 @@ public class OrderDispatcher {
 					// check all queries for existing product definition (has not to be created!)
 
 					for (ProductQuery pq : jobStep.getInputProductQueries()) {
-						if (productQueryService.executeQuery(pq, false, true)) {
+						if (productQueryService.executeQuery(pq, true)) {
 							// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);						
 						} else {
 							// create job step to build product.
