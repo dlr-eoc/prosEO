@@ -46,6 +46,8 @@ public class BaseWrapper {
 
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
+	/** Exit code for completion with warning */
+	private static final int EXIT_CODE_WARNING = 127;
 	/** Exit code for failure */
 	private static final int EXIT_CODE_FAILURE = 255;
 	/** Exit code explanation for successful completion */
@@ -457,11 +459,18 @@ public class BaseWrapper {
 				logger.info("... " + line);
 			}
 			exitCode = process.waitFor();
-			logger.info(MSG_PROCESSING_FINISHED, exitCode);
+			
+			if (EXIT_CODE_OK == exitCode) {
+				logger.info(MSG_PROCESSING_FINISHED, exitCode);
+			} else if (EXIT_CODE_WARNING >= exitCode) {
+				logger.warn(MSG_PROCESSING_FINISHED, exitCode);
+			} else {
+				logger.error(MSG_PROCESSING_FINISHED, exitCode);
+			}
 		} catch (IOException | InterruptedException e) {
 			logger.error(MSG_ERROR_RUNNING_PROCESSOR, e.getMessage());
 		}
-		return exitCode == EXIT_CODE_OK;
+		return exitCode <= EXIT_CODE_WARNING;
 	}
 
 	/**
