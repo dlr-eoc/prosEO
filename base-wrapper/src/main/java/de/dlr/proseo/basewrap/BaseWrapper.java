@@ -65,8 +65,8 @@ public class BaseWrapper {
 	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
 	/** Auto-created path/filename of JobOrderFile within container */
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
-	/** Directory prefix of produced output data */
-	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
+	/** Directory prefix of produced output data (available for wrapper subclasses) */
+	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -105,7 +105,9 @@ public class BaseWrapper {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
 
-	/** Enumeration with valid environment variable names.
+	/** 
+	 *  Enumeration with valid environment variable names (available for wrapper subclasses).
+	 *  
 	 *  At runtime-start the BaseWrapper checks the presence and values of each variable.
 	 *  <ul>
 	 *  <li>{@link #JOBORDER_FILE} URI of valid JobOrder-File</li>
@@ -122,7 +124,7 @@ public class BaseWrapper {
 	 *  </ul>
 	 *  
 	 */
-	enum ENV_VARS {
+	protected enum ENV_VARS {
 		JOBORDER_FILE
 		, STORAGE_ENDPOINT
 		, STORAGE_USER
@@ -149,24 +151,25 @@ public class BaseWrapper {
 	private String ENV_STORAGE_USER = System.getenv(ENV_VARS.STORAGE_USER.toString());
 	/** Password for local Storage Manager */
 	private String ENV_STORAGE_PASSWORD = System.getenv(ENV_VARS.STORAGE_PASSWORD.toString());
-	/** Mount point of shared local file system */
-	private String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
+	/** Mount point of shared local file system (available for wrapper subclasses) */
+	protected String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
 	
-	/** User name for prosEO Control Instance */
-	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
-	/** Password for prosEO Control Instance */
-	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
+	/** User name for prosEO Control Instance (available for wrapper subclasses) */
+	protected String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
+	/** Password for prosEO Control Instance (available for wrapper subclasses) */
+	protected String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
 
 	/**
 	 * Callback address for prosEO Production Planner, format is:
 	 * <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
 	 */
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
-	/** Name of the Processing Facility this wrapper is running in */
-	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	
-	/** HTTP endpoint for Ingestor callback */
-	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+	/** Name of the Processing Facility this wrapper is running in (available for wrapper subclasses) */
+	protected String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
+	
+	/** HTTP endpoint for Ingestor callback (available for wrapper subclasses) */
+	protected String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
 
 	// Variables to be provided by the processor or wrapper image
 	/** Shell command to run the processor (with path to Job Order File as sole parameter) */
