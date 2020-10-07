@@ -64,7 +64,12 @@ public class InputOutput {
 	/**
 	 * List of file names (multiple allowed for input, at most one for output)
 	 */
-	private List<IpfFileName> fileNames;
+	private List<IpfFileName> fileNames = new ArrayList<>();
+	
+	/**
+	 * List of time intervals (optional element)
+	 */
+	private List<TimeInterval> timeIntervals = new ArrayList<>();
 
 	/**
 	 * Gets the product ID
@@ -131,6 +136,12 @@ public class InputOutput {
 	}
 
 	/**
+	 * @return the timeIntervals
+	 */
+	public List<TimeInterval> getTimeIntervals() {
+		return timeIntervals;
+	}
+	/**
 	 * Create an Input/Output element of the given type
 	 * 
 	 * @param type the input/output type (either 'Input' or 'Output')
@@ -139,7 +150,6 @@ public class InputOutput {
 	public InputOutput(String type) throws IllegalArgumentException {
 		if (IO_TYPE_INPUT.equals(type) || IO_TYPE_OUTPUT.equals(type)) {
 			this.type = type;
-			this.fileNames = new ArrayList<IpfFileName>();
 		} else {
 			String message = "Invalid input/output type " + type;
 			logger.error(message);
@@ -157,7 +167,6 @@ public class InputOutput {
 	public InputOutput(String fileType, String fileNameType, String type, String productID) throws IllegalArgumentException {
 		if (IO_TYPE_INPUT.equals(type) || IO_TYPE_OUTPUT.equals(type)) {
 			this.type = type;
-			this.fileNames = new ArrayList<IpfFileName>();
 			setFileType(fileType);
 			setFileNameType(fileNameType);
 			setProductID(productID);
@@ -191,13 +200,24 @@ public class InputOutput {
 
 	    if (IO_TYPE_INPUT.equals(type)) {
 			Element fileNamesEle = doc.createElement("List_of_File_Names");
-			Attr attr = doc.createAttribute("count");
-			attr.setValue(Integer.toString(fileNames.size()));
-			fileNamesEle.setAttributeNode(attr);
+			Attr fnAttr = doc.createAttribute("count");
+			fnAttr.setValue(Integer.toString(fileNames.size()));
+			fileNamesEle.setAttributeNode(fnAttr);
 			ioEle.appendChild(fileNamesEle);
 			for (IpfFileName item : fileNames) {
 				item.buildXML(doc, fileNamesEle, prosEOAttributes);
-			} 
+			}
+			
+			if (!timeIntervals.isEmpty()) {
+				Element timeIntervalsEle = doc.createElement("List_of_Time_Intervals");
+				Attr tiAttr = doc.createAttribute("count");
+				tiAttr.setValue(Integer.toString(timeIntervals.size()));
+				timeIntervalsEle.setAttributeNode(tiAttr);
+				ioEle.appendChild(timeIntervalsEle);
+				for (TimeInterval item : timeIntervals) {
+					item.buildXML(doc, timeIntervalsEle, prosEOAttributes);
+				}
+			}
 		} else {
 			// An output element must have at most one file name
 			if (1 < fileNames.size()) {
