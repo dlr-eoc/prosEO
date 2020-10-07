@@ -120,7 +120,7 @@ public class UIMessages {
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
 	public static final int MSG_ID_PRODUCTCLASS_CREATED = 2861;
 	public static final int MSG_ID_NO_PRODUCTCLASSES_FOUND = 2862;
-	public static final int MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN = 2863;
+	public static final int MSG_ID_NO_PRODCLASS_NAME_GIVEN = 2863;
 	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND = 2864;
 	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID = 2865;
 	public static final int MSG_ID_PRODUCTCLASS_UPDATED = 2866;
@@ -139,6 +139,7 @@ public class UIMessages {
 	public static final int MSG_ID_SELECTION_RULE_DELETE_FAILED = 2878;
 	public static final int MSG_ID_SELECTION_RULE_DELETED = 2879;
 	public static final int MSG_ID_INVALID_VISIBILITY = 2880;
+	public static final int MSG_ID_NO_RULEID_GIVEN = 2881;
 	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
@@ -364,7 +365,7 @@ public class UIMessages {
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
 		MSG_NO_PRODUCTCLASSES_FOUND ("(E%d) No product classes found for given search criteria", MSG_ID_NO_PRODUCTCLASSES_FOUND),
-		MSG_NO_PRODCLASS_IDENTIFIER_GIVEN ("(E%d) No product class name given", MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN),
+		MSG_NO_PRODCLASS_NAME_GIVEN ("(E%d) No product class name given", MSG_ID_NO_PRODCLASS_NAME_GIVEN),
 		MSG_PRODUCTCLASS_NOT_FOUND ("(E%d) Product class %s not found", MSG_ID_PRODUCTCLASS_NOT_FOUND),
 		MSG_PRODUCTCLASS_NOT_FOUND_BY_ID ("(E%d) Product class with database ID %d not found", MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID),
 		MSG_PRODUCTCLASS_DELETE_FAILED ("(E%d) Deletion of product class %s failed (cause: %s)", MSG_ID_PRODUCTCLASS_DELETE_FAILED),
@@ -375,6 +376,7 @@ public class UIMessages {
 		MSG_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
 		MSG_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
 		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),
+		MSG_NO_RULEID_GIVEN ("(E%d) No selection rule database ID given", MSG_ID_NO_RULEID_GIVEN),
 		MSG_RULEID_NOT_NUMERIC ("(E%d) Database ID %d for selection rule not numeric", MSG_ID_RULEID_NOT_NUMERIC),
 		MSG_SELECTION_RULE_DELETE_FAILED ("(E%d) Deletion of selection rule with database ID %d from product class %s failed (cause: %s)", MSG_ID_SELECTION_RULE_DELETE_FAILED),
 		MSG_INVALID_VISIBILITY ("(E%d) Invalid product visibility %s", MSG_ID_INVALID_VISIBILITY),

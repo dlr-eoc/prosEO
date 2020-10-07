@@ -975,7 +975,6 @@ commands:
                   description: The product class name of the selection rule
                 - name: ruleId
                   type: string
-                  optional: true
                   description: The database ID of the selection rule to delete
                     
     # Commands for the Product Ingestor

@@ -415,7 +415,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == updatedProductClass.getProductType() || 0 == updatedProductClass.getProductType().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(updatedProductClass.getProductType());
@@ -498,7 +498,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String productType = deleteCommand.getParameters().get(0).getValue();
@@ -615,7 +615,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -708,7 +708,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (showCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String targetClass = showCommand.getParameters().get(0).getValue();
@@ -849,7 +849,7 @@ public class ProductclassCommandRunner {
 		/* Retrieve the product class using Product Class Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -990,9 +990,14 @@ public class ProductclassCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionRule({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
 		/* Get processor name from command parameters */
+		if (1 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			return;
+		}
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_RULEID_GIVEN));
 			return;
 		}
 		String targetClass = deleteCommand.getParameters().get(0).getValue();
