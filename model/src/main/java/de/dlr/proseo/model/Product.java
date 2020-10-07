@@ -101,7 +101,13 @@ public class Product extends PersistentObject {
 	@ManyToOne
 	private Product enclosingProduct;
 	
-	/** Orbit relationship of this product, if any */
+	/**
+	 * Orbit relationship of this product, if any
+	 * 
+	 * If a product is associated to an orbit, its validity period may still differ from the orbit times, but its validity end time 
+	 * must not extend further than into the following orbit (e. g. a near-realtime time slice beginning in one orbit, but also 
+	 * including some data from the subsequent orbit).
+	 */
 	@ManyToOne
 	private Orbit orbit;
 	
