@@ -59,7 +59,6 @@ public class S3Ops {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
 
-	private static final Region S3_DEFAULT_REGION = Region.EU_CENTRAL_1;
 	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (5 * 1024 * 1024);
 
 	public static String createEmptyKey(S3Client s3, String bucketName, String key, String manifestMsg) {
@@ -414,7 +413,6 @@ public class S3Ops {
 			boolean pause) {
 
 		String s3Prefix = "s3://";
-		String separator = "/";
 		if (!bucket_name.startsWith(s3Prefix)) {
 			bucket_name = s3Prefix + bucket_name;
 		}

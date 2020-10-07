@@ -15,7 +15,6 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
 import de.dlr.proseo.model.enums.ProductQuality;
-import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;

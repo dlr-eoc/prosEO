@@ -146,10 +146,10 @@ public class OrderControllerTest {
 	        { "S5P", "8136", "8141" }
 			
 	};
-	private static String testJob[][] = {
-		//id,job_state,priority,orbit_id,processing_facility_id,filterconditions, outputparameters
-			{"1111","INITIAL","1","15","Test Facility"}
-	};
+//	private static String testJob[][] = {
+//		//id,job_state,priority,orbit_id,processing_facility_id,filterconditions, outputparameters
+//			{"1111","INITIAL","1","15","Test Facility"}
+//	};
 	private static String[][] testOrderData = {
 			//order_id, order_version, execution_time, identifier, order_state, processing_mode,slice_duartion,slice_type,slice_overlapstart_time, stop_time
 			{"111", "0", "2019-11-17T22:49:21.000000","XYZ","RUNNING","NRTI","PT20.345S","TIME_SLICE","0","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000"},
@@ -241,18 +241,18 @@ public class OrderControllerTest {
 	 * @return a list of orders generated
 	 */
 	
-	private List<ProcessingOrder> createTestOrders() {
-		logger.info("Creating test order");
-		List<ProcessingOrder> testOrders = new ArrayList<>();		
-		logger.info("Creating test orders of length: "+  testOrderData.length);
-
-		for (int i = 0; i < testOrderData.length; ++i) {
-			logger.info("Creating test order: "+ i +" "+ testOrderData[i][10]);
-
-			testOrders.add(createOrder(testOrderData[i]));
-		}
-		return testOrders;
-	}
+//	private List<ProcessingOrder> createTestOrders() {
+//		logger.info("Creating test order");
+//		List<ProcessingOrder> testOrders = new ArrayList<>();		
+//		logger.info("Creating test orders of length: "+  testOrderData.length);
+//
+//		for (int i = 0; i < testOrderData.length; ++i) {
+//			logger.info("Creating test order: "+ i +" "+ testOrderData[i][10]);
+//
+//			testOrders.add(createOrder(testOrderData[i]));
+//		}
+//		return testOrders;
+//	}
 	
 	/**
 	 * Remove all (remaining) test orders

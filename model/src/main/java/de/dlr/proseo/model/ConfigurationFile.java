@@ -8,8 +8,6 @@ package de.dlr.proseo.model;
 import java.util.Objects;
 
 import javax.persistence.Embeddable;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 
 /**
  * A processor configuration file

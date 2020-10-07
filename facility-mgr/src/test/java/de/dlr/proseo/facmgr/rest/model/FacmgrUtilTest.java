@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.enums.StorageType;
-import de.dlr.proseo.model.service.RepositoryService;
 
 
 

@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.enums.StorageType;
-import de.dlr.proseo.model.rest.model.PlannerPod;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
@@ -705,7 +704,6 @@ public class KubeConfig {
 	public boolean deletePodsStatus(String status) {
 		if (this.isConnected()) {		 
 			V1JobList list = this.getJobList();
-			List<PlannerPod> jobList = new ArrayList<PlannerPod>();
 			if (list != null) {
 				for (V1Job item : list.getItems()) {
 					PodKube pk = new PodKube(item);

@@ -258,7 +258,7 @@ public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 		// All types in our tutorial supports all logical operations, but we have to make sure that the types are equals
 		if(left.getClass().equals(right.getClass()) && left instanceof Comparable) {
 			// Luckily all used types String, Boolean and also Integer support the interface Comparable
-			@SuppressWarnings("rawtypes")
+			@SuppressWarnings({ "rawtypes", "unchecked" })
 			int result = ((Comparable) left).compareTo((Comparable) right);
 
 			if (operator == BinaryOperatorKind.EQ) {

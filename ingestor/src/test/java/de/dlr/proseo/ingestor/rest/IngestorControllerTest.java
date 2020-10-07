@@ -8,12 +8,7 @@ package de.dlr.proseo.ingestor.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,8 +37,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.util.UriUtils;
-
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
@@ -280,7 +273,7 @@ public class IngestorControllerTest {
 				facility.setStorageManagerUrl(config.getStorageManagerUrl());
 				facility.setStorageManagerUser("testuser");
 				facility.setStorageManagerPassword("testpwd");
-				facility.setDefaultStorageType("POSIX");
+				facility.setDefaultStorageType(StorageType.POSIX);
 				facility = RepositoryService.getFacilityRepository().save(facility);
 
 				return null;

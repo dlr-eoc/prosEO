@@ -20,7 +20,6 @@ import org.xml.sax.SAXParseException;
 
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.services.s3.S3Client;
-import de.dlr.proseo.storagemgr.utils.StorageType;
 
 /**
  * General utility methods 
@@ -43,7 +42,8 @@ public class StorageManagerUtils {
 	 * @return
 	 */
 	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName, String region) throws Exception {
-
+		if (logger.isTraceEnabled()) logger.trace(">>>createStorageManagerInternal(********, ********, {}, {}, {}", s3Endpoint, bucketName, region);
+		
 		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint, region);
 		ArrayList<String> buckets = S3Ops.listBuckets(s3);
 		if (!buckets.contains(bucketName)) {
@@ -60,7 +60,8 @@ public class StorageManagerUtils {
 	 * @return true/false
 	 */
 	public static Boolean checkXml(String xml) {
-
+		if (logger.isTraceEnabled()) logger.trace(">>>checkXml(String)");
+		
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 
 		try {
@@ -94,7 +95,8 @@ public class StorageManagerUtils {
 	 * @throws IOException
 	 */
 	public static String inputStreamToString(InputStream inputStream, Charset charset) throws IOException {
-
+		if (logger.isTraceEnabled()) logger.trace(">>>inputStreamToString(InputStream, Charset)");
+		
 		StringBuilder stringBuilder = new StringBuilder();
 		String line = null;
 
@@ -114,6 +116,8 @@ public class StorageManagerUtils {
 	 * @return StorageType
 	 */
 	public static StorageType getFsType(String pathInfo) {
+		if (logger.isTraceEnabled()) logger.trace(">>>getFsType({})", pathInfo);
+		
 		StorageType storageType = null;
 		if (pathInfo != null) {
 			// Find storage type
@@ -134,16 +138,16 @@ public class StorageManagerUtils {
 	 * @return Relative path
 	 */
 	public static String getRelativePath(String pathInfo) {
+		if (logger.isTraceEnabled()) logger.trace(">>>getRelativePath({})", pathInfo);
+		
 		String relPath = null;
 		if (pathInfo != null) {
 			relPath = pathInfo.trim();
-			// Find storage type
+			// Remove protocol from path
 			if (relPath.startsWith("s3:/") || relPath.startsWith("S3:/")) {
 				relPath = relPath.substring(4);
 			} else if (relPath.startsWith("alluxio:/")) {
 				relPath = relPath.substring(9);
-			} else if (relPath.startsWith("/")) {
-				relPath = relPath;
 			}
 			
 		}

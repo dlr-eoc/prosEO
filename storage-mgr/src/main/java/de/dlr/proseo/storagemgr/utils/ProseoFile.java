@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.utils.StorageType;
 
 /**
  * Abstract definition of proseo file objects
@@ -205,8 +204,11 @@ public abstract class ProseoFile {
 				return new ProseoFileAlluxio(aPath, false, cfg);
 			case POSIX:
 				return new ProseoFilePosix(aPath, false, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;
@@ -231,8 +233,11 @@ public abstract class ProseoFile {
 				return new ProseoFileAlluxio(aPath, true, cfg);
 			case POSIX:
 				return new ProseoFilePosix(aPath, true, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;
@@ -258,8 +263,11 @@ public abstract class ProseoFile {
 				return new ProseoFileAlluxio(bucket, aPath, cfg);
 			case POSIX:
 				return new ProseoFilePosix(bucket, aPath, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;

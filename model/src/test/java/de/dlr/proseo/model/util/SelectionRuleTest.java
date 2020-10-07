@@ -26,7 +26,6 @@ import org.junit.Test;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.util.SelectionItem;
 
 /**
  * Unit test class for SelectionRule using various valid and invalid rules and various sensing time intervals.

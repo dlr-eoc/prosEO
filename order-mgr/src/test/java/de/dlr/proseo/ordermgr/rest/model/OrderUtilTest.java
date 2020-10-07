@@ -34,12 +34,12 @@ public class OrderUtilTest {
 		{ "1", "0", "ABCe", "ABCD Testing", "1","S_TDX1","Tandom-X", "11", "0", "2019-10-17T22:49:21.000000","XYZ","RUNNING","NRTI","2019-08-29T22:49:21.000000","2019-08-29T22:49:21.000000"}
 		
 	};
-	private static String[][] testMissionData = {
-			//
-			{ },
-			{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandom-X"},
-			{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Tandom-X" }
-		};
+//	private static String[][] testMissionData = {
+//			//
+//			{ },
+//			{ "11", "11", "DEFg", "DefrostMission", "2","S_TDX2","Tandom-X"},
+//			{ "12", "12", "XY1Z", "XYZ Testing", "3","S_TDX3","Tandom-X" }
+//		};
 	
 	/**
 	 * Create an orbit from a data array

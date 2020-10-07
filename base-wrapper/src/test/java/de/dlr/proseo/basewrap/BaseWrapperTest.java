@@ -28,10 +28,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.basewrap.BaseWrapper;
-import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
-import de.dlr.proseo.basewrap.rest.RestOps;
-
 /**
  * Test class for prosEO Sample Processor Wrapper using a simple job order file.
  * 

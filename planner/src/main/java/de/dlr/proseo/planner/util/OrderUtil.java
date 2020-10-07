@@ -23,7 +23,6 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
@@ -46,8 +45,7 @@ public class OrderUtil {
 	
     @Autowired
     private JobUtil jobUtil;
-    @Autowired
-    private JobStepUtil jobStepUtil;
+
     @Autowired
     private OrderDispatcher orderDispatcher;
 

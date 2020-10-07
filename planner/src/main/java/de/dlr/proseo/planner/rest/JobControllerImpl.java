@@ -26,10 +26,8 @@ import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.rest.model.RestUtil;
-import de.dlr.proseo.planner.util.JobStepUtil;
 import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
 
@@ -53,13 +51,7 @@ public class JobControllerImpl implements JobController {
     private ProductionPlanner productionPlanner;
 
     @Autowired
-    private OrderDispatcher orderDispatcher;
-
-    @Autowired
     private JobUtil jobUtil;
-    
-    @Autowired
-    private JobStepUtil jobStepUtil;
     
     
     /**
