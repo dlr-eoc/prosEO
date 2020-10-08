@@ -29,6 +29,10 @@ public class UsermgrConfiguration {
 	@Value("${proseo.defaultuser.password}")
 	private String defaultUserPassword;
 
+	/** The password expiration period in days */
+	@Value("${proseo.password.expirationtime}")
+	private String passwordExpirationTime;
+
 	/**
 	 * Gets the name of the default user
 	 * 
@@ -45,6 +49,15 @@ public class UsermgrConfiguration {
 	 */
 	public String getDefaultUserPassword() {
 		return defaultUserPassword;
+	}
+
+	/**
+	 * Gets the password expiration time
+	 * 
+	 * @return the password expiration time
+	 */
+	public String getPasswordExpirationTime() {
+		return passwordExpirationTime;
 	}
 	
 }

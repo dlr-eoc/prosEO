@@ -212,7 +212,7 @@ public class GroupManager {
 		if (null == restGroup) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_MISSING, MSG_ID_GROUP_MISSING));
 		}
-		if (null == restGroup.getGroupname() || "".equals(restGroup.getGroupname())) {
+		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_GROUPNAME_MISSING, MSG_ID_GROUPNAME_MISSING));
 		}
 		
@@ -241,7 +241,7 @@ public class GroupManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
 		
 		// Check parameter
-		if (null == mission || "".equals(mission)) {
+		if (null == mission || mission.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING));
 		}
 		
@@ -470,7 +470,7 @@ public class GroupManager {
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
 		}
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
@@ -524,7 +524,7 @@ public class GroupManager {
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
 		}
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
