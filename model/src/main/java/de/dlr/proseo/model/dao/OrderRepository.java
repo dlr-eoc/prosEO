@@ -41,9 +41,10 @@ public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 	
 	/**
 	 * Get all processing orders scheduled for execution within the given time range
+	 * 
 	 * @param executionTimeFrom the earliest execution time
 	 * @param executionTimeTo the latest execution time
-	 * @return
+	 * @return a list of processing orders matching the selection criteria
 	 */
 	public List<ProcessingOrder> findByExecutionTimeBetween(Instant executionTimeFrom, Instant executionTimeTo);
 }

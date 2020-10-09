@@ -86,7 +86,7 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  * <p>
  * The following rule examples are not valid:
  * <ul>
- *   <li>SELECT ValIntersect(0, 0) <i>(the auxiliary product type must be specified)></i></li>
+ *   <li>SELECT ValIntersect(0, 0) <i>(the auxiliary product type must be specified)</i></li>
  *   <li>FOR AUX_CH4 SELECT ValIntersect(-1, 0) <i>(no negative values)</i></li>
  *   <li>FOR AUX_CH4 SELECT ValIntersect(1h, 1h) <i>(the time unit must be separated from the numerical value by white space)</i></li>
  *   <li>FOR AUX_CH4 SELECT ValIntersect(0, 0); <i>(the semicolon is a rule separator, not a rule terminator)</i></li>
@@ -205,7 +205,7 @@ public class SelectionRule {
 	/**
 	 * Sets the collection of simple selection rules for this rule
 	 * 
-	 * @param newSimpleRules the collection of simple selection rules to set
+	 * @param simpleRules the collection of simple selection rules to set
 	 */
 	public void setSimpleRules(Collection<SimpleSelectionRule> simpleRules) {
 		clearSimpleRules();

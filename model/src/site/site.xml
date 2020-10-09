@@ -13,7 +13,10 @@
     <version position="right"/>
     <publishDate position="right"/>
     <body>
-        <menu ref="reports" />
+        <menu name="Project Reports">
+            <item name="Javadocs" href="apidocs/index.html" />
+            <item name="REST API" href="${project.artifactId}.html" />
+        </menu>
         <menu ref="parent" />
     </body>
 </project>

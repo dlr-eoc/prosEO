@@ -423,6 +423,8 @@ public class Product extends PersistentObject {
 	
 	/**
 	 * Get a named String parameter
+	 * 
+	 * @param key the name of the String parameter
 	 * @return the parameter value casted to String
 	 * @throws ClassCastException if the named parameter is not of an appropriate type
 	 */
@@ -432,7 +434,9 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Set the named String parameter to the given value
-	 * @param parameters the parameters to set
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
 	 */
 	public void setStringParameter(String key, String value) {
 		Parameter param = parameters.get(key);
@@ -445,6 +449,8 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Get a named Integer parameter
+	 * 
+	 * @param key the name of the Integer parameter
 	 * @return the parameter value casted to Integer
 	 * @throws ClassCastException if the named parameter is not of an appropriate type
 	 */
@@ -454,7 +460,9 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Set the named Integer parameter to the given value
-	 * @param parameters the parameters to set
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
 	 */
 	public void setIntegerParameter(String key, Integer value) {
 		Parameter param = parameters.get(key);
@@ -467,6 +475,8 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Get a named Boolean parameter
+	 * 
+	 * @param key the name of the Boolean parameter
 	 * @return the parameter value casted to Boolean
 	 * @throws ClassCastException if the named parameter is not of an appropriate type
 	 */
@@ -476,7 +486,9 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Set the named Boolean parameter to the given value
-	 * @param parameters the parameters to set
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
 	 */
 	public void setBooleanParameter(String key, Boolean value) {
 		Parameter param = parameters.get(key);
@@ -489,6 +501,8 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Get a named Double parameter
+	 * 
+	 * @param key the name of the Double parameter
 	 * @return the parameter value casted to Double
 	 * @throws ClassCastException if the named parameter is not of an appropriate type
 	 */
@@ -498,7 +512,9 @@ public class Product extends PersistentObject {
 
 	/**
 	 * Set the named Double parameter to the given value
-	 * @param parameters the parameters to set
+	 * 
+	 * @param key the parameter name
+	 * @param value the parameter value to set
 	 */
 	public void setDoubleParameter(String key, Double value) {
 		Parameter param = parameters.get(key);

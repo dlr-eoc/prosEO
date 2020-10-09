@@ -86,6 +86,19 @@
 		    <version>${project.version}</version>
 		</dependency>
 	</dependencies>
+	
+	<reporting>
+	   <plugins>
+            <!-- Exclude generated code from Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <excludePackageNames>de.dlr.proseo.model.rest:de.dlr.proseo.model.rest.model</excludePackageNames>
+                </configuration>
+            </plugin>
+	   </plugins>
+	</reporting>
 
 	<build>
 		<finalName>proseo-model</finalName>
@@ -139,7 +152,7 @@
                     </excludes>
                 </configuration>
             </plugin>
-            
+                        
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

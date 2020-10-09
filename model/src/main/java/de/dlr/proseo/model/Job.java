@@ -96,7 +96,7 @@ public class Job extends PersistentObject {
 	/**
 	 * Sets the order this job belongs to
 	 * 
-	 * @param ordeprocessingOrderr the order to set
+	 * @param processingOrder the order to set
 	 */
 	public void setProcessingOrder(ProcessingOrder processingOrder) {
 		this.processingOrder = processingOrder;

@@ -54,8 +54,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	/**
 	 * Get all products of a given mission and class with their sensing start time before the end of a time interval
 	 * and the sensing stop time after the beginning of that interval (including border values);
-	 * this results in a check for intersection with the time interval, if latestSensingStartTime > earliestSensingStopTime,
-	 * and a check for coverage of the time interval, if latestSensingStartTime < earliestSensingStopTime
+	 * this results in a check for intersection with the time interval, if latestSensingStartTime after earliestSensingStopTime,
+	 * and a check for coverage of the time interval, if latestSensingStartTime before earliestSensingStopTime
 	 * 
 	 * @param missionCode the mission code
 	 * @param productType the prosEO product type
