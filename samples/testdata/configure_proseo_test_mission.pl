@@ -31,17 +31,6 @@ my $defaults = {
 	product_class_visibility => 'PUBLIC',
 	selection_rule_mode => 'OPER'
 };
-my $ADMIN_USER = 'sysadm';
-my $ADMIN_PWD = 'sysadm';
-my $USERMGR_USER = 'usermgr';
-my $USERMGR_PWD = 'usermgr';
-my $USERMGR_AUTHORITIES = 'ROLE_USERMGR';
-my $USER_USER = 'proseo';
-my $USER_PWD = 'proseo';
-my $USER_GROUP = 'oper';
-my $WRAPPER_USER = 'wrapper';
-my $WRAPPER_PWD = 'ingest&plan';
-my $USER_AUTHORITIES = 'ROLE_USER';
 my $CLI_SCRIPT_NAME = 'cli_script.txt';
 my $TEST_FILE_DIR = 'testfiles';
 
@@ -50,7 +39,81 @@ my $TEST_FILE_DIR = 'testfiles';
 #
 
 #
-# -- Basic structures
+# -- User management
+#
+my $ADMIN_USER = 'sysadm';
+my $ADMIN_PWD = 'sysadm';
+
+my $USERMGR_USER = 'usermgr';
+my $USERMGR_PWD = 'usermgr';
+my $USERMGR_AUTHORITIES = 'ROLE_MISSION_READER,ROLE_USERMGR,ROLE_CLI_USER,ROLE_GUI_USER';
+
+my $CONFIG_USER = 'proseo';
+my $CONFIG_PWD = 'proseo';
+
+my @groups = (
+    {
+        name => 'operator',
+        authorities => [ 'MISSION_READER', 'PRODUCTCLASS_READER', 'PRODUCT_READER_ALL', 'PROCESSOR_READER',
+           'ORDER_READER', 'ORDER_MGR', 'ORDER_PLANNER', 'ORDER_MONITOR', 'FACILITY_READER', 'FACILITY_MONITOR' ]
+    },
+    {
+        name => 'archivist',
+        authorities => [ 'MISSION_READER', 'PRODUCTCLASS_READER', 'PRODUCT_READER_ALL', 'PRODUCT_INGESTOR', 'PRODUCT_MGR',
+           'FACILITY_READER', 'FACILITY_MONITOR' ]
+    },
+    {
+        name => 'engineer',
+        authorities => [ 'MISSION_READER', 'MISSION_MGR', 'PRODUCTCLASS_READER', 'PRODUCTCLASS_MGR', 'PRODUCT_READER_ALL',
+           'PROCESSOR_READER', 'PROCESSORCLASS_MGR', 'CONFIGURATION_MGR', 'FACILITY_READER', 'FACILITY_MGR', 'FACILITY_MONITOR',
+           'ORDER_READER', 'ORDER_MONITOR' ]
+    },
+    {
+        name => 'approver',
+        authorities => [ 'ORDER_READER', 'ORDER_APPROVER' ]
+    },
+    {
+        name => 'prippublic',
+        authorities => [ 'PRIP_USER', 'PRODUCT_READER' ]
+    },
+    {
+        name => 'externalprocessor',
+        authorities => [ 'PRIP_USER', 'PRODUCT_READER_RESTRICTED', 'PRODUCT_INGESTOR' ]
+    },
+    {
+        name => 'internalprocessor',
+        authorities => [ 'PRODUCT_GENERATOR', 'JOBSTEP_PROCESSOR']
+    }
+);
+my @users = (
+    {
+        name => $CONFIG_USER,
+        pwd => $CONFIG_PWD,
+        authorities => [ 'CLI_USER', 'GUI_USER', 'PRIP_USER' ],
+        groups => [ 'operator', 'archivist', 'engineer', 'approver' ]
+    },
+    {
+        name => 'esaprip',
+        pwd => 'esaprip',
+        authorities => [],
+        groups => [ 'prippublic' ]
+    },
+    {
+        name => 'knmiprip',
+        pwd => 'knmiprip',
+        authorities => [],
+        groups => [ 'externalprocessor' ]
+    },
+    {
+        name => 'wrapper',
+        pwd => 'ingest&plan',
+        authorities => [],
+        groups => [ 'internalprocessor' ]
+    }
+);
+
+#
+# -- Mission basics
 #
 my $mission = { 
 	code => 'PTM', 
@@ -296,14 +359,25 @@ print $cli_script 'mission create --file=' . $filename . "\n";
 say '... creating mission users';
 print $cli_script 'user create --mission=' . $mission->{code} . ' ' . $USERMGR_USER . ' password=' . $USERMGR_PWD . ' authorities=' . $USERMGR_AUTHORITIES . "\n";
 print $cli_script 'login --user=' . $USERMGR_USER . ' --password=' . $USERMGR_PWD . ' PTM' . "\n";
-print $cli_script 'user create ' . $USER_USER . ' password=' . $USER_PWD . "\n";
-print $cli_script 'user create ' . $WRAPPER_USER . ' password=' . $WRAPPER_PWD . "\n";
-print $cli_script 'group create ' . $USER_GROUP . ' authorities=' . $USER_AUTHORITIES . "\n";
-print $cli_script 'group add ' . $USER_GROUP . ' ' . $USER_USER . "\n";
-print $cli_script 'group add ' . $USER_GROUP . ' ' . $WRAPPER_USER . "\n";
+
+foreach my $group ( @groups ) {
+    print $cli_script 'group create ' . $group->{name} . "\n";
+    foreach my $authority ( @{ $group->{authorities} } ) {
+        print $cli_script 'group grant ' . $group->{name} . ' ROLE_' . $authority . "\n";
+    }
+}
+foreach my $user ( @users ) {
+    print $cli_script 'user create ' . $user->{name} . ' password=' . $user->{pwd} . "\n";
+    foreach my $authority ( @{ $user->{authorities} } ) {
+        print $cli_script 'user grant ' . $user->{name} . ' ROLE_' . $authority . "\n";
+    }
+    foreach my $group ( @{ $user->{groups} } ) {
+        print $cli_script 'group add ' . $group . ' ' . $user->{name} . "\n";
+    }
+}
 
 # Perform the remaining configuration steps as regular user
-print $cli_script 'login --user=' . $USER_USER . ' --password=' . $USER_PWD . ' PTM' . "\n";
+print $cli_script 'login --user=' . $CONFIG_USER . ' --password=' . $CONFIG_PWD . ' '. $mission->{code} . "\n";
 
 # Create spacecraft orbits
 say '... creating spacecraft orbits';

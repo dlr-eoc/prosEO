@@ -63,6 +63,7 @@ public class UserManager {
 	private static final int MSG_ID_DUPLICATE_USER = 2766;
 	private static final int MSG_ID_ILLEGAL_DATA_ACCESS = 2767;
 	private static final int MSG_ID_ILLEGAL_DATA_MODIFICATION = 2768;
+	private static final int MSG_ID_ILLEGAL_AUTHORITY = 2769;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_FOUND = "(E%d) No user found for mission %s";
@@ -76,6 +77,7 @@ public class UserManager {
 	private static final String MSG_DUPLICATE_USER = "(E%d) Duplicate user %s";
 	private static final String MSG_ILLEGAL_DATA_ACCESS = "(E%d) User %s not authorized to access data for user %s";
 	private static final String MSG_ILLEGAL_DATA_MODIFICATION = "(E%d) Only change of password allowed for user %s";
+	private static final String MSG_ILLEGAL_AUTHORITY = "(E%d) Illegal authority value %s";
 	
 	private static final String MSG_USER_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_USER_RETRIEVED = "(I%d) User %s retrieved";
@@ -475,11 +477,11 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was revoked
-				if (logger.isTraceEnabled()) logger.trace("Authority revoked: {}", modelAuthority.getAuthority());
 				if (!isUserManager) {
 					throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
 				}
 				userChanged = true;
+				if (logger.isTraceEnabled()) logger.trace("Authority revoked: {}", modelAuthority.getAuthority());
 			}
 		}
 		for (String restAuthority: restUser.getAuthorities()) {
@@ -493,7 +495,11 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was added
-				if (logger.isTraceEnabled()) logger.trace("Authority granted: {}", restAuthority);
+				try {
+					UserRole.asRole(restAuthority);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+				}
 				if (!isUserManager) {
 					throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
 				}
@@ -502,6 +508,7 @@ public class UserManager {
 				newAuthority.setAuthority(restAuthority);
 				newAuthority.setUser(modelUser);
 				newAuthorities.add(newAuthority);
+				if (logger.isTraceEnabled()) logger.trace("Authority granted: {}", restAuthority);
 			}
 		}
 		modelUser.setAuthorities(newAuthorities);

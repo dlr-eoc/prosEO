@@ -108,12 +108,31 @@ public enum UserRole {
 	ORDER_PLANNER,
 	
 	/** Read access to order monitoring data */
-	ORDER_MONITOR;
+	ORDER_MONITOR,
 	
+	/** Notify of job step completion */
+	JOBSTEP_PROCESSOR;
+	
+	private static final String ROLE_PREFIX = "ROLE_";
+
 	/**
 	 * Get the role name with "ROLE_" prefix as stored in the database
 	 * 
 	 * @return "ROLE_" + the role name
 	 */
-	public String asRoleString() { return "ROLE_" + this.toString(); }
+	public String asRoleString() { return ROLE_PREFIX + this.toString(); }
+	
+	/**
+	 * Get the role enum from a role string starting with the "ROLE_" prefix
+	 * 
+	 * @return the enum corresponding to the role string
+	 * @throws IllegalArgumentException if the role string does not start with "ROLE_" or if the remainder of the role string
+	 *         does not represent a legal UserRole enum value
+	 */
+	public static UserRole asRole(String roleString) throws IllegalArgumentException {
+		if (!roleString.startsWith(ROLE_PREFIX)) {
+			throw new IllegalArgumentException();
+		}
+		return valueOf(roleString.substring(ROLE_PREFIX.length()));
+	}
 }
