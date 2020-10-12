@@ -160,19 +160,11 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-
-					// configured processor
-					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
-					if (configuredProcessors.isEmpty()) {
-						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
-						answer = false;
-					} else {
-						// create jobs
-						// for each orbit
-						for (Orbit orbit : orbits) {
-							// create job
-							createJobForOrbitOrTime(order, orbit, null, null, pf);
-						}
+					// create jobs
+					// for each orbit
+					for (Orbit orbit : orbits) {
+						// create job
+						createJobForOrbitOrTime(order, orbit, null, null, pf);
 					}
 				}
 			}
@@ -214,22 +206,14 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-
-					// configured processor
-					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
-					if (configuredProcessors.isEmpty()) {
-						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
-						answer = false;
-					} else {
-						// create jobs
-						// for each orbit
-						while (startT.isBefore(stopT)) {
-							// create job
-							createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
-							startT = sliceStopT;
-							sliceStopT = startT.plus(1, ChronoUnit.DAYS);
-						} 
-					}
+					// create jobs
+					// for each orbit
+					while (startT.isBefore(stopT)) {
+						// create job
+						createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+						startT = sliceStopT;
+						sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+					} 
 				}
 			}
 		} catch (Exception ex) {
@@ -271,12 +255,7 @@ public class OrderDispatcher {
 					answer = false;
 				} else {
 
-					// configured processor
-					Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
-					if (configuredProcessors.isEmpty()) {
-						Messages.ORDER_REQ_CON_PROC_NOT_SET.log(logger, order.getIdentifier());
-						answer = false;
-					} else if (startT.equals(stopT)) {
+					if (startT.equals(stopT)) {
 						createJobForOrbitOrTime(order, null, startT, stopT, pf);
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
@@ -677,9 +656,11 @@ public class OrderDispatcher {
 					}
 				}
 				// now look whether one configured processor is in requested configured processors
-				for (ConfiguredProcessor cp : cplist) {
-					if (requestedConfiguredProcessors.contains(cp)) {
-						cplistFound.add(cp);
+				if (requestedConfiguredProcessors != null && !requestedConfiguredProcessors.isEmpty()) {
+					for (ConfiguredProcessor cp : cplist) {
+						if (requestedConfiguredProcessors.contains(cp)) {
+							cplistFound.add(cp);
+						}
 					}
 				}
 				// there is no requested configured processor, add all possible to look for the newest.
