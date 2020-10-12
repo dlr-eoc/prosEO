@@ -123,17 +123,17 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted info mesage
 	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		logger.info(message);
-
-		return message;
-	}
+//	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
+//		// Prepend message ID to parameter list
+//		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
+//		messageParamList.add(0, messageId);
+//
+//		// Log the error message
+//		String message = String.format(messageFormat, messageParamList.toArray());
+//		logger.info(message);
+//
+//		return message;
+//	}
 
 	/**
 	 * Create and log a formatted error message

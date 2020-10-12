@@ -14,13 +14,10 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.model.rest.OrderController;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.planner.rest.model.RestUtil;
-import de.dlr.proseo.planner.util.JobStepUtil;
-import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.OrderUtil;
 import de.dlr.proseo.planner.util.UtilService;
 
@@ -52,13 +49,6 @@ public class OrderControllerImpl implements OrderController {
     @Autowired
     private ProductionPlanner productionPlanner;
 
-    @Autowired
-    private OrderDispatcher orderDispatcher;
-
-    @Autowired
-    private JobStepUtil jobStepUtil;
-    @Autowired
-    private JobUtil jobUtil;
     @Autowired
     private OrderUtil orderUtil;
 

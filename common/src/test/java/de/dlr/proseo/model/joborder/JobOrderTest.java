@@ -64,7 +64,6 @@ public class JobOrderTest {
 		pr.getListOfInputs().add(io);
 		io = new InputOutput("CFG_STOP_", InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_OUTPUT, "1234");
 		io.getFileNames().add(new IpfFileName("myFile05.xml", "SomethingOther"));
-		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
 		pr = new Proc("ProcTaskName2", "08.15");
@@ -75,9 +74,13 @@ public class JobOrderTest {
 		io = new InputOutput("CFG_STOP_", InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
 		io.getFileNames().add(new IpfFileName("myFile03.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile04.xml"));
+		// New: List of time intervals
+		TimeInterval ti = new TimeInterval("20201001_101112123456", "20201001_101213234567", "myFile03.xml");
+		io.getTimeIntervals().add(ti);
+		ti = new TimeInterval("20201001_101213234567", "20201001_101314345678", "myFile04.xml");
+		io.getTimeIntervals().add(ti);
 		pr.getListOfInputs().add(io);
 		io = new InputOutput("CFG_STOP_", InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_OUTPUT, "567");
-		io.getFileNames().add(new IpfFileName("myFile05.xml", "SomethingOther"));
 		io.getFileNames().add(new IpfFileName("myFile06.xml"));
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);

@@ -1,27 +1,18 @@
 package de.dlr.proseo.planner.kubernetes;
 
-import static org.junit.Assert.*;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.Mission;
-import de.dlr.proseo.model.dao.JobStepRepository;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = ProductionPlanner.class, webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -30,11 +21,11 @@ import de.dlr.proseo.planner.dispatcher.JobDispatcher;
 @AutoConfigureTestEntityManager
 public class KubeTest {
 
-    @Autowired
-    private JobStepRepository jobSteps;
-    
-    @Autowired
-    private ProductionPlanner productionPlanner;
+//    @Autowired
+//    private JobStepRepository jobSteps;
+//    
+//    @Autowired
+//    private ProductionPlanner productionPlanner;
     
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {

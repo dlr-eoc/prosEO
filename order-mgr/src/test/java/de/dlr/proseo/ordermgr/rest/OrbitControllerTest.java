@@ -191,6 +191,7 @@ public class OrbitControllerTest {
 		
 		List<RestOrbit> restOrbits = new ArrayList<RestOrbit>();
 		
+		@SuppressWarnings("rawtypes")
 		ResponseEntity<List> postEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.postForEntity(testUrl, restOrbits, List.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.CREATED, postEntity.getStatusCode());

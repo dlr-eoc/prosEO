@@ -79,17 +79,9 @@ public class KubeJob {
 	 */
 	private String imageName;
 	/**
-	 * The command to call in image
-	 */
-	private String command;
-	/**
 	 * The job order file
 	 */
 	private String jobOrderFileName;
-	/**
-	 * Job Order content
-	 */
-	private String jobOrderString;
 	/**
 	 * Arguments of command
 	 */
@@ -185,13 +177,11 @@ public class KubeJob {
 	 * @param name The name prefix, if set
 	 * @param processor The processor image 
 	 * @param jobOrderFN The job order file name
-	 * @param cmd The command call for image
 	 * @param args Arguments for call
 	 */
-	public KubeJob (int id, String name, String processor, String jobOrderFN, String cmd, ArrayList<String> args) {
+	public KubeJob (int id, String name, String processor, String jobOrderFN, ArrayList<String> args) {
 		
 		imageName = processor;
-		command = cmd;
 		jobOrderFileName = jobOrderFN;
 		podNames = new ArrayList<String>();
 

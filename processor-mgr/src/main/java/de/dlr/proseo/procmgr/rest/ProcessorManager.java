@@ -59,6 +59,7 @@ public class ProcessorManager {
 	private static final int MSG_ID_DELETE_FAILURE = 2264;
 	private static final int MSG_ID_DUPLICATE_PROCESSOR = 2265;
 	private static final int MSG_ID_PROCESSOR_HAS_CONFIG = 2266;
+	private static final int MSG_ID_PROCESSOR_NAME_MISSING = 2267;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -66,6 +67,7 @@ public class ProcessorManager {
 	private static final String MSG_PROCESSOR_MISSING = "(E%d) Processor not set";
 	private static final String MSG_PROCESSOR_ID_MISSING = "(E%d) Processor ID not set";
 	private static final String MSG_PROCESSOR_ID_NOT_FOUND = "(E%d) No processor found with ID %d";
+	private static final String MSG_PROCESSOR_NAME_MISSING = "(E%d) Processor name not set";
 	private static final String MSG_PROCESSOR_CLASS_INVALID = "(E%d) Processor class %s invalid for mission %s";
 	private static final String MSG_PROCESSOR_DATA_MISSING = "(E%d) Processor data not set";
 	private static final String MSG_DELETE_FAILURE = "(E%d) Processor deletion failed for ID %d (cause: %s)";
@@ -138,8 +140,13 @@ public class ProcessorManager {
 	public RestProcessor createProcessor(RestProcessor processor) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessor({})", (null == processor ? "MISSING" : processor.getProcessorName()));
 
-		if (null == processor || "".equals(processor)) {
+		if (null == processor) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_MISSING, MSG_ID_PROCESSOR_MISSING));
+		}
+		
+		// Make sure processor class name is set
+		if (null == processor.getProcessorName() || processor.getProcessorName().isBlank()) {
+			throw new IllegalArgumentException(logError(MSG_PROCESSOR_NAME_MISSING, MSG_ID_PROCESSOR_NAME_MISSING));
 		}
 		
 		Processor modelProcessor = ProcessorUtil.toModelProcessor(processor);

@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.dao.ProductRepository;
-import de.dlr.proseo.model.service.RepositoryService;
 
 /**
  * Plain Java class (no annotations) to check accessibility of repositories from any point in the code

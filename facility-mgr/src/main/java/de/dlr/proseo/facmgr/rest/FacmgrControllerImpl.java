@@ -2,8 +2,6 @@ package de.dlr.proseo.facmgr.rest;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.Optional;
-
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 

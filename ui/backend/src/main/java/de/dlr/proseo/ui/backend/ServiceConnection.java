@@ -9,7 +9,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;

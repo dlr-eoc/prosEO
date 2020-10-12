@@ -20,7 +20,6 @@ import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,8 +43,8 @@ public class ProductQueryController {
 	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 
 	/* Message string constants */
-	private static final String HTTP_HEADER_WARNING = "Warning";
-	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
+//	private static final String HTTP_HEADER_WARNING = "Warning";
+//	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
 
 	/** The service URI */
 	public static final String URI = "/proseo/prip/odata/v1";

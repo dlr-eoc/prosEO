@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.JobStep.JobStepState;
 
 /**
  * Data Access Object for the Job class

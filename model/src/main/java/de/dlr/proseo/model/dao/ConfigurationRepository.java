@@ -19,11 +19,12 @@ import de.dlr.proseo.model.Configuration;
 public interface ConfigurationRepository extends JpaRepository<Configuration, Long> {
 
 	/**
-	 * Get the processor with the given mission, class name and version
+	 * Get the configuration with the given mission, class name and version
 	 * 
+	 * @param mission the mission code
 	 * @param processorName the processor class name
-	 * @param processorVersion the processor version
-	 * @return the unique processor identified by the search criteria
+	 * @param configurationVersion the configuration version
+	 * @return the unique configuration identified by the search criteria
 	 */
 	@Query("select c from Configuration c where c.processorClass.mission.code = ?1 and c.processorClass.processorName = ?2 and c.configurationVersion = ?3")
 	public Configuration findByMissionCodeAndProcessorNameAndConfigurationVersion(String mission, String processorName, String configurationVersion);

@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -27,12 +26,14 @@ public class RestOps {
 	/**
 	 * Generic REST API client (currently only supporting GET, PUT and POST)
 	 * 
+	 * @param user the user to authenticate with
+	 * @param pw the password to authenticate with
 	 * @param endPoint an URL of the REST-Endpoint (e.g. http://localhost:8080)
 	 * @param endPointPath subroute of REST-URL (e.g. /ingest/param/987398724)
 	 * @param payLoad the request payload as string
-	 * @param queryParam the http query parameter (mandatory for PUT, optional for GET)
+	 * @param queryParams the http query parameter (mandatory for PUT, optional for GET)
 	 * @param method the HTTP method (defaults to POST)
-	 * @return ArrayList holding HTTP return code & response as String
+	 * @return ArrayList holding HTTP return code and response as String
 	 */
 	public static HttpResponseInfo restApiCall(String user, String pw, String endPoint, String endPointPath, String payLoad,
 			Map<String,String> queryParams, HttpMethod method) {

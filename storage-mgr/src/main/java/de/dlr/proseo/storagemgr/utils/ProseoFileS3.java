@@ -19,7 +19,6 @@ import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import de.dlr.proseo.storagemgr.utils.StorageType;
 
 /**
  * Proseo file representing S3 file system

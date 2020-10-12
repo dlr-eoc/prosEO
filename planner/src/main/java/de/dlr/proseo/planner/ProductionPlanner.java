@@ -18,7 +18,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -170,37 +168,33 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Disconnect and remove KubeConfigs not defined in this list.
 	 */
 	public void updateKubeConfigs() {
-		boolean found = false;
 		KubeConfig kubeConfig = null;
 			
 		for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
 			kubeConfig = getKubeConfig(pf.getName());
 			if (kubeConfig != null) {
-				if (kubeConfig.connect()) {
-					found = true;
-				} else {
+				if (!kubeConfig.connect()) {
 					// error
 					kubeConfigs.remove(pf.getName().toLowerCase());
 
-					String message = Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
+					Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
 				}
 			}
 			if (kubeConfig == null) {
 				kubeConfig = new KubeConfig(pf);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-					found = true;
-					String message = Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
-					message = Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
+					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+					Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
 				} else {
-					String message = Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+					Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
 				}
 			}
 		}
 		for (KubeConfig kf : getKubeConfigs()) {
 			if (RepositoryService.getFacilityRepository().findByName(kf.getId().toLowerCase()) == null) {
 				kubeConfigs.remove(kf.getId().toLowerCase());
-				String message = Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, kf.getId(), kf.getProcessingEngineUrl());
+				Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, kf.getId(), kf.getProcessingEngineUrl());
 			}
 		}
 	}
@@ -212,7 +206,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param facilityName
 	 */
 	public void updateKubeConfig(String facilityName) {
-		boolean found = false;
 		KubeConfig kubeConfig = null;
 			
 		ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName); 
@@ -220,9 +213,7 @@ public class ProductionPlanner implements CommandLineRunner {
 			kubeConfig = getKubeConfig(pf.getName());
 			if (kubeConfig != null) {
 				kubeConfig.setFacility(pf);
-				if (kubeConfig.connect()) {
-					found = true;
-				} else {
+				if (!kubeConfig.connect()) {
 					// error
 					kubeConfigs.remove(pf.getName().toLowerCase());
 					kubeConfig = null;
@@ -233,7 +224,6 @@ public class ProductionPlanner implements CommandLineRunner {
 				kubeConfig = new KubeConfig(pf);
 				if (kubeConfig != null && kubeConfig.connect()) {
 					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-					found = true;
 					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
 					Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
 				} else {

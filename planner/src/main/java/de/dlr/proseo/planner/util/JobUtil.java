@@ -5,28 +5,22 @@
  */
 package de.dlr.proseo.planner.util;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.util.JobStepUtil;
 
 /**
  * Handle jobs
@@ -39,10 +33,6 @@ import de.dlr.proseo.planner.util.JobStepUtil;
 public class JobUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobUtil.class);
-	/**
-	 * Date time formatter for this class
-	 */
-	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** JPA entity manager */
 	@PersistenceContext

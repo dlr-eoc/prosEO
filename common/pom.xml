@@ -44,6 +44,14 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+    <distributionManagement>
+        <site>
+            <id>prosEO</id>
+            <name>prosEO Local Site</name>
+            <url>file:target/staged-site</url>
+        </site>
+    </distributionManagement>
 	
     <reporting>
         <plugins>

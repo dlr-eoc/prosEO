@@ -120,6 +120,8 @@ public enum Messages {
 	KUBERNETES_NOT_CONNECTED        (false, MessageType.E, "Kubernetes configuration %s not connected"),
 	JOB_STEP_NOT_FOUND              (false, MessageType.E, "No job step found for id %d"),
 	CONFIG_PROC_DISABLED            (false, MessageType.W, "Configured processor %s is disabled"), 
+	PLANNING_CHECK_COMPLETE			(true, MessageType.I, "Planning check complete for product with ID %d"),
+	PLANNING_CHECK_FAILED			(false, MessageType.E, "Planning check failed for product with ID %d (cause: %s)"),
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;

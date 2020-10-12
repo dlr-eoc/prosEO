@@ -14,3 +14,5 @@ logging:
 proseo:
     defaultuser.name: sysadm
     defaultuser.password: sysadm
+    # Password expiration period in days
+    password.expirationtime: 90

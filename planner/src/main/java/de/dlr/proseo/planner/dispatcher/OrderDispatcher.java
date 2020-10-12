@@ -28,12 +28,12 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
-import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -206,10 +206,9 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-					// create jobs
-					// for each orbit
+					// create job (without orbit association)
 					while (startT.isBefore(stopT)) {
-						// create job
+						// create job (without orbit association)
 						createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
 						startT = sliceStopT;
 						sliceStopT = startT.plus(1, ChronoUnit.DAYS);
@@ -262,11 +261,12 @@ public class OrderDispatcher {
 							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
 							answer = false;
 						}
-						// create jobs
-						// for each orbit
+						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
+							// check orbit
+							Orbit orbit = findOrbit(order, startT, sliceStopT);
 							// create job
-							createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+							createJobForOrbitOrTime(order, orbit, startT, sliceStopT, pf);
 							startT = sliceStopT;
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
@@ -348,6 +348,30 @@ public class OrderDispatcher {
 		}
 
 		return answer;
+	}
+
+	/**
+	 * Find a suitable orbit for the given start and stop times. This is possible, if exactly one spacecraft exists for the
+	 * mission, to which the order belongs, and the time interval between start and stop time spans at most two orbits
+	 * (a product assigned to one orbit may extend into the next orbit).
+	 * 
+	 * @param order the processing order to extract the spacecraft from
+	 * @param startT start time of the time interval to check
+	 * @param stopT end time of the time interval to check
+	 * @return the orbit, if a suitable orbit can be found, null otherwise
+	 */
+	private Orbit findOrbit(ProcessingOrder order, Instant startT, Instant stopT) {
+		// Can we identify a unique spacecraft for the mission?
+		Set<Spacecraft> spacecrafts = order.getMission().getSpacecrafts();
+		if (1 == spacecrafts.size()) {
+			List<Orbit> orbits = RepositoryService.getOrbitRepository()
+					.findBySpacecraftCodeAndTimeIntersect(spacecrafts.iterator().next().getCode(), startT, stopT);
+			// If we find one or two orbits, then we assign the first one (even if the product extends into the next orbit)
+			if (1 == orbits.size() || 2 == orbits.size()) {
+				return orbits.get(0);
+			}
+		}
+		return null;
 	}
 
 	/**

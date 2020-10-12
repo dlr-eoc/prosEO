@@ -32,6 +32,7 @@
 		<docker-maven-version>0.31.0</docker-maven-version>
 		<raml-plugin-version>2.0.5</raml-plugin-version>
 		<raml-output-path>target/generated-raml-mvc</raml-output-path>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
 	</properties>
 
 	<modules>
@@ -113,8 +114,9 @@
 			</plugin>
 			<!-- Create Javadoc files for the main and test classes -->
 			<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>${maven-javadoc-plugin.version}</version>
 				<reportSets>
 					<reportSet>
 						<id>javadocs</id>
@@ -127,7 +129,6 @@
 							<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
 							<failOnError>false</failOnError>
 							<quiet>true</quiet>
-                            <sourceFileExcludes>target/generated-raml-mvc/**/*.java</sourceFileExcludes><!-- Not honoured??? TODO -->
 						</configuration>
 					</reportSet>
 				</reportSets>

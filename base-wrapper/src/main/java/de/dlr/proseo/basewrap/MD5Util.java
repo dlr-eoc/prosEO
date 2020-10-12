@@ -51,6 +51,7 @@ public class MD5Util {
 	 * 
 	 * @param inputFile the file to digest
 	 * @return an MD5 hash string
+	 * @throws IOException if the given file cannot be read
 	 */
 	public static String md5Digest(File inputFile) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> md5Digest({})", inputFile.getName());
