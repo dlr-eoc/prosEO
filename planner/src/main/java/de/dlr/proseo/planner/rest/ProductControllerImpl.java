@@ -62,11 +62,11 @@ public class ProductControllerImpl implements ProductController {
 			}
 		} catch (Exception e) {
 			if (logger.isDebugEnabled()) logger.debug("Exception in planning check: ", e);
-			Messages.PLANNING_CHECK_FAILED.log(logger, productid, e.getMessage());
+			Messages.PLANNING_CHECK_FAILED.log(logger, Long.valueOf(productid), e.getMessage());
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
-		Messages.PLANNING_CHECK_COMPLETE.log(logger, productid);
+		Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
 		
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}

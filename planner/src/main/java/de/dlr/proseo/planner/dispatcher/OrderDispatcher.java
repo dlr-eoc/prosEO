@@ -206,7 +206,7 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-					// create job (without orbit association)
+					// create jobs for each day
 					while (startT.isBefore(stopT)) {
 						// create job (without orbit association)
 						createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
@@ -316,6 +316,10 @@ public class OrderDispatcher {
 				} else {
 					// create job (only keep it if at least one job step is created
 					Job job = new Job();
+					// Check whether job can be associated to an orbit
+					if (null == orbit) {
+						orbit = findOrbit(order, startT, stopT);
+					}
 					job.setOrbit(orbit);
 					job.setJobState(JobState.INITIAL);
 					if (startT == null) {
@@ -362,6 +366,10 @@ public class OrderDispatcher {
 	 */
 	private Orbit findOrbit(ProcessingOrder order, Instant startT, Instant stopT) {
 		// Can we identify a unique spacecraft for the mission?
+		if (startT == null || stopT == null) {
+			return null;
+		}
+		
 		Set<Spacecraft> spacecrafts = order.getMission().getSpacecrafts();
 		if (1 == spacecrafts.size()) {
 			List<Orbit> orbits = RepositoryService.getOrbitRepository()
@@ -442,7 +450,7 @@ public class OrderDispatcher {
 		}
 		
 		// Find configured processor to use
-		ConfiguredProcessor configuredProcessor = searchConfiguredProcessorForProductClass(topProductClass, order.getRequestedConfiguredProcessors());
+		ConfiguredProcessor configuredProcessor = searchConfiguredProcessorForProductClass(topProductClass, order.getRequestedConfiguredProcessors(), order.getProcessingMode());
 		if (configuredProcessor != null) {
 			// we have a configured processor!
 			// now create products and job steps to generate output files 
@@ -663,7 +671,7 @@ public class OrderDispatcher {
 	 * @return Configured processor found or null
 	 */
 	private ConfiguredProcessor searchConfiguredProcessorForProductClass(ProductClass productClass,
-			Set<ConfiguredProcessor> requestedConfiguredProcessors) {
+			Set<ConfiguredProcessor> requestedConfiguredProcessors, String processingMode) {
 		if (logger.isTraceEnabled()) logger.trace(">>> searchConfiguredProcessorForProductClass({})", (null == productClass ? "null" : productClass.getProductType()));
 		
 		ConfiguredProcessor cpFound = null;
@@ -693,6 +701,25 @@ public class OrderDispatcher {
 				}
 			}
 
+			if (!cplistFound.isEmpty() && processingMode != null && !processingMode.isBlank()) {
+				// search the configured processors with expected processing mode
+				List <ConfiguredProcessor> cplistFoundWithMode = new ArrayList<ConfiguredProcessor>();
+				for (ConfiguredProcessor cp : cplistFound) {
+					if (cp.getConfiguration().getDynProcParameters().get("Processing_Mode").getStringValue().equals(processingMode)) {
+						cplistFoundWithMode.add(cp);
+					}
+				}
+				if (cplistFoundWithMode.isEmpty()) {
+					for (ConfiguredProcessor cp : cplistFound) {
+						if (cp.getConfiguration().getDynProcParameters().get("Processing_Mode") == null ||
+								cp.getConfiguration().getDynProcParameters().get("Processing_Mode").getStringValue().equals("ALWAYS")) {
+							cplistFoundWithMode.add(cp);
+						}
+					}
+				}
+				cplistFound.clear();
+				cplistFound.addAll(cplistFoundWithMode);
+			}
 			if (!cplistFound.isEmpty()) {
 				// now search the newest processor
 				for (ConfiguredProcessor cp : cplistFound)
