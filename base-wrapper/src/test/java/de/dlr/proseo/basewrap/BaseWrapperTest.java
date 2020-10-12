@@ -53,7 +53,8 @@ public class BaseWrapperTest {
     
 	/**
 	 * Used for setting required ENV VARS before TEST-RUN
-	 * @param newenv Map<String, String> env-var key&value
+	 * @param newenv environment variables mapped by key and value
+	 * @throws Exception on any exception that occurs
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected static void setEnv(Map<String, String> newenv) throws Exception {
@@ -124,7 +125,7 @@ public class BaseWrapperTest {
 	}
 
 	/**
-	 * Test method for {@link de.dlr.proseo.sampleproc.SampleProcessor#run(java.lang.String[])}.
+	 * Test method for {@link de.dlr.proseo.basewrap.BaseWrapper#run()}.
 	 */
 	@Test
 	public final void testRun1() {
