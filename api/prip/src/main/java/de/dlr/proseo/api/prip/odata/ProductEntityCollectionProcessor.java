@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +52,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -64,6 +62,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
+import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 
 
@@ -83,7 +82,6 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
 	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
 	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
-	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_PRODUCT_WITHOUT_UUID = 5008;
 	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5009;
@@ -94,7 +92,6 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
 	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
 	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
-	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_PRODUCT_WITHOUT_UUID = "(W%d) Product with database ID %d has no UUID";
 	private static final String MSG_INVALID_FILTER_CONDITION = "(E%d) Invalid filter condition (cause: %s)";
@@ -111,6 +108,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	/** The configuration for the PRIP API */
 	@Autowired
 	private ProductionInterfaceConfiguration config;
+	
+	/** The security utilities for the PRIP API */
+	@Autowired
+	private ProductionInterfaceSecurity securityConfig;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityCollectionProcessor.class);
@@ -270,17 +271,14 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 
 	/**
 	 * Read the requested products from the prosEO kernel components
-	 * 
-	 * @param username the username for logging in to prosEO
-	 * @param password the password for the user
-	 * @param mission the mission to login to
 	 * @param uriInfo additional URI parameters to consider in the request
+	 * 
 	 * @return a collection of entities representing products
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
 	 * @throws ODataApplicationException if an error occurs during evaluation of a filtering condition
 	 */
-	private EntityCollection queryProducts(String username, String password, String mission, UriInfo uriInfo) throws URISyntaxException, ODataApplicationException {
-		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({}, ********, {})", username, mission);
+	private EntityCollection queryProducts(UriInfo uriInfo) throws URISyntaxException, ODataApplicationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> queryProducts({})", uriInfo);
 		
 		EntityCollection productsCollection = new EntityCollection();
 		List<Entity> productList = new ArrayList<>();
@@ -291,8 +289,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<List> httpResponseEntity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(mission + "-" + username, password).build() );
-			String requestUrl = config.getIngestorUrl() + "/products?mission=" + mission;
+			RestTemplate restTemplate = rtb.basicAuthentication(
+					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
+				.build();
+			String requestUrl = config.getIngestorUrl() + "/products?mission=" + securityConfig.getMission();
 			
 			// TODO Add filter conditions from $filter option, if set (performance improvement)
 			// Requires manual parsing of filter text --> expensive!
@@ -307,7 +307,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser()), e);
 			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -435,32 +435,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		EntityCollection entityCollection;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
-				// Retrieve mission, user name and password from Authorization HTTP header
-				String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-				if (null == authHeader) {
-					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
-					response.setHeader("Warning", message);
-					return;
-				}
-				String[] authParts = authHeader.split(" ");
-				if (2 != authParts.length || !"Basic".equals(authParts[0])) {
-					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
-					response.setHeader("Warning", message);
-					return;
-				}
-				String[] missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("\\\\"); // --> regex "\\" --> matches "\"
-				if (2 != missionUserPassword.length) {
-					String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-					response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
-					response.setHeader("Warning", message);
-					return;
-				}
-				String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
-
 				// Query the backend services for the requested products, passing on user, password and mission
-				entityCollection = queryProducts(userPassword[0], userPassword[1], missionUserPassword[0], uriInfo);
+				entityCollection = queryProducts(uriInfo);
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());

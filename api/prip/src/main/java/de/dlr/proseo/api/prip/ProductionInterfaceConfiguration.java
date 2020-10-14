@@ -21,6 +21,10 @@ import org.springframework.context.annotation.Configuration;
 @EntityScan(basePackages = "de.dlr.proseo.model")
 public class ProductionInterfaceConfiguration {
 	
+	/** The URL of the prosEO User Manager */
+	@Value("${proseo.userManager.url}")
+	private String userMgrUrl;
+	
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -34,9 +38,18 @@ public class ProductionInterfaceConfiguration {
 	private String facilityManagerUrl;
 	
 	/**
+	 * Gets the URL of the prosEO User Manager component
+	 * 
+	 * @return the User Manager URL
+	 */
+	public String getUserMgrUrl() {
+		return userMgrUrl;
+	}
+
+	/**
 	 * Gets the URL of the prosEO Ingestor component
 	 * 
-	 * @return the ingestorUrl
+	 * @return the Ingestor URL
 	 */
 	public String getIngestorUrl() {
 		return ingestorUrl;
@@ -45,7 +58,7 @@ public class ProductionInterfaceConfiguration {
 	/**
 	 * Gets the URL of the prosEO Processor Manager component
 	 * 
-	 * @return the processorManagerUrl
+	 * @return the Processor Manager URL
 	 */
 	public String getProcessorManagerUrl() {
 		return processorManagerUrl;
