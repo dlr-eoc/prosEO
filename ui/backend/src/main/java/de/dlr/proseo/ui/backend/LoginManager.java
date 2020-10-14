@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
+import de.dlr.proseo.model.enums.UserRole;
+
 /**
  * Management of user login and logout (thread safe)
  * 
@@ -209,5 +211,14 @@ public class LoginManager {
 	 */
 	public List<String> getAuthorities() {
 		return authorities.get();
+	}
+	
+	/**
+	 * Checks whether the logged in user has the given role
+	 * 
+	 * @return true, if the respective authority was granted, false otherwise
+	 */
+	public boolean hasRole(UserRole role) {
+		return authorities.get().contains(role.asRoleString());
 	}
 }

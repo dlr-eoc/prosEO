@@ -29,6 +29,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
@@ -187,7 +188,13 @@ public class CommandLineInterface implements CommandLineRunner {
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();
 				}
-				loginManager.doLogin(username, password, mission, true);
+				boolean loggedIn = loginManager.doLogin(username, password, mission, true);
+				if (loggedIn && !loginManager.hasRole(UserRole.CLI_USER)) {
+					String message = uiMsg(MSG_ID_CLI_NOT_AUTHORIZED, loginManager.getUser());
+					logger.error(message);
+					System.err.println(message);
+					loginManager.doLogout();
+				}
 				break;
 			case CMD_LOGOUT:
 				loginManager.doLogout();
@@ -279,6 +286,12 @@ public class CommandLineInterface implements CommandLineRunner {
 				}
 				if (!loginManager.doLogin(username, password, mission, isInteractiveMode)) {
 					// Already logged
+					return;
+				}
+				if (!loginManager.hasRole(UserRole.CLI_USER)) {
+					String message = uiMsg(MSG_ID_CLI_NOT_AUTHORIZED, username);
+					logger.error(message);
+					System.err.println(message);
 					return;
 				}
 			}

@@ -31,6 +31,11 @@
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
         </dependency>
+        <dependency>
+            <groupId>de.dlr.proseo</groupId>
+            <artifactId>proseo-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 	</dependencies>
 	
 	<build>

@@ -51,6 +51,7 @@ public class UIMessages {
 	public static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 2826;
 	public static final int MSG_ID_INSUFFICIENT_CREDENTIALS = 2827;
 	public static final int MSG_ID_LOGIN_WITHOUT_MISSION_FAILED = 2828;
+	public static final int MSG_ID_CLI_NOT_AUTHORIZED = 2829;
 	
 	// CLIUtil
 	public static final int MSG_ID_INVALID_FILE_TYPE = 2830;
@@ -308,6 +309,7 @@ public class UIMessages {
 		MSG_NOT_AUTHORIZED_FOR_MISSION ("(E%d) User %s not authorized for mission %s", MSG_ID_NOT_AUTHORIZED_FOR_MISSION),
 		MSG_INSUFFICIENT_CREDENTIALS ("(E%d) Insufficient credentials given for non-interactive login", MSG_ID_INSUFFICIENT_CREDENTIALS),
 		MSG_LOGIN_WITHOUT_MISSION_FAILED ("(E%d) User %s not authorized to login without a mission", MSG_ID_LOGIN_WITHOUT_MISSION_FAILED),
+		MSG_CLI_NOT_AUTHORIZED ("(E%d) User %s not authorized for Command Line Interface", MSG_ID_CLI_NOT_AUTHORIZED),
 		
 		// Service connection
 		MSG_HTTP_REQUEST_FAILED ("(E%d) HTTP request failed (cause: %s)", MSG_ID_HTTP_REQUEST_FAILED),
