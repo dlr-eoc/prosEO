@@ -46,6 +46,7 @@ import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -81,6 +82,7 @@ public class ProductIngestor {
 
 	// Same as in ProductManager
 	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
 	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
@@ -101,6 +103,7 @@ public class ProductIngestor {
 
 	// Same as in ProductManager
 	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
@@ -126,6 +129,10 @@ public class ProductIngestor {
 	@Autowired
 	IngestorConfiguration ingestorConfig;
 	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
+
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
@@ -185,6 +192,12 @@ public class ProductIngestor {
 	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					ingestorProduct.getMissionCode(), securityService.getMission()));			
+		}
 		
 		// Create a new product in the metadata database
 		RestProduct newProduct;
@@ -307,6 +320,12 @@ public class ProductIngestor {
 					productId, facility));
 		}
 		
+		// Ensure user is authorized for the product file's mission
+		if (!securityService.isAuthorizedForMission(productFile.getProduct().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					productFile.getProduct().getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_PRODUCT_FILE_RETRIEVED, MSG_ID_PRODUCT_FILE_RETRIEVED, productId, facility.getName());
 
 		return ProductFileUtil.toRestProductFile(productFile);
@@ -335,6 +354,12 @@ public class ProductIngestor {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
 		}
 		Product modelProduct = product.get();
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
 		
 		// Error, if a database product file for the given facility exists already
 		for (ProductFile modelProductFile: modelProduct.getProductFile()) {
@@ -376,6 +401,12 @@ public class ProductIngestor {
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Error, if a database product file for the given facility does not yet exist
@@ -450,6 +481,12 @@ public class ProductIngestor {
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Error, if a database product file for the given facility does not yet exist
@@ -564,6 +601,12 @@ public class ProductIngestor {
 			throws IllegalArgumentException, RestClientException, ProcessingException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
 
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					ingestorProduct.getMissionCode(), securityService.getMission()));			
+		}
+		
 		// Retrieve the product class from the database
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
@@ -610,6 +653,12 @@ public class ProductIngestor {
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(restProductFile.getProductId());
 		if (modelProduct.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProductFile.getProductId()));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Copy the relevant attributes to an IngestorProduct

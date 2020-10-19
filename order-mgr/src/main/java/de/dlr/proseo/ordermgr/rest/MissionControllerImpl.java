@@ -50,6 +50,7 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 
 /**
  * Spring MVC controller for the prosEO Order Manager; implements the services required to manage missions
@@ -78,6 +79,9 @@ public class MissionControllerImpl implements MissionController {
 	private static final int MSG_ID_SPACECRAFT_EXISTS = 1016;
 	private static final int MSG_ID_MISSION_CODE_MISSING = 1017;
 
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+
 	/* Message string constants */
 	private static final String MSG_NO_MISSIONS_FOUND = "(E%d) No missions found";
 	private static final String MSG_MISSION_NOT_FOUND = "(E%d) No mission found for ID %d";
@@ -96,6 +100,9 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_MISSION_RETRIEVED = "(I%d) Mission %s retrieved";
 	private static final String MSG_MISSION_CREATED = "(I%d) Mission %s created";
 	private static final String MSG_MISSIONS_RETRIEVED = "(I%d) All missions retrieved";
+
+	// Same as in other services
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
@@ -105,6 +112,10 @@ public class MissionControllerImpl implements MissionController {
 	/** The Order Manager configuration */
 	@Autowired
 	OrdermgrConfiguration orderManagerConfig;
+
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** REST template builder */
 	@Autowired
@@ -286,13 +297,23 @@ public class MissionControllerImpl implements MissionController {
 	 * @param id the ID of the mission to update
 	 * @param mission a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing a Json object corresponding to the mission after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no mission with the given ID exists
+	 * 		   contained objects) and 
+	 *         HTTP status "OK" or 
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no mission with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestMission> modifyMission(Long id, @Valid RestMission mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyMission({})", id);
 
+		// Ensure user is authorized for the mission to update
+		if (!securityService.isAuthorizedForMission(mission.getCode())) {
+			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					mission.getCode(), securityService.getMission());			
+			logger.error(message);
+			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
+		}
+		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		RestMission restMission = null;

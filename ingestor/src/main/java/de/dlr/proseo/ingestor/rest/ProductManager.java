@@ -23,6 +23,7 @@ import javax.persistence.TypedQuery;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -75,6 +77,7 @@ public class ProductManager {
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND = 2025;
 	private static final int MSG_ID_PRODUCT_HAS_FILES = 2026;
 	private static final int MSG_ID_PRODUCT_EXISTS = 2027;
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -99,6 +102,7 @@ public class ProductManager {
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found";
 	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d has existing files and cannot be deleted";
 	private static final String MSG_PRODUCT_EXISTS = "(E%d) Product with equal characteristics already exists with ID %d";
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -111,6 +115,10 @@ public class ProductManager {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductManager.class);
@@ -172,6 +180,12 @@ public class ProductManager {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
 		}
 		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		// Make sure product does not exist on any Processing Facility
 		if (!modelProduct.get().getProductFile().isEmpty()) {
 			throw new IllegalStateException(logError(MSG_PRODUCT_HAS_FILES, MSG_ID_PRODUCT_HAS_FILES, modelProduct.get().getId()));
@@ -192,7 +206,7 @@ public class ProductManager {
 	/**
 	 * List of all products filtered by mission, product class, start time range
 	 * 
-	 * @param mission the mission code
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
@@ -203,56 +217,49 @@ public class ProductManager {
 			Date startTimeFrom, Date startTimeTo) throws NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
 		List<RestProduct> result = new ArrayList<>();
 		
-		if (null == mission && (null == productClass || 0 == productClass.length) && null == startTimeFrom && null == startTimeTo) {
-			// Simple case: no search criteria set
-			for (Product product: RepositoryService.getProductRepository().findAll()) {
-				if (logger.isDebugEnabled()) logger.debug("Found product with ID {}", product.getId());
-				RestProduct resultProduct = ProductUtil.toRestProduct(product);
-				if (logger.isDebugEnabled()) logger.debug("Created result product with ID {}", resultProduct.getId());
-
-				result.add(resultProduct);
+		// Find using search parameters
+		String jpqlQuery = "select p from Product p where p.productClass.mission.code = :missionCode";
+		if (null != productClass && 0 < productClass.length) {
+			jpqlQuery += " and p.productClass.productType in (";
+			for (int i = 0; i < productClass.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":productClass" + i;
 			}
-		} else {
-			// Find using search parameters
-			String jpqlQuery = "select p from Product p where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and p.productClass.mission.code = :missionCode";
+			jpqlQuery += ")";
+		}
+		if (null != startTimeFrom) {
+			jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
+		}
+		if (null != startTimeTo) {
+			jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != productClass && 0 < productClass.length) {
+			for (int i = 0; i < productClass.length; ++i) {
+				query.setParameter("productClass" + i, productClass[i]);
 			}
-			if (null != productClass && 0 < productClass.length) {
-				jpqlQuery += " and p.productClass.productType in (";
-				for (int i = 0; i < productClass.length; ++i) {
-					if (0 < i) jpqlQuery += ", ";
-					jpqlQuery += ":productClass" + i;
-				}
-				jpqlQuery += ")";
-			}
-			if (null != startTimeFrom) {
-				jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
-			}
-			if (null != startTimeTo) {
-				jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != productClass && 0 < productClass.length) {
-				for (int i = 0; i < productClass.length; ++i) {
-					query.setParameter("productClass" + i, productClass[i]);
-				}
-			}
-			if (null != startTimeFrom) {
-				query.setParameter("startTimeFrom",startTimeFrom.toInstant());
-			}
-			if (null != startTimeTo) {
-				query.setParameter("startTimeTo", startTimeTo.toInstant());
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof Product) {
-					result.add(ProductUtil.toRestProduct((Product) resultObject));
-				}
+		}
+		if (null != startTimeFrom) {
+			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
+		}
+		if (null != startTimeTo) {
+			query.setParameter("startTimeTo", startTimeTo.toInstant());
+		}
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof Product) {
+				result.add(ProductUtil.toRestProduct((Product) resultObject));
 			}
 		}
 		
@@ -279,6 +286,12 @@ public class ProductManager {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_MISSING, MSG_ID_PRODUCT_MISSING));
 		}
 
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.getMissionCode(), securityService.getMission()));			
+		}
+		
 		Product modelProduct = ProductUtil.toModelProduct(product);
 		
 		// Check metadata database for product with same characteristics
@@ -418,6 +431,12 @@ public class ProductManager {
 			throw new NoResultException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
 		}
 		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_PRODUCT_RETRIEVED, MSG_ID_PRODUCT_RETRIEVED, id);
 		
 		return ProductUtil.toRestProduct(modelProduct.get());
@@ -444,6 +463,12 @@ public class ProductManager {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
 		}
 		Product modelProduct = optModelProduct.get();
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
 		
 		// Make sure we are allowed to change the product (no intermediate update)
 		if (modelProduct.getVersion() != product.getVersion().intValue()) {
@@ -690,6 +715,12 @@ public class ProductManager {
 			throw new NoResultException(logError(MSG_PRODUCT_NOT_FOUND_BY_UUID, MSG_ID_PRODUCT_NOT_FOUND_BY_UUID, uuid));
 		}
 
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_PRODUCT_RETRIEVED_BY_UUID, MSG_ID_PRODUCT_RETRIEVED_BY_UUID, uuid);
 		
 		return ProductUtil.toRestProduct(product);

@@ -64,6 +64,7 @@ public class OrderControllerImpl implements OrderController {
 	 * @param order the Json object to create the order from
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the order after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 
@@ -75,6 +76,8 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(procOrderManager.createOrder(order), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}	
 	}
 	/**
@@ -88,7 +91,8 @@ public class OrderControllerImpl implements OrderController {
 	 * @param executionTimeFrom earliest order execution time
 	 * @param executionTimeTo latest order execution time
 	 * @return HTTP status "OK" and a list of products or
-	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
+	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date startTimeFrom,
@@ -103,13 +107,16 @@ public class OrderControllerImpl implements OrderController {
 							startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 	/**
 	 * Find the order with the given ID
 	 * 
 	 * @param id the ID to look for
-	 * @return a Json object corresponding to the found order and HTTP status "OK" or an error message and
+	 * @return HTTP status "OK" and a Json object corresponding to the found order or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND", if no orbit with the given ID exists
 	 */
 	@Override
@@ -121,14 +128,19 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 	/**
 	 * Delete an order by ID
 	 * 
 	 * @param the ID of the order to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the orbit did not
-	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @return a response entity with
+	 *         HTTP status "NO_CONTENT", if the deletion was successful, or
+	 *         HTTP status "NOT_FOUND" and an error message, if the orbit did not exist, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 *         HTTP status "NOT_MODIFIED" and an error message, if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteOrderById(Long id) {
@@ -140,17 +152,22 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
 	}
+	
 	/**
 	 * Update the order with the given ID with the attribute values of the given Json object. 
 	 * @param id the ID of the order to update
 	 * @param orbit a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the order after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no order with the given ID exists
+	 * @return a response containing
+	 *         HTTP status "OK" and a Json object corresponding to the order after modification (with ID and version for all 
+	 * 		   contained objects) or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */
 
 	// To be Tested
@@ -167,9 +184,8 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
-	
 	}
-	
-
 }

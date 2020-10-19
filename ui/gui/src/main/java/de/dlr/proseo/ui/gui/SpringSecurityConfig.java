@@ -19,10 +19,19 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 		SpringAuthenticationFilter authenticationFilter = new SpringAuthenticationFilter();
 		authenticationFilter.setAuthenticationManager(authenticationManagerBean());
 		authenticationFilter.setFilterProcessesUrl("/customlogin");
-		http.addFilter(authenticationFilter).authorizeRequests().antMatchers("/resources/**").permitAll().antMatchers("/background.jpg").permitAll()
-				.anyRequest().authenticated().and().formLogin().loginPage("/customlogin")
-				.failureUrl("/customlogin?error").permitAll().and().logout().logoutUrl("/logout")
-				.logoutSuccessUrl("/customlogin?logout").permitAll().and().csrf().disable();
+		http.addFilter(authenticationFilter)
+			.authorizeRequests()
+				.antMatchers("/resources/**").permitAll()
+				.antMatchers("/background.jpg").permitAll()
+				.anyRequest().authenticated()
+			.and()
+				.formLogin()
+					.loginPage("/customlogin")
+					.failureUrl("/customlogin?error").permitAll()
+			.and()
+				.logout()
+					.logoutUrl("/logout")
+					.logoutSuccessUrl("/customlogin?logout").permitAll().and().csrf().disable();
 	}
 
 	@Override

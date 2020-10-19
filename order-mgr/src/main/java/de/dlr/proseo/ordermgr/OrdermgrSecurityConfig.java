@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import de.dlr.proseo.model.enums.UserRole;
+
 /**
  * Security configuration for prosEO OrderManager module
  * 
@@ -50,9 +52,20 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 			.authorizeRequests()
 				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
-				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole("ROOT")
-				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole("ROOT")
-				.anyRequest().authenticated()
+				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
+				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
+				.antMatchers("/**/missions").hasAnyRole(UserRole.MISSION_MGR.toString())
+
+				.antMatchers(HttpMethod.GET, "/**/orders").hasAnyRole(UserRole.ORDER_READER.toString())
+				.antMatchers(HttpMethod.PATCH, "/**/orders/*").hasAnyRole(
+						UserRole.ORDER_MGR.toString(),
+						UserRole.ORDER_APPROVER.toString(),
+						UserRole.ORDER_PLANNER.toString())
+				.antMatchers(HttpMethod.DELETE, "/**/orders/*").hasAnyRole(UserRole.ORDER_MGR.toString())
+				.antMatchers("/**/orders").hasAnyRole(UserRole.ORDER_MGR.toString())
+
+				.antMatchers(HttpMethod.GET, "/**/orbits").hasAnyRole(UserRole.MISSION_READER.toString())
+				.antMatchers("/**/orbits").hasAnyRole(UserRole.MISSION_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
