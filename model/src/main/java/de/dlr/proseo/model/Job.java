@@ -33,6 +33,8 @@ import javax.persistence.Table;
 @Table(indexes = { @Index(unique = false, columnList = "jobState") })
 public class Job extends PersistentObject {
 	
+	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal job state transition from %s to %s";
+	
 	/** The processing order this job belongs to */
 	@ManyToOne
 	private ProcessingOrder processingOrder;
@@ -82,7 +84,28 @@ public class Job extends PersistentObject {
 	/**
 	 * Enumeration describing possible job states.
 	 */
-	public enum JobState { INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED }
+	public enum JobState {
+		INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED;
+		
+		public boolean isLegalTransition(JobState other) {
+			switch(this) {
+			case COMPLETED:
+				return false; // End state
+			case FAILED:
+				return other.equals(INITIAL);
+			case INITIAL:
+				return other.equals(RELEASED) || other.equals(FAILED);
+			case ON_HOLD:
+				return other.equals(INITIAL);
+			case RELEASED:
+				return other.equals(INITIAL) || other.equals(STARTED);
+			case STARTED:
+				return other.equals(ON_HOLD) || other.equals(COMPLETED) || other.equals(FAILED);
+			default:
+				return false;
+			}
+		}
+	}
 
 	/**
 	 * Gets the order this job belongs to
@@ -115,9 +138,15 @@ public class Job extends PersistentObject {
 	 * Sets the processing state of the job
 	 * 
 	 * @param jobState the jobState to set
+	 * @throws IllegalStateException if the intended job state transition is illegal
 	 */
-	public void setJobState(JobState jobState) {
-		this.jobState = jobState;
+	public void setJobState(JobState jobState) throws IllegalStateException {
+		if (null == this.jobState || this.jobState.equals(jobState) || this.jobState.isLegalTransition(jobState)) {
+			this.jobState = jobState;
+		} else {
+			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
+					this.jobState.toString(), jobState.toString()));
+		}
 	}
 
 	/**
