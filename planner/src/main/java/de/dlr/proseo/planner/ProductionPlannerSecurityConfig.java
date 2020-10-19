@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +21,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Planner module
@@ -46,10 +49,24 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 			.httpBasic()
-			.and()
+				.and()
 			.authorizeRequests()
-			// .regexMatchers("(?i).*/processingfacilities/[^/]+/finish/.*").permitAll()
-			.anyRequest().authenticated()
+				.antMatchers(HttpMethod.GET, "/**/orders").hasAnyRole(UserRole.ORDER_READER.toString())
+				.antMatchers("/**/orders/approve").hasAnyRole(UserRole.ORDER_APPROVER.toString())
+				.antMatchers(
+						"/**/orders/plan", "/**/orders/release",
+						"/**/orders/reset", "/**/orders/cancel",
+						"/**/orders/retry", "/**/orders/suspend")
+					.hasAnyRole(UserRole.ORDER_PLANNER.toString())
+				.antMatchers("/**/orders").hasAnyRole(UserRole.ORDER_MGR.toString())
+				.antMatchers(HttpMethod.GET, "/**/jobs", "/**/jobsteps").hasAnyRole(UserRole.ORDER_READER.toString())
+				.antMatchers("/**/jobs", "/**/jobsteps").hasAnyRole(UserRole.ORDER_PLANNER.toString())
+				.antMatchers("/**/processingfacilities/synchronize")
+					.hasAnyRole(UserRole.FACILITY_MGR.toString(), UserRole.ORDER_PLANNER.toString())
+				.antMatchers(HttpMethod.GET, "/**/processingfacilities").hasAnyRole(UserRole.FACILITY_READER.toString())
+				.antMatchers("/**/processingfacilities/*/finish").hasAnyRole(UserRole.JOBSTEP_PROCESSOR.toString())
+				.antMatchers("/**/product").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
+				.anyRequest().hasAnyRole(UserRole.ORDER_MGR.toString())
 			.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
