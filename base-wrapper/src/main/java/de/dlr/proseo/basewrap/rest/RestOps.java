@@ -37,7 +37,8 @@ public class RestOps {
 	 */
 	public static HttpResponseInfo restApiCall(String user, String pw, String endPoint, String endPointPath, String payLoad,
 			Map<String,String> queryParams, HttpMethod method) {
-		if (logger.isTraceEnabled()) logger.trace(">>> restApiCall({}, PWD, {}, {}, {}, {}, {}", user, endPoint, endPointPath, payLoad, queryParams.toString(), method.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> restApiCall({}, PWD, {}, {}, {}, {}, {}", user, endPoint, endPointPath,
+				payLoad, (null == queryParams ? "null" : queryParams.toString()), (null == method ? "null" : method.toString()));
 		
 		HttpResponseInfo responseInfo = new HttpResponseInfo();
 		Response response = null;
