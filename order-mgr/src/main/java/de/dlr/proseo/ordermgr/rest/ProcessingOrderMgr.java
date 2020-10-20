@@ -181,8 +181,9 @@ public class ProcessingOrderMgr {
 	 * @param order the Json object to create the order from
 	 * @return a Json object corresponding to the order after persistence (with ID and version for all contained objects)
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestOrder createOrder(RestOrder order) throws IllegalArgumentException {
+	public RestOrder createOrder(RestOrder order) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createOrder({})", (null == order ? "MISSING" : order.getIdentifier()));
 		
 		if (null == order) {
@@ -354,9 +355,10 @@ public class ProcessingOrderMgr {
 	 * 
 	 * @param the ID of the order to delete
 	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	public void deleteOrderById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteOrderById(Long id) throws EntityNotFoundException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrderById({})", id);
 
 		
@@ -390,8 +392,9 @@ public class ProcessingOrderMgr {
 	 * @return a Json object corresponding to the order found
 	 * @throws IllegalArgumentException if no order ID was given
 	 * @throws NoResultException if no order with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestOrder getOrderById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestOrder getOrderById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrderById({})", id);
 		
 		if (null == id) {
@@ -422,10 +425,11 @@ public class ProcessingOrderMgr {
 	 * @return a Json object corresponding to the product after modification (with ID and version for all contained objects)
 	 * @throws EntityNotFoundException if no product with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the order has been modified since retrieval by the client
 	 */
 	public RestOrder modifyOrder(Long id, RestOrder order) throws
-	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+	EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrder({})", id);
 		
 		if (null == id) {
@@ -795,11 +799,12 @@ public class ProcessingOrderMgr {
 	 * @param executionTimeTo latest order execution time
 	 * @return a list of orders
 	 * @throws NoResultException if no orders matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	
 	public List<RestOrder> getOrders(String mission, String identifier, String[] productclasses, @DateTimeFormat Date startTimeFrom,
 			@DateTimeFormat Date startTimeTo, @DateTimeFormat Date executionTimeFrom,
-			@DateTimeFormat Date executionTimeTo) {
+			@DateTimeFormat Date executionTimeTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrders({}, {}, {}, {}, {})", mission, identifier, productclasses, startTimeFrom, startTimeTo, executionTimeFrom, executionTimeTo);
 
 		if (null == mission) {

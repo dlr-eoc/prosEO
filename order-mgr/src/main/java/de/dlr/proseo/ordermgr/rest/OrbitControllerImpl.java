@@ -284,15 +284,7 @@ public class OrbitControllerImpl implements OrbitController {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
 		}
-		
-		// Ensure user is authorized for the mission to update
-		if (!securityService.isAuthorizedForMission(orbit.get(0).getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					orbit.get(0).getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
-		}
-		
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
 		List<RestOrbit> restOrbitList = null;
@@ -319,6 +311,13 @@ public class OrbitControllerImpl implements OrbitController {
 						updateOrbit.setStopTime(modelOrbit.getStopTime());
 						modelOrbit = updateOrbit;
 					}
+					
+					// Ensure user is authorized for the mission to update
+					if (!securityService.isAuthorizedForMission(modelOrbit.getSpacecraft().getMission().getCode())) {
+						throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+								modelOrbit.getSpacecraft().getMission().getCode(), securityService.getMission()));			
+					}
+					
 					modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
 					restOrbits.add(OrbitUtil.toRestOrbit(modelOrbit));
 				}
@@ -331,6 +330,9 @@ public class OrbitControllerImpl implements OrbitController {
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (SecurityException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		logger.info(String.format(MSG_ORBITS_CREATED, MSG_ID_ORBITS_CREATED, restOrbitList.size()));
@@ -399,14 +401,6 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<RestOrbit> modifyOrbit(Long id, @Valid RestOrbit orbit) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
 		
-		// Ensure user is authorized for the mission to update
-		if (!securityService.isAuthorizedForMission(orbit.getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					orbit.getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
-		}
-		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		RestOrbit restOrbit = null;
@@ -425,7 +419,17 @@ public class OrbitControllerImpl implements OrbitController {
 
 				//Adding spacecraft object to modelOrbit
 				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+				if (null == spacecraft) {
+					throw new IllegalArgumentException(String.format(
+							MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));
+				}
 				changedOrbit.setSpacecraft(spacecraft);
+				
+				// Ensure user is authorized for the mission to update
+				if (!securityService.isAuthorizedForMission(spacecraft.getMission().getCode())) {
+					throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+							spacecraft.getMission().getCode(), securityService.getMission()));			
+				}
 				
 				if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
 					orbitChanged = true;
@@ -461,6 +465,9 @@ public class OrbitControllerImpl implements OrbitController {
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (SecurityException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		logger.info(String.format(MSG_ORBIT_UPDATED, MSG_ID_ORBIT_UPDATED, restOrbit.getOrbitNumber()));
