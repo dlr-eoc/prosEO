@@ -52,7 +52,6 @@
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{version}">version</span></th>
                     <th><span th:text="#{name}">name</span></th>
                     <th colspan="2"><span th:text="#{description}">description</span></th>
                     <th><span th:text="#{facilityurl}">facilityurl</span></th>
@@ -61,7 +60,7 @@
               </tr>
               <tr>   
               <th>&nbsp;</th>           
-              <th colspan="2"><span th:text="#{storagemanagerurl}">storagemanagerurl</span></th>
+              <th><span th:text="#{storagemanagerurl}">storagemanagerurl</span></th>
               <th colspan="2"><span th:text="#{localstoragemanagerurl}">localstoragemanagerurl</span></th>
               <th><span th:text="#{storagetype}">storagetype</span></th>
               <th><span th:text="#{storagemanageruser}">storagemanageruser</span></th>
@@ -72,19 +71,22 @@
               <div th:each="facility : ${facilities}">
               <tr>
                 <td th:id="${facility?.name}" th:rowspan="2" class="first-row" th:text="${facility?.id}"></td>
-                <td class="first-row" th:text="${facility?.version}"></td>
                 <td class="first-row" th:text="${facility?.name}"></td>
                 <td colspan="2" class="first-row" th:text="${facility?.description}"></td>
                 <td class="first-row" th:text="${facility?.processingEngineUrl}"></td>
                 <td class="first-row" th:text="${facility?.processingEngineUser}"></td>
-                <td class="first-row" th:text="${facility?.processingEnginePassword}"></td>
+                <td class="first-row"><input th:id="'pepwdi' + ${facility?.id}" th:value="${facility?.processingEnginePassword}" type="password" readonly></input> <a 
+                  class="eye" th:id="'pepwda' + ${facility?.id}" th:onclick="'showPEPwd(' + ${facility?.id} + ')'"><span 
+                  data-feather="eye"></span></a></td>
               </tr>
               <tr>  
-                <td colspan="2" th:text="${facility?.storageManagerUrl}"></td>
+                <td th:text="${facility?.storageManagerUrl}"></td>
                 <td colspan="2" th:text="${facility?.localStorageManagerUrl}"></td>
                 <td th:text="${facility?.defaultStorageType}"></td>
                 <td th:text="${facility?.storageManagerUser}"></td>
-                <td th:text="${facility?.storageManagerPassword}"></td>
+                <td class="first-row"><input th:id="'smpwdi' + ${facility?.id}" th:value="${facility?.storageManagerPassword}" type="password" readonly></input> <a 
+                  class="eye" th:id="'smpwda' + ${facility?.id}" th:onclick="'showSMPwd(' + ${facility?.id} + ')'"><span 
+                  data-feather="eye"></span></a></td>
               </tr>
               </div>
             </tbody>
@@ -113,6 +115,30 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript">
+  function showPEPwd(id) {
+	  if (document.getElementById('pepwdi' + id).type == 'password' ) { 
+	    document.getElementById('pepwdi' + id).type = 'text';
+	    document.getElementById('pepwda' + id).innerHTML = '<span data-feather="eye-off"></span>';
+	    feather.replace();
+	  } else {
+		  document.getElementById('pepwdi' + id).type = 'password';
+	      document.getElementById('pepwda' + id).innerHTML = '<span data-feather="eye"></span>';
+	      feather.replace();
+	  }
+  };
+
+  function showSMPwd(id) {
+    if (document.getElementById('smpwdi' + id).type == 'password' ) { 
+      document.getElementById('smpwdi' + id).type = 'text';
+      document.getElementById('smpwda' + id).innerHTML = '<span data-feather="eye-off"></span>';
+      feather.replace();
+    } else {
+      document.getElementById('smpwdi' + id).type = 'password';
+        document.getElementById('smpwda' + id).innerHTML = '<span data-feather="eye"></span>';
+        feather.replace();
+    }
+  };
+
   function retrieveData() {
       showLoader();
     var tableRows = $("facilityTable").rows;
@@ -126,6 +152,7 @@
       method: "GET",
       success: function (res) {
           $("#facilitycontent").html(res);
+          feather.replace();
           scrollToHash();
           hideLoader();
       },

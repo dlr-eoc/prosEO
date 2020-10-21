@@ -101,7 +101,9 @@
                       <span th:text="#{duration}">duration</span>: <span th:text="${ord?.sliceDuration}">sliceDuration</span>, 
                       <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'">calendarday</td>
-                    <td th:text="${ord?.requestedProductClasses}"></td>
+                    <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                     <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
                   </tr>
                   <tr

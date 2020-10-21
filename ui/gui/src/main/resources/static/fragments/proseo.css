@@ -341,12 +341,23 @@ code {
   border-color: #c6c8ca;
   font-weight: 500 !important;  
 }
+
+.table .th-row th {
+  color: #1b1e21;
+  background-color: #ececec;
+  border-color: #c6c8ca;
+  font-weight: 500 !important;  
+}
   
 .table .thead-proseo-order th {
   color: #1b1e21;
   background-color: #d6d8d9;
   border-color: #c6c8ca;
   font-weight: 500 !important;  
+}
+
+.table-inline {
+  margin: 0 !important;
 }
 
 .proseo-list-item + .proseo-list-item::before {
@@ -423,4 +434,21 @@ code {
 .proseo-top-div {
   height: 55px;
   width: 100%;
+}
+
+.eye:hover {
+  cursor: pointer;
+}
+
+.no-right-border {  
+  border-right: 0 !important;
+}
+.no-left-border {  
+  border-left: 0 !important;
+}
+
+.tr-rowspan {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  background-color:  transparent !important;
 }
