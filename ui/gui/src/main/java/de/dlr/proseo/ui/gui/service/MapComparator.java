@@ -3,17 +3,20 @@ package de.dlr.proseo.ui.gui.service;
 import java.util.Comparator;
 import java.util.HashMap;
 
-public class OrderComparator implements Comparator {
+public class MapComparator implements Comparator<Object> {
 
-	String key = "id";
+	private static final String MAPKEY_ID = "id";
+
+	String key = MAPKEY_ID;
 	
 	Boolean up = true;
 	
 	/**
-	 * @param key
-	 * @param up
+	 * Constructor with key and "up" arguments
+	 * @param key the key to look for in compared hash maps
+	 * @param up true, if the comparison is to be made in ascending order, false otherwise
 	 */
-	public OrderComparator(String key, Boolean up) {
+	public MapComparator(String key, Boolean up) {
 		this.key = key;
 		this.up = up;
 	}
@@ -21,8 +24,8 @@ public class OrderComparator implements Comparator {
 	@Override
 	public int compare(Object o1, Object o2) {
 		if ((o1 instanceof HashMap) && (o2 instanceof HashMap)) {
-			HashMap h1 = (HashMap) o1;
-			HashMap h2 = (HashMap) o2;
+			HashMap<?, ?> h1 = (HashMap<?, ?>) o1;
+			HashMap<?, ?> h2 = (HashMap<?, ?>) o2;
 			if (h1.get(key) != null && h2.get(key) != null) {
 				if (h1.get(key) instanceof Integer) {
 					Integer v1 = (Integer) h1.get(key);

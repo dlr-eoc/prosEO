@@ -202,6 +202,11 @@ public class KubeJob {
 		
 		
 	}
+	/**
+	 * Instantiate a Kubernetes job with ID and Job Order file name
+	 * @param jsId the job ID
+	 * @param jobOrderFN the Job Order file name
+	 */
 	public KubeJob (Long jsId, String jobOrderFN) {
 		
 		jobOrderFileName = jobOrderFN;

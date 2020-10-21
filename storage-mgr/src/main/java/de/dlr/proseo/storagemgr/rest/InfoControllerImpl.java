@@ -18,7 +18,7 @@ import de.dlr.proseo.storagemgr.rest.model.RestInfo;
  *
  */
 @Component
-public class InfoControllerImpl implements InfoController{
+public class InfoControllerImpl implements InfoController {
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -26,7 +26,7 @@ public class InfoControllerImpl implements InfoController{
 	/**
 	 * Set information with configuration settings.
 	 * 
-	 * @return RestInfo
+	 * @return a response entity with the requested information
 	 */
 	@Override
 	public ResponseEntity<RestInfo> getRestInfo() {

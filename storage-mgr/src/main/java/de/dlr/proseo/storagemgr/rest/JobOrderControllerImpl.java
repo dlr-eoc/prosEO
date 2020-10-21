@@ -142,9 +142,9 @@ public class JobOrderControllerImpl implements JoborderController {
 	}
 
 	/**
-	 * Retrieve contents of file named pathInfo as base64 string.
+	 * Retrieve contents of file as base64 string.
 	 * 
-	 * @param pathInfo
+	 * @param pathInfo the path to the file to retrieve
 	 * @return Base64 coded String
 	 */
 	@Override

@@ -26,6 +26,18 @@
 	</properties>
 
 	<dependencies>
+	    <!-- Only for (unnecessary, but unavoidable) javadoc of generated DummyController -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.phoenixnap.oss</groupId>
+            <artifactId>springmvc-raml-plugin</artifactId>
+            <version>${raml-plugin-version}</version>
+            <type>maven-plugin</type>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -57,7 +69,7 @@
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
 					<basePackage>${raml-base-package}.rest</basePackage>
-					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.SpringFeignClientInterfaceRule</rule>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerStubRule</rule>
 				</configuration>
 				<executions>
 					<execution>

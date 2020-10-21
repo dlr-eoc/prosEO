@@ -29,7 +29,7 @@ import org.springframework.web.servlet.ModelAndView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.OrderComparator;
+import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.OrderService;
 import reactor.core.publisher.Mono;
 
@@ -38,6 +38,8 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 
 @Controller
 public class GUIOrderController extends GUIBaseController {
+	private static final String MAPKEY_ID = "id";
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIOrderController.class);
 	
@@ -92,17 +94,14 @@ public class GUIOrderController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(orderList -> {
 					orders.addAll(orderList);
-					String key = "id";
+					String key = MAPKEY_ID;
 					if (sortby != null) {
-						if (sortby.contentEquals("identifier") || sortby.contentEquals("id") || sortby.contentEquals("orderState")) {
+						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID) || sortby.contentEquals("orderState")) {
 							key = sortby;
 						}
 					}
-					Boolean dir = true;
-					if (up != null) {
-						dir = up;
-					}
-					OrderComparator oc = new OrderComparator(key, dir);
+					Boolean direction = (null == up ? true : up);
+					MapComparator oc = new MapComparator(key, direction);
 					orders.sort(oc);
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
@@ -126,7 +125,7 @@ public class GUIOrderController extends GUIBaseController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-state/post")
 	public DeferredResult<String> setState(
-			@RequestParam(required = true, value = "id") String id, 
+			@RequestParam(required = true, value = MAPKEY_ID) String id, 
 			@RequestParam(required = true, value = "state") String state,
 			@RequestParam(required = false, value = "facility") String facility,
 			Model model) {
@@ -212,7 +211,7 @@ public class GUIOrderController extends GUIBaseController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order/get")
 	public DeferredResult<String> getId(
-			@RequestParam(required = true, value = "id") String id,
+			@RequestParam(required = true, value = MAPKEY_ID) String id,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);

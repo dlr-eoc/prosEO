@@ -419,7 +419,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	 * @param uriInfo information of a parsed OData URI
 	 * @param responseFormat requested content type after content negotiation
 	 * @throws ODataApplicationException if the service implementation encounters a failure
-	 * @throws ODataLibraryException
+	 * @throws ODataLibraryException if the Olingo OData library detects an error
 	 */
 	@Override
 	public void readEntityCollection(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)

@@ -193,10 +193,10 @@ public class JobDispatcher {
 
 
 	/**
-	 * Add input file definition of product p recursively.
-	 * @param p Product
-	 * @param proc The Ipf_Proc
-	 * @param jobStep Job step
+	 * Add input file definition of products recursively.
+	 * @param productClasses a map of products accessible by product class
+	 * @param proc the Ipf_Proc element to add the input to
+	 * @param jobStep the job step, for which the Job Order is generated
 	 */
 	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {})", proc.getTaskName(), jobStep.getId());

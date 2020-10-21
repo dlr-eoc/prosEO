@@ -71,7 +71,7 @@ public class ProductionInterfaceSecurity {
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
 	 * @param messageId a (unique) message id
 	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
+	 * @return a formatted info message
 	 */
 	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
@@ -106,7 +106,7 @@ public class ProductionInterfaceSecurity {
 	/**
 	 * Parse an HTTP authentication header into mission, username and password and set the respective thread-local attributes
 	 * 
-	 * @param authHeader the authentication header to parse, expected format: "Basic base64(mission&bsol;username:password)"
+	 * @param authHeader the authentication header to parse, expected format: "Basic base64(mission&#92;username:password)"
 	 * @throws IllegalArgumentException if the authentication header cannot be parsed into the three parts expected
 	 */
 	public void parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
@@ -137,7 +137,6 @@ public class ProductionInterfaceSecurity {
 	 * Log in to prosEO
 	 * 
 	 * @param request the HTTP request containing the authentication header
-	 * @return true, if the login was successful, false otherwise
 	 * @throws SecurityException if the login failed for any reason
 	 */
 	public void doLogin(HttpServletRequest request) throws SecurityException {
@@ -227,6 +226,7 @@ public class ProductionInterfaceSecurity {
 	/**
 	 * Checks whether the logged in user has the given role
 	 * 
+	 * @param role the user role to check
 	 * @return true, if the respective authority was granted, false otherwise
 	 */
 	public boolean hasRole(UserRole role) {

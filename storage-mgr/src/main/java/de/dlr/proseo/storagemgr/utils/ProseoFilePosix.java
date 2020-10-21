@@ -38,7 +38,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 * 
 	 * @param pathInfo The file path
 	 * @param fullPath Use it as full path if true, otherwise use default bucket + path info
-	 * @param cfg
+	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFilePosix(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		this.cfg = cfg;
@@ -98,7 +98,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 * 
 	 * @param bucket The bucket
 	 * @param pathInfo The relative path
-	 * @param cfg
+	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		String aPath = pathInfo.trim();

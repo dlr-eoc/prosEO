@@ -80,7 +80,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
 	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
 	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
-	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
+//	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = 2121;
 	private static final int MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED = 2122;
 	private static final int MSG_ID_PRODUCT_CLASS_ID_MISSING = 2123;
@@ -119,7 +119,7 @@ public class ProductClassManager {
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with ID %d not found";
-	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
+//	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s and product type %s";
 	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
@@ -725,7 +725,7 @@ public class ProductClassManager {
      * Get the simple selection rules as formatted string, optionally selected by source class
      * 
      * @param id the database ID of the product class to get the selection rule from
-     * @param sourceclass the prosEO product type of the source class, from which the product class can be generated (may be null)
+     * @param sourceClass the prosEO product type of the source class, from which the product class can be generated (may be null)
      * @return a list of strings describing the selection rules for all configured processors
 	 * @throws NoResultException if no simple selection rules matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
@@ -785,7 +785,7 @@ public class ProductClassManager {
      * Create a selection rule using Rule Language
      * 
      * @param id the database ID of the product class
-     * @param selectionRuleString a Json representation of a selection rule in Rule Language
+     * @param selectionRuleStrings a Json representation of a selection rule in Rule Language
      * @return a Json object representing the simple selection rule created and HTTP status CREATED
 	 * @throws IllegalArgumentException if any of the input data was invalid
      * @throws SecurityException if a cross-mission data access was attempted
@@ -1201,6 +1201,7 @@ public class ProductClassManager {
      * @param configuredProcessor the name of the configured processor to remove from the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
+     * @return the Json representation of the modified selection rule
      * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
      * @throws IllegalArgumentException if the product class ID, the selection rule ID or the name of the configured processor were not given
      * @throws SecurityException if a cross-mission data access was attempted

@@ -77,7 +77,6 @@ public class ProductQueryController {
 	 * @param request the HTTP request
 	 * @param response the HTTP response
 	 * @throws ServletException on any unforeseen runtime exception
-	 * @throws IOException 
 	 */
 	@RequestMapping(value = "/**")
 	protected void service(final HttpServletRequest request, HttpServletResponse response) throws ServletException {

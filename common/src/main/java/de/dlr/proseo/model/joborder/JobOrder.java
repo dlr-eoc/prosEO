@@ -34,15 +34,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author melchinger
- *
- * IPF_Job_Order information
+ * Ipf_Job_Order information
  * 
  * For details see 
  * Generic IPF Interface Specification
  * issue 1 revision 8 - 03/08/2009
  * MMFI-GSEG-EOPG-TN-07-0003
  *  
+ * @author melchinger
  */
 public class JobOrder {
 	
@@ -59,61 +58,72 @@ public class JobOrder {
 	private String fileName;
 
 	/**
-	 * The IPF_Conf part of the Job Order
+	 * The Ipf_Conf part of the Job Order
 	 */
 	private Conf conf;
+	
 	/**
-	 * The list of processors
+	 * The list of processors (List_of_Ipf_Procs element)
 	 */
-	private List<Proc> listOfProcs;
+	private List<Proc> listOfProcs = new ArrayList<Proc>();
 
 	/**
+	 * Gets the Job Order file name
 	 * @return the fileName
 	 */
 	public String getFileName() {
 		return fileName;
 	}
+	
 	/**
-	 * @param fileName the fileName to set
+	 * Sets the Job Order file name
+	 * @param fileName the file name to set
 	 */
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
 	}
 	
 	/**
-	 * @return the conf
+	 * Gets the Conf Job Order element
+	 * @return the Job Order configuration
 	 */
 	public Conf getConf() {
 		return conf;
 	}
+	
 	/**
-	 * @param conf the conf to set
+	 * Sets the Conf Job Order element
+	 * @param conf the Job Order configuration to set
 	 */
 	public void setConf(Conf conf) {
 		this.conf = conf;
 	}
+	
 	/**
-	 * @return the listOfProcs
+	 * Gets the List_of_Ipf_Procs element
+	 * @return the list of processors
 	 */
 	public List<Proc> getListOfProcs() {
 		return listOfProcs;
 	}
 	
 	/**
-	 * @param conf
+	 * Constructor with Ipf_Conf argument
+	 * @param conf the Job Order configuration to set
 	 */
 	public JobOrder(Conf conf) {
 		this.conf = conf;
-		this.listOfProcs = new ArrayList<Proc>();
 	}
-	public JobOrder() {
-		this.listOfProcs = new ArrayList<Proc>();
-	}
+	
+	/**
+	 * No-argument constructor
+	 */
+	public JobOrder() { }
 	
 	/**
 	 * Build XML tree and write it to file named fileName.
 	 * @param fileName the file name
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return true after success, else false
 	 */
 	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
@@ -133,6 +143,11 @@ public class JobOrder {
 		return true;
 	}
 
+	/**
+	 * Create a Base64-coded string from the XML representation of this Job Order
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
+	 * @return the Base64-coded string
+	 */
 	public String buildBase64String(Boolean prosEOAttributes) {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -1,3 +1,6 @@
+/**
+ * InputOutput.java
+ */
 package de.dlr.proseo.model.joborder;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,7 +148,7 @@ public class InputOutput {
 	 * Create an Input/Output element of the given type
 	 * 
 	 * @param type the input/output type (either 'Input' or 'Output')
-	 * @throws IllegalArgumentException
+	 * @throws IllegalArgumentException if the given type is not correct
 	 */
 	public InputOutput(String type) throws IllegalArgumentException {
 		if (IO_TYPE_INPUT.equals(type) || IO_TYPE_OUTPUT.equals(type)) {
@@ -181,7 +184,7 @@ public class InputOutput {
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element ioEle = doc.createElement(type);

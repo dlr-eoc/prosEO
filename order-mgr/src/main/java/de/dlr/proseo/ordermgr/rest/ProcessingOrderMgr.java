@@ -353,7 +353,7 @@ public class ProcessingOrderMgr {
 	/**
 	 * Delete an order by ID
 	 * 
-	 * @param the ID of the order to delete
+	 * @param id the ID of the order to delete
 	 * @throws EntityNotFoundException if the order to delete does not exist in the database
      * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws RuntimeException if the deletion was not performed as expected
@@ -792,7 +792,8 @@ public class ProcessingOrderMgr {
 	 * selection is restricted to the mission the current user is logged in to
 	 * 
 	 * @param mission the mission code
-	 * @param productClass an array of product types
+	 * @param identifier the order identifier
+	 * @param productclasses an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
 	 * @param executionTimeFrom earliest order execution time

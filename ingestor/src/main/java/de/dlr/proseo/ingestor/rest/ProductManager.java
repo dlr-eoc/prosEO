@@ -166,12 +166,13 @@ public class ProductManager {
 	/**
 	 * Delete a product by ID
 	 * 
-	 * @param the ID of the product to delete
+	 * @param id the ID of the product to delete
 	 * @throws EntityNotFoundException if the product to delete does not exist in the database
 	 * @throws IllegalStateException if the product to delete still as files at some Processing Facility
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	public void deleteProductById(Long id) throws EntityNotFoundException, IllegalStateException, RuntimeException {
+	public void deleteProductById(Long id) throws EntityNotFoundException, IllegalStateException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductById({})", id);
 		
 		// Test whether the product id is valid
@@ -212,9 +213,10 @@ public class ProductManager {
 	 * @param startTimeTo latest sensing start time
 	 * @return a list of products
 	 * @throws NoResultException if no products matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestProduct> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo) throws NoResultException {
+			Date startTimeFrom, Date startTimeTo) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
 		if (null == mission) {
@@ -278,8 +280,9 @@ public class ProductManager {
 	 * @param product the Json object to create the product from
 	 * @return a Json object corresponding to the product after persistence (with ID and version for all contained objects)
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProduct createProduct(RestProduct product) throws IllegalArgumentException {
+	public RestProduct createProduct(RestProduct product) throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProduct({})", (null == product ? "MISSING" : product.getProductClass()));
 		
 		if (null == product) {
@@ -417,8 +420,9 @@ public class ProductManager {
 	 * @return a Json object corresponding to the product found
 	 * @throws IllegalArgumentException if no product ID was given
 	 * @throws NoResultException if no product with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 		
 		if (null == id) {
@@ -452,9 +456,10 @@ public class ProductManager {
 	 * @throws EntityNotFoundException if no product with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws ConcurrentModificationException if the product has been modified since retrieval by the client
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public RestProduct modifyProduct(Long id, RestProduct product) throws
-				EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+				EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProduct({})", id);
 		
 		Optional<Product> optModelProduct = RepositoryService.getProductRepository().findById(id);
@@ -693,8 +698,9 @@ public class ProductManager {
 	 * @return a Json object corresponding to the product found
 	 * @throws IllegalArgumentException if no or an invalid product UUID was given
 	 * @throws NoResultException if no product with the given UUID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProduct getProductByUuid(String uuid) throws IllegalArgumentException, NoResultException {
+	public RestProduct getProductByUuid(String uuid) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductByUuid({})", uuid);
 		
 		// Check input parameter

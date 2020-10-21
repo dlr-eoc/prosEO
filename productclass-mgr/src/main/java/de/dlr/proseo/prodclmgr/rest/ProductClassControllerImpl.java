@@ -190,7 +190,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * Get the simple selection rules as formatted string, optionally selected by source class
      * 
      * @param id the database ID of the product class to get the selection rule from
-     * @param sourceclass the prosEO product type of the source class, from which the product class can be generated (may be null)
+     * @param sourceClass the prosEO product type of the source class, from which the product class can be generated (may be null)
 	 * @return HTTP status "OK" and a list of strings describing the selection rules for all configured processors or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no selection rules matching the search criteria were found
@@ -212,7 +212,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * Create a selection rule using Rule Language
      * 
      * @param id the database ID of the product class
-     * @param selectionRuleString a Json representation of a selection rule in Rule Language
+     * @param selectionRuleStrings a Json representation of a selection rule in Rule Language
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the selection rule after persistence
 	 *             (with ID and version for all contained objects) or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or

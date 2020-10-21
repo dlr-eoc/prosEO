@@ -10,7 +10,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * Time interval for input elements
+ * Time interval for input elements (Time_Interval Job Order element)
  * (note that in contrast to IpfFileName, file names in time intervals do not carry the FSType attribute)
  * 
  * For details see 
@@ -22,24 +22,28 @@ import org.w3c.dom.Node;
  */
 public class TimeInterval {
 	/**
-	 * The start time
+	 * The start time (Start element)
 	 */
 	private String start;
 	/**
-	 * The stop time
+	 * The stop time (Stop element)
 	 */
 	private String stop;
 	/**
-	 * The file name
+	 * The name of the file applicable for this time interval (File_Name element)
 	 */
 	private String fileName;
 
-	public TimeInterval() {
-		
-	}
 	/**
-	 * @param start
-	 * @param stop
+	 * No-argument constructor
+	 */
+	public TimeInterval() { }
+	
+	/**
+	 * Constructor with time interval start/stop times and file name
+	 * @param start the interval start time to set
+	 * @param stop the interval stop time to set
+	 * @param fileName the file name to set
 	 */
 	public TimeInterval(String start, String stop, String fileName) {
 		this.start = start;
@@ -48,37 +52,43 @@ public class TimeInterval {
 	}
 
 	/**
-	 * @return the start
+	 * Gets the time interval start
+	 * @return the interval start time
 	 */
 	public String getStart() {
 		return start;
 	}
 	/**
-	 * @param start the start to set
+	 * Sets the time interval start
+	 * @param start the interval start time to set
 	 */
 	public void setStart(String start) {
 		this.start = start;
 	}
 	/**
-	 * @return the stop
+	 * Gets the time interval end
+	 * @return the interval stop time
 	 */
 	public String getStop() {
 		return stop;
 	}
 	/**
-	 * @param stop the stop to set
+	 * Sets the time interval end
+	 * @param stop the interval stop time to set
 	 */
 	public void setStop(String stop) {
 		this.stop = stop;
 	}
 	/**
-	 * @return the fileName
+	 * Gets the file name
+	 * @return the file name
 	 */
 	public String getFileName() {
 		return fileName;
 	}
 	/**
-	 * @param fileName the fileName to set
+	 * Sets the file name
+	 * @param fileName the file name to set
 	 */
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
@@ -88,7 +98,7 @@ public class TimeInterval {
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element timeIntervalEle = doc.createElement("Time_Interval");

@@ -57,7 +57,7 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Delete a product by ID
 	 * 
-	 * @param the ID of the product to delete
+	 * @param id the ID of the product to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product did not exist, or
 	 *         HTTP status "BAD_REQUEST", if the product still has files at some Processing Facility, or
