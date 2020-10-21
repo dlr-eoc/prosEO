@@ -94,7 +94,7 @@
                         class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
                       <th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
                         class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
-                      <th><span th:text="#{orbit}">orbit</span></th>
+                      <th><span th:text="#{startstoptime}">startstoptime</span></th>
                       <th><span th:text="#{product}">product</span></th>
                       <th><span>&nbsp;</span></th>
                     </tr>
@@ -120,7 +120,7 @@
                       <td><a th:href="'/order?id=' + ${ord?.id}"
                           th:text="${ord?.identifier}"></a></td>
                       <td th:text="${ord?.orderState}"></td>
-                      <td th:text="${ord?.orbits}"></td>
+                      <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                       <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
