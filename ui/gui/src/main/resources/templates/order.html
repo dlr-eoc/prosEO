@@ -54,9 +54,8 @@
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
                     <th><span th:text="#{state}">state</span></th>
+                    <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{slicing}">slicing</span></th>
                     <th><span th:text="#{product}">product</span></th>
                     <th><span>&nbsp;</span></th>
@@ -64,7 +63,6 @@
                   <tr>
                     <th><span>&nbsp;</span></th>
                     <th><span th:text="#{uuid}">uuid</span></th>
-                    <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{processingtype}">productiontype</span></th>
                     <th><span th:text="#{startstoptime}">startstoptime</span></th>
@@ -78,21 +76,12 @@
                   <!--          table-warning  - light sand -->
                   <!--          table-success  - light green -->
                   <tr
-                    th:id="${ord?.id}"
-                    th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-                    ? 'table-danger' 
-                    : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-                    ? 'table-success' 
-                    : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-                    ? 'table-info' 
-                    : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-                    ? 'table-warning' 
-                    : 'table-danger')))">
+                    th:id="${ord?.id}">
                     <td th:text="${ord?.id}"></td>
                     <td id="order-name" th:text="${ord?.identifier}"></td>
-                    <td th:text="${ord?.version}"></td>
-                    <td th:text="${ord?.missionCode}"></td>
-                    <td th:text="${ord?.orderState}"></td>
+                    <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}" 
+                        th:text="${ord?.orderState}"></td>
+                    <td th:text="${ord?.outputFileClass}"></td>
                     <td th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
                           <span th:text="#{spacecraft}">spacecraft</span> <span th:text="${orb?.spacecraftCode}">spacecraftCode</span>, 
                           <span th:text="${orb?.orbitNumberFrom}">orbitNumberFrom</span> &ndash; <span th:text="${orb?.orbitNumberTo}">orbitNumberTo</span>, 
@@ -107,19 +96,9 @@
                     <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
                   </tr>
                   <tr
-                    th:id="${ord?.id}"
-                    th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-                    ? 'table-danger' 
-                    : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-                    ? 'table-success' 
-                    : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-                    ? 'table-info' 
-                    : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-                    ? 'table-warning' 
-                    : 'table-danger')))">
+                    th:id="${ord?.id}">
                     <td>&nbsp;</td>
                     <td th:text="${ord?.uuid}"></td>
-                    <td th:text="${ord?.outputFileClass}"></td>
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
                     <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>

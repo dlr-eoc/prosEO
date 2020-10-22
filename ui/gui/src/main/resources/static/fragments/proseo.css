@@ -452,3 +452,39 @@ code {
   border-bottom: 0 !important;
   background-color:  transparent !important;
 }
+
+.INITIAL {
+  background-color: #ffeeba !important;
+}
+
+.APPROVED {
+  background-color: #ffeeba !important;
+}
+
+.PLANNED {
+  background-color: #ffeeba !important;
+}
+
+.RELEASED {
+  background-color: #ffeeba !important;
+}
+
+.RUNNING {
+  background-color: #c3e6cb !important;
+}
+
+.SUSPENDING {
+  background-color: #c3e6cb !important;
+}
+
+.COMPLETED {
+  background-color: #bee5eb !important;
+}
+
+.CLOSED {
+  background-color: #bee5eb !important;
+}
+
+.FAILED {
+  background-color: #f5c6cb !important;
+}
