@@ -3,11 +3,11 @@
 
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
-		<artifactId>samples</artifactId>
+		<artifactId>proseo-samples</artifactId>
 		<version>0.5.2</version>
 	</parent>
 
-	<artifactId>sample-wrapper</artifactId>
+	<artifactId>proseo-sample-wrapper</artifactId>
 	<name>prosEO Sample Processor Wrapper</name>
 	<description>
 	   prosEO Sample Wrapper - dummy wrapper as an example of how to extend the BaseWrapper class for the Sample Processor
@@ -33,7 +33,7 @@
 		</dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
-			<artifactId>base-wrapper</artifactId>
+			<artifactId>proseo-base-wrapper</artifactId>
 			<version>0.5.2</version>
 		</dependency>
 	</dependencies>

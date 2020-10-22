@@ -21,6 +21,7 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
@@ -58,7 +60,11 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2363;
 	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2364;
 	private static final int MSG_ID_DUPLICATE_CONFPROC_ID = 2365;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_DATA_MISSING = 2366;
+	
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) No configured processors found for mission %s, identifier %s, processor name %s, processor version %s and configuration version %s";
@@ -71,6 +77,7 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configured processor with ID %d has been modified since retrieval by the client";
 	private static final String MSG_DUPLICATE_CONFPROC_UUID = "(E%d) Duplicate configured processor UUID %s";
 	private static final String MSG_DUPLICATE_CONFPROC_ID = "(E%d) Duplicate configured processor identifier %s";
+	private static final String MSG_CONFIGURED_PROCESSOR_DATA_MISSING = "(E%d) Data for configured processor not set";
 
 	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, identifier %s, processor name %s, processor version %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -78,6 +85,13 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_CONFIGURED_PROCESSOR_MODIFIED = "(I%d) Configured processor with id %d modified";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_MODIFIED = "(I%d) Configured processor with id %d not modified (no changes)";
 	private static final String MSG_CONFIGURED_PROCESSOR_DELETED = "(I%d) Configured processor with id %d deleted";
+
+	// Same as in other services
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -137,18 +151,27 @@ public class ConfiguredProcessorManager {
 	 * @param uuid the UUID of the configured processor
 	 * @return a list of Json objects representing configured processors satisfying the search criteria
 	 * @throws NoResultException if no configured processors matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguredProcessor> getConfiguredProcessors(String mission, String identifier,
-			String processorName, String processorVersion, String configurationVersion, String uuid) throws NoResultException {
+			String processorName, String processorVersion, String configurationVersion, String uuid)
+					throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessors({}, {}, {}, {}, {}, {})", 
 				mission, identifier, processorName, processorVersion, configurationVersion, uuid);
 		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
+		
 		List<RestConfiguredProcessor> result = new ArrayList<>();
 		
-		String jpqlQuery = "select c from ConfiguredProcessor c where 1 = 1";
-		if (null != mission) {
-			jpqlQuery += " and c.processor.processorClass.mission.code = :missionCode";
-		}
+		String jpqlQuery = "select c from ConfiguredProcessor c where c.processor.processorClass.mission.code = :missionCode";
 		if (null != identifier) {
 			jpqlQuery += " and c.identifier = :identifier";
 		}
@@ -165,9 +188,7 @@ public class ConfiguredProcessorManager {
 			jpqlQuery += " and c.uuid = :uuid";
 		}
 		Query query = em.createQuery(jpqlQuery);
-		if (null != mission) {
-			query.setParameter("missionCode", mission);
-		}
+		query.setParameter("missionCode", mission);
 		if (null != identifier) {
 			query.setParameter("identifier", identifier);
 		}
@@ -205,12 +226,21 @@ public class ConfiguredProcessorManager {
      * @param configuredProcessor a Json representation of the new configured processor
 	 * @return a Json representation of the configured processor after creation (with ID and version number)
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestConfiguredProcessor createConfiguredProcessor(@Valid RestConfiguredProcessor configuredProcessor) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguredProcessor({})", (null == configuredProcessor ? "MISSING" : configuredProcessor.getProcessorName()));
+	public RestConfiguredProcessor createConfiguredProcessor(@Valid RestConfiguredProcessor configuredProcessor)
+			throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguredProcessor({})",
+				(null == configuredProcessor ? "MISSING" : configuredProcessor.getProcessorName()));
 
 		if (null == configuredProcessor) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_MISSING, MSG_ID_CONFIGURED_PROCESSOR_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the configured processor
+		if (!securityService.isAuthorizedForMission(configuredProcessor.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					configuredProcessor.getMissionCode(), securityService.getMission()));			
 		}
 		
 		ConfiguredProcessor modelConfiguredProcessor = ConfiguredProcessorUtil.toModelConfiguredProcessor(configuredProcessor);
@@ -273,8 +303,10 @@ public class ConfiguredProcessorManager {
 	 * @return a Json object corresponding to the configured processor found
 	 * @throws IllegalArgumentException if no configured processor ID was given
 	 * @throws NoResultException if no configured processor with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestConfiguredProcessor getConfiguredProcessorById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestConfiguredProcessor getConfiguredProcessorById(Long id)
+			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfiguredProcessorById({})", id);
 		
 		if (null == id) {
@@ -287,6 +319,12 @@ public class ConfiguredProcessorManager {
 			throw new NoResultException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
 		}
 
+		// Ensure user is authorized for the mission of the configured processor
+		if (!securityService.isAuthorizedForMission(modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_CONFIGURED_PROCESSOR_RETRIEVED, MSG_ID_CONFIGURED_PROCESSOR_RETRIEVED, id);
 		
 		return ConfiguredProcessorUtil.toRestConfiguredProcessor(modelConfiguredProcessor.get());
@@ -301,15 +339,25 @@ public class ConfiguredProcessorManager {
 	 * 		   contained objects)
 	 * @throws EntityNotFoundException if no configured processor with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the configured processor has been modified since retrieval by the client
 	 */
 	public RestConfiguredProcessor modifyConfiguredProcessor(Long id, @Valid RestConfiguredProcessor configuredProcessor) throws
-			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+			EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguredProcessor({}, {})", id, (null == configuredProcessor ? "MISSING" : configuredProcessor.getIdentifier()));
 
 		// Check arguments
 		if (null == id) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_ID_MISSING, MSG_ID_CONFIGURED_PROCESSOR_ID_MISSING, id));
+		}
+		if (null == configuredProcessor) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_DATA_MISSING, MSG_ID_CONFIGURED_PROCESSOR_DATA_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the configured processor
+		if (!securityService.isAuthorizedForMission(configuredProcessor.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					configuredProcessor.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<de.dlr.proseo.model.ConfiguredProcessor> optConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findById(id);
@@ -390,9 +438,10 @@ public class ConfiguredProcessorManager {
 	 * 
 	 * @param id the ID of the configured processor to delete
 	 * @throws EntityNotFoundException if the configured processor to delete does not exist in the database
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 */
-	public void deleteConfiguredProcessorById(Long id) throws EntityNotFoundException, RuntimeException {
+	public void deleteConfiguredProcessorById(Long id) throws EntityNotFoundException, SecurityException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfiguredProcessorById({})", id);
 
 		// Check arguments
@@ -404,6 +453,12 @@ public class ConfiguredProcessorManager {
 		
 		if (modelConfiguredProcessor.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_CONFIGURED_PROCESSOR_ID_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the configured processor
+		if (!securityService.isAuthorizedForMission(modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Delete the configured processor

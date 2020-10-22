@@ -41,13 +41,23 @@ import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Evaluation of OData expressions
+ *  
+ * @author Dr. Thomas Bassler
+ */
 public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 
+	/** The entity, for which this object was created */
 	private Entity currentEntity;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEdmProvider.class);
 
+	/**
+	 * Constructor with entity reference argument
+	 * @param currentEntity the entity, to which this object belongs
+	 */
 	public FilterExpressionVisitor(Entity currentEntity) {
 		this.currentEntity = currentEntity;
 	}
@@ -229,6 +239,15 @@ public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 		}
 	}
 
+	/**
+	 * Evaluation of a boolean expression
+	 * 
+	 * @param operator the boolean operator to apply
+	 * @param left the left hand side of the expression
+	 * @param right the right hand side of the expression
+	 * @return the Boolean result of the expression evaluation
+	 * @throws ODataApplicationException if an operand of a type other than Boolean was passed 
+	 */
 	private Object evaluateBooleanOperation(BinaryOperatorKind operator, Object left, Object right)
 			throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> evaluateBooleanOperation({}, {}, {})", operator, left, right);
@@ -251,6 +270,15 @@ public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 		}
 	}
 
+	/**
+	 * Evaluation of a comparison expression
+	 * 
+	 * @param operator the comparison operator to apply
+	 * @param left the left hand side of the expression
+	 * @param right the right hand side of the expression
+	 * @return the Boolean result of the expression evaluation
+	 * @throws ODataApplicationException if the operands are not comparable
+	 */
 	private Object evaluateComparisonOperation(BinaryOperatorKind operator, Object left, Object right) 
 			throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> evaluateComparisonOperation({}, {}, {})", operator, left, right);
@@ -282,6 +310,16 @@ public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 		}
 	}
 
+	/**
+	 * Evaluation of an arithmetic expression;  if any of the operands contains a decimal dot or comma,
+	 * floating point arithmetic will be applied, otherwise integer arithmetic is used
+	 * 
+	 * @param operator the arithmetic operator to apply
+	 * @param left the left hand side of the expression
+	 * @param right the right hand side of the expression
+	 * @return the Number result of the expression evaluation
+	 * @throws ODataApplicationException if any of the operands is not a Number
+	 */
 	private Object evaluateArithmeticOperation(BinaryOperatorKind operator, Object left, 
 			Object right) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> evaluateArithmeticOperation({}, {}, {})", operator, left, right);
@@ -334,12 +372,21 @@ public class FilterExpressionVisitor implements ExpressionVisitor<Object> {
 		}
 	}
 
+	/**
+	 * Evaluation of a method call. Currently only the methods "contains", "startswith" and "endswith" are implemented
+	 * 
+	 * @param methodCall the method to execute
+	 * @param parameters the parameters to pass to the method
+	 * @return application return value of any type
+	 * @throws ExpressionVisitException in no case (not used)
+	 * @throws ODataApplicationException if the parameters are not applicable or insufficient for the requested method, 
+	 *             or if an unimplemented method was requested
+	 */
 	@Override
 	public Object visitMethodCall(MethodKind methodCall, List<Object> parameters) 
 			throws ExpressionVisitException, ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> visitMethodCall({}, {})", methodCall, parameters);
 
-		// To keep this tutorial small and simple, we implement only one method call
 		if(MethodKind.CONTAINS == methodCall) {
 			// "Contains" gets two parameters, both have to be of type String
 			// e.g. /Products?$filter=contains(Description, '1024 MB')

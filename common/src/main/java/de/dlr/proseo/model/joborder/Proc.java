@@ -1,5 +1,5 @@
 /**
- * 
+ * Proc.java
  */
 package de.dlr.proseo.model.joborder;
 
@@ -12,90 +12,95 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
- * @author melchinger
- *
- * IPF_Proc information
+ * Representation of the Ipf_Proc Job Order element
  * 
  * For details see 
  * Generic IPF Interface Specification
  * issue 1 revision 8 - 03/08/2009
  * MMFI-GSEG-EOPG-TN-07-0003
  *  
+ * @author melchinger
  */
 public class Proc {
 	/**
-	 * The task name
+	 * The Task_Name Job Order element
 	 */
 	private String taskName;
 	/**
-	 * The task version
+	 * The Task_Version Job Order element
 	 */
 	private String taskVersion;
 	/**
-	 * List of input definitions
+	 * The List_of_Inputs / Input Job Order elements
 	 */
-	private List<InputOutput> listOfInputs;
+	private List<InputOutput> listOfInputs = new ArrayList<InputOutput>();
 	/**
-	 * List of output definitions
+	 * The List_of_Outputs / Output Job Order elements
 	 */
-	private List<InputOutput> listOfOutputs;
+	private List<InputOutput> listOfOutputs = new ArrayList<InputOutput>();
 	/**
-	 * @return the taskName
+	 * Gets the Task_Name element
+	 * @return the task name
 	 */
 	public String getTaskName() {
 		return taskName;
 	}
 	/**
-	 * @param taskName the taskName to set
+	 * Sets the Task_Name element
+	 * @param taskName the task name to set
 	 */
 	public void setTaskName(String taskName) {
 		this.taskName = taskName;
 	}
 	/**
-	 * @return the taskVersion
+	 * Gets the Task_Version element
+	 * @return the task version
 	 */
 	public String getTaskVersion() {
 		return taskVersion;
 	}
 	/**
-	 * @param taskVersion the taskVersion to set
+	 * Sets the Task_Version element
+	 * @param taskVersion the task version to set
 	 */
 	public void setTaskVersion(String taskVersion) {
 		this.taskVersion = taskVersion;
 	}
 	/**
-	 * @return the listOfInputs
+	 * Gets the Inputs for the List_of_Inputs element
+	 * @return the list of inputs
 	 */
 	public List<InputOutput> getListOfInputs() {
 		return listOfInputs;
 	}
 	/**
-	 * @return the listOfOutputs
+	 * Gets the Outputs for the List_of_Outputs element
+	 * @return the list of outputs
 	 */
 	public List<InputOutput> getListOfOutputs() {
 		return listOfOutputs;
 	}
-	public Proc() {
-		this.listOfInputs = new ArrayList<InputOutput>();
-		this.listOfOutputs = new ArrayList<InputOutput>();
-	}	
+	
+	/**
+	 * No-argument constructor
+	 */
+	public Proc() { }	
 
 	/**
-	 * @param taskName
-	 * @param taskVersion
+	 * Constructor with task name and task version arguments
+	 * @param taskName the task name to set
+	 * @param taskVersion the task version to set
 	 */
 	public Proc(String taskName, String taskVersion) {
 		this.taskName = taskName;
 		this.taskVersion = taskVersion;
-		this.listOfInputs = new ArrayList<InputOutput>();
-		this.listOfOutputs = new ArrayList<InputOutput>();
 	}	
 
 	/**
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element procEle = doc.createElement("Ipf_Proc");

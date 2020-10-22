@@ -757,10 +757,10 @@ public class OrderUtil {
 	
 
 	/**
-	 * Set the job to failed
+	 * Set the failed job steps flag in the order on failure
 	 * 
-	 * @param job The job
-	 * @param failed
+	 * @param order the order to update
+	 * @param failed indicates whether a job step has failed
 	 */
 	@Transactional
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {

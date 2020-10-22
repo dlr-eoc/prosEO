@@ -14,6 +14,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -76,11 +77,7 @@ public class LoginManager {
 			};
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				break;
-			default:
+			if (!(HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) && !(HttpStatus.UNAUTHORIZED.value() == e.getRawStatusCode())) {
 				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			}
 		} catch (RuntimeException e) {
@@ -216,6 +213,7 @@ public class LoginManager {
 	/**
 	 * Checks whether the logged in user has the given role
 	 * 
+	 * @param role the role to check
 	 * @return true, if the respective authority was granted, false otherwise
 	 */
 	public boolean hasRole(UserRole role) {

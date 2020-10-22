@@ -30,7 +30,7 @@ public enum OrderState {
 	/**
 	 * Check whether the transition to the other state is legal
 	 * 
-	 * @param the state to switch to
+	 * @param other the state to switch to
 	 * @return true, if the transition is legal, false otherwise
 	 */
 	public boolean isLegalTransition(OrderState other) {

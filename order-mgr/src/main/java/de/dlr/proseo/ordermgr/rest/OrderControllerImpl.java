@@ -85,7 +85,7 @@ public class OrderControllerImpl implements OrderController {
 	 * 
 	 * @param mission the mission code
 	 * @param identifier the unique order identifier string
-	 * @param productClass an array of product types
+	 * @param productclasses an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
 	 * @param executionTimeFrom earliest order execution time
@@ -135,7 +135,7 @@ public class OrderControllerImpl implements OrderController {
 	/**
 	 * Delete an order by ID
 	 * 
-	 * @param the ID of the order to delete
+	 * @param id the ID of the order to delete
 	 * @return a response entity with
 	 *         HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND" and an error message, if the orbit did not exist, or
@@ -162,7 +162,7 @@ public class OrderControllerImpl implements OrderController {
 	/**
 	 * Update the order with the given ID with the attribute values of the given Json object. 
 	 * @param id the ID of the order to update
-	 * @param orbit a Json object containing the modified (and unmodified) attributes
+	 * @param order a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing
 	 *         HTTP status "OK" and a Json object corresponding to the order after modification (with ID and version for all 
 	 * 		   contained objects) or

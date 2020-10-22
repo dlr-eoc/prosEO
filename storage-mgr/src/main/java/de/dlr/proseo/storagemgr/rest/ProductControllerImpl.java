@@ -43,12 +43,21 @@ import de.dlr.proseo.storagemgr.utils.ProseoFile;
 @Component
 public class ProductControllerImpl implements ProductController {
 
+	/* Message IDs */
+	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
+	private static final int MSG_ID_FILE_NOT_FOUND = 4002;
+
+	/* Message strings */
+	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
+	private static final String MSG_FILE_NOT_FOUND = "(E%d) File %s not found";
+
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
-	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
-	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
+
+	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
+	/** Storage Manager configuration */
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
@@ -81,8 +90,10 @@ public class ProductControllerImpl implements ProductController {
 	 * Copy a file from "ingest" file system to storage manager controlled prosEO cache.
 	 * Source and target are defined in the restProductFS structure
 	 * 
-	 * @param restProductFS
-	 * @return updated restProductFS
+	 * @param restProductFS the ingest file information
+	 * @return a response entity containing
+	 *     HTTP status CREATED and the ingest file information updated with the file paths after ingestion on success, or
+	 *     HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
 	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
@@ -133,7 +144,9 @@ public class ProductControllerImpl implements ProductController {
 	 * 
 	 * @param storageType S2, POSIX or null
 	 * @param prefix Path information
-	 * @return list of strings
+	 * @return a response entity containing
+	 *     HTTP status OK or PARTIAL_CONTENT and list of file (object) paths on success, or
+	 *     HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
 	public ResponseEntity<List<String>> getProductFiles(String storageType, String prefix) {
@@ -151,7 +164,8 @@ public class ProductControllerImpl implements ProductController {
 			}	
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -159,15 +173,15 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Set the members of RestProductFS response.
 	 * 
-	 * @param response
-	 * @param restProductFS
-	 * @param storageId
-	 * @param registered
-	 * @param registeredFilePath
-	 * @param registeredFiles
-	 * @param deleted
-	 * @param msg
-	 * @return Response
+	 * @param response the ingest info structure to update
+	 * @param restProductFS the ingest info structure to copy product ID and source information from
+	 * @param storageId the ID of the storage used
+	 * @param registered true, if the requested files have been ingested, false otherwise
+	 * @param registeredFilePath common path to the ingested files
+	 * @param registeredFiles file names after ingestion
+	 * @param deleted true, if the files were deleted, false otherwise
+	 * @param msg a response message text
+	 * @return the updated response object
 	 */
 	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
 			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
@@ -194,7 +208,10 @@ public class ProductControllerImpl implements ProductController {
 	 * @param pathInfo Path to object
 	 * @param fromByte Start byte, 0 if not set
 	 * @param toByte End byte, end of object data if not set
-	 * @return
+	 * @return a response entity containing
+	 *     HTTP status OK or PARTIAL_CONTENT and the byte stream on success, or
+	 *     HTTP status NOT_FOUND and an error message, or
+	 *     HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
 	public ResponseEntity<?> getObject(String pathInfo, Long fromByte, Long toByte) {
@@ -203,7 +220,8 @@ public class ProductControllerImpl implements ProductController {
 				ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 				InputStream stream = sourceFile.getDataAsInputStream();
 				if (stream == null) {
-					return new ResponseEntity<>("File not found", HttpStatus.NOT_FOUND);
+					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
+							pathInfo), HttpStatus.NOT_FOUND);
 				}
 				Long len = sourceFile.getLength();
 				HttpHeaders headers = new HttpHeaders();
@@ -235,20 +253,24 @@ public class ProductControllerImpl implements ProductController {
 					return new ResponseEntity<>(fsr, headers, status);
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-				return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
+				pathInfo), HttpStatus.NOT_FOUND);
 	}
 
 	/**
 	 * Delete object(s) 
 	 * 
-	 * @param pathInfo Path to object or directory
+	 * @param pathInfo path to the object or directory
 	 * 
-	 * @return Some information about success
+	 * @return a response entity containing
+	 *     HTTP status OK and the full metadata of the deleted object, or
+	 *     HTTP status NOT_FOUND and an error message, or
+	 *     HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
@@ -270,15 +292,16 @@ public class ProductControllerImpl implements ProductController {
 						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
+				pathInfo), HttpStatus.NOT_FOUND);
 	}
 	
 	/**
 	 * List file objects of repository. Collect result in response.
 	 * 
-	 * @param st Storage type
+	 * @param st the storage type
 	 * @param prefix relative path to list
-	 * @param response 
+	 * @param response the ingest information response to fill
 	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
 		ProseoFile path = null;

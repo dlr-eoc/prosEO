@@ -607,7 +607,6 @@ public class OrderDispatcher {
 	 * @param fileClass The file class as string
 	 * @param startTime The start time 
 	 * @param stopTime The stop time
-	 * @param products List to collect all products created
 	 * @return The current created product
 	 */
 	public Product createProduct(ProductClass productClass, Product enclosingProduct, ConfiguredProcessor cp, Orbit orbit, Job job,

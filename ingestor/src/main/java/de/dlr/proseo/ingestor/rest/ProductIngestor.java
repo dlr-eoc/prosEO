@@ -186,11 +186,12 @@ public class ProductIngestor {
      * @param user the username to pass on to the Production Planner
      * @param password the password to pass on to the Production Planner
      * @return a Json representation of the product updated and/or created including their product files
-	 * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
-	 * @throws ProcessingException if the communication with the Storage Manager fails
+     * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
+     * @throws ProcessingException if the communication with the Storage Manager fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
-			throws IllegalArgumentException, ProcessingException {
+			throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
 		
 		// Ensure user is authorized for the product's mission
@@ -296,8 +297,9 @@ public class ProductIngestor {
      * @param facility the processing facility to retrieve the product file metadata for
      * @return the Json representation of the product file metadata
      * @throws NoResultException if no product file for the given product ID exists at the given processing facility
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public RestProductFile getProductFile(Long productId, ProcessingFacility facility) throws NoResultException {
+	public RestProductFile getProductFile(Long productId, ProcessingFacility facility) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductFile({}, {})", productId, facility.getName());
 		
 		// Find the product files for the given product ID
@@ -343,9 +345,10 @@ public class ProductIngestor {
      * @return the updated REST product file (with ID and version)
      * @throws IllegalArgumentException if the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
+     * @throws SecurityException if a cross-mission data access was attempted
      */
 	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile, String user, String password)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
 		// Find the product with the given ID
@@ -392,9 +395,10 @@ public class ProductIngestor {
      * @throws RuntimeException if the deletion failed
  	 * @throws ProcessingException if the communication with the Storage Manager fails
  	 * @throws IllegalArgumentException if the product currently satisfies a product query for the given processing facility
-    */
+     * @throws SecurityException if a cross-mission data access was attempted
+     */
 	public void deleteProductFile(Long productId, ProcessingFacility facility) throws 
-			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException {
+			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility.getName());
 
 		// Find the product with the given ID
@@ -472,9 +476,10 @@ public class ProductIngestor {
      * @throws IllegalArgumentException if the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
      * @throws ConcurrentModificationException if the product file was modified since its retrieval by the client
+     * @throws SecurityException if a cross-mission data access was attempted
      */
 	public RestProductFile modifyProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile) throws
-	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProductFile({}, {}, {})", productId, facility, productFile.getProductFileName());
 
 		// Find the product with the given ID
@@ -596,9 +601,10 @@ public class ProductIngestor {
 	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
 	 * @throws RestClientException if an error in the REST API occurs
 	 * @throws ProcessingException if the communication with the Production Planner fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct)
-			throws IllegalArgumentException, RestClientException, ProcessingException {
+			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
 
 		// Ensure user is authorized for the product's mission
@@ -644,9 +650,10 @@ public class ProductIngestor {
 	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
 	 * @throws RestClientException if an error in the REST API occurs
 	 * @throws ProcessingException if the communication with the Production Planner fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public void notifyPlanner(String user, String password, RestProductFile restProductFile)
-			throws IllegalArgumentException, RestClientException, ProcessingException {
+			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
 
 		// Retrieve the product for the given product file

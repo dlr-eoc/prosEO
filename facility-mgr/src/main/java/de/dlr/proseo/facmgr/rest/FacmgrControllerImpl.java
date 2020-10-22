@@ -67,7 +67,6 @@ public class FacmgrControllerImpl implements FacilityController{
 	
 	/**
 	 * List of all facilities with no search criteria
-	 * @param mission the mission code
 	 * @param name the unique facility name
 	 * @return a response entity with either a list of facilities and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
@@ -103,7 +102,7 @@ public class FacmgrControllerImpl implements FacilityController{
 	/**
 	 * Delete a facility by ID
 	 * 
-	 * @param the ID of the facility to delete
+	 * @param id the ID of the facility to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful,
 	 * 		"BAD_REQUEST", if the facility still has stored products,
 	 * 		"NOT_FOUND", if the facility did not exist, or 

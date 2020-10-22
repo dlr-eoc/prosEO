@@ -29,19 +29,26 @@ import software.amazon.awssdk.services.s3.S3Client;
  */
 public class StorageManagerUtils {
 
+	private static final String DIRECTORY_ROOT = "/";
+	private static final String PROTOCOL_ALLUXIO = "alluxio://";
+	private static final String PROTOCOL_S3 = "s3://";
 	/**
 	 * Logger of this class
 	 */
 	private static Logger logger = LoggerFactory.getLogger(StorageManagerUtils.class);
 
 	/**
-	 * @param s3AccessKey
-	 * @param s3SecretAccesKey
-	 * @param s3Endpoint
-	 * @param bucketName
-	 * @return
+	 * Creates an internal bucket for use by the Storage Manager itself; passes all exceptions on to the caller
+	 * 
+	 * @param s3AccessKey the access key for the client
+	 * @param s3SecretAccesKey the secret access key for the client
+	 * @param s3Endpoint the S3 endpoint to connect to
+	 * @param bucketName the name of the bucket to create
+	 * @param region the region, on which the client shall operate
+	 * @return true, if the bucket exists or was created successfully, false otherwise
 	 */
-	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint, String bucketName, String region) throws Exception {
+	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint,
+			String bucketName, String region) {
 		if (logger.isTraceEnabled()) logger.trace(">>>createStorageManagerInternal(********, ********, {}, {}, {}", s3Endpoint, bucketName, region);
 		
 		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint, region);
@@ -57,7 +64,7 @@ public class StorageManagerUtils {
 	 * Check if the provided String represents a valid XML Document
 	 * 
 	 * @param xml the input String
-	 * @return true/false
+	 * @return true, if the string is valid, false otherwise
 	 */
 	public static Boolean checkXml(String xml) {
 		if (logger.isTraceEnabled()) logger.trace(">>>checkXml(String)");
@@ -89,10 +96,10 @@ public class StorageManagerUtils {
 	/**
 	 * Converts an InputStrem to String
 	 * 
-	 * @param inputStream
+	 * @param inputStream the input stream to read
 	 * @param charset the charset of the string (defaults to UTF-8)
-	 * @return String
-	 * @throws IOException
+	 * @return String a string containing the data of the input stream
+	 * @throws IOException if an I/O error occurs
 	 */
 	public static String inputStreamToString(InputStream inputStream, Charset charset) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>>inputStreamToString(InputStream, Charset)");
@@ -110,10 +117,10 @@ public class StorageManagerUtils {
 	}
 
 	/**
-	 * Get StorageType of path
+	 * Get the storage type of a given path string
 	 * 
-	 * @param pathInfo
-	 * @return StorageType
+	 * @param pathInfo the path to check
+	 * @return the storage type indicated by this path
 	 */
 	public static StorageType getFsType(String pathInfo) {
 		if (logger.isTraceEnabled()) logger.trace(">>>getFsType({})", pathInfo);
@@ -121,11 +128,11 @@ public class StorageManagerUtils {
 		StorageType storageType = null;
 		if (pathInfo != null) {
 			// Find storage type
-			if (pathInfo.startsWith("s3:") || pathInfo.startsWith("S3:")) {
+			if (pathInfo.toLowerCase().startsWith(PROTOCOL_S3)) { // upper case and lower case protocol name allowed!
 				storageType = StorageType.S3;
-			} else if (pathInfo.startsWith("alluxio:")) {
+			} else if (pathInfo.startsWith(PROTOCOL_ALLUXIO)) {
 				storageType = StorageType.ALLUXIO;
-			} else if (pathInfo.startsWith("/")) {
+			} else if (pathInfo.startsWith(DIRECTORY_ROOT)) {
 				storageType = StorageType.POSIX;
 			}
 		}
@@ -134,8 +141,8 @@ public class StorageManagerUtils {
 	/**
 	 * Remove storage dependent path information  
 	 * 
-	 * @param pathInfo
-	 * @return Relative path
+	 * @param pathInfo the full path string
+	 * @return the path string without the protocol part
 	 */
 	public static String getRelativePath(String pathInfo) {
 		if (logger.isTraceEnabled()) logger.trace(">>>getRelativePath({})", pathInfo);
@@ -144,10 +151,10 @@ public class StorageManagerUtils {
 		if (pathInfo != null) {
 			relPath = pathInfo.trim();
 			// Remove protocol from path
-			if (relPath.startsWith("s3:/") || relPath.startsWith("S3:/")) {
-				relPath = relPath.substring(4);
-			} else if (relPath.startsWith("alluxio:/")) {
-				relPath = relPath.substring(9);
+			if (relPath.toLowerCase().startsWith(PROTOCOL_S3)) { // upper case and lower case protocol name allowed!
+				relPath = DIRECTORY_ROOT + relPath.substring(PROTOCOL_S3.length());
+			} else if (relPath.startsWith(PROTOCOL_ALLUXIO)) {
+				relPath = DIRECTORY_ROOT + relPath.substring(PROTOCOL_ALLUXIO.length());
 			}
 			
 		}

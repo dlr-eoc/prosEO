@@ -25,6 +25,7 @@ import javax.ws.rs.ServerErrorException;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.SelectionRule;
 import de.dlr.proseo.prodclmgr.rest.model.ProductClassUtil;
 import de.dlr.proseo.prodclmgr.rest.model.RestParameter;
@@ -78,7 +80,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
 	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
 	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
-	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
+//	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = 2120;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = 2121;
 	private static final int MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED = 2122;
 	private static final int MSG_ID_PRODUCT_CLASS_ID_MISSING = 2123;
@@ -109,12 +111,15 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_QUERIES_EXIST = 2148;
 	private static final int MSG_ID_NO_RULES_FOUND = 2149;
 	private static final int MSG_ID_NO_RULES_FOUND_FOR_SOURCE = 2150;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with ID %d not found";
-	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
+//	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s and product type %s";
 	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
@@ -165,6 +170,13 @@ public class ProductClassManager {
 	private static final String MSG_SELECTION_RULE_DELETED = "(I%d) Selection rule with ID %d for product class with ID %d deleted";
 	private static final String MSG_PROCESSOR_ADDED = "(I%d) Configured processor %s added to selection rule with ID %d for product class with ID %d";
 	private static final String MSG_PROCESSOR_REMOVED = "(I%d) Configured processor %s removed from selection rule with ID %d for product class with ID %d";
+
+	// Same as in other services
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -285,44 +297,42 @@ public class ProductClassManager {
      * @param productType the prosEO product type
      * @return a list of product classes conforming to the search criteria
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public List<RestProductClass> getRestProductClass(String mission, String productType) throws NoResultException {
+	public List<RestProductClass> getRestProductClass(String mission, String productType) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
 		
 		List<RestProductClass> result = new ArrayList<>();
 		
-		if (null != mission && null != productType) {
-			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission, productType);
-			if (null == productClass) {
-				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_TYPE, 
-						productType, mission));
-			}
-			result.add(ProductClassUtil.toRestProductClass(productClass));
-		} else {
-			String jpqlQuery = "select pc from ProductClass pc where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and mission.code = :missionCode";
-			}
-			if (null != productType) {
-				jpqlQuery += " and productType = :productType";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != productType) {
-				query.setParameter("productType", productType);
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
-					result.add(ProductClassUtil.toRestProductClass((de.dlr.proseo.model.ProductClass) resultObject));
-				}
-			}
-			if (result.isEmpty()) {
-				throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, 
-						mission, productType));
+		String jpqlQuery = "select pc from ProductClass pc where mission.code = :missionCode";
+		if (null != productType) {
+			jpqlQuery += " and productType = :productType";
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != productType) {
+			query.setParameter("productType", productType);
+		}
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
+				result.add(ProductClassUtil.toRestProductClass((de.dlr.proseo.model.ProductClass) resultObject));
 			}
 		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, 
+					mission, productType));
+		}
+
 		logInfo(MSG_PRODUCT_CLASS_LIST_RETRIEVED, MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED, mission, productType);
 		
 		return result;
@@ -335,13 +345,20 @@ public class ProductClassManager {
      * @return a Json object describing the product class created (including ID and version) and HTTP status CREATED
  	 * @throws IllegalArgumentException if any of the input data was invalid
  	 * @throws ServerErrorException if saving the product class to the database fails
+     * @throws SecurityException if a cross-mission data access was attempted
     */
 	public RestProductClass createRestProductClass(RestProductClass productClass) throws
-			IllegalArgumentException, ServerErrorException {
+			IllegalArgumentException, ServerErrorException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createRestProductClass({})", (null == productClass ? "MISSING" : productClass.getProductType()));
 		
 		if (null == productClass) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_MISSING, MSG_ID_PRODUCT_CLASS_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(productClass.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					productClass.getMissionCode(), securityService.getMission()));			
 		}
 		
 		// Create product class object
@@ -462,8 +479,9 @@ public class ProductClassManager {
      * @return a Json object describing the product class and HTTP status OK
 	 * @throws IllegalArgumentException if no product class ID was given
 	 * @throws NoResultException if no product class with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public RestProductClass getRestProductClassById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestProductClass getRestProductClassById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClassById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -476,7 +494,13 @@ public class ProductClassManager {
 			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
 		}
 		
-		logInfo(MSG_PRODUCT_CLASS_RETRIEVED, MSG_ID_PRODUCT_CLASS_RETRIEVED, id);
+		// Ensure user is authorized for the mission of the configuration
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
+		}
+		
+	logInfo(MSG_PRODUCT_CLASS_RETRIEVED, MSG_ID_PRODUCT_CLASS_RETRIEVED, id);
 
 		return ProductClassUtil.toRestProductClass(modelProductClass.get());
 	}
@@ -489,10 +513,11 @@ public class ProductClassManager {
      * @return a Json object describing the product class modified (including incremented version)
 	 * @throws EntityNotFoundException if no product class with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the product class has been modified since retrieval by the client
      */
 	public RestProductClass modifyRestProductClass(Long id, RestProductClass productClass) throws
-			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+			EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyRestProductClass({}, {})", id, (null == productClass ? "MISSING" : productClass.getProductType()));
 		
 		// Check arguments
@@ -501,6 +526,12 @@ public class ProductClassManager {
 		}
 		if (null == productClass) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_DATA_MISSING, MSG_ID_PRODUCT_CLASS_DATA_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(productClass.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					productClass.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<ProductClass> optProductClass = RepositoryService.getProductClassRepository().findById(id);
@@ -637,8 +668,10 @@ public class ProductClassManager {
      * @throws EntityNotFoundException if the processor to delete does not exist in the database
      * @throws RuntimeException if the deletion was not performed as expected
      * @throws IllegalArgumentException if the product class ID was not given, or if dependent objects exist
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public void deleteProductclassById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
+	public void deleteProductclassById(Long id)
+			throws EntityNotFoundException, RuntimeException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductclassById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -649,6 +682,12 @@ public class ProductClassManager {
 		Optional<ProductClass> modelProductClass = RepositoryService.getProductClassRepository().findById(id);
 		if (modelProductClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Test whether processor classes reference this product class
@@ -686,11 +725,12 @@ public class ProductClassManager {
      * Get the simple selection rules as formatted string, optionally selected by source class
      * 
      * @param id the database ID of the product class to get the selection rule from
-     * @param sourceclass the prosEO product type of the source class, from which the product class can be generated (may be null)
+     * @param sourceClass the prosEO product type of the source class, from which the product class can be generated (may be null)
      * @return a list of strings describing the selection rules for all configured processors
 	 * @throws NoResultException if no simple selection rules matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-    public List<SelectionRuleString> getSelectionRuleStrings(Long id, String sourceClass) throws NoResultException {
+    public List<SelectionRuleString> getSelectionRuleStrings(Long id, String sourceClass) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleStrings({}, {})", id, sourceClass);
 
 		// Check arguments
@@ -703,6 +743,13 @@ public class ProductClassManager {
 		if (modelProductClass.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
 		}
+
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		if (modelProductClass.get().getRequiredSelectionRules().isEmpty()) {
 			throw new NoResultException(logError(MSG_NO_RULES_FOUND, MSG_ID_NO_RULES_FOUND,
 					modelProductClass.get().getProductType()));
@@ -738,12 +785,13 @@ public class ProductClassManager {
      * Create a selection rule using Rule Language
      * 
      * @param id the database ID of the product class
-     * @param selectionRuleString a Json representation of a selection rule in Rule Language
+     * @param selectionRuleStrings a Json representation of a selection rule in Rule Language
      * @return a Json object representing the simple selection rule created and HTTP status CREATED
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
      */
 	public RestProductClass createSelectionRuleString(Long id, @Valid List<SelectionRuleString> selectionRuleStrings) throws
-			IllegalArgumentException {
+			IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSelectionRuleString(SelectionRuleString[{}])", (null == selectionRuleStrings ? "MISSING" : selectionRuleStrings.size()));
 
 		// Retrieve product class
@@ -751,6 +799,13 @@ public class ProductClassManager {
 		if (optProductClass.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_NOT_FOUND, MSG_ID_PRODUCT_CLASS_NOT_FOUND, id));
 		}
+
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(optProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					optProductClass.get().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		ProductClass productClass = optProductClass.get();
 		
 		// Process all selection rules
@@ -835,8 +890,9 @@ public class ProductClassManager {
      * @param id the database ID of the product class
      * @return a Json object representing the simple selection rule in Rule Language
 	 * @throws NoResultException if no selection rule or product class with the given ID exist
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public SelectionRuleString getSelectionRuleString(Long ruleid, Long id) throws NoResultException {
+	public SelectionRuleString getSelectionRuleString(Long ruleid, Long id) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getSelectionRuleString({}, {})", ruleid, id);
 
 		// Check arguments
@@ -851,6 +907,12 @@ public class ProductClassManager {
 		
 		if (modelProductClass.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Find requested simple selection rule
@@ -882,11 +944,12 @@ public class ProductClassManager {
      * @return a Json object representing the modified simple selection rule in Rule Language
 	 * @throws EntityNotFoundException if no selection rule or product class with the given ID exist
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the selection rule has been modified since retrieval by the client
      */
 	public SelectionRuleString modifySelectionRuleString(Long ruleid, Long id,
 			SelectionRuleString selectionRuleString) throws
-			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException{
+			EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException{
 		if (logger.isTraceEnabled()) logger.trace(">>> modifySelectionRuleString({}, {}, {})", ruleid, id, selectionRuleString);
 
 		// Check arguments
@@ -904,6 +967,12 @@ public class ProductClassManager {
 		
 		if (modelProductClass.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Find requested simple selection rule
@@ -1000,8 +1069,9 @@ public class ProductClassManager {
      * @throws EntityNotFoundException if the selection rule to delete or the product class do not exist in the database
      * @throws IllegalArgumentException if the ID of the product class or the selection rule was not given, or the rule
      *             cannot be deleted due to existing product queries
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public void deleteSelectionrule(Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+	public void deleteSelectionrule(Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionrule({}, {})", ruleid, id);
 		
 		// Check arguments
@@ -1016,6 +1086,12 @@ public class ProductClassManager {
 		
 		if (modelProductClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Find requested simple selection rule
@@ -1056,8 +1132,10 @@ public class ProductClassManager {
      * @return the modified selection rule in Rule Language
      * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
      * @throws IllegalArgumentException if the product class ID, the selection rule ID or the name of the configured processor were not given
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public SelectionRuleString addProcessorToRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+	public SelectionRuleString addProcessorToRule(String configuredProcessor, Long ruleid, Long id)
+			throws EntityNotFoundException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> addProcessorToRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
 		// Check arguments
@@ -1075,6 +1153,12 @@ public class ProductClassManager {
 		
 		if (modelProductClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Find requested simple selection rule
@@ -1117,10 +1201,13 @@ public class ProductClassManager {
      * @param configuredProcessor the name of the configured processor to remove from the selection rule
      * @param ruleid the database ID of the simple selection rule
      * @param id the database ID of the product class
+     * @return the Json representation of the modified selection rule
      * @throws EntityNotFoundException if no configured processor with the given name or no selection rule or product class with the given ID exist
      * @throws IllegalArgumentException if the product class ID, the selection rule ID or the name of the configured processor were not given
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public SelectionRuleString removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id) throws EntityNotFoundException, IllegalArgumentException {
+	public SelectionRuleString removeProcessorFromRule(String configuredProcessor, Long ruleid, Long id)
+			throws EntityNotFoundException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> removeProcessorFromRule({}, {}, {})", configuredProcessor, ruleid, id);
 		
 		// Check arguments
@@ -1138,6 +1225,12 @@ public class ProductClassManager {
 		
 		if (modelProductClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_CLASS_ID_NOT_FOUND, MSG_ID_PRODUCT_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the product class
+		if (!securityService.isAuthorizedForMission(modelProductClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProductClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Find requested simple selection rule

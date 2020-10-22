@@ -32,8 +32,11 @@
 		<docker-maven-version>0.31.0</docker-maven-version>
 		<raml-plugin-version>2.0.5</raml-plugin-version>
 		<raml-output-path>target/generated-raml-mvc</raml-output-path>
-        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
-        <junit.version>4.13.1</junit.version>
+		<maven-site-plugin.version>3.9.1</maven-site-plugin.version>
+		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+		<maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
+		<junit.version>4.13.1</junit.version>
+		<spring-boot-starter-test.version>2.1.6.RELEASE</spring-boot-starter-test.version>
 	</properties>
 
 	<modules>
@@ -54,39 +57,43 @@
 		<module>common</module>
 	</modules>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-			</exclusions>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.phoenixnap.oss</groupId>
-			<artifactId>springmvc-raml-plugin</artifactId>
-			<version>${raml-plugin-version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>xerces</groupId>
-					<artifactId>xmlParserAPIs</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.json</groupId>
-					<artifactId>json</artifactId>
-				</exclusion>
-			</exclusions>
-			<type>maven-plugin</type>
-		</dependency>
-	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring-boot-starter-test.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>xml-apis</groupId>
+						<artifactId>xml-apis</artifactId>
+					</exclusion>
+				</exclusions>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.phoenixnap.oss</groupId>
+				<artifactId>springmvc-raml-plugin</artifactId>
+				<version>${raml-plugin-version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>xml-apis</groupId>
+						<artifactId>xml-apis</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>xerces</groupId>
+						<artifactId>xmlParserAPIs</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.json</groupId>
+						<artifactId>json</artifactId>
+					</exclusion>
+				</exclusions>
+				<type>maven-plugin</type>
+				<scope>provided</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<distributionManagement>
 		<site>
@@ -100,7 +107,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>${maven-project-info-reports-plugin.version}</version>
 				<reportSets>
 					<reportSet>
 						<inherited>true</inherited>
@@ -115,22 +122,28 @@
 			</plugin>
 			<!-- Create Javadoc files for the main and test classes -->
 			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>${maven-javadoc-plugin.version}</version>
+				<configuration>
+					<failOnError>false</failOnError>
+					<quiet>true</quiet>
+					<show>package</show>
+				</configuration>
 				<reportSets>
 					<reportSet>
-						<id>javadocs</id>
+						<id>default</id>
 						<reports>
-							<report>aggregate</report>
-							<report>test-aggregate</report>
+							<report>javadoc</report>
 						</reports>
 						<inherited>true</inherited>
-						<configuration>
-							<javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-							<failOnError>false</failOnError>
-							<quiet>true</quiet>
-						</configuration>
+					</reportSet>
+					<reportSet>
+						<id>aggregate</id>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+						<inherited>false</inherited>
 					</reportSet>
 				</reportSets>
 			</plugin>

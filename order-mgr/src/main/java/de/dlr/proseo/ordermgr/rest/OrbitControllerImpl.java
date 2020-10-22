@@ -155,11 +155,11 @@ public class OrbitControllerImpl implements OrbitController {
 	/**
 	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
 	 * 
-	 * @param spacecraftCode 
-	 * @param orbitNumberFrom
-	 * @param orbitNumber To
-	 * @param startTimeFrom earliest sensing start time
-	 * @param startTimeTo latest sensing start time
+	 * @param spacecraftCode the spacecraft code to filter by (may be null)
+	 * @param orbitNumberFrom the minimum order number requested (may be null)
+	 * @param orbitNumberTo the maximum order number requested (may be null)
+	 * @param startTimeFrom earliest sensing start time requested (may be null)
+	 * @param startTimeTo latest sensing start time requested (may be null)
 	 * @return HTTP status "OK" and a list of orbits or
 	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
@@ -169,7 +169,7 @@ public class OrbitControllerImpl implements OrbitController {
 	
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, @DateTimeFormat Date starttimefrom, @DateTimeFormat Date starttimeto) {
+			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 		
 		/* Check arguments */
@@ -192,13 +192,13 @@ public class OrbitControllerImpl implements OrbitController {
 							.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
 				
 					//Return all Orbits within given orbit number range and start time range
-					if(null != starttimefrom && null != starttimeto) {
+					if(null != startTimeFrom && null != startTimeTo) {
 						for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
 							logger.info("Orbit.starttime: "+orbit.getStartTime());
 							logger.info("Orbit.stoptime: "+orbit.getStopTime());
 
-							if (!(orbit.getStartTime().isBefore(starttimefrom.toInstant())) && 
-									!(orbit.getStopTime().isAfter(starttimeto .toInstant()))) {
+							if (!(orbit.getStartTime().isBefore(startTimeFrom.toInstant())) && 
+									!(orbit.getStopTime().isAfter(startTimeTo.toInstant()))) {
 								if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 								RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 								if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
@@ -216,9 +216,9 @@ public class OrbitControllerImpl implements OrbitController {
 				}
 				
 				//Returns all orbits matching the spacecraft code within the start time range
-				else if (null != starttimefrom && null != starttimeto) {
+				else if (null != startTimeFrom && null != startTimeTo) {
 					for (Orbit orbit : RepositoryService.getOrbitRepository()
-							.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, starttimefrom.toInstant(), starttimeto.toInstant())) {
+							.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, startTimeFrom.toInstant(), startTimeTo.toInstant())) {
 						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
 						RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
 						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
@@ -284,15 +284,7 @@ public class OrbitControllerImpl implements OrbitController {
 			return new ResponseEntity<>(
 					errorHeaders(MSG_ORBIT_MISSING, MSG_ID_ORBIT_MISSING), HttpStatus.BAD_REQUEST);
 		}
-		
-		// Ensure user is authorized for the mission to update
-		if (!securityService.isAuthorizedForMission(orbit.get(0).getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					orbit.get(0).getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
-		}
-		
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 		
 		List<RestOrbit> restOrbitList = null;
@@ -319,6 +311,13 @@ public class OrbitControllerImpl implements OrbitController {
 						updateOrbit.setStopTime(modelOrbit.getStopTime());
 						modelOrbit = updateOrbit;
 					}
+					
+					// Ensure user is authorized for the mission to update
+					if (!securityService.isAuthorizedForMission(modelOrbit.getSpacecraft().getMission().getCode())) {
+						throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+								modelOrbit.getSpacecraft().getMission().getCode(), securityService.getMission()));			
+					}
+					
 					modelOrbit = RepositoryService.getOrbitRepository().save(modelOrbit);
 					restOrbits.add(OrbitUtil.toRestOrbit(modelOrbit));
 				}
@@ -331,6 +330,9 @@ public class OrbitControllerImpl implements OrbitController {
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (SecurityException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		logger.info(String.format(MSG_ORBITS_CREATED, MSG_ID_ORBITS_CREATED, restOrbitList.size()));
@@ -399,14 +401,6 @@ public class OrbitControllerImpl implements OrbitController {
 	public ResponseEntity<RestOrbit> modifyOrbit(Long id, @Valid RestOrbit orbit) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyOrbit({})", id);
 		
-		// Ensure user is authorized for the mission to update
-		if (!securityService.isAuthorizedForMission(orbit.getMissionCode())) {
-			String message = String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					orbit.getMissionCode(), securityService.getMission());			
-			logger.error(message);
-			return new ResponseEntity<>(errorHeaders(message), HttpStatus.FORBIDDEN);
-		}
-		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		RestOrbit restOrbit = null;
@@ -425,7 +419,17 @@ public class OrbitControllerImpl implements OrbitController {
 
 				//Adding spacecraft object to modelOrbit
 				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+				if (null == spacecraft) {
+					throw new IllegalArgumentException(String.format(
+							MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));
+				}
 				changedOrbit.setSpacecraft(spacecraft);
+				
+				// Ensure user is authorized for the mission to update
+				if (!securityService.isAuthorizedForMission(spacecraft.getMission().getCode())) {
+					throw new SecurityException(String.format(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+							spacecraft.getMission().getCode(), securityService.getMission()));			
+				}
 				
 				if (!modelOrbit.getOrbitNumber().equals(changedOrbit.getOrbitNumber())) {
 					orbitChanged = true;
@@ -461,6 +465,9 @@ public class OrbitControllerImpl implements OrbitController {
 		} catch (TransactionException e) {
 			logger.error(e.getMessage());
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (SecurityException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		logger.info(String.format(MSG_ORBIT_UPDATED, MSG_ID_ORBIT_UPDATED, restOrbit.getOrbitNumber()));
@@ -471,7 +478,7 @@ public class OrbitControllerImpl implements OrbitController {
 	/**
 	 * Delete an orbit by ID
 	 * 
-	 * @param the ID of the orbit to delete
+	 * @param id the ID of the orbit to delete
 	 * @return a response entity with 
 	 *         HTTP status "NO_CONTENT", if the deletion was successful, or
      *         HTTP status "NOT_FOUND", if the orbit did not exist, or

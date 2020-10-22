@@ -7,10 +7,10 @@
         <version>0.5.2</version>
     </parent>
 
-	<artifactId>samples</artifactId>
+	<artifactId>proseo-samples</artifactId>
 	<packaging>pom</packaging>
 	<name>prosEO Samples</name>
-	<description/>
+	<description>Sample implementation of processor and wrapper (used in unit testing)</description>
 
     <modules>
         <module>sample-processor</module>

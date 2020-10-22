@@ -46,6 +46,9 @@ import io.kubernetes.client.util.Config;
 @Component
 public class KubeConfig {
 
+	/** Dummy Job Order file name (only used in development environment) **/
+	private static final String DUMMY_JOF_FILENAME = "/testdata/test1.pl";
+
 	/**
 	 * Logger of this class 
 	 */
@@ -256,15 +259,17 @@ public class KubeConfig {
 	}
 	
 	/**
-	 * Instantiate a KuebConfig object
-	 * 
-	 * @param pf the ProcessingFacility
+	 * Instantiate a KubeConfig object without arguments
 	 */
 
-	public KubeConfig () {
+	public KubeConfig() {
 	}
 
-	public KubeConfig (ProcessingFacility pf) {
+	/**
+	 * Instantiate a KubeConfig object with a processing facility
+	 * @param pf the processing facility to set
+	 */
+	public KubeConfig(ProcessingFacility pf) {
 		setFacility(pf);
 	}
 	
@@ -491,7 +496,7 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
-		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
+		KubeJob aJob = new KubeJob(Long.parseLong(name), DUMMY_JOF_FILENAME);
 		try {
 			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {
@@ -510,12 +515,14 @@ public class KubeConfig {
 	/**
 	 * Create a new job on cluster
 	 * 
-	 * @param name of new job
-	 * @return new job or null
+	 * @param id the job ID
+	 * @param stdoutLogLevel the log level to set for stdout
+	 * @param stderrLogLevel the log level to set for stderr
+	 * @return
 	 */
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
-		KubeJob aJob = new KubeJob(id, "/testdata/test1.pl");
+		KubeJob aJob = new KubeJob(id, DUMMY_JOF_FILENAME);
 		try {
 			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
 		} catch (Exception e) {

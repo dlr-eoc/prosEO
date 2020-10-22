@@ -132,7 +132,6 @@ public class FacmgrManager {
 	/**
 	 * List of all facilities filtered by mission and name
 	 * 
-	 * @param mission the mission code
 	 * @param name the name of the facility
 	 * @return a list of facilities
 	 * @throws NoResultException if no facilities matching the given search criteria could be found
@@ -319,7 +318,7 @@ public class FacmgrManager {
 	/**
 	 * Delete an facility by ID
 	 * 
-	 * @param the ID of the facility to delete
+	 * @param id the ID of the facility to delete
 	 * @throws EntityNotFoundException if the facility to delete does not exist in the database
 	 * @throws IllegalArgumentException if the facility to delete still has stored products
 	 * @throws RuntimeException if the deletion was not performed as expected

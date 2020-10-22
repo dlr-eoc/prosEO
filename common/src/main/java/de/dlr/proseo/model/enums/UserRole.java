@@ -6,7 +6,10 @@
 package de.dlr.proseo.model.enums;
 
 /**
- * prosEO User Roles (low-level roles, which can be bundled for user groups)
+ * prosEO User Roles (low-level roles, which can be bundled for user groups).
+ * 
+ * In Spring Security, the user role values are prefixed with "ROLE_" to creaty authority strings for the
+ * Authority and GroupAuthority classes.
  * 
  * @author Dr. Thomas Bassler
  */
@@ -113,6 +116,7 @@ public enum UserRole {
 	/** Notify of job step completion */
 	JOBSTEP_PROCESSOR;
 	
+	/** Spring Security prefix for authorities */
 	private static final String ROLE_PREFIX = "ROLE_";
 
 	/**
@@ -125,6 +129,7 @@ public enum UserRole {
 	/**
 	 * Get the role enum from a role string starting with the "ROLE_" prefix
 	 * 
+	 * @param roleString the role string to convert
 	 * @return the enum corresponding to the role string
 	 * @throws IllegalArgumentException if the role string does not start with "ROLE_" or if the remainder of the role string
 	 *         does not represent a legal UserRole enum value

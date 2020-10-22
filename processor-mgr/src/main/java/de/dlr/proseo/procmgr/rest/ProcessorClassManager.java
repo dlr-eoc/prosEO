@@ -22,12 +22,14 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.rest.model.ProcessorClassUtil;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
@@ -60,7 +62,10 @@ public class ProcessorClassManager {
 	private static final int MSG_ID_DUPLICATE_PROCESSOR_CLASS = 2216;
 	private static final int MSG_ID_PROCESSOR_CLASS_HAS_PROC = 2217;
 	private static final int MSG_ID_PROCESSOR_CLASS_HAS_CONF = 2218;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+	
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
 	private static final String MSG_PROCESSOR_CLASS_NOT_FOUND = "(E%d) No processor class found for mission %s and processor name %s";
@@ -82,6 +87,13 @@ public class ProcessorClassManager {
 	private static final String MSG_PROCESSOR_CLASS_MODIFIED = "(I%d) Processor class with id %d modified";
 	private static final String MSG_PROCESSOR_CLASS_NOT_MODIFIED = "(I%d) Processor class with id %d not modified (no changes)";
 	private static final String MSG_PROCESSOR_CLASS_DELETED = "(I%d) Processor class with id %d deleted";
+
+	// Same as in other services
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -137,45 +149,43 @@ public class ProcessorClassManager {
 	 * @param processorName the processor name (optional)
 	 * @return a list of Json objects representing processor classes satisfying the search criteria
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName) throws NoResultException {
+	public List<RestProcessorClass> getProcessorClasses(String mission, String processorName)
+			throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClasses({}, {})", mission, processorName);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
 		
 		List<RestProcessorClass> result = new ArrayList<>();
 		
-		if (null != mission && null != processorName) {
-			ProcessorClass processorClass = RepositoryService.getProcessorClassRepository().findByMissionCodeAndProcessorName(mission,
-					processorName);
-			if (null == processorClass) {
-				throw new NoResultException(logError(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND, 
-						mission, processorName));
-			}
-			result.add(ProcessorClassUtil.toRestProcessorClass(processorClass));
-		} else {
-			String jpqlQuery = "select pc from ProcessorClass pc where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and mission.code = :missionCode";
-			}
-			if (null != processorName) {
-				jpqlQuery += " and processorName = :processorName";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != processorName) {
-				query.setParameter("processorName", processorName);
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.ProcessorClass) {
-					result.add(ProcessorClassUtil.toRestProcessorClass((de.dlr.proseo.model.ProcessorClass) resultObject));
-				}
-			}
-			if (result.isEmpty()) {
-				throw new NoResultException(logError(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND, 
-						mission, processorName));
+		String jpqlQuery = "select pc from ProcessorClass pc where mission.code = :missionCode";
+		if (null != processorName) {
+			jpqlQuery += " and processorName = :processorName";
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != processorName) {
+			query.setParameter("processorName", processorName);
+		}
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof de.dlr.proseo.model.ProcessorClass) {
+				result.add(ProcessorClassUtil.toRestProcessorClass((de.dlr.proseo.model.ProcessorClass) resultObject));
 			}
 		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_PROCESSOR_CLASS_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_NOT_FOUND, 
+					mission, processorName));
+		}
+
 		logInfo(MSG_PROCESSOR_CLASS_LIST_RETRIEVED, MSG_ID_PROCESSOR_CLASS_LIST_RETRIEVED, mission, processorName);
 		
 		return result;
@@ -187,12 +197,20 @@ public class ProcessorClassManager {
 	 * @param processorClass a Json representation of the new processor class
 	 * @return a Json representation of the processor class after creation (with ID and version number)
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProcessorClass createProcessorClass(@Valid RestProcessorClass processorClass) throws IllegalArgumentException {
+	public RestProcessorClass createProcessorClass(@Valid RestProcessorClass processorClass)
+			throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProcessorClass({})", (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 		
 		if (null == processorClass) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_MISSING, MSG_ID_PROCESSOR_CLASS_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the processor class
+		if (!securityService.isAuthorizedForMission(processorClass.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					processorClass.getMissionCode(), securityService.getMission()));			
 		}
 		
 		ProcessorClass modelProcessorClass = ProcessorClassUtil.toModelProcessorClass(processorClass);
@@ -237,8 +255,9 @@ public class ProcessorClassManager {
 	 * @return a Json object corresponding to the processor class found
 	 * @throws IllegalArgumentException if no processor class ID was given
 	 * @throws NoResultException if no processor class with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProcessorClass getProcessorClassById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestProcessorClass getProcessorClassById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProcessorClassById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -251,6 +270,12 @@ public class ProcessorClassManager {
 			throw new NoResultException(logError(MSG_PROCESSOR_CLASS_ID_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND, id));
 		}
 
+		// Ensure user is authorized for the mission of the processor class
+		if (!securityService.isAuthorizedForMission(modelProcessorClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProcessorClass.get().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_PROCESSOR_CLASS_RETRIEVED, MSG_ID_PROCESSOR_CLASS_RETRIEVED, id);
 		
 		return ProcessorClassUtil.toRestProcessorClass(modelProcessorClass.get());
@@ -265,10 +290,11 @@ public class ProcessorClassManager {
 	 * 		   contained objects)
 	 * @throws EntityNotFoundException if no processor class with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 * @throws ConcurrentModificationException if the processor class has been modified since retrieval by the client
 	 */
 	public RestProcessorClass modifyProcessorClass(Long id, @Valid RestProcessorClass processorClass) throws
-			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+			EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 
 		// Check arguments
@@ -277,6 +303,12 @@ public class ProcessorClassManager {
 		}
 		if (null == processorClass) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_DATA_MISSING, MSG_ID_PROCESSOR_CLASS_DATA_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the processor class
+		if (!securityService.isAuthorizedForMission(processorClass.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					processorClass.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<ProcessorClass> optProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
@@ -345,8 +377,10 @@ public class ProcessorClassManager {
 	 * @throws EntityNotFoundException if the processor class to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 * @throws IllegalArgumentException if the ID of the processor class to delete was not given, or if dependent objects exist
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void deleteProcessorClassById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
+	public void deleteProcessorClassById(Long id)
+			throws EntityNotFoundException, RuntimeException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProcessorClassById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -357,6 +391,12 @@ public class ProcessorClassManager {
 		Optional<ProcessorClass> modelProcessorClass = RepositoryService.getProcessorClassRepository().findById(id);
 		if (modelProcessorClass.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PROCESSOR_CLASS_ID_NOT_FOUND, MSG_ID_PROCESSOR_CLASS_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the processor class
+		if (!securityService.isAuthorizedForMission(modelProcessorClass.get().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProcessorClass.get().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Check whether there are processors or configurations for this processor class

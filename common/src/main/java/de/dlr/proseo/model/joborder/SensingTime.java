@@ -1,5 +1,5 @@
 /**
- * 
+ * SensingTime.java
  */
 package de.dlr.proseo.model.joborder;
 
@@ -20,44 +20,51 @@ import org.w3c.dom.Node;
  */
 public class SensingTime {
 	/**
-	 * The start time
+	 * The sensing start time (Start Job Order element)
 	 */
 	private String start;
 	/**
-	 * The stop time
+	 * The sensing stop time (Stop Job Order element)
 	 */
 	private String stop;
 	/**
-	 * @return the start
+	 * Gets the sensing start time
+	 * @return the sensing start time
 	 */
 	public String getStart() {
 		return start;
 	}
 	/**
-	 * @param start the start to set
+	 * Sets the sensing start time
+	 * @param start the sensing start time to set
 	 */
 	public void setStart(String start) {
 		this.start = start;
 	}
 	/**
-	 * @return the stop
+	 * Gets the sensing stop time
+	 * @return the sensing stop time
 	 */
 	public String getStop() {
 		return stop;
 	}
 	/**
-	 * @param stop the stop to set
+	 * Sets the sensing stop time
+	 * @param stop the sensing stop time to set
 	 */
 	public void setStop(String stop) {
 		this.stop = stop;
 	}
 
-	public SensingTime() {
-		
-	}
 	/**
-	 * @param start
-	 * @param stop
+	 * No-argument constructor
+	 */
+	public SensingTime() { }
+	
+	/**
+	 * Constructor with sensing start and stop time arguments
+	 * @param start the sensing start time to set
+	 * @param stop the sensing stop time to set
 	 */
 	public SensingTime(String start, String stop) {
 		this.start = start;
@@ -68,7 +75,7 @@ public class SensingTime {
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element sensingTimeEle = doc.createElement("Sensing_Time");

@@ -1,13 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
-		<artifactId>samples</artifactId>
+		<artifactId>proseo-samples</artifactId>
 		<version>0.5.2</version>
 	</parent>
 
-	<artifactId>sample-processor</artifactId>
+	<artifactId>proseo-sample-processor</artifactId>
 	<name>prosEO Sample Processor</name>
 	<description>
   		prosEO Sample Processor - dummy processor complying with ESA’s „Generic IPF Interface Specification“
@@ -29,6 +30,12 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 		</dependency>
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
 	<build>
