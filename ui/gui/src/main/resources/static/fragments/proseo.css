@@ -488,3 +488,11 @@ code {
 .FAILED {
   background-color: #f5c6cb !important;
 }
+
+.WAITING_INPUT {
+  background-color: #ffeeba !important;
+}
+
+.ON_HOLD {
+  background-color: #c3e6cb !important;
+}

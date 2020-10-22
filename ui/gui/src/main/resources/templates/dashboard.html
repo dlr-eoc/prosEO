@@ -148,7 +148,7 @@
                 <tbody>
                   <div th:each="jobstep : ${failedjobsteps}">
                     <tr>
-                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&sh=true&jsh=' + ${jobstep?.jobId} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&jh=' + ${jobstep?.jobId} + '&jsh=' + ${jobstep?.id} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
                       <td class="FAILED"><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
@@ -191,7 +191,7 @@
                 <tbody>
                   <div th:each="jobstep : ${completedjobsteps}">
                     <tr>
-                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&sh=true&jsh=' + ${jobstep?.jobId} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
+                      <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&jh=' + ${jobstep?.jobId} + '&jsh=' + ${jobstep?.id} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
                       <td class="COMPLETED"><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
