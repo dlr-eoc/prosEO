@@ -80,7 +80,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForProduct(Product p, KubeConfig kubeConfig) {
-		if (logger.isTraceEnabled()) logger.trace(">>> searchForProduct({}, KubeConfig)", p.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForProduct({}, KubeConfig)", (null == p ? "null" : p.getId()));
 		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
@@ -101,7 +101,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForEnclosingProduct(Product p, KubeConfig kubeConfig) {
-		if (logger.isTraceEnabled()) logger.trace(">>> searchForEnclosingProduct({}, KubeConfig)", p.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForEnclosingProduct({}, KubeConfig)", (null == p ? "null" : p.getId()));
 		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
@@ -122,7 +122,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForProductPrim(Product p, KubeConfig kubeConfig) {
-		if (logger.isTraceEnabled()) logger.trace(">>> searchForProductPrim({}, KubeConfig)", p.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForProductPrim({}, KubeConfig)", (null == p ? "null" : p.getId()));
 		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {

@@ -425,7 +425,7 @@ public class MissionControllerImpl implements MissionController {
 	 * 
 	 * @param id the ID of the mission to delete
 	 * @param force flag whether to also delete all configured items (but not products)
-	 * @param deleteProducts flag whether to also delete all stored products (also from all processing faciliy, requires "force")
+	 * @param deleteProducts flag whether to also delete all stored products (also from all processing facilities, requires "force")
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful,
 	 *      "BAD_REQUEST", if "deleteProducts" was specified without "force" or if dependent objects exist for the mission,
 	 * 		"NOT_FOUND", if the mission did not exist, or
@@ -488,27 +488,6 @@ public class MissionControllerImpl implements MissionController {
 						}
 					}
 				}
-
-				return null;
-			});
-
-			// Delete all product files (also remove product files from Storage Manager);
-			// this is done through the prosEO Ingestor AND CANNOT BE ROLLED BACK (!), therefore it is done in a separate transaction
-			transactionTemplate.execute((status) -> {
-				// Test whether the mission id is valid
-				Mission mission = RepositoryService.getMissionRepository().findById(id).get();
-
-				if (force) {
-					deleteProductFiles(mission);
-				}
-	
-				return null;
-			});
-			
-			// Transaction to perform the metadata deletion
-			transactionTemplate.execute((status) -> {
-				// Test whether the mission id is valid
-				Mission mission = RepositoryService.getMissionRepository().findById(id).get();
 
 				// Delete the mission
 				if (force) {
@@ -663,7 +642,8 @@ public class MissionControllerImpl implements MissionController {
 
 	/**
 	 * Delete product, after all component products have been deleted (this would have happened through the CASCADE annotation
-	 * anyway, but in the bulk delete this is error-prone, therefore we control it programmatically)
+	 * anyway, but in the bulk delete this is error-prone, therefore we control it programmatically); deletes all product files
+	 * for this product (CASCADE)
 	 * 
 	 * @param product the product to delete
 	 * @param deletedProductIds the products deleted so far (may contain the current product!!)
@@ -682,47 +662,5 @@ public class MissionControllerImpl implements MissionController {
 		deletedProductIds.add(product.getId());
 		
 		RepositoryService.getProductRepository().deleteById(product.getId());
-	}
-
-	/**
-	 * Delete all product files for the given mission from their respective processing facilities
-	 * Caution: This 
-	 * @param mission the mission
-	 */
-	private void deleteProductFiles(Mission mission) {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFiles({})", mission.getCode());
-		
-		// Find all products for this mission with product files (dirty read on database!)
-		String jpqlQuery = "select p from Product p where p.productClass.mission.id = " + mission.getId() + " and p.productFile is not empty";
-		Query query = em.createQuery(jpqlQuery);
-		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof Product) {
-				// Find all processing facilities, where this product is stored
-				Product product = ((Product) resultObject);
-				logger.info(String.format(MSG_DELETING_PRODUCT_FILES, MSG_ID_DELETING_PRODUCT_FILES, product.getId()));
-				
-				Set<String> processingFacilities = new HashSet<>();
-				for (ProductFile productFile: ((Product) resultObject).getProductFile() ) {
-					processingFacilities.add(productFile.getProcessingFacility().getName());
-				}
-				
-				// Call Ingestor to remove product files at the found processing facilities from Storage Manager
-				// Note: This action runs in an external transaction and cannot be rolled back!
-				// Note 2: The external transaction modifies the list of product files for the product,
-				//         therefore we have two loops to avoid accessing a potentially invalid object collection!
-				for (String processingFacility: processingFacilities){
-					URI ingestorUrl = URI.create(orderManagerConfig.getIngestorUrl() + String.format(URL_INGESTOR_FILE_DELETE,
-							UriUtils.encodePathSegment(processingFacility, Charset.defaultCharset()), product.getId()));
-					
-					RestTemplate restTemplate = rtb
-							.setConnectTimeout(Duration.ofMillis(orderManagerConfig.getIngestorTimeout()))
-							.basicAuthentication(mission.getCode() + "-" + orderManagerConfig.getIngestorUser(), orderManagerConfig.getIngestorPassword())
-							.build();
-					restTemplate.delete(ingestorUrl);
-					
-				}
-			}
-		}
-
 	}
 }

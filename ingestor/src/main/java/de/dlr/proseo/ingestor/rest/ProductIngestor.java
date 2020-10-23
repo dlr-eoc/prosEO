@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,7 +100,7 @@ public class ProductIngestor {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product file for product ID %d and processing facility %s has been modified since retrieval by the client";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
 	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
-	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s (cause: %s)";
+	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s";
 
 	// Same as in ProductManager
 	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
@@ -151,7 +152,12 @@ public class ProductIngestor {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
+		String message = null;
+		try {
+			message = String.format(messageFormat, messageParamList.toArray());
+		} catch (IllegalFormatException e) {
+			message = messageFormat + " (insufficient parameters)";
+		}
 		logger.info(message);
 		
 		return message;
@@ -171,7 +177,12 @@ public class ProductIngestor {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
+		String message = null;
+		try {
+			message = String.format(messageFormat, messageParamList.toArray());
+		} catch (IllegalFormatException e) {
+			message = messageFormat + " (insufficient parameters)";
+		}
 		logger.error(message);
 		
 		return message;
@@ -427,7 +438,8 @@ public class ProductIngestor {
 		// Do not delete product file, if the product is currently satisfying some product query for the same processing facility
 		for (ProductQuery productQuery: product.get().getSatisfiedProductQueries()) {
 			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
-				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS, productId, facility.getName()));
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS,
+						productId, facility.getName()));
 			}
 		}
 		

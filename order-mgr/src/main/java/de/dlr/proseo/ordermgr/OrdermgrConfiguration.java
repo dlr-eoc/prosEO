@@ -38,7 +38,7 @@ public class OrdermgrConfiguration {
 	private String ingestorTimeout;
 	private Long ingestorTimeoutLong = null;
 	
-	/** User for Ingestor connections */
+	/** User for Ingestor connections (must have PRODUCT_GENERATOR role) */
 	@Value("${proseo.ingestor.user}")
 	private String ingestorUser;
 	
