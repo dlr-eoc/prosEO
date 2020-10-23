@@ -129,7 +129,8 @@
 					<failOnError>false</failOnError>
 					<quiet>true</quiet>
 					<show>package</show>
-				</configuration>
+                    <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                </configuration>
 				<reportSets>
 					<reportSet>
 						<id>default</id>

@@ -181,7 +181,7 @@ my @configurations = (
     	   { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
            { key => 'Threads', parameterType => 'INTEGER', parameterValue => 16 },
-           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'NRTI' }
+           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'OPER' }
     	],
     	configurationFiles => [],
     	staticInputFiles => [
@@ -196,7 +196,7 @@ my @configurations = (
            { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
            { key => 'Threads', parameterType => 'INTEGER', parameterValue => 10 },
-           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'OFFL' }
+           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'OPER' }
         ],
         configurationFiles => [
             { fileVersion => '1.0', fileName => '/usr/share/sample-processor/conf/ptm_l2_config.xml' }
@@ -211,7 +211,7 @@ my @configurations = (
            { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
            { key => 'Threads', parameterType => 'INTEGER', parameterValue => 16 },
-           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'NRTI' }
+           { key => 'Processing_Mode', parameterType => 'STRING', parameterValue => 'OPER' }
         ],
         configurationFiles => [],
         staticInputFiles => [],

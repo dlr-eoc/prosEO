@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
@@ -106,6 +108,7 @@ public class OrderDispatcher {
 			}
 		}		
 		if (!answer) {
+			// TODO Improve handling by returning a proper error message to the caller
 			throw new RuntimeException("publishOrder rollback");
 		}
 		return answer;
@@ -164,7 +167,8 @@ public class OrderDispatcher {
 					// for each orbit
 					for (Orbit orbit : orbits) {
 						// create job
-						createJobForOrbitOrTime(order, orbit, null, null, pf);
+						answer = createJobForOrbitOrTime(order, orbit, null, null, pf);
+						if (!answer) break;
 					}
 				}
 			}
@@ -209,7 +213,8 @@ public class OrderDispatcher {
 					// create jobs for each day
 					while (startT.isBefore(stopT)) {
 						// create job (without orbit association)
-						createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+						if (!answer) break;
 						startT = sliceStopT;
 						sliceStopT = startT.plus(1, ChronoUnit.DAYS);
 					} 
@@ -255,7 +260,7 @@ public class OrderDispatcher {
 				} else {
 
 					if (startT.equals(stopT)) {
-						createJobForOrbitOrTime(order, null, startT, stopT, pf);
+						answer = createJobForOrbitOrTime(order, null, startT, stopT, pf);
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
 							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
@@ -266,7 +271,7 @@ public class OrderDispatcher {
 							// check orbit
 							Orbit orbit = findOrbit(order, startT, sliceStopT);
 							// create job
-							createJobForOrbitOrTime(order, orbit, startT, sliceStopT, pf);
+							answer = createJobForOrbitOrTime(order, orbit, startT, sliceStopT, pf);
 							startT = sliceStopT;
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
@@ -344,7 +349,7 @@ public class OrderDispatcher {
 					}
 				}
 			}
-		} catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException | NoSuchElementException ex) {
 			answer = false;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -429,112 +434,137 @@ public class OrderDispatcher {
 				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
 				pq = RepositoryService.getProductQueryRepository().save(pq);
 				jobStep.getInputProductQueries().add(pq);
+				if (logger.isDebugEnabled()) logger.debug("Product query generated for rule '{}'", selectionRule);
 			}
 		}
 	}
 	
-	private void createProductsAndJobStep(ProductClass productClass, Job job, ProcessingOrder order, List<JobStep> allJobSteps, List<Product> allProducts) {
+	/**
+	 * Recursively create output products and job steps for the given product class, order and job
+	 * 
+	 * @param productClass the requested output product class
+	 * @param job the job to add the new job steps to
+	 * @param order the processing order
+	 * @param allJobSteps result list of job steps
+	 * @param allProducts result list of output products
+	 * @throws NoSuchElementException if a suitable configured processor could not be found
+	 */
+	private void createProductsAndJobStep(ProductClass productClass, Job job, ProcessingOrder order, List<JobStep> allJobSteps,
+			List<Product> allProducts) throws NoSuchElementException {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProductsAndJobStep({}, {}, {}, List<JobStep>, List<Product>)",
+				(null == productClass ? "null" : productClass.getProductType()), (null == job ? "null": job.getId()),
+				(null == order ? "null" : order.getIdentifier()));
+
 		// Find product class with processor class
 		ProductClass topProductClass = getTopProductClassWithPC(productClass);
+		if (logger.isDebugEnabled()) logger.debug("Found top product class {}", topProductClass.getProductType());
 
 		if (order.getInputProductClasses().contains(productClass) || order.getInputProductClasses().contains(topProductClass)) {
 			// We don't need to create the product, it should be there
+			if (logger.isDebugEnabled()) logger.debug("Skipping product class {} with top product class {} due to order input class stop list",
+					productClass.getProductType(), topProductClass.getProductType());
 			return;
 		}
 		
 		// Only one job step for one product
 		for (JobStep i : allJobSteps) {
 			if (i.getOutputProduct().getProductClass().equals(topProductClass)) {
+				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because a job step for it has already been generated",
+						productClass.getProductType(), topProductClass.getProductType());
 				return;
 			}
 		}
 		
 		// Find configured processor to use
 		ConfiguredProcessor configuredProcessor = searchConfiguredProcessorForProductClass(topProductClass, order.getRequestedConfiguredProcessors(), order.getProcessingMode());
-		if (configuredProcessor != null) {
-			// we have a configured processor!
-			// now create products and job steps to generate output files 
-			// create job step(s)
-			JobStep jobStep = new JobStep();
-			jobStep.setJobStepState(JobStepState.INITIAL);
-			jobStep.setProcessingMode(order.getProcessingMode());
-			jobStep.setJob(job);
-			jobStep.getOutputParameters().putAll(order.getOutputParameters(topProductClass));
-			jobStep = RepositoryService.getJobStepRepository().save(jobStep);
-			job.getJobSteps().add(jobStep);
+		if (null == configuredProcessor) {
+			Messages.ORDERDISP_NO_CONF_PROC.log(logger, topProductClass.getProductType());
+			throw new NoSuchElementException(Messages.ORDERDISP_NO_CONF_PROC.format(topProductClass.getProductType()));
+		}
+		if (logger.isDebugEnabled()) logger.debug("Using configured processor {}", configuredProcessor.getIdentifier());
 
-			// now we have the product class, create related products
-			// also create job steps with queries related to product class
-			// collect created products
-			List<Product> products = new ArrayList<Product>();
+		// we have a configured processor!
+		// now create products and job steps to generate output files 
+		// create job step(s)
+		JobStep jobStep = new JobStep();
+		jobStep.setJobStepState(JobStepState.INITIAL);
+		jobStep.setProcessingMode(order.getProcessingMode());
+		jobStep.setJob(job);
+		jobStep.getOutputParameters().putAll(order.getOutputParameters(topProductClass));
+		jobStep = RepositoryService.getJobStepRepository().save(jobStep);
+		job.getJobSteps().add(jobStep);
 
-			createProducts(topProductClass, 
-					null, 
-					configuredProcessor, 
-					job.getOrbit(), 
-					job,
-					jobStep, 
-					order.getOutputFileClass(), 
-					job.getStartTime(), 
-					job.getStopTime(), 
-					products);
-			
-			// now we have to create the product queries for job step.
+		// now we have the product class, create related products
+		// also create job steps with queries related to product class
+		// collect created products
+		List<Product> products = new ArrayList<Product>();
 
-			if (products.isEmpty()) {
-				job.getJobSteps().remove(jobStep);
-				RepositoryService.getJobStepRepository().delete(jobStep);
-				jobStep = null;
-			} else {
-				for (Product p : products) {
-					try {
-						findOrCreateProductQuery(jobStep, p.getProductClass());
-					} catch (IllegalArgumentException e) {
-						logger.error(e.getMessage());
-						job.getJobSteps().remove(jobStep);
-						RepositoryService.getJobStepRepository().delete(jobStep);
-						jobStep = null;
-						throw e;
-					}
-				}
-				allProducts.addAll(products);
-				
-				// this means also to create new job steps for products which are not satisfied
-				// check all queries for existing product definition (has not to be created!)
-				List<JobStep> jobSteps = new ArrayList<JobStep>();
-				jobSteps.add(jobStep);
-				allJobSteps.add(jobStep);
-				for (ProductQuery pq : jobStep.getInputProductQueries()) {
-					if (productQueryService.executeQuery(pq, true)) {
-						// jobStep.getOutputProduct().getSatisfiedProductQueries().add(pq);							
-					} else {
-						// otherwise create job step to build product.
-						createProductsAndJobStep(pq.getRequestedProductClass(),
-								job,
-								order,
-								allJobSteps,
-								allProducts);
-					} 
-				}
+		createProducts(topProductClass, 
+				null, 
+				configuredProcessor, 
+				job.getOrbit(), 
+				job,
+				jobStep, 
+				order.getOutputFileClass(), 
+				job.getStartTime(), 
+				job.getStopTime(), 
+				products);
+		
+		// now we have to create the product queries for job step.
 
-				// save all created things
-				job = RepositoryService.getJobRepository().save(job);
-				for (JobStep js : jobSteps) {
-					js.setJob(job);
-					JobStep jobS = RepositoryService.getJobStepRepository().save(js);
-					if (js.getOutputProduct() != null) {
-						js.getOutputProduct().setJobStep(jobS);
-						Product ps = RepositoryService.getProductRepository().save(js.getOutputProduct());
-						jobS.setOutputProduct(ps);
-						jobS = RepositoryService.getJobStepRepository().save(jobS);
-					} else {
-						@SuppressWarnings("unused")
-						int bla = 1; // Debug support ;-)
-					}
+		if (products.isEmpty()) {
+			if (logger.isDebugEnabled()) logger.debug("No products could be generated, skipping job step generation");
+			job.getJobSteps().remove(jobStep);
+			RepositoryService.getJobStepRepository().delete(jobStep);
+			jobStep = null;
+		} else {
+			for (Product p : products) {
+				try {
+					findOrCreateProductQuery(jobStep, p.getProductClass());
+				} catch (IllegalArgumentException e) {
+					logger.error(e.getMessage());
+					job.getJobSteps().remove(jobStep);
+					RepositoryService.getJobStepRepository().delete(jobStep);
+					jobStep = null;
+					throw e;
 				}
 			}
-		} else {
-			Messages.ORDERDISP_NO_CONF_PROC.log(logger, topProductClass.getProductType());
+			allProducts.addAll(products);
+			
+			// this means also to create new job steps for products which are not satisfied
+			// check all queries for existing product definition (has not to be created!)
+			List<JobStep> jobSteps = new ArrayList<JobStep>();
+			jobSteps.add(jobStep);
+			allJobSteps.add(jobStep);
+			for (ProductQuery pq : jobStep.getInputProductQueries()) {
+				if (productQueryService.executeQuery(pq, true)) {
+					// Already satisfied, no processing of input product required							
+					if (logger.isDebugEnabled()) logger.debug("Product query for rule '{}' already satisfied", pq.getGeneratingRule());
+				} else {
+					// otherwise create job step to build product.
+					createProductsAndJobStep(pq.getRequestedProductClass(),
+							job,
+							order,
+							allJobSteps,
+							allProducts);
+				} 
+			}
+
+			// save all created things
+			job = RepositoryService.getJobRepository().save(job);
+			for (JobStep js : jobSteps) {
+				js.setJob(job);
+				JobStep jobS = RepositoryService.getJobStepRepository().save(js);
+				if (js.getOutputProduct() != null) {
+					js.getOutputProduct().setJobStep(jobS);
+					Product ps = RepositoryService.getProductRepository().save(js.getOutputProduct());
+					jobS.setOutputProduct(ps);
+					jobS = RepositoryService.getJobStepRepository().save(jobS);
+				} else {
+					@SuppressWarnings("unused")
+					int bla = 1; // Debug support ;-)
+				}
+			}
 		}
 	}
 	
@@ -657,6 +687,8 @@ public class OrderDispatcher {
 			js.setOutputProduct(p);
 		}
 		
+		if (logger.isDebugEnabled()) logger.debug("Output product {} created", p.getUuid().toString());
+		
 		return p;
 	}
 	
@@ -671,75 +703,81 @@ public class OrderDispatcher {
 	 */
 	private ConfiguredProcessor searchConfiguredProcessorForProductClass(ProductClass productClass,
 			Set<ConfiguredProcessor> requestedConfiguredProcessors, String processingMode) {
-		if (logger.isTraceEnabled()) logger.trace(">>> searchConfiguredProcessorForProductClass({})", (null == productClass ? "null" : productClass.getProductType()));
+		if (logger.isTraceEnabled()) logger.trace(">>> searchConfiguredProcessorForProductClass({}, Set<ConfiguredProcessor, {})",
+				(null == productClass ? "null" : productClass.getProductType()), processingMode);
 		
-		ConfiguredProcessor cpFound = null;
+		// Check arguments
+		if (null == productClass) {
+			if (logger.isDebugEnabled()) logger.warn("searchConfiguredProcessorForProductClass called without product class");
+			return null;
+		}
+		
 		List <ConfiguredProcessor> cplistFound = new ArrayList<ConfiguredProcessor>();
-		Processor pFound = null;
 		
-		if (productClass != null) {
-			if (productClass.getProcessorClass() != null) {
-				// build list of all configured processors
-				List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
-				for (Processor p : productClass.getProcessorClass().getProcessors()) {
-					for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
-						cplist.add(cp);
-					}
-				}
-				// now look whether one configured processor is in requested configured processors
-				if (requestedConfiguredProcessors != null && !requestedConfiguredProcessors.isEmpty()) {
-					for (ConfiguredProcessor cp : cplist) {
-						if (requestedConfiguredProcessors.contains(cp)) {
-							cplistFound.add(cp);
-						}
-					}
-				}
-				// there is no requested configured processor, add all possible to look for the newest.
-				if (cplistFound.isEmpty()) {
-					cplistFound.addAll(cplist);
+		if (productClass.getProcessorClass() != null) {
+			// build list of all configured processors
+			List <ConfiguredProcessor> cplist = new ArrayList<ConfiguredProcessor>();
+			for (Processor p : productClass.getProcessorClass().getProcessors()) {
+				for (ConfiguredProcessor cp : p.getConfiguredProcessors()) {
+					cplist.add(cp);
+					if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} found", cp.getIdentifier());
 				}
 			}
+			// now look whether one configured processor is in requested configured processors
+			if (requestedConfiguredProcessors != null && !requestedConfiguredProcessors.isEmpty()) {
+				for (ConfiguredProcessor cp : cplist) {
+					if (requestedConfiguredProcessors.contains(cp)) {
+						cplistFound.add(cp);
+						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} in list of requested processors", cp.getIdentifier());
+					}
+				}
+			}
+			// there is no requested configured processor, add all possible to look for the newest.
+			if (cplistFound.isEmpty()) {
+				cplistFound.addAll(cplist);
+			}
+		}
 
-			if (!cplistFound.isEmpty() && processingMode != null && !processingMode.isBlank()) {
-				// search the configured processors with expected processing mode
-				List <ConfiguredProcessor> cplistFoundWithMode = new ArrayList<ConfiguredProcessor>();
-				for (ConfiguredProcessor cp : cplistFound) {
-					if (cp.getConfiguration().getDynProcParameters().get("Processing_Mode").getStringValue().equals(processingMode)) {
-						cplistFoundWithMode.add(cp);
-					}
-				}
-				if (cplistFoundWithMode.isEmpty()) {
-					for (ConfiguredProcessor cp : cplistFound) {
-						if (cp.getConfiguration().getDynProcParameters().get("Processing_Mode") == null ||
-								cp.getConfiguration().getDynProcParameters().get("Processing_Mode").getStringValue().equals("ALWAYS")) {
-							cplistFoundWithMode.add(cp);
-						}
-					}
-				}
-				cplistFound.clear();
-				cplistFound.addAll(cplistFoundWithMode);
-			}
-			if (!cplistFound.isEmpty()) {
-				// now search the newest processor
-				for (ConfiguredProcessor cp : cplistFound)
-				if (pFound == null) {
-					pFound = cp.getProcessor();
-				} else {
-					if (cp.getProcessor().getProcessorVersion().compareTo(pFound.getProcessorVersion()) > 0) {
-						pFound = cp.getProcessor();
-					}
-				}
-			}
-			// search configured processor with newest configuration
+		if (!cplistFound.isEmpty() && processingMode != null && !processingMode.isBlank()) {
+			// search the configured processors with expected processing mode
+			List <ConfiguredProcessor> cplistFoundWithMode = new ArrayList<ConfiguredProcessor>();
 			for (ConfiguredProcessor cp : cplistFound) {
-				if (cp.getProcessor().equals(pFound)) {
-					if (cpFound == null) {
-						cpFound = cp;
-					} else {
-						if (cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
-							cpFound = cp;
-						}
+				Parameter processingModeParam = cp.getConfiguration().getDynProcParameters().get("Processing_Mode");
+				if (null != processingModeParam && processingModeParam.getStringValue().equals(processingMode)) {
+					cplistFoundWithMode.add(cp);
+					if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} intended for mode {}", cp.getIdentifier(), processingMode);
+				}
+			}
+			if (cplistFoundWithMode.isEmpty()) {
+				for (ConfiguredProcessor cp : cplistFound) {
+					Parameter processingModeParam = cp.getConfiguration().getDynProcParameters().get("Processing_Mode");
+					if (null == processingModeParam || processingModeParam.getStringValue().equals("ALWAYS")) {
+						cplistFoundWithMode.add(cp);
+						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} suitable for mode {}", cp.getIdentifier(), processingMode);
 					}
+				}
+			}
+			cplistFound.clear();
+			cplistFound.addAll(cplistFoundWithMode);
+		}
+
+		// now search the newest processor
+		Processor pFound = null;
+		if (!cplistFound.isEmpty()) {
+			for (ConfiguredProcessor cp : cplistFound) {
+				if (null == pFound || cp.getProcessor().getProcessorVersion().compareTo(pFound.getProcessorVersion()) > 0) {
+					pFound = cp.getProcessor();
+				}
+			}
+			if (logger.isDebugEnabled()) logger.debug("Newest applicable processor version is {}", pFound.getProcessorVersion());
+		}
+		
+		// search configured processor with newest configuration
+		ConfiguredProcessor cpFound = null;
+		for (ConfiguredProcessor cp : cplistFound) {
+			if (cp.getProcessor().equals(pFound)) {
+				if (null == cpFound || cp.getConfiguration().getConfigurationVersion().compareTo(cpFound.getConfiguration().getConfigurationVersion()) > 0) {
+					cpFound = cp;
 				}
 			}
 		}

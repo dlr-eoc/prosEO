@@ -500,6 +500,7 @@ public class OrderUtil {
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_COMPLETED;
 				} else {
+					order.setOrderState(OrderState.SUSPENDING); // direct transition to PLANNED not allowed
 					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;

@@ -7,7 +7,6 @@ spring:
         url: jdbc:postgresql://localhost:5432/proseo
         username: postgres
         password: sequel09Master
-    packagesToScan: de.dlr.proseo.model
 logging:
     level:
         root: INFO
@@ -19,5 +18,6 @@ proseo:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
         # Connection timeout in ms
         timeout: 1000
+        # User for Ingestor connections (must have PRODUCT_GENERATOR role)
         user: <user>
         password: <password>

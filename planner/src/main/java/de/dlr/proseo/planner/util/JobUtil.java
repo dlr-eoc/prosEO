@@ -71,18 +71,16 @@ public class JobUtil {
 				// try to suspend job steps not running
 				Boolean allSuspended = true;
 				for (JobStep js : job.getJobSteps()) {
-					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() & allSuspended;
+					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() && allSuspended;
 				}
 				job.incrementVersion();
+				job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+				answer = Messages.JOB_HOLD;
 				if (allSuspended) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
-					RepositoryService.getJobRepository().save(job);
+					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL); // direct transition to INITIAL not allowed
 					answer = Messages.JOB_SUSPENDED;
-				} else {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_HOLD;
 				}
+				RepositoryService.getJobRepository().save(job);
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;
