@@ -52,42 +52,78 @@
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{producttype}">producttype</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
                     <th><span th:text="#{description}">typedescription</span></th>
-                    <th><span th:text="#{visibility}">visibility</span></th>
+                    <th><span th:text="#{enclosingclass}">enclosingclass</span></th>
                     <th><span th:text="#{processorclass}">processorclass</span></th>
+                    <th><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
                   </tr>
                   <tr>
                     <th><span>&nbsp;</span></th>
                     <th><span th:text="#{defaultslicingtype}">defaultslicingtype</span></th>
                     <th><span th:text="#{defaultslicingduration}">defaultslicingduration</span></th>
-                    <th><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
                     <th><span th:text="#{componentclasses}">componentclasses</span></th>
-                    <th><span th:text="#{enclosingclass}">enclosingclass</span></th>
+                    <th><span th:text="#{visibility}">visibility</span></th>
                     <th><span th:text="#{selectionrules}">selectionrules</span></th>
                   </tr>
                 </thead>
                 <tbody>
             <div th:each="class : ${productclasses}">
-                  <tr th:id="${class?.productType}">
-                    <td rowspan="2" th:text="${class?.id}" class="first-row"></td>
-                    <td class="first-row"><a th:href="'/product-show?productClass=' + ${class?.productType}" th:text="${class?.productType}"></a></td>
-                    <td th:text="${class?.version}" class="first-row"></td>
-                    <td th:text="${class?.missionCode}" class="first-row"></td>
-                    <td th:text="${class?.typeDescription}" class="first-row"></td>
-                    <td th:text="${class?.visibility}" class="first-row"></td>
-                    <td class="first-row"><a th:href="'/processor-class-show?pc=' + ${class?.processorClass}"><span th:text="${class?.processorClass}"></span></a></td>
-                  </tr>
-                  <tr class="proseo-row-divider">
-                    <td th:text="${class?.defaultSlicingType}"></td>
-                    <td th:text="${class?.defaultSliceDuration}"></td>
-                    <td th:text="${class?.productFileTemplate}"></td>
-                    <td><a th:each="comp : ${class?.componentClasses}" class="proseo-list-item" th:href="'#' + ${comp}"><span th:text="${comp}"></span></a></td>
-                    <td><a th:href="'#' + ${class?.enclosingClass}"><span th:text="${class?.enclosingClass}"></span></a></td>
-                    <td><span class="code" th:text="${class?.prettyPrintSelRules}"></span></td>
-                  </tr>
-            </div>
+							<tr th:id="${class?.productType}">
+								<td th:text="${class?.id}" class="first-row"></td>
+								<td class="first-row"><a
+									th:href="'/product-show?productClass=' + ${class?.productType}"
+									th:text="${class?.productType}"></a></td>
+								<td th:text="${class?.typeDescription}" class="first-row"></td>
+								<td class="first-row"><a
+									th:href="'#' + ${class?.enclosingClass}"><span
+										th:text="${class?.enclosingClass}"></span></a></td>
+								<td class="first-row"><a
+									th:href="'/processor-class-show?pc=' + ${class?.processorClass}"><span
+										th:text="${class?.processorClass}"></span></a></td>
+								<td class="first-row"><textarea th:if="${class?.productFileTemplate} != null" class="mission-template" readonly wrap="soft"
+                                  th:style="${#strings.isEmpty(class?.productFileTemplate)?'height:1em':'height:3em'}"
+                                  th:rows="${#strings.isEmpty(class?.productFileTemplate)?'0':'3'}"
+                                  th:text="${class?.productFileTemplate}"></textarea></td>
+							</tr>
+							<tr class="proseo-row-divider">
+								<td><span>&nbsp;</span></td>
+								<td th:text="${class?.defaultSlicingType}"></td>
+								<td th:text="${class?.defaultSliceDuration}"></td>
+								<td><a th:each="comp : ${class?.componentClasses}"
+									class="proseo-list-item" th:href="'#' + ${comp}"><span
+										th:text="${comp}"></span></a></td>
+								<td th:text="${class?.visibility}"></td>
+								<td>
+									<table class="proseo-inline-table" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
+										<thead class="thead-proseo">
+											<tr>
+												<th><span th:text="#{mode}">mode</span></th>
+												<th><span th:text="#{selectionrules}">selectionrules</span></th>
+												<th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
+											</tr>
+										</thead>
+										<div  th:each="modeRules : ${class?.sortedSelectionRules}">
+										<tbody th:each="rule,iterStat : ${modeRules?.selRules}">
+												<tr>
+													<td th:if="${iterStat.first} == true"
+														th:text="${modeRules?.mode}"></td>
+													<td th:if="${iterStat.first} == false" class="tr-rowspan"><span>&nbsp;</span></td>
+													<td><span class="no-wrap"
+														th:each="word,i : ${#strings.arraySplit(rule?.ruleString,' ')}"
+														><span th:if="${i.first} == false">&nbsp;</span><span th:if="${i.count} != 2" class="code"
+                            th:text="${word}"></span><a th:if="${i.count} == 2"
+                              th:href="'#' + ${word}"><span class="code"
+                            th:text="${word}"></span></a></span></td>
+													<td><a th:each="acp : ${rule?.applicableConfiguredProcessors}" 
+                       class="proseo-list-item"  
+                       th:href="'/configured-processor-show?cp=' + ${acp}" th:text="${acp}"></a></td>
+												</tr>
+											</tbody>
+										</div>
+									</table>
+							  </td>
+							</tr>
+						</div>
                 </tbody>
               </table>
           </div>

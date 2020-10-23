@@ -54,17 +54,16 @@
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
+                    <!-- <th><span th:text="#{facility}">facility</span></th> -->
                     <th><span th:text="#{state}">state</span></th>
+                    <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{slicing}">slicing</span></th>
                     <th><span th:text="#{product}">product</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                   <tr>
-                    <th><span>&nbsp;</span></th>
+                    <th class="tr-rowspan"><span>&nbsp;</span></th>
                     <th><span th:text="#{uuid}">uuid</span></th>
-                    <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{processingtype}">productiontype</span></th>
                     <th><span th:text="#{startstoptime}">startstoptime</span></th>
@@ -78,21 +77,13 @@
                   <!--          table-warning  - light sand -->
                   <!--          table-success  - light green -->
                   <tr
-                    th:id="${ord?.id}"
-                    th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-                    ? 'table-danger' 
-                    : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-                    ? 'table-success' 
-                    : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-                    ? 'table-info' 
-                    : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-                    ? 'table-warning' 
-                    : 'table-danger')))">
+                    th:id="${ord?.id}">
                     <td th:text="${ord?.id}"></td>
                     <td id="order-name" th:text="${ord?.identifier}"></td>
-                    <td th:text="${ord?.version}"></td>
-                    <td th:text="${ord?.missionCode}"></td>
-                    <td th:text="${ord?.orderState}"></td>
+                    <!-- <td><span id="orderFacility"></span></td> -->
+                    <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}" 
+                        th:text="${ord?.orderState}"></td>
+                    <td th:text="${ord?.outputFileClass}"></td>
                     <td th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
                           <span th:text="#{spacecraft}">spacecraft</span> <span th:text="${orb?.spacecraftCode}">spacecraftCode</span>, 
                           <span th:text="${orb?.orbitNumberFrom}">orbitNumberFrom</span> &ndash; <span th:text="${orb?.orbitNumberTo}">orbitNumberTo</span>, 
@@ -106,24 +97,15 @@
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                     <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
                   </tr>
-                  <tr
-                    th:id="${ord?.id}"
-                    th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-                    ? 'table-danger' 
-                    : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-                    ? 'table-success' 
-                    : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-                    ? 'table-info' 
-                    : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-                    ? 'table-warning' 
-                    : 'table-danger')))">
-                    <td>&nbsp;</td>
+                  <tr>
+                    <td class="tr-rowspan">&nbsp;</td>
                     <td th:text="${ord?.uuid}"></td>
-                    <td th:text="${ord?.outputFileClass}"></td>
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
                     <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                    <td th:text="${ord?.inputProductClasses}"></td>
+                    <td><a th:each="comp : ${ord?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                     <td>&nbsp;</td>
                   </tr>
                 </tbody>
@@ -188,94 +170,85 @@
           <div id="jobscontent" name="jobscontent">
             <table class="table table-hover" id="jobs" th:unless="${#arrays.isEmpty(jobs)}">
               <thead class="thead-proseo-order">
-                <tr>
-                  <th colspan="2" id="togglejobs" class="cursorpointer emptycol" onclick="toggleJobs()"><div id="jobshide"><span
-                        data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobs}">jobs</span></div><div id="jobsshow"><span
-                        data-feather="plus-circle"></span>&nbsp;<span th:text="#{jobs}">jobs</span></div></th>
-                  <th><span th:text="#{version}">version</span></th>
+                <tr class="th-row">
+                  <th colspan="2"><span th:text="#{jobs}">jobs</span></th>
                   <th><span th:text="#{state}">state</span></th>
-                  <th><span th:text="#{facility}">facility</span></th>
-                  <th><span th:text="#{starttime}">starttime</span><br/></th>
-                  <th><span th:text="#{orbit}">orbit</span> <span th:text="#{id}">id</span></th>
-                  <th><span th:text="#{mission}">mission</span></th>
-                  <th><span th:text="#{number}">number</span></th>
-                </tr>
-                <tr class="filtercontent" id="togglejobshead2">
-                  <th class="emptycol" colspan="2"></th>
-                  <th></th>
                   <th><span th:text="#{failedsteps}">failedsteps</span></th>
+                  <th><span th:text="#{facility}">facility</span></th>
                   <th><span th:text="#{priority}">priority</span></th>
-                  <th><span th:text="#{stoptime}">stoptime</span></th>
-                  <th  colspan="3"><span th:text="#{starttime}">starttime</span> &ndash; <span th:text="#{stoptime}">stoptime</span></th>
+                  <th><span th:text="#{starttime}">starttime</span> &ndash; <span th:text="#{stoptime}">stoptime</span></th>
+                  <th><span th:text="#{orbit}">orbit</span> <span th:text="#{number}">number</span></th>
+                  <th></th>
                 </tr>
               </thead>
-              <tbody class="filtercontent" id="togglejobsbody">
-                <div th:each="job : ${jobs}">
-                  <tr>
-                    <td class="emptycol first-row" colspan="2"><span th:text="${job?.id}"></span></td>
-                    <td class="first-row"><span th:text="${job?.version}"></span></td>
-                    <td class="first-row"><span th:text="${job?.jobState}"></span></td>
+              <tbody th:each="job : ${jobs}">
+                  <tr th:id="${job?.id}">
+                    <td th:id="'togglejob' + ${job?.id}" 
+                        class="cursorpointer first-row" 
+                        th:onclick="'toggleJob(' + ${job?.id} + ')'"
+                      ><div class="jobhide" 
+                            th:id="'jobh' + ${job?.id}"><span data-feather="minus-circle"></span></div>
+                       <div class="jobshow" th:id="'jobs' + ${job?.id}"><span
+                                  data-feather="plus-circle"></span></div></td>
+                    <td class="first-row"><span th:text="${job?.id}"></span></td>
+                    <td th:class="(${job?.hasFailedJobSteps} == true) ? 'FAILED' : ${job?.jobState} + ' first-row'"><span th:text="${job?.jobState}"></span></td>
+                    <td class="first-row"><span th:text="${job?.hasFailedJobSteps}"></span></td>
                     <td class="first-row"><span th:text="${job?.processingFacilityName}"></span></td>
-                    <td class="first-row"><span th:text="${job?.startTime}"></span></td>
-                    <td class="first-row"><span th:text="${job?.orbit?.id}"></span></td>
-                    <td class="first-row"><span th:text="${job?.orbit?.missionCode}"></span></td>
+                    <td class="first-row"><span th:text="${job?.priority}"></span></td>
+                    <td class="first-row"><span th:text="${job?.startTime}"></span> &ndash; <span th:text="${job?.stopTime}"></span></td>
                     <td class="first-row"><span th:text="${job?.orbit?.orbitNumber}"></span></td>
+                    <td th:rowspan="${#lists.size(job?.jobSteps)}"><span class="filtercontent" th:id="'togglejobg' + ${job?.id}"></span></td>
                   </tr>
-                  <tr>
-                    <td class="emptycol" colspan="2"></td>
-                    <td></td>
-                    <td><span th:text="${job?.hasFailedJobSteps}"></span></td>
-                    <td><span th:text="${job?.priority}"></span></td>
-                    <td><span th:text="${job?.stopTime}"></span></td>
-                    <td colspan="3"><span th:text="${job?.orbit?.startTime}"></span> &ndash; <span th:text="${job?.orbit?.stopTime}"></span></td>
-                  </tr>
-                  <tr>
+                  <tr class="filtercontent" th:id="'togglejobb' + ${job?.id}">
                     <td class="emptycol"></td>
                     <td colspan="7">
                       <table class="table table-hover" th:id="'jobsteps' + ${job?.id}">
                         <thead class="thead-proseo-order">
                           <tr>
-                            <th th:id="'togglejs' + ${job?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${job?.id} + ')'"><div class="jshide" th:id="'jsh' + ${job?.id}"><span
-                                  data-feather="minus-circle"></span>&nbsp;<span th:text="#{jobsteps}">jobsteps</span></div><div class="jsshow" th:id="'jss' + ${job?.id}"><span
-                                  data-feather="plus-circle"></span>&nbsp;<span th:text="#{jobsteps}">jobsteps</span></div></th>
-                            <th><span th:text="#{version}">version</span></th>
+                            <th colspan="2"><span th:text="#{jobsteps}">jobsteps</span></th>
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
                             <th><span th:text="#{product}">product</span></th>
                             <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
-                            <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
                             <th><span th:text="#{errloglevel}">errloglevel</span></th>
                           </tr>
-                          <tr class="filtercontent" th:id="'togglejsh2' + ${job?.id}">
-                            <th colspan="10"><span th:text="#{joffilename}">joffilename</span></th>
-                          </tr>
-                          <tr class="filtercontent" th:id="'togglejsh3' + ${job?.id}">
-                            <th colspan="10"><span th:text="#{stdout}">stdout</span></th>
-                          </tr>
                         </thead>
-                        <tbody class="filtercontent" th:id="'togglejsb' + ${job?.id}">
+                        <tbody>
                           <div th:each="jobstep : ${job?.jobSteps}">
                             <tr>
+                              <td th:id="'togglejs' + ${jobstep?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${jobstep?.id} + ')'"><div class="jshide" th:id="'jsh' + ${jobstep?.id}"><span
+                                  data-feather="minus-circle"></span></div><div class="jsshow" th:id="'jss' + ${jobstep?.id}"><span
+                                  data-feather="plus-circle"></span></div></td>
                               <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
-                              <td class="first-row"><span th:text="${jobstep?.version}"></span></td>
-                              <td class="first-row"><span th:text="${jobstep?.jobStepState}"></span></td>
+                              <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
-                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProduct}"></span></a></td>
-                              <td class="first-row"><span th:text="${jobstep?.inputProductClasses}"></span></td>
-                              <td class="first-row"><span th:text="${jobstep?.outputProductClass}"></span></td>
+                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
+                              <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
+                                    class="proseo-list-item"  
+                                    th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                               <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stderrLogLevel}"></span></td>
                             </tr>
-                            <tr>
-                              <td colspan="10"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
+                          <tr class="filtercontent th-row" th:id="'togglejsh2' + ${jobstep?.id}">
+                            <th class="tr-rowspan"><span>&nbsp;</span></th>
+                            <th colspan="9"><span th:text="#{joffilename}">joffilename</span></th>
+                          </tr>
+                          <tr class="filtercontent th-row" th:id="'togglejsh3' + ${jobstep?.id}">
+                            <th class="tr-rowspan"><span>&nbsp;</span></th>
+                            <th colspan="9"><span th:text="#{stdout}">stdout</span></th>
+                          </tr>
+                            <tr class="filtercontent" th:id="'togglejsb2' + ${jobstep?.id}">
+                            <td class="tr-rowspan"><span>&nbsp;</span></td>
+                              <td colspan="9"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
                             </tr>
-                            <tr>
-                              <td colspan="10"><textarea class="code" readonly
+                            <tr class="filtercontent" th:id="'togglejsb3' + ${jobstep?.id}">
+                            <td class="tr-rowspan"><span>&nbsp;</span></td>
+                              <td colspan="9"><textarea class="code" readonly
                                   th:style="${#strings.isEmpty(jobstep?.processingStdOut)?'height:1em':'height:10em'}"
                                   th:rows="${#strings.isEmpty(jobstep?.processingStdOut)?'0':'10'}"
                                   th:text="${jobstep?.processingStdOut}"></textarea></td>
@@ -284,10 +257,7 @@
                         </tbody>
                       </table>
                     </td>
-                    <td><span  class="filtercontent code" th:id="'togglejsg' + ${job?.id}"></span> <!-- th:utext="${job?.graph}" --> 
-                    </td>
                   </tr>
-                </div>
               </tbody>
             </table>                
           </div>
@@ -329,35 +299,19 @@
         addURLParam('fsh=true');
     }
   }
-  function toggleJobs() {
-      var eleshow = document.getElementById("jobsshow");
-      var elehide = document.getElementById("jobshide");
-    var content = document.getElementById("togglejobsbody");
-    var secondhead = document.getElementById("togglejobshead2");
-    $(secondhead).toggleClass("filtercontent");   
-    $(content).toggleClass("filtercontent");
-    if ($(content).css("display") === "none") {
-        $(eleshow).show();
-        $(elehide).hide();
-        removeURLParam('sh=true');
-    } else {
-        $(eleshow).hide();
-        $(elehide).show();
-        addURLParam('sh=true');
-    }
-  }
+
   function toggleJS(id) {
       var eleshow = document.getElementById("jss" + id);
       var elehide = document.getElementById("jsh" + id);
-      var content = document.getElementById("togglejsb" + id);
-      var graph = document.getElementById("togglejsg" + id);
+      var content2 = document.getElementById("togglejsb2" + id);
+      var content3 = document.getElementById("togglejsb3" + id);
     var secondhead = document.getElementById("togglejsh2" + id);
     var thirdhead = document.getElementById("togglejsh3" + id);
     $(secondhead).toggleClass("filtercontent");   
     $(thirdhead).toggleClass("filtercontent");   
-    $(content).toggleClass("filtercontent");
-    $(graph).toggleClass("filtercontent");
-    if ($(content).css("display") === "none") {
+    $(content2).toggleClass("filtercontent");
+    $(content3).toggleClass("filtercontent");
+    if ($(content2).css("display") === "none") {
         $(eleshow).show();
         $(elehide).hide();
         removeURLParam('jsh=' + id);
@@ -365,6 +319,27 @@
         $(eleshow).hide();
         $(elehide).show();
         addURLParam('jsh=' + id);
+    }
+  }
+  function toggleJob(id) {
+      var eleshow = document.getElementById("jobs" + id);
+      var elehide = document.getElementById("jobh" + id);
+      var content = document.getElementById("togglejobb" + id);
+      var graph = document.getElementById("togglejobg" + id);
+    //var secondhead = document.getElementById("togglejsh2" + id);
+    //var thirdhead = document.getElementById("togglejsh3" + id);
+    //$(secondhead).toggleClass("filtercontent");   
+    //$(thirdhead).toggleClass("filtercontent");   
+    $(content).toggleClass("filtercontent");
+    $(graph).toggleClass("filtercontent");
+    if ($(content).css("display") === "none") {
+        $(eleshow).show();
+        $(elehide).hide();
+        removeURLParam('jh=' + id);
+    } else {
+        $(eleshow).hide();
+        $(elehide).show();
+        addURLParam('jh=' + id);
     }
   }
     function plan(oId, state) {
@@ -441,7 +416,7 @@
               } else if (state == 'RESET') {
                 removeURLKey('jsh');
                 removeURLKey('fsh');
-                removeURLKey('sh');
+                removeURLKey('jh');
                 retrieveData(oId);
               } else {
                 retrieveData(oId);
@@ -520,13 +495,23 @@
           $.ajax({
             url : url,
             method : "GET",
-            success : function(res) {
+            success : function(res, state, x) {
               $("#jobscontent").html(res);
               hideLoader();
               var eleshow = document.getElementById("jobsshow");
               var elehide = document.getElementById("jobshide");
               $(eleshow).show();
               $(elehide).hide(); 
+              var jx = document.getElementsByClassName('jobshow');
+              for (var i = 0; i < jx.length; i++) {
+                var ele = jx[i];
+                $(ele).show();
+              } 
+              var jy = document.getElementsByClassName('jobhide');
+              for (var i = 0; i < jy.length; i++) {
+                var ele = jy[i];
+                $(ele).hide();
+              }
               var x = document.getElementsByClassName('jsshow');
               for (var i = 0; i < x.length; i++) {
             	  var ele = x[i];
@@ -537,12 +522,11 @@
                 var ele = y[i];
             	  $(ele).hide();
               }
-              feather.replace();  
-              var showit = getURLParams('sh'); 
-              for (var i = 0; i < showit.length; i++) {
-            	  if (showit[i] == 'true') {
-            		  toggleJobs();
-            		}
+              feather.replace(); 
+
+              var jh = getURLParams('jh'); 
+              for (var i = 0; i < jh.length; i++) {
+                  toggleJob(jh[i]);
               }
               var jsh = getURLParams('jsh'); 
               for (var i = 0; i < jsh.length; i++) {
@@ -552,6 +536,7 @@
                 var t = getURLParams('t'); 
                 for (var i = 0; i < t.length; i++) {
             	    scrollToElem(t[i]);
+            	    removeURLKey('t');
                 }
               }
             },
@@ -563,6 +548,7 @@
           });
         }
       };
+      
   </script>
 <script>
     window.onload = function () {

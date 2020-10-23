@@ -105,21 +105,13 @@
                     <!-- 				  table-warning  - light sand -->
                     <!-- 				  table-success  - light green -->
                     <tr th:each="ord : ${orders}"
-                      th:id="${ord?.id}"
-                      th:class="(${ord?.orderState} == 'FAILED' or ${ord?.hasFailedJobSteps} == true)
-                      ? 'table-danger' 
-                      : ((${ord?.orderState} == 'RUNNING' or ${ord?.orderState} == 'SUSPENDING') 
-                      ? 'table-success' 
-                      : ((${ord?.orderState} == 'COMPLETED' or ${ord?.orderState} == 'CLOSED') 
-                      ? 'table-info' 
-                      : ((${ord?.orderState} == 'INITIAL' or ${ord?.orderState} == 'APPROVED' or ${ord?.orderState} == 'PLANNED' or ${ord?.orderState} == 'RELEASED') 
-                      ? 'table-warning' 
-                      : 'table-danger')))">
+                      th:id="${ord?.id}">
                       <td><a th:href="'/order?id=' + ${ord?.id}"
                           th:text="${ord?.id}"></a></td>
                       <td><a th:href="'/order?id=' + ${ord?.id}"
                           th:text="${ord?.identifier}"></a></td>
-                      <td th:text="${ord?.orderState}"></td>
+                      <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                          th:text="${ord?.orderState}"></td>
                       <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                       <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
