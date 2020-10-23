@@ -496,3 +496,11 @@ code {
 .ON_HOLD {
   background-color: #c3e6cb !important;
 }
+
+.no-wrap {
+  white-space: nowrap;
+}
+
+.proseo-inline-table {
+  width: 100%;
+}

@@ -1,6 +1,8 @@
 package de.dlr.proseo.ui.gui;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -69,7 +71,8 @@ public class GUIProductClassController extends GUIBaseController {
 				} else if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						productclasses.addAll(pcList);
-					
+						sortSelectionRules(productclasses);
+						
 						model.addAttribute("productclasses", productclasses);
 						logger.trace(model.toString() + "MODEL TO STRING");
 						logger.trace(">>>>MONO" + productclasses.toString());
@@ -104,6 +107,58 @@ public class GUIProductClassController extends GUIBaseController {
 			logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
 			return  webclient.build().get().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
 
+		}
+		
+		private void sortSelectionRules(List<Object> productclasses) {
+			if (productclasses != null) {
+				for(Object o1 : productclasses) {
+					if (o1 instanceof HashMap) {
+						HashMap<String, HashMap<String, Object>> sortedList = new HashMap<String, HashMap<String, Object>>();
+						HashMap<String, Object> h1 = (HashMap<String, Object>) o1;
+						Object sro = h1.get("selectionRule");
+						if (sro instanceof List) {
+							List<Object> srl = (List<Object>) sro;
+							for (Object o2 : srl) {
+								if (o2 instanceof HashMap) {
+									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
+									// now we have a selection rule
+									// collect all modes in a new hash map
+									String mode = (String)sr.get("mode");
+									if (!sortedList.containsKey(mode)) {
+										HashMap<String, Object> localList = new HashMap<String, Object>();
+										localList.put("mode", mode);
+										localList.put("selRules", new ArrayList<Object>());
+										sortedList.put(mode, localList);
+									}
+								}
+							}
+							for (Object o2 : srl) {
+								if (o2 instanceof HashMap) {
+									HashMap<?, ?> sr = (HashMap<?, ?>) o2;
+									// now we have a selection rule
+									// collect all modes in a new hash map
+									String mode = (String)sr.get("mode");								
+									((List<Object>)sortedList.get(mode).get("selRules")).add(sr);
+								}
+							}
+							for (HashMap<String, Object> modeList : sortedList.values()) {
+								Object listObj = modeList.get("selRules");
+								if (listObj instanceof List ) {
+									List<Object> list = (List<Object>)listObj;
+									MapComparator oc = new MapComparator("sourceProductClass", true);
+									list.sort(oc);
+								}
+							}	
+							MapComparator mlc = new MapComparator("mode", true);
+							Collection<HashMap<String, Object>> mList = sortedList.values();
+							List<Object> cList = new ArrayList<Object>();
+							cList.addAll(mList);
+							cList.sort(mlc);
+							((HashMap<String, Object>)h1).put("sortedSelectionRules", cList);
+						}
+					}
+				}
+			}
 		}
 	}
 

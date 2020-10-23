@@ -27,7 +27,8 @@
                         "deltaTimeT0": { "duration" : 0, "unit" : "HOURS" },
                         "deltaTimeT1": { "duration" : 0, "unit" : "HOURS" }
                     }
-                ]
+                ],
+                "ruleString": "FOR PTM_L2A SELECT ValIntersect(0 D, 0 D) MINCOVER(90)"
             }
         ]
     },
@@ -59,7 +60,8 @@
                         "deltaTimeT0": { "duration" : 0, "unit" : "HOURS" },
                         "deltaTimeT1": { "duration" : 0, "unit" : "HOURS" }
                     }
-                ]
+                ],
+                "ruleString": "FOR PTM_L2A SELECT ValIntersect(0 D, 0 D) MINCOVER(90)"
             }
         ]
     }
