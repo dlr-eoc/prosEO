@@ -30,12 +30,24 @@ public class GUIAuthenticationToken implements Authentication {
 		return principal.getUsername();
 	}
 
+	/**
+	 * Return the password of the principal
+	 * 
+	 * @return The password of the principal
+	 */
 	public String getPassword() {
 		return principal.getPassword();
 	}
+	
+	/**
+	 * Return the complete prosEO user name (concatenate mission name and user name 
+	 * 
+	 * @return The prosEO user name
+	 */
 	public String getProseoName() {
 		return this.getMission() + "-" + this.getName();
 	}
+	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		// TODO Auto-generated method stub
@@ -54,9 +66,16 @@ public class GUIAuthenticationToken implements Authentication {
 	public Object getDetails() {
 		return mission;
 	}
+	
 	public void setDetails(String mission) {
 		this.mission = mission;
 	}
+	
+	/**
+	 * Return the mission of the user
+	 * 
+	 * @return The mission
+	 */
 	public String getMission() {
 		return mission;
 	}

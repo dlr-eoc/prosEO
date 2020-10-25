@@ -7,6 +7,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -54,6 +55,11 @@ public class GUIController {
     	return "customlogin.html";
 
     }
+    /**
+     * Retrieve the defined missions.
+     * 
+     * @return List of missions
+     */
     @ModelAttribute("missions")
     public List<String> missioncodes() {
     	List<String> missions = new ArrayList<String>();   
@@ -88,7 +94,9 @@ public class GUIController {
 				missions.add(restMission.getCode());
 			}
 		}
-		
+
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		missions.sort(c);
         return missions;
     }
     

@@ -46,38 +46,56 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
           <div class="container-fluid">
-            <form name="ord-shw" id="ord-shw" action="/order-show/get"
-              method="get">
+            <p>&nbsp;</p>
+				<form name="ord-shw" id="ord-shw" action="/order-show/get"
+					method="get">
+					<table class="select-table table-borderless">
+						<tbody>
+							<tr>
+								<td><span class="input-group-text" th:text="#{name}">name</span></td>
+								<td><input type="text" class="form-control" id="orderid"></td>
+								<td style="width:4em" rowspan="2">&nbsp;</td>
+								<td rowspan="2" class="align-top"><span
+									class="align-top input-group-text" th:text="#{state}">state</span></td>
+								<td rowspan="2"><select name="orderstates" id="orderstates"
+									class="selectpicker" multiple>
+                    <option>INITIAL</option>
+                    <option>APPROVED</option>
+                    <option>PLANNED</option>
+                    <option>RELEASED</option>
+                    <option>RUNNING</option>
+                    <option>SUSPENDING</option>
+                    <option>COMPLETED</option>
+                    <option>FAILED</option>
+                    <option>CLOSED</option>
+								</select></td>
+                <td style="width:4em" rowspan="2">&nbsp;</td>
+								<td><span class="input-group-text" th:text="#{start-date}"></span></td>
+								<td><input type="date" class="form-control" id="fromDate"></td>
+                <td style="width:4em" rowspan="2">&nbsp;</td>
+                <td rowspan="2" class="align-top"><span
+                  class="align-top input-group-text" th:text="#{product}"></span></td>
+                <td rowspan="2"><select name="orderstates" id="products"
+                  class="selectpicker" multiple>
+                  <option th:each="prod : ${productclasses}" th:text="${prod}"
+                    th:label="${prod}"></option>
+                </select></td>
+							</tr>
+							<tr>
+								<td colspan="2"><button id="orderselect" type="button"
+										onclick="retrieveData();"
+										class="btn btn-sm btn-outline-secondary">
+										<span th:text="#{order-show}"></span>
+									</button></td>
+								<td><span class="input-group-text" th:text="#{end-date}">name</span></td>
+								<td><input type="date" class="form-control" id="toDate"></td>
+							</tr>
+						</tbody>
+					</table>
+					
+				</form>
 
-              <div class="input-group mb-3">
-                <p class="text-left">
-                  <label><span th:text="#{order-id}"></span></label>
-                  <input type="text" class="form-control" id="orderid">
-                </p>
-              </div>
-              <div class="input-group mb-3">
-                <p class="text-left">
-                  <label for="fromDate"><span th:text="#{start-date}"></span></label>
-                </p>
-                <p class="text-left">
-                  <input type="date" class="form-control" id="fromDate">
-                </p>
-                <p class="text-left">
-                  <label for="toDate"><span th:text="#{end-date}"></span></label>
-                </p>
-                <p class="text-left">
-                  <input type="date" class="form-control" id="toDate">
-                </p>
-              </div>
-              <div class="input-group mb-3">
-                <button id="orderselect" type="button" onclick="retrieveData();"
-                  class="btn btn-primary mb-2">
-                  <span th:text="#{order-show}"></span>
-                </button>
-              </div>
-            </form>
-
-          </div>
+			</div>
           <div>
             <div class="container-fluid">
               <h5>
@@ -285,7 +303,6 @@
 				}
 				var url = "/order-show/get"
 				var divider = "?";
-				var ident = document.getElementById('orderid').value;
 				var sortcol = "id";
 				var up = true;
 				var done = false;
@@ -351,15 +368,62 @@
 					}
 				}
 
-				if (ident != null) {
+			var ident = document.getElementById('orderid').value;
+				if (ident != null && ident.length > 0) {
 					url = url + divider + "identifier=" + ident.trim();
 					divider = "&";
 				}
+				// <select>.selectedOptions does not work for IE, loop over options instead
+				var states = document.getElementById('orderstates').options;
+				if (states != null && states.length > 0) {
+					var first = true;
+					for (i = 0; i < states.length; i++) {
+						if (states[i].selected) {
+							if (first) {
+								url = url + divider + "states=";
+								divider = "&";
+								first = false;
+							} else {
+								url = url + ":";
+							}
+							url = url + states[i].value;
+						}
+					}
+				}
+
+				var from = document.getElementById('fromDate').value;
+				if (from != null && from.length > 0) {
+					url = url + divider + "from=" + from.trim();
+					divider = "&";
+				}
+				var to = document.getElementById('toDate').value;
+				if (to != null && to.length > 0) {
+					url = url + divider + "to=" + to.trim();
+					divider = "&";
+				}
+
+			// <select>.selectedOptions does not work for IE, loop over options instead
+				var products = document.getElementById('products').options;
+				if (products != null && products.length > 0) {
+					var first = true;
+					for (i = 0; i < products.length; i++) {
+						if (products[i].selected) {
+							if (first) {
+								url = url + divider + "products=";
+								divider = "&";
+								first = false;
+							} else {
+								url = url + ":";
+							}
+							url = url + products[i].value;
+						}
+					}
+				}
+
 				url = url + divider + "sortby=" + sortcol;
 				divider = "&";
 				url = url + divider + "up=" + up;
 				divider = "&";
-				var prop = document.getElementById('test');
 
 				$.ajax({
 					url : url,

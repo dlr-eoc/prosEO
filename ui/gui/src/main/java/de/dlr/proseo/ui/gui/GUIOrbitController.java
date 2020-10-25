@@ -43,6 +43,15 @@ public class GUIOrbitController extends GUIBaseController {
 	    return "orbit-show";
 	    }
 
+		/**
+		 * Retrieve the orbits of a spacecraft
+		 * 
+		 * @param spacecraft The spacecraft identifier
+		 * @param sortby The sort column
+		 * @param up The sort direction (true for up)
+		 * @param model The model to hold the data
+		 * @return The result
+		 */
 		@SuppressWarnings("unchecked")
 		@RequestMapping(value = "/orbits/get")
 		public DeferredResult<String> getOrbits(
@@ -87,7 +96,7 @@ public class GUIOrbitController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		public Mono<ClientResponse> get(String spacecraft) {
+		private Mono<ClientResponse> get(String spacecraft) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getOrderManagerUrl() + "/orbits";

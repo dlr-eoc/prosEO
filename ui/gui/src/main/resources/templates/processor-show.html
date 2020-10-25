@@ -54,8 +54,6 @@
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
                     <th><span th:text="#{processorversion}">processorversion</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
                     <th><span th:text="#{istest}">istest</span></th>
                     <th><span th:text="#{mindiskspace}">mindiskspace</span></th>
                     <th><span th:text="#{maxtime}">maxtime</span></th>
@@ -71,7 +69,7 @@
                     <th><span th:text="#{critical}">critical</span></th>
                     <th><span th:text="#{criticallevel}">criticallevel</span></th>
                     <th><span th:text="#{numberofcpus}">numberofcpus</span></th>
-                    <th colspan="5"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
+                    <th colspan="4"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
               </tr>
             </thead>
             <tbody th:unless="${processors} == null">
@@ -80,8 +78,6 @@
                 <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
                 <td class="first-row"> <a th:href="'/processor-class-show#' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
                 <td class="first-row" th:text="${processor?.processorVersion}"></td>
-                <td class="first-row" th:text="${processor?.version}"></td>
-                <td class="first-row" th:text="${processor?.missionCode}"></td>
                 <td class="first-row" th:text="${processor?.isTest}"></td>
                 <td class="first-row" th:text="${processor?.minDiskSpace}"></td>
                 <td class="first-row" th:text="${processor?.maxTime}"></td>
@@ -106,7 +102,7 @@
                     <td th:text="${task?.isCritical}"></td>
                     <td th:text="${task?.criticalityLevel}"></td>
                     <td th:text="${task?.numberOfCpus}"></td>
-                <td colspan="5"><span th:each="comp : ${task?.breakpointFileNames}" 
+                <td colspan="3"><span th:each="comp : ${task?.breakpointFileNames}" 
                        class="proseo-list-item" th:text="${comp}"></span></td>                
                 </tr>
               </div>

@@ -90,7 +90,7 @@ public class GUIProductClassController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		public Mono<ClientResponse> get() {
+		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProductClassManagerUrl() + "/productclasses";

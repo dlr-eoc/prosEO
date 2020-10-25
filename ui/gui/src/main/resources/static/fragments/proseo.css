@@ -504,3 +504,8 @@ code {
 .proseo-inline-table {
   width: 100%;
 }
+
+.select-table {
+  border: 0 !important;
+  vertical-align: top !important;
+}

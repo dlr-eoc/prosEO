@@ -45,6 +45,14 @@ public class GUIConfigurationController extends GUIBaseController {
 	    }
 	    
 
+		/**
+		 * Retrieve the configurations of a mission
+		 * 
+		 * @param sortby The sort column
+		 * @param up The sort direction (true for up)
+		 * @param model The model to hold the data
+		 * @return
+		 */
 		@SuppressWarnings("unchecked")
 		@RequestMapping(value = "/configurations/get")
 		public DeferredResult<String> getConfigurations(
@@ -88,7 +96,7 @@ public class GUIConfigurationController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		public Mono<ClientResponse> get() {
+		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProcessorManagerUrl() + "/configurations";
