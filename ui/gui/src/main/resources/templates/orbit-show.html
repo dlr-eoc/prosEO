@@ -52,7 +52,6 @@
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{version}">version</span></th>
                     <th><span th:text="#{mission}">mission</span></th>
                     <th><span th:text="#{spacecraft}">spacecraft</span></th>
                     <th><span th:text="#{number}">number</span></th>
@@ -64,7 +63,6 @@
               <div th:each="orbit : ${orbits}">
               <tr>
                 <td th:id="${orbit?.id}" class="first-row" th:text="${orbit?.id}"></td>
-                <td class="first-row" th:text="${orbit?.version}"></td>
                 <td class="first-row"> <a th:href="'/mission-show?m=' + ${orbit?.missionCode}" th:text="${orbit?.missionCode}"></a></td>
                 <td class="first-row" th:text="${orbit?.spacecraftCode}"></td>
                 <td class="first-row" th:text="${orbit?.orbitNumber}"></td>

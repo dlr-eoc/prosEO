@@ -50,6 +50,17 @@ public class GUIProductController extends GUIBaseController {
     	return "productfile-show";
     }
    
+	/**
+	 * Retrieve products selected by id, product class and start time  
+	 * @param id The product id or null for all
+	 * @param productClass The product class or null for all
+	 * @param startTimeFrom The from of start time range
+	 * @param startTimeTo The to of start time range
+	 * @param sortby The sort column
+	 * @param up The sort direction (true for up)
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/product/get")
 	public DeferredResult<String> getProducts(
@@ -107,6 +118,14 @@ public class GUIProductController extends GUIBaseController {
 		return deferredResult;
 	}
 
+	/**
+	 * Retrieve the product file with id or all if id is null
+	 * @param id The product file id or null
+	 * @param sortby The sort column
+	 * @param up The sort direction (true for up)
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/productfile/get")
 	public DeferredResult<String> getProductFiles(
@@ -152,7 +171,7 @@ public class GUIProductController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	public Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo) {
+	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";

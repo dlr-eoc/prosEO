@@ -52,7 +52,6 @@
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{version}">version</span></th>
                     <th><span th:text="#{name}">name</span></th>
                     <th><span th:text="#{uuid}">uuid</span></th>
                     <th><span th:text="#{processorname}">processorname</span></th>
@@ -65,7 +64,6 @@
               <div th:each="configuredprocessor : ${configuredprocessors}">
               <tr>
                 <td class="first-row" th:text="${configuredprocessor?.id}"></td>
-                <td class="first-row" th:text="${configuredprocessor?.version}"></td>
                 <td class="first-row" th:text="${configuredprocessor?.identifier}"></td>
 <!--                 <td class="first-row"> <a th:href="'/configuredprocessor-class-show#' + ${configuredprocessor?.configuredprocessorName}" th:text="${configuredprocessor?.configuredprocessorName}"></a></td> -->
                 <td class="first-row" th:text="${configuredprocessor?.uuid}"></td>

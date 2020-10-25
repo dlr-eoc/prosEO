@@ -43,6 +43,14 @@ public class GUIFacilityController extends GUIBaseController {
 	    return "facility-show";
 	    }
 
+		/**
+		 * Retrieve the defined processing facilities
+		 * 
+		 * @param sortby The sort column
+		 * @param up The sort direction (true for up)
+		 * @param model The model to hold the data
+		 * @return
+		 */
 		@SuppressWarnings("unchecked")
 		@RequestMapping(value = "/facilities/get")
 		public DeferredResult<String> getFacilities(
@@ -86,7 +94,7 @@ public class GUIFacilityController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		public Mono<ClientResponse> get() {
+		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProductionPlannerUrl() + "/processingfacilities";

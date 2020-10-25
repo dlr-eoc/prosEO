@@ -52,7 +52,6 @@
             <thead class="thead-proseo" id="proseo-thead">
               <tr>
                     <th><span th:text="#{id}">id</span></th>
-                    <th><span th:text="#{version}">version</span></th>
                     <th><span th:text="#{code}">code</span></th>
                     <th><span th:text="#{name}">name</span></th>
                     <th><span th:text="#{fileclasses}">fileclasses</span></th>
@@ -61,14 +60,13 @@
               </tr>
               <tr>   
               <th>&nbsp;</th>           
-              <th colspan="6"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
+              <th colspan="5"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
               </tr>
             </thead>
             <tbody th:unless="${missions} == null">
               <div th:each="mission : ${missions}">
               <tr>
                 <td th:id="${mission?.code}" th:rowspan="2" class="first-row" th:text="${mission?.id}"></td>
-                <td class="first-row" th:text="${mission?.version}"></td>
                 <td class="first-row" th:text="${mission?.code}"></td>
                 <td class="first-row" th:text="${mission?.name}"></td>
                 <td class="first-row"><span th:each="comp : ${mission?.fileClasses}" 
@@ -88,7 +86,7 @@
                 </table>
               </tr>
               <tr>              
-              <td colspan="6"><textarea class="mission-template" readonly wrap="soft"
+              <td colspan="5"><textarea class="mission-template" readonly wrap="soft"
                                   th:style="${#strings.isEmpty(mission?.productFileTemplate)?'height:1em':'height:10em'}"
                                   th:rows="${#strings.isEmpty(mission?.productFileTemplate)?'0':'6'}"
                                   th:text="${mission?.productFileTemplate}"></textarea>

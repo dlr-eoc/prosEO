@@ -45,6 +45,14 @@ public class GUIMissionController extends GUIBaseController {
 	    }
 	    
 
+		/**
+		 * Retrieve the defined missions
+		 * 
+		 * @param sortby The sort column
+		 * @param up The sort direction (true for up)
+		 * @param model The model to hold the data
+		 * @return The result
+		 */
 		@SuppressWarnings("unchecked")
 		@RequestMapping(value = "/missions/get")
 		public DeferredResult<String> getMissions(
@@ -88,7 +96,7 @@ public class GUIMissionController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		public Mono<ClientResponse> get() {
+		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getOrderManagerUrl() + "/missions";

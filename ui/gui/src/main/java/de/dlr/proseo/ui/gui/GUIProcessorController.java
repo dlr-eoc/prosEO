@@ -50,6 +50,15 @@ public class GUIProcessorController extends GUIBaseController {
     return "configured-processor-show";
     }
 
+	/**
+	 * Retrieve the processor with name or all if name is null
+	 * 
+	 * @param processorName The processor name or null
+	 * @param sortby The sort column
+	 * @param up The sort direction (true for up)
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/processor-show/get")
 	public DeferredResult<String> getProcessors(
@@ -94,6 +103,15 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 
+	/**
+	 * Retrieve the configured processors of a processor or all if processor is null
+	 * 
+	 * @param processorName The processor name or null
+	 * @param sortby The sort column
+	 * @param up The sort direction (true for up)
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/configuredprocessor/get")
 	public DeferredResult<String> getConfiguredProcessors(
@@ -138,7 +156,7 @@ public class GUIProcessorController extends GUIBaseController {
 		return deferredResult;
 	}
 	
-	public Mono<ClientResponse> get(String processorName) {
+	private Mono<ClientResponse> get(String processorName) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getProcessorManagerUrl() + "/processors";
@@ -162,7 +180,7 @@ public class GUIProcessorController extends GUIBaseController {
 
 	}
 
-	public Mono<ClientResponse> getCP(String processorName) {
+	private Mono<ClientResponse> getCP(String processorName) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getProcessorManagerUrl() + "/configuredprocessors";

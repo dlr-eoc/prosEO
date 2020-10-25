@@ -52,8 +52,6 @@
 							<tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{name}">name</span></th>
-                    <th><span th:text="#{version}">version</span></th>
-                    <th><span th:text="#{mission}">mission</span></th>
                     <th><span th:text="#{productclasses}">productclasses</span></th>
 							</tr>
 						</thead>
@@ -61,8 +59,6 @@
 							<tr th:each="processor : ${procs}">
 								<td th:id="${processor?.processorName}" th:text="${processor?.id}"></td>
                 <td><a th:href="'/processor-show?processorName=' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
-								<td th:text="${processor?.version}"></td>
-								<td th:text="${processor?.missionCode}"></td>
 								<td><a th:each="comp : ${processor?.productClasses}" 
 								       class="proseo-list-item"  
 								       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
