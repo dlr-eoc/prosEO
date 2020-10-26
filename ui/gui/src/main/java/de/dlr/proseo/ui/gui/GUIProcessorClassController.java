@@ -16,6 +16,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.ProcessorService;
 import reactor.core.publisher.Mono;
 
@@ -65,6 +66,10 @@ public class GUIProcessorClassController extends GUIBaseController {
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(processorClassList -> {
 					procs.addAll(processorClassList);
+					
+					MapComparator oc = new MapComparator("processorName", true);
+					procs.sort(oc);
+					
 					model.addAttribute("procs", procs);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + procs.toString());

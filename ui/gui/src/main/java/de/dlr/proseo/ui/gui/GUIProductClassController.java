@@ -71,6 +71,10 @@ public class GUIProductClassController extends GUIBaseController {
 				} else if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						productclasses.addAll(pcList);
+						
+						MapComparator oc = new MapComparator("productType", true);
+						productclasses.sort(oc);
+						
 						sortSelectionRules(productclasses);
 						
 						model.addAttribute("productclasses", productclasses);

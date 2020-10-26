@@ -14,11 +14,11 @@
 		<button th:id="'ok' + ${ord?.id}" th:text="#{plan}">plan</button>
 		<button th:id="'cancel' + ${ord?.id}" th:text="#{cancel}">cancel</button>
 		</dialog>
-		<div class="dropdown menu">
+		<div class="dropdown">
 			<a class="nav-link order-menu-link" data-toggle="dropdown" aria-haspopup="true"
 				aria-expanded="false" role="button"><img alt="Menu"
 				src="more-vertical.svg" class="order-menu-img"></span></a>
-			<div class="dropdown-menu dropdown-menu-right">
+			<div class="dropdown-menu dropdown-menu-right menu">
 				<a
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'APPROVE\')'" href="#"><span

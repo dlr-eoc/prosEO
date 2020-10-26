@@ -361,7 +361,6 @@ code {
 }
 
 .proseo-list-item + .proseo-list-item::before {
-  display: inline-block;
   content: ", ";
 }
 
