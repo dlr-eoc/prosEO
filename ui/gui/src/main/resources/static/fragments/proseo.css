@@ -472,6 +472,14 @@ code {
   background-color: #c3e6cb !important;
 }
 
+.READY {
+  background-color: #c3e6cb !important;
+}
+
+.STARTED {
+  background-color: #c3e6cb !important;
+}
+
 .SUSPENDING {
   background-color: #c3e6cb !important;
 }

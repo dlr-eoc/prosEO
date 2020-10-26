@@ -143,12 +143,12 @@ public class GUIOrderController extends GUIBaseController {
 							key = sortby;
 						}
 					}
-					Boolean direction = (null == up ? true : up);
-					MapComparator oc = new MapComparator(key, direction);
+					Boolean isUp = (null == up ? true : up);
+					MapComparator oc = new MapComparator(key, isUp);
 					orders.sort(oc);
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
-					model.addAttribute("selorder", (up == true ? "select-up" : "select-down"));
+					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
 					deferredResult.setResult("order-show :: #orderscontent");
