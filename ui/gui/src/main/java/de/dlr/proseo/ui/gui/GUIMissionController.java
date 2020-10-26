@@ -20,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -78,6 +79,9 @@ public class GUIMissionController extends GUIBaseController {
 				} else if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						missions.addAll(pcList);
+						
+						MapComparator oc = new MapComparator("code", true);
+						missions.sort(oc);
 					
 						model.addAttribute("missions", missions);
 						logger.trace(model.toString() + "MODEL TO STRING");

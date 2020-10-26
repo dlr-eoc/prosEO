@@ -22,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -100,6 +101,8 @@ public class GUIProductController extends GUIBaseController {
 				} else {
 					clientResponse.bodyToMono(List.class).subscribe(pList -> {
 						products.addAll(pList);
+						MapComparator oc = new MapComparator("productClass", true);
+						products.sort(oc);
 						model.addAttribute("products", products);
 						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());

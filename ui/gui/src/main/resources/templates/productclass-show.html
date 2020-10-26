@@ -94,9 +94,9 @@
 										th:text="${comp}"></span></a></td>
 								<td th:text="${class?.visibility}"></td>
 								<td>
-									<table class="proseo-inline-table" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
-										<thead class="thead-proseo">
-											<tr>
+									<table class="table table-hover" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
+										<thead>
+											<tr class="th-row">
 												<th><span th:text="#{mode}">mode</span></th>
 												<th><span th:text="#{selectionrules}">selectionrules</span></th>
 												<th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
