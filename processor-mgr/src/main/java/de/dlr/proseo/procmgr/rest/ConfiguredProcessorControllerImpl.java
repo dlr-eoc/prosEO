@@ -19,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
 /**
@@ -140,6 +142,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param configuredProcessor a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configured processor after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged configured processor, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configured processor with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
@@ -150,7 +153,9 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguredProcessor({}, {})", id, (null == configuredProcessor ? "MISSING" : configuredProcessor.getIdentifier()));
 
 		try {
-			return new ResponseEntity<>(configuredProcessorManager.modifyConfiguredProcessor(id, configuredProcessor), HttpStatus.OK);
+			RestConfiguredProcessor changedConfiguredProcessor = configuredProcessorManager.modifyConfiguredProcessor(id, configuredProcessor); 
+			HttpStatus httpStatus = (configuredProcessor.getVersion() == changedConfiguredProcessor.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedConfiguredProcessor, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {

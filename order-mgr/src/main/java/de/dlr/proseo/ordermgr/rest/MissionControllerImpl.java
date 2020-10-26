@@ -5,9 +5,6 @@
  */
 package de.dlr.proseo.ordermgr.rest;
 
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,9 +28,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriUtils;
-
 import de.dlr.proseo.model.rest.MissionController;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
@@ -47,7 +41,6 @@ import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
@@ -69,7 +62,6 @@ public class MissionControllerImpl implements MissionController {
 	private static final int MSG_ID_PRODUCTS_EXIST = 1006;
 	private static final int MSG_ID_PRODUCTCLASSES_EXIST = 1007;
 	private static final int MSG_ID_PROCESSORCLASSES_EXIST = 1008;
-	private static final int MSG_ID_DELETING_PRODUCT_FILES = 1009;
 	private static final int MSG_ID_MISSION_DELETED = 1010;
 	private static final int MSG_ID_MISSION_UPDATED = 1011;
 	private static final int MSG_ID_MISSION_RETRIEVED = 1012;
@@ -78,6 +70,7 @@ public class MissionControllerImpl implements MissionController {
 	private static final int MSG_ID_MISSION_EXISTS = 1015;
 	private static final int MSG_ID_SPACECRAFT_EXISTS = 1016;
 	private static final int MSG_ID_MISSION_CODE_MISSING = 1017;
+	private static final int MSG_ID_MISSION_NOT_MODIFIED = 1018;
 
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -94,12 +87,12 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists";
 	private static final String MSG_MISSION_CODE_MISSING = "(E%d) No mission code given";
 
-	private static final String MSG_DELETING_PRODUCT_FILES = "(I%d) Deleting product files for product with database ID %d";
 	private static final String MSG_MISSION_DELETED = "(I%d) Mission with database ID %d deleted";
 	private static final String MSG_MISSION_UPDATED = "(I%d) Mission %s updated";
 	private static final String MSG_MISSION_RETRIEVED = "(I%d) Mission %s retrieved";
 	private static final String MSG_MISSION_CREATED = "(I%d) Mission %s created";
 	private static final String MSG_MISSIONS_RETRIEVED = "(I%d) All missions retrieved";
+	private static final String MSG_MISSION_NOT_MODIFIED = "(I%d) Mission with id %d not modified (no changes)";
 
 	// Same as in other services
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
@@ -107,8 +100,6 @@ public class MissionControllerImpl implements MissionController {
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String MSG_PREFIX = "199 proseo-ordermgr-missioncontroller ";
 	
-	private static final String URL_INGESTOR_FILE_DELETE = "/ingest/%s/%d";
-
 	/** The Order Manager configuration */
 	@Autowired
 	OrdermgrConfiguration orderManagerConfig;
@@ -413,9 +404,15 @@ public class MissionControllerImpl implements MissionController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		logger.info(String.format(MSG_MISSION_UPDATED, MSG_ID_MISSION_UPDATED, restMission.getCode()));
+		HttpStatus httpStatus = HttpStatus.OK;
+		if (mission.getVersion() == restMission.getVersion()) {
+			httpStatus = HttpStatus.NOT_MODIFIED;
+			logger.info(String.format(MSG_MISSION_NOT_MODIFIED, MSG_ID_MISSION_NOT_MODIFIED, id));
+		} else {
+			logger.info(String.format(MSG_MISSION_UPDATED, MSG_ID_MISSION_UPDATED, restMission.getCode()));
+		}
 		
-		return new ResponseEntity<>(restMission, HttpStatus.OK);
+		return new ResponseEntity<>(restMission, httpStatus);
 
 	}
 

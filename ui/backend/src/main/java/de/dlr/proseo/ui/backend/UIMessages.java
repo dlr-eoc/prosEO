@@ -31,6 +31,7 @@ public class UIMessages {
 	public static final int MSG_ID_INVALID_TIME = 2805;
 	public static final int MSG_ID_EXCEPTION = 2806;
 	public static final int MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION = 2807;
+	public static final int MSG_ID_NOT_MODIFIED = 2808;
 	public static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	// Service connection
@@ -486,6 +487,7 @@ public class UIMessages {
 		/* --- Info messages -- */
 		// General
 		MSG_OPERATION_CANCELLED ("(I%d) Operation cancelled", MSG_ID_OPERATION_CANCELLED),
+		MSG_NOT_MODIFIED ("(I%d) Data not modified", MSG_ID_NOT_MODIFIED),
 		
 		// Login Manager
 		MSG_LOGGED_IN ("(I%d) User %s logged in", MSG_ID_LOGGED_IN),

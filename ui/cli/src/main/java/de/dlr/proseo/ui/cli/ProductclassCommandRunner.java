@@ -446,11 +446,14 @@ public class ProductclassCommandRunner {
 			restProductClass.getComponentClasses().clear();
 			restProductClass.getComponentClasses().addAll(updatedProductClass.getComponentClasses());
 		}
-		if (isDeleteAttributes || (null != updatedProductClass.getEnclosingClass() && 0 != updatedProductClass.getEnclosingClass().length())) {
+		if (isDeleteAttributes || (null != updatedProductClass.getEnclosingClass() && !updatedProductClass.getEnclosingClass().isBlank())) {
 			restProductClass.setEnclosingClass(updatedProductClass.getEnclosingClass());
 		}
-		if (isDeleteAttributes || (null != updatedProductClass.getProcessorClass() && 0 != updatedProductClass.getProcessorClass().length())) {
+		if (isDeleteAttributes || (null != updatedProductClass.getProcessorClass() && !updatedProductClass.getProcessorClass().isBlank())) {
 			restProductClass.setProcessorClass(updatedProductClass.getProcessorClass());
+		}
+		if (isDeleteAttributes || (null != updatedProductClass.getProductFileTemplate() && !updatedProductClass.getProductFileTemplate().isBlank())) {
+			restProductClass.setProductFileTemplate(updatedProductClass.getProductFileTemplate());
 		}
 		
 		/* Update product class using Product Class Manager service */
@@ -461,6 +464,9 @@ public class ProductclassCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
@@ -955,6 +961,9 @@ public class ProductclassCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
 				break;

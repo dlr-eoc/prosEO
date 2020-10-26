@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
@@ -132,6 +133,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param processorClass a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged product, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
@@ -142,7 +144,9 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 
 		try {
-			return new ResponseEntity<>(processorClassManager.modifyProcessorClass(id, processorClass), HttpStatus.OK);
+			RestProcessorClass changedProcessorClass = processorClassManager.modifyProcessorClass(id, processorClass); 
+			HttpStatus httpStatus = (processorClass.getVersion() == changedProcessorClass.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedProcessorClass, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {

@@ -161,7 +161,8 @@ public class ProductControllerImpl implements ProductController {
 	 * @param id the ID of the product to update
 	 * @param product a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the product after modification
-	 *             (with ID and version for all contained objects) or 
+	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "NOT_MODIFIED" and the unchanged product, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or

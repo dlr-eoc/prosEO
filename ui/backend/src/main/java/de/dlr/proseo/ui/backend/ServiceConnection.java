@@ -276,41 +276,49 @@ public class ServiceConnection {
 		// Execute the HTTP request
 		try {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with PATCH", serviceUrl + requestPath);
-			try {
-				String responseContent =  httpclient.execute(req, httpResponse -> {
-					int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
-					Header warningHeader = httpResponse.getFirstHeader("Warning");
-					String warningMessage = (null == warningHeader ? "no message" : warningHeader.getValue());
-					if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-						throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
-					} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
-						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-								httpStatusCode, reasonPhrase, warningMessage));
-						throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
-					} else if (300 <= httpStatusCode){
-						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
-						throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
-					}
-					return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-				});
-				// Convert Json response to object of requested class
-				return mapper.readValue(responseContent, clazz);
-			} catch (Exception e) {
-				throw e;
-			}
+			
+			String responseContent =  httpclient.execute(req, httpResponse -> {
+				int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
+				Header warningHeader = httpResponse.getFirstHeader("Warning");
+				String warningMessage = (null == warningHeader ? "no message" : warningHeader.getValue());
+				if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
+					throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
+				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
+					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
+							httpStatusCode, reasonPhrase, warningMessage));
+					throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
+				} else if (HttpStatus.NOT_MODIFIED.value() == httpStatusCode) {
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.info(uiMsg(MSG_ID_NOT_MODIFIED));
+					throw new RestClientResponseException(warningMessage, httpStatusCode, 
+							HttpStatus.NOT_MODIFIED.getReasonPhrase(), null, null, null);
+				} else if (300 <= httpStatusCode){
+					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
+					throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
+				}
+				return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
+			});
+			
+			// Convert Json response to object of requested class
+			return mapper.readValue(responseContent, clazz);
+			
 		} catch (IOException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			// already logged
+			throw e;
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw new RuntimeException(e);

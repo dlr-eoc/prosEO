@@ -140,6 +140,7 @@ public class ProductClassUtil {
 		if (null != restProductClass.getDefaultSliceDuration()) {
 			modelProductClass.setDefaultSliceDuration(Duration.ofSeconds(restProductClass.getDefaultSliceDuration()));
 		}
+		// Product file template left out here, because it must not be set, if it is the same as the mission's template
 		
 		return modelProductClass;
 	}

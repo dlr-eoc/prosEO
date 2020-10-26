@@ -128,9 +128,11 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * Update the facility with the given ID with the attribute values of the given Json object. 
 	 * @param id the ID of the facility to update
 	 * @param restFacility a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the facility after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no facility with the given ID exists
+	 * @return a response containing
+	 *     	   HTTP status "OK" and a Json object corresponding to the facility after modification (with ID and version for all 
+	 * 		       contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged facility, if no attributes were actually changed, or
+	 * 	       HTTP status "NOT_FOUND" and an error message, if no facility with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProcessingFacility> modifyFacility(Long id, RestProcessingFacility restFacility) {

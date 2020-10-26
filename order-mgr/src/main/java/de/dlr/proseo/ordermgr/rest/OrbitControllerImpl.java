@@ -55,6 +55,7 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final int MSG_ID_ORBIT_RETRIEVED = 1058;
 	private static final int MSG_ID_ORBIT_UPDATED = 1059;
 	private static final int MSG_ID_ORBIT_DELETED = 1060;
+	private static final int MSG_ID_ORBIT_NOT_MODIFIED = 1061;
 
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -73,6 +74,7 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final String MSG_ORBIT_RETRIEVED = "(I%d) Orbit %d retrieved";
 	private static final String MSG_ORBIT_UPDATED = "(I%d) Orbit %d updated";
 	private static final String MSG_ORBIT_DELETED = "(I%d) Orbit %d deleted";
+	private static final String MSG_ORBIT_NOT_MODIFIED = "(I%d) Mission with id %d not modified (no changes)";
 
 	// Same as in other services
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
@@ -470,9 +472,15 @@ public class OrbitControllerImpl implements OrbitController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
-		logger.info(String.format(MSG_ORBIT_UPDATED, MSG_ID_ORBIT_UPDATED, restOrbit.getOrbitNumber()));
+		HttpStatus httpStatus = HttpStatus.OK;
+		if (orbit.getVersion() == restOrbit.getVersion()) {
+			httpStatus = HttpStatus.NOT_MODIFIED;
+			logger.info(String.format(MSG_ORBIT_NOT_MODIFIED, MSG_ID_ORBIT_NOT_MODIFIED, id));
+		} else {
+			logger.info(String.format(MSG_ORBIT_UPDATED, MSG_ID_ORBIT_UPDATED, restOrbit.getOrbitNumber()));
+		}
 		
-		return new ResponseEntity<>(restOrbit, HttpStatus.OK);
+		return new ResponseEntity<>(restOrbit, httpStatus);
 	}
 
 	/**

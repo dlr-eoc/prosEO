@@ -575,6 +575,24 @@ public class ProductClassManager {
 			modelProductClass.setDefaultSliceDuration(changedProductClass.getDefaultSliceDuration());
 		}
 		
+		// Update product file template, if different from mission template (uses REST product class for comparison!)
+		if (null == modelProductClass.getProductFileTemplate()) {
+			// Currently no template set --> set template, if a new template different from the mission's template was given
+			if (!modelProductClass.getMission().getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
+				productClassChanged = true;
+				modelProductClass.setProductFileTemplate(productClass.getProductFileTemplate());
+			}
+		} else if (null == productClass.getProductFileTemplate() 
+				|| modelProductClass.getMission().getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
+			// Currently template is set, but new value is null or same as mission template --> unset template
+			productClassChanged = true;
+			modelProductClass.setProductFileTemplate(null);
+		} else if (!modelProductClass.getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
+			// Currently template is set, but a different value was given, which does not correspond to the mission template
+			productClassChanged = true;
+			modelProductClass.setProductFileTemplate(productClass.getProductFileTemplate());
+		}
+		
 		// Check the processor class
 		if (null == productClass.getProcessorClass() || 0 == productClass.getProcessorClass().length()) {
 			if (null != modelProductClass.getProcessorClass()) {

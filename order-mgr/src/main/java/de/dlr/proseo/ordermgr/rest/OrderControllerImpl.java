@@ -166,6 +166,7 @@ public class OrderControllerImpl implements OrderController {
 	 * @return a response containing
 	 *         HTTP status "OK" and a Json object corresponding to the order after modification (with ID and version for all 
 	 * 		   contained objects) or
+	 *         HTTP status "NOT_MODIFIED" and the unchanged order, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no order with the given ID exists, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
 	 */

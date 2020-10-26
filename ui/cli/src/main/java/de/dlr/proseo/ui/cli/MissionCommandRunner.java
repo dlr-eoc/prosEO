@@ -405,6 +405,9 @@ public class MissionCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
@@ -1084,6 +1087,9 @@ public class MissionCommandRunner {
 			} catch (RestClientResponseException e) {
 				String message = null;
 				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+					System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+					return;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;

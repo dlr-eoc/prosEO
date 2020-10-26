@@ -530,7 +530,8 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
 		}
-		if (!modelProduct.getProductionType().equals(changedProduct.getProductionType())) {
+		if (null == modelProduct.getProductionType() && null != changedProduct.getProductionType()
+				|| null != modelProduct.getProductionType() && !modelProduct.getProductionType().equals(changedProduct.getProductionType())) {
 			productChanged = true;
 			modelProduct.setProductionType(changedProduct.getProductionType());
 		}

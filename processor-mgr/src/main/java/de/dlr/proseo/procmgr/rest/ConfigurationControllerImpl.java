@@ -133,17 +133,20 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param configuration a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged configuration, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
-	 *         HTTP status "CONFLICT"and an error message, if the configuration has been modified since retrieval by the client
+	 *         HTTP status "CONFLICT" and an error message, if the configuration has been modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> modifyConfiguration(Long id, @Valid RestConfiguration configuration) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguration({}, {})", id, (null == configuration ? "MISSING" : configuration.getProcessorName() + " " + configuration.getConfigurationVersion()));
 		
 		try {
-			return new ResponseEntity<>(configurationManager.modifyConfiguration(id, configuration), HttpStatus.OK);
+			RestConfiguration changedConfiguration = configurationManager.modifyConfiguration(id, configuration); 
+			HttpStatus httpStatus = (configuration.getVersion() == changedConfiguration.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedConfiguration, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
