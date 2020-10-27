@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.5.2</version>
+		<version>0.6.0</version>
 	</parent>
 
 	<artifactId>proseo-ingestor</artifactId>
@@ -22,7 +22,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.5.2</module.version>
+		<module.version>0.6.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/ingestor-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.ingestor.rest</raml-base-package>
