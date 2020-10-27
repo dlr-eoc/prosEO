@@ -1,0 +1,46 @@
+group create operator
+group grant operator ROLE_MISSION_READER
+group grant operator ROLE_PRODUCTCLASS_READER
+group grant operator ROLE_PRODUCT_READER_ALL
+group grant operator ROLE_PROCESSOR_READER
+group grant operator ROLE_ORDER_READER
+group grant operator ROLE_ORDER_MGR
+group grant operator ROLE_ORDER_PLANNER
+group grant operator ROLE_ORDER_MONITOR
+group grant operator ROLE_FACILITY_READER
+group grant operator ROLE_FACILITY_MONITOR
+group create archivist
+group grant archivist ROLE_MISSION_READER
+group grant archivist ROLE_PRODUCTCLASS_READER
+group grant archivist ROLE_PRODUCT_READER_ALL
+group grant archivist ROLE_PRODUCT_INGESTOR
+group grant archivist ROLE_PRODUCT_MGR
+group grant archivist ROLE_FACILITY_READER
+group grant archivist ROLE_FACILITY_MONITOR
+group create engineer
+group grant engineer ROLE_MISSION_READER
+group grant engineer ROLE_MISSION_MGR
+group grant engineer ROLE_PRODUCTCLASS_READER
+group grant engineer ROLE_PRODUCTCLASS_MGR
+group grant engineer ROLE_PRODUCT_READER_ALL
+group grant engineer ROLE_PROCESSOR_READER
+group grant engineer ROLE_PROCESSORCLASS_MGR
+group grant engineer ROLE_CONFIGURATION_MGR
+group grant engineer ROLE_FACILITY_READER
+group grant engineer ROLE_FACILITY_MGR
+group grant engineer ROLE_FACILITY_MONITOR
+group grant engineer ROLE_ORDER_READER
+group grant engineer ROLE_ORDER_MONITOR
+group create approver
+group grant approver ROLE_ORDER_READER
+group grant approver ROLE_ORDER_APPROVER
+group create prippublic
+group grant prippublic ROLE_PRIP_USER
+group grant prippublic ROLE_PRODUCT_READER
+group create externalprocessor
+group grant externalprocessor ROLE_PRIP_USER
+group grant externalprocessor ROLE_PRODUCT_READER_RESTRICTED
+group grant externalprocessor ROLE_PRODUCT_INGESTOR
+group create internalprocessor
+group grant internalprocessor ROLE_PRODUCT_GENERATOR
+group grant internalprocessor ROLE_JOBSTEP_PROCESSOR
