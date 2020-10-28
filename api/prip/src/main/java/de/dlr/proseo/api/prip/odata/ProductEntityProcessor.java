@@ -525,7 +525,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		}
 		// Redirect the request to the download URI
 		log(Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
-		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
+		response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
 		
