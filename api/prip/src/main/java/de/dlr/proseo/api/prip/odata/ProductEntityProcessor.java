@@ -384,7 +384,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		ExpandOption expandOption = uriInfo.getExpandOption();
 
 		// [4] Create a serializer based on the requested format (json)
-		if (!ContentType.APPLICATION_JSON.equals(responseFormat)) {
+		if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
 			// Any other format currently throws an exception (see Github issue #122)
 			String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
