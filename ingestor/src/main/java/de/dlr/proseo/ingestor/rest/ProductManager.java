@@ -32,6 +32,8 @@ import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.ProductVisibility;
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -78,6 +80,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_HAS_FILES = 2026;
 	private static final int MSG_ID_PRODUCT_EXISTS = 2027;
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	private static final int MSG_ID_VISIBILITY_VIOLATION = 2029;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -103,6 +106,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d has existing files and cannot be deleted";
 	private static final String MSG_PRODUCT_EXISTS = "(E%d) Product with equal characteristics already exists with ID %d";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	private static final String MSG_VISIBILITY_VIOLATION = "(E%d) User not authorized for read access to product class %s";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -261,9 +265,28 @@ public class ProductManager {
 		}
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
-				result.add(ProductUtil.toRestProduct((Product) resultObject));
+				// Filter depending on product visibility and user authorization
+				Product product = (Product) resultObject;
+				ProductVisibility visibility = product.getProductClass().getVisibility();
+				switch (visibility) {
+				case PUBLIC:
+					break;
+				case RESTRICTED:
+					if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+						break;
+					}
+					// Fall through to test READER_ALL
+				default: // Internal
+					if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
+						break;
+					}
+					// Product not visible for user
+					continue;
+				}
+				result.add(ProductUtil.toRestProduct(product));
 			}
 		}
+		
 		
 		if (result.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY));
@@ -441,6 +464,25 @@ public class ProductManager {
 					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
+		// Ensure product class is visible for user
+		ProductVisibility visibility = modelProduct.get().getProductClass().getVisibility();
+		switch (visibility) {
+		case PUBLIC:
+			break;
+		case RESTRICTED:
+			if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+				break;
+			}
+			// Fall through to test READER_ALL
+		default: // Internal
+			if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
+				break;
+			}
+			// Product not visible for user
+			throw new SecurityException(logError(MSG_VISIBILITY_VIOLATION, MSG_ID_VISIBILITY_VIOLATION,
+					modelProduct.get().getProductClass().getProductType()));
+		}
+
 		logInfo(MSG_PRODUCT_RETRIEVED, MSG_ID_PRODUCT_RETRIEVED, id);
 		
 		return ProductUtil.toRestProduct(modelProduct.get());
@@ -728,6 +770,25 @@ public class ProductManager {
 					product.getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
+		// Ensure product class is visible for user
+		ProductVisibility visibility = product.getProductClass().getVisibility();
+		switch (visibility) {
+		case PUBLIC:
+			break;
+		case RESTRICTED:
+			if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+				break;
+			}
+			// Fall through to test READER_ALL
+		default: // Internal
+			if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
+				break;
+			}
+			// Product not visible for user
+			throw new SecurityException(logError(MSG_VISIBILITY_VIOLATION, MSG_ID_VISIBILITY_VIOLATION,
+					product.getProductClass().getProductType()));
+		}
+
 		logInfo(MSG_PRODUCT_RETRIEVED_BY_UUID, MSG_ID_PRODUCT_RETRIEVED_BY_UUID, uuid);
 		
 		return ProductUtil.toRestProduct(product);
