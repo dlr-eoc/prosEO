@@ -33,9 +33,17 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.processorManager.url}")
 	private String processorManagerUrl;
 	
-	/** The URL of some prosEO Facility Manager */
+	/** The URL of the prosEO Facility Manager */
 	@Value("${proseo.facilityManager.url}")
 	private String facilityManagerUrl;
+	
+	/** The user name for the prosEO Facility Manager */
+	@Value("${proseo.facilityManager.user}")
+	private String facilityManagerUser;
+	
+	/** The password for the prosEO Facility Manager */
+	@Value("${proseo.facilityManager.password}")
+	private String facilityManagerPassword;
 	
 	/**
 	 * Gets the URL of the prosEO User Manager component
@@ -71,6 +79,24 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public String getFacilityManagerUrl() {
 		return facilityManagerUrl;
+	}
+
+	/**
+	 * Gets the user name for the prosEO Facility Manager component
+	 * 
+	 * @return the facilityManagerUser
+	 */
+	public String getFacilityManagerUser() {
+		return facilityManagerUser;
+	}
+
+	/**
+	 * Gets the password for the prosEO Facility Manager component
+	 * 
+	 * @return the facilityManagerPassword
+	 */
+	public String getFacilityManagerPassword() {
+		return facilityManagerPassword;
 	}
 
 }

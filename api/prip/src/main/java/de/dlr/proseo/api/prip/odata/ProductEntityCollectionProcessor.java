@@ -31,6 +31,7 @@ import org.apache.olingo.server.api.ServiceMetadata;
 import org.apache.olingo.server.api.processor.EntityCollectionProcessor;
 import org.apache.olingo.server.api.serializer.EntityCollectionSerializerOptions;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
+import org.apache.olingo.server.api.serializer.SerializerException;
 import org.apache.olingo.server.api.serializer.SerializerResult;
 import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriInfoResource;
@@ -82,6 +83,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
 	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
 	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
+	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_PRODUCT_WITHOUT_UUID = 5008;
 	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5009;
@@ -95,6 +97,10 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_PRODUCT_WITHOUT_UUID = "(W%d) Product with database ID %d has no UUID";
 	private static final String MSG_INVALID_FILTER_CONDITION = "(E%d) Invalid filter condition (cause: %s)";
+	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
+
+	/* Other string constants */
+	private static final String HTTP_HEADER_WARNING = "Warning";
 
 	/** The cached OData factory object */
 	private OData odata;
@@ -304,8 +310,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			return productsCollection;
 		} catch (HttpClientErrorException.BadRequest e) {
 			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
+			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (HttpClientErrorException.Unauthorized e) {
 			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser()), e);
 			throw e;
@@ -321,7 +327,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(httpResponseEntity.getStatusCode())) {
 			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
-					httpResponseEntity.getStatusCodeValue(), httpResponseEntity.getStatusCode().toString(), httpResponseEntity.getHeaders().getFirst("Warning"));
+					httpResponseEntity.getStatusCodeValue(), httpResponseEntity.getStatusCode().toString(), httpResponseEntity.getHeaders().getFirst(HTTP_HEADER_WARNING));
 			logger.error(message);
 			throw new RuntimeException(message);
 		}
@@ -440,28 +446,28 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
-				response.setHeader("Warning", message);
+				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			} catch (ODataApplicationException e) {
 				String message = logError(MSG_INVALID_FILTER_CONDITION, MSG_ID_INVALID_FILTER_CONDITION, e.getMessage());
 				response.setStatusCode(e.getStatusCode());
-				response.setHeader("Warning", message);
+				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			} catch (HttpClientErrorException e) {
 				response.setStatusCode(e.getRawStatusCode());
-				response.setHeader("Warning", e.getMessage()); // Message already logged and formatted
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
 				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 				e.printStackTrace();
 				response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
-				response.setHeader("Warning", message);
+				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			}
 		} else {
 			String message = logError(MSG_INVALID_ENTITY_TYPE, MSG_ID_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
-			response.setHeader("Warning", message);
+			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
 
@@ -472,29 +478,45 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		ExpandOption expandOption = uriInfo.getExpandOption();
 		CountOption countOption = uriInfo.getCountOption();
 		
-		// [4] Create a serializer based on the requested format (json)
-		ODataSerializer serializer = odata.createSerializer(responseFormat);
+		InputStream serializedContent = null;
+		try {
+			// [4] Create a serializer based on the requested format (json)
+			if (!ContentType.APPLICATION_JSON.equals(responseFormat)) {
+				// Any other format currently throws an exception (see Github issue #122)
+				String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, message);
+				return;
+			}
+			ODataSerializer serializer = odata.createSerializer(responseFormat);
 
-		// [5] Now serialize the content: transform from the EntitySet object to InputStream, taking into account system query options
-		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-		String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntityType,
-				expandOption, selectOption);
+			// [5] Now serialize the content: transform from the EntitySet object to InputStream, taking into account system query options
+			EdmEntityType edmEntityType = edmEntitySet.getEntityType();
+			String selectList = odata.createUriHelper().buildContextURLSelectList(edmEntityType,
+					expandOption, selectOption);
 
-		ContextURL contextUrl = ContextURL.with()
-				.entitySet(edmEntitySet)
-				.selectList(selectList)
-				.build();
+			ContextURL contextUrl = ContextURL.with()
+					.entitySet(edmEntitySet)
+					.selectList(selectList)
+					.build();
 
-		final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
-		EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with()
-				.id(id)
-				.contextURL(contextUrl)
-				.expand(expandOption)
-				.select(selectOption)
-				.count(countOption)
-				.build();
-		SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
-		InputStream serializedContent = serializerResult.getContent();
+			final String id = request.getRawBaseUri() + "/" + edmEntitySet.getName();
+			EntityCollectionSerializerOptions opts = EntityCollectionSerializerOptions.with()
+					.id(id)
+					.contextURL(contextUrl)
+					.expand(expandOption)
+					.select(selectOption)
+					.count(countOption)
+					.build();
+			SerializerResult serializerResult = serializer.entityCollection(serviceMetadata, edmEntityType, entityCollection, opts);
+			serializedContent = serializerResult.getContent();
+		} catch (Exception e) {
+			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			e.printStackTrace();
+			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
 
 		// Finally: configure the response object: set the body, headers and status code
 		response.setContent(serializedContent);

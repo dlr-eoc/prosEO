@@ -75,6 +75,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
 	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
 	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
+	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
@@ -92,6 +93,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
 	private static final String MSG_CANNOT_DESERIALIZE_RESPONSE = "(E%d) Cannot deserialize HTTP response";
+	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
 
 	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
 
@@ -251,7 +253,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		ResponseEntity<?> entity = null;
 		try {
 			RestTemplate restTemplate = rtb.basicAuthentication(
-					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
+					securityConfig.getMission() + "-" + config.getFacilityManagerUser(), config.getFacilityManagerPassword())
 				.build();
 			String requestUrl = config.getFacilityManagerUrl() + "/facilities?name=" + facilityName;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
@@ -382,6 +384,13 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		ExpandOption expandOption = uriInfo.getExpandOption();
 
 		// [4] Create a serializer based on the requested format (json)
+		if (!ContentType.APPLICATION_JSON.equals(responseFormat)) {
+			// Any other format currently throws an exception (see Github issue #122)
+			String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
 		// [5] Now serialize the content: transform from the Entity object to InputStream

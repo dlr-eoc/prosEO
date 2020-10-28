@@ -51,7 +51,7 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
-				.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/ingest/*/*").hasAnyRole(
+				.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/ingest/*/*").hasAnyRole(
 						UserRole.PRODUCT_READER.toString(),
 						UserRole.PRODUCT_READER_RESTRICTED.toString(),
 						UserRole.PRODUCT_READER_ALL.toString())

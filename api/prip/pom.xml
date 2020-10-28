@@ -85,18 +85,6 @@
 			<classifier>rest</classifier>
 			<exclusions>
 				<exclusion>
-					<groupId>software.amazon.awssdk</groupId>
-					<artifactId>s3</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.amazonaws</groupId>
-					<artifactId>aws-java-sdk-s3</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.alluxio</groupId>
-					<artifactId>alluxio-core-client-fs</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>javax</groupId>
 					<artifactId>javaee-api</artifactId>
 				</exclusion>
@@ -104,6 +92,12 @@
 					<groupId>org.glassfish.jersey.bundles</groupId>
 					<artifactId>jaxrs-ri</artifactId>
 				</exclusion>
+                <!-- The SecurityService in the model is not used -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-security</artifactId>
+                </exclusion>
+                <!-- The PRIP has no direct database access -->
 				<exclusion>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-starter-data-jpa</artifactId>
