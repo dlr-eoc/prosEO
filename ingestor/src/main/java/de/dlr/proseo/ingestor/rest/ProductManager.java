@@ -215,13 +215,17 @@ public class ProductManager {
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of products
 	 * @throws NoResultException if no products matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProduct> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
+	public List<RestProduct> getProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+			Long recordFrom, Long recordTo, String[] orderBy) throws NoResultException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -295,6 +299,33 @@ public class ProductManager {
 		logInfo(MSG_PRODUCT_LIST_RETRIEVED, MSG_ID_PRODUCT_LIST_RETRIEVED, result.size(), mission, productClass, startTimeFrom, startTimeTo);
 		
 		return result;
+	}
+
+	/**
+	 * Get the number of products available, possibly filtered by mission, product class and time range
+	 * 
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @return the number of products found as string
+     * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo) throws SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
+
+		// TODO Auto-generated method stub
+		return "0";
 	}
 
 	/**
@@ -443,7 +474,7 @@ public class ProductManager {
 	 * @return a Json object corresponding to the product found
 	 * @throws IllegalArgumentException if no product ID was given
 	 * @throws NoResultException if no product with the given ID exists
-     * @throws SecurityException if a cross-mission data access was attempted
+	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
@@ -482,7 +513,7 @@ public class ProductManager {
 			throw new SecurityException(logError(MSG_VISIBILITY_VIOLATION, MSG_ID_VISIBILITY_VIOLATION,
 					modelProduct.get().getProductClass().getProductType()));
 		}
-
+	
 		logInfo(MSG_PRODUCT_RETRIEVED, MSG_ID_PRODUCT_RETRIEVED, id);
 		
 		return ProductUtil.toRestProduct(modelProduct.get());

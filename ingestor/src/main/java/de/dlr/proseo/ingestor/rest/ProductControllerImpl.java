@@ -83,26 +83,54 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	/**
-	 * List of all products filtered by mission, product class, start time range
+	 * List of all products filtered by mission, product class, start time range; the output will be ordered by the columns
+     * given in orderBy, and the resulting product list will only contain the records in the given range
 	 * 
 	 * @param mission the mission code
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of products or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
 	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo, HttpHeaders httpHeaders) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
+			Date startTimeFrom, Date startTimeTo, Long recordFrom, Long recordTo, String[] orderBy, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo), HttpStatus.OK);
+					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
+    /**
+     * Number of products available, possibly filtered by mission, product class and time range
+     * 
+	 * @param mission the mission code
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @return HTTP status "OK" and the number of products found (may be zero) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
+     */
+	@Override
+    public ResponseEntity<?> countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass,
+				startTimeFrom, startTimeTo);
+		
+		try {
+			return new ResponseEntity<>(
+					productManager.countProducts(mission, productClass, startTimeFrom, startTimeTo), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
