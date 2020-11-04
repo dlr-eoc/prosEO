@@ -34,6 +34,8 @@ UNIX-like OS
    ```bash
    $ go get $(cat tools/gopackages.txt)
    ```
+  **Note** this seems to be broken at the moment, use https://terraform.io to download
+  the terraform CLI and put the executable into the `gospace/bin` directory.
 1. Install kubectl:
   ```bash
   $ mkdir bin
