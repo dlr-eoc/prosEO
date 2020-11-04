@@ -37,9 +37,9 @@ UNIX-like OS
 1. Install kubectl:
   ```bash
   $ mkdir bin
-  $ export KUBECTL_RELEASE=$(cat tools/kubectl_release.txt)
+  $ export KUBE_VERSION=$(grep '^kube_version:' kubespray/roles/download/defaults/main.yml | cut -d' ' -f2)
   $ cd bin
-  $ curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_RELEASE}/bin/linux/amd64/kubectl
+  $ curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl
   $ chmod +x kubectl
   ```
 

@@ -34,17 +34,17 @@ its job. You can see which environment variables are required by
    output the *exact* commands to use, so treat the following as an example
    only:
    ```bash
-   $ echo yes | terraform 0.13upgrade ../../kubespray/contrib/terraform/openstack
+   $ echo yes | terraform 0.13upgrade ../../contrib/terraform/openstack
    ```
 1. Using kubespray's openstack configuration combined with the above
    configuration file, run:
    ```bash
-   $ terraform init -var-file=cluster.tfvars ../../kubespray/contrib/terraform/openstack
+   $ terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
 1. You now have a `.terraform` directory that holds terraform's plugins required
    for this cluster. Now apply this configuration:
    ```bash
-   $ terraform apply -var-file=cluster.tfvars ../../kubespray/contrib/terraform/openstack
+   $ terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
 1. Check your configuration with:
    ```bash

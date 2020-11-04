@@ -37,11 +37,11 @@ COPY kubespray/requirements.txt ./tools/
 RUN pipenv install -r ./tools/requirements.txt
 
 # Install kubectl
-COPY tools/kubectl_release.txt ./tools/
-RUN export KUBECTL_RELEASE=$(cat ./tools/kubectl_release.txt) && \
+COPY kubespray/roles/download/defaults/main.yml ./tools/
+RUN export KUBE_VERSION=$(grep '^kube_version:' ./tools/main.yml | cut -d' ' -f2)
       mkdir bin && \
       cd bin && \
-      curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_RELEASE}/bin/linux/amd64/kubectl && \
+      curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl && \
       chmod +x kubectl
 
 # Entry point

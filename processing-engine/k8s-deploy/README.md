@@ -43,7 +43,7 @@ skip sections that do not apply to you.
 Choosing a Cluster
 ------------------
 
-Simply `$ cd kybespray/inventory/<yourcluster>` and run commands from there.
+Simply `$ cd kubespray/inventory/<yourcluster>` and run commands from there.
 
 Creating a new Cluster
 ----------------------
@@ -122,25 +122,6 @@ whether this works by running:
 ```bash
 $ ansible -i hosts -m ping all
 ```
-
-It's best to download some K8S components from the prosEO registry:
-
-1. Don't validate certs:
-   ```bash
-   $ sed -i 's/^#* *download_validate_certs:.*/download_validate_certs: False/g' group_vars/all/all.yml
-   ```
-1. Add download URLs for packages:
-   ```bash
-   $ cat >group_vars/all/proseo.yml <<EOF
-# Use prosEO registry for downloads
-etcd_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/etcd-v3.3.10-linux-amd64.tar.gz"
-cni_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/cni-plugins-linux-amd64-v0.8.1.tgz"
-calicoctl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/calicoctl-linux-amd64"
-crictl_download_url: "https://proseo-registry.eoc.dlr.de/artifactory/proseo/critest-v1.16.1-linux-amd64.tar.gz"
-EOF
-   ```
-1. TODO: these could be done as part of the `make_cluster.sh` script.
-
 Now it's up to kubespray to configure all VMs for running a K8S cluster. We
 need to run commands from the kubespray directory now, and specify the cluster
 inventory.
@@ -149,3 +130,20 @@ inventory.
 $ cd ../..  # /kubespray directory
 $ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
 ```
+
+*Note:* It may be that the worker nodes cannot join to the cluster with an
+error message stating the kubeadm configuration file version is outdated. If
+that happens, there's only one thing to do: update the configuration.
+
+For each worker node, do the following:
+
+1. SSH into the node.
+1. Run the following:
+   ```bash
+   $ sudo /usr/local/bin/kubeadm config migrate \
+      --old-config /etc/kubernetes/kubeadm-client.conf \
+      --new-config /etc/kubernetes/kubeadm-client-new.conf
+   $ sudo mv /etc/kubernetes/kubeadm-client-new.conf \
+      /etc/kubernetes/kubeadm-client.conf
+   ```
+1. The re-start the playbook script above.
