@@ -1,59 +1,338 @@
 <!doctype html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>DLR Mission Welcome</title>
-    <!-- Bootstrap core CSS -->
-    <!-- Bootstrap core CSS -->
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{product} + ' | ' + #{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
 
-
-    <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-    </style>
-    <!-- Custom styles for this template -->
-    <link href="signin.css" rel="stylesheet">
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
   </head>
- 
-  <body class="text-center"style="background-image: url(background.jpg)">
-  <div th:insert="fragments/navbar.html :: navigation-bar"></div>
-<div class="container-fluid">
-<form name = "prdct-shw" th:action="@{/product-show?}">
 
-<div class="input-group mb-3">
-	<p class="text-left"><input type="text" th:name="id" placeholder="Classname" class="form-control" id="className"></p>
-</div>
-<div class="input-group mb-3">
-<p class="text-left"><label for="fromDate">Start date:</label></p>
-<p class="text-left"><input type="date" class="form-control" id="fromDate"></p>
-<p class="text-left"><label for"toDate">End date:</label></p>
-<p class="text-left"><input type="date"  class="form-control" id="toDate"></p>
-</div>
-  <div class="input-group mb-3">
-  <button type="submit" class="btn btn-primary mb-2">Show Products</button>
-  </div>
-</form>     
-      
-</div>
-              <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-<script src="../js/resources.js"></script>
-<div th:insert="fragments/footer.html :: footer"></div>
-</body> 
+  <body>
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+      <div class="container-fluid pl-0 pr-0">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item"><span
+              th:text="#{product}">product</span></li>
+        </ul>
+        <div th:replace="fragments/navbar.html :: navbarRight"></div>
+      </div>
+    </nav>
+
+	<div class="container-fluid">
+		<div class="row">
+			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+			<div class="proseo-top-div"></div>
+
+			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+
+			<div id="productcontent" name="productcontent">
+				<table class="table table-hover" id="productTable"
+					th:if="${products != null and (not #lists.isEmpty(products))}">
+					<thead class="thead-proseo" id="proseo-thead">
+						<tr>
+							<th colspan="2"><span th:text="#{id}">id</span></th>
+							<th><span th:text="#{product-class}">product-class</span></th>
+							<th><span th:text="#{generationtime}">generationtime</span></th>
+							<th><span th:text="#{mode}">mode</span></th>
+							<th><span th:text="#{sensingstarttime}">sensingstarttime</span></th>
+							<th><span th:text="#{sensingstoptime}">sensingstoptime</span></th>
+							<th><span th:text="#{productquality}">productquality</span></th>
+							<th><span th:text="#{fileclass}">fileclass</span></th>
+						</tr>
+					</thead>
+					<div th:each="elem : ${products}">
+						<tbody>
+							<tr>
+								<td th:id="'toggleprod' + ${elem?.id}"
+									class="cursorpointer first-row no-right-border"
+									th:onclick="'toggleProd(' + ${elem?.id} + ')'"><div
+										class="prodhide" th:id="'prodh' + ${elem?.id}">
+										<span data-feather="minus-circle"></span>
+									</div>
+									<div class="prodshow" th:id="'prods' + ${elem?.id}">
+										<span data-feather="plus-circle"></span>
+									</div></td>
+								<td th:id="${elem?.id}" th:text="${elem?.id}"
+									class="cursorpointer first-row no-left-border"
+                  th:onclick="'toggleProd(' + ${elem?.id} + ')'"></td>
+								<td class="first-row"><a
+									th:href="'/productclass-show?pc=' + ${elem?.productClass}"
+									th:text="${elem?.productClass}"></a></td>
+								<td th:text="${elem?.generationTime}" class="first-row"></td>
+								<td th:text="${elem?.mode}" class="first-row"></td>
+								<td th:text="${elem?.sensingStartTime}" class="first-row"></td>
+								<td th:text="${elem?.sensingStopTime}" class="first-row"></td>
+								<td th:text="${elem?.productQuality}" class="first-row"></td>
+								<td th:text="${elem?.fileClass}" class="first-row"></td>
+							</tr>
+						</tbody>
+						<tbody class="filtercontent" th:id="'prodcont' + ${elem?.id}">
+							<tr class="th-row">
+								<th class="tr-rowspan"><span>&nbsp;</span></th>
+								<th><span th:text="#{productiontype}">productiontype</span></th>
+								<th><span th:text="#{uuid}">uuid</span></th>
+								<th><span th:text="#{componentproductids}">componentproductids</span></th>
+								<th><span th:text="#{enclosingproductids}">componentproductids</span></th>
+								<th><span th:text="#{spacecraft}">spacecraft</span> &ndash;
+									<span th:text="#{orbit}">orbit</span></th>
+								<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+								<th colspan="2"><span th:text="#{parameters}">parameters</span></th>
+							</tr>
+							<tr>
+								<td class="tr-rowspan">&nbsp;</td>
+								<td th:text="${elem?.productionType}"></td>
+								<td th:text="${elem?.uuid}"></td>
+								<td><a th:each="comp : ${elem?.componentProductIds}"
+									class="proseo-list-item href"
+									th:onclick="'productref(' + ${comp} + ')'"><span
+										th:text="${comp}"></span></a></td>
+								<td><a class="href"
+									th:onclick="'productref(' + ${elem?.enclosingProductId} + ')'"><span
+										th:text="${elem?.enclosingProductId}"></span></a></td>
+								<td><span th:text="${elem?.orbit?.spacecraftCode}"></span>
+									&ndash; <span th:text="${elem?.orbit?.orbitNumber}"></span></td>
+								<td><a
+									th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
+									th:text="${elem?.configuredProcessor.identifier}"
+									th:if="null != ${elem?.configuredProcessor}"></a></td>
+								<td colspan="2">
+									<table class="table-inline">
+										<tr th:each="comp : ${elem?.parameters}">
+											<td th:text="${comp?.key}"></td>
+											<td th:text="${comp?.parameterValue}"></td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td class="tr-rowspan">&nbsp;</td>
+								<td colspan="8">
+									<table class="table table-hover"
+										id="'productfiletable' + ${elem?.id}"
+										th:unless="${#arrays.isEmpty(elem?.productFile)}">
+										<thead id="proseo-thead">
+											<tr class="th-row">
+												<th><span th:text="#{file}">file</span>&nbsp;<span
+													th:text="#{id}">id</span></th>
+												<th colspan="2"><span th:text="#{facility}">facility</span></th>
+												<th><span th:text="#{storagetype}">storagetype</span></th>
+												<th colspan="3"><span th:text="#{filepath}">filepath</span></th>
+											</tr>
+											<tr class="th-row">
+												<th class="tr-rowspan"><span>&nbsp;</span></th>
+												<th colspan="3"><span th:text="#{filename}">filename</span></th>
+												<th><span th:text="#{filesize}">filesize</span></th>
+												<th><span th:text="#{checksum}">checksum</span></th>
+												<th><span th:text="#{checksumtime}">checksumtime</span></th>
+											</tr>
+											<tr class="th-row">
+												<th class="tr-rowspan"><span>&nbsp;</span></th>
+												<th colspan="3"><span th:text="#{zipfilename}">zipfilename</span></th>
+												<th><span th:text="#{zipfilesize}">zipfilesize</span></th>
+												<th><span th:text="#{zipchecksum}">zipchecksum</span></th>
+												<th><span th:text="#{zipchecksumtime}">zipchecksumtime</span></th>
+											</tr>
+											<tr class="th-row">
+												<th class="tr-rowspan"><span>&nbsp;</span></th>
+												<th colspan="6"><span th:text="#{auxfilenames}">auxfilenames</span></th>
+											</tr>
+										</thead>
+										<tbody>
+											<div th:each="file : ${elem?.productFile}">
+												<tr>
+													<td th:id="${file?.id}" th:text="${file?.id}"
+														class="first-row"></td>
+													<td colspan="2" class="first-row"><a
+														th:href="'/facility-show?f=' + ${file?.processingFacilityName}"
+														th:text="${file?.processingFacilityName}"></a></td>
+													<td th:text="${file?.storageType}" class="first-row"></td>
+													<td colspan="3" th:text="${file?.filePath}"
+														class="first-row"></td>
+												</tr>
+												<tr>
+													<td class="tr-rowspan"><span>&nbsp;</span></td>
+													<td colspan="3" th:text="${file?.productFileName}"></td>
+													<td th:text="${file?.fileSize}"></td>
+													<td th:text="${file?.checksum}"></td>
+													<td th:text="${file?.checksumTime}"></td>
+												</tr>
+												<tr>
+													<td class="tr-rowspan"><span>&nbsp;</span></td>
+													<td colspan="3" th:text="${file?.zipFileName}"></td>
+													<td th:text="${file?.zipFileSize}"></td>
+													<td th:text="${file?.zipChecksum}"></td>
+													<td th:text="${file?.zipChecksumTime}"></td>
+												</tr>
+												<tr>
+													<td class="tr-rowspan"><span>&nbsp;</span></td>
+													<td colspan="6"><a
+														th:each="comp : ${file?.auxFileNames}"
+														class="proseo-list-item"><span th:text="${comp}"></span></a></td>
+												</tr>
+											</div>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+						</tbody>
+					</div>
+					</tbody>
+				</table>
+			</div>
+
+			<div th:insert="fragments/footer.html :: footer"></div>
+			</main>
+		</div>
+	</div>
+</body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+
+  <script type="text/javascript"> 
+  function toggleProd(id) {
+    var content = document.getElementById("prodcont" + id);
+    var eleshow = document.getElementById("prods" + id);
+    var elehide = document.getElementById("prodh" + id);
+    $(content).toggleClass("filtercontent");
+    if ($(content).css("display") === "none") {
+        $(eleshow).show();
+        $(elehide).hide();
+    } else {
+        $(eleshow).hide();
+        $(elehide).show();
+    }
+  }
+  function openProd(id) {
+	    var content = document.getElementById("prodcont" + id);
+	    var eleshow = document.getElementById("prods" + id);
+	    var elehide = document.getElementById("prodh" + id);
+	    if ($(content).css("display") === "none") {
+	        $(content).toggleClass("filtercontent");
+	        $(eleshow).hide();
+	        $(elehide).show();
+	    }
+	  }
+  
+  function productref(ref) {
+	  var id = getURLParam('id');
+	  var pc = getURLParam('productClass');
+	    if (pc == null && id == null) {
+		    scrollToElem(ref);
+		    openProd(ref);
+ 	    } else {
+		    window.location.href = '/product-show?id=' + ref;
+	    }
+  }
+    function retrieveData(id, productClass, startTimeFrom, startTimeTo) {
+      showLoader();
+      var tableRows = $("productTable").rows;
+      if (tableRows > 1 && tableRows != null) {
+        $("productTable > tbody").empty();
+      }
+      var url = "/product/get"
+      var divider = "?";
+      if (productClass != null) {
+          url = url + divider + "productClass=" + productClass.toString().trim();
+          divider = "&";
+    }
+      if (startTimeFrom != null) {
+          url = url + divider + "startTimeFrom=" + startTimeFrom.toString().trim();
+          divider = "&";
+    }
+      if (startTimeTo != null) {
+          url = url + divider + "startTimeTo=" + startTimeTo.toString().trim();
+          divider = "&";
+    }
+      if (id != null) {
+          url = url + divider + "id=" + id.toString().trim();
+          divider = "&";
+    }
+        $.ajax({
+          url : url,
+          method : "GET",
+          success : function(res) {
+            $("#productcontent").html(res);
+            hideLoader();
+            var x = document.getElementsByClassName('prodshow');
+            for (var i = 0; i < x.length; i++) {
+              var ele = x[i];
+              $(ele).show();
+            } 
+            var y = document.getElementsByClassName('prodhide');
+            for (var i = 0; i < y.length; i++) {
+              var ele = y[i];
+              $(ele).hide();
+            }
+            feather.replace();  
+            if (id != null) {
+              scrollToElem(id);
+            	openProd(id);
+            }
+          },
+          fail : function(err) {
+            hideLoader();
+            console.log(err);
+            prop.innerHTML = "Fehler!" + err;
+          }
+        });
+    };
+        
+  </script>
+<script>
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-product');
+     $(elem).addClass('active');
+     feather.replace();
+     var productClass = getURLParam('productClass');
+     var startTimeFrom = getURLParam('startTimeFrom');
+     var startTimeTo = getURLParam('startTimeTo');
+     var id = getURLParam('id');
+     retrieveData(id, productClass, startTimeFrom, startTimeTo);
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+    }
+</script>
+
 </html>

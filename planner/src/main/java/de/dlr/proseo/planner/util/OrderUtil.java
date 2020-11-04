@@ -23,7 +23,6 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
@@ -46,8 +45,7 @@ public class OrderUtil {
 	
     @Autowired
     private JobUtil jobUtil;
-    @Autowired
-    private JobStepUtil jobStepUtil;
+
     @Autowired
     private OrderDispatcher orderDispatcher;
 
@@ -66,6 +64,7 @@ public class OrderUtil {
 			case INITIAL:
 			case APPROVED:
 			case PLANNED:
+			case RELEASED:
 				for (Job job : order.getJobs()) {
 					jobUtil.cancel(job);
 				}
@@ -74,9 +73,6 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
-			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
-				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -122,7 +118,8 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
-				break;				
+				break;		
+			case RELEASED:		
 			case PLANNED:
 				// remove jobs and jobsteps
 				HashMap<Long,Job> toRemove = new HashMap<Long,Job>();
@@ -147,9 +144,6 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				answer = Messages.ORDER_RESET;
 				break;	
-			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
-				break;
 			case RUNNING:
 				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
@@ -506,6 +500,7 @@ public class OrderUtil {
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_COMPLETED;
 				} else {
+					order.setOrderState(OrderState.SUSPENDING); // direct transition to PLANNED not allowed
 					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
 					answer = Messages.ORDER_SUSPENDED;
@@ -559,9 +554,9 @@ public class OrderUtil {
 				for (Job job : order.getJobs()) {
 					if (!(job.getJobState() == JobState.INITIAL || job.getJobState() == JobState.COMPLETED)) {
 						all = false;
-						if (job.getJobState() != JobState.COMPLETED) {
-							allCompleted = false;
-						}
+					}
+					if (job.getJobState() != JobState.COMPLETED) {
+						allCompleted = false;
 					}
 					if (job.getHasFailedJobSteps()) {
 						order.setHasFailedJobSteps(true);
@@ -763,10 +758,10 @@ public class OrderUtil {
 	
 
 	/**
-	 * Set the job to failed
+	 * Set the failed job steps flag in the order on failure
 	 * 
-	 * @param job The job
-	 * @param failed
+	 * @param order the order to update
+	 * @param failed indicates whether a job step has failed
 	 */
 	@Transactional
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {

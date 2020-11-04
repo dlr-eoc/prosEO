@@ -6,7 +6,7 @@
 package de.dlr.proseo.model.enums;
 
 /**
- * Possible states for a processing order; recommended state transitions:
+ * Possible states for a processing order; legal state transitions:
  * <ol>
  *
  * <li>INITIAL -&gt; APPROVED: Customer approved order parameters and/or committed budget
@@ -25,5 +25,35 @@ package de.dlr.proseo.model.enums;
  * 
  */
 public enum OrderState {
-	INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
+	INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED;
+	
+	/**
+	 * Check whether the transition to the other state is legal
+	 * 
+	 * @param other the state to switch to
+	 * @return true, if the transition is legal, false otherwise
+	 */
+	public boolean isLegalTransition(OrderState other) {
+		switch (this) {
+		case INITIAL:
+			return other.equals(APPROVED);
+		case APPROVED:
+			return other.equals(PLANNED);
+		case CLOSED:
+			return false; // End state!
+		case COMPLETED:
+			return other.equals(CLOSED);
+		case FAILED:
+			return other.equals(PLANNED) || other.equals(CLOSED);
+		case PLANNED:
+			return other.equals(INITIAL) || other.equals(RELEASED) || other.equals(FAILED);
+		case RELEASED:
+			return other.equals(PLANNED) || other.equals(RUNNING);
+		case RUNNING:
+			return other.equals(SUSPENDING) || other.equals(COMPLETED) || other.equals(FAILED);
+		case SUSPENDING:
+			return other.equals(PLANNED);
+		}
+		return false;
+	}
 }

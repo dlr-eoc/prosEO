@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.5.1</version>
+		<version>0.6.0</version>
 	</parent>
 
 	<artifactId>proseo-interfaces</artifactId>
@@ -19,13 +19,32 @@
 	</organization>
 
 	<properties>
-        <module.version>0.5.1</module.version>
+        <module.version>0.6.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/test/resources/raml/interface-test.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.interfaces</raml-base-package>
 	</properties>
 
 	<dependencies>
+	    <!-- Only for (unnecessary, but unavoidable) javadoc of generated DummyController -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.phoenixnap.oss</groupId>
+            <artifactId>springmvc-raml-plugin</artifactId>
+            <version>${raml-plugin-version}</version>
+            <type>maven-plugin</type>
+        </dependency>
+        <!-- Implicit dependencies for classes generated from RAML spec -->
+        <!-- https://mvnrepository.com/artifact/commons-lang/commons-lang -->
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -57,7 +76,7 @@
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
 					<basePackage>${raml-base-package}.rest</basePackage>
-					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.SpringFeignClientInterfaceRule</rule>
+					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerStubRule</rule>
 				</configuration>
 				<executions>
 					<execution>

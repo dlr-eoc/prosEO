@@ -1,10 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<!-- <parent> <groupId>de.dlr.proseo</groupId> <artifactId>proseo</artifactId> <version>0.1.0</version> </parent> -->
+	
+    <parent>
+        <groupId>de.dlr.proseo</groupId>
+        <artifactId>proseo</artifactId>
+        <version>0.6.0</version>
+    </parent>
+
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo-common</artifactId>
-	<version>0.5.1</version>
+	<version>0.6.0</version>
 	<name>prosEO Common Classes</name>
+	
 	<description>
 	   Classes common to more than one prosEO module, but not dependent on anything beyond the
 	   Java SE libraries, JUnit, Log4j and Logback
@@ -20,6 +28,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
+        <maven-site-plugin.version>3.9.1</maven-site-plugin.version>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+        <maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -40,57 +51,18 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
-    <reporting>
-        <plugins>
-            <plugin>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.0.0</version>
-                <reportSets>
-                    <reportSet>
-                        <inherited>true</inherited>
-                        <reports>
-                            <report>index</report>
-                            <report>modules</report>
-                            <report>scm</report>
-                            <report>summary</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <!-- Create Javadoc files for the main and test classes -->
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.0</version>
-                <reportSets>
-                    <reportSet>
-                        <id>javadocs</id>
-                        <reports>
-                            <report>aggregate</report>
-                            <report>test-aggregate</report>
-                        </reports>
-                        <inherited>true</inherited>
-                        <configuration>
-                            <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-                            <failOnError>false</failOnError>
-                            <quiet>true</quiet>
-                        </configuration>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 
     <build>
+        <finalName>proseo-common</finalName>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.7.1</version>
+                    <version>${maven-site-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

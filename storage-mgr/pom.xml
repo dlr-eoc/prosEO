@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.5.1</version>
+		<version>0.6.0</version>
 	</parent>
 
 	<artifactId>proseo-storage-mgr</artifactId>
@@ -19,7 +19,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.5.1</module.version>
+		<module.version>0.6.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
@@ -29,6 +29,11 @@
 	</properties>
 
 	<dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -39,8 +44,7 @@
 		</dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
+            <artifactId>spring-boot-starter-test</artifactId>
         </dependency>
         <!-- AWS S3 SDK 2 -->
         <dependency>
@@ -90,15 +94,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.h2database</groupId> -->
-<!-- 			<artifactId>h2</artifactId> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>de.dlr.proseo</groupId> -->
-<!-- 			<artifactId>proseo-model</artifactId> -->
-<!-- 			<version>${project.version}</version> -->
-<!-- 		</dependency> -->
+        <dependency>
+            <groupId>com.phoenixnap.oss</groupId>
+            <artifactId>springmvc-raml-plugin</artifactId>
+            <type>maven-plugin</type>
+        </dependency>
 	</dependencies>
 
 	<build>

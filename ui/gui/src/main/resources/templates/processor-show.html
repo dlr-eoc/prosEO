@@ -1,156 +1,186 @@
 <!doctype html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>DLR Mission Welcome</title>
-    <!-- Bootstrap core CSS -->
-    <!-- Bootstrap core CSS -->
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <meta charset="utf-8" />
+      <meta name="viewport"
+  content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <title th:text="#{processor} + ' | ' + #{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+  integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
 
-
-    <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-    </style>
-    <!-- Custom styles for this template -->
-    <link href="signin.css" rel="stylesheet">
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
   </head>
-  <body class="text-center"style="background-image: url(background.jpg)">
+
+<body>
+  <div style="display:none;" id="loader"></div>
+  <nav id="proseo-nav"
+    class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+    <div class="container-fluid pl-0 pr-0">
+      <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+        href="/"><img src="proseo_logo.png" class="rounded" width="50"
+        height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+      <button class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button" data-toggle="collapse" data-target="#sidebarMenu"
+        aria-controls="sidebarMenu" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <ul class="navbar-nav mr-auto navbar-left">
+        <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+            th:text="${missioncode}">mission</span></a></li>
+        <li class="p-breadcrumb-item" aria-current="page"><span
+          th:text="#{processor-show}">show</span></li>
+      </ul>
+      <div th:replace="fragments/navbar.html :: navbarRight"></div>
+    </div>
+  </nav>
+
+
   <div class="container-fluid">
-  <div th:insert="fragments/navbar.html :: navigation-bar"></div>
-  </div>>
-<div class="container-fluid">
-<form name = "prc-cls-shw" id="prc-shw" action="/processor-class/get" method="get">
-<div class="input-group mb-3">
-	<p class="text-left"><input type="text"  th:value="${missioncode}" placeholder="Mission" class="form-control" name="missioncode" id="missioncode"></p>
-</div>
-<div class="input-group mb-3">
-	<p class="text-left"><input type="text" th:value="${processorclassnamecode}" placeholder="Processor-Class Name" class="form-control" name="processorclassnamecode" id="processorclassnamecode"></p>
-</div>
-<div class="input-group mb-3">
-	<p class="text-left"><input type="text" th:value="${processorversion}" placeholder="Processor Version" class="form-control" name="processorversion" id="processorversion"></p>
-</div>
-  <div class="input-group mb-3">
-  <button type="button"  onclick = "retrieveData();" class="btn btn-primary mb-2">Show Processor-Class</button>
-  </div>
-</form>
+    <div class="row">
+      <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
-</div>
-<div class="container-fluid">
-  <div id="content" name="content">
-	    <table class="table" id="processorTable" name="processorTable">
-  	<thead class="thead-dark">
- 	 <tr>
-  		<th scope="col">ID</th>
-  		<th scope="col">version</th>
-  		<th scope="col">missionCode</th>
-  		<th scope="col">processorName</th>
-  		<th scope="col">processorVersion</th>
-  		<th scope="col">isTest</th>
-  		<th scope="col">minDiskSpace</th>
-  		<th scope="col">maxTime</th>
-  		<th scope="col">sensingTimeFlag</th>
-  		<th scope="col">configuredProcessors</th>
-  		<th scope="col">tasks</th>
-  		<th scope="col">dockerImage</th>
-  		<th scope="col">dockerRunParameters</th>
-  	</tr>
-   </thead>
-   <tbody th:unless="${procs} == null">
-  		<tr th:each="processor : ${procs}">
-  		<td th:text="${processor?.id}"></td>
-  		<td th:text="${processor?.version}"></td>
-  		<td th:text="${processor?.missionCode}"></td>
-  		<td th:text="${processor?.processorName}"></td>
-  		<td th:text="${processor?.processorVersion}"></td>
-  		<td th:text="${processor?.isTest}"></td>
-  		<td th:text="${processor?.minDiskSpace}"></td>
-  		<td th:text="${processor?.maxTime}"></td>
-  		<td th:text="${processor?.sensingTimeFlag}"></td>
-  		<td th:text="${processor?.configuredProcessors}"></td>
-  		<td th:text="${processor?.tasks}"></td>
-  		<td th:text="${processor?.dockerImage}"></td>
-  		<td th:text="${processor?.dockerRunParameters}"></td>
-  		
-  	</tr>
-  	</tbody>
- 	</table>
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+
+        <div id="processorcontent" name="processorcontent">
+          <table class="table" id="processorTable" name="processorTable">
+            <thead class="thead-proseo" id="proseo-thead">
+              <tr>
+                    <th><span th:text="#{id}">id</span></th>
+                    <th><span th:text="#{name}">name</span></th>
+                    <th><span th:text="#{processorversion}">processorversion</span></th>
+                    <th><span th:text="#{istest}">istest</span></th>
+                    <th><span th:text="#{mindiskspace}">mindiskspace</span></th>
+                    <th><span th:text="#{maxtime}">maxtime</span></th>
+                    <th><span th:text="#{sensingtimeflag}">sensingtimeflag</span></th>
+                    <th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
+                    <th><span th:text="#{dockerimage}">dockerimage</span></th>
+                    <th rowspan="2"><span th:text="#{dockerrunparameters}">dockerrunparameters</span></th>
+              </tr>
+              <tr>
+                    <th>&nbsp;</th>
+                    <th><span th:text="#{task}">task</span></th>
+                    <th><span th:text="#{taskversion}">taskversion</span></th>
+                    <th><span th:text="#{critical}">critical</span></th>
+                    <th><span th:text="#{criticallevel}">criticallevel</span></th>
+                    <th><span th:text="#{numberofcpus}">numberofcpus</span></th>
+                    <th colspan="4"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
+              </tr>
+            </thead>
+            <tbody th:unless="${processors} == null">
+              <div th:each="processor : ${processors}">
+              <tr>
+                <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
+                <td class="first-row"> <a th:href="'/processor-class-show#' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
+                <td class="first-row" th:text="${processor?.processorVersion}"></td>
+                <td class="first-row" th:text="${processor?.isTest}"></td>
+                <td class="first-row" th:text="${processor?.minDiskSpace}"></td>
+                <td class="first-row" th:text="${processor?.maxTime}"></td>
+                <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
+                <td class="first-row"><a th:each="comp : ${processor?.configuredProcessors}" 
+                       class="proseo-list-item"  
+                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                <td class="first-row" th:text="${processor?.dockerImage}"></td>
+                <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}">
+                <table class="table">
+                  <tbody>
+                    <tr th:each="elem : ${processor?.dockerRunParameters}">
+                      <td th:text="${elem?.key}"></td>
+                      <td th:text="${elem?.value}"></td>
+                    </tr>
+                  </tbody>
+                </table></td>
+              </tr>
+                <tr th:each="task : ${processor?.tasks}">
+                    <td th:text="${task?.taskName}"></td>
+                    <td th:text="${task?.taskVersion}"></td>
+                    <td th:text="${task?.isCritical}"></td>
+                    <td th:text="${task?.criticalityLevel}"></td>
+                    <td th:text="${task?.numberOfCpus}"></td>
+                <td colspan="3"><span th:each="comp : ${task?.breakpointFileNames}" 
+                       class="proseo-list-item" th:text="${comp}"></span></td>                
+                </tr>
+              </div>
+            </tbody>
+          </table>
+        </div>
+      <div th:insert="fragments/footer.html :: footer"></div>
+      </main>
+    </div>
   </div>
-  <p id="test" name="test">PARAM</p>
-  <div th:fragment="resultLists"></div>
-   	
-                  
-</div>                        
+</body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+
+<script type="text/javascript">
+  function retrieveData(processorName) {
+      showLoader();
+    var tableRows = $("processorTable").rows;
+    if(tableRows > 1 && tableRows != null) {
+    $("processorTable > tbody").empty();
+    }
+      var url = "/processor-show/get";      
+
+      var divider = "?";
+      if (processorName != null) {
+          url = url + divider + "processorName=" + processorName.toString().trim();
+          divider = "&";
+      }
+      
+      $.ajax({
+      url: url,
+      method: "GET",
+      success: function (res) {
+          $("#processorcontent").html(res);
+          scrollToHash();
+          hideLoader();
+      },
+      fail: function (err) {
+          hideLoader();
+          console.log(err);
+          prop.innerHTML = "Fehler!" + err;
+      }
+
+  });
+  };
+</script>
 <script>
-function functionOne() {
-var mission = document.getElementById('missioncode').value;
-var processor = document.getElementById('processorclassnamecode').value;
-var version = document.getElementById('processorversion').value;
-var uri ="/processor-class-show/get?mission=" + mission + "&processorclassName=" + processor + "&processorVersion=" + version;
- $.ajax({
-    type: "GET",
-       url: uri,
-       data: $("#prc-cls-shw").serialize(),
-       success: function(data){
-          $("#content").replaceWith(data);
-       }
- });
-};
-
-function retrieveData() {
-	var tableRows = $("processorTable").rows;
-	if(tableRows > 1 && tableRows != null) {
-	$("processorTable > tbody").empty();
-	}
-    var url = "/processor-show/get";
-    var prop = document.getElementById('test');
-    if ($("#missioncode").val() != "" && $("#processorclassnamecode").val() != "") {
-        url += "?mission=" + $("#missioncode").val() + "&processorclassName=" + $("#processorclassnamecode").val() ;
-    } else if ($("#missioncode").val() == "" && $("#processorclassnamecode").val() != "") {
-    	url += "?processorclassName=" + $("#processorclassnamecode").val();
-    } else if($("#missioncode").val() != "" && $("#processorclassnamecode").val() == "") {
-    	url += "?mission=" + $("#missioncode").val();
-    } else {
-    	prop.innerHTML = "UNGÜLTIGE EINGABE";
-    	return;
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-processor');
+     $(elem).addClass('active');
+     feather.replace();
+     var processorName = getURLParam('processorName');
+     retrieveData(processorName);
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+     
     }
-    
-    
-    $.ajax({
-    url: url,
-    method: "GET",
-    success: function (res) {
-        $("#content").html(res);
-    },
-    fail: function (err) {
-        console.log(err);
-        prop.innerHTML = "Fehler!" + err;
-    }
-
-});
-};
 </script>
 
-              <script src="https://code.jquery.com/jquery-3.3.1.min.js"  crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-<script src="../js/resources.js"></script>
-<div class="container-fluid">
-<div th:insert="fragments/footer.html :: footer"></div>
-</div>
-</body> 
 </html>

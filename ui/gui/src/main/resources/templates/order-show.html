@@ -1,283 +1,464 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>DLR Mission Welcome</title>
-    <!-- Bootstrap core CSS -->
-    <!-- Bootstrap core CSS -->
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{order} + ' | ' + #{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
 
-
-    <style>
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
-        }
-      }
-      table {
-  font-family: arial, sans-serif;
-  border-collapse: collapse;
-  width: 100%;
-}
-
-td, th {
-  border: 1px solid #dddddd;
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even) {
-  background-color: #dddddd;
-}
-.collapsible {
-  background-color: #777;
-  color: white;
-  cursor: pointer;
-  padding: 18px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-}
-
-.active, .collapsible:hover {
-  background-color: #333;
-}
-
-.content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  background-color: #ffffff;
-}
-    </style>
-    <!-- Custom styles for this template -->
-    <link href="signin.css" rel="stylesheet">
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css"/>
   </head>
-<body class="text-center">
-<div class="container-fluid">
-  <div th:insert="fragments/navbar.html :: navigation-bar"></div>
-</div>
-<div class="container-fluid">
-<ul class="breadcrumb">
-	<li class="breadcrumb-item"><a href="/"><span th:text="#{mission}"></span></a></li>
-	<li class="breadcrumb-item active" aria-current="page"><span th:text="#{order_show}"></span></li>
-</ul>
-</div>
 
- <div class="container-fluid">
-<form name = "ord-shw" action="/order-show?">
+  <body>
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"     
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+      <div class="container-fluid pl-0 pr-0">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span
+              th:text="#{order-show}">show</span></li>
+        </ul>
+        <div th:replace="fragments/navbar.html :: navbarRight"></div>
+      </div>
+    </nav>
 
-<div class="input-group mb-3">
-	<p class="text-left">
-	<label for="orderid"><span th:text="#{order_id}"></span></label>
-	<input type="text" class="form-control" id="orderid"></p>
-</div>
-<div class="input-group mb-3">
-<p class="text-left"><label for="fromDate"><span th:text="#{start_date}"></span></label></p>
-<p class="text-left"><input type="date" class="form-control" id="fromDate"></p>
-<p class="text-left"><label for"toDate"><span th:text="#{end_date}"></span></label></p>
-<p class="text-left"><input type="date"  class="form-control" id="toDate"></p>
-</div>
-  <div class="input-group mb-3">
-  <button type="submit" class="btn btn-primary mb-2"><span th:text="#{order_show}"></span></button>
-  </div>
-</form>     
-      
-</div>      
-<div class="container">
-<h2><span th:text="#{order}"></span></h2>
+    <div class="container-fluid">
+      <div class="row">
+        <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
 
-<table class="table table-hover">
-  <tr>
-    <th><span th:text="#{order_id}"></span></th>
-    <th><span th:text="#{processing_order}"></span></th>
-    <th><span th:text="#{jobstate}"></span></th>
-    <th><span th:text="#{orbit}"></span></th>
-    <th>Output Product</th>
-  </tr>
-  <tr class="table-success">
-    <td><button type="button" class="collapsible">#123</button>
-<div class="content">
-  <table class="table table-sm">
-  <tr>
-  <th>Jobs</th>
-  <th>Starttime</th>
-  <th>Stoptime</th>
-  <th>Filter Conditions</th>
-  <th>Output Parameters</th>
-  <th>Output Product</th>
-  </tr>
-  <td><button type="button" class="collapsible">#3452</button>
-  	  <div class="content">
-  <table>
-  <tr>
-  <th>State</th>
-  <th>Start Time</th>
-  <th>Stop Time</th>
-  <th>Output Product</th>
-  </tr>
-  <td>RUNNING</td>
-  <td><table>
-  <tr>
-  <th>Apply</th>
-  <th>Selected</th>
-  </tr>
-  <tr>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>revision 01</td>
-  </tr>
-  <tr>
-  <td></td>
-  <td>FILECLASS OPER</td>
-  </tr>
-  </table></td>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>CO2</td>
-  
-  </table>
-  </div>
-  <button type="button" class="collapsible">#3454</button>
-  	  <div class="content">
-  <table>
-  <tr>
-  <th>State</th>
-  <th>Start Time</th>
-  <th>Stop Time</th>
-  <th>Output Product</th>
-  </tr>
-  <td>FINISHED</td>
-  <td><table>
-  <tr>
-  <th>Apply</th>
-  <th>Selected</th>
-  </tr><tr>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>revision 01</td>
-  </tr>
-  <tr>
-  <td></td>
-  <td>FILECLASS OPER</td>
-  </table></td>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>O2</td>
-  
-  </table>
-  </div>
-  <button type="button" class="collapsible">#3459</button>
-  	  <div class="content">
-  <table>
-  <tr>
-  <th>State</th>
-  <th>Start Time</th>
-  <th>Stop Time</th>
-  <th>Output Product</th>
-  </tr>
-  <td>RUNNING</td>
-  <td><table>
-  <tr>
-  <th>Apply</th>
-  <th>Selected</th>
-  </tr>
-  <tr>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>revision 02</td>
-  </tr>
-  <tr>
-  <td></td>
-  <td>FILECLASS OPER</td>
-  </tr>
-  </table></td>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>FRESCO, CH4, CLOUD</td>
-  
-  </table>
-  </div>
-  </td>
-  <td>28.01.2019 13:00</td>
-  <td>30.01.2019 13:00</td>
-  <td>
-  <table>
-  <tr>
-  <th>Apply</th>
-  <th>Selected</th>
-  </tr>
-  <tr>
-  <td><input type="text" id="test" name="test1"><input type="button" value="submit"></td>
-  <td>revision 02</td>
-  </tr>
-  <tr>
-  <td></td>
-  <td>FILECLASS OPER</td>
-  </tr>
-  </table>
-  
-  <td><input type="text" id="test" name="test1"></td>
-  <td>CO2, FRESCO, CLOUD</td>
-  </div>
-  </tr>
-  </table>
-</div></td>
-    <td>ABCDEF</td>
-    <td>RUNNING</td>
-    <td>1082</td>
-    <td>CO, FRESCO, CLOUD, CH4, O2</td>
-  <tr class = "table-danger">
-    <td><button type="button" class="collapsible">#456</button></td>
-    <td>DEFT</td>
-    <td>INITIAL</td>
-    <td>1085</td>
-    <td> CO2 <td>
-  </tr>
-  <tr class="table-info">
-    <td><button type="button" class="collapsible">#789</button></td>
-    <td>Lorem</td>
-    <td>FINISHED</td>
-    <td>1089</td>
-    <td>FRESCO<td>
-  </tr>
- <tr class="table-success">
-    <td><button type="button" class="collapsible">#012</button></td>
-    <td>Ipsum</td>
-    <td>RUNNING</td>
-    <td>1100</td>
-    <td>CH4, CLOUD</td>
-  </tr>
- 
-</table>	
-</div>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+          <div class="container-fluid">
+            <p>&nbsp;</p>
+				<form name="ord-shw" id="ord-shw" action="/order-show/get"
+					method="get">
+					<table class="select-table table-borderless">
+						<tbody>
+							<tr>
+								<td><span class="input-group-text" th:text="#{name}">name</span></td>
+								<td><input type="text" class="form-control" id="orderid"></td>
+								<td style="width:4em" rowspan="2">&nbsp;</td>
+								<td rowspan="2" class="align-top"><span
+									class="align-top input-group-text" th:text="#{state}">state</span></td>
+								<td rowspan="2"><select name="orderstates" id="orderstates"
+									class="selectpicker" multiple>
+                    <option>INITIAL</option>
+                    <option>APPROVED</option>
+                    <option>PLANNED</option>
+                    <option>RELEASED</option>
+                    <option>RUNNING</option>
+                    <option>SUSPENDING</option>
+                    <option>COMPLETED</option>
+                    <option>FAILED</option>
+                    <option>CLOSED</option>
+								</select></td>
+                <td style="width:4em" rowspan="2">&nbsp;</td>
+								<td><span class="input-group-text" th:text="#{start-date}"></span></td>
+								<td><input type="date" class="form-control" id="fromDate"></td>
+                <td style="width:4em" rowspan="2">&nbsp;</td>
+                <td rowspan="2" class="align-top"><span
+                  class="align-top input-group-text" th:text="#{product}"></span></td>
+                <td rowspan="2"><select name="orderstates" id="products"
+                  class="selectpicker" multiple>
+                  <option th:each="prod : ${productclasses}" th:text="${prod}"
+                    th:label="${prod}"></option>
+                </select></td>
+							</tr>
+							<tr>
+								<td colspan="2"><button id="orderselect" type="button"
+										onclick="retrieveData();"
+										class="btn btn-sm btn-outline-secondary">
+										<span th:text="#{order-show}"></span>
+									</button></td>
+								<td><span class="input-group-text" th:text="#{end-date}">name</span></td>
+								<td><input type="date" class="form-control" id="toDate"></td>
+							</tr>
+						</tbody>
+					</table>
+					
+				</form>
+
+			</div>
+          <div>
+            <div class="container-fluid">
+              <h5>
+                <span th:text="#{order}"></span>
+              </h5>
+
+              <div id="orderscontent" name="orderscontent">
+                <table class="table table-hover" id="orderTable">
+                  <thead class="thead-proseo" id="proseo-thead">
+                    <tr>
+                      <th onclick="selectOrder('select-id', ['select-identifier', 'select-state'])" 
+                        class="selectord cursorpointer"><span id="select-id" class="select-up xyz" th:class="('selectord ' + (${selcol} == 'id' ? ${selorder} : ''))" th:text="#{id}">id</span></th>
+                      <th onclick="selectOrder('select-identifier', ['select-id', 'select-state'])" 
+                        class="selectord cursorpointer"><span id="select-identifier" th:class="('selectord ' + (${selcol} == 'identifier' ? ${selorder} : ''))" th:text="#{name}">name</span></th>
+                      <th onclick="selectOrder('select-state', ['select-identifier', 'select-id'])" 
+                        class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
+                      <th><span th:text="#{startstoptime}">startstoptime</span></th>
+                      <th><span th:text="#{product}">product</span></th>
+                      <th><span>&nbsp;</span></th>
+                    </tr>
+                  </thead>
+                  <tbody th:unless="${orders} == null">
+                    <!-- 				  table-danger   - dark rose -->
+                    <!-- 				  table-info     - light blue -->
+                    <!-- 				  table-warning  - light sand -->
+                    <!-- 				  table-success  - light green -->
+                    <tr th:each="ord : ${orders}"
+                      th:id="${ord?.id}">
+                      <td><a th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.id}"></a></td>
+                      <td><a th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.identifier}"></a></td>
+                      <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
+                          th:text="${ord?.orderState}"></td>
+                      <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                      <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
+                    </tr>
+                  </tbody>
+                  <!--  <tr class = "table-danger">
+                  <tr class="table-info">
+                  <tr class="table-success"> -->
+
+                </table>
+              </div>
+            </div>
+          </div>
+          <div th:insert="fragments/footer.html :: footer"></div>
+        </main>
+      </div>
+    </div>
+	</div>
+  </body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
-
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling;
-    if (content.style.display === "block") {
-      content.style.display = "none";
-    } else {
-      content.style.display = "block";
+  var input = document.getElementById("orderid");
+  input.addEventListener("keyup", function(event) {
+    if (event.keyCode === 13) {
+      event.preventDefault();
+      document.getElementById("orderselect").click();
     }
   });
-}
 </script>
-              <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-<script src="../js/resources.js"></script>
-<div th:insert="fragments/footer.html :: footer"></div>
-</body> 
+  <script type="text/javascript">
+
+			function selectOrder(ele, others) {
+				var elem = $("#" + ele);
+				var sel = "select-down";
+				var newsel = "select-up";
+				var styles = $(elem).attr("class");
+				if (styles != null) {
+					var styless = styles.split(" ");
+					for (i = 0; i < styless.length; i++) {
+						var s = styless[i];
+						if (s == "select-up") {
+							sel = "select-up";
+							newsel = "select-down";
+							break;
+						} else if (s == "select-down") {
+							sel = "select-down";
+							newsel = "select-up";
+							break;
+						}
+					}
+				}
+				$(elem).removeClass(sel);
+				$(elem).addClass(newsel);
+				for (i = 0; i < others.length; i++) {
+					var e = others[i];
+					var eleidentifier = $("#" + e);
+					$(eleidentifier).removeClass("select-up");
+					$(eleidentifier).removeClass("select-down");
+				}
+				retrieveData();
+			};
+
+
+			function plan(oId, state) {
+				var dialog = document.getElementById('plan' + oId);
+				var ok = document.getElementById('ok' + oId);
+				var cancel = document.getElementById('cancel' + oId);
+				if (!dialog.hasAttribute('open')) {
+					// show the dialog 
+					var div = document.createElement('div');
+					div.id = 'backdrop';
+					document.body.appendChild(div);
+					dialog.setAttribute('open', 'open');
+					ok.addEventListener('click', function() {
+						var menu = document.getElementById('facilities' + oId);
+						var facility = menu.options[menu.selectedIndex].value;
+						doPlan(oId, facility);
+						var dialog = document.getElementById('plan' + oId);
+						dialog.removeAttribute('open');
+						var div = document.querySelector('#backdrop');
+						if (div != null) {
+							div.parentNode.removeChild(div);
+						}
+					});
+					cancel.addEventListener('click', function() {
+						var dialog = document.getElementById('plan' + oId);
+						dialog.removeAttribute('open');
+						var div = document.querySelector('#backdrop');
+						if (div != null) {
+							div.parentNode.removeChild(div);
+						}
+					});
+				}
+			};
+
+			function doPlan(oId, facility) {
+				showLoader();
+				var url = "/order-state/post?id=" + oId
+						+ "&state=PLAN&facility=" + facility;
+				var row = document.getElementById(oId);
+
+				$.ajax({
+					url : url,
+					method : "POST",
+					success : function(res) {
+						hideLoader();
+						retrieveData();
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					}
+				});
+			};
+
+			function setState(oId, state) {
+				showLoader();
+				var url = "/order-state/post?id=" + oId + "&state=" + state;
+				var row = document.getElementById(oId);
+
+				var method = 'POST';
+				if (state == 'DELETE') {
+					method = 'DELETE';
+				} else {
+				}
+				$.ajax({
+					url : url,
+					method : method,
+					success : function() {
+						hideLoader();
+						retrieveData();
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					},
+					complete : function() {
+						hideLoader();
+						if (state == 'DELETE') {
+							retrieveData();
+						}
+					}
+				});
+			};
+
+			function retrieveData() {
+				showLoader();
+				var tableRows = $("orderTable").rows;
+				if (tableRows > 1 && tableRows != null) {
+					$("orderTable > tbody").empty();
+				}
+				var url = "/order-show/get"
+				var divider = "?";
+				var sortcol = "id";
+				var up = true;
+				var done = false;
+				var elem = $("#select-identifier");
+				var styles = $(elem).attr("class");
+				if (styles != null) {
+					var styless = styles.split(" ");
+					for (i = 0; i < styless.length; i++) {
+						var s = styless[i];
+						if (s == "select-up") {
+							done = true;
+							sortcol = "identifier";
+							up = true;
+							break;
+						} else if (s == "select-down") {
+							done = true;
+							sortcol = "identifier";
+							up = false;
+							break;
+						}
+					}
+				}
+				if (!done) {
+					var elem = $("#select-id");
+					styles = $(elem).attr("class");
+					if (styles != null) {
+						var styless = styles.split(" ");
+						for (i = 0; i < styless.length; i++) {
+							var s = styless[i];
+							if (s == "select-up") {
+								done = true;
+								sortcol = "id";
+								up = true;
+								break;
+							} else if (s == "select-down") {
+								done = true;
+								sortcol = "id";
+								up = false;
+								break;
+							}
+						}
+					}
+				}
+				if (!done) {
+					var elem = $("#select-state");
+					styles = $(elem).attr("class");
+					if (styles != null) {
+						var styless = styles.split(" ");
+						for (i = 0; i < styless.length; i++) {
+							var s = styless[i];
+							if (s == "select-up") {
+								done = true;
+								sortcol = "orderState";
+								up = true;
+								break;
+							} else if (s == "select-down") {
+								done = true;
+								sortcol = "orderState";
+								up = false;
+								break;
+							}
+						}
+					}
+				}
+
+			var ident = document.getElementById('orderid').value;
+				if (ident != null && ident.length > 0) {
+					url = url + divider + "identifier=" + ident.trim();
+					divider = "&";
+				}
+				// <select>.selectedOptions does not work for IE, loop over options instead
+				var states = document.getElementById('orderstates').options;
+				if (states != null && states.length > 0) {
+					var first = true;
+					for (i = 0; i < states.length; i++) {
+						if (states[i].selected) {
+							if (first) {
+								url = url + divider + "states=";
+								divider = "&";
+								first = false;
+							} else {
+								url = url + ":";
+							}
+							url = url + states[i].value;
+						}
+					}
+				}
+
+				var from = document.getElementById('fromDate').value;
+				if (from != null && from.length > 0) {
+					url = url + divider + "from=" + from.trim();
+					divider = "&";
+				}
+				var to = document.getElementById('toDate').value;
+				if (to != null && to.length > 0) {
+					url = url + divider + "to=" + to.trim();
+					divider = "&";
+				}
+
+			// <select>.selectedOptions does not work for IE, loop over options instead
+				var products = document.getElementById('products').options;
+				if (products != null && products.length > 0) {
+					var first = true;
+					for (i = 0; i < products.length; i++) {
+						if (products[i].selected) {
+							if (first) {
+								url = url + divider + "products=";
+								divider = "&";
+								first = false;
+							} else {
+								url = url + ":";
+							}
+							url = url + products[i].value;
+						}
+					}
+				}
+
+				url = url + divider + "sortby=" + sortcol;
+				divider = "&";
+				url = url + divider + "up=" + up;
+				divider = "&";
+
+				$.ajax({
+					url : url,
+					method : "GET",
+					success : function(res) {
+						$("#orderscontent").html(res);
+						hideLoader();
+						document.title = "[[#{order}]]" + " | "
+								+ "[[#{proseo}]]";
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					}
+				});
+			};
+		</script>
+<script>
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-order');
+     $(elem).addClass('active');
+     feather.replace();
+     retrieveData();
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+        window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+     
+    }
+</script>
+
 </html>

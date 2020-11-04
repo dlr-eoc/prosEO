@@ -62,6 +62,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param processorName the processor name
 	 * @param configurationVersion the configuration version
 	 * @return HTTP status "OK" and a list of Json objects representing configurations satisfying the search criteria or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no configurations matching the search criteria were found
 	 */
 	@Override
@@ -73,6 +74,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(configurationManager.getConfigurations(mission, processorName, configurationVersion), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -82,6 +85,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
      * @param configuration a Json representation of the new configuration
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the configuration after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
@@ -92,6 +96,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(configurationManager.createConfiguration(configuration), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -101,6 +107,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param id the configuration ID
 	 * @return HTTP status "OK" and a Json object corresponding to the configuration found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no configuration ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists
 	 */
 	@Override
@@ -113,6 +120,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 	}
@@ -124,20 +133,26 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @param configuration a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configuration after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged configuration, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configuration with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
-	 *         HTTP status "CONFLICT"and an error message, if the configuration has been modified since retrieval by the client
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 *         HTTP status "CONFLICT" and an error message, if the configuration has been modified since retrieval by the client
 	 */
 	@Override
 	public ResponseEntity<RestConfiguration> modifyConfiguration(Long id, @Valid RestConfiguration configuration) {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguration({}, {})", id, (null == configuration ? "MISSING" : configuration.getProcessorName() + " " + configuration.getConfigurationVersion()));
 		
 		try {
-			return new ResponseEntity<>(configurationManager.modifyConfiguration(id, configuration), HttpStatus.OK);
+			RestConfiguration changedConfiguration = configurationManager.modifyConfiguration(id, configuration); 
+			HttpStatus httpStatus = (configuration.getVersion() == changedConfiguration.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedConfiguration, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
@@ -150,6 +165,7 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the configuration did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given, or if dependent objects exist
 	 */
 	@Override
@@ -163,6 +179,8 @@ public class ConfigurationControllerImpl implements ConfigurationController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

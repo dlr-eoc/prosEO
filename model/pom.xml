@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo</artifactId>
-		<version>0.5.1</version>
+		<version>0.6.0</version>
 	</parent>
 
 	<artifactId>proseo-model</artifactId>
@@ -61,6 +61,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -71,6 +75,10 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
@@ -85,7 +93,33 @@
 		    <artifactId>proseo-common</artifactId>
 		    <version>${project.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>com.phoenixnap.oss</groupId>
+            <artifactId>springmvc-raml-plugin</artifactId>
+            <version>${raml-plugin-version}</version>
+            <type>maven-plugin</type>
+        </dependency>
+        <!-- Implicit dependencies for classes generated from RAML spec -->
+		<!-- https://mvnrepository.com/artifact/commons-lang/commons-lang -->
+		<dependency>
+		    <groupId>commons-lang</groupId>
+		    <artifactId>commons-lang</artifactId>
+		    <version>2.6</version>
+		</dependency>
 	</dependencies>
+	
+	<reporting>
+	   <plugins>
+            <!-- Exclude generated code from Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <excludePackageNames>de.dlr.proseo.model.rest:de.dlr.proseo.model.rest.model</excludePackageNames>
+                </configuration>
+            </plugin>
+	   </plugins>
+	</reporting>
 
 	<build>
 		<finalName>proseo-model</finalName>
@@ -139,7 +173,7 @@
                     </excludes>
                 </configuration>
             </plugin>
-            
+                        
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -153,8 +187,6 @@
                             <classifier>rest</classifier>
                             <includes>
                                 <include>de/dlr/proseo/model/rest/**</include>
-                                <include>de/dlr/proseo/model/enums/**</include>
-                                <include>de/dlr/proseo/model/util/OrbitTimeFormatter.class</include>
                             </includes>
                         </configuration>
                     </execution>

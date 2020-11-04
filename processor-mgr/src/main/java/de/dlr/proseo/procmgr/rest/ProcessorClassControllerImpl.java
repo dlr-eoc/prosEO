@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.procmgr.rest.model.RestProcessorClass;
 
 /**
@@ -63,6 +64,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param mission the mission code (optional)
 	 * @param processorName the processor name (optional)
 	 * @return HTTP status "OK" and a list of Json objects representing processor classes satisfying the search criteria or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no processor classes matching the search criteria were found
 	 */
 	@Override
@@ -73,6 +75,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(processorClassManager.getProcessorClasses(mission, processorName), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -82,6 +86,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param processorClass a Json representation of the new processor class
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the processor class after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
@@ -92,6 +97,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(processorClassManager.createProcessorClass(processorClass), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -101,6 +108,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param id the processor class ID
 	 * @return HTTP status "OK" and a Json object corresponding to the processor class found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no processor class ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists
 	 */
 	@Override
@@ -113,6 +121,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -123,8 +133,10 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @param processorClass a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the processor class after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged product, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no processor class with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the processor class has been modified since retrieval by the client
 	 */
 	@Override
@@ -132,11 +144,15 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProcessorClass({}, {})", id, (null == processorClass ? "MISSING" : processorClass.getProcessorName()));
 
 		try {
-			return new ResponseEntity<>(processorClassManager.modifyProcessorClass(id, processorClass), HttpStatus.OK);
+			RestProcessorClass changedProcessorClass = processorClassManager.modifyProcessorClass(id, processorClass); 
+			HttpStatus httpStatus = (processorClass.getVersion() == changedProcessorClass.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedProcessorClass, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
@@ -149,6 +165,7 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processor class did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if the processor class ID was not given, or if dependent objects exist
 	 */
 	@Override
@@ -162,6 +179,8 @@ public class ProcessorClassControllerImpl implements ProcessorclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

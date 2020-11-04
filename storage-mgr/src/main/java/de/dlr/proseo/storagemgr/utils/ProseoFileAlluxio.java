@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 
 /**
  * Proseo file representing alluxio.
@@ -66,8 +65,8 @@ public class ProseoFileAlluxio extends ProseoFile {
 	}
 
 	@Override
-	public FsType getFsType() {
-		return FsType.ALLUXIO;
+	public StorageType getFsType() {
+		return StorageType.ALLUXIO;
 	}
 
 	@Override

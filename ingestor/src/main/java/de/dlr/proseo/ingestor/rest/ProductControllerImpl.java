@@ -57,10 +57,11 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Delete a product by ID
 	 * 
-	 * @param the ID of the product to delete
+	 * @param id the ID of the product to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product did not exist, or
 	 *         HTTP status "BAD_REQUEST", if the product still has files at some Processing Facility, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
@@ -74,6 +75,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalStateException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
@@ -87,6 +90,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
 	 * @return HTTP status "OK" and a list of products or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
@@ -99,6 +103,8 @@ public class ProductControllerImpl implements ProductController {
 					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -108,6 +114,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param product the Json object to create the product from
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the product after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
@@ -118,6 +125,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(productManager.createProduct(product), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -127,6 +136,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param id the ID to look for
 	 * @return HTTP status "OK" and a Json object corresponding to the product found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no product ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists
 	 */
 	@Override
@@ -139,6 +149,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -149,9 +161,11 @@ public class ProductControllerImpl implements ProductController {
 	 * @param id the ID of the product to update
 	 * @param product a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the product after modification
-	 *             (with ID and version for all contained objects) or 
+	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "NOT_MODIFIED" and the unchanged product, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the product has been modified since retrieval by the client
 	 */
 	@Override
@@ -168,6 +182,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -177,6 +193,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param uuid the universally unique product identifier
 	 * @return HTTP status "OK" and a Json object corresponding to the product found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product UUID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given UUID exists
 	 */
 	@Override
@@ -191,6 +208,8 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 

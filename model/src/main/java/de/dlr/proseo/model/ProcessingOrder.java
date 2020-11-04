@@ -50,6 +50,8 @@ import de.dlr.proseo.model.enums.ProductionType;
 	@Index(unique = false, columnList = "execution_time") 
 })
 public class ProcessingOrder extends PersistentObject {
+	
+	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal order state transition from %s to %s";
 
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
 
@@ -223,9 +225,15 @@ public class ProcessingOrder extends PersistentObject {
 	 * Sets the state of the processing order
 	 * 
 	 * @param orderState the orderState to set
+	 * @throws IllegalStateException if the intended order state transition is illegal
 	 */
-	public void setOrderState(OrderState orderState) {
-		this.orderState = orderState;
+	public void setOrderState(OrderState orderState) throws IllegalStateException {
+		if (null == this.orderState || this.orderState.equals(orderState) || this.orderState.isLegalTransition(orderState)) {
+			this.orderState = orderState;
+		} else {
+			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
+					this.orderState.toString(), orderState.toString()));
+		}
 	}
 
 	/**

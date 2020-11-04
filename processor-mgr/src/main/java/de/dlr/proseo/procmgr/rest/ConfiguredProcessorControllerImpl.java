@@ -19,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguredProcessor;
 
 /**
@@ -66,6 +68,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param configurationVersion the configuration version
 	 * @param uuid the UUID of the configured processor
 	 * @return HTTP status "OK" and a list of Json objects representing configured processors satisfying the search criteria or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no configured processors matching the search criteria were found
 	 */
 	@Override
@@ -81,6 +84,8 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 					HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -90,6 +95,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
      * @param configuredProcessor a Json representation of the new configured processor
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the configured processor after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
 	 */
 	@Override
@@ -100,6 +106,8 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 			return new ResponseEntity<>(configuredProcessorManager.createConfiguredProcessor(configuredProcessor), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -109,6 +117,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param id the configured processor ID
 	 * @return HTTP status "OK" and a Json object corresponding to the configured processor found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no configured processor ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configured processor with the given ID exists
 	 */
 	@Override
@@ -121,6 +130,8 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -131,8 +142,10 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param configuredProcessor a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the configured processor after modification
 	 *             (with ID and version for all contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged configured processor, if no attributes were actually changed, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no configured processor with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the configured processor has been modified since retrieval by the client
 	 */
 	@Override
@@ -140,11 +153,15 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguredProcessor({}, {})", id, (null == configuredProcessor ? "MISSING" : configuredProcessor.getIdentifier()));
 
 		try {
-			return new ResponseEntity<>(configuredProcessorManager.modifyConfiguredProcessor(id, configuredProcessor), HttpStatus.OK);
+			RestConfiguredProcessor changedConfiguredProcessor = configuredProcessorManager.modifyConfiguredProcessor(id, configuredProcessor); 
+			HttpStatus httpStatus = (configuredProcessor.getVersion() == changedConfiguredProcessor.getVersion() ? HttpStatus.NOT_MODIFIED : HttpStatus.OK);
+			return new ResponseEntity<>(changedConfiguredProcessor, httpStatus);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
@@ -156,6 +173,7 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 	 * @param id the ID of the configured processor to delete
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the configured processor did not exist, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
@@ -167,6 +185,8 @@ public class ConfiguredProcessorControllerImpl implements ConfiguredprocessorCon
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}

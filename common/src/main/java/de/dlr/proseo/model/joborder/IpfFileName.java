@@ -1,5 +1,5 @@
 /**
- * 
+ * IpfFileName.java
  */
 package de.dlr.proseo.model.joborder;
 
@@ -21,6 +21,7 @@ import org.w3c.dom.Node;
  *  
  */
 public class IpfFileName {
+	private static final String DEFAULT_FILE_SYSTEM_TYPE = "POSIX";
 	/**
 	 * The file name
 	 */
@@ -34,66 +35,78 @@ public class IpfFileName {
 	 */
 	private String FSType;
 	/**
-	 * @return the fileName
+	 * Gets the file name
+	 * 
+	 * @return the file name
 	 */
 	public String getFileName() {
 		return fileName;
 	}
 	/**
-	 * @param fileName the fileName to set
+	 * Sets the file name
+	 * @param fileName the file name to set
 	 */
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
 	}
 	/**
-	 * @return the originalFileName
+	 * Gets the original file name
+	 * @return the original file name
 	 */
 	public String getOriginalFileName() {
 		return originalFileName;
 	}
 	/**
-	 * @param originalFileName the originalFileName to set
+	 * Sets the original file name
+	 * @param originalFileName the original file name to set
 	 */
 	public void setOriginalFileName(String originalFileName) {
 		this.originalFileName = originalFileName;
 	}
 	/**
-	 * @return the fSType
+	 * Gets the file system type
+	 * @return the file system type
 	 */
 	public String getFSType() {
 		return FSType;
 	}
 	/**
-	 * @param fSType the fSType to set
+	 * Sets the file system type
+	 * @param fSType the file system type to set
 	 */
 	public void setFSType(String fSType) {
 		FSType = fSType;
 	}
 	/**
-	 * @param fileName
-	 * @param fSType
+	 * Constructor with file name and file system type arguments
+	 * @param fileName the file name to set
+	 * @param fSType the file system type to set
 	 */
 	public IpfFileName(String fileName, String fSType) {
 		super();
 		this.fileName = fileName;
 		FSType = fSType;
 	}
+	/**
+	 * No-argument constructor, sets the file system type to the default value "POSIX"
+	 */
 	public IpfFileName() {
-		FSType = "POSIX";
+		FSType = DEFAULT_FILE_SYSTEM_TYPE;
 	}
 	/**
-	 * @param fileName
+	 * Constructor with file name argument, sets the file system type to the default value "POSIX"
+	 * @param fileName the file name to set
 	 */
 	public IpfFileName(String fileName) {
 		this.fileName = fileName;
-		FSType = "POSIX";
+		FSType = DEFAULT_FILE_SYSTEM_TYPE;
 	}
 
 	/**
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element fnEle = doc.createElement("File_Name");

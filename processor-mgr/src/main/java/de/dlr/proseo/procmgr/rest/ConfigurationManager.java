@@ -24,6 +24,7 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.rest.model.ConfigurationUtil;
 import de.dlr.proseo.procmgr.rest.model.RestConfiguration;
 import de.dlr.proseo.procmgr.rest.model.RestConfigurationInputFile;
@@ -65,8 +67,11 @@ public class ConfigurationManager {
 	private static final int MSG_ID_CONCURRENT_UPDATE = 2315;
 	private static final int MSG_ID_DUPLICATE_CONFIGURATION = 2316;
 	private static final int MSG_ID_CONFIGURATION_HAS_PROC = 2317;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
+
 	/* Message string constants */
 	private static final String MSG_CONFIGURATION_NOT_FOUND = "(E%d) No configuration found for mission %s, processor name %s and configuration version %s";
 	private static final String MSG_CONFIGURATION_MISSING = "(E%d) Configuration not set";
@@ -88,8 +93,15 @@ public class ConfigurationManager {
 	private static final String MSG_CONFIGURATION_NOT_MODIFIED = "(I%d) Configuration with id %d not modified (no changes)";
 	private static final String MSG_CONFIGURATION_DELETED = "(I%d) Configuration with id %d deleted";
 	
+	// Same as in other services
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	
 	/** Allowed filename types for static input files (in lower case for easier comparation) */
 	private static final List<String> ALLOWED_FILENAME_TYPES = Arrays.asList("physical", "logical", "stem", "regexp", "directory");
+
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -146,52 +158,49 @@ public class ConfigurationManager {
 	 * @param configurationVersion the configuration version
 	 * @return a list of Json objects representing configurations satisfying the search criteria
 	 * @throws NoResultException if no processor classes matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestConfiguration> getConfigurations(String mission, String processorName,
-			String configurationVersion) throws NoResultException {
+			String configurationVersion) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurations({}, {}, {})", mission, processorName, configurationVersion);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
 		
 		List<RestConfiguration> result = new ArrayList<>();
 		
-		if (null != mission && null != processorName && null != configurationVersion) {
-			de.dlr.proseo.model.Configuration processor = RepositoryService.getConfigurationRepository()
-					.findByMissionCodeAndProcessorNameAndConfigurationVersion(mission, processorName, configurationVersion);
-			if (null == processor) {
-				throw new NoResultException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND,
-						mission, processorName, configurationVersion));
-			}
-			result.add(ConfigurationUtil.toRestConfiguration(processor));
-		} else {
-			String jpqlQuery = "select c from Configuration c where 1 = 1";
-			if (null != mission) {
-				jpqlQuery += " and processorClass.mission.code = :missionCode";
-			}
-			if (null != processorName) {
-				jpqlQuery += " and processorClass.processorName = :processorName";
-			}
-			if (null != configurationVersion) {
-				jpqlQuery += " and configurationVersion = :configurationVersion";
-			}
-			Query query = em.createQuery(jpqlQuery);
-			if (null != mission) {
-				query.setParameter("missionCode", mission);
-			}
-			if (null != processorName) {
-				query.setParameter("processorName", processorName);
-			}
-			if (null != configurationVersion) {
-				query.setParameter("configurationVersion", configurationVersion);
-			}
-			for (Object resultObject: query.getResultList()) {
-				if (resultObject instanceof de.dlr.proseo.model.Configuration) {
-					result.add(ConfigurationUtil.toRestConfiguration((de.dlr.proseo.model.Configuration) resultObject));
-				}
-			}
-			if (result.isEmpty()) {
-				throw new NoResultException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND,
-						mission, processorName, configurationVersion));
+		String jpqlQuery = "select c from Configuration c where processorClass.mission.code = :missionCode";
+		if (null != processorName) {
+			jpqlQuery += " and processorClass.processorName = :processorName";
+		}
+		if (null != configurationVersion) {
+			jpqlQuery += " and configurationVersion = :configurationVersion";
+		}
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != processorName) {
+			query.setParameter("processorName", processorName);
+		}
+		if (null != configurationVersion) {
+			query.setParameter("configurationVersion", configurationVersion);
+		}
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof de.dlr.proseo.model.Configuration) {
+				result.add(ConfigurationUtil.toRestConfiguration((de.dlr.proseo.model.Configuration) resultObject));
 			}
 		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_CONFIGURATION_NOT_FOUND, MSG_ID_CONFIGURATION_NOT_FOUND,
+					mission, processorName, configurationVersion));
+		}
+
 		logInfo(MSG_CONFIGURATION_LIST_RETRIEVED, MSG_ID_CONFIGURATION_LIST_RETRIEVED, mission, processorName, configurationVersion);
 		
 		return result;
@@ -203,12 +212,21 @@ public class ConfigurationManager {
      * @param configuration a Json representation of the new configuration
 	 * @return a Json representation of the configuration after creation (with ID and version number)
 	 * @throws IllegalArgumentException if any of the input data was invalid
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestConfiguration createConfiguration(@Valid RestConfiguration configuration) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguration({})", (null == configuration ? "MISSING" : configuration.getProcessorName()));
+	public RestConfiguration createConfiguration(@Valid RestConfiguration configuration)
+			throws IllegalArgumentException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> createConfiguration({})",
+				(null == configuration ? "MISSING" : configuration.getProcessorName()));
 
 		if (null == configuration) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_MISSING, MSG_ID_CONFIGURATION_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the configuration
+		if (!securityService.isAuthorizedForMission(configuration.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					configuration.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
@@ -258,8 +276,9 @@ public class ConfigurationManager {
 	 * @return a Json object corresponding to the configuration found
 	 * @throws IllegalArgumentException if no configuration ID was given
 	 * @throws NoResultException if no configuration with the given ID exists
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestConfiguration getConfigurationById(Long id) throws IllegalArgumentException, NoResultException {
+	public RestConfiguration getConfigurationById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getConfigurationById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -272,6 +291,12 @@ public class ConfigurationManager {
 			throw new NoResultException(logError(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id));
 		}
 
+		// Ensure user is authorized for the mission of the configuration
+		if (!securityService.isAuthorizedForMission(modelConfiguration.get().getProcessorClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelConfiguration.get().getProcessorClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_CONFIGURATION_RETRIEVED, MSG_ID_CONFIGURATION_RETRIEVED, id);
 		
 		return ConfigurationUtil.toRestConfiguration(modelConfiguration.get());
@@ -287,9 +312,10 @@ public class ConfigurationManager {
 	 * @throws EntityNotFoundException if no configuration with the given ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
 	 * @throws ConcurrentModificationException if the configuration has been modified since retrieval by the client
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public RestConfiguration modifyConfiguration(Long id, @Valid RestConfiguration configuration) throws
-			EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+			EntityNotFoundException, IllegalArgumentException, SecurityException, ConcurrentModificationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyConfiguration({}, {})", id, (null == configuration ? "MISSING" : configuration.getProcessorName() + " " + configuration.getConfigurationVersion()));
 		
 		// Check arguments
@@ -298,6 +324,12 @@ public class ConfigurationManager {
 		}
 		if (null == configuration) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURATION_DATA_MISSING, MSG_ID_CONFIGURATION_DATA_MISSING));
+		}
+		
+		// Ensure user is authorized for the mission of the configuration
+		if (!securityService.isAuthorizedForMission(configuration.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					configuration.getMissionCode(), securityService.getMission()));			
 		}
 		
 		Optional<Configuration> optConfiguration = RepositoryService.getConfigurationRepository().findById(id);
@@ -429,8 +461,10 @@ public class ConfigurationManager {
 	 * @throws EntityNotFoundException if the configuration to delete does not exist in the database
 	 * @throws RuntimeException if the deletion was not performed as expected
 	 * @throws IllegalArgumentException if the ID of the processor class to delete was not given, or if dependent objects exist
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public void deleteConfigurationById(Long id) throws EntityNotFoundException, RuntimeException, IllegalArgumentException {
+	public void deleteConfigurationById(Long id)
+			throws EntityNotFoundException, RuntimeException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteConfigurationById({})", id);
 		
 		if (null == id || 0 == id) {
@@ -441,6 +475,12 @@ public class ConfigurationManager {
 		Optional<Configuration> modelConfiguration = RepositoryService.getConfigurationRepository().findById(id);
 		if (modelConfiguration.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_CONFIGURATION_ID_NOT_FOUND, MSG_ID_CONFIGURATION_ID_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the mission of the configuration
+		if (!securityService.isAuthorizedForMission(modelConfiguration.get().getProcessorClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelConfiguration.get().getProcessorClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Check whether there are configured processors for this configuration

@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
 
 @Component
@@ -26,7 +27,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		Object principal = authentication.getPrincipal();
 		if (principal instanceof String) {
-			String[] userNameParts = ((String) principal).split("\\\\"); // --> regex "\\" --> matches "\"
+			String[] userNameParts = ((String) principal).split("/"); // --> regex "\\" --> matches "\"
 			if (userNameParts.length != 2) {
 				logger.error("Invalid Username (mission missing?): " + userNameParts);
 				throw new BadCredentialsException("Invalid Username (mission missing?)");
@@ -35,7 +36,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 			String userName = userNameParts[1];
 			String password = (String) authentication.getCredentials();
 
-			if (loginManager.doLogin(userName, password, mission)) {
+			if (loginManager.doLogin(userName, password, mission, false) && loginManager.hasRole(UserRole.GUI_USER)) {
 				GUIAuthenticationToken newAuthentication = new GUIAuthenticationToken();
 				UserDetails newPrincipal = new User(userName, password, authentication.getAuthorities());
 				newAuthentication.setPrincipal(newPrincipal);

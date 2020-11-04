@@ -46,6 +46,8 @@ public class BaseWrapper {
 
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
+	/** Exit code for completion with warning */
+	private static final int EXIT_CODE_WARNING = 127;
 	/** Exit code for failure */
 	private static final int EXIT_CODE_FAILURE = 255;
 	/** Exit code explanation for successful completion */
@@ -63,14 +65,8 @@ public class BaseWrapper {
 	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
 	/** Auto-created path/filename of JobOrderFile within container */
 	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
-	/** Directory prefix of produced output data */
-	private static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
-	/** Constant for file name type "Physical" in JOF */
-	private static final String FILENAME_TYPE_PHYSICAL = "Physical";
-	/** Constant for file name type "Directory" in JOF */
-	protected static final String FILENAME_TYPE_DIRECTORY = "Directory";
-	/** Constant for file name type "Archive" in JOF (non-standard extension!) */
-	protected static final String FILENAME_TYPE_ARCHIVE = "Archive";
+	/** Directory prefix of produced output data (available for wrapper subclasses) */
+	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -104,11 +100,14 @@ public class BaseWrapper {
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
 	private static final String MSG_SKIPPING_INPUT_ENTRY = "Skipping input entry of type {} with filename type {}";
+	private static final String MSG_WARNING_INPUT_FILENAME_MISSING = "Skipping input entry of type {} without filename";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
 
-	/** Enumeration with valid environment variable names.
+	/** 
+	 *  Enumeration with valid environment variable names (available for wrapper subclasses).
+	 *  
 	 *  At runtime-start the BaseWrapper checks the presence and values of each variable.
 	 *  <ul>
 	 *  <li>{@link #JOBORDER_FILE} URI of valid JobOrder-File</li>
@@ -125,7 +124,7 @@ public class BaseWrapper {
 	 *  </ul>
 	 *  
 	 */
-	enum ENV_VARS {
+	protected enum ENV_VARS {
 		JOBORDER_FILE
 		, STORAGE_ENDPOINT
 		, STORAGE_USER
@@ -152,24 +151,25 @@ public class BaseWrapper {
 	private String ENV_STORAGE_USER = System.getenv(ENV_VARS.STORAGE_USER.toString());
 	/** Password for local Storage Manager */
 	private String ENV_STORAGE_PASSWORD = System.getenv(ENV_VARS.STORAGE_PASSWORD.toString());
-	/** Mount point of shared local file system */
-	private String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
+	/** Mount point of shared local file system (available for wrapper subclasses) */
+	protected String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
 	
-	/** User name for prosEO Control Instance */
-	private String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
-	/** Password for prosEO Control Instance */
-	private String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
+	/** User name for prosEO Control Instance (available for wrapper subclasses) */
+	protected String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
+	/** Password for prosEO Control Instance (available for wrapper subclasses) */
+	protected String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
 
 	/**
 	 * Callback address for prosEO Production Planner, format is:
 	 * <planner-URL>/processingfacilities/<procFacilityName>/finish/<podName>
 	 */
 	private String ENV_STATE_CALLBACK_ENDPOINT = System.getenv(ENV_VARS.STATE_CALLBACK_ENDPOINT.toString());
-	/** Name of the Processing Facility this wrapper is running in */
-	private String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
 	
-	/** HTTP endpoint for Ingestor callback */
-	private String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
+	/** Name of the Processing Facility this wrapper is running in (available for wrapper subclasses) */
+	protected String ENV_PROCESSING_FACILITY_NAME = System.getenv(ENV_VARS.PROCESSING_FACILITY_NAME.toString());
+	
+	/** HTTP endpoint for Ingestor callback (available for wrapper subclasses) */
+	protected String ENV_INGESTOR_ENDPOINT = System.getenv(ENV_VARS.INGESTOR_ENDPOINT.toString());
 
 	// Variables to be provided by the processor or wrapper image
 	/** Shell command to run the processor (with path to Job Order File as sole parameter) */
@@ -334,13 +334,19 @@ public class BaseWrapper {
 		for(Proc item : jo.getListOfProcs()) {
 			// Loop all Input
 			for (InputOutput io: item.getListOfInputs()) {
-				if (!FILENAME_TYPE_PHYSICAL.equals(io.getFileNameType())) {
+				if (!InputOutput.FN_TYPE_PHYSICAL.equals(io.getFileNameType())) {
 					// Only download "Physical" files
 					logger.info(MSG_SKIPPING_INPUT_ENTRY, io.getFileType(), io.getFileNameType());
 					continue;
 				}
 				// Loop List_of_File_Names
 				for (IpfFileName fn: io.getFileNames()) {
+					// Ensure file name exists and is not blank
+					if (null == fn.getFileName() || fn.getFileName().isBlank()) {
+						logger.warn(MSG_WARNING_INPUT_FILENAME_MISSING, io.getFileType());
+						continue;
+					}
+
 					// Fill original filename with current val of `File_Name` --> for later use...
 					fn.setOriginalFileName(fn.getFileName());
 					
@@ -349,8 +355,8 @@ public class BaseWrapper {
 					if (f.exists()) {
 						// nothing to do
 						continue;
-					} 
-
+					}
+					
 					// Request input file from Storage Manager
 					Map<String,String> params = new HashMap<>();
 					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
@@ -382,7 +388,7 @@ public class BaseWrapper {
 
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
-					if (FILENAME_TYPE_DIRECTORY.equals(io.getFileNameType())) {
+					if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 						if (Files.exists(filePath)) {
 							if (!Files.isDirectory(filePath)) {
 								logger.error(MSG_NOT_A_DIRECTORY, fn.getFileName());
@@ -456,11 +462,18 @@ public class BaseWrapper {
 				logger.info("... " + line);
 			}
 			exitCode = process.waitFor();
-			logger.info(MSG_PROCESSING_FINISHED, exitCode);
+			
+			if (EXIT_CODE_OK == exitCode) {
+				logger.info(MSG_PROCESSING_FINISHED, exitCode);
+			} else if (EXIT_CODE_WARNING >= exitCode) {
+				logger.warn(MSG_PROCESSING_FINISHED, exitCode);
+			} else {
+				logger.error(MSG_PROCESSING_FINISHED, exitCode);
+			}
 		} catch (IOException | InterruptedException e) {
 			logger.error(MSG_ERROR_RUNNING_PROCESSOR, e.getMessage());
 		}
-		return exitCode == EXIT_CODE_OK;
+		return exitCode <= EXIT_CODE_WARNING;
 	}
 
 	/**
@@ -469,7 +482,7 @@ public class BaseWrapper {
 	 * <ol>
 	 *   <li>Adding additional output files to the output list as desired (e. g. log files, job order file)</li>
 	 *   <li>Packaging multiple files into a single ZIP file for delivery via the PRIP if desired (add an output file
-	 *       with File_Name_Type "Archive", using Java constant FILENAME_TYPE_ARCHIVE)</li>
+	 *       with File_Name_Type "Archive", using Java constant InputOutput.FN_TYPE_ARCHIVE)</li>
 	 * </ol>
 	 * Note: The first (non-archive) output file is taken as the (main) product file, subsequent files are interpreted as
 	 * auxiliary files.
@@ -501,7 +514,7 @@ public class BaseWrapper {
 			// Loop all Outputs
 			for (InputOutput io: item.getListOfOutputs()) {
 				// Ignore directories (cannot be pushed)
-				if (FILENAME_TYPE_DIRECTORY.equals(io.getFileNameType())) {
+				if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 					continue;
 				}
 				
@@ -559,7 +572,7 @@ public class BaseWrapper {
 					}
 					
 					// Create metadata for this file
-					if (FILENAME_TYPE_ARCHIVE.equals(io.getFileNameType())) {
+					if (InputOutput.FN_TYPE_ARCHIVE.equals(io.getFileNameType())) {
 						// Extension to JOF specification, only to be used in "postProcessingHook()" to identify ZIP archives,
 						// must only be used once
 						if (null != productFile.getZipFileName()) {
@@ -798,6 +811,7 @@ public class BaseWrapper {
 		try {
 			System.exit(((BaseWrapper) clazz.getDeclaredConstructor().newInstance()).run());
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error("Requested wrapper class {} cannot be launched (cause: {})", clazz.getName(), e.getMessage());
 			System.exit(EXIT_CODE_FAILURE);
 		}

@@ -27,8 +27,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 import de.dlr.proseo.storagemgr.rest.model.RestJoborder;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 import de.dlr.proseo.storagemgr.utils.StorageManagerUtils;
@@ -123,10 +123,10 @@ public class JobOrderControllerImpl implements JoborderController {
 				response.setMessage("XML Doc parsed from attribute jobOrderStringBase64 is not valid...");
 				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 			}
-			ProseoFile proFile = ProseoFile.fromType(joborder.getFsType(), objKey, cfg);
+			ProseoFile proFile = ProseoFile.fromType(StorageType.valueOf(joborder.getFsType()), objKey, cfg);
 			if (proFile != null) {
 				if (proFile.writeBytes(bytes)) {
-					response.setFsType(proFile.getFsType());
+					response.setFsType(proFile.getFsType().toString());
 					response.setPathInfo(proFile.getFullPath());
 					response.setUploaded(true);
 					response.setJobOrderStringBase64(joborder.getJobOrderStringBase64());
@@ -142,9 +142,9 @@ public class JobOrderControllerImpl implements JoborderController {
 	}
 
 	/**
-	 * Retrieve contents of file named pathInfo as base64 string.
+	 * Retrieve contents of file as base64 string.
 	 * 
-	 * @param pathInfo
+	 * @param pathInfo the path to the file to retrieve
 	 * @return Base64 coded String
 	 */
 	@Override
@@ -153,7 +153,7 @@ public class JobOrderControllerImpl implements JoborderController {
 		if (pathInfo != null) {
 			ProseoFile proFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			// Find storage type
-			if (proFile == null || proFile.getFsType() == FsType.ALLUXIO) {
+			if (proFile == null || proFile.getFsType() == StorageType.ALLUXIO) {
 				logger.warn("Invalid storage type for path: {}", pathInfo);
 				return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 			}

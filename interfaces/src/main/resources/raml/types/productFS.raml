@@ -6,14 +6,18 @@
       productId: string
       #the storage type of the source file/dir (used for request/response)
       sourceStorageType:
-        enum: [S3, POSIX]
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       #the path/URI of the source file/dir (used for request/response)
       sourceFilePaths: string[]
       #the prosEO-storageID of the target file/dir (used for response)
       targetStorageId?: string
       #the storage type of the target file/dir (used for request/response)
       targetStorageType:
-        enum: [S3, ALLUXIO, POSIX]
+        type: string
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
       #the final registerd path within prosEO storage (used for response)
       registeredFilePath?: string
       #Register success/failure (used for response)

@@ -56,8 +56,8 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			List<RestProcessingFacility> l = new ArrayList<RestProcessingFacility>();
 			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: productionPlanner.getKubeConfigs()) {
 				l.add(new RestProcessingFacility(
-						null,
-						null,
+						kc.getLongId(),
+						kc.getVersion(),
 						kc.getId(),
 						kc.getDescription(),
 						kc.getProcessingEngineUrl(),

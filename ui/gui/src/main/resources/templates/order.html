@@ -1,0 +1,573 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
+
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+      <div class="container-fluid pl-0 pr-0">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/order-show"><span
+                th:text="#{order}">order</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-name"></span></li>
+        </ul>
+        <div th:replace="fragments/navbar.html :: navbarRight"></div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+          
+          <div id="ordercontent" name="ordercontent">
+            <div th:each="ord : ${orders}">
+              <table class="table table-hover" id="orderTable">
+                <thead class="thead-proseo-order">
+                  <tr>
+                    <th><span th:text="#{id}">id</span></th>
+                    <th><span th:text="#{name}">name</span></th>
+                    <!-- <th><span th:text="#{facility}">facility</span></th> -->
+                    <th><span th:text="#{state}">state</span></th>
+                    <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
+                    <th><span th:text="#{slicing}">slicing</span></th>
+                    <th><span th:text="#{product}">product</span></th>
+                    <th><span>&nbsp;</span></th>
+                  </tr>
+                  <tr>
+                    <th class="tr-rowspan"><span>&nbsp;</span></th>
+                    <th><span th:text="#{uuid}">uuid</span></th>
+                    <th><span th:text="#{processingmode}">processingmode</span></th>
+                    <th><span th:text="#{processingtype}">productiontype</span></th>
+                    <th><span th:text="#{startstoptime}">startstoptime</span></th>
+                    <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                    <th><span>&nbsp;</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!--          table-danger   - dark rose -->
+                  <!--          table-info     - light blue -->
+                  <!--          table-warning  - light sand -->
+                  <!--          table-success  - light green -->
+                  <tr
+                    th:id="${ord?.id}">
+                    <td th:text="${ord?.id}"></td>
+                    <td id="order-name" th:text="${ord?.identifier}"></td>
+                    <!-- <td><span id="orderFacility"></span></td> -->
+                    <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}" 
+                        th:text="${ord?.orderState}"></td>
+                    <td th:text="${ord?.outputFileClass}"></td>
+                    <td th:if="${ord?.slicingType} == 'ORBIT'"><div th:each="orb : ${ord?.orbits}"><p class="p-in-td"><span th:text="#{orbit}">orbit</span>: 
+                          <span th:text="#{spacecraft}">spacecraft</span> <span th:text="${orb?.spacecraftCode}">spacecraftCode</span>, 
+                          <span th:text="${orb?.orbitNumberFrom}">orbitNumberFrom</span> &ndash; <span th:text="${orb?.orbitNumberTo}">orbitNumberTo</span>, 
+                          <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></p></div></td>
+                    <td th:if="${ord?.slicingType} == 'TIME_SLICE'"><span th:text="#{timeslice}">timeslice</span>: 
+                      <span th:text="#{duration}">duration</span>: <span th:text="${ord?.sliceDuration}">sliceDuration</span>, 
+                      <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'">calendarday</td>
+                    <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                    <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
+                  </tr>
+                  <tr>
+                    <td class="tr-rowspan">&nbsp;</td>
+                    <td th:text="${ord?.uuid}"></td>
+                    <td th:text="${ord?.processingMode}"></td>
+                    <td th:text="${ord?.productionType}"></td>
+                    <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                    <td><a th:each="comp : ${ord?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                    <td>&nbsp;</td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="table table-hover" id="orderfilters">
+                <thead class="thead-proseo-order">
+                  <tr>
+                    <th id="togglefilter" class="cursorpointer" onclick="toggleFilter()"><div id="filterhide"><span
+                          data-feather="minus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div><div id="filtershow"><span
+                          data-feather="plus-circle"></span>&nbsp;<span th:text="#{filterandparams}">filterandparams</span></div></th>
+                    <th><span th:text="#{productclass}">productclass</span></th>
+                    <th><span th:text="#{key}">key</span></th>
+                    <th><span th:text="#{value}">value</span></th>
+                  </tr>
+                </thead>
+                <tbody class="filtercontent" id="togglefiltercontent">
+                  <div th:each="ifilt : ${ord?.inputFilters}">
+                    <div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
+                      <tr th:if="${iterStat.first} == true" class="first-row">
+                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="#{inputfilter}">inputfilter</span></td>
+                        <td th:rowspan="${#lists.size(ifilt?.filterConditions)}" class="first-row"><span th:text="${ifilt?.productClass}"></span></td>
+                        <td class="first-row"><span th:text="${fcond?.key}"></span></td>
+                        <td class="first-row"><span th:text="${fcond?.parameterValue}"></span></td>
+                      </tr>
+                      <tr th:if="${iterStat.first} == false">
+                        <td><span th:text="${fcond?.key}"></span></td>
+                        <td><span th:text="${fcond?.parameterValue}"></span></td>
+                      </tr>
+                    </div>
+                  </div>
+                  <div th:each="params : ${ord?.classOutputParameters}">
+                    <div th:each="p,iterStat : ${params?.outputParameters}">
+                      <tr th:if="${iterStat.first} == true" class="first-row">
+                        <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="#{classoutparams}">classoutparams</span></td>
+                        <td th:rowspan="${#lists.size(params?.outputParameters)}" class="first-row"><span th:text="${params?.productClass}"></span></td>
+                        <td class="first-row"><span th:text="${p?.key}"></span></td>
+                        <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                      </tr>
+                      <tr th:if="${iterStat.first} == false">
+                        <td><span th:text="${p?.key}"></span></td>
+                        <td><span th:text="${p?.parameterValue}"></span></td>
+                      </tr>
+                    </div>
+                  </div>
+                  <div th:each="p,iterStat : ${ord?.outputParameters}">
+                    <tr th:if="${iterStat.first} == true" class="first-row">
+                      <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{outparams}">outparams</span></td>
+                      <td th:rowspan="${#lists.size(ord?.outputParameters)}" class="first-row"><span th:text="#{allclasses}">allclasses</span></td>
+                      <td class="first-row"><span th:text="${p?.key}"></span></td>
+                      <td class="first-row"><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                    <tr th:if="${iterStat.first} == false">
+                      <td><span th:text="${p?.key}"></span></td>
+                      <td><span th:text="${p?.parameterValue}"></span></td>
+                    </tr>
+                  </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div id="jobscontent" name="jobscontent">
+            <table class="table table-hover" id="jobs" th:unless="${#arrays.isEmpty(jobs)}">
+              <thead class="thead-proseo-order">
+                <tr class="th-row">
+                  <th colspan="2"><span th:text="#{jobs}">jobs</span></th>
+                  <th><span th:text="#{state}">state</span></th>
+                  <th><span th:text="#{failedsteps}">failedsteps</span></th>
+                  <th><span th:text="#{facility}">facility</span></th>
+                  <th><span th:text="#{priority}">priority</span></th>
+                  <th><span th:text="#{starttime}">starttime</span> &ndash; <span th:text="#{stoptime}">stoptime</span></th>
+                  <th><span th:text="#{orbit}">orbit</span> <span th:text="#{number}">number</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody th:each="job : ${jobs}">
+                  <tr th:id="${job?.id}">
+                    <td th:id="'togglejob' + ${job?.id}" 
+                        class="cursorpointer first-row" 
+                        th:onclick="'toggleJob(' + ${job?.id} + ')'"
+                      ><div class="jobhide" 
+                            th:id="'jobh' + ${job?.id}"><span data-feather="minus-circle"></span></div>
+                       <div class="jobshow" th:id="'jobs' + ${job?.id}"><span
+                                  data-feather="plus-circle"></span></div></td>
+                    <td class="first-row"><span th:text="${job?.id}"></span></td>
+                    <td th:class="(${job?.hasFailedJobSteps} == true) ? 'FAILED' : ${job?.jobState} + ' first-row'"><span th:text="${job?.jobState}"></span></td>
+                    <td class="first-row"><span th:text="${job?.hasFailedJobSteps}"></span></td>
+                    <td class="first-row"><span th:text="${job?.processingFacilityName}"></span></td>
+                    <td class="first-row"><span th:text="${job?.priority}"></span></td>
+                    <td class="first-row"><span th:text="${job?.startTime}"></span> &ndash; <span th:text="${job?.stopTime}"></span></td>
+                    <td class="first-row"><span th:text="${job?.orbit?.orbitNumber}"></span></td>
+                    <td th:rowspan="${#lists.size(job?.jobSteps)}"><span class="filtercontent" th:id="'togglejobg' + ${job?.id}"></span></td>
+                  </tr>
+                  <tr class="filtercontent" th:id="'togglejobb' + ${job?.id}">
+                    <td class="emptycol"></td>
+                    <td colspan="7">
+                      <table class="table table-hover" th:id="'jobsteps' + ${job?.id}">
+                        <thead class="thead-proseo-order">
+                          <tr>
+                            <th colspan="2"><span th:text="#{jobsteps}">jobsteps</span></th>
+                            <th><span th:text="#{state}">state</span></th>
+                            <th><span th:text="#{processingmode}">processingmode</span></th>
+                            <th><span th:text="#{product}">product</span></th>
+                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                            <th><span th:text="#{starttime}">starttime</span></th>
+                            <th><span th:text="#{completiontime}">completiontime</span></th>
+                            <th><span th:text="#{outloglevel}">outloglevel</span></th>
+                            <th><span th:text="#{errloglevel}">errloglevel</span></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <div th:each="jobstep : ${job?.jobSteps}">
+                            <tr>
+                              <td th:id="'togglejs' + ${jobstep?.id}" class="cursorpointer" th:onclick="'toggleJS(' + ${jobstep?.id} + ')'"><div class="jshide" th:id="'jsh' + ${jobstep?.id}"><span
+                                  data-feather="minus-circle"></span></div><div class="jsshow" th:id="'jss' + ${jobstep?.id}"><span
+                                  data-feather="plus-circle"></span></div></td>
+                              <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
+                              <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
+                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
+                              <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
+                                    class="proseo-list-item"  
+                                    th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
+                              <td class="first-row"><span th:text="${jobstep?.stderrLogLevel}"></span></td>
+                            </tr>
+                          <tr class="filtercontent th-row" th:id="'togglejsh2' + ${jobstep?.id}">
+                            <th class="tr-rowspan"><span>&nbsp;</span></th>
+                            <th colspan="9"><span th:text="#{joffilename}">joffilename</span></th>
+                          </tr>
+                          <tr class="filtercontent th-row" th:id="'togglejsh3' + ${jobstep?.id}">
+                            <th class="tr-rowspan"><span>&nbsp;</span></th>
+                            <th colspan="9"><span th:text="#{stdout}">stdout</span></th>
+                          </tr>
+                            <tr class="filtercontent" th:id="'togglejsb2' + ${jobstep?.id}">
+                            <td class="tr-rowspan"><span>&nbsp;</span></td>
+                              <td colspan="9"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
+                            </tr>
+                            <tr class="filtercontent" th:id="'togglejsb3' + ${jobstep?.id}">
+                            <td class="tr-rowspan"><span>&nbsp;</span></td>
+                              <td colspan="9"><textarea class="code" readonly
+                                  th:style="${#strings.isEmpty(jobstep?.processingStdOut)?'height:1em':'height:10em'}"
+                                  th:rows="${#strings.isEmpty(jobstep?.processingStdOut)?'0':'10'}"
+                                  th:text="${jobstep?.processingStdOut}"></textarea></td>
+                            </tr>
+                          </div>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+              </tbody>
+            </table>                
+          </div>
+          <div th:insert="fragments/footer.html :: footer"></div>
+        </main>
+      </div>
+    </div>
+  </body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+
+  <script type="text/javascript"> 
+  function toggleFilter() {
+	    var eleshow = document.getElementById("filtershow");
+	    var elehide = document.getElementById("filterhide");
+    var content = document.getElementById("togglefiltercontent");
+    $(content).toggleClass("filtercontent");
+    if ($(content).css("display") === "none") {
+        $(eleshow).show();
+        $(elehide).hide();
+        removeURLParam('fsh=true');
+    } else {
+        $(eleshow).hide();
+        $(elehide).show();
+        addURLParam('fsh=true');
+    }
+  }
+
+  function toggleJS(id) {
+      var eleshow = document.getElementById("jss" + id);
+      var elehide = document.getElementById("jsh" + id);
+      var content2 = document.getElementById("togglejsb2" + id);
+      var content3 = document.getElementById("togglejsb3" + id);
+    var secondhead = document.getElementById("togglejsh2" + id);
+    var thirdhead = document.getElementById("togglejsh3" + id);
+    $(secondhead).toggleClass("filtercontent");   
+    $(thirdhead).toggleClass("filtercontent");   
+    $(content2).toggleClass("filtercontent");
+    $(content3).toggleClass("filtercontent");
+    if ($(content2).css("display") === "none") {
+        $(eleshow).show();
+        $(elehide).hide();
+        removeURLParam('jsh=' + id);
+    } else {
+        $(eleshow).hide();
+        $(elehide).show();
+        addURLParam('jsh=' + id);
+    }
+  }
+  function toggleJob(id) {
+      var eleshow = document.getElementById("jobs" + id);
+      var elehide = document.getElementById("jobh" + id);
+      var content = document.getElementById("togglejobb" + id);
+      var graph = document.getElementById("togglejobg" + id);
+    //var secondhead = document.getElementById("togglejsh2" + id);
+    //var thirdhead = document.getElementById("togglejsh3" + id);
+    //$(secondhead).toggleClass("filtercontent");   
+    //$(thirdhead).toggleClass("filtercontent");   
+    $(content).toggleClass("filtercontent");
+    $(graph).toggleClass("filtercontent");
+    if ($(content).css("display") === "none") {
+        $(eleshow).show();
+        $(elehide).hide();
+        removeURLParam('jh=' + id);
+    } else {
+        $(eleshow).hide();
+        $(elehide).show();
+        addURLParam('jh=' + id);
+    }
+  }
+    function plan(oId, state) {
+      var dialog = document.getElementById('plan' + oId);
+      var ok = document.getElementById('ok' + oId);
+      var cancel = document.getElementById('cancel' + oId);
+      if (!dialog.hasAttribute('open')) {
+          // show the dialog 
+          var div = document.createElement('div');
+          div.id = 'backdrop';
+          document.body.appendChild(div); 
+          dialog.setAttribute('open','open');
+          ok.addEventListener('click', 
+            function () {
+              var menu = document.getElementById('facilities' + oId);
+              var facility = menu.options[menu.selectedIndex].value;
+              doPlan(oId, facility);
+                var dialog = document.getElementById('plan' + oId);
+                dialog.removeAttribute('open');  
+                var div = document.querySelector('#backdrop');
+                  if (div != null) {
+                      div.parentNode.removeChild(div);
+                    }
+            }
+          );
+          cancel.addEventListener('click',  
+            function () {
+                var dialog = document.getElementById('plan' + oId);
+                dialog.removeAttribute('open');  
+                var div = document.querySelector('#backdrop');
+                if (div != null) {
+                  div.parentNode.removeChild(div);
+                }
+            }
+          );
+      }
+    };
+
+    function doPlan(oId, facility) {
+      showLoader();
+      var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
+      var row = document.getElementById(oId);
+      
+      $.ajax({
+        url : url,
+        method : "POST",
+        success : function(res) {
+          hideLoader();
+          retrieveData(oId);
+        },
+        fail : function(err) {
+          console.log(err);
+          prop.innerHTML = "Fehler!" + err;
+        }
+      });
+    };
+    
+    function setState(oId, state) {
+        showLoader();
+        var url = "/order-state/post?id=" + oId + "&state=" + state;
+        var row = document.getElementById(oId);
+        var method = 'POST';
+        if (state == 'DELETE') {
+           method = 'DELETE';
+        } else {
+        }
+        $.ajax({
+            url : url,
+            method : method,
+            success : function() {
+              hideLoader();
+              if (state == 'DELETE') {
+                location.href = location.origin + '/order-show';  
+              } else if (state == 'RESET') {
+                removeURLKey('jsh');
+                removeURLKey('fsh');
+                removeURLKey('jh');
+                retrieveData(oId);
+              } else {
+                retrieveData(oId);
+              }
+            },
+            fail : function(err) {
+              console.log(err);
+              location.href = location.origin + '/order-show';  
+            },
+            complete: function() {
+                if (state == 'DELETE') {
+                    location.href = location.origin + '/order-show';                  
+                }
+            }
+          });
+      };
+    
+    function retrieveData(id) {
+    	showLoader();
+      var tableRows = $("orderTable").rows;
+      if (tableRows > 1 && tableRows != null) {
+        $("orderTable > tbody").empty();
+      }
+      var url = "/order/get"
+      var divider = "?";
+      
+      if (id != null) {
+        url = url + divider + "id=" + id.toString().trim();
+        divider = "&";
+
+        $.ajax({
+          url : url,
+          method : "GET",
+          success : function(res) {
+            $("#ordercontent").html(res);
+            var on = document.getElementById('order-name');
+            var br = document.getElementById('breadcrumb-order-name');
+            br.textContent = on.textContent; 
+            document.title = on.textContent + " | " + "[[#{proseo}]]";
+            var eleshow = document.getElementById("filtershow");
+            var elehide = document.getElementById("filterhide");
+            $(eleshow).show();
+            $(elehide).hide();  
+            feather.replace(); 
+            var showit = getURLParams('fsh'); 
+            for (var i = 0; i < showit.length; i++) {
+              if (showit[i] == 'true') {
+                toggleFilter();
+              }
+            }
+            hideLoader();
+            retrieveJobs(id); 
+          },
+          fail : function(err) {
+            console.log(err);
+            prop.innerHTML = "Fehler!" + err;
+            hideLoader();
+          }
+        });
+      }
+    };
+    
+    function retrieveJobs(id) {
+        showLoader();
+        var tableRows = $("jobs").rows;
+        if (tableRows > 1 && tableRows != null) {
+          $("jobs > tbody").empty();
+        }
+        var url = "/jobs/get"
+        var divider = "?";
+        
+        if (id != null) {
+          url = url + divider + "orderid=" + id.toString().trim();
+          divider = "&";
+
+          $.ajax({
+            url : url,
+            method : "GET",
+            success : function(res, state, x) {
+              $("#jobscontent").html(res);
+              hideLoader();
+              var eleshow = document.getElementById("jobsshow");
+              var elehide = document.getElementById("jobshide");
+              $(eleshow).show();
+              $(elehide).hide(); 
+              var jx = document.getElementsByClassName('jobshow');
+              for (var i = 0; i < jx.length; i++) {
+                var ele = jx[i];
+                $(ele).show();
+              } 
+              var jy = document.getElementsByClassName('jobhide');
+              for (var i = 0; i < jy.length; i++) {
+                var ele = jy[i];
+                $(ele).hide();
+              }
+              var x = document.getElementsByClassName('jsshow');
+              for (var i = 0; i < x.length; i++) {
+            	  var ele = x[i];
+            	  $(ele).show();
+              } 
+              var y = document.getElementsByClassName('jshide');
+              for (var i = 0; i < y.length; i++) {
+                var ele = y[i];
+            	  $(ele).hide();
+              }
+              feather.replace(); 
+
+              var jh = getURLParams('jh'); 
+              for (var i = 0; i < jh.length; i++) {
+                  toggleJob(jh[i]);
+              }
+              var jsh = getURLParams('jsh'); 
+              for (var i = 0; i < jsh.length; i++) {
+                  toggleJS(jsh[i]);
+              }
+              if (!scrollToHash()) {
+                var t = getURLParams('t'); 
+                for (var i = 0; i < t.length; i++) {
+            	    scrollToElem(t[i]);
+            	    removeURLKey('t');
+                }
+              }
+            },
+            fail : function(err) {
+                hideLoader();
+              console.log(err);
+              prop.innerHTML = "Fehler!" + err;
+            }
+          });
+        }
+      };
+      
+  </script>
+<script>
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-order');
+     $(elem).addClass('active');
+     feather.replace();
+     var myid = getURLParam('id');
+     if (myid != null) {
+       retrieveData(myid);
+     }
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+    	  window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+    }
+</script>
+
+</html>

@@ -13,12 +13,12 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProductFile.StorageType;
-import de.dlr.proseo.model.rest.model.PlannerPod;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
@@ -45,6 +45,9 @@ import io.kubernetes.client.util.Config;
  */
 @Component
 public class KubeConfig {
+
+	/** Dummy Job Order file name (only used in development environment) **/
+	private static final String DUMMY_JOF_FILENAME = "/testdata/test1.pl";
 
 	/**
 	 * Logger of this class 
@@ -85,11 +88,16 @@ public class KubeConfig {
 	 * The name of the facility
 	 */
 	private String id;
-	
+
 	/**
 	 * The id of the facility
 	 */
 	private long longId;
+
+	/**
+	 * The version of the facility
+	 */
+	private long version;
 	
 	/**
 	 * The facility description 
@@ -251,15 +259,17 @@ public class KubeConfig {
 	}
 	
 	/**
-	 * Instantiate a KuebConfig object
-	 * 
-	 * @param pf the ProcessingFacility
+	 * Instantiate a KubeConfig object without arguments
 	 */
 
-	public KubeConfig () {
+	public KubeConfig() {
 	}
 
-	public KubeConfig (ProcessingFacility pf) {
+	/**
+	 * Instantiate a KubeConfig object with a processing facility
+	 * @param pf the processing facility to set
+	 */
+	public KubeConfig(ProcessingFacility pf) {
 		setFacility(pf);
 	}
 	
@@ -271,6 +281,7 @@ public class KubeConfig {
 	public void setFacility(ProcessingFacility pf) {
 		id = pf.getName();
 		longId = pf.getId();
+		version = pf.getVersion();
 		description = pf.getDescription();
 		url = pf.getProcessingEngineUrl();
 		storageManagerUrl = pf.getStorageManagerUrl();
@@ -349,7 +360,9 @@ public class KubeConfig {
                     client = Config.fromUrl(url, false);
                 }
 			}
-			client.setDebugging(true);
+			if (logger.isTraceEnabled()) {
+				client.setDebugging(true);
+			}
 			Configuration.setDefaultApiClient(client);
 			apiV1 = new CoreV1Api();
 			batchApiV1 = new BatchV1Api();
@@ -483,8 +496,16 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
-		KubeJob aJob = new KubeJob(Long.parseLong(name), "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		KubeJob aJob = new KubeJob(Long.parseLong(name), DUMMY_JOF_FILENAME);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			if (e instanceof RuntimeException) {
+				// We did not throw this one!
+				logger.error("Job creation failed with exception: " + e.getMessage(), e);
+			}
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
@@ -494,13 +515,19 @@ public class KubeConfig {
 	/**
 	 * Create a new job on cluster
 	 * 
-	 * @param name of new job
-	 * @return new job or null
+	 * @param id the job ID
+	 * @param stdoutLogLevel the log level to set for stdout
+	 * @param stderrLogLevel the log level to set for stderr
+	 * @return
 	 */
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
-		KubeJob aJob = new KubeJob(id, "/testdata/test1.pl");
-		aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		KubeJob aJob = new KubeJob(id, DUMMY_JOF_FILENAME);
+		try {
+			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
+		} catch (Exception e) {
+			aJob = null;
+		}
 		if (aJob != null) {
 			kubeJobList.put(aJob.getJobName(), aJob);
 		}
@@ -538,6 +565,14 @@ public class KubeConfig {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
+			} else if (e instanceof ApiException) {
+				if (((ApiException) e).getCode() == HttpStatus.NOT_FOUND.value()) {
+					// Already gone (for whatever reason, maybe Kubernetes breakdown, maybe manual intervention)
+					return true;
+				} else {
+					e.printStackTrace();
+					return false;
+				}
 			} else {
 				e. printStackTrace();
 				return false;
@@ -594,6 +629,9 @@ public class KubeConfig {
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
+			} else if (e instanceof ApiException && ((ApiException) e).getCode() == 404) {
+				// pod not found
+				return null;
 			} else {
 				e. printStackTrace();
 				return null;
@@ -621,6 +659,13 @@ public class KubeConfig {
 	 */
 	public long getLongId() {
 		return longId;
+	}
+
+	/**
+	 * @return version
+	 */
+	public long getVersion() {
+		return version;
 	}
 	
 	/**
@@ -666,7 +711,6 @@ public class KubeConfig {
 	public boolean deletePodsStatus(String status) {
 		if (this.isConnected()) {		 
 			V1JobList list = this.getJobList();
-			List<PlannerPod> jobList = new ArrayList<PlannerPod>();
 			if (list != null) {
 				for (V1Job item : list.getItems()) {
 					PodKube pk = new PodKube(item);

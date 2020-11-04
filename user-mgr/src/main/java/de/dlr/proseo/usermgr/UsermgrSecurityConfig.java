@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,6 +25,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.usermgr.rest.model.RestUser;
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.rest.UserManager;
 
 /**
@@ -66,7 +68,9 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		.and()
 		.authorizeRequests()
 			.antMatchers("/**/login").authenticated()
-			.anyRequest().hasAnyRole("ROOT", "USERMGR")
+			.antMatchers(HttpMethod.GET, "/**/users/*").authenticated() // Any user may change their own password
+			.antMatchers(HttpMethod.PATCH, "/**/users/*").authenticated() // Any user may change their own password
+			.anyRequest().hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString())
 		.and()
 		.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}
@@ -109,14 +113,15 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		
 		// Make sure one initial user exists
 		try {
-			jdbcDaoImpl.loadUserByUsername("sysadm");
+			jdbcDaoImpl.loadUserByUsername(config.getDefaultUserName());
 		} catch (UsernameNotFoundException e) {
 			logger.info("Creating bootstrap user");
 			RestUser restUser = new RestUser();
 			restUser.setUsername(config.getDefaultUserName());
 			restUser.setPassword(passwordEncoder().encode(config.getDefaultUserPassword()));
 			restUser.setEnabled(true);
-			restUser.getAuthorities().add("ROLE_ROOT");
+			restUser.getAuthorities().add(UserRole.ROOT.asRoleString());
+			restUser.getAuthorities().add(UserRole.CLI_USER.asRoleString());
 			final RestUser transactionalRestUser = restUser;
 			
 			TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);

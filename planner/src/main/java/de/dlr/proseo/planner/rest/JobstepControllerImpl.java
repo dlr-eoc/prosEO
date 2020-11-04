@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.JobstepController;
@@ -33,7 +30,6 @@ import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 import de.dlr.proseo.planner.rest.model.RestUtil;
 import de.dlr.proseo.planner.util.JobStepUtil;
-import de.dlr.proseo.planner.util.JobUtil;
 import de.dlr.proseo.planner.util.UtilService;
 
 
@@ -55,23 +51,35 @@ public class JobstepControllerImpl implements JobstepController {
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
+    
     @Autowired
     private JobStepUtil jobStepUtil;
     
+   
     /**
      * Get production planner job steps by status
      * 
      */
 	@Override
 	@Transactional
-    public ResponseEntity<List<RestJobStep>> getJobSteps(
-            @Valid
-            Status status) {
-		
+    public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {		
 		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
-		Iterable<JobStep> it;
+		List<JobStep> it ;
 		if (status == null || status.value().equalsIgnoreCase("NONE")) {
 			it = RepositoryService.getJobStepRepository().findAll();
+		} else if (mission != null) {
+			JobStepState state = JobStepState.valueOf(status.toString());
+			//it = new ArrayList<JobStep>();
+			if (last != null && last > 0) {
+				List<JobStep> itall = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
+				if (last < itall.size()) {
+					it = itall.subList(0, last.intValue());
+				} else {
+					it = itall;
+				}
+			} else {
+				it = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
+			}
 		} else {
 			JobStepState state = JobStepState.valueOf(status.toString());
 			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);

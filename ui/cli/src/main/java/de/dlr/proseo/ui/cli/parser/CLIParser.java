@@ -195,7 +195,7 @@ public class CLIParser {
 			// Long version of option name
 			if (optionString.contains("=")) {
 				// Extract option value
-				optionValue = optionString.split("=")[1];
+				optionValue = optionString.split("=", -1)[1]; // extract option value even if it is empty
 			}
 			optionLongForm = optionString.split("=")[0].substring(2);
 		} else {

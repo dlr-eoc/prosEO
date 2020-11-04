@@ -21,6 +21,7 @@ public interface ProcessorRepository extends JpaRepository<Processor, Long> {
 	/**
 	 * Get the processor with the given mission, class name and version
 	 * 
+	 * @param mission the misson code
 	 * @param processorName the processor class name
 	 * @param processorVersion the processor version
 	 * @return the unique processor identified by the search criteria

@@ -9,8 +9,6 @@ import java.util.Map;
 
 import javax.persistence.EntityManagerFactory;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -35,7 +33,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.ordermgr.OrderManager;
-import de.dlr.proseo.ordermgr.rest.OrdermgrTestConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)

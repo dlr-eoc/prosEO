@@ -623,7 +623,7 @@ public class JobCommandRunner {
 	}
 	
 	/**
-	 * Suspend the named job
+	 * Suspend the named job step
 	 * 
 	 * @param suspendCommand the parsed "job step suspend" command
 	 */
@@ -646,8 +646,9 @@ public class JobCommandRunner {
 			return;
 		}
 		
-		/* Check whether (database) job step is in state "READY", otherwise suspending not allowed */
+		/* Check whether (database) job step is in state "READY", "WAITING_INPUT" or "RUNNING", otherwise suspending not allowed */
 		if (!JobStepState.READY.equals(restJobStep.getJobStepState())
+				&& !JobStepState.WAITING_INPUT.equals(restJobStep.getJobStepState())
 				&& !JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
 					CMD_SUSPEND, restJobStep.getJobStepState(),

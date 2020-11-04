@@ -1,4 +1,4 @@
-FROM localhost:5000/proseo-ingestor:0.5.1
+FROM localhost:5000/proseo-ingestor:0.6.0
 ADD application.yml /usr/share/ingestor/application.yml
 WORKDIR /usr/share/ingestor
 

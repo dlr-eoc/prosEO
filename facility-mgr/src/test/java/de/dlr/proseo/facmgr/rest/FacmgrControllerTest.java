@@ -42,7 +42,7 @@ import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -131,18 +131,18 @@ public class FacmgrControllerTest {
 	 * @return a list of facilities generated
 	 */
 	
-	private List<ProcessingFacility> createTestFacilities() {
-		logger.info("Creating test facilities");
-		List<ProcessingFacility> testFacilities = new ArrayList<>();		
-		logger.info("Creating test facility of length: "+  testFacilityData.length);
-
-		for (int i = 0; i < testFacilityData.length; ++i) {
-			logger.info("Creating test facility: "+ i +" "+ testFacilityData[i][2]);
-
-			testFacilities.add(createFacility(testFacilityData[i]));
-		}
-		return testFacilities;
-	}
+//	private List<ProcessingFacility> createTestFacilities() {
+//		logger.info("Creating test facilities");
+//		List<ProcessingFacility> testFacilities = new ArrayList<>();		
+//		logger.info("Creating test facility of length: "+  testFacilityData.length);
+//
+//		for (int i = 0; i < testFacilityData.length; ++i) {
+//			logger.info("Creating test facility: "+ i +" "+ testFacilityData[i][2]);
+//
+//			testFacilities.add(createFacility(testFacilityData[i]));
+//		}
+//		return testFacilities;
+//	}
 	
 	/**
 	 * Remove all (remaining) test facilities

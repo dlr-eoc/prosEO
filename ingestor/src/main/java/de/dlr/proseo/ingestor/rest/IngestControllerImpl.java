@@ -170,6 +170,7 @@ public class IngestControllerImpl implements IngestController {
      * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
      *         HTTP status "BAD_REQUEST", if an invalid processing facility was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
@@ -208,6 +209,8 @@ public class IngestControllerImpl implements IngestController {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 			} catch (IllegalArgumentException e) {
 				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+			} catch (SecurityException e) {
+				return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 			}
 			try {
 				productIngestor.notifyPlanner(userPassword[0], userPassword[1], ingestorProduct);
@@ -230,6 +233,7 @@ public class IngestControllerImpl implements IngestController {
      * @param processingFacility the processing facility to retrieve the product file metadata for
      * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "OK" and the Json representation of the product file metadata, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
      * 	       HTTP status "NOT_FOUND", if no product file for the given product ID exists at the given processing facility 
      */
 	@Override
@@ -255,6 +259,8 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(productIngestor.getProductFile(productId, facility), HttpStatus.CREATED);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -271,6 +277,7 @@ public class IngestControllerImpl implements IngestController {
      * @param productFile the REST product file to store
      * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and the updated REST product file (with ID and version) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
      *         HTTP status "BAD_REQUEST", if the processing facility or the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
      */
@@ -305,6 +312,8 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 		
 		try {
@@ -325,8 +334,10 @@ public class IngestControllerImpl implements IngestController {
      * @param httpHeaders the HTTP request headers (injected)
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
+	 *         HTTP status "BAD_REQUEST", if the product currently satisfies a product query for the given processing facility, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
-     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
+ 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+    *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
 	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, HttpHeaders httpHeaders) {
@@ -352,8 +363,12 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ProcessingException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
@@ -369,6 +384,7 @@ public class IngestControllerImpl implements IngestController {
      * @param productFile the REST product file to store
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID or no processing facility with the given name exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the product file has been modified since retrieval by the client
      */
 	@Override
@@ -399,6 +415,8 @@ public class IngestControllerImpl implements IngestController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 

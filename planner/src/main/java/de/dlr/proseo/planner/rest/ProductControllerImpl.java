@@ -20,8 +20,8 @@ import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.rest.ProductController;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
-import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.UtilService;
 /**
@@ -49,7 +49,9 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	@Transactional
-	public ResponseEntity<?> getObjectByProductid(String productid) {		
+	public ResponseEntity<?> getObjectByProductid(String productid) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByProductid({})", productid);
+		
 		// look for product
 		try {
 			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
@@ -59,9 +61,13 @@ public class ProductControllerImpl implements ProductController {
 				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, null, true);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (logger.isDebugEnabled()) logger.debug("Exception in planning check: ", e);
+			Messages.PLANNING_CHECK_FAILED.log(logger, Long.valueOf(productid), e.getMessage());
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+		
+		Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
+		
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
 	}
 
@@ -74,6 +80,8 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForProduct(Product p, KubeConfig kubeConfig) {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForProduct({}, KubeConfig)", (null == p ? "null" : p.getId()));
+		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
 			aKubeConfig = searchForProductPrim(p, aKubeConfig);
@@ -93,6 +101,8 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForEnclosingProduct(Product p, KubeConfig kubeConfig) {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForEnclosingProduct({}, KubeConfig)", (null == p ? "null" : p.getId()));
+		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
 			aKubeConfig = searchForProductPrim(p, aKubeConfig);
@@ -112,6 +122,8 @@ public class ProductControllerImpl implements ProductController {
 	 * @return Kube Config used
 	 */
 	private KubeConfig searchForProductPrim(Product p, KubeConfig kubeConfig) {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForProductPrim({}, KubeConfig)", (null == p ? "null" : p.getId()));
+		
 		KubeConfig aKubeConfig = kubeConfig;
 		if (p != null) {
 			if (p.getProductFile().isEmpty() && p.getJobStep() != null) {

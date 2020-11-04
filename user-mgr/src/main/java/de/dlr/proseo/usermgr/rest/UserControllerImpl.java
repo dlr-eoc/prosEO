@@ -96,6 +96,7 @@ public class UserControllerImpl implements UserController {
 	 * @param username the user name
 	 * @return HTTP status "OK" and a Json object corresponding to the user found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no user name was given, or
+	 *         HTTP status "UNAUTHORIZED" and an error message, if a user (not user mgr) attempted to access the data of another user, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no user with the given name exists
 	 */
 	@Override
@@ -108,6 +109,8 @@ public class UserControllerImpl implements UserController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.UNAUTHORIZED);
 		}
 	}
 
@@ -141,6 +144,7 @@ public class UserControllerImpl implements UserController {
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the user after modification or 
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no user with the given name exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "UNAUTHORIZED" and an error message, if a user (not user mgr) attempted to change anything but their own password, or
 	 *         HTTP status "CONFLICT"and an error message, if the user has been modified since retrieval by the client
 	 */
 	@Override
@@ -153,6 +157,8 @@ public class UserControllerImpl implements UserController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.UNAUTHORIZED);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}

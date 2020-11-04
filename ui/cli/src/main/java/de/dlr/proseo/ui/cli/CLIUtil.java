@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +27,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,7 +51,7 @@ public class CLIUtil {
 	public static final String FILE_FORMAT_JSON = "JSON";
 	/** XML file format */
 	public static final String FILE_FORMAT_XML = "XML";
-
+	
 	/** Lenient date/time parsing pattern */
 	private static Pattern dateTimePattern = Pattern.compile(
 			"(?<year>\\d\\d\\d\\d)-(?<month>\\d\\d)-(?<day>\\d\\d)" + 	// date (groups 1-3)
@@ -116,13 +117,16 @@ public class CLIUtil {
 	}
 	
 	/**
-	 * Print the given object to the given output stream according to the requested file format
+	 * Print the given object to the given output stream according to the requested file format; if the object is a list or set
+	 * of size 1, then the single element of the collection is printed, not the list/set itself
+	 * 
 	 * @param out the output stream to print to
 	 * @param object the object to print
 	 * @param fileFormat the file format requested (one of JSON, XML, YAML)
 	 * @throws IllegalArgumentException if the file format is not one of the above, or if a formatting error occurs during printing
 	 * @throws IOException if an I/O error occurs during printing
 	 */
+	@SuppressWarnings("rawtypes")
 	public static void printObject(PrintStream out, Object object, String fileFormat) throws IllegalArgumentException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> printObject({}, object, {})", out, object, fileFormat);
 		
@@ -132,7 +136,7 @@ public class CLIUtil {
 			mapper = new ObjectMapper();
 			break;
 		case FILE_FORMAT_XML:
-			mapper = new XmlMapper();
+			mapper = (new XmlMapper()).enable(ToXmlGenerator.Feature.WRITE_XML_1_1);
 			break;
 		case FILE_FORMAT_YAML:
 			mapper = new ObjectMapper(new YAMLFactory());
@@ -145,7 +149,13 @@ public class CLIUtil {
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		
 		try {
-			out.println(mapper.writeValueAsString(object));
+			Object objectToPrint = object;
+			if (object instanceof List && 1 == ((List) object).size()) {
+				objectToPrint = ((List) object).get(0);
+			} else if (object instanceof Set && 1 == ((Set) object).size()) {
+				objectToPrint = ((Set) object).iterator().next();
+			}
+			out.println(mapper.writeValueAsString(objectToPrint));
 		} catch (JsonGenerationException e) {
 			String message = uiMsg(MSG_ID_GENERATION_EXCEPTION, object, fileFormat, e.getMessage());
 			logger.error(message);

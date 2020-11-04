@@ -26,7 +26,6 @@ import org.junit.Test;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.util.SelectionItem;
 
 /**
  * Unit test class for SelectionRule using various valid and invalid rules and various sensing time intervals.
@@ -804,6 +803,24 @@ public class SelectionRuleTest {
 			System.out.println(String.format("... expected exception thrown: %s", e.getMessage()));
 		} catch (NoSuchElementException | ParseException e) {
 			fail(String.format("Test with null value for item collection throws unexpected exception %s", e.getMessage()));
+		}
+		
+		// Test special case with point-in-time item (start time == stop time)
+		SelectionItem pointInTimeItem = new SelectionItem(
+				TEST_PRODUCT_TYPE,
+				Instant.parse("2016-11-02T00:00:00Z"),
+				Instant.parse("2016-11-02T00:00:00Z"),
+				Instant.parse("2016-11-24T16:21:00Z"),
+				itemObjects[0]
+			);
+		try {
+			List<Object> result = SelectionRule.parseSelectionRule(targetProductClass, rules[0]).selectItems(TEST_PRODUCT_TYPE,
+					Arrays.asList(pointInTimeItem), startStopTimes[0][0], startStopTimes[0][0]);
+			if (1 != result.size()) {
+				fail(String.format("Unexpected selection result for test with point-in-time item: %s", concatenate(result.toArray())));
+			}
+		} catch (NoSuchElementException | IllegalArgumentException | ParseException e) {
+			fail(String.format("Test with point-in-time item throws unexpected exception %s", e.getMessage()));
 		}
 	}
 	

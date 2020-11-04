@@ -5,9 +5,12 @@
  */
 package de.dlr.proseo.usermgr.rest;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,10 +24,13 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.enums.UserRole;
+import de.dlr.proseo.usermgr.UsermgrConfiguration;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
 import de.dlr.proseo.usermgr.model.User;
@@ -55,6 +61,9 @@ public class UserManager {
 	private static final int MSG_ID_DELETE_FAILURE = 2764;
 	private static final int MSG_ID_MISSION_MISSING = 2765;
 	private static final int MSG_ID_DUPLICATE_USER = 2766;
+	private static final int MSG_ID_ILLEGAL_DATA_ACCESS = 2767;
+	private static final int MSG_ID_ILLEGAL_DATA_MODIFICATION = 2768;
+	private static final int MSG_ID_ILLEGAL_AUTHORITY = 2769;
 	
 	/* Message string constants */
 	private static final String MSG_USER_NOT_FOUND = "(E%d) No user found for mission %s";
@@ -66,6 +75,9 @@ public class UserManager {
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for user %s";
 	private static final String MSG_MISSION_MISSING = "(E%d) Mission not set";
 	private static final String MSG_DUPLICATE_USER = "(E%d) Duplicate user %s";
+	private static final String MSG_ILLEGAL_DATA_ACCESS = "(E%d) User %s not authorized to access data for user %s";
+	private static final String MSG_ILLEGAL_DATA_MODIFICATION = "(E%d) Only change of password allowed for user %s";
+	private static final String MSG_ILLEGAL_AUTHORITY = "(E%d) Illegal authority value %s";
 	
 	private static final String MSG_USER_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_USER_RETRIEVED = "(I%d) User %s retrieved";
@@ -75,12 +87,17 @@ public class UserManager {
 	private static final String MSG_USER_DELETED = "(I%d) User %s deleted";
 
 	/* Other string constants */
-	private static final String ROLE_ROOT = "ROLE_ROOT";
+	private static final String ROLE_ROOT = UserRole.ROOT.asRoleString();
+	private static final String ROLE_USERMGR = UserRole.USERMGR.asRoleString();
 
 	/** Repository for User objects */
 	@Autowired
 	UserRepository userRepository;
 	
+	/** The User Manager configuration */
+	@Autowired
+	private UsermgrConfiguration config;
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -198,7 +215,7 @@ public class UserManager {
 		if (null == restUser) {
 			throw new IllegalArgumentException(logError(MSG_USER_MISSING, MSG_ID_USER_MISSING));
 		}
-		if (null == restUser.getUsername() || "".equals(restUser.getUsername())) {
+		if (null == restUser.getUsername() || restUser.getUsername().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
@@ -273,8 +290,27 @@ public class UserManager {
 	public RestUser getUserByName(String username) throws IllegalArgumentException, NoResultException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getUserByName({})", username);
 		
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
+		}
+		
+		// Check permission to read the user data (only ROOT and USERMGR may read all user data, regular users may only read their own data)
+		
+		// Since successful authentication is required for accessing "login", we trust that the authentication object is filled
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String loginUsername = auth.getName();
+		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();  // Includes group authorities
+		
+		// Collect authorities and handle root user: No check against missions required
+		boolean isUserManager = false;
+		for (GrantedAuthority authority: authorities) {
+			if (ROLE_ROOT.equals(authority.getAuthority()) || ROLE_USERMGR.equals(authority.getAuthority())) {
+				isUserManager = true;
+			}
+		}
+		
+		if (!isUserManager && !username.equals(loginUsername)) {
+			throw new SecurityException(logError(MSG_ILLEGAL_DATA_ACCESS, MSG_ID_ILLEGAL_DATA_ACCESS, loginUsername, username));
 		}
 		
 		User modelUser = userRepository.findByUsername(username);
@@ -298,7 +334,7 @@ public class UserManager {
 	public void deleteUserByName(String username) throws EntityNotFoundException, RuntimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteUserByName({})", username);
 		
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
@@ -331,6 +367,14 @@ public class UserManager {
 	/**
 	 * Update a user by user name
 	 * 
+	 * If the password is changed, the password expiration date will be updated according to the password expiration period
+	 * configured.
+	 * 
+	 * Note: This method cannot detect, whether a password was actually changed, because due to the BCrypt algorithm used
+	 * the same password may yield different salted hashes with each encryption run. It is in the responsibility of the
+	 * calling component to make sure that the password was indeed altered (and that it conforms to any applicable password
+	 * policy).
+	 * 
 	 * @param username the name of the user to update
 	 * @param restUser a Json object containing the modified (and unmodified) attributes
 	 * @return a response containing a Json object corresponding to the user after modification
@@ -342,11 +386,31 @@ public class UserManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyUser({}, {})", username, (null == restUser ? "MISSING" : restUser.getUsername()));
 		
 		// Check arguments
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		if (null == restUser) {
 			throw new IllegalArgumentException(logError(MSG_USER_DATA_MISSING, MSG_ID_USER_DATA_MISSING));
+		}
+		
+		// Check permission to change the user (only ROOT and USERMGR may change all users, regular users may only change
+		// their password (which entails an update of the password expiration date)
+		
+		// Since successful authentication is required for accessing "login", we trust that the authentication object is filled
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String loginUsername = auth.getName();
+		Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();  // Includes group authorities
+		
+		// Collect authorities and handle root user: No check against missions required
+		boolean isUserManager = false;
+		for (GrantedAuthority authority: authorities) {
+			if (ROLE_ROOT.equals(authority.getAuthority()) || ROLE_USERMGR.equals(authority.getAuthority())) {
+				isUserManager = true;
+			}
+		}
+		
+		if (!isUserManager && !username.equals(loginUsername)) {
+			throw new SecurityException(logError(MSG_ILLEGAL_DATA_ACCESS, MSG_ID_ILLEGAL_DATA_ACCESS, loginUsername, username));
 		}
 		
 		// Get the user to modify
@@ -361,21 +425,42 @@ public class UserManager {
 		
 		boolean userChanged = false;
 		
-		if (!modelUser.getPassword().equals(changedUser.getPassword())) {
-			userChanged = true;
-			modelUser.setPassword(changedUser.getPassword());
-		}
 		if (!modelUser.getEnabled().equals(changedUser.getEnabled())) {
+			if (logger.isTraceEnabled()) logger.trace("Enabled changed from {} to {}", modelUser.getEnabled(), changedUser.getEnabled());
+			if (!isUserManager) {
+				throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
+			}
 			userChanged = true;
-			modelUser.setPassword(changedUser.getPassword());
+			modelUser.setEnabled(changedUser.getEnabled());
 		}
-		if (!modelUser.getExpirationDate().equals(changedUser.getExpirationDate()))	{
+		// Change expiration dates only if the modification is by at least one day
+		if (24*60*60*1000 <= Math.abs(modelUser.getExpirationDate().getTime() - changedUser.getExpirationDate().getTime()))	{
+			if (logger.isTraceEnabled()) logger.trace("Expiration changed from {} to {}", modelUser.getExpirationDate(), changedUser.getExpirationDate());
+			if (!isUserManager) {
+				throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
+			}
 			userChanged = true;
 			modelUser.setExpirationDate(changedUser.getExpirationDate());
 		}
-		if (!modelUser.getPasswordExpirationDate().equals(changedUser.getPasswordExpirationDate())) {
+		if (24*60*60*1000 <= Math.abs(modelUser.getPasswordExpirationDate().getTime() - changedUser.getPasswordExpirationDate().getTime())) {
+			if (logger.isTraceEnabled()) logger.trace("Passwd expiration changed from {} to {}", modelUser.getPasswordExpirationDate(), changedUser.getPasswordExpirationDate());
+			if (!isUserManager) {
+				throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
+			}
 			userChanged = true;
 			modelUser.setPasswordExpirationDate(changedUser.getPasswordExpirationDate());
+		}
+		if (!modelUser.getPassword().equals(changedUser.getPassword())) {
+			userChanged = true;
+			modelUser.setPassword(changedUser.getPassword());
+			
+			// Update password expiration date, if needed
+			Date newPasswordExpirationDate = 
+					Date.from(Instant.now().plus(Long.parseLong(config.getPasswordExpirationTime()), ChronoUnit.DAYS));
+			if (modelUser.getPasswordExpirationDate().before(newPasswordExpirationDate)) {
+				// Do not reduce longer expiration dates, if they have been granted (esp. those amounting to "never expires")
+				modelUser.setPasswordExpirationDate(newPasswordExpirationDate);
+			}
 		}
 		
 		// Apply changed authorities
@@ -392,7 +477,11 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was revoked
+				if (!isUserManager) {
+					throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
+				}
 				userChanged = true;
+				if (logger.isTraceEnabled()) logger.trace("Authority revoked: {}", modelAuthority.getAuthority());
 			}
 		}
 		for (String restAuthority: restUser.getAuthorities()) {
@@ -406,11 +495,20 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was added
+				try {
+					UserRole.asRole(restAuthority);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+				}
+				if (!isUserManager) {
+					throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
+				}
 				userChanged = true;
 				Authority newAuthority = new Authority();
 				newAuthority.setAuthority(restAuthority);
 				newAuthority.setUser(modelUser);
 				newAuthorities.add(newAuthority);
+				if (logger.isTraceEnabled()) logger.trace("Authority granted: {}", restAuthority);
 			}
 		}
 		modelUser.setAuthorities(newAuthorities);

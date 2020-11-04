@@ -2,8 +2,6 @@ package de.dlr.proseo.facmgr.rest;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.Optional;
-
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 
@@ -69,7 +67,6 @@ public class FacmgrControllerImpl implements FacilityController{
 	
 	/**
 	 * List of all facilities with no search criteria
-	 * @param mission the mission code
 	 * @param name the unique facility name
 	 * @return a response entity with either a list of facilities and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
@@ -105,9 +102,11 @@ public class FacmgrControllerImpl implements FacilityController{
 	/**
 	 * Delete a facility by ID
 	 * 
-	 * @param the ID of the facility to delete
-	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, "NOT_FOUND", if the facility did not
-	 *         exist, or "NOT_MODIFIED", if the deletion was unsuccessful
+	 * @param id the ID of the facility to delete
+	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful,
+	 * 		"BAD_REQUEST", if the facility still has stored products,
+	 * 		"NOT_FOUND", if the facility did not exist, or 
+	 * 		"NOT_MODIFIED", if the deletion was unsuccessful
 	 */
 	@Override
 	public ResponseEntity<?> deleteFacilityById(Long id) {
@@ -119,6 +118,8 @@ public class FacmgrControllerImpl implements FacilityController{
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
@@ -127,9 +128,11 @@ public class FacmgrControllerImpl implements FacilityController{
 	 * Update the facility with the given ID with the attribute values of the given Json object. 
 	 * @param id the ID of the facility to update
 	 * @param restFacility a Json object containing the modified (and unmodified) attributes
-	 * @return a response containing a Json object corresponding to the facility after modification (with ID and version for all 
-	 * 		   contained objects) and HTTP status "OK" or an error message and
-	 * 		   HTTP status "NOT_FOUND", if no facility with the given ID exists
+	 * @return a response containing
+	 *     	   HTTP status "OK" and a Json object corresponding to the facility after modification (with ID and version for all 
+	 * 		       contained objects) or 
+	 *         HTTP status "NOT_MODIFIED" and the unchanged facility, if no attributes were actually changed, or
+	 * 	       HTTP status "NOT_FOUND" and an error message, if no facility with the given ID exists
 	 */
 	@Override
 	public ResponseEntity<RestProcessingFacility> modifyFacility(Long id, RestProcessingFacility restFacility) {

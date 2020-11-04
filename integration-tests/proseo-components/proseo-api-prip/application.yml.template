@@ -5,7 +5,10 @@ logging:
         de.dlr.proseo: TRACE
         org.apache.olingo: DEBUG
 proseo:
+    userManager.url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
     ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
-    orderManager.url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     processorManager.url: http://proseo-processor-mgr:8080/proseo/processor-mgr/v0.1
-    facilityManager.url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
+    facilityManager:
+        url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
+        user: pripapi
+        password: pripapi

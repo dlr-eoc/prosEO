@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,9 +44,10 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
-import de.dlr.proseo.model.ProductFile.StorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -77,9 +79,11 @@ public class ProductIngestor {
 	private static final int MSG_ID_PRODUCT_FILE_DELETED = 2068;
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
+	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
 
 	// Same as in ProductManager
 	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
 	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
@@ -96,9 +100,11 @@ public class ProductIngestor {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The product file for product ID %d and processing facility %s has been modified since retrieval by the client";
 	private static final String MSG_DELETION_UNSUCCESSFUL = "(E%d) Deletion unsuccessful for product file %s in product with ID %d";
 	private static final String MSG_ERROR_DELETING_PRODUCT = "(E%d) Error deleting product with ID %d from processing facility %s (cause: %s)";
+	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s";
 
 	// Same as in ProductManager
 	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
@@ -124,6 +130,10 @@ public class ProductIngestor {
 	@Autowired
 	IngestorConfiguration ingestorConfig;
 	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
+
 	/** Product Manager */
 	@Autowired
 	ProductManager productManager;
@@ -142,7 +152,12 @@ public class ProductIngestor {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
+		String message = null;
+		try {
+			message = String.format(messageFormat, messageParamList.toArray());
+		} catch (IllegalFormatException e) {
+			message = messageFormat + " (insufficient parameters)";
+		}
 		logger.info(message);
 		
 		return message;
@@ -162,7 +177,12 @@ public class ProductIngestor {
 		messageParamList.add(0, messageId);
 		
 		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
+		String message = null;
+		try {
+			message = String.format(messageFormat, messageParamList.toArray());
+		} catch (IllegalFormatException e) {
+			message = messageFormat + " (insufficient parameters)";
+		}
 		logger.error(message);
 		
 		return message;
@@ -177,12 +197,19 @@ public class ProductIngestor {
      * @param user the username to pass on to the Production Planner
      * @param password the password to pass on to the Production Planner
      * @return a Json representation of the product updated and/or created including their product files
-	 * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
-	 * @throws ProcessingException if the communication with the Storage Manager fails
+     * @throws IllegalArgumentException if the product ingestion failed (typically due to an error in the Json input)
+     * @throws ProcessingException if the communication with the Storage Manager fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
-			throws IllegalArgumentException, ProcessingException {
+			throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					ingestorProduct.getMissionCode(), securityService.getMission()));			
+		}
 		
 		// Create a new product in the metadata database
 		RestProduct newProduct;
@@ -281,8 +308,9 @@ public class ProductIngestor {
      * @param facility the processing facility to retrieve the product file metadata for
      * @return the Json representation of the product file metadata
      * @throws NoResultException if no product file for the given product ID exists at the given processing facility
+     * @throws SecurityException if a cross-mission data access was attempted
      */
-	public RestProductFile getProductFile(Long productId, ProcessingFacility facility) throws NoResultException {
+	public RestProductFile getProductFile(Long productId, ProcessingFacility facility) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductFile({}, {})", productId, facility.getName());
 		
 		// Find the product files for the given product ID
@@ -305,6 +333,12 @@ public class ProductIngestor {
 					productId, facility));
 		}
 		
+		// Ensure user is authorized for the product file's mission
+		if (!securityService.isAuthorizedForMission(productFile.getProduct().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					productFile.getProduct().getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
 		logInfo(MSG_PRODUCT_FILE_RETRIEVED, MSG_ID_PRODUCT_FILE_RETRIEVED, productId, facility.getName());
 
 		return ProductFileUtil.toRestProductFile(productFile);
@@ -322,9 +356,10 @@ public class ProductIngestor {
      * @return the updated REST product file (with ID and version)
      * @throws IllegalArgumentException if the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
+     * @throws SecurityException if a cross-mission data access was attempted
      */
 	public RestProductFile ingestProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile, String user, String password)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProductFile({}, {}, {}, {}, PWD)", productId, facility, productFile.getProductFileName(), user);
 
 		// Find the product with the given ID
@@ -333,6 +368,12 @@ public class ProductIngestor {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
 		}
 		Product modelProduct = product.get();
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
 		
 		// Error, if a database product file for the given facility exists already
 		for (ProductFile modelProductFile: modelProduct.getProductFile()) {
@@ -364,15 +405,23 @@ public class ProductIngestor {
      * @throws EntityNotFoundException if the product or the product file could not be found
      * @throws RuntimeException if the deletion failed
  	 * @throws ProcessingException if the communication with the Storage Manager fails
-    */
+ 	 * @throws IllegalArgumentException if the product currently satisfies a product query for the given processing facility
+     * @throws SecurityException if a cross-mission data access was attempted
+     */
 	public void deleteProductFile(Long productId, ProcessingFacility facility) throws 
-			EntityNotFoundException, RuntimeException, ProcessingException {
+			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility.getName());
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Error, if a database product file for the given facility does not yet exist
@@ -384,6 +433,14 @@ public class ProductIngestor {
 		}
 		if (null == modelProductFile) {
 			throw new EntityNotFoundException(logError(MSG_PRODUCT_FILE_NOT_FOUND, MSG_ID_PRODUCT_FILE_NOT_FOUND, facility.getName()));
+		}
+		
+		// Do not delete product file, if the product is currently satisfying some product query for the same processing facility
+		for (ProductQuery productQuery: product.get().getSatisfiedProductQueries()) {
+			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS,
+						productId, facility.getName()));
+			}
 		}
 		
 		// Remove the product file from the processing facility storage: Delete all files individually by path name
@@ -431,15 +488,22 @@ public class ProductIngestor {
      * @throws IllegalArgumentException if the product cannot be found, or if the data for the
      *         product file is invalid (also, if a product file for the given processing facility already exists)
      * @throws ConcurrentModificationException if the product file was modified since its retrieval by the client
+     * @throws SecurityException if a cross-mission data access was attempted
      */
 	public RestProductFile modifyProductFile(Long productId, ProcessingFacility facility, RestProductFile productFile) throws
-	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException {
+	EntityNotFoundException, IllegalArgumentException, ConcurrentModificationException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyProductFile({}, {}, {})", productId, facility, productFile.getProductFileName());
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
 		if (product.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productId));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(product.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Error, if a database product file for the given facility does not yet exist
@@ -549,11 +613,18 @@ public class ProductIngestor {
 	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
 	 * @throws RestClientException if an error in the REST API occurs
 	 * @throws ProcessingException if the communication with the Production Planner fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public void notifyPlanner(String user, String password, IngestorProduct ingestorProduct)
-			throws IllegalArgumentException, RestClientException, ProcessingException {
+			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, ingestorProduct.getProductClass());
 
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(ingestorProduct.getMissionCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					ingestorProduct.getMissionCode(), securityService.getMission()));			
+		}
+		
 		// Retrieve the product class from the database
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
@@ -591,15 +662,22 @@ public class ProductIngestor {
 	 * @throws IllegalArgumentException if the mission code and/or the product type are invalid
 	 * @throws RestClientException if an error in the REST API occurs
 	 * @throws ProcessingException if the communication with the Production Planner fails
+     * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public void notifyPlanner(String user, String password, RestProductFile restProductFile)
-			throws IllegalArgumentException, RestClientException, ProcessingException {
+			throws IllegalArgumentException, RestClientException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> notifyPlanner({}, PWD, {})", user, restProductFile.getProductFileName());
 
 		// Retrieve the product for the given product file
 		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(restProductFile.getProductId());
 		if (modelProduct.isEmpty()) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, restProductFile.getProductId()));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
 		// Copy the relevant attributes to an IngestorProduct

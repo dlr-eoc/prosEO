@@ -14,8 +14,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+
+import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Management of user login and logout (thread safe)
@@ -56,7 +59,8 @@ public class LoginManager {
 	 * @param username the username to login with (including mission prefix)
 	 * @param password the password to login with
 	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
-	 * @return a list of strings denoting authorities granted to the user for the given mission (may be empty)
+	 * @return a list of strings denoting authorities granted to the user for the given mission
+	 * 		   (may be empty, meaning access is denied)
 	 */
 	private List<String> login(String username, String password, String mission) {
 		if (logger.isTraceEnabled()) logger.trace(">>> login({}, ********, {})", username, mission);
@@ -73,16 +77,9 @@ public class LoginManager {
 			};
 		} catch (RestClientResponseException e) {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			if (!(HttpStatus.NOT_FOUND.value() == e.getRawStatusCode()) && !(HttpStatus.UNAUTHORIZED.value() == e.getRawStatusCode())) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
 			}
-			System.err.println(message);
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_HTTP_CONNECTION_FAILURE, e.getMessage()));
 		}
@@ -96,10 +93,20 @@ public class LoginManager {
 	 * @param username the user name for login (without mission prefix; optional, will be requested from standard input, if not set)
 	 * @param password the password for login (optional, will be requested from standard input, if not set)
 	 * @param mission the mission to log in to (may be null for user with prosEO Administrator privileges)
+	 * @param showLoginMessage if true, show a message upon successful login
 	 * @return true, if the login was successful, false otherwise
 	 */
-	public boolean doLogin(String username, String password, String mission) {
+	public boolean doLogin(String username, String password, String mission, boolean showLoginMessage) {
 		if (logger.isTraceEnabled()) logger.trace(">>> doLogin({}, ********, {})", username, mission);
+		
+		// Catch missing arguments in non-interactive mode
+		if (null == System.console() && (null == username || username.isBlank() || null == password || password.isBlank())) {
+			String message = uiMsg(MSG_ID_INSUFFICIENT_CREDENTIALS);
+			logger.error(message);
+			System.err.println(message);
+			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
+			return false;
+		}
 		
 		// Ask for username, if not set
 		if (null == username || "".equals(username)) {
@@ -122,7 +129,9 @@ public class LoginManager {
 		List<String> grantedAuthorities = login(missionUsername, password, mission);
 		if (grantedAuthorities.isEmpty()) {
 			// Report failure
-			String message = uiMsg(MSG_ID_LOGIN_FAILED, username);
+			String message = null == mission ? 
+					uiMsg(MSG_ID_LOGIN_WITHOUT_MISSION_FAILED, username) : 
+					uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username, mission);
 			logger.error(message);
 			System.err.println(message);
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
@@ -137,7 +146,9 @@ public class LoginManager {
 			String message = uiMsg(MSG_ID_LOGGED_IN, username);
 			logger.info(message);
 			if (logger.isDebugEnabled()) logger.debug("... with authorities: " + Arrays.toString(grantedAuthorities.toArray()));
-			System.out.println(message);
+			if (showLoginMessage) {
+				System.out.println(message);
+			}
 			if (logger.isTraceEnabled()) logger.trace("<<< doLogin()");
 			return true;
 		}
@@ -197,5 +208,15 @@ public class LoginManager {
 	 */
 	public List<String> getAuthorities() {
 		return authorities.get();
+	}
+	
+	/**
+	 * Checks whether the logged in user has the given role
+	 * 
+	 * @param role the role to check
+	 * @return true, if the respective authority was granted, false otherwise
+	 */
+	public boolean hasRole(UserRole role) {
+		return authorities.get().contains(role.asRoleString());
 	}
 }

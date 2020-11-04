@@ -13,6 +13,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -116,7 +118,8 @@ public class ProductclassCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(), 
-					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() + "&productType=" + productType, 
+					URI_PATH_PRODUCTCLASSES + "?mission=" + loginManager.getMission() 
+						+ "&productType=" + URLEncoder.encode(productType, Charset.defaultCharset()), 
 					List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -236,7 +239,7 @@ public class ProductclassCommandRunner {
 		if (null == restProductClass.getProductType() || 0 == restProductClass.getProductType().length()) {
 			System.out.print(PROMPT_PRODUCT_TYPE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -313,7 +316,7 @@ public class ProductclassCommandRunner {
 		
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only product class name allowed as parameter
-			requestURI += "&productType=" + showCommand.getParameters().get(0).getValue();
+			requestURI += "&productType=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());
 		}
 		
 		/* Get the product class information from the Product Class Manager service */
@@ -412,7 +415,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == updatedProductClass.getProductType() || 0 == updatedProductClass.getProductType().length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(updatedProductClass.getProductType());
@@ -443,11 +446,14 @@ public class ProductclassCommandRunner {
 			restProductClass.getComponentClasses().clear();
 			restProductClass.getComponentClasses().addAll(updatedProductClass.getComponentClasses());
 		}
-		if (isDeleteAttributes || (null != updatedProductClass.getEnclosingClass() && 0 != updatedProductClass.getEnclosingClass().length())) {
+		if (isDeleteAttributes || (null != updatedProductClass.getEnclosingClass() && !updatedProductClass.getEnclosingClass().isBlank())) {
 			restProductClass.setEnclosingClass(updatedProductClass.getEnclosingClass());
 		}
-		if (isDeleteAttributes || (null != updatedProductClass.getProcessorClass() && 0 != updatedProductClass.getProcessorClass().length())) {
+		if (isDeleteAttributes || (null != updatedProductClass.getProcessorClass() && !updatedProductClass.getProcessorClass().isBlank())) {
 			restProductClass.setProcessorClass(updatedProductClass.getProcessorClass());
+		}
+		if (isDeleteAttributes || (null != updatedProductClass.getProductFileTemplate() && !updatedProductClass.getProductFileTemplate().isBlank())) {
+			restProductClass.setProductFileTemplate(updatedProductClass.getProductFileTemplate());
 		}
 		
 		/* Update product class using Product Class Manager service */
@@ -458,6 +464,9 @@ public class ProductclassCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
@@ -495,7 +504,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (deleteCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String productType = deleteCommand.getParameters().get(0).getValue();
@@ -612,7 +621,7 @@ public class ProductclassCommandRunner {
 		/* Read original product class from Product Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -645,7 +654,7 @@ public class ProductclassCommandRunner {
 			if (null == restSelectionRule.getSelectionRule() || 0 == restSelectionRule.getSelectionRule().length()) {
 				System.out.println(PROMPT_SELECTION_RULE);
 				String response = readTextFromConsole();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -705,7 +714,7 @@ public class ProductclassCommandRunner {
 		/* Get product class name from command parameters */
 		if (showCommand.getParameters().isEmpty()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		String targetClass = showCommand.getParameters().get(0).getValue();
@@ -733,7 +742,9 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass);
+				message = null == sourceClass ?
+						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND, targetClass) :
+						uiMsg(MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE, targetClass, sourceClass);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -844,7 +855,7 @@ public class ProductclassCommandRunner {
 		/* Retrieve the product class using Product Class Manager service */
 		if (null == targetClass || 0 == targetClass.length()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
 			return;
 		}
 		RestProductClass restProductClass = retrieveProductClassByType(targetClass);
@@ -900,7 +911,7 @@ public class ProductclassCommandRunner {
 			while (null == restSelectionRule) {
 				System.out.print("Select rule (empty field cancels): ");
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
@@ -930,6 +941,16 @@ public class ProductclassCommandRunner {
 			restSelectionRule.getConfiguredProcessors().clear();
 			restSelectionRule.getConfiguredProcessors().addAll(updatedSelectionRule.getConfiguredProcessors());
 		}
+		if (FORMAT_PLAIN.equals(selectionRuleFileFormat) &&
+				(null == updatedSelectionRule.getSelectionRule() || 0 == updatedSelectionRule.getSelectionRule().length())) {
+			System.out.println(PROMPT_SELECTION_RULE);
+			String response = readTextFromConsole();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restSelectionRule.setSelectionRule(response);
+		} 
 		
 		/* Update selection rule using Product Class Manager service */
 		try {
@@ -940,6 +961,9 @@ public class ProductclassCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
 				break;
@@ -975,9 +999,14 @@ public class ProductclassCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteSelectionRule({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
 		/* Get processor name from command parameters */
+		if (1 > deleteCommand.getParameters().size()) {
+			// No identifying value given
+			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_NAME_GIVEN));
+			return;
+		}
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
-			System.err.println(uiMsg(MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN));
+			System.err.println(uiMsg(MSG_ID_NO_RULEID_GIVEN));
 			return;
 		}
 		String targetClass = deleteCommand.getParameters().get(0).getValue();

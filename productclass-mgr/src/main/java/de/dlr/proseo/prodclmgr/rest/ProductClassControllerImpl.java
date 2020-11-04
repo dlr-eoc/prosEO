@@ -65,6 +65,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param mission the mission code
      * @param productType the prosEO product type (if set, missionType should not be set)
      * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no product classes matching the search criteria were found
      */
 	@Override
@@ -75,6 +76,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -84,6 +87,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param productClass a Json object describing the new product class
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the product class after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
      */
 	@Override
@@ -96,6 +100,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.resolve(e.getResponse().getStatus()));
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -105,6 +111,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param id the database ID of the product class
 	 * @return HTTP status "OK" and a Json object corresponding to the product class found or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no product class ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product class with the given ID exists
      */
 	@Override
@@ -117,6 +124,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -129,6 +138,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 *             (with ID and version for all contained objects) or 
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no product class with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the product class has been modified since retrieval by the client
      */
 	@Override
@@ -143,6 +153,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -153,6 +165,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the product class did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if the product class ID was not given, or if dependent objects exist
      */
 	@Override
@@ -166,6 +179,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (RuntimeException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		}
@@ -175,8 +190,9 @@ public class ProductClassControllerImpl implements ProductclassController {
      * Get the simple selection rules as formatted string, optionally selected by source class
      * 
      * @param id the database ID of the product class to get the selection rule from
-     * @param sourceclass the prosEO product type of the source class, from which the product class can be generated (may be null)
+     * @param sourceClass the prosEO product type of the source class, from which the product class can be generated (may be null)
 	 * @return HTTP status "OK" and a list of strings describing the selection rules for all configured processors or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no selection rules matching the search criteria were found
      */
 	@Override
@@ -187,6 +203,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(productClassManager.getSelectionRuleStrings(id, sourceClass), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -194,9 +212,10 @@ public class ProductClassControllerImpl implements ProductclassController {
      * Create a selection rule using Rule Language
      * 
      * @param id the database ID of the product class
-     * @param selectionRuleString a Json representation of a selection rule in Rule Language
+     * @param selectionRuleStrings a Json representation of a selection rule in Rule Language
 	 * @return HTTP status "CREATED" and a response containing a Json object corresponding to the selection rule after persistence
 	 *             (with ID and version for all contained objects) or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if any of the input data was invalid
      */
 	@Override
@@ -207,6 +226,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(productClassManager.createSelectionRuleString(id, selectionRuleStrings), HttpStatus.CREATED);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -217,6 +238,7 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param id the database ID of the product class
 	 * @return HTTP status "OK" and a Json object corresponding to the simple selection rule in Rule Language or 
 	 *         HTTP status "BAD_REQUEST" and an error message, if no simple selection rule ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no simple selection rule with the given ID exists
      */
 	@Override
@@ -227,6 +249,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(productClassManager.getSelectionRuleString(ruleid, id), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -240,6 +264,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 *             (with ID and version for all contained objects) or 
 	 * 		   HTTP status "NOT_FOUND" and an error message, if if the rule ID is invalid or the rule does not belong to the given product class, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "CONFLICT"and an error message, if the simple selection rule has been modified since retrieval by the client
      */
 	@Override
@@ -253,6 +278,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		} catch (ConcurrentModificationException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.CONFLICT);
 		}
@@ -265,7 +292,9 @@ public class ProductClassControllerImpl implements ProductclassController {
      * @param id the database ID of the product class
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the if the selection rule to delete or the product class do not exist in the database, or
-	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 *         HTTP status "BAD_REQUEST", if the ID of the product class or the selection rule was not given, or the rule
+     *             cannot be deleted due to existing product queries
      */
 	@Override
 	public ResponseEntity<?> deleteSelectionrule(Long ruleid, Long id) {
@@ -278,6 +307,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -291,6 +322,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 *             Rule Language, if the addition was successful, or
 	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class 
 	 *             with the given ID exist, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
@@ -303,6 +335,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 
@@ -316,6 +350,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 *             Rule Language, if the removal was successful, or
 	 *         HTTP status "NOT_FOUND", if no configured processor with the given name or no selection rule or product class
 	 *             with the given ID exist, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "BAD_REQUEST", if the product class ID, the selection rule ID or the name of the configured processor were not given
      */
 	@Override
@@ -328,6 +363,8 @@ public class ProductClassControllerImpl implements ProductclassController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
 

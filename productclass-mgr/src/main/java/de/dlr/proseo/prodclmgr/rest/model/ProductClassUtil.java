@@ -67,6 +67,7 @@ public class ProductClassUtil {
 		for (ProductClass componentClass: modelProductClass.getComponentClasses()) {
 			restProductClass.getComponentClasses().add(componentClass.getProductType());
 		}
+		Boolean first = true;
 		for (SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
 			RestSimpleSelectionRule restSimpleSelectionRule = new RestSimpleSelectionRule();
 			restSimpleSelectionRule.setId(simpleSelectionRule.getId());
@@ -95,7 +96,11 @@ public class ProductClassUtil {
 				restSimplePolicy.setDeltaTimeT1(new DeltaTimeT1(simplePolicy.getDeltaTimeT1().duration, simplePolicy.getDeltaTimeT1().unit.toString()));
 				restSimpleSelectionRule.getSimplePolicies().add(restSimplePolicy);
 			}
+			restSimpleSelectionRule.setRuleString(simpleSelectionRule.toString());
 			restProductClass.getSelectionRule().add(restSimpleSelectionRule);
+		}
+		if (modelProductClass.getProductFileTemplate() != null) {
+			restProductClass.setProductFileTemplate(modelProductClass.getProductFileTemplate());
 		}
 		
 		return restProductClass;
@@ -135,6 +140,7 @@ public class ProductClassUtil {
 		if (null != restProductClass.getDefaultSliceDuration()) {
 			modelProductClass.setDefaultSliceDuration(Duration.ofSeconds(restProductClass.getDefaultSliceDuration()));
 		}
+		// Product file template left out here, because it must not be set, if it is the same as the mission's template
 		
 		return modelProductClass;
 	}

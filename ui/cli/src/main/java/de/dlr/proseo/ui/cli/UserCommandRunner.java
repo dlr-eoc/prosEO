@@ -9,6 +9,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -110,7 +112,7 @@ public class UserCommandRunner {
 		RestUser restUser = null;
 		try {
 			restUser = serviceConnection.getFromService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + username,
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(username, Charset.defaultCharset()),
 					RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -146,11 +148,14 @@ public class UserCommandRunner {
 		
 		try {
 			restUser = serviceConnection.patchToService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + restUser.getUsername(),
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(restUser.getUsername(), Charset.defaultCharset()),
 					restUser, RestUser.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return null;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, restUser.getUsername(), loginManager.getMission());
 				break;
@@ -239,6 +244,9 @@ public class UserCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return null;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 				break;
@@ -339,7 +347,7 @@ public class UserCommandRunner {
 		if (null == restUser.getUsername() || restUser.getUsername().isEmpty()) {
 			System.out.print(PROMPT_USER_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -348,7 +356,7 @@ public class UserCommandRunner {
 		while (null == restUser.getPassword() || restUser.getPassword().isEmpty()) {
 			System.out.print(PROMPT_PASSWORD);
 			String response = new String(System.console().readPassword());
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -623,7 +631,7 @@ public class UserCommandRunner {
 		/* Delete user using User Manager service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
-					URI_PATH_USERS + "/" + restUser.getUsername(), 
+					URI_PATH_USERS + "/" + UriUtils.encodePathSegment(restUser.getUsername(), Charset.defaultCharset()), 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -895,7 +903,7 @@ public class UserCommandRunner {
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isEmpty()) {
 			System.out.print(PROMPT_GROUP_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}

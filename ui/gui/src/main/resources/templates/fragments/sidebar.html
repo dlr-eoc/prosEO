@@ -1,0 +1,54 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+	<div th:fragment="sidebarMenu">
+		<nav id="sidebarMenu"
+			class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+			<div class="sidebar-sticky pt-3">
+				<ul class="nav flex-column">
+					<!-- dashboard -->
+					<li class="nav-item"><a id="sb-dashboard" class="nav-link"
+						href="/"><span th:text="#{dashboard}">dashboard</span></a></li>
+					<!-- order -->
+					<li class="nav-item"><a id="sb-order" class="nav-link"
+						href="/order-show"><span th:text="#{order}">order</span></a></li>
+					<!-- product -->
+					<li class="nav-item"><a id="sb-product" class="nav-link"
+						href="/product-show"><span th:text="#{product}">product</span></a></li>
+					<!-- product-class -->
+					<li class="nav-item"><a id="sb-product-class" class="nav-link"
+						href="/productclass-show"><span th:text="#{product-class}">product-class</span></a></li>
+					<!-- processor -->
+					<li class="nav-item"><a id="sb-processor" class="nav-link"
+						href="/processor-show"><span th:text="#{processor}">processor</span></a></li>
+					<!-- processor-class -->
+					<li class="nav-item"><a id="sb-processor-class"
+						class="nav-link" href="/processor-class-show"
+						th:text="#{processor-class}">processor-class</a></li>
+					<!-- configuration -->
+					<li class="nav-item"><a id="sb-configuration" class="nav-link"
+						href="/configuration-show"><span th:text="#{configuration}">configuration</span></a></li>
+          <!-- configured processor -->
+          <li class="nav-item"><a id="sb-configured-processor" class="nav-link"
+            href="/configured-processor-show"><span th:text="#{configuredprocessor}">configuredprocessor</span></a></li>
+					<!-- mission -->
+					<li class="nav-item"><a id="sb-mission" class="nav-link"
+						href="/mission-show"><span th:text="#{mission}">mission</span></a></li>
+					<!-- orbit -->
+<!-- 					<li class="nav-item"><a id="sb-orbit" class="nav-link"
+						href="/orbit-show"><span th:text="#{orbit}">orbit</span></a></li>
+ -->					<!-- facility -->
+					<li class="nav-item"><a id="sb-facility" class="nav-link"
+						href="/facility-show"><span th:text="#{facility}">facility</span></a></li>
+					<!-- user -->
+<!-- 					<li class="nav-item"><a id="sb-user" class="nav-link"
+						href="/user-show"><span th:text="#{user}">user</span></a></li>
+ -->					<!-- group -->
+<!-- 					<li class="nav-item"><a id="sb-group" class="nav-link"
+						href="/group-show"><span th:text="#{group}">group</span></a></li>
+ -->				</ul>
+			</div>
+		</nav>
+	</div>
+</body>
+</html>

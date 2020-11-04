@@ -16,6 +16,9 @@ types:
   RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
   RestProcessingFacility: !include ../../../../../model/src/main/resources/raml/types/processingfacility.raml
   PlannerPod: !include ../../../../../interfaces/src/main/resources/raml/types/planner-pod.raml
+  RestJobGraph: !include ../../../../../interfaces/src/main/resources/raml/types/jobgraph.raml
+  RestJobStepGraph: !include ../../../../../interfaces/src/main/resources/raml/types/jobstepgraph.raml
+  RestId: !include ../../../../../interfaces/src/main/resources/raml/types/id.raml
 
 resourceTypes:
   standard:
@@ -238,6 +241,17 @@ resourceTypes:
               application/json:
                 type: RestJob
                 example: !include ../../../../../model/src/main/resources/raml/examples/job.json
+  /graph:
+    /{id}:
+      get:
+        description: Dependencies of all job steps of job
+        displayName: graphJobSteps
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestJobGraph
+                example: !include ../../../../../interfaces/src/main/resources/raml/examples/jobgraph.json
 
 /jobsteps:
   type: standard
@@ -248,6 +262,8 @@ resourceTypes:
       status?:
         type: string
         enum: [ INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, NONE ]
+      mission?: string
+      last?: integer
     responses:
       200:
         body:

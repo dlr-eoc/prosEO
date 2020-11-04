@@ -38,6 +38,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
@@ -59,7 +60,6 @@ public class S3Ops {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
 
-	private static final Region S3_DEFAULT_REGION = Region.EU_CENTRAL_1;
 	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (5 * 1024 * 1024);
 
 	public static String createEmptyKey(S3Client s3, String bucketName, String key, String manifestMsg) {
@@ -75,12 +75,12 @@ public class S3Ops {
 	}
 
 	/**
-	 * list Keys in Bucket based on prefix
+	 * List keys in bucket based on prefix
 	 * 
-	 * @param s3
-	 * @param bucketName
-	 * @param prefix
-	 * @return List<String> the keys
+	 * @param s3 the V1 S3 client to use
+	 * @param bucketName the bucket name
+	 * @param prefix the bucket prefix
+	 * @return the keys contained in the bucket
 	 */
 	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) {
 		Boolean isTopLevel = false;
@@ -133,12 +133,12 @@ public class S3Ops {
 	}
 
 	/**
-	 * list all Buckets
+	 * List all buckets; passes all exceptions on to the caller
 	 * 
-	 * @param s3
-	 * @return ArrayList<String> buckets
+	 * @param s3 the S3 client to use
+	 * @return a list of buckets
 	 */
-	public static ArrayList<String> listBuckets(S3Client s3) throws Exception{
+	public static ArrayList<String> listBuckets(S3Client s3) {
 
 			ArrayList<String> buckets = new ArrayList<String>();
 			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
@@ -146,8 +146,7 @@ public class S3Ops {
 			try {
 				listBucketsResponse = s3.listBuckets(listBucketsRequest);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(e.getMessage());
 				throw e;
 			}
 			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
@@ -155,14 +154,14 @@ public class S3Ops {
 	}
 
 	/**
-	 * Creates a new S3-Bucket
+	 * Creates a new S3 bucket
 	 * 
-	 * @param s3
-	 * @param bucketName
-	 * @param S3Region
-	 * @return String the new bucket name
+	 * @param s3 the S3 client to use
+	 * @param bucketName the name of the new bucket
+	 * @param region the region, in which the bucket shall be stored
+	 * @return the new bucket name or null, if the operation failed
 	 */
-	public static String createBucket(S3Client s3, String bucketName, String region) throws Exception{
+	public static String createBucket(S3Client s3, String bucketName, String region) {
 
 		try {
 			CreateBucketRequest createBucketRequest = CreateBucketRequest.builder().bucket(bucketName)
@@ -177,12 +176,13 @@ public class S3Ops {
 	}
 
 	/**
-	 * return Base V2 S3-Client
+	 * Create a base V2 S3 client
 	 *
-	 * @param s3AccessKey
-	 * @param secretAccessKey
-	 * @param s3Endpoint
-	 * @return S3Client
+	 * @param s3AccessKey the access key for the client
+	 * @param secretAccessKey the secret access key for the client
+	 * @param s3Endpoint the S3 endpoint to connect to
+	 * @param region the region, on which the client shall operate
+	 * @return a configured S3 client or null, if an error occurred
 	 */
 	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		try {
@@ -201,12 +201,13 @@ public class S3Ops {
 	}
 
 	/**
-	 * return Base V1 S3-Client
+	 * Create a base V1 S3 client
 	 *
-	 * @param s3AccessKey
-	 * @param secretAccessKey
-	 * @param s3Endpoint
-	 * @return AmazonS3
+	 * @param s3AccessKey the access key for the client
+	 * @param secretAccessKey the secret access key for the client
+	 * @param s3Endpoint the S3 endpoint to connect to
+	 * @param region the region, on which the client shall operate
+	 * @return a configured S3 client or null, if an error occurred
 	 */
 	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		try {
@@ -234,12 +235,12 @@ public class S3Ops {
 	}
 
 	/**
-	 * fetch file from S3 to local file
+	 * Fetch file from S3 to local file
 	 * 
 	 * @param s3            a given instantiated S3Client
 	 * @param s3Object      URI of S3-Object (e.g. s3://bucket/path/to/some/file)
 	 * @param ContainerPath local target filePath
-	 * @return
+	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean v2FetchFile(S3Client s3, String s3Object, String ContainerPath) {
 
@@ -281,12 +282,11 @@ public class S3Ops {
 	}
 
 	/**
-	 * fetch file from S3 to local file
+	 * Fetch file from S3 as input stream
 	 * 
 	 * @param s3            a given instantiated S3Client
 	 * @param s3Object      URI of S3-Object (e.g. s3://bucket/path/to/some/file)
-	 * @param ContainerPath local target filePath
-	 * @return
+	 * @return the file content
 	 */
 	public static InputStream v2FetchStream(S3Client s3, String s3Object) {
 		InputStream stream = null;
@@ -309,25 +309,25 @@ public class S3Ops {
 	}
 
 	/**
-	 * Upload Dir to S3 using Multipart-Uploads
+	 * Upload a directory to S3 using multipart uploads
 	 * 
-	 * @param v1S3Client  AmazonS3 v1 client
-	 * @param dir_path    String
-	 * @param bucket_name Bucket
-	 * @param key_prefix  String
-	 * @param recursive   Boolean
-	 * @param pause       Boolean
-	 * @return ArrayList<String> of uploaded keys
+	 * @param v1S3Client  the S3 V1 client to use
+	 * @param sourceDirPath    path to the directory to upload
+	 * @param targetBucketName the name of the target bucket
+	 * @param targetKeyPrefix  the key prefix to set for the target bucket
+	 * @param recursive   true, if subdirectories shall be copied, too, false otherwise
+	 * @param pause       (not used)
+	 * @return a list of uploaded keys or null, if the operation failed
 	 */
-	public static ArrayList<String> v1UploadDir(AmazonS3 v1S3Client, String dir_path, String bucket_name, String key_prefix,
+	public static ArrayList<String> v1UploadDir(AmazonS3 v1S3Client, String sourceDirPath, String targetBucketName, String targetKeyPrefix,
 			boolean recursive, boolean pause) {
 		ArrayList<String> response = new ArrayList<String>();
 		TransferManager xfer_mgr = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
-		AmazonS3URI s3uri = new AmazonS3URI(bucket_name);
+		AmazonS3URI s3uri = new AmazonS3URI(targetBucketName);
 		String bucket = s3uri.getBucket();
 		try {
-			MultipleFileUpload xfer = xfer_mgr.uploadDirectory(bucket, key_prefix, new File(dir_path), recursive);
+			MultipleFileUpload xfer = xfer_mgr.uploadDirectory(bucket, targetKeyPrefix, new File(sourceDirPath), recursive);
 			// loop with Transfer.isDone()
 			// or block with Transfer.waitForCompletion()
 
@@ -335,11 +335,11 @@ public class S3Ops {
 			xfer_mgr.shutdownNow(false);
 
 			// check files in s3 & add to response
-			List<S3ObjectSummary> list = v1S3Client.listObjectsV2(bucket, key_prefix).getObjectSummaries();
+			List<S3ObjectSummary> list = v1S3Client.listObjectsV2(bucket, targetKeyPrefix).getObjectSummaries();
 			for (S3ObjectSummary o : list) {
 				response.add(o.getKey());
 			}
-			logger.info("Copied dir://{} to {}/{}", dir_path, bucket_name, key_prefix);
+			logger.info("Copied dir://{} to {}/{}", sourceDirPath, targetBucketName, targetKeyPrefix);
 
 			return response;
 		} catch (AmazonServiceException e) {
@@ -350,17 +350,17 @@ public class S3Ops {
 
 
 	/**
-	 * Upload File to S3 using Multipart-Uploads
+	 * Upload file to S3 using multipart uploads
 	 * 
 	 * The source file is uploaded to a S3 storage. The target key in the storage is build as:
-	 * s3://<bucket name>/ <target key prefix>/<source file name>
+	 * s3://&lt;bucket name&gt;/&lt;target key prefix&gt;/&lt;source file name&gt;
 	 * 
-	 * @param v1S3Client  AmazonS3 v1 client
+	 * @param v1S3Client  the S3 V1 client to use
 	 * @param sourceFilePath The path of source file
 	 * @param targetBucketName The S3 bucket to store the file
 	 * @param targetKeyPrefix The key in the bucket to store the file
-	 * @param pause       Boolean
-	 * @return True/False
+	 * @param pause       (not used)
+	 * @return a single-element list of keys uploaded or null, if the operation failed
 	 */
 	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName, String targetKeyPrefix,
 			boolean pause) {
@@ -401,34 +401,33 @@ public class S3Ops {
 	}
 
 	/**
-	 * Upload Files or Dirs to S3 using Multipart-Uploads
+	 * Upload files or directories to S3 using Multipart-Uploads
 	 * 
-	 * @param v1S3Client  AmazonS3 v1 client
-	 * @param file_path   String
-	 * @param bucket_name String
-	 * @param key_prefix  String
-	 * @param pause       Boolean
-	 * @return True/False
+	 * @param v1S3Client  the S3 V1 client to use
+	 * @param sourcePath    path to the file or directory to upload
+	 * @param targetBucketName the name of the target bucket
+	 * @param targetPathPrefix  the key prefix to set for the target bucket
+	 * @param pause       (not used)
+	 * @return a list of uploaded keys or null, if the operation failed
 	 */
-	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String sourcePath, String bucket_name, String targetPathPrefix,
+	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String sourcePath, String targetBucketName, String targetPathPrefix,
 			boolean pause) {
 
 		String s3Prefix = "s3://";
-		String separator = "/";
-		if (!bucket_name.startsWith(s3Prefix)) {
-			bucket_name = s3Prefix + bucket_name;
+		if (!targetBucketName.startsWith(s3Prefix)) {
+			targetBucketName = s3Prefix + targetBucketName;
 		}
 		File f = new File(sourcePath);
 
 		ArrayList<String> response;
 		if (f.isFile()) {
-			response = v1UploadFile(v1S3Client, sourcePath, bucket_name, targetPathPrefix, false);
+			response = v1UploadFile(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, false);
 			if (null != response) {
 				return response;
 			}
 		}
 		if (f.isDirectory()) {
-			response = v1UploadDir(v1S3Client, sourcePath, bucket_name, targetPathPrefix, true, false);
+			response = v1UploadDir(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, true, false);
 			if (null != response) {
 				return response;
 			}
@@ -437,14 +436,14 @@ public class S3Ops {
 	}
 
 	/**
-	 * Copy Objects between S3-Buckets or inside S3-Buckets
+	 * Copy objects between S3 buckets or inside S3 buckets
 	 * 
-	 * @param s3Client
-	 * @param sourceBucketName
-	 * @param sourceObjectKeyPrefix
-	 * @param destBucketName
-	 * @param destObjectPrefix
-	 * @return true/false
+	 * @param s3Client the S3 V1 client to use
+	 * @param sourceBucketName the bucket to copy from
+	 * @param sourceObjectKeyPrefix the object key to copy from
+	 * @param destBucketName the bucket to copy to
+	 * @param destObjectPrefix the object key to copy to 
+	 * @return a list of copied keys or null, if the operation failed
 	 */
 	public static ArrayList<String> v1Copy(AmazonS3 s3Client, String sourceBucketName, String sourceObjectKeyPrefix,
 			String destBucketName, String destObjectPrefix) {
@@ -484,13 +483,18 @@ public class S3Ops {
 	}
 
 	/**
-	 * Create a folder like object in repository.
+	 * Create a folder-like object in repository. This method passes low-level S3 exceptions on.
 	 * 
-	 * @param client AmazonS3 client
-	 * @param bucketName Bucket name
-	 * @param folderName Folder name
+	 * @param client the S3 V2 client to use
+	 * @param bucketName the name of the bucket to create the folder in
+	 * @param folderName the name of the folder to create
+	 * @throws SdkException Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for catch all scenarios.
+     * @throws SdkClientException If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws S3Exception Base class for all service exceptions. Unknown exceptions will be thrown as an instance of this type.
+     * @throws AwsServiceException if an error in the S3 object storage service occurs
 	 */
-	public static void createFolder(S3Client client, String bucketName, String folderName) {
+	public static void createFolder(S3Client client, String bucketName, String folderName) 
+			throws SdkException, SdkClientException, S3Exception, AwsServiceException {
 	    // create meta-data for your folder and set content-length to 0
 		String key = folderName;
 		if (!key.endsWith("/")) {
@@ -503,16 +507,13 @@ public class S3Ops {
 		try {
 			client.putObject(putRequest, RequestBody.empty());
 		} catch (S3Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		} catch (AwsServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		} catch (SdkClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		}
 	}
@@ -521,9 +522,9 @@ public class S3Ops {
 	 * Delete object(s) in repository.
 	 * The prefix is either an object key or like a directory path 
 	 * 
-	 * @param client AmazonS3 client
-	 * @param bucketName Bucket name
-	 * @param prefix Object prefix
+	 * @param client the S3 V1 client to use
+	 * @param bucketName the name of the bucket to delete the object(s) in
+	 * @param prefix the object prefix
 	 */
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
 	    try {
@@ -542,12 +543,10 @@ public class S3Ops {
 			DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest( bucketName ).withKeys( keysList );
 			client.deleteObjects(deleteObjectsRequest);
 		} catch (AmazonServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		} catch (com.amazonaws.SdkClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		}
 	}
@@ -555,22 +554,20 @@ public class S3Ops {
 	/**
 	 * Get the object length (file size)
 	 * 
-	 * @param client AmazonS3 client
-	 * @param bucketName Bucket name
-	 * @param key Object key
-	 * @return Length of object
+	 * @param client the S3 V1 client to use
+	 * @param bucketName the name of the bucket, in which the object is stored
+	 * @param key the object key
+	 * @return the length of the object or zero, if no object metadata could be retrieved
 	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
 		ObjectMetadata md;
 		try {
 			md = client.getObjectMetadata(bucketName, key);
 		} catch (AmazonServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		} catch (com.amazonaws.SdkClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 			throw e;
 		}
 		if (md != null) {

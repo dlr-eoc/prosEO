@@ -3,11 +3,11 @@
 
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
-		<artifactId>api</artifactId>
-		<version>0.5.1</version>
+		<artifactId>proseo-api</artifactId>
+		<version>0.6.0</version>
 	</parent>
 
-	<artifactId>prip</artifactId>
+	<artifactId>proseo-api-prip</artifactId>
 	<name>prosEO Production Interface Delivery Point API</name>
 	<description>prosEO API conforming to ESA's Production Interface Delivery Point API (ESA-EOPG-EOPGC-TN-7)</description>
 
@@ -19,7 +19,7 @@
 
 	<properties>
 		<olingo.version>4.7.1</olingo.version>
-		<module.version>0.5.1</module.version>
+		<module.version>0.6.0</module.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
 		<raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
@@ -27,6 +27,11 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -38,6 +43,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.projectreactor</groupId>
@@ -69,46 +78,45 @@
 			<artifactId>proseo-interfaces</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>de.dlr.proseo</groupId>
-            <artifactId>proseo-model</artifactId>
-            <version>${project.version}</version>
-            <classifier>rest</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>software.amazon.awssdk</groupId>
-                    <artifactId>s3</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-s3</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.alluxio</groupId>
-                    <artifactId>alluxio-core-client-fs</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.glassfish.jersey.bundles</groupId>
-                    <artifactId>jaxrs-ri</artifactId>
-                </exclusion>
+		<dependency>
+			<groupId>de.dlr.proseo</groupId>
+			<artifactId>proseo-model</artifactId>
+			<version>${project.version}</version>
+			<classifier>rest</classifier>
+			<exclusions>
+				<exclusion>
+					<groupId>javax</groupId>
+					<artifactId>javaee-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.glassfish.jersey.bundles</groupId>
+					<artifactId>jaxrs-ri</artifactId>
+				</exclusion>
+                <!-- The SecurityService in the model is not used -->
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                    <artifactId>spring-boot-starter-security</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+                <!-- The PRIP has no direct database access -->
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-data-jpa</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>mysql</groupId>
+					<artifactId>mysql-connector-java</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.phoenixnap.oss</groupId>
+			<artifactId>springmvc-raml-plugin</artifactId>
+            <type>maven-plugin</type>
+		</dependency>
 	</dependencies>
 
 	<build>

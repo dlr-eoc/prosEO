@@ -59,7 +59,7 @@ public enum Messages {
 	ORDER_REQ_DAY_NOT_SET			(false, MessageType.E, "Processing order '%s' requested calendar day not set"),
 	ORDER_REQ_TIMESLICE_NOT_SET		(false, MessageType.E, "Processing order '%s' requested time slice not set"),
 	ORDER_REQ_ORBIT_OR_TIME_NOT_SET	(false, MessageType.E, "Processing order '%s' requested orbit or start/stop time not set"),
-	ORDERDISP_NO_CONF_PROC			(false, MessageType.E, "OrderDipatcher: no configured processor found for product class '%s'"),
+	ORDERDISP_NO_CONF_PROC			(false, MessageType.E, "OrderDispatcher: no configured processor found for product class '%s'"),
 	ORDER_REQ_CON_PROC_NOT_SET		(false, MessageType.E, "Processing order '%s' requested configured processor not set"),
 	ORDER_REQ_PROD_CLASS_NOT_SET	(false, MessageType.E, "Processing order '%s' requested product class(es) not set"),
 	ORDER_WAIT_FOR_RELEASE			(true, MessageType.I, "Processing order '%s' has state '%s', wait for release"),
@@ -117,6 +117,11 @@ public enum Messages {
 	KUBECONFIG_JOB_NOT_FOUND		(false, MessageType.E, "Job '%s' not found, is it already finished?"),
 	KUBEJOB_CREATED					(true, MessageType.I, "Kubernetes job '%s/%s' created"),
 	KUBEJOB_FINISHED				(true, MessageType.I, "Kubernetes job '%s/%s' finished"),
+	KUBERNETES_NOT_CONNECTED        (false, MessageType.E, "Kubernetes configuration %s not connected"),
+	JOB_STEP_NOT_FOUND              (false, MessageType.E, "No job step found for id %d"),
+	CONFIG_PROC_DISABLED            (false, MessageType.W, "Configured processor %s is disabled"), 
+	PLANNING_CHECK_COMPLETE			(true, MessageType.I, "Planning check complete for product with ID %d"),
+	PLANNING_CHECK_FAILED			(false, MessageType.E, "Planning check failed for product with ID %d (cause: %s)"),
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;

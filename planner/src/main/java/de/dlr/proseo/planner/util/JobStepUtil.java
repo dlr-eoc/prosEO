@@ -12,14 +12,11 @@ import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.ProcessingException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -27,14 +24,13 @@ import org.springframework.web.client.RestTemplate;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
-import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.dao.ProductRepository;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -74,6 +70,19 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
+    public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
+    	String query = "select js from JobStep js " + 
+        		" inner join Job j on js.job.id = j.id " + 
+        		" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
+        		" inner join Mission m on o.mission.id = m.id " + 
+        		" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+    	// em.createNativeQ
+        return em.createQuery(query,
+          JobStep.class)
+        		.setMaxResults(limit)
+        		.getResultList();
+    }
+    
 	/**
 	 * Search for not satisfied product queries referencing product class on processing facility and check which are now satisfied. 
 	 * Change state of job step to READY if all queries are now satisfied. 
@@ -142,6 +151,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_SUSPENDED;
 				break;
 			case RUNNING:
@@ -160,6 +170,7 @@ public class JobStepUtil {
 					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
 					RepositoryService.getJobStepRepository().save(js);
+					em.merge(js);
 				} else {
 					answer = Messages.JOBSTEP_ALREADY_RUNNING;
 				}
@@ -196,6 +207,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_CANCELED;
 				break;
 			case RUNNING:
@@ -240,12 +252,13 @@ public class JobStepUtil {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
 					collectProducts(jsp, jspList);
-					if (checkProducts(jspList)) {
+					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
-						// 	Dicard this problem and set job step to completed
+						// Discard this problem and set job step to completed
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
+						em.merge(js);
 						answer = Messages.JOBSTEP_RETRIED_COMPLETED;
 						break;
 					}		
@@ -253,6 +266,7 @@ public class JobStepUtil {
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				answer = Messages.JOBSTEP_RETRIED;
 				break;
 			default:
@@ -316,12 +330,12 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
-					deleteJOF(js);
-					js.setJobOrderFilename(null);
 				};
 				// fall through intended
 			case COMPLETED:
 			case FAILED:
+				deleteJOF(js);
+				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
 					js.getOutputProduct().setJobStep(null);
 				}
@@ -365,12 +379,13 @@ public class JobStepUtil {
 				if (js.getOutputProduct() != null) {
 					deleteProduct(js.getOutputProduct());	
 					js.setOutputProduct(null);
-					deleteJOF(js);
-					js.setJobOrderFilename(null);
 				};
+				// Fall through intended
 			case RUNNING:
 			case COMPLETED:
 			case FAILED:
+				deleteJOF(js);
+				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
 					js.getOutputProduct().setJobStep(null);
 				}
@@ -456,6 +471,7 @@ public class JobStepUtil {
 				js.setJobStepState(JobStepState.RUNNING);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
 				Messages.JOBSTEP_STARTED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;
@@ -487,10 +503,14 @@ public class JobStepUtil {
 				logger.trace("Looking for product queries of job step: " + js.getId());
 				for (ProductQuery pq : js.getInputProductQueries()) {
 					if (!pq.isSatisfied()) {
-						if (productQueryService.executeQuery(pq, false, false)) {
-							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
+						if (productQueryService.executeQuery(pq, false)) {
 							RepositoryService.getProductQueryRepository().save(pq);
-							RepositoryService.getProductRepository().save(js.getOutputProduct());
+							for (Product p: pq.getSatisfyingProducts()) {
+								RepositoryService.getProductRepository().save(p);
+							}
+							// The following removed - it is the *input* product queries that matter!
+//							js.getOutputProduct().getSatisfiedProductQueries().add(pq);
+//							RepositoryService.getProductRepository().save(js.getOutputProduct());
 						} else {
 							hasUnsatisfiedInputQueries = true;
 						}
@@ -675,7 +695,7 @@ public class JobStepUtil {
 		if (p != null) {
 			list.add(p);
 			for (Product cp : p.getComponentProducts()) {
-				collectProducts(p, list);
+				collectProducts(cp, list);
 			}
 		}
 	}
@@ -683,26 +703,27 @@ public class JobStepUtil {
 	/**
 	 * Check whether the products of list exists and are already generated
 	 * @param list Product list
+	 * @param pf ProcessingFacility
 	 * @return true if all products are generated
 	 */
 	@Transactional
-    private Boolean checkProducts(List<Product> list) {
+    private Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
 		Boolean answer = true;
 		for (Product p : list) {
-			List<Product> resultList = RepositoryService.getProductRepository()
-				.findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
-					p.getProductClass().getId(),
-					p.getConfiguredProcessor().getId(),
-					p.getSensingStartTime(),
-					p.getSensingStopTime());
-			if (resultList.isEmpty()) {
+			if (p.getProductFile().isEmpty()) {
 				answer = false;
 				break;
 			} else {
-				for (Product rp : resultList) {
-					if (rp.getGenerationTime() == null) {
-						answer = false;
+				Boolean onPF = false;
+				for (ProductFile f : p.getProductFile()) {
+					if (f.getProcessingFacility().equals(pf)) {
+						onPF = true;
+						break;
 					}
+				}
+				if (!onPF) {
+					answer = false;
+					break;
 				}
 			}
 		}

@@ -5,28 +5,22 @@
  */
 package de.dlr.proseo.planner.util;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
-import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.util.JobStepUtil;
 
 /**
  * Handle jobs
@@ -39,10 +33,6 @@ import de.dlr.proseo.planner.util.JobStepUtil;
 public class JobUtil {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(JobUtil.class);
-	/**
-	 * Date time formatter for this class
-	 */
-	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd'_'HHmmssSSSSSS").withZone(ZoneId.of("UTC"));
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -81,18 +71,16 @@ public class JobUtil {
 				// try to suspend job steps not running
 				Boolean allSuspended = true;
 				for (JobStep js : job.getJobSteps()) {
-					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() & allSuspended;
+					allSuspended = UtilService.getJobStepUtil().suspend(js, force).isTrue() && allSuspended;
 				}
 				job.incrementVersion();
+				job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
+				answer = Messages.JOB_HOLD;
 				if (allSuspended) {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
-					RepositoryService.getJobRepository().save(job);
+					job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL); // direct transition to INITIAL not allowed
 					answer = Messages.JOB_SUSPENDED;
-				} else {
-					job.setJobState(de.dlr.proseo.model.Job.JobState.ON_HOLD);
-					RepositoryService.getJobRepository().save(job);
-					answer = Messages.JOB_HOLD;
 				}
+				RepositoryService.getJobRepository().save(job);
 				break;
 			case COMPLETED:
 				answer = Messages.JOB_ALREADY_COMPLETED;
@@ -144,10 +132,10 @@ public class JobUtil {
 					if (!(   js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.INITIAL
 						  || js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.COMPLETED)) {
 						all = false;
-						if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.COMPLETED) {
-							allCompleted = false;
-						}
 						
+					}
+					if (js.getJobStepState() != de.dlr.proseo.model.JobStep.JobStepState.COMPLETED) {
+						allCompleted = false;
 					}
 				}
 				if (all) {
@@ -155,11 +143,13 @@ public class JobUtil {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
 						answer = Messages.JOB_COMPLETED;
 					} else {
 						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
 						answer = Messages.JOB_RETRIED;
 					}
 				} else {

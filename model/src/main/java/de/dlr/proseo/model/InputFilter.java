@@ -29,14 +29,16 @@ public class InputFilter extends PersistentObject {
 	private Map<String, Parameter> filterConditions = new HashMap<>();
 
 	/**
-	 * @return the outputParameters
+	 * Gets the filter conditions
+	 * 
+	 * @return the filter conditions
 	 */
 	public Map<String, Parameter> getFilterConditions() {
 		return filterConditions;
 	}
 
 	/**
-	 * @param outputParameters the outputParameters to set
+	 * @param filterConditions the filter conditions to set
 	 */
 	public void setFilterConditions(Map<String, Parameter> filterConditions) {
 		this.filterConditions = filterConditions;

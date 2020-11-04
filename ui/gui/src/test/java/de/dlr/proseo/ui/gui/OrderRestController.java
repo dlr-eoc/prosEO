@@ -7,24 +7,23 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.joborder.*;
+import de.dlr.proseo.model.rest.model.RestProduct;
 
 
 
 @RestController
 public class OrderRestController {
-	public List<Product> getAllOrders() {
-        List<Product> products = new ArrayList<>();
+	public List<RestProduct> getAllOrders() {
+        List<RestProduct> products = new ArrayList<>();
           
-        Product product1 = new Product();
+        RestProduct product1 = new RestProduct();
    
-        product1.setId(1);
+        product1.setId(1L);
    
           
-        Product product2 = new Product();
-        product1.setEnclosingProduct(product2);
-        product2.setId(2);
+        RestProduct product2 = new RestProduct();
+        product1.setEnclosingProductId(1L);
+        product2.setId(2L);
        
            
         products.add(product1);

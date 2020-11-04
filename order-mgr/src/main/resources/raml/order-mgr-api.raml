@@ -181,6 +181,15 @@ resourceTypes:
     delete:
       description: Delete a mission by ID
       displayName: deleteMissionById
+      queryParameters:
+        force?:
+          type: boolean
+          default: false
+          description: Also delete all configured items for this mission, but no products
+        delete-products?:
+          type: boolean
+          default: false
+          description: Also delete all products for this mission (requires "force")
       responses:
         204:
 /orbits:

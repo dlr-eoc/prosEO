@@ -1,3 +1,6 @@
+/**
+ * Conf.java
+ */
 package de.dlr.proseo.model.joborder;
 
 import java.util.ArrayList;
@@ -9,201 +12,252 @@ import org.w3c.dom.Node;
 
 
 /**
- * @author melchinger
- *
- * IPF_Conf information
+ * Representation of the Ipf_Conf Job Order element
  * 
  * For details see 
  * Generic IPF Interface Specification
  * issue 1 revision 8 - 03/08/2009
  * MMFI-GSEG-EOPG-TN-07-0003
  *  
+ * @author melchinger
  */
 public class Conf {
-	/**
-	 * 
-	 */
+	/** Job Order element Processor_Name */
 	private String processorName;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Version */
 	private String version;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Stdout_Log_Level */
 	private String stdoutLogLevel;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Stderr_Log_Level */
 	private String stderrLogLevel;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Test */
 	private String test;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Breakpoint_Enable */
 	private String breakpointEnable;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Processing_Station */
 	private String processingStation;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Acquisition_Station */
 	private String acquisitionStation;
-	/**
-	 * 
-	 */
+	
+	/** Job Order element Sensing_Time */
 	private SensingTime sensingTime;
+	
+	/** Job Order elements Config_Files / Config_File_Name */
+	private List<String> configFileNames = new ArrayList<String>(); 
+
+	/** Job Order elements Dynamic_Processing_Parameters / Processing_Parameter */
+	private List<ProcessingParameter> dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
+	
 	/**
+	 * Gets the Processor_Name element
 	 * 
-	 */
-	private List<String> configFileNames; 
-	/**
-	 * 
-	 */
-	private List<ProcessingParameter> dynamicProcessingParameters;
-	/**
-	 * @return the processorName
+	 * @return the processor name
 	 */
 	public String getProcessorName() {
 		return processorName;
 	}
+	
 	/**
-	 * @param processorName the processorName to set
+	 * Sets the Processor_Name element
+	 * 
+	 * @param processorName the processor name to set
 	 */
 	public void setProcessorName(String processorName) {
 		this.processorName = processorName;
 	}
+	
 	/**
+	 * Gets the Version element
+	 * 
 	 * @return the version
 	 */
 	public String getVersion() {
 		return version;
 	}
+	
 	/**
+	 * Sets the Version element
+	 * 
 	 * @param version the version to set
 	 */
 	public void setVersion(String version) {
 		this.version = version;
 	}
+	
 	/**
-	 * @return the stdoutLogLevel
+	 * Gets the Stdout_Log_Level element
+	 * 
+	 * @return the log level for stdout
 	 */
 	public String getStdoutLogLevel() {
 		return stdoutLogLevel;
 	}
+	
 	/**
-	 * @param stdoutLogLevel the stdoutLogLevel to set
+	 * Sets the Stdout_Log_Level element
+	 * 
+	 * @param stdoutLogLevel the log level for stdout to set
 	 */
 	public void setStdoutLogLevel(String stdoutLogLevel) {
 		this.stdoutLogLevel = stdoutLogLevel;
 	}
+	
 	/**
-	 * @return the stderrLogLevel
+	 * Gets the Stderr_Log_Level element
+	 * 
+	 * @return the log level for stderr
 	 */
 	public String getStderrLogLevel() {
 		return stderrLogLevel;
 	}
+	
 	/**
-	 * @param stderrLogLevel the stderrLogLevel to set
+	 * Sets the Stderr_Log_Level element
+	 * 
+	 * @param stderrLogLevel the log level for stderr to set
 	 */
 	public void setStderrLogLevel(String stderrLogLevel) {
 		this.stderrLogLevel = stderrLogLevel;
 	}
+	
 	/**
-	 * @return the test
+	 * Gets the Test element
+	 * 
+	 * @return the test flag
 	 */
 	public String getTest() {
 		return test;
 	}
 	/**
-	 * @param test the test to set
+	 * Sets the Test element
+	 * 
+	 * @param test the test flag to set ("true" or "false")
 	 */
 	public void setTest(String test) {
 		this.test = test;
 	}
 	/**
-	 * @return the breakpointEnable
+	 * Gets the Breakpoint_Enable element
+	 * 
+	 * @return the breakpoint enablement flag
 	 */
 	public String getBreakpointEnable() {
 		return breakpointEnable;
 	}
+	
 	/**
-	 * @param breakpointEnable the breakpointEnable to set
+	 * Sets the Breakpoint_Enable element
+	 * 
+	 * @param breakpointEnable the breakpoint enablement flag to set ("true" or "false")
 	 */
 	public void setBreakpointEnable(String breakpointEnable) {
 		this.breakpointEnable = breakpointEnable;
 	}
+	
 	/**
-	 * @return the processingStation
+	 * Gets the Processing_Station element
+	 * 
+	 * @return the processing station
 	 */
 	public String getProcessingStation() {
 		return processingStation;
 	}
+	
 	/**
-	 * @param processingStation the processingStation to set
+	 * Sets the Processing_Station element
+	 * 
+	 * @param processingStation the processing station to set
 	 */
 	public void setProcessingStation(String processingStation) {
 		this.processingStation = processingStation;
 	}
+	
 	/**
-	 * @return the acquisitionStation
+	 * Gets the Acquisition_Station element
+	 * 
+	 * @return the acquisition station
 	 */
 	public String getAcquisitionStation() {
 		return acquisitionStation;
 	}
+	
 	/**
-	 * @param acquisitionStation the acquisitionStation to set
+	 * Sets the Acquisition_Station element
+	 * 
+	 * @param acquisitionStation the acquisition station to set
 	 */
 	public void setAcquisitionStation(String acquisitionStation) {
 		this.acquisitionStation = acquisitionStation;
 	}
+	
 	/**
-	 * @return the sensingTime
+	 * Gets the Sensing_Time element
+	 * 
+	 * @return the sensing time
 	 */
 	public SensingTime getSensingTime() {
 		return sensingTime;
 	}
+	
 	/**
-	 * @param sensingTime the sensingTime to set
+	 * Sets the Sensing_Time element
+	 * 
+	 * @param sensingTime the sensing time to set
 	 */
 	public void setSensingTime(SensingTime sensingTime) {
 		this.sensingTime = sensingTime;
 	}
+	
 	/**
-	 * @return the configFileNames
+	 * Gets the Config_File_Name values for the Config_Files element
+	 * 
+	 * @return the configuration file names
 	 */
 	public List<String> getConfigFileNames() {
 		return configFileNames;
 	}
+	
 	/**
-	 * @param configFileNames the configFileNames to set
+	 * Sets the Config_File_Name values for the Config_Files element
+	 * 
+	 * @param configFileNames the configuration file names to set
 	 */
 	public void setConfigFileNames(List<String> configFileNames) {
 		this.configFileNames = configFileNames;
 	}
+	
 	/**
-	 * @return the dynamicProcessingParameters
+	 * Gets the Processing_Parameter values for the Dynamic_Processing_Parameters element
+	 * 
+	 * @return the dynamic processing parameters
 	 */
 	public List<ProcessingParameter> getDynamicProcessingParameters() {
 		return dynamicProcessingParameters;
 	}
 	
-	public Conf() {
-		this.configFileNames = new ArrayList<String>();
-		this.dynamicProcessingParameters = new ArrayList<ProcessingParameter>();
-	}
 	/**
-	 * @param processorName
-	 * @param version
-	 * @param stdoutLogLevel
-	 * @param stderrLogLevel
-	 * @param test
-	 * @param breakpointEnable
-	 * @param processingStation
-	 * @param acquisitionStation
+	 * No-argument constructor, initializes the configuration file names and the dynamic processing parameters
+	 */
+	public Conf() {	}
+	
+	/**
+	 * Constructor with arguments for all scalar attributes
+	 * 
+	 * @param processorName the processor name to set
+	 * @param version the version to set
+	 * @param stdoutLogLevel the log level for stdout to set
+	 * @param stderrLogLevel the log level for stderr to set
+	 * @param test the test flag to set ("true" or "false")
+	 * @param breakpointEnable the breakpoint enablement flag to set ("true" or "false")
+	 * @param processingStation the processing station to set
+	 * @param acquisitionStation the acquisition station to set
 	 */
 	public Conf(String processorName, String version, String stdoutLogLevel, String stderrLogLevel, String test,
 			String breakpointEnable, String processingStation, String acquisitionStation) {
@@ -222,9 +276,10 @@ public class Conf {
 	
 	/**
 	 * Add contents of this to XML node parentElement. Use doc to create elements
-	 * @param doc The Document
-	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * 
+	 * @param doc the Document to use
+	 * @param parentElement the node to add this as child to
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 
@@ -288,6 +343,7 @@ public class Conf {
 	
 	/**
 	 * Read info from XML sub tree
+	 * 
 	 * @param thisNode XML node containing information
 	 */
 	public void read(Node thisNode) {

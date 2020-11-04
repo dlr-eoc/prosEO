@@ -9,9 +9,11 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -129,7 +131,7 @@ public class OrderCommandRunner {
 		try {
 			List<?> resultList = null;
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					URI_PATH_ORDERS + "?identifier=" + orderIdentifier,
+					URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(orderIdentifier, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -228,7 +230,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getIdentifier() || 0 == restOrder.getIdentifier().length()) {
 			System.out.print(PROMPT_IDENTIFIER);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -255,7 +257,7 @@ public class OrderCommandRunner {
 				&& (null == restOrder.getSliceDuration() || 0 == restOrder.getSliceDuration())) {
 			System.out.print(PROMPT_SLICE_DURATION);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -271,26 +273,26 @@ public class OrderCommandRunner {
 			while (null == restOrder.getStartTime()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrder.setStartTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			}
 			while (null == restOrder.getStopTime()) {
 				System.out.print(PROMPT_STOP_TIME);
 				String response = System.console().readLine();
-				if ("".equals(response)) {
+				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
 				}
 				try {
 					restOrder.setStopTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
-				} catch (DateTimeParseException e) {
+				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			} 
@@ -339,7 +341,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getProcessingMode() || 0 == restOrder.getProcessingMode().length()) {
 			System.out.print(PROMPT_PROCESSING_MODE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -349,7 +351,7 @@ public class OrderCommandRunner {
 		if (null == restOrder.getOutputFileClass() || 0 == restOrder.getOutputFileClass().length()) {
 			System.out.print(PROMPT_FILE_CLASS);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -359,7 +361,7 @@ public class OrderCommandRunner {
 		if (restOrder.getRequestedProductClasses().isEmpty()) {
 			System.out.print(PROMPT_PRODUCT_CLASSES);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -421,14 +423,19 @@ public class OrderCommandRunner {
 		/* Check whether order ID is given (overrides --from and --to options) or --from and/or --to parameters are set */
 		if (showCommand.getParameters().isEmpty()) {
 			for (ParsedOption option: showCommand.getOptions()) {
-				if ("from".equals(option.getName())) {
-					requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
-				} else if ("to".equals(option.getName())) {
-					requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+				try {
+					if ("from".equals(option.getName())) {
+						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					} else if ("to".equals(option.getName())) {
+						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					}
+				} catch (DateTimeException e) {
+					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
+					return;
 				}
 			}
 		} else {
-			requestURI += "&identifier=" + showCommand.getParameters().get(0).getValue();  // only one parameter expected
+			requestURI += "&identifier=" + URLEncoder.encode(showCommand.getParameters().get(0).getValue(), Charset.defaultCharset());  // only one parameter expected
 		}
 		
 		/* Get the order information from the Order Manager */
@@ -536,7 +543,7 @@ public class OrderCommandRunner {
 				// Read order by user-defined identifier
 				List<?> resultList = null;
 				resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-						URI_PATH_ORDERS + "?identifier=" + updatedOrder.getIdentifier(),
+						URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(updatedOrder.getIdentifier(), Charset.defaultCharset()),
 						List.class, loginManager.getUser(), loginManager.getPassword());
 				if (resultList.isEmpty()) {
 					throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -645,6 +652,9 @@ public class OrderCommandRunner {
 			if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
@@ -825,7 +835,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_ORDER_OR_FACILITY_NOT_FOUND, restOrder.getIdentifier(), processingFacility);
+				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, processingFacility);
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
 				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());

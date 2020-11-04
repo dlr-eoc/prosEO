@@ -59,7 +59,6 @@ public class SampleProcessor {
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILES = "Invalid number of output files: {} (1 - 10 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_OUTPUT_FILE_TYPES = "Invalid number of output file types: {} (exactly 1 expected)";
 	private static final String MSG_INVALID_OUTPUT_FILE_TYPE = "Invalid output file type: {}";
-	private static final String MSG_INVALID_NUMBER_OF_INPUT_FILES = "Invalid number of input files for output file type {}: {} (exactly 3 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_INPUT_FILE_TYPES = "Invalid number of input file types: {} (exactly 1 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES = "Invalid number of input file names: {} (exactly 1 expected)";
 	private static final String MSG_INVALID_NUMBER_OF_TASK_NAMES = "Invalid number of task names: {} (exactly 1 expected)";
@@ -84,7 +83,6 @@ public class SampleProcessor {
 	private static final String JOF_TAG_FILE_NAME = "File_Name";
 	private static final String JOF_TAG_FILE_TYPE = "File_Type";
 	private static final String JOF_TAG_FILE_NAME_TYPE = "File_Name_Type";
-	private static final String JOF_TAG_FILE_VERSION = "File_Type";
 	private static final String JOF_TAG_TASK_NAME = "Task_Name";
 	private static final String JOF_TAG_CONFIG_FILES = "Config_Files";
 	private static final String JOF_TAG_CONFIG_FILE_NAME = "Conf_File_Name";
@@ -93,11 +91,9 @@ public class SampleProcessor {
 	private static final String CONF_TAG_PARAM = "PARAM";
 	private static final String CONF_ATTR_NAME = "name";
 	private static final String CONF_ATTR_VALUE_TASK_NAME = "task_name";
-	private static final String CONF_ATTR_VALUE_VERSION = "version";
 	
 	// Allowed product types and requested input
 	private static final String STATIC_INPUT_CONFIG = "processing_configuration";
-	private static final String DYNAMIC_INPUT_AUX = "AUX_IERS_B";
 	private static final String PRODUCT_TYPE_L0 = "L0________";
 	private static final String PRODUCT_TYPE_L1B = "L1B_______";
 	private static final String PRODUCT_TYPE_L1B_1 = "L1B_PART1";
@@ -247,7 +243,7 @@ public class SampleProcessor {
 				return false;
 			}
 			NodeList inputFileNames = ((Element) inputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME);
-			if (1 != inputFileNames.getLength()) {
+			if (1 > inputFileNames.getLength()) {
 				logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES, inputFileNames.getLength());
 				return false;
 			}
@@ -285,7 +281,7 @@ public class SampleProcessor {
 		}
 
 		NodeList configFileNames = ((Element) configurationFiles.item(0)).getElementsByTagName(JOF_TAG_CONFIG_FILE_NAME);
-		if (1 != configFileNames.getLength()) {
+		if (1 > configFileNames.getLength()) {
 			logger.error(MSG_INVALID_NUMBER_OF_CONFIGURATION_FILE_NAMES, configFileNames.getLength());
 			return false;
 		}
@@ -380,7 +376,7 @@ public class SampleProcessor {
 				return null;
 			}
 			NodeList inputFileNames = ((Element) inputFiles.item(i)).getElementsByTagName(JOF_TAG_FILE_NAME);
-			if (1 != inputFileNames.getLength()) {
+			if (1 > inputFileNames.getLength()) {
 				logger.error(MSG_INVALID_NUMBER_OF_INPUT_FILE_NAMES, inputFileNames.getLength());
 				return null;
 			}
@@ -563,8 +559,7 @@ public class SampleProcessor {
 				i--;
 			}
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// Never mind ...
 		}
 		
 		// Process input product to output product

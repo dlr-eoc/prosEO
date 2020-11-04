@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.dao.GroupMemberRepository;
 import de.dlr.proseo.usermgr.dao.GroupRepository;
 import de.dlr.proseo.usermgr.dao.UserRepository;
@@ -65,9 +66,12 @@ public class GroupManager {
 	private static final int MSG_ID_GROUP_MEMBER_ADDED = 2790;
 //	private static final int MSG_ID_FREE = 2791;
 	private static final int MSG_ID_GROUP_MEMBER_REMOVED = 2792;
+	
+	// The following IDs identical to UserManager
 	private static final int MSG_ID_USERNAME_MISSING = 2756;
 	private static final int MSG_ID_USERNAME_NOT_FOUND = 2757;
 	private static final int MSG_ID_DUPLICATE_GROUP = 2758;
+	private static final int MSG_ID_ILLEGAL_AUTHORITY = 2769;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
@@ -85,6 +89,7 @@ public class GroupManager {
 	private static final String MSG_USERNAME_MISSING = "(E%d) User name not set";
 	private static final String MSG_USERNAME_NOT_FOUND = "(E%d) User %s not found";
 	private static final String MSG_DUPLICATE_GROUP = "(E%d) Duplicate user group %s";
+	private static final String MSG_ILLEGAL_AUTHORITY = "(E%d) Illegal authority value %s";
 	
 	private static final String MSG_GROUP_LIST_RETRIEVED = "(I%d) User(s) for mission %s retrieved";
 	private static final String MSG_GROUP_RETRIEVED = "(I%d) User group %s retrieved";
@@ -212,7 +217,7 @@ public class GroupManager {
 		if (null == restGroup) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_MISSING, MSG_ID_GROUP_MISSING));
 		}
-		if (null == restGroup.getGroupname() || "".equals(restGroup.getGroupname())) {
+		if (null == restGroup.getGroupname() || restGroup.getGroupname().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_GROUPNAME_MISSING, MSG_ID_GROUPNAME_MISSING));
 		}
 		
@@ -241,7 +246,7 @@ public class GroupManager {
 		if (logger.isTraceEnabled()) logger.trace(">>> getGroups({}, {})", mission, groupName);
 		
 		// Check parameter
-		if (null == mission || "".equals(mission)) {
+		if (null == mission || mission.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_MISSION_MISSING, MSG_ID_MISSION_MISSING));
 		}
 		
@@ -325,7 +330,7 @@ public class GroupManager {
 		// Test whether the deletion was successful
 		modelGroup = groupRepository.findById(id);
 		
-		if (null != modelGroup) {
+		if (!modelGroup.isEmpty()) {
 			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 		}
 		
@@ -395,6 +400,11 @@ public class GroupManager {
 			}
 			if (authorityChanged) {
 				// This authority was added
+				try {
+					UserRole.asRole(restAuthority);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+				}
 				userChanged = true;
 				GroupAuthority newAuthority = new GroupAuthority();
 				newAuthority.setAuthority(restAuthority);
@@ -470,7 +480,7 @@ public class GroupManager {
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
 		}
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		
@@ -524,7 +534,7 @@ public class GroupManager {
 		if (null == id || 0 == id) {
 			throw new IllegalArgumentException(logError(MSG_GROUP_ID_MISSING, MSG_ID_GROUP_ID_MISSING));
 		}
-		if (null == username || "".equals(username)) {
+		if (null == username || username.isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
 		}
 		

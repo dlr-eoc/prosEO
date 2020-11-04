@@ -9,8 +9,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 
 import org.apache.commons.io.IOUtils;
@@ -18,6 +18,7 @@ import org.apache.http.Header;
 import org.apache.http.auth.AUTH;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.AuthSchemes;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -57,6 +58,10 @@ public class ServiceConnection {
 	@Autowired
 	private RestTemplateBuilder rtb;
 	
+	/** Service configuration parameters */
+	@Autowired
+	private ServiceConfiguration config;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ServiceConnection.class);
 	
@@ -79,8 +84,10 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
-			String requestUrl = serviceUrl + requestPath;
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -88,7 +95,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -131,8 +138,10 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
-			RequestEntity<Void> requestEntity = RequestEntity.put(new URI(serviceUrl + requestPath)).build();
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
+			RequestEntity<Void> requestEntity = RequestEntity.put(URI.create(serviceUrl + requestPath)).build();
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -140,7 +149,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -185,8 +194,10 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<T> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
-			String requestUrl = serviceUrl + requestPath;
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
@@ -194,7 +205,7 @@ public class ServiceConnection {
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
 			throw HttpClientErrorException.create(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"), e.getResponseHeaders(), e.getResponseBodyAsByteArray(), null);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -243,9 +254,10 @@ public class ServiceConnection {
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_ABSENT);
 		HttpClient httpclient = HttpClientBuilder.create().build();
 		HttpPatch req = new HttpPatch();
+		req.setConfig(RequestConfig.custom().setConnectTimeout(config.getHttpTimeout().intValue()).build());
 		try {
-			req.setURI(new URI(serviceUrl + requestPath));
-		} catch (URISyntaxException e) {
+			req.setURI(URI.create(serviceUrl + requestPath));
+		} catch (IllegalArgumentException e) {
 			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);
@@ -264,41 +276,49 @@ public class ServiceConnection {
 		// Execute the HTTP request
 		try {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with PATCH", serviceUrl + requestPath);
-			try {
-				String responseContent =  httpclient.execute(req, httpResponse -> {
-					int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
-					Header warningHeader = httpResponse.getFirstHeader("Warning");
-					String warningMessage = (null == warningHeader ? "no message" : warningHeader.getValue());
-					if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-						throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
-					} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
-						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-								httpStatusCode, reasonPhrase, warningMessage));
-						throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
-					} else if (300 <= httpStatusCode){
-						String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
-						if (null != httpResponse.getEntity())
-							httpResponse.getEntity().getContent().close();
-						logger.error(uiMsg(MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
-						throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
-					}
-					return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-				});
-				// Convert Json response to object of requested class
-				return mapper.readValue(responseContent, clazz);
-			} catch (Exception e) {
-				throw e;
-			}
+			
+			String responseContent =  httpclient.execute(req, httpResponse -> {
+				int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
+				Header warningHeader = httpResponse.getFirstHeader("Warning");
+				String warningMessage = (null == warningHeader ? "no message" : warningHeader.getValue());
+				if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
+					throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
+				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
+					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
+							httpStatusCode, reasonPhrase, warningMessage));
+					throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
+				} else if (HttpStatus.NOT_MODIFIED.value() == httpStatusCode) {
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.info(uiMsg(MSG_ID_NOT_MODIFIED));
+					throw new RestClientResponseException(warningMessage, httpStatusCode, 
+							HttpStatus.NOT_MODIFIED.getReasonPhrase(), null, null, null);
+				} else if (300 <= httpStatusCode){
+					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
+					if (null != httpResponse.getEntity())
+						httpResponse.getEntity().getContent().close();
+					logger.error(uiMsg(MSG_ID_HTTP_REQUEST_FAILED, reasonPhrase));
+					throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), reasonPhrase);
+				}
+				return IOUtils.toString(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8);
+			});
+			
+			// Convert Json response to object of requested class
+			return mapper.readValue(responseContent, clazz);
+			
 		} catch (IOException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
+		} catch (RestClientResponseException e) {
+			// already logged
+			throw e;
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw new RuntimeException(e);
@@ -320,11 +340,13 @@ public class ServiceConnection {
 		// Attempt connection to service
 		ResponseEntity<Object> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == username ? rtb.build() : rtb.basicAuthentication(username, password).build() );
-			String requestUrl = serviceUrl + requestPath;
+			RestTemplate restTemplate = ( null == username ? rtb : rtb.basicAuthentication(username, password) )
+					.setReadTimeout(Duration.ofSeconds(config.getHttpTimeout()))
+					.build();
+			URI requestUrl = URI.create(serviceUrl + requestPath);
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with DELETE", requestUrl);
 			//restTemplate.delete(requestUrl);
-			entity = restTemplate.exchange(new URI(requestUrl), HttpMethod.DELETE, null, Object.class);
+			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = e.getResponseHeaders().getFirst("Warning");
 			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
@@ -332,13 +354,13 @@ public class ServiceConnection {
 			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username), e);
+			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
 			throw new RestClientException(message, e);
-		} catch (URISyntaxException e) {
+		} catch (IllegalArgumentException e) {
 			String message = uiMsg(MSG_ID_INVALID_URL, serviceUrl + requestPath, e.getMessage());
 			logger.error(message);
 			throw new RuntimeException(message, e);

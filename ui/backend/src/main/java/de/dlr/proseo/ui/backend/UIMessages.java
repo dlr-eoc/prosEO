@@ -31,6 +31,7 @@ public class UIMessages {
 	public static final int MSG_ID_INVALID_TIME = 2805;
 	public static final int MSG_ID_EXCEPTION = 2806;
 	public static final int MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION = 2807;
+	public static final int MSG_ID_NOT_MODIFIED = 2808;
 	public static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	// Service connection
@@ -49,6 +50,9 @@ public class UIMessages {
 	public static final int MSG_ID_LOGIN_CANCELLED = 2824;
 	public static final int MSG_ID_MISSION_NOT_FOUND = 2825;
 	public static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 2826;
+	public static final int MSG_ID_INSUFFICIENT_CREDENTIALS = 2827;
+	public static final int MSG_ID_LOGIN_WITHOUT_MISSION_FAILED = 2828;
+	public static final int MSG_ID_CLI_NOT_AUTHORIZED = 2829;
 	
 	// CLIUtil
 	public static final int MSG_ID_INVALID_FILE_TYPE = 2830;
@@ -101,19 +105,24 @@ public class UIMessages {
 	public static final int MSG_ID_ORBIT_DATA_INVALID = 2850;
 	public static final int MSG_ID_ORBITS_CREATED = 2851;
 	public static final int MSG_ID_NO_ORBITS_FOUND = 2852;
-	public static final int MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN = 2853;
+	public static final int MSG_ID_NO_ORBIT_NUMBER_GIVEN = 2853;
 	public static final int MSG_ID_ORBIT_NOT_FOUND = 2854;
 	public static final int MSG_ID_ORBIT_NOT_FOUND_BY_ID = 2855;
 	public static final int MSG_ID_ORBITS_UPDATED = 2856;
 	public static final int MSG_ID_ORBIT_DELETE_FAILED = 2857;
 	public static final int MSG_ID_ORBITS_DELETED = 2858;
 	public static final int MSG_ID_MISSION_CREATED = 2859;
+	public static final int MSG_ID_NO_MISSION_CODE_GIVEN = 2780;
+	public static final int MSG_ID_MISSION_DELETED = 2781;
+	public static final int MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE = 2782;
+	public static final int MSG_ID_MISSION_DELETE_FAILED = 2783;
+	public static final int MSG_ID_LOGGED_IN_TO_MISSION = 2784;
 	
 	// Product class CLI
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
 	public static final int MSG_ID_PRODUCTCLASS_CREATED = 2861;
 	public static final int MSG_ID_NO_PRODUCTCLASSES_FOUND = 2862;
-	public static final int MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN = 2863;
+	public static final int MSG_ID_NO_PRODCLASS_NAME_GIVEN = 2863;
 	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND = 2864;
 	public static final int MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID = 2865;
 	public static final int MSG_ID_PRODUCTCLASS_UPDATED = 2866;
@@ -123,6 +132,7 @@ public class UIMessages {
 	public static final int MSG_ID_SELECTION_RULE_DATA_INVALID = 2870;
 	public static final int MSG_ID_SELECTION_RULES_CREATED = 2871;
 	public static final int MSG_ID_NO_SELECTION_RULES_FOUND = 2872;
+	public static final int MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE = 2755;
 	public static final int MSG_ID_INPUT_OUT_OF_BOUNDS = 2873;
 	public static final int MSG_ID_INPUT_NOT_NUMERIC = 2874;
 	public static final int MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID = 2875;
@@ -131,6 +141,7 @@ public class UIMessages {
 	public static final int MSG_ID_SELECTION_RULE_DELETE_FAILED = 2878;
 	public static final int MSG_ID_SELECTION_RULE_DELETED = 2879;
 	public static final int MSG_ID_INVALID_VISIBILITY = 2880;
+	public static final int MSG_ID_NO_RULEID_GIVEN = 2881;
 	
 	// Order CLI
 	public static final int MSG_ID_NO_ORDERS_FOUND = 2930;
@@ -152,7 +163,6 @@ public class UIMessages {
 	public static final int MSG_ID_ORDER_CANCELLED = 2946;
 	public static final int MSG_ID_ORDER_RESET = 2947;
 	public static final int MSG_ID_ORDER_JOBS_NOT_FOUND = 2948;
-	public static final int MSG_ID_ORDER_OR_FACILITY_NOT_FOUND = 2949;
 	public static final int MSG_ID_RETRYING_ORDER = 2759;
 
 	// Job/job step CLI
@@ -298,6 +308,9 @@ public class UIMessages {
 		MSG_MISSION_NOT_FOUND ("(E%d) Mission %s not found", MSG_ID_MISSION_NOT_FOUND),
 		MSG_LOGIN_FAILED ("(E%d) Login for user %s failed", MSG_ID_LOGIN_FAILED),
 		MSG_NOT_AUTHORIZED_FOR_MISSION ("(E%d) User %s not authorized for mission %s", MSG_ID_NOT_AUTHORIZED_FOR_MISSION),
+		MSG_INSUFFICIENT_CREDENTIALS ("(E%d) Insufficient credentials given for non-interactive login", MSG_ID_INSUFFICIENT_CREDENTIALS),
+		MSG_LOGIN_WITHOUT_MISSION_FAILED ("(E%d) User %s not authorized to login without a mission", MSG_ID_LOGIN_WITHOUT_MISSION_FAILED),
+		MSG_CLI_NOT_AUTHORIZED ("(E%d) User %s not authorized for Command Line Interface", MSG_ID_CLI_NOT_AUTHORIZED),
 		
 		// Service connection
 		MSG_HTTP_REQUEST_FAILED ("(E%d) HTTP request failed (cause: %s)", MSG_ID_HTTP_REQUEST_FAILED),
@@ -309,18 +322,24 @@ public class UIMessages {
 		
 		// Mission CLI
 		MSG_NO_MISSIONS_FOUND ("(E%d) No missions found for given search criteria", MSG_ID_NO_MISSIONS_FOUND),
+		MSG_MISSION_NOT_FOUND_BY_ID ("(E%d) Mission with database ID %d not found", MSG_ID_MISSION_NOT_FOUND_BY_ID),
+		MSG_MISSION_DATA_INVALID ("(E%d) Mission data invalid (cause: %s)", MSG_ID_MISSION_DATA_INVALID),
+		MSG_NO_MISSION_CODE_GIVEN ("(E%d) Mission code missing", MSG_ID_NO_MISSION_CODE_GIVEN),
+		MSG_DELETE_PRODUCTS_WITHOUT_FORCE ("(E%d) Option 'delete-products' not valid without option 'force'", MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE),
 		MSG_MISSION_NOT_READABLE ("(E%d) Mission %s not readable (cause: %s)", MSG_ID_MISSION_NOT_READABLE),
+		MSG_MISSION_DELETE_FAILED ("(E%d) Deletion of mission %s failed (cause: %s)", MSG_ID_MISSION_DELETE_FAILED),
 		MSG_SPACECRAFT_EXISTS ("(E%d) Spacecraft %s exists in mission %s", MSG_ID_SPACECRAFT_EXISTS),
 		MSG_NO_SPACECRAFT_CODE_GIVEN ("(E%d) No spacecraft code given", MSG_ID_NO_SPACECRAFT_CODE_GIVEN),
 		MSG_SPACECRAFT_NOT_FOUND ("(E%d) Spacecraft %s not found in mission %s", MSG_ID_SPACECRAFT_NOT_FOUND),
 		MSG_ORBIT_NUMBER_INVALID ("(E%d) Orbit number %s not numeric", MSG_ID_ORBIT_NUMBER_INVALID),
 		MSG_ORBIT_DATA_INVALID ("(E%d) Orbit data invalid (cause: %s)", MSG_ID_ORBIT_DATA_INVALID),
 		MSG_NO_ORBITS_FOUND ("(E%d) No orbits found for given search criteria", MSG_ID_NO_ORBITS_FOUND),
-		MSG_NO_ORBIT_IDENTIFIER_GIVEN ("(E%d) Spacecraft code and/or orbit number missing", MSG_ID_NO_ORBIT_IDENTIFIER_GIVEN),
+		MSG_NO_ORBIT_NUMBER_GIVEN ("(E%d) No orbit number given", MSG_ID_NO_ORBIT_NUMBER_GIVEN),
 		MSG_ORBIT_NOT_FOUND ("(E%d) Orbit number %d not found for spacecraft %s", MSG_ID_ORBIT_NOT_FOUND),
 		MSG_ORBIT_NOT_FOUND_BY_ID ("(E%d) Orbit with database ID %d not found", MSG_ID_ORBIT_NOT_FOUND_BY_ID),
 		MSG_ORBIT_DELETE_FAILED ("(E%d) Deletion of orbit %d for spacecraft %s failed (cause: %s)", MSG_ID_ORBIT_DELETE_FAILED),
-		
+		MSG_LOGGED_IN_TO_MISSION ("(E%d) Operation not allowed, when already logged in to a mission (currently logged in to %s)", MSG_ID_LOGGED_IN_TO_MISSION),
+				
 		// Order CLI
 		MSG_NO_ORDERS_FOUND ("(E%d) No orders found for given search criteria", MSG_ID_NO_ORDERS_FOUND),
 		MSG_INVALID_SLICING_TYPE ("(E%d) Invalid order slicing type %s", MSG_ID_INVALID_SLICING_TYPE),
@@ -332,7 +351,6 @@ public class UIMessages {
 		MSG_ORDER_DATA_INVALID ("(E%d) Order data invalid (cause: %s)", MSG_ID_ORDER_DATA_INVALID),
 		MSG_FACILITY_MISSING ("(E%d) Processing facility missing in parameters", MSG_ID_FACILITY_MISSING),
 		MSG_ORDER_JOBS_NOT_FOUND ("(E%d) No jobs found for order with identifier %s", MSG_ID_ORDER_JOBS_NOT_FOUND),
-		MSG_ORDER_OR_FACILITY_NOT_FOUND ("(E%d) Order %s or processing facility %s not found", MSG_ID_ORDER_OR_FACILITY_NOT_FOUND),
 		
 		// Job and job step CLI
 		MSG_NO_JOBS_FOUND ("(E%d) No jobs found for given search criteria", MSG_ID_NO_JOBS_FOUND),
@@ -350,16 +368,18 @@ public class UIMessages {
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
 		MSG_NO_PRODUCTCLASSES_FOUND ("(E%d) No product classes found for given search criteria", MSG_ID_NO_PRODUCTCLASSES_FOUND),
-		MSG_NO_PRODCLASS_IDENTIFIER_GIVEN ("(E%d) No product class name given", MSG_ID_NO_PRODCLASS_IDENTIFIER_GIVEN),
+		MSG_NO_PRODCLASS_NAME_GIVEN ("(E%d) No product class name given", MSG_ID_NO_PRODCLASS_NAME_GIVEN),
 		MSG_PRODUCTCLASS_NOT_FOUND ("(E%d) Product class %s not found", MSG_ID_PRODUCTCLASS_NOT_FOUND),
 		MSG_PRODUCTCLASS_NOT_FOUND_BY_ID ("(E%d) Product class with database ID %d not found", MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID),
 		MSG_PRODUCTCLASS_DELETE_FAILED ("(E%d) Deletion of product class %s failed (cause: %s)", MSG_ID_PRODUCTCLASS_DELETE_FAILED),
 		MSG_FILE_NOT_FOUND ("(E%d) Selection rule file %s not found or not readable", MSG_ID_FILE_NOT_FOUND),
 		MSG_SELECTION_RULE_DATA_INVALID ("(E%d) Selection rule data invalid (cause: %s)", MSG_ID_SELECTION_RULE_DATA_INVALID),
 		MSG_NO_SELECTION_RULES_FOUND ("(E%d) No selection rules found for product class %s", MSG_ID_NO_SELECTION_RULES_FOUND),
-		MSG_NO_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
-		MSG_NO_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
+		MSG_NO_SELECTION_RULES_FOUND_FOR_SOURCE ("(E%d) No selection rules found for target product class %s and source product class %s", MSG_ID_NO_SELECTION_RULES_FOUND_FOR_SOURCE),
+		MSG_INPUT_OUT_OF_BOUNDS ("(E%d) Input %d invalid, please select a number between %d and %d", MSG_ID_INPUT_OUT_OF_BOUNDS),
+		MSG_INPUT_NOT_NUMERIC ("(E%d) Input %s not numeric", MSG_ID_INPUT_NOT_NUMERIC),
 		MSG_SELECTION_RULE_NOT_FOUND_BY_ID ("(E%d) Selection rule with database ID %d not found", MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID),
+		MSG_NO_RULEID_GIVEN ("(E%d) No selection rule database ID given", MSG_ID_NO_RULEID_GIVEN),
 		MSG_RULEID_NOT_NUMERIC ("(E%d) Database ID %d for selection rule not numeric", MSG_ID_RULEID_NOT_NUMERIC),
 		MSG_SELECTION_RULE_DELETE_FAILED ("(E%d) Deletion of selection rule with database ID %d from product class %s failed (cause: %s)", MSG_ID_SELECTION_RULE_DELETE_FAILED),
 		MSG_INVALID_VISIBILITY ("(E%d) Invalid product visibility %s", MSG_ID_INVALID_VISIBILITY),
@@ -467,6 +487,7 @@ public class UIMessages {
 		/* --- Info messages -- */
 		// General
 		MSG_OPERATION_CANCELLED ("(I%d) Operation cancelled", MSG_ID_OPERATION_CANCELLED),
+		MSG_NOT_MODIFIED ("(I%d) Data not modified", MSG_ID_NOT_MODIFIED),
 		
 		// Login Manager
 		MSG_LOGGED_IN ("(I%d) User %s logged in", MSG_ID_LOGGED_IN),
@@ -483,6 +504,7 @@ public class UIMessages {
 		// Mission CLI
 		MSG_MISSION_CREATED ("(I%d) Mission %s created (database ID %d)", MSG_ID_MISSION_CREATED),
 		MSG_MISSION_UPDATED ("(I%d) Mission %s updated (new version %d)", MSG_ID_MISSION_UPDATED),
+		MSG_MISSION_DELETED ("(I%d) Mission %s deleted", MSG_ID_MISSION_DELETED),
 		MSG_SPACECRAFT_ADDED ("(I%d) Spacecraft %s added (database ID %d)", MSG_ID_SPACECRAFT_ADDED),
 		MSG_SPACECRAFT_REMOVED ("(I%d) Spacecraft %s removed from mission %s", MSG_ID_SPACECRAFT_REMOVED),
 		MSG_ORBITS_CREATED ("(I%d) %d orbits created", MSG_ID_ORBITS_CREATED),
@@ -515,7 +537,7 @@ public class UIMessages {
 		MSG_PRODUCTCLASS_CREATED ("(I%d) Product class %s created (database ID %d)", MSG_ID_PRODUCTCLASS_CREATED),
 		MSG_PRODUCTCLASS_UPDATED ("(I%d) Product class with database ID %d updated (new version %d)", MSG_ID_PRODUCTCLASS_UPDATED),
 		MSG_PRODUCTCLASS_DELETED ("(I%d) Product class with database ID %d deleted", MSG_ID_PRODUCTCLASS_DELETED),
-		MSG_SELECTION_RULE_CREATED ("(I%d) %d selection rules created for product class %s", MSG_ID_SELECTION_RULES_CREATED),
+		MSG_SELECTION_RULES_CREATED ("(I%d) %d selection rules created for product class %s", MSG_ID_SELECTION_RULES_CREATED),
 		MSG_SELECTION_RULE_UPDATED ("(I%d) Selection rule with database ID %d updated (new version %d)", MSG_ID_SELECTION_RULE_UPDATED),
 		MSG_SELECTION_RULE_DELETED ("(I%d) Selection rule with database ID %d deleted", MSG_ID_SELECTION_RULE_DELETED),
 		

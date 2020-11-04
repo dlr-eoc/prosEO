@@ -15,19 +15,19 @@
       description?:
         type: string
         description: A short description of the processing facility
-      processingEngineUrl:
+      processingEngineUrl?:
         type: string
         description: The URL to access this facility's processing engine (Kubernetes instance)
-      processingEngineUser:
+      processingEngineUser?:
         type: string
         description: User name for connecting to this facility's processing engine (Kubernetes instance)
-      processingEnginePassword:
+      processingEnginePassword?:
         type: string
         description: Password for connecting to this facility's processing engine (Kubernetes instance)
       storageManagerUrl:
         type: string
         description: The URL to access this facility's storage manager
-      localStorageManagerUrl:
+      localStorageManagerUrl?:
         type: string
         description: URL of the locally accessible Storage Manager (shall contain the string "%NODE_IP%")
       storageManagerUser:
@@ -38,4 +38,5 @@
         description: Password for connecting to the Storage Manager (locally and from external services)
       defaultStorageType:
         type: string
-        description: The default storage type (S3, POSIX, ...) to use in this facility.
+        description: The type of the storage
+        pattern: ^(S3|ALLUXIO|POSIX|OTHER)$

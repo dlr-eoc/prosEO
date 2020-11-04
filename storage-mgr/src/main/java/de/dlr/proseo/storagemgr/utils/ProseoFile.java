@@ -1,17 +1,14 @@
 package de.dlr.proseo.storagemgr.utils;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 
 /**
  * Abstract definition of proseo file objects
@@ -33,81 +30,20 @@ import de.dlr.proseo.storagemgr.rest.model.FsType;
 public abstract class ProseoFile {
 	
 	/**
-	 * Logger for this class
-	 */
-	private static Logger logger = LoggerFactory.getLogger(ProseoFileS3.class);
-	
-	/**
-	 * original path
+	 * Original path
 	 */
 	protected String pathInfo;
 	
-	/**
-	 * @return the pathInfo
-	 */
-	public String getPathInfo() {
-		return pathInfo;
-	}
-
-	/**
-	 * @return the relPath
-	 */
-	public String getRelPath() {
-		return relPath;
-	}
-
-	/**
-	 * @return the basePath
-	 */
-	public String getBasePath() {
-		return basePath;
-	}
-
-	/**
-	 * @param pathInfo the pathInfo to set
-	 */
-	public void setPathInfo(String pathInfo) {
-		this.pathInfo = pathInfo;
-	}
-
-	/**
-	 * @param relPath the relPath to set
-	 */
-	public void setRelPath(String relPath) {
-		this.relPath = relPath;
-	}
-
-	/**
-	 * @param basePath the basePath to set
-	 */
-	public void setBasePath(String basePath) {
-		this.basePath = basePath;
-	}
-
-	// file name
+	/** File name */
 	protected String fileName;
 	
 	/**
-	 * @return the fileName
-	 */
-	public String getFileName() {
-		return fileName;
-	}
-
-	/**
-	 * @param fileName the fileName to set
-	 */
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
-	}
-
-	/**
-	 * path below bucket
+	 * File path relative to bucket
 	 */
 	protected String relPath;
 	
 	/**
-	 * Bucket
+	 * Bucket, in which the file resides
 	 */
 	protected String basePath;
 
@@ -117,7 +53,77 @@ public abstract class ProseoFile {
 	protected StorageManagerConfiguration cfg;
 
 	/**
-	 * Extract file name from relPath
+	 * Logger for this class
+	 */
+	private static Logger logger = LoggerFactory.getLogger(ProseoFile.class);
+	
+	/**
+	 * Gets the file path information
+	 * @return the path information
+	 */
+	public String getPathInfo() {
+		return pathInfo;
+	}
+
+	/**
+	 * Sets the file path information
+	 * @param pathInfo the pathInfo to set
+	 */
+	public void setPathInfo(String pathInfo) {
+		this.pathInfo = pathInfo;
+	}
+
+	/**
+	 * Gets the file name 
+	 * @return the file name
+	 */
+	public String getFileName() {
+		return fileName;
+	}
+
+	/**
+	 * Sets the file name 
+	 * @param fileName the file name to set
+	 */
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	/**
+	 * Gets the file path relative to the bucket
+	 * @return the relative path
+	 */
+	public String getRelPath() {
+		return relPath;
+	}
+
+	/**
+	 * Sets the file path relative to the bucket
+	 * @param relPath the relative path to set
+	 */
+	public void setRelPath(String relPath) {
+		this.relPath = relPath;
+	}
+
+	/**
+	 * Gets the path to the bucket
+	 * @return the base path
+	 */
+	public String getBasePath() {
+		return basePath;
+	}
+
+	/**
+	 * Sets the path to the bucket
+	 * @param basePath the base path to set
+	 */
+	public void setBasePath(String basePath) {
+		this.basePath = basePath;
+	}
+
+	/**
+	 * Set file name from relative path and remove it from the relative path
+	 * (if the relative path does not end on '/')
 	 */
 	protected void buildFileName() {
 		fileName = "";	
@@ -136,6 +142,7 @@ public abstract class ProseoFile {
 	}
 	
 	/**
+	 * Gets the complete file path relative to the bucket
 	 * @return Relative path + file name
 	 */
 	public String getRelPathAndFile() {
@@ -147,14 +154,16 @@ public abstract class ProseoFile {
 	}
 
 	/**
-	 * @return true if object represents a directory
+	 * Checks whether the object is a directory
+	 * @return true if object represents a directory, false otherwise
 	 */
 	public Boolean isDirectory() {
 		return (fileName == null) || fileName.isEmpty();
 	}
 	
 	/**
-	 * @return Extension of file name 
+	 * Gets the file name extension
+	 * @return Extension of file name or an empty string, if the file name has no extension
 	 */
 	public String getExtension() {
 		if ((fileName == null) || fileName.isEmpty()) {
@@ -168,8 +177,8 @@ public abstract class ProseoFile {
 	 * Create a file object out of full path info. 
 	 * 
 	 * @param pathInfo Full path
-	 * @param cfg
-	 * @return The new file object
+	 * @param cfg a pointer to the Storage Manager configuration
+	 * @return The new file object or null, if the operation failed
 	 */
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
@@ -191,24 +200,27 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with relative path pathInfo
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param pathInfo Relative path with bucket
-	 * @param cfg
-	 * @return The new file object
+	 * @param cfg a pointer to the Storage Manager configuration
+	 * @return The new file object or null, if the operation failed
 	 */
-	public static ProseoFile fromType(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromType(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(aPath, false, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(aPath, false, cfg);
 			case POSIX:
 				return new ProseoFilePosix(aPath, false, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;
@@ -217,24 +229,27 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with full path pathInfo
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param pathInfo Full path (with type info)
-	 * @param cfg
-	 * @return The new file object
+	 * @param cfg a pointer to the Storage Manager configuration
+	 * @return The new file object or null, if the operation failed
 	 */
-	public static ProseoFile fromTypeFullPath(FsType aType, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromTypeFullPath(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(aPath, true, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(aPath, true, cfg);
 			case POSIX:
 				return new ProseoFilePosix(aPath, true, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;
@@ -243,61 +258,70 @@ public abstract class ProseoFile {
 	/**
 	 * Create file object of aType with bucket and relative path.
 	 * 
-	 * @param aType FsType
+	 * @param aType StorageType
 	 * @param bucket Bucket 
 	 * @param pathInfo Relative path
-	 * @param cfg
-	 * @return
+	 * @param cfg a pointer to the Storage Manager configuration
+	 * @return the new file object or null, if the operation failed
 	 */
-	public static ProseoFile fromTypeAndBucket(FsType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
+	public static ProseoFile fromTypeAndBucket(StorageType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			switch (aType) {
-			case S_3:
+			case S3:
 				return new ProseoFileS3(bucket, aPath, cfg);
 			case ALLUXIO:
 				return new ProseoFileAlluxio(bucket, aPath, cfg);
 			case POSIX:
 				return new ProseoFilePosix(bucket, aPath, cfg);
+			case OTHER:
+			default:
+				logger.warn("Unknown FS type in path: {}", pathInfo);
+				return null;
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		logger.warn("pathInfo not set");
 		return null;
 	}
 
-	/**
-	 * @return The file system type
-	 */
-	public abstract FsType getFsType();
+	// The methods below must be implemented by the derived prosEO file classes
 	
 	/**
-	 * @return Get the file system resource definition
+	 * Gets the file system type
+	 * @return The file system type
+	 */
+	public abstract StorageType getFsType();
+	
+	/**
+	 * Gets the file system resource definition
+	 * @return the file system resource definition
 	 */
 	public abstract FileSystemResource getFileSystemResource();
 	
 	/**
 	 * Delete file object recursively.
 	 * 
-	 * @return String list of deleted object paths.
+	 * @return list of deleted object paths.
 	 */
 	public abstract ArrayList<String> delete();
 	
 	/**
 	 * List objects recursively.
 	 * 
-	 * @return List of file objects
+	 * @return list of file objects
 	 */
 	public abstract ArrayList<ProseoFile> list();
 	
 	/**
+	 * Gets the full file path
 	 * @return The full path including type
 	 */
 	public abstract String getFullPath();
 
 	/**
-	 * @return Input stream on file object
+	 * Gets the file content as input stream
+	 * @return the file content (data)
 	 */
 	public abstract InputStream getDataAsInputStream();
 	
@@ -306,6 +330,7 @@ public abstract class ProseoFile {
 	 * 
 	 * @param bytes Byte array
 	 * @return true after success
+	 * @throws Exception if an error occurs in any lower-level library
 	 */
 	public abstract Boolean writeBytes(byte[] bytes) throws Exception;
 	
@@ -315,10 +340,12 @@ public abstract class ProseoFile {
 	 * @param proFile Target file object
 	 * @param recursive Copy recursively if true
 	 * @return List of copied target file names
+	 * @throws Exception if an error occurs in any lower-level library
 	 */
 	public abstract ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception;
 	
 	/**
+	 * Gets the object size
 	 * @return Length of file object
 	 */
 	public abstract long getLength();

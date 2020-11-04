@@ -79,17 +79,9 @@ public class KubeJob {
 	 */
 	private String imageName;
 	/**
-	 * The command to call in image
-	 */
-	private String command;
-	/**
 	 * The job order file
 	 */
 	private String jobOrderFileName;
-	/**
-	 * Job Order content
-	 */
-	private String jobOrderString;
 	/**
 	 * Arguments of command
 	 */
@@ -185,13 +177,11 @@ public class KubeJob {
 	 * @param name The name prefix, if set
 	 * @param processor The processor image 
 	 * @param jobOrderFN The job order file name
-	 * @param cmd The command call for image
 	 * @param args Arguments for call
 	 */
-	public KubeJob (int id, String name, String processor, String jobOrderFN, String cmd, ArrayList<String> args) {
+	public KubeJob (int id, String name, String processor, String jobOrderFN, ArrayList<String> args) {
 		
 		imageName = processor;
-		command = cmd;
 		jobOrderFileName = jobOrderFN;
 		podNames = new ArrayList<String>();
 
@@ -212,6 +202,11 @@ public class KubeJob {
 		
 		
 	}
+	/**
+	 * Instantiate a Kubernetes job with ID and Job Order file name
+	 * @param jsId the job ID
+	 * @param jobOrderFN the Job Order file name
+	 */
 	public KubeJob (Long jsId, String jobOrderFN) {
 		
 		jobOrderFileName = jobOrderFN;
@@ -254,24 +249,37 @@ public class KubeJob {
 	 * Create the Kubernetes job on processing facility (based on constructor parameters)
 	 * @param aKubeConfig The processing facility
 	 * @return The kube job
+	 * @throws Exception 
 	 */
 	@Transactional
-	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) {	
+	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
 		
 		kubeConfig = aKubeConfig;
 		JobOrder jobOrder = null;
 		if (!aKubeConfig.isConnected()) {
-			logger.warn("Kubernetes configuration {} not connected", aKubeConfig);
+			Messages.KUBERNETES_NOT_CONNECTED.log(logger, aKubeConfig.getProcessingFacility().toString());
 			return null;
 		}
 		
 		Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(this.getJobId());
 		if (js.isEmpty()) {
-			return this;
+			Messages.JOB_STEP_NOT_FOUND.log(logger, this.getJobId());
+			return null;
 		}
 		
 		JobStep jobStep = js.get();
+		if (!jobStep.getOutputProduct().getConfiguredProcessor().getEnabled()) {
+			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
+			return null;
+		}
+		Instant execTime = jobStep.getJob().getProcessingOrder().getExecutionTime();
+		if (execTime != null) { 
+			if (Instant.now().isBefore(execTime)) {
+				if (logger.isTraceEnabled()) logger.trace(">>> execution time of order is after now.");
+				return null;
+			}
+		}
 		if (stdoutLogLevel != null && !stdoutLogLevel.isEmpty()) {
 			jobStep.setStdoutLogLevel(JobStep.StdLogLevel.valueOf(stdoutLogLevel));
 		} else if (jobStep.getStdoutLogLevel() == null) {
@@ -287,15 +295,15 @@ public class KubeJob {
 		JobDispatcher jd = new JobDispatcher();
 		jobOrder = jd.createJobOrder(jobStep);
 		if (jobOrder == null) {
-			logger.error("Creation of job order for job step {} failed", jobStep.getId());
-			// todo Exception
-			return null;
+			String errStr = String.format("Creation of job order for job step %d failed", jobStep.getId());
+			logger.error(errStr);
+			throw new Exception(errStr);
 		}
 		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
 		if (jobOrder == null) {
-			logger.error("Sending of job order to Storage Manager failed for job step {}", jobStep.getId());
-			// todo Exception
-			return null;
+			String errStr = String.format("Sending of job order to Storage Manager failed for job step %d", jobStep.getId());
+			logger.error(errStr);
+			throw new Exception(errStr);
 		}
 		jobStep.setJobOrderFilename(jobOrder.getFileName());
 		// wrapper user and PW
@@ -400,22 +408,20 @@ public class KubeJob {
 				.withSpec(jobSpec)
 				.build();
 		try {
-			logger.info("Creating job {}", job.toString());
+			if (logger.isTraceEnabled()) {
+				logger.info("Creating job {}", job.toString());
+			}
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
 			searchPod();
 			UtilService.getJobStepUtil().startJobStep(jobStep);
 			Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
 		} catch (ApiException e1) {
-			// TODO Auto-generated catch block
 			logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
-			e1.printStackTrace();
-			return null;
+			throw e1;
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
-			e.printStackTrace();
-			return null;
+			throw e;
 		}
 		return this;
 	}	
@@ -532,12 +538,16 @@ public class KubeJob {
 		boolean success = false;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
+			if (aJob == null) {
+				// job not found, try to remove
+				return true;
+			}
 			if (podNames.isEmpty()) {
 				searchPod();
 			}
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
-			
-			if (aJob != null) {
+
+			if (aPod != null) {
 				PodKube aPlan = new PodKube(aJob);
 				String cn = this.getContainerName();
 				if (cn != null && !podNames.isEmpty()) {
@@ -572,6 +582,7 @@ public class KubeJob {
 									// pod exists! 
 								}
 							}
+							
 							if (aJob.getStatus().getConditions() != null) {
 								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
 								for (V1JobCondition jc : jobCondList) {
@@ -594,6 +605,11 @@ public class KubeJob {
 									}
 								}
 							}
+							
+							// TODO check whether pod is in normal state or has an Error/Warning event
+							// example
+							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
+							
 						}
 						if (aPlan.getLog() != null) {
 							js.get().setProcessingStdOut(aPlan.getLog());

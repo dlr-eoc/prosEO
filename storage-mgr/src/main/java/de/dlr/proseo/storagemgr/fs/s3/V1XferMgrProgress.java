@@ -2,12 +2,9 @@ package de.dlr.proseo.storagemgr.fs.s3;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.event.ProgressEvent;
-import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.s3.transfer.*;
 import com.amazonaws.services.s3.transfer.Transfer.TransferState;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 

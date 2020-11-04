@@ -10,24 +10,22 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.ConfigurationFile;
 import de.dlr.proseo.model.ConfigurationInputFile;
-import de.dlr.proseo.model.ConfiguredProcessor;
-import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.Task;
@@ -38,10 +36,9 @@ import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
-import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
-import de.dlr.proseo.interfaces.rest.model.FsType;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
+import de.dlr.proseo.model.enums.StorageType;
 
 /**
  * Create Kubernetes jobs with all information needed like processor image, job order file, parameters.
@@ -78,32 +75,14 @@ public class JobDispatcher {
 	 * @return The new job order
 	 */
 	public JobOrder createJobOrder(JobStep jobStep) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobOrder({})", jobStep.getId());
+
 		// create the job order structure for a jobStep
 
 		jobOrder = null;		
 		if (jobStep != null) {
 			// Find DB elements needed
 			try {
-				Job job = jobStep.getJob();
-				if (job == null) {
-					// throw new RuntimeException("Element not found");
-				}
-				ProcessingOrder order = job.getProcessingOrder();
-				if (order == null) {
-					// throw new RuntimeException("Element not found");
-				}
-				Set<ConfiguredProcessor> configuredProcessors = order.getRequestedConfiguredProcessors();
-
-				ConfiguredProcessor cp;
-
-				Product product = RepositoryService.getProductRepository().findByJobStep(jobStep);
-
-				if (product == null) {
-					// throw new RuntimeException("Element not found");
-				}
-
-				Set<ProductQuery> productQueries = jobStep.getInputProductQueries();
-
 				jobOrder = new JobOrder();
 				String processorName = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getProcessorClass().getProcessorName();
 				String version = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getProcessorVersion();
@@ -140,26 +119,25 @@ public class JobDispatcher {
 				// list of ipf procs
 				for (Task t : jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getTasks()) {
 					Proc proc = new Proc(t.getTaskName(), t.getTaskVersion());
-					// add config files
-					for (ConfigurationFile cf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getConfigurationFiles()) {
-						InputOutput sio = new InputOutput("processing_configuration", "Physical", "Input", null);
-						sio.getFileNames().add(new IpfFileName(cf.getFileName()));
-						proc.getListOfInputs().add(sio);				
-					}
-					// add static config files first
+					// add static input files first
 					for (ConfigurationInputFile scf : jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getStaticInputFiles()) {
-						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), "Input", null);
+						InputOutput sio = new InputOutput(scf.getFileType(), scf.getFileNameType(), InputOutput.IO_TYPE_INPUT, null);
 						for (String sioFName: scf.getFileNames()) {
 							sio.getFileNames().add(new IpfFileName(sioFName));
 						}
 						proc.getListOfInputs().add(sio);
 					}
 					// dynamic input files calculated by input products
-					for (ProductQuery pq : jobStep.getOutputProduct().getSatisfiedProductQueries()) {
-						for (Product p : pq.getNewestSatisfyingProducts()) {
-							addIpfIOInput(p, proc, jobStep);
+					// create IpfInput for each product class
+					Map<ProductClass, List<Product>> productClasses = new HashMap<ProductClass, List<Product>>();
+					for (ProductQuery pq : jobStep.getInputProductQueries()) {
+						// Replaced "getNewestSatisfyingProducts" by "getSatisfyingProducts" --> older ones are allowed!
+						// If this is a problem with some test cases, check test cases
+						for (Product p : pq.getSatisfyingProducts()) {
+							addProductToMap(p, productClasses);
 						}
 					}
+					addIpfIOInput(productClasses, proc, jobStep);
 					Product p = jobStep.getOutputProduct();
 					addIpfIOOutput(p, proc, jobStep, ""); 
 					jobOrder.getListOfProcs().add(proc);
@@ -170,7 +148,7 @@ public class JobDispatcher {
 				jobOrder = null;
 			}
 
-			// read a job order file for test purposes
+			// write a job order file for test purposes
 			if (jobOrder != null) {
 				InetAddress ip;
 				try {
@@ -186,7 +164,7 @@ public class JobDispatcher {
 		}
 		return jobOrder;
 	}
-	
+
 	/**
 	 * Add input file definition of product p recursively.
 	 * @param p Product
@@ -194,17 +172,76 @@ public class JobDispatcher {
 	 * @param jobStep Job step
 	 */
 	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep) {
+		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput({}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId());
+
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
-				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), "Physical", "Input", String.valueOf(p.getId()));
+				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), InputOutput.FN_TYPE_PHYSICAL, 
+						InputOutput.IO_TYPE_INPUT, String.valueOf(p.getId()));
 				String filePath = pf.getFilePath();
 				String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
 				sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
 				proc.getListOfInputs().add(sio);
+				if (logger.isTraceEnabled()) logger.trace("... added product {} to input files", p.getId());
 			}
 		} else {
 			for (Product sp : p.getComponentProducts()) {
 				addIpfIOInput(sp, proc, jobStep);
+			}
+		}
+	}
+
+
+	/**
+	 * Add input file definition of products recursively.
+	 * @param productClasses a map of products accessible by product class
+	 * @param proc the Ipf_Proc element to add the input to
+	 * @param jobStep the job step, for which the Job Order is generated
+	 */
+	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep) {
+		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {})", proc.getTaskName(), jobStep.getId());
+
+		for (ProductClass pc : productClasses.keySet()) {
+			InputOutput sio = new InputOutput(pc.getProductType(), InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
+			for (Product p : productClasses.get(pc)) {
+				if (p.getComponentProducts().isEmpty()) {
+					for (ProductFile pf : p.getProductFile()) {
+						String filePath = pf.getFilePath();
+						String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
+						sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
+						if (logger.isTraceEnabled()) logger.trace("... added product {} to input files", p.getId());
+					}
+				} else {
+					// not possible, because the product structure is flattened by addProductToMap
+					if (logger.isTraceEnabled()) logger.trace("... in 'impossible' location for product {}", p.getId());
+				}
+			}
+			proc.getListOfInputs().add(sio);
+		}
+	}
+	
+	/**
+	 * Add the product to map productClasses. Collect all products of same class into one map element.
+	 * Don't add products with components (these products are seen as directory and are not handled by wrapper/processor.
+	 * 
+	 * @param p The Product
+	 * @param productClasses The map
+	 */
+	private void addProductToMap(Product p, Map<ProductClass, List<Product>> productClasses) {
+		if (logger.isTraceEnabled()) logger.trace(">>> addProductToMap({}, [...])", (null == p ? "null" : p.getId()));
+
+		if (p.getComponentProducts().isEmpty()) {
+			if (productClasses.containsKey(p.getProductClass())) {
+				productClasses.get(p.getProductClass()).add(p);
+			} else {
+				List<Product> plist = new ArrayList<Product>();
+				plist.add(p);
+				productClasses.put(p.getProductClass(), plist);
+			}
+			if (logger.isTraceEnabled()) logger.trace("... added!");
+		} else {
+			for (Product sp : p.getComponentProducts()) {
+				addProductToMap(sp, productClasses);
 			}
 		}
 	}
@@ -218,13 +255,15 @@ public class JobDispatcher {
 	 * @param baseDir Base directory path of output data in facility/storage manager
 	 */
 	public void addIpfIOOutput(Product p, Proc proc, JobStep jobStep, String baseDir) {
-		String fnType = p.getComponentProducts().isEmpty() ? "Physical" : "Directory"; 
-		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, "Output", String.valueOf(p.getId()));
+		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOOutput({}, {}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId(), baseDir);
+
+		String fnType = p.getComponentProducts().isEmpty() ? InputOutput.FN_TYPE_PHYSICAL : InputOutput.FN_TYPE_DIRECTORY; 
+		InputOutput sio = new InputOutput(p.getProductClass().getProductType(), fnType, InputOutput.IO_TYPE_OUTPUT, String.valueOf(p.getId()));
 		String storageType = jobStep.getJob().getProcessingFacility().getDefaultStorageType().toString();
 		String fn = "";
 		if (p.getGenerationTime() != null) {
 			fn = p.generateFilename();
-			if (fnType.equals("Directory")) {
+			if (fnType.equals(InputOutput.FN_TYPE_DIRECTORY)) {
 				int i = fn.lastIndexOf('.');
 				if (i > 0) {
 					fn = fn.substring(0, i);
@@ -269,12 +308,12 @@ public class JobDispatcher {
 			RestJoborder jo = new RestJoborder();
 			switch (kubeConfig.getStorageType()) {
 			case S3:
-				jo.setFsType(FsType.S_3);
+				jo.setFsType(StorageType.S3.toString());
 				break;
 			case POSIX:
 				// fall through intended
 			default:
-				jo.setFsType(FsType.POSIX);
+				jo.setFsType(StorageType.POSIX.toString());
 				break;					
 			}
 			

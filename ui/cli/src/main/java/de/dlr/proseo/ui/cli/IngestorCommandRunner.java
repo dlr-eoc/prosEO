@@ -9,9 +9,10 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -147,7 +149,7 @@ public class IngestorCommandRunner {
 		if (null == restProduct.getProductClass() || 0 == restProduct.getProductClass().length()) {
 			System.out.print(PROMPT_PRODUCT_CLASS);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -156,7 +158,7 @@ public class IngestorCommandRunner {
 		if (null == restProduct.getFileClass() || 0 == restProduct.getFileClass().length()) {
 			System.out.print(PROMPT_FILE_CLASS);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -165,52 +167,52 @@ public class IngestorCommandRunner {
 		while (null == restProduct.getSensingStartTime() || 0 == restProduct.getSensingStartTime().length()) {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-			} catch (DateTimeParseException e) {
+			} catch (DateTimeException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_STOP_TIME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-			} catch (DateTimeParseException e) {
+			} catch (DateTimeException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getSensingStopTime() || 0 == restProduct.getSensingStopTime().length()) {
 			System.out.print(PROMPT_START_TIME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setSensingStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-			} catch (DateTimeParseException e) {
+			} catch (DateTimeException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
 		while (null == restProduct.getGenerationTime() || 0 == restProduct.getGenerationTime().length()) {
 			System.out.print(PROMPT_GENERATION_TIME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			try {
 				restProduct.setGenerationTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response))); // no time zone in input expected
-			} catch (DateTimeParseException e) {
+			} catch (DateTimeException e) {
 				System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 			}
 		}
@@ -274,10 +276,15 @@ public class IngestorCommandRunner {
 		if (1 == showCommand.getParameters().size()) {
 			requestURI += "?mission=" + loginManager.getMission();
 			for (ParsedOption option: showCommand.getOptions()) {
-				if ("from".equals(option.getName())) {
-					requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
-				} else if ("to".equals(option.getName())) {
-					requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+				try {
+					if ("from".equals(option.getName())) {
+						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					} else if ("to".equals(option.getName())) {
+						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+					}
+				} catch (DateTimeException e) {
+					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
+					return;
 				}
 			}
 			requestURI += "&productClass=" + showCommand.getParameters().get(0).getValue();
@@ -495,6 +502,9 @@ public class IngestorCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
@@ -781,7 +791,7 @@ public class IngestorCommandRunner {
 		/* Delete product using Ingestor service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + facilityName + "/" + productIdString, 
+					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) + "/" + productIdString, 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

@@ -8,11 +8,7 @@ package de.dlr.proseo.ingestor.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,13 +37,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.IngestorTestConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
 import de.dlr.proseo.ingestor.rest.model.RestParameter;
-import de.dlr.proseo.ingestor.rest.model.SourceStorageType;
+import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -278,6 +273,7 @@ public class IngestorControllerTest {
 				facility.setStorageManagerUrl(config.getStorageManagerUrl());
 				facility.setStorageManagerUser("testuser");
 				facility.setStorageManagerPassword("testpwd");
+				facility.setDefaultStorageType(StorageType.POSIX);
 				facility = RepositoryService.getFacilityRepository().save(facility);
 
 				return null;
@@ -303,7 +299,7 @@ public class IngestorControllerTest {
 		ingestorProduct.setSensingStopTime(TEST_STOP_TIME_TEXT);
 		ingestorProduct.setGenerationTime(TEST_GEN_TIME_TEXT);
 		File productFile = new File(TEST_PRODUCT_PATH_2);
-		ingestorProduct.setSourceStorageType(SourceStorageType.S_3);
+		ingestorProduct.setSourceStorageType(StorageType.S3.toString());
 		ingestorProduct.setMountPoint(TEST_STORAGE_SYSTEM);
 		ingestorProduct.setFilePath(productFile.getParent());
 		ingestorProduct.setProductFileName(productFile.getName());
@@ -340,12 +336,7 @@ public class IngestorControllerTest {
 		}
 		
 		// Perform REST API call
-		try {
-			testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + URLEncoder.encode(TEST_NAME, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
+		testUrl = "http://localhost:" + port + INGESTOR_BASE_URI + "/ingest/" + TEST_NAME; // URL path segment encoding is handled by TestTemplate!
 		logger.info("Testing URL {} / POST", testUrl);
 
 		@SuppressWarnings("rawtypes")

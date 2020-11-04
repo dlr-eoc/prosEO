@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +21,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import de.dlr.proseo.model.enums.UserRole;
 
 /**
  * Security configuration for prosEO Ingestor module
@@ -48,7 +51,13 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
-				.anyRequest().authenticated()
+				.antMatchers(HttpMethod.GET, "/**/products", "/**/products/*", "/**/products/*/*", "/**/ingest/*/*").hasAnyRole(
+						UserRole.PRODUCT_READER.toString(),
+						UserRole.PRODUCT_READER_RESTRICTED.toString(),
+						UserRole.PRODUCT_READER_ALL.toString())
+				.antMatchers(HttpMethod.POST, "/**/ingest/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
+				.antMatchers(HttpMethod.POST, "/**/ingest/*/*").hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
+				.anyRequest().hasAnyRole(UserRole.PRODUCT_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

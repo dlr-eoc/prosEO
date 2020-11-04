@@ -34,6 +34,8 @@ import javax.persistence.Table;
 @Table(indexes = { @Index(unique = false, columnList = "jobStepState") })
 public class JobStep extends PersistentObject {
 
+	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal job step state transition from %s to %s";
+
 	/** The job this job step belongs to */
 	@ManyToOne
 	private Job job;
@@ -91,7 +93,28 @@ public class JobStep extends PersistentObject {
 	/**
 	 * The possible processing states for a job step
 	 */
-	public enum JobStepState { INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED }
+	public enum JobStepState {
+		INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED;
+		
+		public boolean isLegalTransition(JobStepState other) {
+			switch(this) {
+			case INITIAL:
+				return other.equals(WAITING_INPUT) || other.equals(READY);
+			case COMPLETED:
+				return false; // End state
+			case FAILED:
+				return other.equals(INITIAL);
+			case READY:
+				return other.equals(INITIAL) || other.equals(RUNNING);
+			case RUNNING:
+				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
+			case WAITING_INPUT:
+				return other.equals(INITIAL) || other.equals(READY);
+			default:
+				return false;
+			}
+		}
+	}
 
 	/**
 	 * The possible log levels for stdout and stderr
@@ -157,9 +180,15 @@ public class JobStep extends PersistentObject {
 	 * Sets the state of the job step
 	 * 
 	 * @param jobStepState the jobStepState to set
+	 * @throws IllegalStateException if the intended job step state transition is illegal
 	 */
-	public void setJobStepState(JobStepState jobStepState) {
-		this.jobStepState = jobStepState;
+	public void setJobStepState(JobStepState jobStepState) throws IllegalStateException {
+		if (null == this.jobStepState || this.jobStepState.equals(jobStepState) || this.jobStepState.isLegalTransition(jobStepState)) {
+			this.jobStepState = jobStepState;
+		} else {
+			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
+					this.jobStepState.toString(), jobStepState.toString()));
+		}
 	}
 
 	/**

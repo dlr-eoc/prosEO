@@ -15,6 +15,8 @@ import io.kubernetes.client.openapi.models.V1Job;
  */
 public class PodKube extends PlannerPod {
 
+	private static final long serialVersionUID = 287477937477814477L;
+
 	/**
 	 * Set instance variables and convert data to text
 	 * 

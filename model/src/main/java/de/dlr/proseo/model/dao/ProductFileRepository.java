@@ -31,4 +31,13 @@ public interface ProductFileRepository extends JpaRepository<ProductFile, Long> 
 	@Query("select pf from ProductFile pf where product_id = ?1")
 	public List<ProductFile> findByProductId(long productId);
 
+	/**
+	 * Get all product files for a given processing facility id
+	 * 
+	 * @param facilityId the database id of the processing facility 
+	 * @return a (possibly empty) list of product files
+	 */
+	@Query("select pf from ProductFile pf where processing_facility_id = ?1")
+	public List<ProductFile> findByProcessingFacilityId(long facilityId);
+
 }

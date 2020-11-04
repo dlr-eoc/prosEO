@@ -6,9 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -16,17 +14,11 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
 import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
-import de.dlr.proseo.storagemgr.rest.model.FsType;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 /**
  * Proseo file representing POSIX file system
@@ -46,7 +38,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 * 
 	 * @param pathInfo The file path
 	 * @param fullPath Use it as full path if true, otherwise use default bucket + path info
-	 * @param cfg
+	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFilePosix(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		this.cfg = cfg;
@@ -106,7 +98,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 * 
 	 * @param bucket The bucket
 	 * @param pathInfo The relative path
-	 * @param cfg
+	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		String aPath = pathInfo.trim();
@@ -125,8 +117,8 @@ public class ProseoFilePosix extends ProseoFile {
 	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getFsType()
 	 */
 	@Override
-	public FsType getFsType() {
-		return FsType.POSIX;
+	public StorageType getFsType() {
+		return StorageType.POSIX;
 	}
 
 	/* (non-Javadoc)
@@ -186,7 +178,7 @@ public class ProseoFilePosix extends ProseoFile {
 		ArrayList<String> result = null;
 		File srcFile = new File(this.getFullPath());
 		switch (proFile.getFsType()) {
-		case S_3:// create internal buckets & prefixes if not exists..
+		case S3:// create internal buckets & prefixes if not exists..
 			String targetPath = null;
 			if (srcFile.isDirectory()) {
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());

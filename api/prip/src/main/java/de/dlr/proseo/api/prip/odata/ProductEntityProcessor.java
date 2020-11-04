@@ -6,19 +6,14 @@
 package de.dlr.proseo.api.prip.odata;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
-
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
+import org.apache.olingo.commons.api.data.ContextURL.Suffix;
 import org.apache.olingo.commons.api.data.Entity;
-import org.apache.olingo.commons.api.data.Property;
-import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.EdmEntitySet;
 import org.apache.olingo.commons.api.edm.EdmEntityType;
 import org.apache.olingo.commons.api.format.ContentType;
@@ -39,6 +34,8 @@ import org.apache.olingo.server.api.uri.UriInfo;
 import org.apache.olingo.server.api.uri.UriParameter;
 import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceEntitySet;
+import org.apache.olingo.server.api.uri.queryoption.ExpandOption;
+import org.apache.olingo.server.api.uri.queryoption.SelectOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -56,13 +53,14 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
+import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 
 
 /**
- * Retrieve product collections from the prosEO metadata database (via the Ingestor component) with additional information 
+ * Retrieve product information from the prosEO metadata database (via the Ingestor component) and download product data 
  * from the prosEO Storage Manager
  * 
  * @author Dr. Thomas Bassler
@@ -77,7 +75,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
 	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
 	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
-	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
+	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
@@ -91,11 +89,11 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
 	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
 	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
-	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
 	private static final String MSG_CANNOT_DESERIALIZE_RESPONSE = "(E%d) Cannot deserialize HTTP response";
+	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
 
 	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
 
@@ -116,6 +114,10 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/** The configuration for the PRIP API */
 	@Autowired
 	private ProductionInterfaceConfiguration config;
+	
+	/** The security utilities for the PRIP API */
+	@Autowired
+	private ProductionInterfaceSecurity securityConfig;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityProcessor.class);
@@ -174,74 +176,40 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		this.serviceMetadata = serviceMetadata;
 	}
 
-	/**
-	 * Parse an HTTP authentication header into username and password
-	 * @param authHeader the authentication header to parse
-	 * @return a string array containing the mission, the username and the password
-	 * @throws IllegalArgumentException if the authentication header cannot be parsed
-	 */
-	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
-
-		if (null == authHeader) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] authParts = authHeader.split(" ");
-		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] missionUserPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split("\\\\"); // --> regex "\\" --> matches "\"
-		if (2 != missionUserPassword.length) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
-		
-		String[] result = new String[3];
-		result[0] = missionUserPassword[0];
-		result[1] = userPassword[0];
-		result[2] = userPassword[1];
-		return result;
-	}
 
 	/**
 	 * Get the metadata for a single product from the prosEO Ingestor service
-	 * 
-	 * @param authHeader the Basic Authorization header for logging in to prosEO
 	 * @param productUuid the UUID of the product to retrieve
+	 * 
 	 * @return a product object
-	 * @throws IllegalArgumentException if the authorization header cannot be parsed
 	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws Unauthorized if the user named in the Basic Auth header is not authorized to access the requested product
 	 * @throws RestClientException if the request to the Ingestor fails for some other reason
 	 * @throws RuntimeException if any other exception occurs
+	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
-	private RestProduct getProduct(String authHeader, String productUuid)
-			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({}, {})", authHeader, productUuid);
+	private RestProduct getProduct(String productUuid)
+			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({})", productUuid);
 
-		// Parse authentication header
-		String[] missionUserPassword = parseAuthenticationHeader(authHeader);
-		
 		// Request product metadata from Ingestor service
 		
 		// Attempt connection to service
 		ResponseEntity<RestProduct> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == authHeader ? rtb.build() : 
-				rtb.basicAuthentication(missionUserPassword[0] + "-" + missionUserPassword[1], missionUserPassword[2]).build());
+			RestTemplate restTemplate = rtb.basicAuthentication(
+					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
+				.build();
 			String requestUrl = config.getIngestorUrl() + "/products/uuid/" + productUuid;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, RestProduct.class);
+		} catch (HttpClientErrorException.Unauthorized e) {
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
+			logger.error(message);
+			throw new SecurityException(message);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
-		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, missionUserPassword[1]), e);
-			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
@@ -266,9 +234,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 	/**
 	 * Get the URL of the storage manager for a given processing facility from the prosEO Facility Manager service
-	 * 
-	 * @param authHeader the Basic Authorization header for logging in to prosEO
 	 * @param facilityName the name of the processing facility
+	 * 
 	 * @return the URL of the Storage Manager associated with the given processing facility
 	 * @throws IllegalArgumentException if the authorization header cannot be parsed
 	 * @throws HttpClientErrorException if an error is returned from the Facility Manager service
@@ -276,20 +243,18 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @throws RestClientException if the request to the Facility Manager fails for some other reason
 	 * @throws RuntimeException if any other exception occurs
 	 */
-	private String getStorageManagerUrl(String authHeader, String facilityName)
+	private String getStorageManagerUrl(String facilityName)
 			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getStorageManagerUrl({}, {})", authHeader, facilityName);
+		if (logger.isTraceEnabled()) logger.trace(">>> getStorageManagerUrl({})", facilityName);
 
-		// Parse authentication header
-		String[] missionUserPassword = parseAuthenticationHeader(authHeader);
-		
 		// Request processing facility data from Facility Manager service
 		
 		// Attempt connection to service
 		ResponseEntity<?> entity = null;
 		try {
-			RestTemplate restTemplate = ( null == authHeader ? rtb.build() :
-				rtb.basicAuthentication(missionUserPassword[0] + "-" + missionUserPassword[1], missionUserPassword[2]).build() );
+			RestTemplate restTemplate = rtb.basicAuthentication(
+					securityConfig.getMission() + "-" + config.getFacilityManagerUser(), config.getFacilityManagerPassword())
+				.build();
 			String requestUrl = config.getFacilityManagerUrl() + "/facilities?name=" + facilityName;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
@@ -298,7 +263,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
 			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
 		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, missionUserPassword[1]), e);
+			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser()), e);
 			throw e;
 		} catch (RestClientException e) {
 			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
@@ -338,13 +303,18 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @param productUuid the UUID of the product to retrieve
 	 * @return a binary stream containing the product data
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
-	 * @throws IllegalArgumentException if the authorization header cannot be parsed
+	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
+	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
+	 * @throws RestClientException if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException if any other exception occurs
+	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
-	private Entity getProductAsEntity(String authHeader, String productUuid) throws URISyntaxException, IllegalArgumentException {
+	private Entity getProductAsEntity(String authHeader, String productUuid) throws URISyntaxException, IllegalArgumentException,
+			HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({}, {})", authHeader, productUuid);
 		
 		// Get the product information from the Ingestor service
-		RestProduct restProduct = getProduct(authHeader, productUuid);
+		RestProduct restProduct = getProduct(productUuid);
 
 		// Create output product
 		Entity product = ProductUtil.toPripProduct(restProduct);
@@ -368,32 +338,30 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			throws ODataApplicationException, ODataLibraryException {
 		if (logger.isTraceEnabled()) logger.trace(">>> readEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
 		
-		// 1st we have retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
+		// [1] Retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) resourcePaths.get(0); // in our example, the first segment is the EntitySet
 		EdmEntitySet edmEntitySet = uriResourceEntitySet.getEntitySet();
 
-		// 2nd: fetch the data from backend for this requested EntitySetName
-		// it has to be delivered as Entity object
+		// [2] Fetch the data from backend for this requested EntitySetName (has to be delivered as Entity object)
 	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
 	    
 		Entity entity;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
-				// Extract UUID from keyPredicates (only one key element defined for "Products")				
 				entity = getProductAsEntity(request.getHeader(HttpHeaders.AUTHORIZATION), keyPredicates.get(0).getText());
+			} catch (HttpClientErrorException e) {
+				response.setStatusCode(e.getRawStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+				return;
+			} catch (SecurityException e) {
+				response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+				return;
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
-				return;
-			} catch (IllegalArgumentException e) {
-				response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
-				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
-				return;
-			} catch (HttpClientErrorException e) {
-				response.setStatusCode(e.getRawStatusCode());
-				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
 				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
@@ -411,14 +379,33 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 		if (logger.isDebugEnabled()) logger.debug("... preparing data for response");
 		
-		// 3rd: create a serializer based on the requested format (json)
+		// [3] Check for system query options
+		SelectOption selectOption = uriInfo.getSelectOption();
+		ExpandOption expandOption = uriInfo.getExpandOption();
+
+		// [4] Create a serializer based on the requested format (json)
+		if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
+			// Any other format currently throws an exception (see Github issue #122)
+			String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
 		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
-		// 4th: Now serialize the content: transform from the EntitySet object to InputStream
+		// [5] Now serialize the content: transform from the Entity object to InputStream
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
-		ContextURL contextUrl = ContextURL.with().entitySet(edmEntitySet).build();
+		ContextURL contextUrl = ContextURL.with()
+				.entitySet(edmEntitySet)
+				.selectList(odata.createUriHelper().buildContextURLSelectList(edmEntityType, expandOption, selectOption))
+				.suffix(Suffix.ENTITY)
+				.build();
 
-		EntitySerializerOptions opts = EntitySerializerOptions.with().contextURL(contextUrl).build();
+		EntitySerializerOptions opts = EntitySerializerOptions.with()
+				.contextURL(contextUrl)
+				.expand(expandOption)
+				.select(selectOption)
+				.build();
 		SerializerResult serializerResult = serializer.entity(serviceMetadata, edmEntityType, entity, opts);
 		InputStream serializedContent = serializerResult.getContent();
 
@@ -453,7 +440,25 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// Find the requested product
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0); // in our example, the first segment is the EntitySet
 	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-		RestProduct restProduct = getProduct(request.getHeader(HttpHeaders.AUTHORIZATION), keyPredicates.get(0).getText());
+		RestProduct restProduct;
+
+		try {
+			restProduct = getProduct(keyPredicates.get(0).getText());
+		} catch (HttpClientErrorException e) {
+			response.setStatusCode(e.getRawStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+			return;
+		} catch (SecurityException e) {
+			response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+			return;
+		} catch (Exception e) {
+			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			e.printStackTrace();
+			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
 		
 		// Check whether the product is actually available on some processing facility
 		if (restProduct.getProductFile().isEmpty()) {
@@ -465,7 +470,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		RestProductFile productFile = restProduct.getProductFile().get(randomProductIndex);
 		
 		// Get the service URI of the Storage Manager service
-		String storageManagerUrl = getStorageManagerUrl(request.getHeader(HttpHeaders.AUTHORIZATION), productFile.getProcessingFacilityName());
+		String storageManagerUrl = getStorageManagerUrl(productFile.getProcessingFacilityName());
 		
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
 		URIBuilder uriBuilder = null;
@@ -520,7 +525,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		}
 		// Redirect the request to the download URI
 		log(Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
-		response.setStatusCode(HttpStatusCode.FOUND.getStatusCode());
+		response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());
 		

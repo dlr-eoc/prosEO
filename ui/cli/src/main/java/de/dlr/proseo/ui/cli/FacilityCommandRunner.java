@@ -9,6 +9,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +50,9 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_FACILITY_NAME = "Facility name (empty field cancels): ";
 	private static final String PROMPT_PROCENG_URL = "Processing engine URL (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_URL = "Storage manager URL (empty field cancels): ";
+	private static final String PROMPT_STORAGEMGR_USER = "Storage manager username (empty field cancels): ";
+	private static final String PROMPT_STORAGEMGR_PASSWD = "Storage manager password (empty field cancels): ";
+	private static final String PROMPT_LOCAL_STORAGEMGR_URL = "Kubernetes-local storage manager URL (empty field cancels): ";
 	private static final String PROMPT_STORAGE_TYPE = "Default storage type (empty field cancels): ";
 	
 	private static final String URI_PATH_FACILITIES = "/facilities";
@@ -79,7 +84,7 @@ public class FacilityCommandRunner {
 		List<?> resultList = null;
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getFacilityManagerUrl(),
-					URI_PATH_FACILITIES + "?name=" + facilityName, List.class, loginManager.getUser(), loginManager.getPassword());
+					URI_PATH_FACILITIES + "?name=" + URLEncoder.encode(facilityName, Charset.defaultCharset()), List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				String message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
 				logger.error(message);
@@ -90,7 +95,7 @@ public class FacilityCommandRunner {
 				try {
 					return mapper.convertValue(resultList.get(0), RestProcessingFacility.class);
 				} catch (Exception e) {
-					String message = uiMsg(MSG_ID_FACILITY_NOT_READABLE, loginManager.getMission(), e.getMessage());
+					String message = uiMsg(MSG_ID_FACILITY_NOT_READABLE, facilityName, e.getMessage());
 					logger.error(message);
 					System.err.println(message);
 					return null;
@@ -100,7 +105,7 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, loginManager.getMission());
+				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, facilityName);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -179,7 +184,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getName() || restFacility.getName().isBlank()) {
 			System.out.print(PROMPT_FACILITY_NAME);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -188,7 +193,7 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getProcessingEngineUrl() || restFacility.getProcessingEngineUrl().isBlank()) {
 			System.out.print(PROMPT_PROCENG_URL);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -197,16 +202,43 @@ public class FacilityCommandRunner {
 		if (null == restFacility.getStorageManagerUrl() || restFacility.getStorageManagerUrl().isBlank()) {
 			System.out.print(PROMPT_STORAGEMGR_URL);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
 			restFacility.setStorageManagerUrl(response);
 		}
+		if (null == restFacility.getStorageManagerUser() || restFacility.getStorageManagerUser().isBlank()) {
+			System.out.print(PROMPT_STORAGEMGR_USER);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setStorageManagerUser(response);
+		}
+		if (null == restFacility.getStorageManagerPassword() || restFacility.getStorageManagerPassword().isBlank()) {
+			System.out.print(PROMPT_STORAGEMGR_PASSWD);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setStorageManagerPassword(response);
+		}
+		if (null == restFacility.getLocalStorageManagerUrl() || restFacility.getLocalStorageManagerUrl().isBlank()) {
+			System.out.print(PROMPT_LOCAL_STORAGEMGR_URL);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setLocalStorageManagerUrl(response);
+		}
 		if (null == restFacility.getDefaultStorageType() || restFacility.getDefaultStorageType().isBlank()) {
 			System.out.print(PROMPT_STORAGE_TYPE);
 			String response = System.console().readLine();
-			if ("".equals(response)) {
+			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
@@ -266,7 +298,7 @@ public class FacilityCommandRunner {
 			}
 		}
 		
-		/* If facility name is set, show just the requested mission */
+		/* If facility name is set, show just the requested facility */
 		if (!showCommand.getParameters().isEmpty()) {
 			// Only facility name allowed as parameter
 			RestProcessingFacility restFacility = retrieveFacilityByName(showCommand.getParameters().get(0).getValue());
@@ -441,6 +473,9 @@ public class FacilityCommandRunner {
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+				System.out.println(uiMsg(MSG_ID_NOT_MODIFIED));
+				return;
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
 				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
@@ -489,9 +524,9 @@ public class FacilityCommandRunner {
 			return;
 		}
 		
-		/* Delete processor using Processor Manager service */
+		/* Delete facility using Facility Manager service */
 		try {
-			serviceConnection.deleteFromService(serviceConfig.getProcessorManagerUrl(),
+			serviceConnection.deleteFromService(serviceConfig.getFacilityManagerUrl(),
 					URI_PATH_FACILITIES + "/" + restFacility.getId(), 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {

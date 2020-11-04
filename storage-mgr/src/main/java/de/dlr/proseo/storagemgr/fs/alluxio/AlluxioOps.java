@@ -66,6 +66,8 @@ public final class AlluxioOps {
 	 *
 	 * @param srcPath the source {@link AlluxioURI} (could be a file or a directory)
 	 * @param dstPath the {@link AlluxioURI} of the destination in the local filesystem
+	 * @param readType the Alluxio read type
+	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean copyToLocal(AlluxioURI srcPath, AlluxioURI dstPath, ReadPType readType) {
 		try {
@@ -120,10 +122,8 @@ public final class AlluxioOps {
 	 * @param dfs a given instantiated AlluxioFS
 	 * @param srcPath URI of Alluxio-Object (e.g. alluxio://bucket/path/to/some/file)
 	 * @param dstPath local target filePath
-	 * @return Boolean
-	 * @throws AlluxioException 
-	 * @throws FileDoesNotExistException 
-	 * @throws IOException 
+	 * @param readType the Alluxio read type
+	 * @return true, if the operation succeeded, false otherwise
 	 */
 	private static Boolean copyFileToLocal(AlluxioURI srcPath, AlluxioURI dstPath, ReadPType readType) {
 		File dstFile = new File(dstPath.getPath());
@@ -174,8 +174,12 @@ public final class AlluxioOps {
 	 * destination directory already exists.
 	 *
 	 * @param dstPath the {@link AlluxioURI} of the destination directory which will be created
+	 * @throws AlluxioException if an error occurs in the Alluxio library
+	 * @throws IOException if an I/O error occurred when accessing the destination path
+	 * @throws InvalidPathException if the destination path exists, but is a file
 	 */
-	private static void createDstDir(AlluxioURI dstPath, CreateDirectoryPOptions opt) throws AlluxioException, IOException {
+	private static void createDstDir(AlluxioURI dstPath, CreateDirectoryPOptions opt)
+			throws AlluxioException, IOException, InvalidPathException {
 		try {
 			fs.createDirectory(dstPath, opt);
 		} catch (FileAlreadyExistsException e) {
@@ -472,19 +476,21 @@ public final class AlluxioOps {
 	 *
 	 * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
 	 * @param dstPath the {@link AlluxioURI} of the destination
-	 * @param writeType {@link WritePType} for controlling caching & persistence
-	 * @throws InterruptedException when failed to send messages to the pool
+	 * @param writeType {@link WritePType} for controlling caching and persistence
+	 * @return true, if the operation succeeded, false otherwise
+	 * @throws AlluxioException if an error occurred in the Alluxio library
+	 * @throws IOException if srcPath points to an empty directory, or if the destination directory cannot be created
+	 * @throws RuntimeException when failed to send messages to the pool
 	 */
 	public static Boolean copyFromLocal(AlluxioURI srcPath, AlluxioURI dstPath, WritePType writeType)
-			throws AlluxioException, IOException {
+			throws AlluxioException, IOException, RuntimeException {
 
-		Boolean msg = false;
+		Boolean success = false;
 		List<AlluxioURI> srcPaths = new ArrayList<>();
 		File src = new File(srcPath.getPath());
 		if (src.isDirectory()) {
 			File[] files = src.listFiles();
 			if (files == null) {
-				msg = false;
 				throw new IOException(String.format("Failed to list files for directory %s", src));
 			}
 			for (File f : files) {
@@ -495,8 +501,7 @@ public final class AlluxioOps {
 		}
 
 		if (srcPaths.size() == 1) {
-			Boolean single = copyFromLocalFile(srcPaths.get(0), dstPath, writeType);
-			msg = single;
+			success = copyFromLocalFile(srcPaths.get(0), dstPath, writeType);
 		} else {
 			CopyThreadPoolExecutor pool = new CopyThreadPoolExecutor(mThread,
 					fs, fs.exists(dstPath) ? null : dstPath);
@@ -507,15 +512,15 @@ public final class AlluxioOps {
 					asyncCopyLocalPath(pool, src1, dst, writeType);
 				}
 				logger.info(String.format(COPY_SUCCEED_MESSAGE, "file://"+srcPath, "alluxio://"+dstPath));
-				msg = true;
+				success = true;
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-				msg = false;
+				success = false;
 				throw new RuntimeException(e);
 			} finally {
 				pool.shutdown();
 			}
 		}
-		return msg;
+		return success;
 	}
 }

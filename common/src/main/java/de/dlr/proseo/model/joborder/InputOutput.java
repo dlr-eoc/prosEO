@@ -1,9 +1,12 @@
+/**
+ * InputOutput.java
+ */
 package de.dlr.proseo.model.joborder;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -11,8 +14,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 /**
- * @author melchinger
- *
  * Input or Output information
  * 
  * For details see 
@@ -20,8 +21,29 @@ import org.w3c.dom.Node;
  * issue 1 revision 8 - 03/08/2009
  * MMFI-GSEG-EOPG-TN-07-0003
  *  
+ * @author melchinger
+ *
  */
 public class InputOutput {
+	
+	/** Type string for input elements */
+	public final static String IO_TYPE_INPUT = "Input";
+	/** Type string for output elements */
+	public final static String IO_TYPE_OUTPUT = "Output";
+	
+	/** File name type for physical files */
+	public final static String FN_TYPE_PHYSICAL = "Physical";
+	/** File name type for logical files */
+	public final static String FN_TYPE_LOGICAL = "Logical";
+	/** File name type for file name stems */
+	public final static String FN_TYPE_STEM = "Stem";
+	/** File name type for regular expressions */
+	public final static String FN_TYPE_REGEXP = "Regexp";
+	/** File name type for directories */
+	public final static String FN_TYPE_DIRECTORY = "Directory";
+	/** File name type for ZIP archives (non-standard extension!) */
+	public static final String FN_TYPE_ARCHIVE = "Archive";
+	
 	/**
 	 * The type of element (Input/Output)
 	 */
@@ -35,85 +57,138 @@ public class InputOutput {
 	 */
 	private String fileNameType;
 	/**
-	 * The product id of DB
+	 * The product database ID (non-standard!)
 	 */
 	private String productID;
 
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(InputOutput.class);
+
 	/**
-	 * List of file names
+	 * List of file names (multiple allowed for input, at most one for output)
 	 */
-	private List<IpfFileName> fileNames;
+	private List<IpfFileName> fileNames = new ArrayList<>();
+	
 	/**
+	 * List of time intervals (optional element)
+	 */
+	private List<TimeInterval> timeIntervals = new ArrayList<>();
+
+	/**
+	 * Gets the product ID
+	 * 
 	 * @return the productID
 	 */
-	
 	public String getProductID() {
 		return productID;
 	}
 	/**
+	 * Sets the product ID
+	 * 
 	 * @param productID the productID to set
 	 */
 	public void setProductID(String productID) {
 		this.productID = productID;
 	}
 	/**
+	 * Gets the file type
+	 * 
 	 * @return the fileType
 	 */
 	public String getFileType() {
 		return fileType;
 	}
 	/**
+	 * Sets the file type
+	 * 
 	 * @param fileType the fileType to set
 	 */
 	public void setFileType(String fileType) {
 		this.fileType = fileType;
 	}
 	/**
+	 * Gets the file name type
+	 * 
 	 * @return the fileNameType
 	 */
 	public String getFileNameType() {
 		return fileNameType;
 	}
 	/**
-	 * @param fileNameType the fileNameType to set
+	 * Sets the file name type
+	 * 
+	 * @param fileNameType the file name type to set ('Physical', 'Logical', 'Stem', 'Regexp', 'Directory')
 	 */
-	public void setFileNameType(String fileNameType) {
-		this.fileNameType = fileNameType;
+	public void setFileNameType(String fileNameType) throws IllegalArgumentException {
+		if (FN_TYPE_PHYSICAL.equals(fileNameType) || FN_TYPE_LOGICAL.equals(fileNameType) || FN_TYPE_STEM.equals(fileNameType)
+				|| FN_TYPE_REGEXP.equals(fileNameType) || FN_TYPE_DIRECTORY.equals(fileNameType) || FN_TYPE_ARCHIVE.equals(fileNameType) ) {
+			this.fileNameType = fileNameType;
+		} else {
+			String message = "Invalid file name type " + fileNameType;
+			logger.error(message);
+			throw new IllegalArgumentException(message);
+		}
 	}
 	/**
-	 * @return the fileNames
+	 * Gets the list of file names
+	 * 
+	 * @return the list of file names
 	 */
 	public List<IpfFileName> getFileNames() {
 		return fileNames;
 	}
 
-	public InputOutput(String type) {
-		this.type = type;
-		this.fileNames = new ArrayList<IpfFileName>();
+	/**
+	 * @return the timeIntervals
+	 */
+	public List<TimeInterval> getTimeIntervals() {
+		return timeIntervals;
 	}
 	/**
-	 * @param fileType
-	 * @param fileNameType
-	 * @param type
-	 * @param productID
+	 * Create an Input/Output element of the given type
+	 * 
+	 * @param type the input/output type (either 'Input' or 'Output')
+	 * @throws IllegalArgumentException if the given type is not correct
 	 */
-	public InputOutput(String fileType, String fileNameType, String type, String productID) {
-		this.type = type;
-		this.fileType = fileType;
-		this.fileNameType = fileNameType;
-		this.fileNames = new ArrayList<IpfFileName>();
-		this.productID = productID;
+	public InputOutput(String type) throws IllegalArgumentException {
+		if (IO_TYPE_INPUT.equals(type) || IO_TYPE_OUTPUT.equals(type)) {
+			this.type = type;
+		} else {
+			String message = "Invalid input/output type " + type;
+			logger.error(message);
+			throw new IllegalArgumentException(message);
+		}
+	}
+	/**
+	 * Create an Input/Output element with all attributes set
+	 * 
+	 * @param fileType the file type
+	 * @param fileNameType the file name type ('Physical', 'Logical', 'Stem', 'Regexp', 'Directory')
+	 * @param type the input/output type (either 'Input' or 'Output')
+	 * @param productID the product database ID
+	 */
+	public InputOutput(String fileType, String fileNameType, String type, String productID) throws IllegalArgumentException {
+		if (IO_TYPE_INPUT.equals(type) || IO_TYPE_OUTPUT.equals(type)) {
+			this.type = type;
+			setFileType(fileType);
+			setFileNameType(fileNameType);
+			setProductID(productID);
+		} else {
+			String message = "Invalid input/output type " + type;
+			logger.error(message);
+			throw new IllegalArgumentException(message);
+		}
 	}
 
 	/**
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
-	 * @prosEOAttributes if true, write attributes of prosEO specific data
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
 	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
 	    Element ioEle = doc.createElement(type);
-	    if (productID != null && productID.length() > 0) {
+	    if (prosEOAttributes && productID != null && productID.length() > 0) {
 	    	ioEle.setAttribute("Product_ID", productID);
 	    }
 	    parentElement.appendChild(ioEle);
@@ -126,15 +201,37 @@ public class InputOutput {
         fileNameTypeEle.appendChild(doc.createTextNode(fileNameType));
         ioEle.appendChild(fileNameTypeEle);
 
-	    Element fileNamesEle = doc.createElement("List_of_File_Names");
-	    Attr attr = doc.createAttribute("count");
-	    attr.setValue(Integer.toString(fileNames.size()));
-	    fileNamesEle.setAttributeNode(attr); 
-	    ioEle.appendChild(fileNamesEle);
-	    
-	    for (IpfFileName item : fileNames) {
-	    	item.buildXML(doc, fileNamesEle, prosEOAttributes);
-	    }
+	    if (IO_TYPE_INPUT.equals(type)) {
+			Element fileNamesEle = doc.createElement("List_of_File_Names");
+			Attr fnAttr = doc.createAttribute("count");
+			fnAttr.setValue(Integer.toString(fileNames.size()));
+			fileNamesEle.setAttributeNode(fnAttr);
+			ioEle.appendChild(fileNamesEle);
+			for (IpfFileName item : fileNames) {
+				item.buildXML(doc, fileNamesEle, prosEOAttributes);
+			}
+			
+			if (!timeIntervals.isEmpty()) {
+				Element timeIntervalsEle = doc.createElement("List_of_Time_Intervals");
+				Attr tiAttr = doc.createAttribute("count");
+				tiAttr.setValue(Integer.toString(timeIntervals.size()));
+				timeIntervalsEle.setAttributeNode(tiAttr);
+				ioEle.appendChild(timeIntervalsEle);
+				for (TimeInterval item : timeIntervals) {
+					item.buildXML(doc, timeIntervalsEle, prosEOAttributes);
+				}
+			}
+		} else {
+			// An output element must have at most one file name
+			if (1 < fileNames.size()) {
+				String message = "Output element must have at most one file name, but has " + fileNames.size();
+				logger.error(message);
+				throw new IndexOutOfBoundsException(message);
+			}
+			if (1 == fileNames.size()) {
+				fileNames.get(0).buildXML(doc, ioEle, prosEOAttributes);
+			}
+		}
 	}
 	
 
@@ -173,6 +270,10 @@ public class InputOutput {
 						fnele = fnele.getNextSibling();
 					}						
 					break;
+				case "file_name" :
+					IpfFileName fn = new IpfFileName();
+					fn.read(child);
+					this.getFileNames().add(fn);
 				}
 				child = child.getNextSibling();
 			}

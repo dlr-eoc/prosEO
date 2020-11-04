@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.interfaces.rest.model.RestParameter;
 import de.dlr.proseo.interfaces.rest.model.RestProduct;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
-import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -43,8 +43,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 public class ProductUtil {
 
 	private static final String ERR_NO_PRODUCT_FILES_FOUND = "No product files found in product ";
-
-	private static final int DATE_TIME_OFFSET_LENGTH = 24;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
@@ -67,12 +65,11 @@ public class ProductUtil {
 		RestProductFile restProductFile = restProduct.getProductFile().get(0);
 		
 		// Determine production type
-		// TODO Derive from Product.productionType
-		String productQuality = restProduct.getProductQuality();
+		String restProductionType = restProduct.getProductionType();
 		int productionType;
-		if (ProductQuality.SYSTEMATIC.name().equals(productQuality)) {
+		if (ProductionType.SYSTEMATIC.name().equals(restProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL;
-		} else if (ProductQuality.NOMINAL.name().equals(productQuality)) {
+		} else if (ProductionType.ON_DEMAND_DEFAULT.name().equals(restProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
 		} else {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
