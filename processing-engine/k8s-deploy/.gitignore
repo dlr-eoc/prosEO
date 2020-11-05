@@ -4,9 +4,6 @@ cluster-key.*
 *.retry
 .ostackrc
 
-# Cluster configuration
-clusters/
-
 # Tool directories
 bin/
 gospace/

@@ -52,6 +52,12 @@ its job. The following steps assume you're in your cluster directory, e.g.
    $ ./hosts --hostfile
    ```
 
+### Firewalls
+
+Make sure the openstack system you're using has inbound firewall rules accepting
+packets from all sources on port 22 (SSH), 80 (HTTP) and 443 (HTTPS) for the
+bastion host(s). The specifics of that are up to your provider.
+
 ### Open Telekom Cloud
 
 In the OTC, a Virtual Private Cloud will be configured for this set of VMs,

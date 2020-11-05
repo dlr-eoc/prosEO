@@ -156,7 +156,38 @@ that happens, there's only one thing to do: update the configuration. From the
 cluster directory, run:
 
 ```bash
+# In cluster directory
 $ ansible-playbook -i hosts ../../../scripts/ansible/migrate-kubeadm-config.yml
 ```
 
 Then re-start the kubespray playbook.
+
+Congratulations, you have a kubernetes cluster! You now should also configure
+the bastion host to forward traffic, etc:
+
+*Note:* This last step requires certificate files to be installed in the
+cluster directory's `certs/servercert.pem` and `certs/privkey.pem` respectively.
+- For creating self-signed certificates, use [a guide such as this](https://www.cyberithub.com/create-a-self-signed-certificate/)
+- For using ACME/Let's Encrypt certificates, [dehydrated](https://github.com/dehydrated-io/dehydrated)
+  is recommended.
+
+*Note 2:* You probably also want to configure users that can access the API
+exposed by the bastion configuration. Since it's not a great idea to store
+plaintext passwords here, we'll leave that up to you. You need to pass to
+ansible the `nginx_users` dict, where keys are user names and values are
+plaintext passwords.
+
+One option would be to create a file `kubespray/inventory/<cluster>/group_vars/bastion/nginx.yml`:
+
+```yaml
+---
+nginx_users
+  foo: bar  # creates user foo with password bar
+```
+
+Without that step, the API proxy will be inaccessible by anyone.
+
+```bash
+# In cluster directory
+$ ansible-playbook -i hosts ../../../scripts/ansible/postinstall.yml
+```
