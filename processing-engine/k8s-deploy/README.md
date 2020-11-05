@@ -48,10 +48,14 @@ Simply `$ cd kubespray/inventory/<yourcluster>` and run commands from there.
 Creating a new Cluster
 ----------------------
 
-1. Make a cluster directory:
+1. Make a cluster directory. This assumes you are currently in the `k8s-deploy`
+   directory:
    ```bash
-   $ make_cluster.sh <clustername>
+   $ scripts/make_cluster.sh <clustername>
    ```
+   The script copies files from kubespray's `kubespray/inventory/sample`
+   cluster to `kubespray/inventory/<clustername>` and adds a few
+   configuration files.
 1. Change to the new cluster directory.
 1. Create SSH keys for this cluster:
    ```bash
@@ -68,6 +72,20 @@ Creating a new Cluster
   we're managing.
 - The `clustername.sh` file is entirely optional, but it sets the bash
   prompt, indicating which cluster's environment is currently loaded.
+
+All your cluster configuration lives in this directory. You can copy
+it anywhere, and adjust the relative paths to scripts in further
+steps accordingly, e.g.  for managing the cluster configuration in a separate
+repository.
+
+It would also be possible to create a symbolic link from
+`kubespray/inventory/<clustername>` to this repository - however, there
+are some issues with using the docker environment. The
+[Initial Setup](docs/SETUP.md) guide has some details here.
+
+In either case, the guide assumes that commands are run from your cluster
+directory, and that your cluster directory lives in the path that
+`make_cluster.sh` creates.
 
 ### VM Provisioning
 
@@ -122,6 +140,14 @@ whether this works by running:
 ```bash
 $ ansible -i hosts -m ping all
 ```
+
+We need to run some configuration on all the nodes first. This is a little
+specific to the operating system you're running on.
+
+```bash
+$ ansible-playbook -i hosts ../../../scripts/ansible/cluster-preinstall.yml
+```
+
 Now it's up to kubespray to configure all VMs for running a K8S cluster. We
 need to run commands from the kubespray directory now, and specify the cluster
 inventory.
@@ -133,17 +159,11 @@ $ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush
 
 *Note:* It may be that the worker nodes cannot join to the cluster with an
 error message stating the kubeadm configuration file version is outdated. If
-that happens, there's only one thing to do: update the configuration.
+that happens, there's only one thing to do: update the configuration. From the
+cluster directory, run:
 
-For each worker node, do the following:
+```bash
+$ ansible-playbook -i hosts ../../../scripts/ansible/migrate-kubeadm-config.yml
+```
 
-1. SSH into the node.
-1. Run the following:
-   ```bash
-   $ sudo /usr/local/bin/kubeadm config migrate \
-      --old-config /etc/kubernetes/kubeadm-client.conf \
-      --new-config /etc/kubernetes/kubeadm-client-new.conf
-   $ sudo mv /etc/kubernetes/kubeadm-client-new.conf \
-      /etc/kubernetes/kubeadm-client.conf
-   ```
-1. The re-start the playbook script above.
+Then re-start the kubespray playbook.

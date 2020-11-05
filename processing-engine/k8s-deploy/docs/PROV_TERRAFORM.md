@@ -15,7 +15,8 @@ OpenStack Configuration
 -----------------------
 
 You will need some environment variables to be defined for terraform to do
-its job. You can see which environment variables are required by
+its job. The following steps assume you're in your cluster directory, e.g.
+`kubespray/inventory/<yourname>`.
 
 1. Link the OpenStack hosts script.
    ```bash
@@ -27,7 +28,7 @@ its job. You can see which environment variables are required by
    ```
 1. Modify the configuration to include your username, password, etc.
 1. Create your `cluster.tfvars` configuration file. This is outside of the scope
-   of this guide. See [the variables file](kubespray/contrib/terraform/openstack/variables.tf)
+   of this guide. See [the variables file](https://github.com/kubernetes-sigs/kubespray/contrib/terraform/openstack/variables.tf)
    for some information on what configuration varaibles exist.
 1. Optionally upgrade kubespray's openstack configuration. You will know if
    you need to do this when the next step fails. In fact, the next step will

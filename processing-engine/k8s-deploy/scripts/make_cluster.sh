@@ -12,6 +12,7 @@ CLUSTERDIR="kubespray/inventory/$CLUSTER"
 cp -rf kubespray/inventory/sample "$CLUSTERDIR"
 cd "$CLUSTERDIR"
 ln -sf ../../contrib
+ln -snf ../../../scripts/ansible/roles
 cd -
 
 # Create autoenv configuration

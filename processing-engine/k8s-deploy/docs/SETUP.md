@@ -34,8 +34,9 @@ UNIX-like OS
    ```bash
    $ go get $(cat tools/gopackages.txt)
    ```
-  **Note** this seems to be broken at the moment, use https://terraform.io to download
-  the terraform CLI and put the executable into the `gospace/bin` directory.
+  **Note** this seems to be broken at the moment, so
+  [download the terraform cli](https://terraform.io/download.html) and
+  put the executable into the `gospace/bin` directory.
 1. Install kubectl:
   ```bash
   $ mkdir bin
@@ -92,6 +93,20 @@ so if you update either, there is no need to re-build the image. However,
 any dependencies installed from `Pipfile`, `gopackages.txt` or
 `kubespray/requirements.txt` are installed at build-time. If those change,
 it is best to re-build the image.
+
+### Mapping Configuration Directories
+
+The cluster installation guide will speak about cluster directories that
+contain all the cluster configuration. They typically live in the `kubespray`
+directory, because that's where they're expected by many scripts. But it's
+possible that you'd like to manage this configuration elsewhere, pershaps
+in a repository specific to that purpose.
+
+You can do that, and create a symbolic link to that directory from within
+`kubespray/inventory/<yourname>` - and that works well with the `pipenv`
+approach above. But in the case of using a docker image, you must then
+also ensure that the linked-to directory is mapped into the image. For that,
+you may have to adjust `docker/run.sh`.
 
 Verify Environment
 ------------------
