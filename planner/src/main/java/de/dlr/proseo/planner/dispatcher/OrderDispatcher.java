@@ -341,7 +341,7 @@ public class OrderDispatcher {
 					order.getJobs().add(job);
 					List<JobStep> allJobSteps = new ArrayList<JobStep>();
 					List<Product> allProducts = new ArrayList<Product>();
-
+					if (logger.isTraceEnabled()) logger.trace("Job with time {} - {}", startT, stopT);
 					// look for all products to create
 
 					for (ProductClass productClass : requestedProductClasses) {
@@ -536,7 +536,9 @@ public class OrderDispatcher {
 			List<JobStep> jobSteps = new ArrayList<JobStep>();
 			jobSteps.add(jobStep);
 			allJobSteps.add(jobStep);
-			for (ProductQuery pq : jobStep.getInputProductQueries()) {
+			List<ProductQuery> pql = new ArrayList<ProductQuery>();
+			pql.addAll(jobStep.getInputProductQueries());
+			for (ProductQuery pq : pql) {
 				if (productQueryService.executeQuery(pq, true)) {
 					// Already satisfied, no processing of input product required							
 					if (logger.isDebugEnabled()) logger.debug("Product query for rule '{}' already satisfied", pq.getGeneratingRule());

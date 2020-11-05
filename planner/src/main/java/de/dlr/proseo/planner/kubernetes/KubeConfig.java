@@ -17,11 +17,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.StorageType;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.rest.model.PodKube;
+import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
@@ -450,10 +454,28 @@ public class KubeConfig {
 				if (kj.getFinishInfo(kName)) {
 					
 				}
-			}
-			
+			}			
 		}
-		
+		// get all job steps of DB with states RUNNING
+		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
+		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
+		List<JobStep> runningJobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(processingFacility.getId(), jobStepStates);
+		// These job steps has to be in Kubernetes job list. If not, there was a problem. Set it to failed.
+		for (JobStep js : runningJobSteps) {
+			String aName = ProductionPlanner.jobNamePrefix + js.getId();
+			// If no job with this name is running, change state to FAILED and set info in log
+			if (!kJobs.containsKey(aName)) {
+				js.setJobStepState(JobStepState.FAILED);	
+				js.incrementVersion();
+				String stdout = js.getProcessingStdOut();
+				if (stdout == null) {
+					stdout = "";
+				}
+				js.setProcessingStdOut("Job on Processing Fycility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				js = RepositoryService.getJobStepRepository().save(js);
+				UtilService.getJobStepUtil().checkFinish(js);
+			}			
+		}		
 	}
 	/**
 	 * Retrieve all pods of cluster

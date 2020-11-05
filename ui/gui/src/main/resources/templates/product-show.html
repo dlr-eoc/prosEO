@@ -45,7 +45,7 @@
 			<div class="proseo-top-div"></div>
 
 			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-
+      <p th:text="${countProducts}"></p>
 			<div id="productcontent" name="productcontent">
 				<table class="table table-hover" id="productTable"
 					th:if="${products != null and (not #lists.isEmpty(products))}">
@@ -199,6 +199,25 @@
 					</div>
 					</tbody>
 				</table>
+				<nav th:unless="${((productCount==null)?1:productCount) lt 2}" id="pagenav" th:name="${productCount}" aria-label="Page navigation">
+					<ul class="pagination justify-content-center">
+						<li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a class="page-link" 
+						  th:onclick="'retrieveDataPage(0, ' + ${pageSize} + ')'" href="#"
+							tabindex="-1"><span aria-hidden="true" data-feather="chevrons-left"></span></a></li>
+            <li class="page-item" th:classappend="${page eq 1} ? 'disabled'"><a class="page-link"
+                     th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page)-2)*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)-1)*((pageSize==null)?1:pageSize)} + ')'"
+                     href="#"><span aria-hidden="true" data-feather="chevron-left"></span></a></li>            
+						<li th:each="pageNo : ${showPages}" class="page-item"  th:classappend="${page eq pageNo} ? 'disabled'"><a 
+						      th:onclick="'retrieveDataPage(' + ${(pageNo-1)*pageSize} + ', ' + ${pageNo*pageSize} + ')'" 
+						      class="page-link" href="#" th:text="${pageNo}">1</a></li>
+						<li class="page-item" th:classappend="${page eq pageCount} ? 'disabled'"><a class="page-link" href="#" 
+                  th:onclick="'retrieveDataPage(' + ${(((page==null)?0:page))*((pageSize==null)?1:pageSize)} + ', ' + ${(((page==null)?0:page)+1)*((pageSize==null)?1:pageSize)} + ')'" 
+                  ><span aria-hidden="true" data-feather="chevron-right"></span></a></li>
+						<li class="page-item" th:classappend="${page eq pageCount} ? 'disabled'"><a class="page-link" href="#" 
+                  th:onclick="'retrieveDataPage(' + ${(((pageCount==null)?0:pageCount)-1)*((pageSize==null)?1:pageSize)} + ', ' + ${((pageCount==null)?0:pageCount)*((pageSize==null)?1:pageSize)} + ')'" 
+						      ><span aria-hidden="true" data-feather="chevrons-right"></span></a></li>
+					</ul>
+				</nav>
 			</div>
 
 			<div th:insert="fragments/footer.html :: footer"></div>
@@ -258,7 +277,15 @@
 		    window.location.href = '/product-show?id=' + ref;
 	    }
   }
-    function retrieveData(id, productClass, startTimeFrom, startTimeTo) {
+  
+  function retrieveDataPage(from, to) {
+    var productClass = getURLParam('productClass');
+    var startTimeFrom = getURLParam('startTimeFrom');
+    var startTimeTo = getURLParam('startTimeTo');
+    var id = getURLParam('id');
+    retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to);
+  }
+    function retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to) {
       showLoader();
       var tableRows = $("productTable").rows;
       if (tableRows > 1 && tableRows != null) {
@@ -276,6 +303,14 @@
     }
       if (startTimeTo != null) {
           url = url + divider + "startTimeTo=" + startTimeTo.toString().trim();
+          divider = "&";
+    }
+    if (from != null) {
+          url = url + divider + "recordFrom=" + from;
+          divider = "&";
+    }
+    if (to != null) {
+          url = url + divider + "recordTo=" + to;
           divider = "&";
     }
       if (id != null) {
@@ -319,11 +354,7 @@
      var elem = document.getElementById('sb-product');
      $(elem).addClass('active');
      feather.replace();
-     var productClass = getURLParam('productClass');
-     var startTimeFrom = getURLParam('startTimeFrom');
-     var startTimeTo = getURLParam('startTimeTo');
-     var id = getURLParam('id');
-     retrieveData(id, productClass, startTimeFrom, startTimeTo);
+     retrieveDataPage(0, 25);
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

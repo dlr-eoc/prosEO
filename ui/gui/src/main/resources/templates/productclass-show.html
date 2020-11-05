@@ -47,7 +47,7 @@
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
           
           <div id="productclasscontent" name="productclasscontent">
-              <table class="table table-hover" id="productclassTable">
+              <table class="table table-hover rounded" id="productclassTable">
                 <thead class="thead-proseo" id="proseo-thead">
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
@@ -94,7 +94,7 @@
 										th:text="${comp}"></span></a></td>
 								<td th:text="${class?.visibility}"></td>
 								<td>
-									<table class="table table-hover" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
+									<table class="table table-hover  rounded" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
 										<thead>
 											<tr class="th-row">
 												<th><span th:text="#{mode}">mode</span></th>

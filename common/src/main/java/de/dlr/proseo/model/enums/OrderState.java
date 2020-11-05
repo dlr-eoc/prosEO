@@ -38,7 +38,7 @@ public enum OrderState {
 		case INITIAL:
 			return other.equals(APPROVED);
 		case APPROVED:
-			return other.equals(PLANNED);
+			return other.equals(INITIAL) || other.equals(PLANNED);
 		case CLOSED:
 			return false; // End state!
 		case COMPLETED:
