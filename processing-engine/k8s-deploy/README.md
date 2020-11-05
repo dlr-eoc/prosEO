@@ -121,6 +121,7 @@ provisioned, you need to enable SSH forwarding on those hosts. SSH into
 the bastion:
 
 ```bash
+# In cluster directory
 $ ansible-playbook -i hosts ../../../scripts/ansible/bastion-preinstall.yml
 ```
 
@@ -131,6 +132,7 @@ ansible should be able to connect to all hosts in the cluster. You can find out
 whether this works by running:
 
 ```bash
+# In cluster directory
 $ ansible -i hosts -m ping all
 ```
 
@@ -138,6 +140,7 @@ We need to run some configuration on all the nodes first. This is a little
 specific to the operating system you're running on.
 
 ```bash
+# In cluster directory
 $ ansible-playbook -i hosts ../../../scripts/ansible/cluster-preinstall.yml
 ```
 
@@ -146,7 +149,7 @@ need to run commands from the kubespray directory now, and specify the cluster
 inventory.
 
 ```
-$ cd ../..  # /kubespray directory
+# In /kubespray directory
 $ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
 ```
 
@@ -180,6 +183,7 @@ plaintext passwords.
 One option would be to create a file `kubespray/inventory/<cluster>/group_vars/bastion/nginx.yml`:
 
 ```yaml
+# <cluster directory>/group_vars/bastion/nginx.yml
 ---
 nginx_users
   foo: bar  # creates user foo with password bar
@@ -191,3 +195,29 @@ Without that step, the API proxy will be inaccessible by anyone.
 # In cluster directory
 $ ansible-playbook -i hosts ../../../scripts/ansible/postinstall.yml
 ```
+
+Updating a Cluster
+------------------
+
+1. Use your provisioner to create new machines. This should result in a new
+   inventory for kubespray.
+1. Change to your cluster directory, if you haven't already.
+1. Update your SSH config - this gets regenerated when you modified your
+   inventory.
+   ```bash
+   # In cluster directory
+   $ ../../../scripts/ssh_config.sh
+   ```
+1. Re-run the `bastion-preinstall.yml` or `cluster-preinstall.yml` scripts as
+   needed, depending on whether you added/modified bastions or other nodes or
+   both (see above).
+1. Go to the kubespray directory, and run the `cluster.yml` script again.
+   ```bash
+   # In /kubespray directory
+   $ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
+   ```
+
+*Note:* The `upgrade-cluster.yml` script can be used to bring kubernetes to
+the latest version on already existing clusters. Do not use it to grow a
+cluster.
+
