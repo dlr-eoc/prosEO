@@ -1,0 +1,13 @@
+---
+- name: Allow epel releases
+  yum:
+    name: epel-release
+
+- name: Install tools
+  yum:
+    name:
+    - htop
+    - git
+    - wget
+    - python-pip
+    state: latest
