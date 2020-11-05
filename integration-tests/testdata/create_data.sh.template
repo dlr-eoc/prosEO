@@ -86,7 +86,7 @@ cp -p bulletinb-380.xml $TEST_DATA_DIR
 
 # Upload test data to S3 storage on test cluster
 # Requires "aws" (aws-cli) as a local S3 client, correctly configured with access key id and secret
-aws s3 sync $TEST_DATA_DIR s3://proseo-s5p-main/integration-test/testdata/ --endpoint-url https://obs.eu-de.otc.t-systems.com
+aws s3 sync $TEST_DATA_DIR s3://proseo-s5p-main/integration-test/testdata/ --endpoint-url https://<S3 API endpoint>
 
 
 # -------------------------
@@ -100,13 +100,13 @@ echo "" >$CLI_SCRIPT
 # Create a processing facility
 cat >$TEST_DATA_DIR/facility.json <<EOF
 {
-    "name": "telekom-otc",
-    "description": "Telekom_OTC",
-    "processingEngineUrl": "https://proseo-k8s-gate.de/",
+    "name": "my-cloud",
+    "description": "My Cloud Provider",
+    "processingEngineUrl": "https://<facility bastion host>/",
     "processingEngineUser": "kubeuser1",
     "processingEnginePassword": "very-secret-password",
     "storageManagerUrl": 
-    	"https://proseo-k8s-gate.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/",
+    	"https://<facility bastion host>/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1/",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
@@ -117,7 +117,7 @@ echo "facility create --file=$TEST_DATA_DIR/facility.json" >>$CLI_SCRIPT
 
 
 # Ingest test data into prosEO
-echo "ingest --file=$TEST_DATA_DIR/ingest_products.json telekom-otc" >>$CLI_SCRIPT
+echo "ingest --file=$TEST_DATA_DIR/ingest_products.json my-cloud" >>$CLI_SCRIPT
 cat >$TEST_DATA_DIR/ingest_products.json <<EOF
 [
     {

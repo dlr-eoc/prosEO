@@ -107,7 +107,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "processingEnginePassword": "very-secret-password",
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
-    "localStorageManagerUrl": "http://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
+    "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"
@@ -116,7 +116,7 @@ EOF
 echo "facility create --file=$TEST_DATA_DIR/facility.json" >>$CLI_SCRIPT
 
 # Ingest test data into prosEO
-echo "ingest --file=$TEST_DATA_DIR/ingest_products.json telekom-otc" >>$CLI_SCRIPT
+echo "ingest --file=$TEST_DATA_DIR/ingest_products.json localhost" >>$CLI_SCRIPT
 cat >$TEST_DATA_DIR/ingest_products.json <<EOF
 [
     {
@@ -506,6 +506,9 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
     "orderState": "INITIAL",
     "slicingType": "ORBIT",
     "sliceOverlap": 0,
+	"inputFilters": [
+    	{
+    		"productClass": "L0________",
     "filterConditions": [
         {
             "key": "revision",
@@ -517,6 +520,35 @@ cat >$TEST_DATA_DIR/order_l2.json <<EOF
             "parameterType": "STRING",
             "parameterValue": "OPER"
         }
+		    ]
+	    },
+    	{
+    		"productClass": "L1B_PART1",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "2"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+	    }
+    ],
+    "classOutputParameters": [
+    	{
+    		"productClass": "L1B_PART1",
+    "outputParameters": [
+        {
+            "key": "revision",
+            "parameterType": "INTEGER",
+    				"parameterValue": "2"
+    			}
+    		]
+    	}
     ],
     "outputParameters": [
         {
@@ -553,6 +585,24 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
     "slicingType": "TIME_SLICE",
     "sliceDuration": 14400,
     "sliceOverlap": 0,
+    "inputFilters": [
+    	{
+    		"productClass": "PTM_L2A",
+		    "filterConditions": [
+		        {
+		            "key": "revision",
+		            "parameterType": "INTEGER",
+		            "parameterValue": "99"
+		        },
+		        {
+		            "key": "fileClass",
+		            "parameterType": "STRING",
+		            "parameterValue": "TEST"
+		        }
+		    ]
+    	},
+    	{
+    		"productClass": "PTM_L2B",
     "filterConditions": [
         {
             "key": "revision",
@@ -564,6 +614,8 @@ cat >$TEST_DATA_DIR/order_l3.json <<EOF
             "parameterType": "STRING",
             "parameterValue": "TEST"
         }
+		    ]
+    	}
     ],
     "outputParameters": [
         {

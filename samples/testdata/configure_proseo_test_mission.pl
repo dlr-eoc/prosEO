@@ -125,7 +125,7 @@ my $mission = {
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStartTime)}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(sensingStopTime)}_' .
             '${(new java.text.DecimalFormat(\\"00000\\")).format(null == orbit ? 0 : orbit.orbitNumber)}_' .
-            '${parameters.get(\\"copernicusCollection\\").getParameterValue()}_' .
+            '${parameters.get(\\"revision\\").getParameterValue()}_' .
             '${configuredProcessor.processor.processorVersion.replaceAll(\\"\\\\\\\\.\\", \\"\\")}_' .
             '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(generationTime)}.nc'
 
@@ -152,7 +152,7 @@ my @processors = (
     	tasks => [ 
     	   { taskName => 'ptm_l01b', taskVersion => '0.1.0' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.5.2'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.6.0'
     },
     {
         processorName => 'PTML2', 
@@ -161,7 +161,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l2', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.5.2'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.6.0'
     },
     {
         processorName => 'PTML3', 
@@ -170,7 +170,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l3', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.5.2'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.6.0'
     }
 );
 my @configurations = (
