@@ -17,8 +17,10 @@
     - https
     - nfs
     kubectl_proxy_port: 8001
+    alert_email: s5p-ops@dlr.de # XXX put in group_vars/bastion/...
   roles:
   - configure_sshd  # Already done in bastion-preinstall, but this allows updates
+  - hardening
   - install_kubectl
   - install_packages
   - configure_nfs
