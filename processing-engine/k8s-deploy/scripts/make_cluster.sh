@@ -15,6 +15,10 @@ ln -sf ../../contrib
 ln -snf ../../../scripts/ansible/roles
 cd -
 
+# Make bin directory
+BINDIR="$CLUSTERDIR/bin"
+mkdir -p "$BINDIR"
+
 # Create autoenv configuration
 CONFIGDIR="$CLUSTERDIR/config"
 mkdir -p "$CONFIGDIR"
