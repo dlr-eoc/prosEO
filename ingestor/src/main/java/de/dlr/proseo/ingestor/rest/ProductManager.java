@@ -239,58 +239,15 @@ public class ProductManager {
 		List<RestProduct> result = new ArrayList<>();
 		
 		// Find using search parameters
-		String jpqlQuery = "select p from Product p where p.productClass.mission.code = :missionCode";
-		if (null != productClass && 0 < productClass.length) {
-			jpqlQuery += " and p.productClass.productType in (";
-			for (int i = 0; i < productClass.length; ++i) {
-				if (0 < i) jpqlQuery += ", ";
-				jpqlQuery += ":productClass" + i;
-			}
-			jpqlQuery += ")";
-		}
-		if (null != startTimeFrom) {
-			jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
-		}
-		if (null != startTimeTo) {
-			jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
-		}
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != productClass && 0 < productClass.length) {
-			for (int i = 0; i < productClass.length; ++i) {
-				query.setParameter("productClass" + i, productClass[i]);
-			}
-		}
-		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
-		}
-		if (null != startTimeTo) {
-			query.setParameter("startTimeTo", startTimeTo.toInstant());
-		}
+		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
+				recordFrom, recordTo, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
 				Product product = (Product) resultObject;
-				ProductVisibility visibility = product.getProductClass().getVisibility();
-				switch (visibility) {
-				case PUBLIC:
-					break;
-				case RESTRICTED:
-					if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
-						break;
-					}
-					// Fall through to test READER_ALL
-				default: // Internal
-					if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
-						break;
-					}
-					// Product not visible for user
-					continue;
-				}
 				result.add(ProductUtil.toRestProduct(product));
 			}
-		}
-		
+		}		
 		
 		if (result.isEmpty()) {
 			throw new NoResultException(logError(MSG_PRODUCT_LIST_EMPTY, MSG_ID_PRODUCT_LIST_EMPTY));
@@ -323,8 +280,15 @@ public class ProductManager {
 						mission, securityService.getMission()));
 			} 
 		}
-
-		// TODO Auto-generated method stub
+		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
+				null, null, null, true);
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long)resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
 		return "0";
 	}
 
@@ -824,5 +788,94 @@ public class ProductManager {
 		
 		return ProductUtil.toRestProduct(product);
 	}
+	/*
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return JPQL Query
+	 */
+	private Query createProductsQuery(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
 
+		// Find using search parameters
+		String jpqlQuery = null;
+		if (count) {
+			jpqlQuery = "select count(p) from Product p where p.productClass.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from Product p where p.productClass.mission.code = :missionCode";
+		}
+		if (null != productClass && 0 < productClass.length) {
+			jpqlQuery += " and p.productClass.productType in (";
+			for (int i = 0; i < productClass.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":productClass" + i;
+			}
+			jpqlQuery += ")";
+		}
+		if (null != startTimeFrom) {
+			jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
+		}
+		if (null != startTimeTo) {
+			jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
+		}
+		// visibility
+		List<ProductVisibility> visibilities = new ArrayList<ProductVisibility>();
+		visibilities.add(ProductVisibility.PUBLIC);
+		if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+			visibilities.add(ProductVisibility.RESTRICTED);
+		}
+		if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
+			visibilities.add(ProductVisibility.INTERNAL);
+		}
+		if (0 < visibilities.size()) {
+			jpqlQuery += " and p.productClass.visibility in (";
+			for (int i = 0; i < visibilities.size(); ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":visibility" + i;
+			}
+			jpqlQuery += ")";
+		}
+		
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += orderBy[i];
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+		if (null != productClass && 0 < productClass.length) {
+			for (int i = 0; i < productClass.length; ++i) {
+				query.setParameter("productClass" + i, productClass[i]);
+			}
+		}
+		if (null != startTimeFrom) {
+			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
+		}
+		if (null != startTimeTo) {
+			query.setParameter("startTimeTo", startTimeTo.toInstant());
+		}
+		if (0 < visibilities.size()) {
+			for (int i = 0; i < visibilities.size(); ++i) {
+				query.setParameter("visibility" + i, visibilities.get(i));
+			}
+		}
+		
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
+	}
+	
 }

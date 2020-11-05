@@ -137,8 +137,8 @@
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{order}">order</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
-                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
@@ -151,12 +151,12 @@
                       <td><a th:href="'order?id=' + ${jobstep?.orderId} + '&jh=' + ${jobstep?.jobId} + '&jsh=' + ${jobstep?.id} + '&t=' + ${jobstep?.id}"><span th:text="${jobstep?.id}"></span></a></td>
                       <td class="FAILED"><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
+                      <td><a 
+                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
                       <td><a th:each="comp : ${jobstep?.inputProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
-                      <td><a 
-                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><span th:text="${jobstep?.processingStartTime}"></span></td>
                       <td><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                       <td><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
@@ -180,8 +180,8 @@
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{order}">order</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
-                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{outputproductclass}">outputproductclass</span></th>
+                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
@@ -195,11 +195,11 @@
                       <td class="COMPLETED"><span th:text="${jobstep?.jobStepState}"></span></td>
                       <td><a th:href="'order?id=' + ${jobstep?.orderId}"><span th:text="${jobstep?.orderIdentifier}"></span></a></td>
                       <td><span th:text="${jobstep?.processingMode}"></span></td>
+                      <td><a 
+                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><a th:each="comp : ${jobstep?.inputProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
-                      <td><a 
-                         th:href="'/productclass-show?pc=' + ${jobstep?.outputProductClass}" th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
                       <td><span th:text="${jobstep?.processingStartTime}"></span></td>
                       <td><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                       <td><span th:text="${jobstep?.stdoutLogLevel}"></span></td>

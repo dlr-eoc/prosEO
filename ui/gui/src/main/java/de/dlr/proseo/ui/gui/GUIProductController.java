@@ -1,7 +1,13 @@
 package de.dlr.proseo.ui.gui;
 
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,18 +16,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.jca.cci.RecordTypeNotSupportedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
@@ -40,6 +53,11 @@ public class GUIProductController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
+
+	/** The connector service to the prosEO backend services */
+	@Autowired
+	private ServiceConnection serviceConnection;
+	
 
     @RequestMapping(value = "/product-show")
     public String showProduct(){
@@ -69,13 +87,33 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "productClass") String productClass,
 			@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
+			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
+			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
-		logger.trace(">>> getProducs({}, {}, {}, model)", productClass, startTimeFrom, startTimeTo);
-		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo);
+		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", productClass, startTimeFrom, startTimeTo, fromIndex, toIndex);
+		Long from = null;
+		Long to = null;
+		if (fromIndex != null && fromIndex >= 0) {
+			from = fromIndex;
+		} else {
+			from = (long) 0;
+		}
+		if (toIndex != null && from != null && toIndex > from) {
+			to = toIndex;
+		} else if (from != null) {
+			to = from + 100;
+		}
+		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> products = new ArrayList<>();
+		Long prodCount = countProducts(productClass, startTimeFrom, startTimeTo);
+
+		Long pageSize = to - from;
+		Long deltaPage = (long) ((prodCount % pageSize)==0?0:1);
+		Long pages = (prodCount / pageSize) + deltaPage;
+		Long page = (fromIndex / pageSize) + 1;
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -93,6 +131,13 @@ public class GUIProductController extends GUIBaseController {
 					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
 						products.add(p);
 						model.addAttribute("products", products);
+						model.addAttribute("productCount", 1);
+						model.addAttribute("pageSize", 1);
+						model.addAttribute("pageCount", 1);
+						model.addAttribute("page", 1);
+						List<Long> showPages = new ArrayList<Long>();
+						showPages.add((long) 1);
+						model.addAttribute("showPages", showPages);
 						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
 						deferredResult.setResult("product-show :: #productcontent");
@@ -101,9 +146,26 @@ public class GUIProductController extends GUIBaseController {
 				} else {
 					clientResponse.bodyToMono(List.class).subscribe(pList -> {
 						products.addAll(pList);
-						MapComparator oc = new MapComparator("productClass", true);
-						products.sort(oc);
+						//MapComparator oc = new MapComparator("productClass", true);
+						//products.sort(oc);
 						model.addAttribute("products", products);
+						model.addAttribute("productCount", prodCount);
+						model.addAttribute("pageSize", pageSize);
+						model.addAttribute("pageCount", pages);
+						model.addAttribute("page", page);
+						List<Long> showPages = new ArrayList<Long>();
+						Long start = Math.max(page - 4, 1);
+						Long end = Math.min(page + 4, pages);
+						if (page < 5) {
+							end = Math.min(end + (5 - page), pages);
+						}
+						if (pages - page < 5) {
+							start = Math.max(start - (4 - (pages - page)), 1);
+						}
+						for (Long i = start; i <= end; i++) {
+							showPages.add(i);
+						}
+						model.addAttribute("showPages", showPages);
 						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
 						deferredResult.setResult("product-show :: #productcontent");
@@ -137,7 +199,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
-		Mono<ClientResponse> mono = get(id, null, null, null);
+		Mono<ClientResponse> mono = get(id, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> productfiles = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -173,8 +235,56 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
+    private Long countProducts(String productClass, String startTimeFrom, String startTimeTo) {
+    	
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String divider = "?";
+		String uri = "/products/count";
+		if (productClass != mission && !mission.isEmpty()) {
+			uri += divider + "mission=" + mission;
+			divider ="&";
+		}
+		if (productClass != null && !productClass.isEmpty()) {
+			uri += divider + "productClass=" + productClass;
+		}
+		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
+			uri += divider + "startTimeFrom=" + startTimeFrom;
+		}
+		if (startTimeTo != null && !startTimeTo.isEmpty()) {
+			uri += divider + "startTimeTo=" + startTimeTo;
+		}
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getIngestorUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
 
-	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo) {
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		
+        return result;
+    }
+	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo, Long from, Long to) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";
@@ -194,6 +304,12 @@ public class GUIProductController extends GUIBaseController {
 			}
 			if (startTimeTo != null && !startTimeTo.isEmpty()) {
 				uri += divider + "startTimeTo=" + startTimeTo;
+			}
+			if (from != null) {
+				uri += divider + "recordFrom=" + from;
+			}
+			if (to != null) {
+				uri += divider + "recordTo=" + to;
 			}
 		}
 		logger.trace("URI " + uri);
