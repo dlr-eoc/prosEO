@@ -58,7 +58,7 @@
                     <th><span th:text="#{state}">state</span></th>
                     <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{slicing}">slicing</span></th>
-                    <th><span th:text="#{product}">product</span></th>
+                    <th><span th:text="#{outputproductclasses}">outputproductclasses</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                   <tr>
@@ -67,7 +67,12 @@
                     <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{processingtype}">productiontype</span></th>
                     <th><span th:text="#{startstoptime}">startstoptime</span></th>
-                    <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                    <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
+                    <th><span>&nbsp;</span></th>
+                  </tr>
+                  <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
+                    <th class="tr-rowspan"><span>&nbsp;</span></th>
+                    <th colspan="5"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                 </thead>
@@ -107,6 +112,13 @@
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                     <td>&nbsp;</td>
+                  </tr>
+                  <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
+                    <td class="tr-rowspan"><span>&nbsp;</span></td>
+                    <td colspan="5"><a th:each="comp : ${ord?.configuredProcessors}" 
+                       class="proseo-list-item"  
+                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                    <td><span>&nbsp;</span></td>
                   </tr>
                 </tbody>
               </table>
