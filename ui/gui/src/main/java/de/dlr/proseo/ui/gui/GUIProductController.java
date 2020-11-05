@@ -311,6 +311,7 @@ public class GUIProductController extends GUIBaseController {
 			if (to != null) {
 				uri += divider + "recordTo=" + to;
 			}
+			uri += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
 		}
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

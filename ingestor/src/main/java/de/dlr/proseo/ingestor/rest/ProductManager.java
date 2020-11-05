@@ -845,6 +845,7 @@ public class ProductManager {
 			jpqlQuery += " order by ";
 			for (int i = 0; i < orderBy.length; ++i) {
 				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += "p.";
 				jpqlQuery += orderBy[i];
 			}
 		}
