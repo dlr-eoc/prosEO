@@ -2,4 +2,4 @@
 - hosts: bastion
   become: true
   roles:
-  - allow_ssh_tcp_forwarding
+  - configure_sshd

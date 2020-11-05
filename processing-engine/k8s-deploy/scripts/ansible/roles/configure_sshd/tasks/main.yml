@@ -6,10 +6,16 @@
     line: "AllowTcpForwarding yes"
     create: yes
     state: present
-  register: tcp_forwarding
+
+- name: Disable root logins
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: ".*PermitRootLogin.*"
+    line: "PermitRootLogin no"
+    create: yes
+    state: present
 
 - name: Restartd SSHD
   service:
     name: sshd
     state: restarted
-  when: tcp_forwarding is changed

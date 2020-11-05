@@ -18,6 +18,7 @@
     - nfs
     kubectl_proxy_port: 8001
   roles:
+  - configure_sshd  # Already done in bastion-preinstall, but this allows updates
   - install_kubectl
   - install_packages
   - configure_nfs
