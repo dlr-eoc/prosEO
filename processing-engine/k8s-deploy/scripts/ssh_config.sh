@@ -9,6 +9,7 @@ SSH_KEY_PATH="${PWD}/ssh-keys"
 SSH_KEY_FILE="${SSH_KEY_PATH}/cluster-key"
 SSH_KEY_TYPE="ed25519"
 SSH_CONFIG="${SSH_KEY_PATH}/ssh_config"
+SSH_HOSTFILE_CACHE="${SSH_KEY_PATH}/hostfile.cache"
 SSH_ENVFILE="${PWD}/config/ssh.sh"
 SSH_AGENT_ENVFILE="${PWD}/config/ssh_agent.sh"
 SSH_ANSIBLE_ENVFILE="${PWD}/config/ansible.sh"
@@ -23,14 +24,29 @@ if [ ! -d "${SSH_KEY_PATH}" ] ; then
   echo "done."
 fi
 
+
+./hosts --hostfile | sort -u > "${SSH_HOSTFILE_CACHE}.new"
+SSH_GENERATE_KEYFILE=0
+if [ ! -f "${SSH_HOSTFILE_CACHE}" ] ; then
+  SSH_GENERATE_KEYFILE=1
+else
+  # Generate update to the cache
+  if diff -q "${SSH_HOSTFILE_CACHE}" "${SSH_HOSTFILE_CACHE}.new" ; then
+    true # ignore if they're the same
+  else
+    SSH_GENERATE_KEYFILE=1
+  fi
+fi
+mv "${SSH_HOSTFILE_CACHE}.new" "${SSH_HOSTFILE_CACHE}"
+
 if [ ! -f "${SSH_KEY_FILE}" ] ; then
   echo "Generating SSH key..."
   ssh-keygen -t "${SSH_KEY_TYPE}" -f "${SSH_KEY_NAME}"
   echo "done."
 fi
 
-if [ ! -f "${SSH_CONFIG}" ] ; then
-  echo "Trying to genreate SSH config..."
+if [ ! -f "${SSH_CONFIG}" -o "${SSH_GENERATE_KEYFILE}" -eq 1 ] ; then
+  echo "Trying to (re-)generate SSH config..."
 
   # Include user config
   if [ -f ~/.ssh/config ] ; then
@@ -58,7 +74,7 @@ Host ${BASTION_HOST} ${BASTION_IP}
   TCPKeepAlive yes
 
 EOF
-  done < <(./hosts --hostfile | grep bastion-)
+  done < <(cat "${SSH_HOSTFILE_CACHE}" | grep bastion-)
 
   # Other hosts - if there is a bastion host
   if [ ! -z "${BASTION_HOST}" ] ; then
@@ -76,7 +92,7 @@ Host ${HOST} ${IP}
   ProxyJump ${BASTION_HOST}
 
 EOF
-    done < <(./hosts --hostfile | grep -v bastion- | grep -v '^#')
+    done < <(cat "${SSH_HOSTFILE_CACHE}" | grep -v bastion- | grep -v '^#')
   fi
 
   # Move into place
