@@ -9,6 +9,7 @@
     "inputProductClasses": [ "L1B" ],
     "outputProductClass": "CH4",
     "outputProduct": 1234,
+    "configuredProcessor": "confProc",
     "stdoutLogLevel": "INFO",
     "stderrLogLevel": "INFO"
 }

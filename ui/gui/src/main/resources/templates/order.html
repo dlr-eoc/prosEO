@@ -220,6 +220,7 @@
                             <th colspan="2"><span th:text="#{jobsteps}">jobsteps</span></th>
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
+                            <th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
                             <th><span th:text="#{product}">product</span></th>
                             <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
@@ -237,6 +238,7 @@
                               <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
                               <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
+                              <td class="first-row"><a th:href="'/configured-processor-show?cp=' + ${jobstep?.configuredProcessor}"><span th:text="${jobstep?.configuredProcessor}"></span></a></td>
                               <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
                               <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
                                     class="proseo-list-item"  

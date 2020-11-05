@@ -200,6 +200,9 @@ public class RestUtil {
 			}
 			if (js.getOutputProduct() != null) {
 				pjs.setOutputProduct(js.getOutputProduct().getId());
+				if (js.getOutputProduct().getConfiguredProcessor() != null) {
+					pjs.setConfiguredProcessor(js.getOutputProduct().getConfiguredProcessor().getIdentifier());
+				}
 			}
 			pjs.setOrderIdentifier(js.getJob().getProcessingOrder().getIdentifier());
 			pjs.setOrderId(js.getJob().getProcessingOrder().getId());
