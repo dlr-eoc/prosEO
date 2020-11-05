@@ -121,14 +121,7 @@ provisioned, you need to enable SSH forwarding on those hosts. SSH into
 the bastion:
 
 ```bash
-(bastion) $ sudo sed -i 's/^#* *AllowTcpForwarding.*/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
-```
-
-The file `/etc/ssh/sshd_config` should contain the line `AllowTcpForwarding yes`.
-If not, edit it manually. Then:
-
-```bash
-(bastion) $ sudo systemctl restart sshd
+$ ansible-playbook -i hosts ../../../scripts/ansible/bastion-preinstall.yml
 ```
 
 ### K8S Deployment

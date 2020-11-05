@@ -1,0 +1,15 @@
+---
+- name: Enable TCP forwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: ".*AllowTcpForwarding.*"
+    line: "AllowTcpForwarding yes"
+    create: yes
+    state: present
+  register: tcp_forwarding
+
+- name: Restartd SSHD
+  service:
+    name: sshd
+    state: restarted
+  when: tcp_forwarding is changed
