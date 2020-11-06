@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -28,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.procmgr.rest.model.ConfiguredProcessorUtil;
@@ -61,6 +64,7 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_DUPLICATE_CONFPROC_UUID = 2364;
 	private static final int MSG_ID_DUPLICATE_CONFPROC_ID = 2365;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_DATA_MISSING = 2366;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_HAS_PRODUCTS = 2367;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -78,6 +82,7 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_DUPLICATE_CONFPROC_UUID = "(E%d) Duplicate configured processor UUID %s";
 	private static final String MSG_DUPLICATE_CONFPROC_ID = "(E%d) Duplicate configured processor identifier %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_DATA_MISSING = "(E%d) Data for configured processor not set";
+	private static final String MSG_CONFIGURED_PROCESSOR_HAS_PRODUCTS = "(E%d) Cannot delete configured processor %s, because it is referenced by %d products";
 
 	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, identifier %s, processor name %s, processor version %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -459,6 +464,19 @@ public class ConfiguredProcessorManager {
 		if (!securityService.isAuthorizedForMission(modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode())) {
 			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
 					modelConfiguredProcessor.get().getProcessor().getProcessorClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
+		// Check whether there are still products referencing this configured processor
+		// (restricted to the product classes processable by the processor class for efficiency)
+		ProcessorClass processorClass = modelConfiguredProcessor.get().getProcessor().getProcessorClass();
+		String jpqlQuery = "select count(p) from Product p where p.productClass in :productClasses and p.configuredProcessor = :configuredProcessor";
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("productClasses", processorClass.getProductClasses());
+		query.setParameter("configuredProcessor", modelConfiguredProcessor.get());
+		Object result = query.getSingleResult();
+		if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_HAS_PRODUCTS, MSG_ID_CONFIGURED_PROCESSOR_HAS_PRODUCTS,
+					modelConfiguredProcessor.get().getIdentifier(), result));
 		}
 		
 		// Delete the configured processor
