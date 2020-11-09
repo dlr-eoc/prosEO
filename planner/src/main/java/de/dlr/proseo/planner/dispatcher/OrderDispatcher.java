@@ -470,7 +470,7 @@ public class OrderDispatcher {
 		for (JobStep i : allJobSteps) {
 			if (i.getOutputProduct().getProductClass().equals(topProductClass)) {
 				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because a job step for it has already been generated",
-						productClass.getProductType(), topProductClass.getProductType());
+						productClass.getProductType());
 				return;
 			}
 		}
@@ -478,8 +478,17 @@ public class OrderDispatcher {
 		// Find configured processor to use
 		ConfiguredProcessor configuredProcessor = searchConfiguredProcessorForProductClass(topProductClass, order.getRequestedConfiguredProcessors(), order.getProcessingMode());
 		if (null == configuredProcessor) {
-			Messages.ORDERDISP_NO_CONF_PROC.log(logger, topProductClass.getProductType());
-			throw new NoSuchElementException(Messages.ORDERDISP_NO_CONF_PROC.format(topProductClass.getProductType()));
+			// We cannot create the product, as there is no configured processor for it - now it depends ...
+			if (order.getRequestedProductClasses().contains(productClass) || order.getRequestedProductClasses().contains(topProductClass)) {
+				// This was one of the requested product classes, therefore fail
+				Messages.ORDERDISP_NO_CONF_PROC.log(logger, topProductClass.getProductType());
+				throw new NoSuchElementException(Messages.ORDERDISP_NO_CONF_PROC.format(topProductClass.getProductType()));
+			} else {
+				// This was a preceding (possibly auxiliary) input product class, so just wait for the product to appear
+				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because no configured processor can be found",
+						productClass.getProductType());
+				return;
+			}
 		}
 		if (logger.isDebugEnabled()) logger.debug("Using configured processor {}", configuredProcessor.getIdentifier());
 
