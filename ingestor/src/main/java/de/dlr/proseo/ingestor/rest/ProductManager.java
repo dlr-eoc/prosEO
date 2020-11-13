@@ -825,7 +825,7 @@ public class ProductManager {
 		// visibility
 		List<ProductVisibility> visibilities = new ArrayList<ProductVisibility>();
 		visibilities.add(ProductVisibility.PUBLIC);
-		if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+		if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED) || securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
 			visibilities.add(ProductVisibility.RESTRICTED);
 		}
 		if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
