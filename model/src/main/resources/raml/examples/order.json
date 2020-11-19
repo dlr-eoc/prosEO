@@ -69,5 +69,7 @@
     "inputProductClasses": [ "L1B" ],
     "outputFileClass": "RPRO",
     "processingMode": "OFFL",
-    "hasFailedJobSteps": false
+    "hasFailedJobSteps": false,
+    "jobStepStates": [ "INITIAL", "READY" ],
+    "percentComplete": 80
 }

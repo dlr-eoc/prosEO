@@ -249,7 +249,7 @@ public class ProductionPlanner implements CommandLineRunner {
       
 		InetAddress ip;
 		String hostname;
-		TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
+		// TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 		config = plannerConfig;
 		try {
 			ip = InetAddress.getLocalHost();

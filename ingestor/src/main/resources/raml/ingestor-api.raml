@@ -98,6 +98,7 @@ resourceTypes:
       startTimeTo?: datetime-only
       recordFrom?: integer
       recordTo?: integer
+      jobStep?: integer
       orderBy?:
         type: string[]
         description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -129,6 +130,7 @@ resourceTypes:
         productClass?: string[]
         startTimeFrom?: datetime-only
         startTimeTo?: datetime-only
+        jobStep?: integer
       responses:
         200:
           body:

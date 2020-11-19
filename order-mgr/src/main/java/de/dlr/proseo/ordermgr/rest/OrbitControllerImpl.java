@@ -11,7 +11,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
@@ -24,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Orbit;
@@ -89,6 +94,10 @@ public class OrbitControllerImpl implements OrbitController {
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrbitControllerImpl.class);
@@ -162,16 +171,21 @@ public class OrbitControllerImpl implements OrbitController {
 	 * @param orbitNumberTo the maximum order number requested (may be null)
 	 * @param startTimeFrom earliest sensing start time requested (may be null)
 	 * @param startTimeTo latest sensing start time requested (may be null)
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return HTTP status "OK" and a list of orbits or
 	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception
 	 */
-	
+
+	@Transactional
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo) {
+			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo,
+			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 		
 		/* Check arguments */
@@ -180,78 +194,21 @@ public class OrbitControllerImpl implements OrbitController {
 					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
 		}
 
-		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+		List<RestOrbit> resultList = new ArrayList<RestOrbit>();
+
+		// Find using search parameters
+		Query query = createOrbitsQuery(spacecraftCode, orbitNumberFrom, orbitNumberTo, startTimeFrom, startTimeTo,
+				recordFrom, recordTo, orderBy, false);
 		
-		List<RestOrbit> resultList = null;
-		try {
-			resultList = transactionTemplate.execute((status) -> {
-				List<RestOrbit> result = new ArrayList<>();		
-				// Find using search parameters
-				// Returns orbits matching to the spacecraft code
-				if(null != orbitNumberFrom && 0 != orbitNumberFrom.intValue() && null != orbitNumberTo && 0 != orbitNumberTo.intValue()) {
-					//Gets all matching Orbits for the matching spacecraft code and Orbit number range
-					List <Orbit> matchOrbits = RepositoryService.getOrbitRepository()
-							.findBySpacecraftCodeAndOrbitNumberBetween(spacecraftCode, orbitNumberFrom.intValue(), orbitNumberTo.intValue());
-				
-					//Return all Orbits within given orbit number range and start time range
-					if(null != startTimeFrom && null != startTimeTo) {
-						for (de.dlr.proseo.model.Orbit orbit : matchOrbits) {
-							logger.info("Orbit.starttime: "+orbit.getStartTime());
-							logger.info("Orbit.stoptime: "+orbit.getStopTime());
-
-							if (!(orbit.getStartTime().isBefore(startTimeFrom.toInstant())) && 
-									!(orbit.getStopTime().isAfter(startTimeTo.toInstant()))) {
-								if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-								RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-								if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-								result.add(resultOrbit);						
-							}
-						}
-					}
-					//Return all Orbits within given orbit number range
-					for (de.dlr.proseo.model.Orbit  orbit: matchOrbits) {
-						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-						RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-						result.add(resultOrbit);
-					}				
-				}
-				
-				//Returns all orbits matching the spacecraft code within the start time range
-				else if (null != startTimeFrom && null != startTimeTo) {
-					for (Orbit orbit : RepositoryService.getOrbitRepository()
-							.findBySpacecraftCodeAndStartTimeBetween(spacecraftCode, startTimeFrom.toInstant(), startTimeTo.toInstant())) {
-						if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-						RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-						if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-						result.add(resultOrbit);	
-
-					}
-				}
-				else {
-					for(Orbit orbit : RepositoryService.getOrbitRepository().findAll()) {
-						logger.info("SPacecraft Input value: = "+ spacecraftCode);
-						logger.info("orbit spacecraft code: = "+orbit.getSpacecraft().getCode());				
-						if(spacecraftCode.equals(orbit.getSpacecraft().getCode())) {
-							if (logger.isDebugEnabled()) logger.debug("Found orbit with ID {}", orbit.getId());
-							RestOrbit resultOrbit = OrbitUtil.toRestOrbit(orbit);
-							if (logger.isDebugEnabled()) logger.debug("Created result orbit with ID {}", resultOrbit.getId());
-							result.add(resultOrbit);				
-						}
-					}
-					
-				}
-				if (result.isEmpty()) {
-					throw new NoResultException(String.format(MSG_NO_ORBITS_FOUND, MSG_ID_NO_ORBITS_FOUND));
-				}
-				return result;
-			});
-		} catch (NoResultException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
-		} catch (TransactionException e) {
-			logger.error(e.getMessage());
-			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof Orbit) {
+				// Filter depending on product visibility and user authorization
+				Orbit orbit = (Orbit) resultObject;
+				resultList.add(OrbitUtil.toRestOrbit(orbit));
+			}
+		}		
+		if (resultList.isEmpty()) {
+			return new ResponseEntity<>(resultList, HttpStatus.NOT_FOUND);
 		}
 		
 		// Ensure user is authorized for the mission to read
@@ -265,6 +222,48 @@ public class OrbitControllerImpl implements OrbitController {
 		logger.info(String.format(MSG_ORBITS_RETRIEVED, MSG_ID_ORBITS_RETRIEVED, resultList.size()));
 		
 		return new ResponseEntity<>(resultList, HttpStatus.OK);								
+	}
+
+	
+	/**
+	 * List of all orbits filtered by spacecraft code, orbit number range, starttime range
+	 * 
+	 * @param spacecraftCode the spacecraft code to filter by (may be null)
+	 * @param orbitNumberFrom the minimum order number requested (may be null)
+	 * @param orbitNumberTo the maximum order number requested (may be null)
+	 * @param startTimeFrom earliest sensing start time requested (may be null)
+	 * @param startTimeTo latest sensing start time requested (may be null) sort direction (ASC/DESC), separated by white space
+	 * @return HTTP status "OK" and a list of orbits or
+	 *         HTTP status "NOT_FOUND" and an error message, if no orbits matching the search criteria were found, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if the request parameters were inconsistent, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 *         HTTP status "INTERNAL_SERVER_ERROR" on any unexpected exception
+	 */
+
+	@Transactional
+	@Override
+	public ResponseEntity<String> countOrbits(String spacecraftCode, Long orbitNumberFrom,
+			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
+		
+		/* Check arguments */
+		if (null == spacecraftCode || "".equals(spacecraftCode)) {
+			return new ResponseEntity<>(
+					errorHeaders(MSG_ORBIT_INCOMPLETE, MSG_ID_ORBIT_INCOMPLETE), HttpStatus.BAD_REQUEST);
+		}
+
+		// Find using search parameters
+		Query query = createOrbitsQuery(spacecraftCode, orbitNumberFrom, orbitNumberTo, startTimeFrom, startTimeTo,
+				null, null, null, true);
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+		}
+		if (resultObject instanceof String) {
+			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+		}
+		return new ResponseEntity<>("0", HttpStatus.OK);	
+			
 	}
 	
 	/**
@@ -541,5 +540,64 @@ public class OrbitControllerImpl implements OrbitController {
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
+	}
+
+	private Query createOrbitsQuery(String spacecraftCode, Long orbitNumberFrom,
+			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo,
+			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+
+		// Find using search parameters
+		String jpqlQuery = null;
+		if (count) {
+			jpqlQuery = "select count(x) from Orbit x where x.spacecraft.code = :spacecraftCode";
+		} else {
+			jpqlQuery = "select x from Orbit x where x.spacecraft.code = :spacecraftCode";
+		}
+		if (null != orbitNumberFrom) {
+			jpqlQuery += " and x.orbitNumber >= :orbitNumberFrom";
+		}
+		if (null != orbitNumberTo) {
+			jpqlQuery += " and x.orbitNumber <= :orbitNumberTo";
+		}
+		if (null != startTimeFrom) {
+			jpqlQuery += " and x.startTime >= :startTimeFrom";
+		}
+		if (null != startTimeTo) {
+			jpqlQuery += " and x.startTime <= :startTimeTo";
+		}
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += "x.";
+				jpqlQuery += orderBy[i];
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("spacecraftCode", spacecraftCode);
+
+		if (null != orbitNumberFrom) {
+			query.setParameter("orbitNumberFrom",orbitNumberFrom);
+		}
+		if (null != orbitNumberTo) {
+			query.setParameter("orbitNumberTo", orbitNumberTo);
+		}
+		if (null != startTimeFrom) {
+			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
+		}
+		if (null != startTimeTo) {
+			query.setParameter("startTimeTo", startTimeTo.toInstant());
+		}
+		
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
 	}
 }

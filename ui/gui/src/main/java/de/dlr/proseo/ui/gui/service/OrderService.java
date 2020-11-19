@@ -88,14 +88,25 @@ public class OrderService {
 
 	}
 	
-	public Mono<ClientResponse> getJobsOfOrder(String id) {
+	public Mono<ClientResponse> getJobsOfOrder(String id,Long from, Long to) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = config.getProductionPlanner() + "/jobs";
 		// get one order identified by id.
+		String divider = "?";
 		if(null != id && !id.trim().isEmpty()) {
-			uri += "?orderid=" + id.trim();
+			uri += divider + "orderid=" + id.trim();
+			divider ="&";
 		}
+		if (from != null) {
+			uri += divider + "recordFrom=" + from;
+			divider ="&";
+		}
+		if (to != null) {
+			uri += divider + "recordTo=" + to;
+			divider ="&";
+		}
+		uri += divider + "orderBy=startTime ASC";
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {

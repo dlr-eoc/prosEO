@@ -36,9 +36,18 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState NOT IN ('COMPLETED', 'FAILED')")
 	public int countJobStepNotFinishedByJobId(long id);
 
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1 AND js.jobStepState NOT IN ('COMPLETED', 'FAILED')")
+	public int countJobStepNotFinishedByOrderId(long id);
+
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1")
+	public int countJobStepByOrderId(long id);
+
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState = 'FAILED'")
 	public int countJobStepFailedByJobId(long id);
 	
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState = 'RUNNING'")
 	public int countJobStepRunningByJobId(long id);
+
+	@Query("SELECT DISTINCT(js.jobStepState) FROM JobStep js WHERE js.job.processingOrder.id = ?1")
+	public List<String> findDistinctJobStepStatesByOrderId(long id);
 }

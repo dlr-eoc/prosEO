@@ -113,6 +113,8 @@
                         class="selectord cursorpointer"><span id="select-state" th:class="('selectord ' + (${selcol} == 'orderState' ? ${selorder} : ''))" th:text="#{state}">state</span></th>
                       <th><span th:text="#{startstoptime}">startstoptime</span></th>
                       <th><span th:text="#{product}">product</span></th>
+                      <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
+                      <th><span th:text="#{percentcomplete}">jobstepstates</span></th>
                       <th><span>&nbsp;</span></th>
                     </tr>
                   </thead>
@@ -133,6 +135,20 @@
                       <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td>
+                        <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="RUNNING" th:class="${#lists.contains(ord?.jobStepStates, 'RUNNING')} == true?'RUNNING-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="FAILED" th:class="${#lists.contains(ord?.jobStepStates, 'FAILED')} == true?'FAILED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="COMPLETED" th:class="${#lists.contains(ord?.jobStepStates, 'COMPLETED')} == true?'COMPLETED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                      </td>
+                      <td>
+                      <div th:title="${ord?.percentComplete} + '%'" class="progress">
+                        <div class="progress-bar" role="progressbar" th:style="'width: ' + ${ord?.percentComplete} + '%;'" 
+                            th:aria-valuenow="${ord?.percentComplete}" aria-valuemin="0" aria-valuemax="100"
+                            th:text="${ord?.percentComplete} + '%'"></div>
+                      </div>
+                      </td>
                       <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
                     </tr>
                   </tbody>

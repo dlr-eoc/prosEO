@@ -59,6 +59,7 @@
                     <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{slicing}">slicing</span></th>
                     <th><span th:text="#{outputproductclasses}">outputproductclasses</span></th>
+                    <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                   <tr>
@@ -68,11 +69,12 @@
                     <th><span th:text="#{processingtype}">productiontype</span></th>
                     <th><span th:text="#{startstoptime}">startstoptime</span></th>
                     <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
+                    <th><span th:text="#{percentcomplete}">percentcomplete</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <th class="tr-rowspan"><span>&nbsp;</span></th>
-                    <th colspan="5"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
+                    <th colspan="6"><span th:text="#{requestedconfiguredprocessors}">requestedconfiguredprocessors</span></th>
                     <th><span>&nbsp;</span></th>
                   </tr>
                 </thead>
@@ -100,6 +102,13 @@
                     <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                      <td>
+                        <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="RUNNING" th:class="${#lists.contains(ord?.jobStepStates, 'RUNNING')} == true?'RUNNING-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="FAILED" th:class="${#lists.contains(ord?.jobStepStates, 'FAILED')} == true?'FAILED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                        <span title="COMPLETED" th:class="${#lists.contains(ord?.jobStepStates, 'COMPLETED')} == true?'COMPLETED-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
+                      </td>
                     <td><div th:insert="fragments/ordermenu.html :: orderMenu"></div></td>
                   </tr>
                   <tr>
@@ -111,11 +120,17 @@
                     <td><a th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                    <td>
+                      <div th:title="${ord?.percentComplete} + '%'" class="progress">
+                        <div class="progress-bar" role="progressbar" th:style="'width: ' + ${ord?.percentComplete} + '%;'" 
+                            th:aria-valuenow="${ord?.percentComplete}" aria-valuemin="0" aria-valuemax="100"
+                            th:text="${ord?.percentComplete} + '%'"></div>
+                      </div></td>
                     <td>&nbsp;</td>
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <td class="tr-rowspan"><span>&nbsp;</span></td>
-                    <td colspan="5"><a th:each="comp : ${ord?.configuredProcessors}" 
+                    <td colspan="6"><a th:each="comp : ${ord?.configuredProcessors}" 
                        class="proseo-list-item"  
                        th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
                     <td><span>&nbsp;</span></td>
@@ -221,8 +236,8 @@
                             <th><span th:text="#{state}">state</span></th>
                             <th><span th:text="#{processingmode}">processingmode</span></th>
                             <th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-                            <th><span th:text="#{product}">product</span></th>
-                            <th><span th:text="#{inputproductclasses}">inputproductclasses</span></th>
+                            <th><span th:text="#{outputproduct}">product</span></th>
+                            <th><span th:text="#{inputproducts}">inputproductclasses</span></th>
                             <th><span th:text="#{starttime}">starttime</span></th>
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
@@ -242,7 +257,7 @@
                               <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
                               <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
                                     class="proseo-list-item"  
-                                    th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                                    th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a></td>
                               <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
@@ -273,7 +288,8 @@
                     </td>
                   </tr>
               </tbody>
-            </table>                
+            </table>
+            <div th:replace="fragments/navbar.html :: pagenav"></div>                
           </div>
           <div th:insert="fragments/footer.html :: footer"></div>
         </main>
@@ -482,7 +498,12 @@
               }
             }
             hideLoader();
-            retrieveJobs(id); 
+            var aJob = null;
+            var jh = getURLParams('jh'); 
+            if (jh.length > 0) {
+              aJob = jh[0];
+            }
+            retrieveJobs(id, 0, 20, aJob); 
           },
           fail : function(err) {
             console.log(err);
@@ -492,8 +513,13 @@
         });
       }
     };
+
+    function retrieveDataPage(from, to) {
+      var myid = getURLParam('id');
+      retrieveJobs(myid, from, to, null);
+    }
     
-    function retrieveJobs(id) {
+    function retrieveJobs(id, from, to, aJob) {
         showLoader();
         var tableRows = $("jobs").rows;
         if (tableRows > 1 && tableRows != null) {
@@ -505,6 +531,18 @@
         if (id != null) {
           url = url + divider + "orderid=" + id.toString().trim();
           divider = "&";
+
+          if (from != null) {
+                url = url + divider + "recordFrom=" + from;
+                divider = "&";
+          }
+          if (to != null) {
+                url = url + divider + "recordTo=" + to;
+                divider = "&";
+          }
+          if (aJob != null) {
+            url = url + divider + "job=" + aJob;
+          }
 
           $.ajax({
             url : url,

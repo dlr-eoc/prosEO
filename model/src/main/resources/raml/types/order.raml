@@ -75,3 +75,9 @@
       hasFailedJobSteps?:
         type: boolean
         description: Indicates whether at least one of the job steps for this order is in state FAILED
+      jobStepStates?:
+        type: string[]
+        description: The different existing job step states of order
+      percentComplete:
+        type: integer
+        description: Percentage of finished (completed or failed) job steps

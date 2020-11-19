@@ -452,60 +452,103 @@ code {
   background-color:  transparent !important;
 }
 
+.INITIAL-c {
+  color: #ffeeba !important;
+}
 .INITIAL {
   background-color: #ffeeba !important;
 }
 
+.APPROVED-c {
+  color: #ffeeba !important;
+}
 .APPROVED {
   background-color: #ffeeba !important;
 }
 
+.PLANNED-c {
+  color: #ffeeba !important;
+}
 .PLANNED {
   background-color: #ffeeba !important;
 }
 
+.RELEASED-c {
+  color: #ffeeba !important;
+}
 .RELEASED {
   background-color: #ffeeba !important;
 }
 
+.RUNNING-c {
+  color: #c3e6cb !important;
+}
 .RUNNING {
   background-color: #c3e6cb !important;
 }
 
+.READY-c {
+  color: #c3e6cb !important;
+}
 .READY {
   background-color: #c3e6cb !important;
 }
 
+.STARTED-c {
+  color: #c3e6cb !important;
+}
 .STARTED {
   background-color: #c3e6cb !important;
 }
 
+.SUSPENDING-c {
+  color: #c3e6cb !important;
+}
 .SUSPENDING {
   background-color: #c3e6cb !important;
 }
 
+.COMPLETED-c {
+  color: #bee5eb !important;
+}
 .COMPLETED {
   background-color: #bee5eb !important;
 }
 
+.CLOSED-c {
+  color: #bee5eb !important;
+}
 .CLOSED {
   background-color: #bee5eb !important;
 }
 
+.FAILED-c {
+  color: #f5c6cb !important;
+}
 .FAILED {
   background-color: #f5c6cb !important;
 }
 
+.WAITING_INPUT-c {
+  color: #ffeeba !important;
+}
 .WAITING_INPUT {
   background-color: #ffeeba !important;
 }
 
+.ON_HOLD-c {
+  color: #c3e6cb !important;
+}
 .ON_HOLD {
   background-color: #c3e6cb !important;
 }
 
 .no-wrap {
   white-space: nowrap;
+}
+
+.jobstepstate {
+  color: LightGray;
 }
 
 .proseo-inline-table {

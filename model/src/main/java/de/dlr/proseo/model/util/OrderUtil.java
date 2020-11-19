@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.Parameter.ParameterType;
@@ -25,6 +29,7 @@ import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProductClass;
 
 public class OrderUtil {
@@ -182,8 +187,23 @@ public class OrderUtil {
 
 			restOrder.setOrbits(orbitQueries);
 		}
+		// Get the list of job step states
+		// this is much faster than iterating over jobs and job steps
+		List<String> jss = RepositoryService.getJobStepRepository().findDistinctJobStepStatesByOrderId(processingOrder.getId());
+		if (jss == null) {
+			jss = new ArrayList<String>();
+		}
+		restOrder.setJobStepStates(jss);
 		
-	
+		// Calculate the percentage of finished job steps
+
+		Long percentComplete = (long) 0;
+		Long jsCount = (long) RepositoryService.getJobStepRepository().countJobStepByOrderId(processingOrder.getId());
+		if (jsCount != null && jsCount > 0) {
+			Long jsCountNotFinished = (long) RepositoryService.getJobStepRepository().countJobStepNotFinishedByOrderId(processingOrder.getId());
+			percentComplete = 100 - (jsCountNotFinished * 100 / jsCount);
+		}
+		restOrder.setPercentComplete(percentComplete);
 		return restOrder;
 	}
 

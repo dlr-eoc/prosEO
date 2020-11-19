@@ -217,13 +217,14 @@ public class ProductManager {
 	 * @param startTimeTo latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
+	 * @param jobStepId get input products of job step
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return a list of products
 	 * @throws NoResultException if no products matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
 	public List<RestProduct> getProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
-			Long recordFrom, Long recordTo, String[] orderBy) throws NoResultException, SecurityException {
+			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
 				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 		
@@ -240,7 +241,7 @@ public class ProductManager {
 		
 		// Find using search parameters
 		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				recordFrom, recordTo, orderBy, false);
+				recordFrom, recordTo, jobStepId, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
@@ -265,10 +266,11 @@ public class ProductManager {
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param jobStepId get input products of job step
 	 * @return the number of products found as string
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo) throws SecurityException {
+	public String countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId) throws SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
 		
 		if (null == mission) {
@@ -281,7 +283,7 @@ public class ProductManager {
 			} 
 		}
 		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				null, null, null, true);
+				null, null, jobStepId, null, true);
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return ((Long)resultObject).toString();
@@ -795,18 +797,28 @@ public class ProductManager {
 	 * @param startTimeTo latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
+	 * @param jobStepId get input products of job step
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return JPQL Query
 	 */
 	private Query createProductsQuery(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
-			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, Boolean count) {
 
 		// Find using search parameters
 		String jpqlQuery = null;
-		if (count) {
-			jpqlQuery = "select count(p) from Product p where p.productClass.mission.code = :missionCode";
+		String join = "";
+		if (jobStepId != null) {
+			if (count) {
+				jpqlQuery = "select count(p) from ProductQuery pq join pq.satisfyingProducts p " + join + " where pq.jobStep.id = :jobStepId and p.productClass.mission.code = :missionCode";
+			} else {
+				jpqlQuery = "select p from ProductQuery pq join pq.satisfyingProducts p " + join + " where pq.jobStep.id = :jobStepId and p.productClass.mission.code = :missionCode";
+			}
 		} else {
-			jpqlQuery = "select p from Product p where p.productClass.mission.code = :missionCode";
+			if (count) {
+				jpqlQuery = "select count(p) from Product p " + join + " where p.productClass.mission.code = :missionCode";
+			} else {
+				jpqlQuery = "select p from Product p " + join + " where p.productClass.mission.code = :missionCode";
+			}
 		}
 		if (null != productClass && 0 < productClass.length) {
 			jpqlQuery += " and p.productClass.productType in (";
@@ -839,7 +851,7 @@ public class ProductManager {
 			}
 			jpqlQuery += ")";
 		}
-		
+				
 		// order by
 		if (null != orderBy && 0 < orderBy.length) {
 			jpqlQuery += " order by ";
@@ -858,7 +870,7 @@ public class ProductManager {
 			}
 		}
 		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
+			query.setParameter("startTimeFrom", startTimeFrom.toInstant());
 		}
 		if (null != startTimeTo) {
 			query.setParameter("startTimeTo", startTimeTo.toInstant());
@@ -867,6 +879,10 @@ public class ProductManager {
 			for (int i = 0; i < visibilities.size(); ++i) {
 				query.setParameter("visibility" + i, visibilities.get(i));
 			}
+		}
+
+		if (jobStepId != null) {
+			query.setParameter("jobStepId", jobStepId);
 		}
 		
 		// length of record list
