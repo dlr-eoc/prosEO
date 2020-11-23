@@ -72,6 +72,7 @@
               </div>
             </tbody>
           </table>
+        <div th:replace="fragments/navbar.html :: pagenav"></div>
         </div>
       <div th:insert="fragments/footer.html :: footer"></div>
       </main>
@@ -96,7 +97,13 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script type="text/javascript">
-  function retrieveData(sp) {
+
+  function retrieveDataPage(from, to) {
+    var spacecraft = getURLParam('sp');
+    retrieveData(spacecraft, from, to);
+  }
+  
+  function retrieveData(sp, from, to) {
       showLoader();
     var tableRows = $("orbitTable").rows;
     if(tableRows > 1 && tableRows != null) {
@@ -109,12 +116,21 @@
         url = url + divider + "spacecraft=" + sp.toString().trim();
         divider = "&";
       }
+    if (from != null) {
+          url = url + divider + "recordFrom=" + from;
+          divider = "&";
+    }
+    if (to != null) {
+          url = url + divider + "recordTo=" + to;
+          divider = "&";
+    }
       
       $.ajax({
       url: url,
       method: "GET",
       success: function (res) {
           $("#orbitcontent").html(res);
+          feather.replace();
           scrollToHash();
           hideLoader();
       },
@@ -132,9 +148,8 @@
      // $('.collapse').collapse();
      var elem = document.getElementById('sb-orbit');
      $(elem).addClass('active');
+     retrieveDataPage(0, 25);
      feather.replace();
-     var myid = getURLParam('sp');
-     retrieveData(myid);
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

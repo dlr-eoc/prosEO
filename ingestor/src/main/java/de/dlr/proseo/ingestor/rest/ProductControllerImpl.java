@@ -99,13 +99,13 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo, Long recordFrom, Long recordTo, String[] orderBy, HttpHeaders httpHeaders) {
+			Date startTimeFrom, Date startTimeTo, Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
 				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy), HttpStatus.OK);
+					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -124,13 +124,13 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
      */
 	@Override
-    public ResponseEntity<?> countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, HttpHeaders httpHeaders) {
+    public ResponseEntity<?> countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass,
 				startTimeFrom, startTimeTo);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.countProducts(mission, productClass, startTimeFrom, startTimeTo), HttpStatus.OK);
+					productManager.countProducts(mission, productClass, startTimeFrom, startTimeTo, jobStepId), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

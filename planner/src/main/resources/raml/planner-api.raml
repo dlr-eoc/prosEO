@@ -178,12 +178,33 @@ resourceTypes:
         type: integer
         format: long
         description: The persistent id of the processing order
+      recordFrom?: integer
+      recordTo?: integer
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:
           application/json:
             type: RestJob[]
-            example: !include ../../../../../model/src/main/resources/raml/examples/job-list.json
+            example: !include ../../../../../model/src/main/resources/raml/examples/job-list.json  
+  /count:
+    type: standard
+    get:
+      description: Get number of jobs, possibly filtered by state and processing order 
+      displayName: countJobs
+      queryParameters:
+        state?: string
+        orderid?: 
+          type: integer
+          format: long
+          description: The persistent id of the processing order
+      responses:
+        200:
+          body:
+            text/plain:
+
   /{name}:
     get:
       description: Get production planner job

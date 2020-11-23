@@ -204,6 +204,11 @@ resourceTypes:
       orbitNumberTo?: integer
       starttimefrom?: datetime-only
       starttimeto?: datetime-only
+      recordFrom?: integer
+      recordTo?: integer
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:
@@ -223,6 +228,21 @@ resourceTypes:
           application/json:
             type: RestOrbit[]
             example: !include ../../../../../model/src/main/resources/raml/examples/orbit-list.json
+  /count:
+    type: standard
+    get:
+      description: Get number of orbits, possibly filtered by spaceraft, orbit number and time range
+      displayName: countOrbits
+      queryParameters:
+        spacecraftCode: string
+        orbitNumberFrom?: integer
+        orbitNumberTo?: integer
+        starttimefrom?: datetime-only
+        starttimeto?: datetime-only
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:

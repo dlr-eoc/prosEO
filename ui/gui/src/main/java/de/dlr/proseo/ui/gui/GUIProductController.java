@@ -89,6 +89,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
 			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
+			@RequestParam(required = false, value = "jobStepId") Long jobStepId,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
@@ -100,20 +101,20 @@ public class GUIProductController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
+		Long count = countProducts(productClass, startTimeFrom, startTimeTo, jobStepId);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
-			to = from + 100;
+			to = count;
 		}
-		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo, from, to);
+		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo, from, to, jobStepId);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> products = new ArrayList<>();
-		Long prodCount = countProducts(productClass, startTimeFrom, startTimeTo);
 
 		Long pageSize = to - from;
-		Long deltaPage = (long) ((prodCount % pageSize)==0?0:1);
-		Long pages = (prodCount / pageSize) + deltaPage;
-		Long page = (fromIndex / pageSize) + 1;
+		Long deltaPage = (long) ((count % pageSize)==0?0:1);
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -131,7 +132,7 @@ public class GUIProductController extends GUIBaseController {
 					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
 						products.add(p);
 						model.addAttribute("products", products);
-						model.addAttribute("productCount", 1);
+						model.addAttribute("count", 1);
 						model.addAttribute("pageSize", 1);
 						model.addAttribute("pageCount", 1);
 						model.addAttribute("page", 1);
@@ -149,7 +150,7 @@ public class GUIProductController extends GUIBaseController {
 						//MapComparator oc = new MapComparator("productClass", true);
 						//products.sort(oc);
 						model.addAttribute("products", products);
-						model.addAttribute("productCount", prodCount);
+						model.addAttribute("count", count);
 						model.addAttribute("pageSize", pageSize);
 						model.addAttribute("pageCount", pages);
 						model.addAttribute("page", page);
@@ -199,7 +200,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
-		Mono<ClientResponse> mono = get(id, null, null, null, null, null);
+		Mono<ClientResponse> mono = get(id, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> productfiles = new ArrayList<>();
 		mono.subscribe(clientResponse -> {
@@ -235,7 +236,7 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-    private Long countProducts(String productClass, String startTimeFrom, String startTimeTo) {
+    private Long countProducts(String productClass, String startTimeFrom, String startTimeTo, Long jobStepId) {
     	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -247,12 +248,19 @@ public class GUIProductController extends GUIBaseController {
 		}
 		if (productClass != null && !productClass.isEmpty()) {
 			uri += divider + "productClass=" + productClass;
+			divider ="&";
 		}
 		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
 			uri += divider + "startTimeFrom=" + startTimeFrom;
+			divider ="&";
 		}
 		if (startTimeTo != null && !startTimeTo.isEmpty()) {
 			uri += divider + "startTimeTo=" + startTimeTo;
+			divider ="&";
+		}
+		if (jobStepId != null) {
+			uri += divider + "jobStep=" + jobStepId;
+			divider ="&";
 		}
 		Long result = (long) -1;
 		try {
@@ -284,7 +292,7 @@ public class GUIProductController extends GUIBaseController {
 		
         return result;
     }
-	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo, Long from, Long to) {
+	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo, Long from, Long to, Long jobStepId) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";
@@ -298,18 +306,27 @@ public class GUIProductController extends GUIBaseController {
 			}
 			if (productClass != null && !productClass.isEmpty()) {
 				uri += divider + "productClass=" + productClass;
+				divider ="&";
 			}
 			if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
 				uri += divider + "startTimeFrom=" + startTimeFrom;
+				divider ="&";
 			}
 			if (startTimeTo != null && !startTimeTo.isEmpty()) {
 				uri += divider + "startTimeTo=" + startTimeTo;
+				divider ="&";
 			}
 			if (from != null) {
 				uri += divider + "recordFrom=" + from;
+				divider ="&";
 			}
 			if (to != null) {
 				uri += divider + "recordTo=" + to;
+				divider ="&";
+			}
+			if (jobStepId != null) {
+				uri += divider + "jobStep=" + jobStepId;
+				divider ="&";
 			}
 			uri += divider + "orderBy=productClass.productType ASC,sensingStartTime ASC";
 		}

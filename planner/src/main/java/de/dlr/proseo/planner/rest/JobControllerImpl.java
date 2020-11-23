@@ -6,12 +6,19 @@
 package de.dlr.proseo.planner.rest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +26,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
+import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -52,33 +61,106 @@ public class JobControllerImpl implements JobController {
 
     @Autowired
     private JobUtil jobUtil;
-    
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+
     
     /**
      * Get production planner jobs by order id
      * 
+	 * @param state state of jobs
+	 * @param orderId order id of jobs
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return a list of jobs
      */
 	@Transactional
 	@Override
-    public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId) {
-		List<Job> jobs = this.findJobsByStateAndOrderId(state, orderId);
-		List<RestJob> restJobs = new ArrayList<RestJob>();
-		if (jobs != null && !jobs.isEmpty()) {
-			for (Job job : jobs) { 
-				RestJob rj = RestUtil.createRestJob(job);
-				if (rj != null) {
-					restJobs.add(rj);
+    public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
+			Long recordFrom, Long recordTo, String[] orderBy) {
+
+		List<RestJob> resultList = new ArrayList<>();
+		// Find using search parameters
+		// if job is set, look for page containing it
+//		if (jobId != null && jobId > 0) {
+//			Boolean found = false;
+//			Long pageSize = recordTo - recordFrom;
+//			Long from = (long) 0;
+//			Long to = pageSize;
+//			List<Job> jobList = new ArrayList<Job>();	
+//			while (found == false) {
+//				jobList.clear();
+//				Query query = createJobsQuery(state, orderId, from, to, orderBy, false);
+//				for (Object resultObject: query.getResultList()) {
+//					if (resultObject instanceof Job) {
+//						// Filter depending on product visibility and user authorization
+//						Job job = (Job) resultObject;			
+//						jobList.add(job);
+//						if (job.getId() == jobId) {
+//							found = true;
+//						}
+//					}
+//				}	
+//				if (jobList.isEmpty()) {
+//					// no page found, use original page
+//					break;
+//				}
+//			}
+//			if (found) {
+//				for (Job job: jobList) {			
+//					resultList.add(RestUtil.createRestJob(job));
+//				}	
+//			}
+//		} 
+		if (resultList.isEmpty()) {
+			Query query = createJobsQuery(state, orderId, recordFrom, recordTo, orderBy, false);
+			
+			for (Object resultObject: query.getResultList()) {
+				if (resultObject instanceof Job) {
+					// Filter depending on product visibility and user authorization
+					Job job = (Job) resultObject;					
+					resultList.add(RestUtil.createRestJob(job));
 				}
-			}
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(restJobs, responseHeaders, HttpStatus.OK);
+			}		
 		}
-		Messages.JOBS_FOR_ORDER_NOT_EXIST.log(logger, String.valueOf(orderId));
-		String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.formatWithPrefix(String.valueOf(orderId));
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		if (resultList.isEmpty()) {
+			Messages.JOBS_FOR_ORDER_NOT_EXIST.log(logger, String.valueOf(orderId));
+			String message = Messages.JOBS_FOR_ORDER_NOT_EXIST.formatWithPrefix(String.valueOf(orderId));
+	    	HttpHeaders responseHeaders = new HttpHeaders();
+	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		}
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
+		return new ResponseEntity<>(resultList, responseHeaders, HttpStatus.OK);
+	}
+
+    /**
+     * Get production planner number of jobs by order id and state
+     * 
+	 * @param state state of jobs
+	 * @param orderId order id of jobs
+	 * @return number of jobs
+     */
+	@Transactional
+	@Override
+    public ResponseEntity<String> countJobs(String state, Long orderId) {
+
+		List<RestJob> resultList = new ArrayList<>();
+
+		// Find using search parameters
+		Query query = createJobsQuery(state, orderId, null, null, null, true);
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+		}
+		if (resultObject instanceof String) {
+			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+		}
+		return new ResponseEntity<>("0", HttpStatus.OK);	
 	}
 	
 	/* 
@@ -300,5 +382,52 @@ public class JobControllerImpl implements JobController {
     	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
-	
+
+	private Query createJobsQuery(String state, Long orderId,
+			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+
+		// Find using search parameters
+		String jpqlQuery = null;
+		String div = " where";
+		if (count) {
+			jpqlQuery = "select count(x) from Job x";
+		} else {
+			jpqlQuery = "select x from Job x";
+		}
+		if (null != state) {
+			jpqlQuery += div + " x.jobState = :state";
+			div = " and";
+		}
+		if (null != orderId) {
+			jpqlQuery += div + " x.processingOrder.id = :orderId";
+			div = " and";
+		}
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += "x.";
+				jpqlQuery += orderBy[i];
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+
+		if (null != state) {
+			query.setParameter("state",state);
+		}
+		if (null != orderId) {
+			query.setParameter("orderId", orderId);
+		}
+		
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
+	}
 }

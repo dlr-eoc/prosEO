@@ -375,10 +375,31 @@ public class GUIOrderController extends GUIBaseController {
 	@RequestMapping(value = "/jobs/get")
 	public DeferredResult<String> getJobsOfOrder(
 			@RequestParam(required = true, value = "orderid") String id,
+			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
+			@RequestParam(required = false, value = "recordTo") Long toIndex,
+			@RequestParam(required = false, value = "job") String jobId,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id);
+		Long from = null;
+		Long to = null;
+		if (fromIndex != null && fromIndex >= 0) {
+			from = fromIndex;
+		} else {
+			from = (long) 0;
+		}
+		Long count = countJobs(id);
+		if (toIndex != null && from != null && toIndex > from) {
+			to = toIndex;
+		} else if (from != null) {
+			to = count;
+		}
+		Long pageSize = to - from;
+		Long deltaPage = (long) ((count % pageSize)==0?0:1);
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (from / pageSize) + 1;
+		// TODO use jobId to find page of job 
+		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
@@ -404,6 +425,23 @@ public class GUIOrderController extends GUIBaseController {
 					 * h.put("graph", result); } }
 					 */		
 					model.addAttribute("jobs", jobs);
+					model.addAttribute("count", count);
+					model.addAttribute("pageSize", pageSize);
+					model.addAttribute("pageCount", pages);
+					model.addAttribute("page", page);
+					List<Long> showPages = new ArrayList<Long>();
+					Long start = Math.max(page - 4, 1);
+					Long end = Math.min(page + 4, pages);
+					if (page < 5) {
+						end = Math.min(end + (5 - page), pages);
+					}
+					if (pages - page < 5) {
+						start = Math.max(start - (4 - (pages - page)), 1);
+					}
+					for (Long i = start; i <= end; i++) {
+						showPages.add(i);
+					}
+					model.addAttribute("showPages", showPages);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + jobs.toString());
 					deferredResult.setResult("order :: #jobscontent");
@@ -561,7 +599,46 @@ public class GUIOrderController extends GUIBaseController {
 		}
 		return result;
 	}
-	
+
+    private Long countJobs(String id)  {	    	
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = "/jobs/count";
+		String divider = "?";
+		if (id != null) {
+			uri += divider + "orderid=" + id;
+			divider ="&";
+		}
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getProductionPlannerUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
+
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		
+        return result;
+    }
 }
 
 
