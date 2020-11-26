@@ -184,4 +184,30 @@
             return true;
         }
         return false;
-    }
+    };
+    
+    function enableElement(x) {
+    	x.disabled = false;
+    	if ($(x).hasClass('disabled')) {
+    		$(x).removeClass('disabled');
+    	}
+    	if ($(x).hasClass('font-italic')) {
+    		$(x).removeClass('font-italic');
+    	}
+    	if (!$(x).hasClass('enabled')) {
+    		$(x).addClass('enabled');
+    	}    	
+    };
+
+    function disableElement(x) {
+    	x.disabled = true;
+    	if (!$(x).hasClass('disabled')) {
+    		$(x).addClass('disabled');
+    	}
+    	if (!$(x).hasClass('font-italic')) {
+    		$(x).addClass('font-italic');
+    	}
+    	if ($(x).hasClass('enabled')) {
+    		$(x).removeClass('enabled');
+    	}    	
+    };

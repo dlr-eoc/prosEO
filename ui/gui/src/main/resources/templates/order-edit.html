@@ -1,0 +1,934 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta charset="utf-8">
+      <meta name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title th:text="#{proseo}">proseo</title>
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous" />
+
+          <!-- Custom styles for prosEO -->
+          <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+          <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
+  </head>
+
+  <body>
+    <div style="display:none;" id="loader"></div>
+    <nav id="proseo-nav"
+      class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
+      <div class="container-fluid pl-0 pr-0">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" id="mission"
+          href="/"><img src="proseo_logo.png" class="rounded" width="50"
+            height="50">&nbsp;<span th:text="#{proseo}">proseo</span></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button" data-toggle="collapse" data-target="#sidebarMenu"
+          aria-controls="sidebarMenu" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <ul class="navbar-nav mr-auto navbar-left">
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/"><span
+                th:text="${missioncode}">mission</span></a></li>
+          <li class="p-breadcrumb-item"><a class="bread-link" href="/order-show"><span
+                th:text="#{order}">order</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-name"></span></li>
+        </ul>
+        <div th:replace="fragments/navbar.html :: navbarRight"></div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
+      <div class="proseo-top-div"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+
+            <p>&nbsp;</p>
+			<div id="orderedit" name="orderedit">
+				<div th:each="ord : ${orders}">
+
+          <div class="row py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{name}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
+                  id="identifier" name="identifier" th:value="${ord?.identifier}">
+            </div>
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{processingmode}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><select name="processingMode" id="processingMode"
+                  class="custom-select">
+                <option th:each="obj : ${processingmodes}" th:text="${obj}"
+                  th:label="${obj}" th:selected="${obj}==${ord?.processingMode}?'true':'false'"></option>
+                </select>
+            </div>
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{processingtype}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><select name="productionType" id="productionType"
+                  class="custom-select">
+                <option th:each="obj : ${productiontypes}" th:text="${obj}"
+                  th:label="${obj}" th:selected="${obj}==${ord?.productionType}?'true':'false'"></option>
+                </select>
+            </div>
+            
+          </div>
+          <div class="row py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{executiontime}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
+                  id="executionTime" name="executionTime" th:value="${ord?.executionTime}">
+            </div>
+            <div class="col-8">
+            </div>
+          </div>
+          <div class="row py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{slicing}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><select name="slicingType" id="slicingType"
+                  class="custom-select">
+                <option th:each="obj : ${slicingtypes}" th:text="${obj}"
+                  th:label="${obj}" th:selected="${obj}==${ord?.slicingType}?'true':'false'"></option>
+                </select>
+            </div>
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{overlap}"></p>
+            </div>
+            <div class="col-2 pl-lg-0">
+              <div class="input-group">
+                <input type="text" class="form-control" id="sliceOverlap"
+                  name="sliceOverlap" th:value="${ord?.sliceOverlap}">
+                <div class="input-group-append">
+                  <span class="input-group-text">s</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-4">
+            </div>
+          </div>
+          <!-- Orbit data -->
+					<div class="row filtercontent" id="ORBIT">
+						<div class="col-12">
+							<!-- Nested rows to hold slicing data -->
+							<div th:each="orbit,iterstat : ${ord?.orbits}" class="row py-lg-1" name="orbitData" th:data-index="${iterstat.index}">
+								<div class="col-4"></div>
+								<div class="col-2">
+									<div class="input-group">
+										<div class="input-group-prepend">
+											<p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
+										</div>
+										<select name="spacecraftCode" th:id="'spacecraftCode-'+${iterstat.index}"
+											class="custom-select">
+											<option th:each="obj : ${spacecrafts}" th:text="${obj}"
+												th:label="${obj}"
+												th:selected="${obj}==${orbit?.spacecraftCode}?'true':'false'"></option>
+										</select>
+									</div>
+							  </div>
+                <div class="col-2">
+									<div class="input-group">
+										<div class="input-group-prepend">
+											<p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
+										</div>
+										<input type="text" class="form-control" th:id="'orbitNumberFrom-'+${iterstat.index}"
+											name="orbitNumberFrom" th:value="${orbit?.orbitNumberFrom}">
+									</div>
+                </div>
+                <div class="col-2">
+									<div class="input-group">
+										<div class="input-group-prepend">
+											<p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
+										</div>
+										<input type="text" class="form-control" th:id="'orbitNumberTo-'+${iterstat.index}"
+											name="orbitNumberTo" th:value="${orbit?.orbitNumberTo}">
+									</div>
+                </div>
+                <div class="col-1">
+                  <div class="input-group-text">
+                    <span th:id="'addOrbit-' + ${iterstat.index}" 
+                        class="cursorpointer" 
+                        th:onclick="'addOrbit(' + ${iterstat.index} + ')'" 
+                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span th:id="'removeOrbit-' + ${iterstat.index}"
+                        class="cursorpointer" 
+                        th:onclick="'removeOrbit(' + ${iterstat.index} + ')'"
+                      ><span class="feather-l" data-feather="x-circle"></span></span>
+                  </div>
+                </div>
+                <div class="col-1"></div>
+							</div>
+							<!-- No orbit exists, fill with default data -->
+              <div th:if="${#lists.isEmpty(ord?.orbits)}" class="row py-lg-1" name="orbitData" data-index="0">
+                <div class="col-4"></div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
+                    </div>
+                    <select name="spacecraftCode" id="spacecraftCode-0"
+                      class="custom-select">
+                      <option th:each="obj : ${spacecrafts}" th:text="${obj}"
+                        th:label="${obj}"
+                        th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="orbitNumberFrom-0"
+                      name="orbitNumberFrom" value="0">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="orbitNumberTo-0"
+                      name="orbitNumberTo" value="1">
+                  </div>
+                </div>
+                <div class="col-1">
+                  <div class="input-group-text">
+                    <span id="addOrbit-0" 
+                        class="cursorpointer" 
+                        onclick="addOrbit(0)"
+                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span id="removeOrbit-0" 
+                        class="cursorpointer" 
+                        onclick="removeOrbit(0)"
+                      ><span class="feather-l" data-feather="x-circle"></span></span>
+                  </div>
+                </div>
+                <div class="col-1"></div>
+              </div>
+              <!-- Template orbit data  -->
+              <div class="row py-lg-1 filtercontent" name="orbitDataTemplate" id="orbitDataTemplate" data-index="0">
+                <div class="col-4"></div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{spacecraft}"></p>
+                    </div>
+                    <select name="spacecraftCode" id="spacecraftCode-x"
+                      class="custom-select">
+                      <option th:each="obj : ${spacecrafts}" th:text="${obj}"
+                        th:label="${obj}"
+                        th:selected="${obj}==${spacecrafts[0]}?'true':'false'"></option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="orbitNumberFrom-x"
+                      name="orbitNumberFrom" value="0">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="orbitNumberTo-x"
+                      name="orbitNumberTo" value="1">
+                  </div>
+                </div>
+                <div class="col-1">
+                  <div class="input-group-text">
+                    <span id="addOrbit-x" 
+                        class="cursorpointer" 
+                        onclick="addOrbit(x)"
+                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span id="removeOrbit-x" 
+                        class="cursorpointer" 
+                        onclick="removeOrbit(x)"
+                      ><span class="feather-l" data-feather="x-circle"></span></span>
+                  </div>
+                </div>
+                <div class="col-1"></div>
+              </div>
+						</div>
+					</div>
+					<!-- TIME_SLICE data -->
+          <div class="row filtercontent" id="TIME_SLICE">
+            <div class="col-12">
+              <!-- Nested rows to hold slicing data -->
+              <div class="row py-lg-1">
+                <div class="col-4"></div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="startTime"
+                      name="startTime" th:value="${ord?.startTime}">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="stopTime"
+                      name="stopTime" th:value="${ord?.stopTime}">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{duration}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="sliceDuration"
+                      name="sliceDuration"  th:value="${ord?.sliceDuration}">
+										<div class="input-group-append">
+											<span class="input-group-text">s</span>
+										</div>
+									</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- CALENDAR_DAY data -->
+          <div class="row filtercontent" id="CALENDAR_DAY">
+            <div class="col-12">
+              <!-- Nested rows to hold slicing data -->
+              <div class="row py-lg-1">
+                <div class="col-4"></div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="start-date"
+                      name="start-date" th:value="${ord?.startTime}">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
+                    </div>
+                    <input type="text" class="form-control" id="start-date"
+                      name="start-date" th:value="${ord?.stopTime}">
+                  </div>
+                </div>
+                <div class="col-2">
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Requested product classes -->
+          <div class="row py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{outputproductclasses}"></p>
+            </div>
+            <div class="col-7 pl-lg-0">
+              <select id="seloutclasses" multiple="multiple">
+                <option th:each="obj : ${productclasses}" th:text="${obj}"
+                  th:label="${obj}" th:selected="${#lists.contains(ord?.requestedProductClasses,obj)}?'true':'false'"></option>
+              </select>
+            </div>
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{outputfileclass}"></p>
+            </div>
+            <div class="col-1 pl-lg-0">
+              <select name="outputFileClass" id="outputFileClass"
+                  class="custom-select">
+                <option th:each="obj : ${fileclasses}" th:text="${obj}"
+                  th:label="${obj}"  th:selected="${obj}==${ord?.outputFileClass}?'true':'false'"></option>
+                </select>
+            </div>
+          </div>
+          <!-- Input product stop classes -->
+          <div class="row  py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{inputclassesstoplist}"></p>
+            </div>
+            <div class="col-10 pl-lg-0">
+              <select id="selinclasses" multiple="multiple">
+                <option th:each="obj : ${productclasses}" th:text="${obj}"
+                  th:label="${obj}" th:selected="${#lists.contains(ord?.inputProductClasses,obj)}?'true':'false'"></option>
+              </select>
+            </div>
+          </div>
+          <!-- Requested configured procssors -->
+					<div class="row py-lg-1">
+						<div class="col-2 pr-lg-0">
+							<p class="input-group-text word-wrap"
+								th:text="#{requestedconfiguredprocessors}"></p>
+						</div>
+						<div class="col-10 pl-lg-0">
+							<select id="selconfproc" multiple="multiple">
+								<option th:each="obj : ${configuredprocessors}" th:text="${obj}"
+									th:label="${obj}" th:selected="${#lists.contains(ord?.configuredProcessors,obj)}?'true':'false'"></option>
+							</select>
+						</div>
+					</div>
+					<!-- Input filters for product classes -->
+          <div name="paramgroup" class="row" id="inputFilters">
+						<div class="col-12">
+              <div class="row py-lg-1">
+                <div class="col-12">
+                  <div class="input-group-prepend">
+                    <p class="input-group-text word-wrap" th:text="#{inputfilter}"></p>
+                  </div>
+                </div>
+              </div>
+							<div th:each="ifilt : ${ord?.inputFilters}">
+								<div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
+									<div th:if="${iterStat.first} == true" class="row py-lg-1">
+                    <div class="col-1"></div>
+										<div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{class}"></p>
+                        </div>
+                        <select name="inProductClass" id="productClass"
+                          class="custom-select">
+                          <option th:each="obj : ${productclasses}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${ifilt?.productClass}?'true':'false'"></option>
+                        </select>
+                      </div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<div class="input-group-prepend">
+													<p class="input-group-text word-wrap" th:text="#{key}"></p>
+												</div>
+												<input type="text" class="form-control" id="key" name="key"
+													th:value="${fcond?.key}">
+											</div>
+										</div>
+										<div class="col-2">
+											<div class="input-group">
+												<div class="input-group-prepend">
+													<p class="input-group-text word-wrap"
+														th:text="#{type}"></p>
+												</div>
+												<select name="parameterType" id="parameterType"
+													class="custom-select">
+													<option th:each="obj : ${parametertypes}" th:text="${obj}"
+														th:label="${obj}"
+														th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+												</select>
+											</div>
+										</div>
+										<div class="col-3">
+											<div class="input-group">
+												<div class="input-group-prepend">
+													<p class="input-group-text word-wrap" th:text="#{value}"></p>
+												</div>
+												<input type="text" class="form-control" id="parameterValue"
+													name="parameterValue" th:value="${fcond?.parameterValue}">
+											</div>
+										</div>
+									</div>
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+                    <div class="col-4">
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                  </div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Product class output parameters -->
+          <div name="paramgroup" class="row" id="classOutputParameters">
+            <div class="col-12">
+              <div class="row py-lg-1">
+                <div class="col-12">
+                  <div class="input-group-prepend">
+                    <p class="input-group-text word-wrap" th:text="#{classoutparams}"></p>
+                  </div>
+                </div>
+              </div>
+              <div th:each="ifilt : ${ord?.classOutputParameters}">
+                <div th:each="fcond,iterStat : ${ifilt?.outputParameters}">
+                  <div th:if="${iterStat.first} == true" class="row py-lg-1">
+                    <div class="col-1"></div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{class}"></p>
+                        </div>
+                        <select name="outProductClass" id="productClass"
+                          class="custom-select">
+                          <option th:each="obj : ${productclasses}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${ifilt?.productClass}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                  </div>
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+                    <div class="col-4">
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Output parameters for all product classes -->
+          <div class="row" id="outputParameters">
+            <div class="col-12">
+              <div class="row py-lg-1">
+                <div class="col-12">
+                  <div class="input-group-prepend">
+                    <p class="input-group-text word-wrap" th:text="#{outparams}"></p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div th:each="fcond,iterStat : ${ord?.outputParameters}">
+                  <div th:if="${iterStat.first} == true" class="row py-lg-1">
+                    <div class="col-1"></div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{allclasses}"></p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                  </div>
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+                    <div class="col-4">
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+					
+				</div>
+			</div>
+
+			<div th:insert="fragments/footer.html :: footer"></div>
+        </main>
+      </div>
+    </div>
+  </body>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>          
+  <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
+  
+  <script type="text/javascript"> 
+    function findElementByNameAndDataIndex(name, index) {
+    	var elems = document.getElementsByName(name);
+    	if (elems != null) {
+    		for (var i = 0; i < elems.length; i++) {
+    			var anIndex = $(elems[i]).attr('data-index');
+    			if (anIndex != null) {
+    				if (anIndex == index) {
+    					return elems[i];
+    				}
+    			}
+    		}
+    	}
+    	return null;
+    };
+    
+    function removeOrbit(index) {
+    	var orbits = document.getElementsByName('orbitData');
+    	if (orbits != null) {
+    		if (orbits.length > 1) {
+    			// reomove orbit
+    			var element = findElementByNameAndDataIndex('orbitData', index);
+    			if (element != null) {
+    				$(element).remove();
+    			}
+    		}
+    		// else only one orbit, do nothing
+    	}
+    };
+    
+			function addOrbit(index) {
+				var orbits = document.getElementsByName('orbitData');
+				if (orbits != null) {
+					// find current element, add new orbit line from "hidden" template structure defined in body
+						var element = findElementByNameAndDataIndex('orbitData', index);
+						if (element != null) {
+							// Get the template 
+							var template = document.getElementById('orbitDataTemplate');
+							if (template != null) {
+								var newOrbit = $(template).clone(true);
+								$(newOrbit).removeAttr('id');
+								$(newOrbit).attr('name', 'orbitData');
+								// calc the new index
+								var newIndex = 0;
+								for (var i = 0; i < orbits.length; i++) {
+									if ($(orbits[i]).attr('data-index') > newIndex) {
+										newIndex = $(orbits[i]).attr('data-index');
+									}
+								}
+				        newIndex++;
+				        // replace the attributes containing index
+                $(newOrbit).attr('data-index', newIndex);
+				        var x = $(newOrbit).find("select[id='spacecraftCode-x']");
+				        $(x).attr('id', 'spacecraftCode-' + newIndex);
+		            x = $(newOrbit).find("select[id='orbitNumberFrom-x']");
+		            $(x).attr('id', 'orbitNumberFrom-' + newIndex);
+	              x = $(newOrbit).find("select[id='orbitNumberTo-x']");
+	              $(x).attr('id', 'orbitNumberTo-' + newIndex);
+	              x = $(newOrbit).find("span[id='addOrbit-x']");
+	              $(x).attr('onclick', 'addOrbit(' + newIndex + ')');
+	              $(x).attr('id', 'addOrbit-' + newIndex);
+	              x = $(newOrbit).find("span[id='removeOrbit-x']");
+	              $(x).attr('onclick', 'removeOrbit(' + newIndex + ')');
+	              $(x).attr('id', 'removeOrbit-' + newIndex);
+	              $(newOrbit).removeClass('filtercontent');
+	              $(newOrbit).insertAfter($(element));
+							}
+						}
+					}
+			};
+
+			function enableSlicingData() {
+				var slicingType = document.getElementById('slicingType');
+				if (slicingType != null) {
+					for (var i = 0; i < slicingType.options.length; i++) {
+						var type = slicingType.options[i].value;
+						var ele = document.getElementById(type);
+						if (type == slicingType.value) {
+							if ($(ele).hasClass("filtercontent")) {
+								$(ele).removeClass("filtercontent");
+							} else {
+								if (!$(ele).hasClass("filtercontent")) {
+									$(ele).addClass("filtercontent");
+								}
+							}
+						} else {
+							if (!$(ele).hasClass("filtercontent")) {
+								$(ele).addClass("filtercontent");
+							}
+						}
+					}
+				}
+			};
+
+			function enableClasses() {
+				var x = this;
+				var selects = document.getElementsByName($(x).attr('name'));
+				if (selects != null) {
+					var values = new Map;
+					for (var i = 0; i < selects.length; i++) {
+						if (selects[i].value != x.value) {
+							values.set(selects[i].value, selects[i].value);
+						}
+					}
+					for (var i = 0; i < x.options.length; i++) {
+						if (values.has(x.options[i].value)) {
+							disableElement(x.options[i]);
+						} else {
+							enableElement(x.options[i]);
+						}
+					}
+				}
+			}
+
+			function addEventHandler() {
+				document.getElementById('slicingType').addEventListener(
+						'change', enableSlicingData);
+				var elems = document.getElementsByName('inProductClass');
+				if (elems != null) {
+					for (var i = 0; i < elems.length; i++) {
+						elems[i].addEventListener('click', enableClasses);
+					}
+				}
+				var elems1 = document.getElementsByName('outProductClass');
+				if (elems1 != null) {
+					for (var i = 0; i < elems1.length; i++) {
+						elems1[i].addEventListener('click', enableClasses);
+					}
+				}
+			};
+
+			function retrieveData(id) {
+				showLoader();
+				var tableRows = $("orderTable").rows;
+				if (tableRows > 1 && tableRows != null) {
+					$("orderTable > tbody").empty();
+				}
+				var url = "/order-edit/get"
+				var divider = "?";
+
+				if (id != null) {
+					url = url + divider + "id=" + id.toString().trim();
+					divider = "&";
+
+					$.ajax({
+						url : url,
+						method : "GET",
+						success : function(res) {
+							$("#orderedit").html(res);
+							var on = document.getElementById('identifier');
+							var br = document
+									.getElementById('breadcrumb-order-name');
+							if (on != null && br != null) {
+								br.textContent = on.value;
+								document.title = on.value + " | "
+										+ "[[#{proseo}]]";
+							}
+							feather.replace();
+							$('#selinclasses').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+							$('#seloutclasses').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+							$('#selconfproc').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+							enableSlicingData();
+							addEventHandler();
+
+							hideLoader();
+						},
+						fail : function(err) {
+							console.log(err);
+							prop.innerHTML = "Fehler!" + err;
+							hideLoader();
+						}
+					});
+				}
+			};
+		</script>
+<script>
+    window.onload = function () {
+     // $('.collapse').collapse();
+     var elem = document.getElementById('sb-order');
+     $(elem).addClass('active');
+     feather.replace();
+     var myid = getURLParam('id');
+     if (myid != null) {
+       retrieveData(myid);
+     }
+     
+     // correct scroll due to "sticky" elements
+     var handler = function ( ) {
+        var h = (document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+        window.scrollBy(0, h);
+      };
+      window.addEventListener('hashchange', handler);
+    }
+    
+</script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#example-getting-started').multiselect();
+    });
+</script>
+
+</html>

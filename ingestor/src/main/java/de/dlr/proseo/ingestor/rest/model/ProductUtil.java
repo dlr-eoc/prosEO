@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
@@ -214,7 +215,7 @@ public class ProductUtil {
 		for (RestParameter restParameter: restProduct.getParameters()) {
 			de.dlr.proseo.model.Parameter modelParameter = new de.dlr.proseo.model.Parameter();
 			try {
-				modelParameter.setParameterType(de.dlr.proseo.model.Parameter.ParameterType.valueOf(restParameter.getParameterType()));
+				modelParameter.setParameterType(ParameterType.valueOf(restParameter.getParameterType()));
 			} catch (Exception e) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_PARAMETER_TYPE, MSG_ID_INVALID_PARAMETER_TYPE,
 						restParameter.getParameterType()));

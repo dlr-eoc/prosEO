@@ -12,6 +12,8 @@ import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import de.dlr.proseo.model.enums.ParameterType;
+
 /**
  * This class allows to add mission-specific parameters to any persistent object. A parameter consists of a type
  * (of the enum ParameterType) and a value with a class that corresponds to the type.
@@ -32,11 +34,6 @@ public class Parameter {
 	
 	/** The parameter value */
 	private String parameterValue;
-	
-	/**
-	 *  Enumeration of valid parameter types for mission-specific parameters
-	 */
-	public enum ParameterType { STRING, BOOLEAN, INTEGER, DOUBLE };
 	
 	/**
 	 * Initializer with type and value (values of type Short and Float are converted to Integer and Double, respectively)

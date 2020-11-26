@@ -53,8 +53,11 @@
 					th:class="('dropdown-item ' + ((${ord?.orderState} == 'CLOSED' or ${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
 					th:onclick="'setState(' + ${ord?.id} + ', \'DELETE\')'" href="#"><span
 					th:text="#{delete}">delete</span></a>
-<!-- 				<div class="dropdown-divider"></div> -->
-<!-- 				<a class="dropdown-item" href="#">Separated link</a> -->
+        <div class="dropdown-divider"></div>
+        <a
+          th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:href="'/order-edit?id=' + ${ord?.id}"><span
+          th:text="#{edit}">edit</span></a>
 			</div>
 		</div>
 	</div>

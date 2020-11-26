@@ -33,7 +33,7 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;

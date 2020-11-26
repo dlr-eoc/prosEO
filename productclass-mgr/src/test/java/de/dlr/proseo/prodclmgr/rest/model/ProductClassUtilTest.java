@@ -18,7 +18,7 @@ import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
