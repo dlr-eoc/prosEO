@@ -94,6 +94,9 @@
             </div>
           </div>
           <div class="row py-lg-1">
+            <div class="col-12 border"></div>
+          </div>
+          <div class="row py-lg-1">
             <div class="col-2 pr-lg-0">
               <p class="input-group-text word-wrap"
                 th:text="#{slicing}"></p>
@@ -334,6 +337,9 @@
               </div>
             </div>
           </div>
+          <div class="row py-lg-1">
+            <div class="col-12 border"></div>
+          </div>
           <!-- Requested product classes -->
           <div class="row py-lg-1">
             <div class="col-2 pr-lg-0">
@@ -384,6 +390,9 @@
 							</select>
 						</div>
 					</div>
+          <div class="row py-lg-1">
+            <div class="col-12 border"></div>
+          </div>
 					<!-- Input filters for product classes -->
           <div name="paramgroup" class="row" id="inputFilters">
 						<div class="col-12">
@@ -394,8 +403,9 @@
                   </div>
                 </div>
               </div>
-							<div th:each="ifilt : ${ord?.inputFilters}">
-								<div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
+							<div th:each="ifilt,iterCls : ${ord?.inputFilters}"  name="InClassParameters">
+								<div th:each="fcond,iterStat : ${ifilt?.filterConditions}" name="InClassParameter" 
+                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
 									<div th:if="${iterStat.first} == true" class="row py-lg-1">
                     <div class="col-1"></div>
 										<div class="col-3">
@@ -412,7 +422,7 @@
                         </select>
                       </div>
 										</div>
-										<div class="col-3">
+										<div class="col-2">
 											<div class="input-group">
 												<div class="input-group-prepend">
 													<p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -444,11 +454,25 @@
 													name="parameterValue" th:value="${fcond?.parameterValue}">
 											</div>
 										</div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span>
+                          <!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
+                      </div>
+                    </div>
 									</div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1" name="InClassParameter" 
+                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
                     <div class="col-4">
                     </div>
-                    <div class="col-3">
+                    <div class="col-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -480,12 +504,27 @@
                           name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+                          th:id="'removeInClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeInClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span>
+                      </div>
+                    </div>
                   </div>
 								</div>
 							</div>
 						</div>
 					</div>
 					
+          <div class="row py-lg-1">
+            <div class="col-12 border"></div>
+          </div>
 					<!-- Product class output parameters -->
           <div name="paramgroup" class="row" id="classOutputParameters">
             <div class="col-12">
@@ -496,9 +535,10 @@
                   </div>
                 </div>
               </div>
-              <div th:each="ifilt : ${ord?.classOutputParameters}">
+              <div th:each="ifilt,iterCls : ${ord?.classOutputParameters}" name="OutClassParameters">
                 <div th:each="fcond,iterStat : ${ifilt?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row py-lg-1">
+                  <div th:if="${iterStat.first} == true" class="row py-lg-1" name="OutClassParameter" 
+                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
                     <div class="col-1"></div>
                     <div class="col-3">
                       <div class="input-group">
@@ -514,7 +554,7 @@
                         </select>
                       </div>
                     </div>
-                    <div class="col-3">
+                    <div class="col-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -544,13 +584,27 @@
                         </div>
                         <input type="text" class="form-control" id="parameterValue"
                           name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span>
+                          <!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
                       </div>
                     </div>
                   </div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1" name="OutClassParameter"  
+                       th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
                     <div class="col-4">
                     </div>
-                    <div class="col-3">
+                    <div class="col-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -580,12 +634,27 @@
                         </div>
                         <input type="text" class="form-control" id="parameterValue"
                           name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+                          th:id="'removeOutClassParameter-' + ${iterCls.index} + '-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeOutClassParameter(' + ${iterCls.index} + ',' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+          <div class="row py-lg-1">
+            <div class="col-12 border"></div>
           </div>
           <!-- Output parameters for all product classes -->
           <div class="row" id="outputParameters">
@@ -599,7 +668,7 @@
               </div>
               <div>
                 <div th:each="fcond,iterStat : ${ord?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row py-lg-1">
+                  <div th:if="${iterStat.first} == true" class="row py-lg-1" name="ParameterAll"  th:data-index="${iterStat.index}">
                     <div class="col-1"></div>
                     <div class="col-3">
                       <div class="input-group">
@@ -609,7 +678,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="col-3">
+                    <div class="col-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -641,11 +710,24 @@
                           name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
-                  </div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-1">
+										<div class="col-1">
+											<div class="input-group-text">
+												<span th:id="'addParameterAll-' + ${iterStat.index}"
+													class="cursorpointer"
+													th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="plus-circle"></span></span>
+													<!-- <span>&nbsp;&nbsp;</span><span
+													th:id="'removeParameterAll-' + ${iterStat.index}"
+													class="cursorpointer"
+													th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
+													class="feather-l" data-feather="x-circle"></span></span> -->
+											</div>
+										</div>
+									</div>
+                  <div th:if="${iterStat.first} == false" class="row py-lg-1" name="ParameterAll"  th:data-index="${iterStat.index}">
                     <div class="col-4">
                     </div>
-                    <div class="col-3">
+                    <div class="col-2">
                       <div class="input-group">
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
@@ -677,12 +759,73 @@
                           name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
-                  </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span th:id="'addParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'addParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+                          th:id="'removeParameterAll-' + ${iterStat.index}"
+                          class="cursorpointer"
+                          th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span>
+                      </div>
+                    </div>
+									</div>
                 </div>
               </div>
             </div>
           </div>
 					
+                  <div class="row py-lg-1 filtercontent" name="allOutParams" id="paramTemplate">
+                    <div class="col-4">
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{key}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="key" name="key"
+                          th:value="${fcond?.key}">
+                      </div>
+                    </div>
+                    <div class="col-2">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap"
+                            th:text="#{type}"></p>
+                        </div>
+                        <select name="parameterType" id="parameterType"
+                          class="custom-select">
+                          <option th:each="obj : ${parametertypes}" th:text="${obj}"
+                            th:label="${obj}"
+                            th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                          <p class="input-group-text word-wrap" th:text="#{value}"></p>
+                        </div>
+                        <input type="text" class="form-control" id="parameterValue"
+                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                      </div>
+                    </div>
+                    <div class="col-1">
+                      <div class="input-group-text">
+                        <span id="add-x"
+                          class="cursorpointer"
+                          onclick="add(x)"><span
+                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+                          id="remove-x"
+                          class="cursorpointer"
+                          onclick="remove(x)"><span
+                          class="feather-l" data-feather="x-circle"></span></span>
+                      </div>
+                    </div>
+                  </div>
+                  
 				</div>
 			</div>
 
@@ -710,8 +853,7 @@
   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
   
   <script type="text/javascript"> 
-    function findElementByNameAndDataIndex(name, index) {
-    	var elems = document.getElementsByName(name);
+    function findElementInListByDataIndex(elems, index) {
     	if (elems != null) {
     		for (var i = 0; i < elems.length; i++) {
     			var anIndex = $(elems[i]).attr('data-index');
@@ -730,7 +872,7 @@
     	if (orbits != null) {
     		if (orbits.length > 1) {
     			// reomove orbit
-    			var element = findElementByNameAndDataIndex('orbitData', index);
+    			var element = findElementInListByDataIndex(orbits, index);
     			if (element != null) {
     				$(element).remove();
     			}
@@ -743,7 +885,7 @@
 				var orbits = document.getElementsByName('orbitData');
 				if (orbits != null) {
 					// find current element, add new orbit line from "hidden" template structure defined in body
-						var element = findElementByNameAndDataIndex('orbitData', index);
+						var element = findElementInListByDataIndex(orbits, index);
 						if (element != null) {
 							// Get the template 
 							var template = document.getElementById('orbitDataTemplate');
@@ -780,6 +922,94 @@
 					}
 			};
 
+		    function removeParameter(params, name, clsIndex, index) {
+		      if (params != null) {
+		        if (params.length > 1) {
+		          // reomove orbit
+		          var element = findElementInListByDataIndex(params, index);
+		          if (element != null) {
+		            $(element).remove();
+		          }
+		        }
+		        // else only one orbit, do nothing
+		      }
+		    };
+
+	    function addParameter(params, name, clsIndex, index) {
+	        if (params != null) {
+	          // find current element, add new orbit line from "hidden" template structure defined in body
+	            var element = findElementInListByDataIndex(params, index);
+	            if (element != null) {
+	              // Get the template 
+	              var template = document.getElementById('paramTemplate');
+	              if (template != null) {
+	                var newParam = $(template).clone(true);
+	                $(newParam).removeAttr('id');
+	                $(newParam).attr('name', name);
+	                // calc the new index
+	                var newIndex = 0;
+	                for (var i = 0; i < params.length; i++) {
+	                  if ($(params[i]).attr('data-index') > newIndex) {
+	                    newIndex = $(params[i]).attr('data-index');
+	                  }
+	                }
+	                newIndex++;
+	                // replace the attributes containing index
+                  $(newParam).attr('data-index', newIndex);
+                  if (clsIndex != null) {
+                	  $(newParam).attr('data-clsindex', clsIndex);
+                  }
+	                var x = $(newParam).find("span[id='add-x']");
+	                $(x).attr('onclick', 'add' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+	                $(x).attr('id', 'add' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+	                x = $(newParam).find("span[id='remove-x']");
+	                $(x).attr('onclick', 'remove' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+	                $(x).attr('id', 'remove' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+	                $(newParam).removeClass('filtercontent');
+	                $(newParam).insertAfter($(element));
+	              }
+	            }
+	          }
+	    };
+
+	      function removeParameterAll(index) {
+	          var params = document.getElementsByName('ParameterAll');
+	          removeParameter(params, 'ParameterAll', null, index);
+	      };
+	      
+	      function addParameterAll(index) {
+	          var params = document.getElementsByName('ParameterAll');
+	          addParameter(params, 'ParameterAll', null, index);
+	      };
+	        
+	        function addOutClassParameter(clsIndex, index) {
+	            var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
+	            var parent = $(elem).parents("div[name='OutClassParameters']");
+	            var params = $(parent).find("div[name='OutClassParameter']");
+	            addParameter(params, 'OutClassParameter', clsIndex, index);
+	        };
+
+	        function removeOutClassParameter(clsIndex, index) {
+	              var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
+	              var parent = $(elem).parents("div[name='OutClassParameters']");
+	              var params = $(parent).find("div[name='OutClassParameter']");
+	            removeParameter(params, 'OutClassParameter', clsIndex, index);
+	        };
+	        
+	        function addInClassParameter(clsIndex, index) {
+	            var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
+	            var parent = $(elem).parents("div[name='InClassParameters']");
+	            var params = $(parent).find("div[name='InClassParameter']");
+	            addParameter(params, 'InClassParameter', clsIndex, index);
+	        };
+	        
+	      function removeInClassParameter(clsIndex, index) {
+	            var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
+	            var parent = $(elem).parents("div[name='InClassParameters']");
+	            var params = $(parent).find("div[name='InClassParameter']");
+	          removeParameter(params, 'InClassParameter', clsIndex, index);
+	      };
+			
 			function enableSlicingData() {
 				var slicingType = document.getElementById('slicingType');
 				if (slicingType != null) {
