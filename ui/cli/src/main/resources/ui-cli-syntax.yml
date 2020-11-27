@@ -48,14 +48,11 @@ options:
       type: boolean
       description: Show the prosEO CLI version and exit (only for call from shell command line)
       shortForm: V
-    - name: user
+    - name: identFile
       type: string
-      description: The user name for login to prosEO.
-      shortForm: u
-    - name: password
-      type: string
-      description: The password for login to prosEO (only valid if a user name for login is given).
-      shortForm: p
+      description: |
+          Path to a file containing user name and password (in two separate lines);
+          the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
     - name: mission
       type: string
       description: The mission to login to (only valid if a user name for login is given)
@@ -1402,6 +1399,10 @@ commands:
               description: If set, give facility details, otherwise show facility names only (setting facilityName parameter
                            implies verbose)
               shortForm: v
+            - name: showPasswords
+              type: boolean
+              description: If set, show passwords for Processing Facility users, otherwise show placeholder
+              shortForm: s
           parameters:
             - name: facilityName
               type: string

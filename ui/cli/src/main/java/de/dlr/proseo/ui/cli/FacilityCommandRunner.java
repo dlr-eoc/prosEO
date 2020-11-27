@@ -58,6 +58,8 @@ public class FacilityCommandRunner {
 	private static final String URI_PATH_FACILITIES = "/facilities";
 	
 	private static final String FACILITIES = "facilities";
+	
+	private static final String PWD_PLACEHOLDER = "********";
 
 	/** The user manager used by all command runners */
 	@Autowired
@@ -281,12 +283,13 @@ public class FacilityCommandRunner {
 	 * 
 	 * @param showCommand the parsed "facility show" command
 	 */
+	@SuppressWarnings("unchecked")
 	private void showFacility(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showFacility({})", (null == showCommand ? "null" : showCommand.getName()));
 		
 		/* Check command options */
 		String facilityOutputFormat = CLIUtil.FILE_FORMAT_YAML;
-		Boolean isVerbose = false;
+		Boolean isVerbose = false, showPasswords = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
 			case "format":
@@ -294,6 +297,9 @@ public class FacilityCommandRunner {
 				break;
 			case "verbose":
 				isVerbose = true;
+				break;
+			case "showPasswords":
+				showPasswords = true;
 				break;
 			}
 		}
@@ -342,8 +348,20 @@ public class FacilityCommandRunner {
 			return;
 		}
 		
+		// Remove passwords unless explicitly requested
+		if (!showPasswords) {
+			// Must be a list of processing facilities
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					((Map<String, Object>) resultObject).put("processingEnginePassword", PWD_PLACEHOLDER);
+					((Map<String, Object>) resultObject).put("storageManagerPassword", PWD_PLACEHOLDER);
+				}
+			}
+		}
+		
+		/* Display the facility(s) found */
 		if (isVerbose) {
-			/* Display the facility(s) found */
+			// Print facility details
 			try {
 				CLIUtil.printObject(System.out, resultList, facilityOutputFormat);
 			} catch (IllegalArgumentException e) {
@@ -354,7 +372,7 @@ public class FacilityCommandRunner {
 				return;
 			} 
 		} else {
-			// Must be a list of processing facilities
+			// Print facility names only; resultList must be a list of processing facilities
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					System.out.println(((Map<?, ?>) resultObject).get("name"));

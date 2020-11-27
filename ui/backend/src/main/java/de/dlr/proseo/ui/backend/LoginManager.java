@@ -168,7 +168,7 @@ public class LoginManager {
 		mission.remove();
 		authorities.remove();
 		
-		String message = uiMsg(MSG_ID_LOGGED_OUT, oldUser);
+		String message = (null == oldUser ? uiMsg(MSG_ID_USER_NOT_LOGGED_IN) : uiMsg(MSG_ID_LOGGED_OUT, oldUser));
 		logger.info(message);
 		System.out.println(message);
 		if (logger.isTraceEnabled()) logger.trace("<<< doLogout()");

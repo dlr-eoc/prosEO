@@ -8,10 +8,19 @@ package de.dlr.proseo.ui.cli;
 
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -98,6 +107,14 @@ public class CommandLineInterface implements CommandLineRunner {
 	private static Logger logger = LoggerFactory.getLogger(CommandLineInterface.class);
 	
 	/**
+	 * Helper class to return username and password from a method
+	 */
+	private static class Credentials {
+		public String username;
+		public String password;
+	}
+	
+	/**
 	 * Check the program invocation arguments (-u/--user, -p/--password, -m/--mission) and remove them from the command line
 	 * 
 	 * @param args the program invocation arguments
@@ -146,6 +163,57 @@ public class CommandLineInterface implements CommandLineRunner {
 	}
 	
 	/**
+	 * Read the user credentials from a file consisting of one or two lines, the first line containing the username and
+	 * the second line the password.
+	 * The file will only be read, if it is only readable by the current system user (as far as warranted by the operating system).
+	 * 
+	 * @param filePathString path to the file containing the credentials
+	 * @return a Credentials object with username and optionally password set from the file
+	 * @throws SecurityException if the file denoted by the file path does not meet the security criteria
+	 * @throws FileNotFoundException if the file denoted by the file path does not exist
+	 */
+	private Credentials readIdentFile(String filePathString) throws SecurityException, FileNotFoundException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> readIdentFile({})", filePathString);
+
+		Credentials credentials = new Credentials();
+		
+		try {
+			// Check file permissions
+			Path filePath = Path.of(filePathString);
+			if (Files.exists(filePath)) {
+				PosixFileAttributeView attributeView = Files.getFileAttributeView(filePath, PosixFileAttributeView.class);
+				Set<PosixFilePermission> permissions = attributeView.readAttributes().permissions();
+				if (permissions.contains(PosixFilePermission.GROUP_READ) || permissions.contains(PosixFilePermission.OTHERS_READ)) {
+					String message = uiMsg(MSG_ID_CREDENTIALS_UNSAFE, filePathString);
+					logger.error(message);
+					System.err.println(message);
+					throw new SecurityException(message);
+				}
+			} else {
+				String message = uiMsg(MSG_ID_CREDENTIALS_NOT_FOUND, filePathString);
+				logger.error(message);
+				System.err.println(message);
+				throw new FileNotFoundException(message);
+			}
+			
+			// Read the credentials from the file
+			BufferedReader credentialFile = new BufferedReader(new FileReader(filePathString));
+			credentials.username = credentialFile.readLine();
+			if (null != credentials.username) {
+				credentials.password = credentialFile.readLine();
+			}
+			credentialFile.close();
+		} catch (IOException e) {
+			String message = uiMsg(MSG_ID_CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
+			logger.error(message);
+			System.err.println(message);
+			throw new IOException(message, e);
+		}
+		
+		return credentials;
+	}
+
+	/**
 	 * Execute the given command (may result in just evaluating the top-level options; "exit" is handled in main command loop)
 	 * 
 	 * @param command the command to execute
@@ -182,8 +250,16 @@ public class CommandLineInterface implements CommandLineRunner {
 			case CMD_LOGIN:
 				String username = null, password = null, mission = null;
 				for (ParsedOption option: command.getOptions()) {
-					if ("user".equals(option.getName())) username = option.getValue();
-					if ("password".equals(option.getName())) password = option.getValue();
+					if ("identFile".equals(option.getName())) {
+						try {
+							Credentials credentials = readIdentFile(option.getValue());
+							username = credentials.username;
+							password = credentials.password;
+						} catch (Exception e) {
+							// IOException needs to be reported, everything else has been handled
+							e.printStackTrace();
+						}
+					}
 				}
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();

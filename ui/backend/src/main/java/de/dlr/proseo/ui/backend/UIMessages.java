@@ -41,6 +41,7 @@ public class UIMessages {
 	public static final int MSG_ID_SERIALIZATION_FAILED = 2813;
 	public static final int MSG_ID_INVALID_URL = 2814;
 	public static final int MSG_ID_UNEXPECTED_STATUS = 2815;
+	// 2816, 2817, 2818 used for CLI Main
 	
 	// Login Manager
 	public static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
@@ -89,6 +90,9 @@ public class UIMessages {
 	public static final int MSG_ID_USER_INTERRUPT = 2926;
 	public static final int MSG_ID_END_OF_FILE = 2927;
 	public static final int MSG_ID_CLI_TERMINATED = 2928;
+	public static final int MSG_ID_CREDENTIALS_UNSAFE = 2816;
+	public static final int MSG_ID_CREDENTIALS_NOT_FOUND = 2817;
+	public static final int MSG_ID_CREDENTIALS_NOT_READABLE = 2818;
 	
 	// Mission CLI
 	public static final int MSG_ID_NO_MISSIONS_FOUND = 2840;
@@ -483,6 +487,9 @@ public class UIMessages {
 		MSG_PASSWORD_MISSING ("(E%d) No password given for user %s", MSG_ID_PASSWORD_MISSING),
 		MSG_UNCAUGHT_EXCEPTION ("(E%d) prosEO Command Line Interface terminated by exception: %s", MSG_ID_UNCAUGHT_EXCEPTION),
 		MSG_USER_INTERRUPT("(E%d) prosEO Command Line Interface exiting due to user interrupt", MSG_ID_USER_INTERRUPT),
+		MSG_CREDENTIALS_UNSAFE ("(E%d) Credential file %s ignored, because it is unsafe (group or world readable)", MSG_ID_CREDENTIALS_UNSAFE),
+		MSG_CREDENTIALS_NOT_FOUND ("(E%d) Credential file %s not found", MSG_ID_CREDENTIALS_NOT_FOUND),
+		MSG_CREDENTIALS_NOT_READABLE ("(E%d) Credential file %s not readable (cause: %s)", MSG_ID_CREDENTIALS_NOT_READABLE),
 		
 		/* --- Info messages -- */
 		// General
