@@ -113,8 +113,8 @@
             </div>
             <div class="col-2 pl-lg-0">
               <div class="input-group">
-                <input type="text" class="form-control" id="sliceOverlap"
-                  name="sliceOverlap" th:value="${ord?.sliceOverlap}">
+                <input class="form-control" id="sliceOverlap"
+                  name="sliceOverlap" type="number" min="0" th:value="${ord?.sliceOverlap}">
                 <div class="input-group-append">
                   <span class="input-group-text">s</span>
                 </div>
@@ -147,8 +147,8 @@
 										<div class="input-group-prepend">
 											<p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
 										</div>
-										<input type="text" class="form-control" th:id="'orbitNumberFrom-'+${iterstat.index}"
-											name="orbitNumberFrom" th:value="${orbit?.orbitNumberFrom}">
+										<input class="form-control" th:id="'orbitNumberFrom-'+${iterstat.index}"
+											name="orbitNumberFrom" type="number" min="0" th:value="${orbit?.orbitNumberFrom}">
 									</div>
                 </div>
                 <div class="col-2">
@@ -156,8 +156,8 @@
 										<div class="input-group-prepend">
 											<p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
 										</div>
-										<input type="text" class="form-control" th:id="'orbitNumberTo-'+${iterstat.index}"
-											name="orbitNumberTo" th:value="${orbit?.orbitNumberTo}">
+										<input class="form-control" th:id="'orbitNumberTo-'+${iterstat.index}"
+											name="orbitNumberTo" type="number" min="0" th:value="${orbit?.orbitNumberTo}">
 									</div>
                 </div>
                 <div class="col-1">
@@ -165,7 +165,9 @@
                     <span th:id="'addOrbit-' + ${iterstat.index}" 
                         class="cursorpointer" 
                         th:onclick="'addOrbit(' + ${iterstat.index} + ')'" 
-                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span th:id="'removeOrbit-' + ${iterstat.index}"
+                      ><span class="feather-l" data-feather="plus-circle"></span></span>
+                      <span>&nbsp;&nbsp;</span>
+                      <span th:unless="${iterstat.first}" th:id="'removeOrbit-' + ${iterstat.index}"
                         class="cursorpointer" 
                         th:onclick="'removeOrbit(' + ${iterstat.index} + ')'"
                       ><span class="feather-l" data-feather="x-circle"></span></span>
@@ -194,8 +196,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
                     </div>
-                    <input type="text" class="form-control" id="orbitNumberFrom-0"
-                      name="orbitNumberFrom" value="0">
+                    <input class="form-control" id="orbitNumberFrom-0"
+                      name="orbitNumberFrom" type="number" min="0" value="0">
                   </div>
                 </div>
                 <div class="col-2">
@@ -203,8 +205,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
                     </div>
-                    <input type="text" class="form-control" id="orbitNumberTo-0"
-                      name="orbitNumberTo" value="1">
+                    <input class="form-control" id="orbitNumberTo-0"
+                      name="orbitNumberTo" type="number" min="0" value="1">
                   </div>
                 </div>
                 <div class="col-1">
@@ -212,10 +214,11 @@
                     <span id="addOrbit-0" 
                         class="cursorpointer" 
                         onclick="addOrbit(0)"
-                      ><span class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span id="removeOrbit-0" 
+                      ><span class="feather-l" data-feather="plus-circle"></span></span>
+                      <!-- <span>&nbsp;&nbsp;</span><span id="removeOrbit-0" 
                         class="cursorpointer" 
                         onclick="removeOrbit(0)"
-                      ><span class="feather-l" data-feather="x-circle"></span></span>
+                      ><span class="feather-l" data-feather="x-circle"></span></span> -->
                   </div>
                 </div>
                 <div class="col-1"></div>
@@ -241,8 +244,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{orbitfrom}"></p>
                     </div>
-                    <input type="text" class="form-control" id="orbitNumberFrom-x"
-                      name="orbitNumberFrom" value="0">
+                    <input class="form-control" id="orbitNumberFrom-x"
+                      name="orbitNumberFrom" type="number" min="0" value="0">
                   </div>
                 </div>
                 <div class="col-2">
@@ -250,8 +253,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
                     </div>
-                    <input type="text" class="form-control" id="orbitNumberTo-x"
-                      name="orbitNumberTo" value="1">
+                    <input class="form-control" id="orbitNumberTo-x"
+                      name="orbitNumberTo" type="number" min="0" value="1">
                   </div>
                 </div>
                 <div class="col-1">
@@ -298,8 +301,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{duration}"></p>
                     </div>
-                    <input type="text" class="form-control" id="sliceDuration"
-                      name="sliceDuration"  th:value="${ord?.sliceDuration}">
+                    <input class="form-control" id="sliceDuration"
+                      name="sliceDuration" type="number" min="1"  th:value="${ord?.sliceDuration}">
 										<div class="input-group-append">
 											<span class="input-group-text">s</span>
 										</div>
@@ -328,8 +331,8 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
                     </div>
-                    <input type="text" class="form-control" id="start-date"
-                      name="start-date" th:value="${ord?.stopTime}">
+                    <input type="text" class="form-control" id="stop-date"
+                      name="stop-date" th:value="${ord?.stopTime}">
                   </div>
                 </div>
                 <div class="col-2">
@@ -396,13 +399,18 @@
 					<!-- Input filters for product classes -->
           <div name="paramgroup" class="row" id="inputFilters">
 						<div class="col-12">
-              <div class="row py-lg-1">
-                <div class="col-12">
-                  <div class="input-group-prepend">
-                    <p class="input-group-text word-wrap" th:text="#{inputfilter}"></p>
-                  </div>
-                </div>
-              </div>
+              <div class="row py-lg-1" id="inputFilterStart">
+								<div class="col-12">
+									<div class="input-group-prepend">
+										<p class="input-group-text word-wrap" th:text="#{inputfilter}"></p>
+										<div class="input-group-text">
+											<span th:id="addInClass" class="cursorpointer"
+												th:onclick="addInClass()"><span class="feather-l"
+												data-feather="plus-circle"></span></span>
+										</div>
+									</div>
+								</div>
+							</div>
 							<div th:each="ifilt,iterCls : ${ord?.inputFilters}"  name="InClassParameters">
 								<div th:each="fcond,iterStat : ${ifilt?.filterConditions}" name="InClassParameter" 
                        th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
@@ -411,10 +419,15 @@
 										<div class="col-3">
                       <div class="input-group">
                         <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        th:onclick="'removeInClass(' + ${iterCls.index} + ')'"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
                           <p class="input-group-text word-wrap"
                             th:text="#{class}"></p>
                         </div>
-                        <select name="inProductClass" id="productClass"
+                        <select name="inProductClass" id="inProductClass"
                           class="custom-select">
                           <option th:each="obj : ${productclasses}" th:text="${obj}"
                             th:label="${obj}"
@@ -427,7 +440,7 @@
 												<div class="input-group-prepend">
 													<p class="input-group-text word-wrap" th:text="#{key}"></p>
 												</div>
-												<input type="text" class="form-control" id="key" name="key"
+												<input type="text" class="form-control" id="key" name="key" 
 													th:value="${fcond?.key}">
 											</div>
 										</div>
@@ -528,10 +541,15 @@
 					<!-- Product class output parameters -->
           <div name="paramgroup" class="row" id="classOutputParameters">
             <div class="col-12">
-              <div class="row py-lg-1">
+              <div class="row py-lg-1" id="classOutputParameterStart">
                 <div class="col-12">
                   <div class="input-group-prepend">
                     <p class="input-group-text word-wrap" th:text="#{classoutparams}"></p>
+                    <div class="input-group-text">
+                      <span th:id="addOutClass" class="cursorpointer"
+                        th:onclick="addOutClass()"><span class="feather-l"
+                        data-feather="plus-circle"></span></span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -543,10 +561,15 @@
                     <div class="col-3">
                       <div class="input-group">
                         <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        th:onclick="'removeOutClass(' + ${iterCls.index} + ')'"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
                           <p class="input-group-text word-wrap"
                             th:text="#{class}"></p>
                         </div>
-                        <select name="outProductClass" id="productClass"
+                        <select name="outProductClass" id="outProductClass"
                           class="custom-select">
                           <option th:each="obj : ${productclasses}" th:text="${obj}"
                             th:label="${obj}"
@@ -657,22 +680,32 @@
             <div class="col-12 border"></div>
           </div>
           <!-- Output parameters for all product classes -->
-          <div class="row" id="outputParameters">
+          <div class="row" id="allclassOutputParameters">
             <div class="col-12">
-              <div class="row py-lg-1">
+              <div class="row py-lg-1" id="allclassOutputParameterStart">
                 <div class="col-12">
                   <div class="input-group-prepend">
                     <p class="input-group-text word-wrap" th:text="#{outparams}"></p>
+                    <div class="input-group-text">
+                      <span id="addAllClass" class="cursorpointer"
+                        th:onclick="addAllClass()"><span class="feather-l"
+                        data-feather="plus-circle"></span></span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
+              <div id="OutAllClassParameter">
                 <div th:each="fcond,iterStat : ${ord?.outputParameters}">
                   <div th:if="${iterStat.first} == true" class="row py-lg-1" name="ParameterAll"  th:data-index="${iterStat.index}">
                     <div class="col-1"></div>
                     <div class="col-3">
                       <div class="input-group">
                         <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        onclick="removeAllClass()"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
                           <p class="input-group-text word-wrap"
                             th:text="#{allclasses}"></p>
                         </div>
@@ -776,9 +809,22 @@
               </div>
             </div>
           </div>
-					
-                  <div class="row py-lg-1 filtercontent" name="allOutParams" id="paramTemplate">
-                    <div class="col-4">
+          <!-- Template for all class parameter -->
+              <div class="filtercontent" id="OutAllClassParameterTemplate">
+                  <div class="row py-lg-1" name="ParameterAll" data-index="0">
+                    <div class="col-1"></div>
+                    <div class="col-3">
+                      <div class="input-group">
+                        <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <span class="cursorpointer"
+                        onclick="removeAllClass()"><span class="feather-l"
+                        data-feather="x-circle"></span></span>
+                    </div>
+                          <p class="input-group-text word-wrap"
+                            th:text="#{allclasses}"></p>
+                        </div>
+                      </div>
                     </div>
                     <div class="col-2">
                       <div class="input-group">
@@ -786,7 +832,7 @@
                           <p class="input-group-text word-wrap" th:text="#{key}"></p>
                         </div>
                         <input type="text" class="form-control" id="key" name="key"
-                          th:value="${fcond?.key}">
+                          value="">
                       </div>
                     </div>
                     <div class="col-2">
@@ -809,23 +855,133 @@
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
                         <input type="text" class="form-control" id="parameterValue"
-                          name="parameterValue" th:value="${fcond?.parameterValue}">
+                          name="parameterValue" value="">
                       </div>
                     </div>
                     <div class="col-1">
                       <div class="input-group-text">
-                        <span id="add-x"
+                        <span id="addParameterAll-0"
                           class="cursorpointer"
-                          onclick="add(x)"><span
-                          class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
-                          id="remove-x"
+                          onclick="addParameterAll(0)"><span
+                          class="feather-l" data-feather="plus-circle"></span></span>
+                          <!-- <span>&nbsp;&nbsp;</span><span
+                          th:id="'removeParameterAll-' + ${iterStat.index}"
                           class="cursorpointer"
-                          onclick="remove(x)"><span
-                          class="feather-l" data-feather="x-circle"></span></span>
+                          th:onclick="'removeParameterAll(' + ${iterStat.index} + ')'"><span
+                          class="feather-l" data-feather="x-circle"></span></span> -->
                       </div>
                     </div>
                   </div>
-                  
+              </div>
+          <!-- Template for parameter row with class select -->
+					<div class="filtercontent" name="InClassParameters"
+						id="paramClassTemplate">
+						<div class="row py-lg-1" name="allOutParams">
+							<div class="col-1"></div>
+							<div class="col-3">
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<div class="input-group-text">
+											<span id="removeProductClass" class="cursorpointer"
+												onclick="nix"><span
+												class="feather-l" data-feather="x-circle"></span></span>
+										</div>
+										<p class="input-group-text word-wrap" th:text="#{class}"></p>
+									</div>
+									<select id="templateProductClass"
+										class="custom-select">
+										<option th:each="obj : ${productclasses}" th:text="${obj}"
+											th:label="${obj}"></option>
+									</select>
+								</div>
+							</div>
+							<div class="col-2">
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<p class="input-group-text word-wrap" th:text="#{key}"></p>
+									</div>
+									<input type="text" class="form-control" id="key" name="key"
+										th:value="${fcond?.key}">
+								</div>
+							</div>
+							<div class="col-2">
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<p class="input-group-text word-wrap" th:text="#{type}"></p>
+									</div>
+									<select name="parameterType" id="parameterType"
+										class="custom-select">
+										<option th:each="obj : ${parametertypes}" th:text="${obj}"
+											th:label="${obj}"
+											th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+									</select>
+								</div>
+							</div>
+							<div class="col-3">
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<p class="input-group-text word-wrap" th:text="#{value}"></p>
+									</div>
+									<input type="text" class="form-control" id="parameterValue"
+										name="parameterValue" th:value="${fcond?.parameterValue}">
+								</div>
+							</div>
+							<div class="col-1">
+								<div class="input-group-text">
+									<span id="add-x" class="cursorpointer" onclick="add(x)"><span
+										class="feather-l" data-feather="plus-circle"></span></span>
+									<!-- <span>&nbsp;&nbsp;</span><span
+										id="remove-x" class="cursorpointer" onclick="remove(x)"><span
+										class="feather-l" data-feather="x-circle"></span></span> -->
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Template for parameter row without class select -->
+					<div class="row py-lg-1 filtercontent" name="allOutParams"
+						id="paramTemplate">
+						<div class="col-4"></div>
+						<div class="col-2">
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<p class="input-group-text word-wrap" th:text="#{key}"></p>
+								</div>
+								<input type="text" class="form-control" id="key" name="key"
+									th:value="${fcond?.key}">
+							</div>
+						</div>
+						<div class="col-2">
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<p class="input-group-text word-wrap" th:text="#{type}"></p>
+								</div>
+								<select name="parameterType" id="parameterType"
+									class="custom-select">
+									<option th:each="obj : ${parametertypes}" th:text="${obj}"
+										th:label="${obj}"
+										th:selected="${obj}==${fcond?.parameterType}?'true':'false'"></option>
+								</select>
+							</div>
+						</div>
+						<div class="col-3">
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<p class="input-group-text word-wrap" th:text="#{value}"></p>
+								</div>
+								<input type="text" class="form-control" id="parameterValue"
+									name="parameterValue" th:value="${fcond?.parameterValue}">
+							</div>
+						</div>
+						<div class="col-1">
+							<div class="input-group-text">
+								<span id="add-x" class="cursorpointer" onclick="add(x)"><span
+									class="feather-l" data-feather="plus-circle"></span></span><span>&nbsp;&nbsp;</span><span
+									id="remove-x" class="cursorpointer" onclick="remove(x)"><span
+									class="feather-l" data-feather="x-circle"></span></span>
+							</div>
+						</div>
+					</div>
+
 				</div>
 			</div>
 
@@ -852,289 +1008,444 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>          
   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
   
-  <script type="text/javascript"> 
-    function findElementInListByDataIndex(elems, index) {
-    	if (elems != null) {
-    		for (var i = 0; i < elems.length; i++) {
-    			var anIndex = $(elems[i]).attr('data-index');
-    			if (anIndex != null) {
-    				if (anIndex == index) {
-    					return elems[i];
-    				}
-    			}
-    		}
-    	}
-    	return null;
-    };
+<script type="text/javascript"> 
+
+function findElementInListByDataIndex(elems, index) {
+   if (elems != null) {
+     for (var i = 0; i < elems.length; i++) {
+       var anIndex = $(elems[i]).attr('data-index');
+       if (anIndex != null) {
+         if (anIndex == index) {
+           return elems[i];
+         }
+       }
+     }
+   }
+   return null;
+ };
     
-    function removeOrbit(index) {
-    	var orbits = document.getElementsByName('orbitData');
-    	if (orbits != null) {
-    		if (orbits.length > 1) {
-    			// reomove orbit
-    			var element = findElementInListByDataIndex(orbits, index);
-    			if (element != null) {
-    				$(element).remove();
-    			}
-    		}
-    		// else only one orbit, do nothing
-    	}
-    };
+function removeOrbit(index) {
+  var orbits = document.getElementsByName('orbitData');
+  if (orbits != null) {
+    if (orbits.length > 1) {
+      // reomove orbit
+      var element = findElementInListByDataIndex(orbits, index);
+      if (element != null) {
+        $(element).remove();
+      }
+    }
+    // else only one orbit, do nothing
+  }
+};
     
-			function addOrbit(index) {
-				var orbits = document.getElementsByName('orbitData');
-				if (orbits != null) {
-					// find current element, add new orbit line from "hidden" template structure defined in body
-						var element = findElementInListByDataIndex(orbits, index);
-						if (element != null) {
-							// Get the template 
-							var template = document.getElementById('orbitDataTemplate');
-							if (template != null) {
-								var newOrbit = $(template).clone(true);
-								$(newOrbit).removeAttr('id');
-								$(newOrbit).attr('name', 'orbitData');
-								// calc the new index
-								var newIndex = 0;
-								for (var i = 0; i < orbits.length; i++) {
-									if ($(orbits[i]).attr('data-index') > newIndex) {
-										newIndex = $(orbits[i]).attr('data-index');
-									}
-								}
-				        newIndex++;
-				        // replace the attributes containing index
-                $(newOrbit).attr('data-index', newIndex);
-				        var x = $(newOrbit).find("select[id='spacecraftCode-x']");
-				        $(x).attr('id', 'spacecraftCode-' + newIndex);
-		            x = $(newOrbit).find("select[id='orbitNumberFrom-x']");
-		            $(x).attr('id', 'orbitNumberFrom-' + newIndex);
-	              x = $(newOrbit).find("select[id='orbitNumberTo-x']");
-	              $(x).attr('id', 'orbitNumberTo-' + newIndex);
-	              x = $(newOrbit).find("span[id='addOrbit-x']");
-	              $(x).attr('onclick', 'addOrbit(' + newIndex + ')');
-	              $(x).attr('id', 'addOrbit-' + newIndex);
-	              x = $(newOrbit).find("span[id='removeOrbit-x']");
-	              $(x).attr('onclick', 'removeOrbit(' + newIndex + ')');
-	              $(x).attr('id', 'removeOrbit-' + newIndex);
-	              $(newOrbit).removeClass('filtercontent');
-	              $(newOrbit).insertAfter($(element));
-							}
-						}
-					}
-			};
+function addOrbit(index) {
+  var orbits = document.getElementsByName('orbitData');
+  if (orbits != null) {
+    // find current element, add new orbit line from "hidden" template structure defined in body
+    var element = findElementInListByDataIndex(orbits, index);
+    if (element != null) {
+      // Get the template 
+      var template = document.getElementById('orbitDataTemplate');
+      if (template != null) {
+        var newOrbit = $(template).clone(true);
+        $(newOrbit).removeAttr('id');
+        $(newOrbit).attr('name', 'orbitData');
+        // calc the new index
+        var newIndex = 0;
+        for (var i = 0; i < orbits.length; i++) {
+          if ($(orbits[i]).attr('data-index') > newIndex) {
+            newIndex = $(orbits[i]).attr('data-index');
+          }
+        }
+        newIndex++;
+        // replace the attributes containing index
+        $(newOrbit).attr('data-index', newIndex);
+        var x = $(newOrbit).find("select[id='spacecraftCode-x']");
+        $(x).attr('id', 'spacecraftCode-' + newIndex);
+        x = $(newOrbit).find("select[id='orbitNumberFrom-x']");
+        $(x).attr('id', 'orbitNumberFrom-' + newIndex);
+        x = $(newOrbit).find("select[id='orbitNumberTo-x']");
+        $(x).attr('id', 'orbitNumberTo-' + newIndex);
+        x = $(newOrbit).find("span[id='addOrbit-x']");
+        $(x).attr('onclick', 'addOrbit(' + newIndex + ')');
+        $(x).attr('id', 'addOrbit-' + newIndex);
+        x = $(newOrbit).find("span[id='removeOrbit-x']");
+        $(x).attr('onclick', 'removeOrbit(' + newIndex + ')');
+        $(x).attr('id', 'removeOrbit-' + newIndex);
+        $(newOrbit).removeClass('filtercontent');
+        $(newOrbit).insertAfter($(element));
+      }
+    }
+  }
+};
 
-		    function removeParameter(params, name, clsIndex, index) {
-		      if (params != null) {
-		        if (params.length > 1) {
-		          // reomove orbit
-		          var element = findElementInListByDataIndex(params, index);
-		          if (element != null) {
-		            $(element).remove();
-		          }
-		        }
-		        // else only one orbit, do nothing
-		      }
-		    };
+function removeParameter(params, name, clsIndex, index) {
+  if (params != null) {
+    if (params.length > 1) {
+      // reomove orbit
+      var element = findElementInListByDataIndex(params, index);
+      if (element != null) {
+        $(element).remove();
+      }
+    }
+    // else only one orbit, do nothing
+  }
+};
+		    
+function removeClassParameter(params, index) {
+  if (params != null) {
+    if (params.length > 1) {
+      // reomove orbit
+      var element = findElementInListByDataIndex(params, index);
+      if (element != null) {
+        $(element).remove();
+      }
+    }
+    // else only one orbit, do nothing
+  }
+};
 
-	    function addParameter(params, name, clsIndex, index) {
-	        if (params != null) {
-	          // find current element, add new orbit line from "hidden" template structure defined in body
-	            var element = findElementInListByDataIndex(params, index);
-	            if (element != null) {
-	              // Get the template 
-	              var template = document.getElementById('paramTemplate');
-	              if (template != null) {
-	                var newParam = $(template).clone(true);
-	                $(newParam).removeAttr('id');
-	                $(newParam).attr('name', name);
-	                // calc the new index
-	                var newIndex = 0;
-	                for (var i = 0; i < params.length; i++) {
-	                  if ($(params[i]).attr('data-index') > newIndex) {
-	                    newIndex = $(params[i]).attr('data-index');
-	                  }
-	                }
-	                newIndex++;
-	                // replace the attributes containing index
-                  $(newParam).attr('data-index', newIndex);
-                  if (clsIndex != null) {
-                	  $(newParam).attr('data-clsindex', clsIndex);
-                  }
-	                var x = $(newParam).find("span[id='add-x']");
-	                $(x).attr('onclick', 'add' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
-	                $(x).attr('id', 'add' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
-	                x = $(newParam).find("span[id='remove-x']");
-	                $(x).attr('onclick', 'remove' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
-	                $(x).attr('id', 'remove' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
-	                $(newParam).removeClass('filtercontent');
-	                $(newParam).insertAfter($(element));
-	              }
-	            }
-	          }
-	    };
+function addParameter(params, name, clsIndex, index) {
+  if (params != null) {
+    // find current element, add new orbit line from "hidden" template structure defined in body
+    var element = findElementInListByDataIndex(params, index);
+    if (element != null) {
+      // Get the template 
+      var template = document.getElementById('paramTemplate');
+      if (template != null) {
+        var newParam = $(template).clone(true);
+        $(newParam).removeAttr('id');
+        $(newParam).attr('name', name);
+        // calc the new index
+        var newIndex = 0;
+        for (var i = 0; i < params.length; i++) {
+          if ($(params[i]).attr('data-index') > newIndex) {
+            newIndex = $(params[i]).attr('data-index');
+          }
+        }
+        newIndex++;
+        // replace the attributes containing index
+        $(newParam).attr('data-index', newIndex);
+        if (clsIndex != null) {
+          $(newParam).attr('data-clsindex', clsIndex);
+        }
+        var x = $(newParam).find("span[id='add-x']");
+        $(x).attr('onclick', 'add' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+        $(x).attr('id', 'add' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+        x = $(newParam).find("span[id='remove-x']");
+        $(x).attr('onclick', 'remove' + name +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+        $(x).attr('id', 'remove' + name +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+        $(newParam).removeClass('filtercontent');
+        $(newParam).insertAfter($(element));
+      }
+    }
+  }
+};
+	    
+function addClassParameter(element, params, name, subname, selname, classType) {
+  if (element != null) {
+    // check if all classes are already defined
+	            	  
+    var selects = document.getElementsByName(selname);
+    if (selects != null) {
+      var values = new Map;
+      for (var i = 0; i < selects.length; i++) {
+        if (!values.has(selects[i].value)) {
+          values.set(selects[i].value, selects[i].value);
+        }
+      }
+      if (selects.length > 0 && values.size >= selects[0].options.length) {
+        // all defined, do nothing
+        alert("Defined for all Product Classes");
+      } else {
+        // Get the template 
+        var template = document.getElementById('paramClassTemplate');
+        if (template != null) {
+          var newParam = $(template).clone(true);
+          $(newParam).removeAttr('id');
+          $(newParam).attr('name', name);
+          var child = $(newParam).children()[0];
+          $(child).attr('name', subname);
+          // calc the new index
+          var newIndex = 0;
+          var clsIndex = 0;
+          if (params != null) {
+            for (var i = 0; i < params.length; i++) {
+              if ($(params[i]).attr('data-clsindex') > clsIndex) {
+                clsIndex = $(params[i]).attr('data-clsindex');
+              }
+            }
+            clsIndex++;
+          }
+          // replace the attributes containing index
+          $(child).attr('data-index', newIndex);
+          $(child).attr('data-clsindex', clsIndex);
+          var x = $(newParam).find("span[id='add-x']");
+          $(x).attr('onclick', 'add' + subname +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+          $(x).attr('id', 'add' + subname +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+          x = $(newParam).find("span[id='remove-x']");
+          $(x).attr('onclick', 'remove' + subname +'(' + (clsIndex==null?'':clsIndex+',') + newIndex + ')');
+          $(x).attr('id', 'remove' + subname +'-' + (clsIndex==null?'':clsIndex+'-') + newIndex);
+          x = $(newParam).find("select[id='templateProductClass']");
+          $(x).removeAttr('id');
+          $(x).attr('name', selname);
+          $(x).bind('click', enableClasses);
+          // find first class not defined
+          var sel = $(x)[0];
+          for (var i = 0; i < sel.options.length; i++) {
+            if (!values.has(sel.options[i].value)) {
+              sel.options[i].selected = true;
+              break;
+            }
+          }
+          x = $(newParam).find("span[id='removeProductClass']");
+          $(x).removeAttr('id');
+          $(x).attr('onclick', 'remove' + classType + '(' + clsIndex + ')');
+          $(newParam).removeClass('filtercontent');
+          $(newParam).insertAfter($(element));
+        }
+      }
+    }
+  }
+};
 
-	      function removeParameterAll(index) {
-	          var params = document.getElementsByName('ParameterAll');
-	          removeParameter(params, 'ParameterAll', null, index);
-	      };
+function removeParameterAll(index) {
+  var params = document.getElementsByName('ParameterAll');
+  removeParameter(params, 'ParameterAll', null, index);
+};
 	      
-	      function addParameterAll(index) {
-	          var params = document.getElementsByName('ParameterAll');
-	          addParameter(params, 'ParameterAll', null, index);
-	      };
+function addParameterAll(index) {
+  var params = document.getElementsByName('ParameterAll');
+  addParameter(params, 'ParameterAll', null, index);
+};
 	        
-	        function addOutClassParameter(clsIndex, index) {
-	            var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
-	            var parent = $(elem).parents("div[name='OutClassParameters']");
-	            var params = $(parent).find("div[name='OutClassParameter']");
-	            addParameter(params, 'OutClassParameter', clsIndex, index);
-	        };
+function addOutClassParameter(clsIndex, index) {
+  var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
+  var parent = $(elem).parents("div[name='OutClassParameters']");
+  var params = $(parent).find("div[name='OutClassParameter']");
+  addParameter(params, 'OutClassParameter', clsIndex, index);
+};
 
-	        function removeOutClassParameter(clsIndex, index) {
-	              var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
-	              var parent = $(elem).parents("div[name='OutClassParameters']");
-	              var params = $(parent).find("div[name='OutClassParameter']");
-	            removeParameter(params, 'OutClassParameter', clsIndex, index);
-	        };
+function removeOutClassParameter(clsIndex, index) {
+  var elem = document.getElementById('addOutClassParameter-' + clsIndex + '-' + index);
+  var parent = $(elem).parents("div[name='OutClassParameters']");
+  var params = $(parent).find("div[name='OutClassParameter']");
+  removeParameter(params, 'OutClassParameter', clsIndex, index);
+};
 	        
-	        function addInClassParameter(clsIndex, index) {
-	            var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
-	            var parent = $(elem).parents("div[name='InClassParameters']");
-	            var params = $(parent).find("div[name='InClassParameter']");
-	            addParameter(params, 'InClassParameter', clsIndex, index);
-	        };
+function addInClassParameter(clsIndex, index) {
+  var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
+  var parent = $(elem).parents("div[name='InClassParameters']");
+  var params = $(parent).find("div[name='InClassParameter']");
+  addParameter(params, 'InClassParameter', clsIndex, index);
+};
 	        
-	      function removeInClassParameter(clsIndex, index) {
-	            var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
-	            var parent = $(elem).parents("div[name='InClassParameters']");
-	            var params = $(parent).find("div[name='InClassParameter']");
-	          removeParameter(params, 'InClassParameter', clsIndex, index);
-	      };
-			
-			function enableSlicingData() {
-				var slicingType = document.getElementById('slicingType');
-				if (slicingType != null) {
-					for (var i = 0; i < slicingType.options.length; i++) {
-						var type = slicingType.options[i].value;
-						var ele = document.getElementById(type);
-						if (type == slicingType.value) {
-							if ($(ele).hasClass("filtercontent")) {
-								$(ele).removeClass("filtercontent");
-							} else {
-								if (!$(ele).hasClass("filtercontent")) {
-									$(ele).addClass("filtercontent");
-								}
-							}
-						} else {
-							if (!$(ele).hasClass("filtercontent")) {
-								$(ele).addClass("filtercontent");
-							}
-						}
-					}
-				}
-			};
+function removeInClassParameter(clsIndex, index) {
+  var elem = document.getElementById('addInClassParameter-' + clsIndex + '-' + index);
+  var parent = $(elem).parents("div[name='InClassParameters']");
+  var params = $(parent).find("div[name='InClassParameter']");
+  removeParameter(params, 'InClassParameter', clsIndex, index);
+};
+	      
+function addInClass() {
+  var elem = document.getElementById('inputFilterStart');
+  var parent = document.getElementById('inputFilters');
+  var params = $(parent).find("div[name='InClassParameter']");
+  addClassParameter(elem, params, 'InClassParameters', 'InClassParameter', 'inProductClass', 'InClass');
+};
 
-			function enableClasses() {
-				var x = this;
-				var selects = document.getElementsByName($(x).attr('name'));
-				if (selects != null) {
-					var values = new Map;
-					for (var i = 0; i < selects.length; i++) {
-						if (selects[i].value != x.value) {
-							values.set(selects[i].value, selects[i].value);
-						}
-					}
-					for (var i = 0; i < x.options.length; i++) {
-						if (values.has(x.options[i].value)) {
-							disableElement(x.options[i]);
-						} else {
-							enableElement(x.options[i]);
-						}
-					}
-				}
-			}
+function addOutClass() {
+  var elem = document.getElementById('classOutputParameterStart');
+  var parent = document.getElementById('classOutputParameters');
+  var params = $(parent).find("div[name='OutClassParameter']");
+  addClassParameter(elem, params, 'OutClassParameters', 'OutClassParameter', 'outProductClass', 'OutClass');
+};
+function removeInClass(index) {
+  var parent = document.getElementById('inputFilters');
+  var elems = $(parent).find("div[name='InClassParameter']");
+  for (var i = 0; i < elems.length; i++) {
+    var anIndex = $(elems[i]).attr('data-clsindex');
+    if (anIndex != null) {
+      if (anIndex == index) {
+        $(elems[i]).remove();
+      }
+    }
+  }
+};
+function removeOutClass(index) {
+  var parent = document.getElementById('classOutputParameters');
+  var elems = $(parent).find("div[name='OutClassParameter']");
+  for (var i = 0; i < elems.length; i++) {
+    var anIndex = $(elems[i]).attr('data-clsindex');
+    if (anIndex != null) {
+      if (anIndex == index) {
+        $(elems[i]).remove();
+      }
+    }
+  }
+};
+function addAllClass() {
+  var element = document.getElementById('allclassOutputParameterStart');
+  var parent = document.getElementById('allclassOutputParameters');
+  var params = $(parent).find("div[name='ParameterAll']");
+  if (params == null || params.length == 0) {// Get the template 
+    var template = document.getElementById('OutAllClassParameterTemplate');
+    if (template != null) {
+      var newParam = $(template).clone(true);
+      $(newParam).attr('id', 'OutAllClassParameter');
+      var child = $(newParam).children()[0];
+      $(child).attr('name', 'ParameterAll');
+      // calc the new index
+      var newIndex = 0;
+      // replace the attributes containing index
+      $(child).attr('data-index', newIndex);
+      var subname = 'ParameterAll';
+      var x = $(newParam).find("span[id='add-x']");
+      $(x).attr('onclick', 'add' + subname +'(' + newIndex + ')');
+      $(x).attr('id', 'add' + subname +'-' + newIndex);
+      x = $(newParam).find("span[id='remove-x']");
+      $(x).attr('onclick', 'remove' + subname +'('  + newIndex + ')');
+      $(x).attr('id', 'remove' + subname +'-' + newIndex);
+                        
+      $(newParam).removeClass('filtercontent');
+      $(newParam).insertAfter($(element));
+    }
+  } else {
+    // nothing to do
+    alert("Defined for all Product Classes");
+  }
+};
+function removeAllClass() {
+  var elem = document.getElementById('OutAllClassParameter');
+  $(elem).remove();
+};
+              
+function enableSlicingData() {
+  var slicingType = document.getElementById('slicingType');
+  if (slicingType != null) {
+    for (var i = 0; i < slicingType.options.length; i++) {
+      var type = slicingType.options[i].value;
+      var ele = document.getElementById(type);
+      if (type == slicingType.value) {
+        if ($(ele).hasClass("filtercontent")) {
+          $(ele).removeClass("filtercontent");
+        } else {
+          if (!$(ele).hasClass("filtercontent")) {
+            $(ele).addClass("filtercontent");
+          }
+        }
+      } else {
+        if (!$(ele).hasClass("filtercontent")) {
+          $(ele).addClass("filtercontent");
+        }
+      }
+    }
+  }
+};
 
-			function addEventHandler() {
-				document.getElementById('slicingType').addEventListener(
-						'change', enableSlicingData);
-				var elems = document.getElementsByName('inProductClass');
-				if (elems != null) {
-					for (var i = 0; i < elems.length; i++) {
-						elems[i].addEventListener('click', enableClasses);
-					}
-				}
-				var elems1 = document.getElementsByName('outProductClass');
-				if (elems1 != null) {
-					for (var i = 0; i < elems1.length; i++) {
-						elems1[i].addEventListener('click', enableClasses);
-					}
-				}
-			};
+function enableClasses() {
+  var x = this;
+  var selects = document.getElementsByName($(x).attr('name'));
+  if (selects != null) {
+    var values = new Map;
+    for (var i = 0; i < selects.length; i++) {
+      if (selects[i].value != x.value) {
+        values.set(selects[i].value, selects[i].value);
+      }
+    }
+    for (var i = 0; i < x.options.length; i++) {
+      if (values.has(x.options[i].value)) {
+        disableElement(x.options[i]);
+      } else {
+        enableElement(x.options[i]);
+      }
+    }
+  }
+}
 
-			function retrieveData(id) {
-				showLoader();
-				var tableRows = $("orderTable").rows;
-				if (tableRows > 1 && tableRows != null) {
-					$("orderTable > tbody").empty();
-				}
-				var url = "/order-edit/get"
-				var divider = "?";
+function addEventHandler() {
+  document.getElementById('slicingType').addEventListener(
+                                                          'change', enableSlicingData);
+  var elems = document.getElementsByName('inProductClass');
+  if (elems != null) {
+    for (var i = 0; i < elems.length; i++) {
+      elems[i].addEventListener('click', enableClasses);
+    }
+  }
+  var elems1 = document.getElementsByName('outProductClass');
+  if (elems1 != null) {
+    for (var i = 0; i < elems1.length; i++) {
+      elems1[i].addEventListener('click', enableClasses);
+    }
+  }
+};
 
-				if (id != null) {
-					url = url + divider + "id=" + id.toString().trim();
-					divider = "&";
+function retrieveData(id) {
+  showLoader();
+  var tableRows = $("orderTable").rows;
+  if (tableRows > 1 && tableRows != null) {
+    $("orderTable > tbody").empty();
+  }
+  var url = "/order-edit/get"
+  var divider = "?";
 
-					$.ajax({
-						url : url,
-						method : "GET",
-						success : function(res) {
-							$("#orderedit").html(res);
-							var on = document.getElementById('identifier');
-							var br = document
-									.getElementById('breadcrumb-order-name');
-							if (on != null && br != null) {
-								br.textContent = on.value;
-								document.title = on.value + " | "
-										+ "[[#{proseo}]]";
-							}
-							feather.replace();
-							$('#selinclasses').multiselect({
-								buttonWidth : '99%',
-								enableFiltering : true,
-								numberDisplayed : 0,
-								maxHeight : 400,
-								enableCaseInsensitiveFiltering : true,
-								nonSelectedText : ''
-							});
-							$('#seloutclasses').multiselect({
-								buttonWidth : '99%',
-								enableFiltering : true,
-								numberDisplayed : 0,
-								maxHeight : 400,
-								enableCaseInsensitiveFiltering : true,
-								nonSelectedText : ''
-							});
-							$('#selconfproc').multiselect({
-								buttonWidth : '99%',
-								enableFiltering : true,
-								numberDisplayed : 0,
-								maxHeight : 400,
-								enableCaseInsensitiveFiltering : true,
-								nonSelectedText : ''
-							});
-							enableSlicingData();
-							addEventHandler();
+  if (id != null) {
+    url = url + divider + "id=" + id.toString().trim();
+    divider = "&";
 
-							hideLoader();
-						},
-						fail : function(err) {
-							console.log(err);
-							prop.innerHTML = "Fehler!" + err;
-							hideLoader();
-						}
-					});
-				}
-			};
-		</script>
+    $.ajax({
+      url : url,
+      method : "GET",
+      success : function(res) {
+        $("#orderedit").html(res);
+        var on = document.getElementById('identifier');
+        var br = document
+            .getElementById('breadcrumb-order-name');
+        if (on != null && br != null) {
+          br.textContent = on.value;
+          document.title = on.value + " | "
+              + "[[#{proseo}]]";
+        }
+        feather.replace();
+        $('#selinclasses').multiselect({
+          buttonWidth : '99%',
+          enableFiltering : true,
+          numberDisplayed : 0,
+          maxHeight : 400,
+          enableCaseInsensitiveFiltering : true,
+          nonSelectedText : ''
+        });
+        $('#seloutclasses').multiselect({
+          buttonWidth : '99%',
+          enableFiltering : true,
+          numberDisplayed : 0,
+          maxHeight : 400,
+          enableCaseInsensitiveFiltering : true,
+          nonSelectedText : ''
+        });
+        $('#selconfproc').multiselect({
+          buttonWidth : '99%',
+          enableFiltering : true,
+          numberDisplayed : 0,
+          maxHeight : 400,
+          enableCaseInsensitiveFiltering : true,
+          nonSelectedText : ''
+        });
+        enableSlicingData();
+        addEventHandler();
+
+        hideLoader();
+      },
+      fail : function(err) {
+        console.log(err);
+        prop.innerHTML = "Fehler!" + err;
+        hideLoader();
+      }
+    });
+  }
+};
+
+</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();
