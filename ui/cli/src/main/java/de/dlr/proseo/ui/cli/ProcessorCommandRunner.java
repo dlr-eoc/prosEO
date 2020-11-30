@@ -727,7 +727,7 @@ public class ProcessorCommandRunner {
 			} 
 		} else {
 			// Must be a list of processors
-			String listFormat = "%20s %s";
+			String listFormat = "%-20s %s";
 			System.out.println(String.format(listFormat, "Processor Name", "Version"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
@@ -1176,7 +1176,7 @@ public class ProcessorCommandRunner {
 			} 
 		} else {
 			// Must be a list of configurations
-			String listFormat = "%20s %s";
+			String listFormat = "%-20s %s";
 			System.out.println(String.format(listFormat, "Processor Name", "Configuration Version"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
@@ -1651,7 +1651,7 @@ public class ProcessorCommandRunner {
 			} 
 		} else {
 			// Must be a list of configured processors
-			String listFormat = "%20s %24s %20s %16s %s";
+			String listFormat = "%-30s %-38s %-20s %-16s %s";
 			System.out.println(String.format(listFormat, "Identifier", "UUID", "Processor Name", "Processor Version", "Configuration Version"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {

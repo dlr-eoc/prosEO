@@ -345,7 +345,7 @@ public class MissionCommandRunner {
 			} 
 		} else {
 			// Must be a list of missions
-			String listFormat = "%6s %s";
+			String listFormat = "%-6s %s";
 			System.out.println(String.format(listFormat, "Code", "Name"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
@@ -967,8 +967,8 @@ public class MissionCommandRunner {
 			} 
 		} else {
 			// Must be a list of orbits
-			String listFormat = "%6s %05d %26s %26s";
-			System.out.println(String.format("%6s %5s %26s %26s", "S/C", "Orb-#", "Sensing Start", "Sensing Stop"));
+			String listFormat = "%-6s %05d %-26s %-26s";
+			System.out.println(String.format("%-6s %-5s %-26s %-26s", "S/C", "Orb-#", "Sensing Start", "Sensing Stop"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;

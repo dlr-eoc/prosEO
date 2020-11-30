@@ -320,7 +320,7 @@ public class JobCommandRunner {
 				return;
 			}
 		} else {
-			String listFormat = "%11s %-25s %-25s %s %s";
+			String listFormat = "%11s %-25s %-25s %-10s %s";
 			System.out.println(String.format(listFormat, "Database ID", "Sensing Start", "Sensing Stop", "Job State", ""));
 			for (Object listObject: resultList) {
 				if (listObject instanceof Map) {

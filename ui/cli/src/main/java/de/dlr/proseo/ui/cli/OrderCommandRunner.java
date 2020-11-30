@@ -487,8 +487,8 @@ public class OrderCommandRunner {
 			} 
 		} else {
 			// Must be a list of orders
-			String listFormat = "%20s %24s %26s %26s %6s %s";
-			System.out.println(String.format(listFormat, "Identifier", "UUID", "Sensing Start", "Sensing Stop", "Processing Mode", "Order State"));
+			String listFormat = "%-30s %-38s %-26s %-26s %-6s %s";
+			System.out.println(String.format(listFormat, "Identifier", "UUID", "Sensing Start", "Sensing Stop", "Mode", "Order State"));
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					Map<?, ?> resultMap = (Map<?, ?>) resultObject;

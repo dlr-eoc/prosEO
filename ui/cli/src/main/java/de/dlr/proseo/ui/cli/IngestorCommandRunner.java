@@ -354,8 +354,8 @@ public class IngestorCommandRunner {
 			} 
 		} else {
 			// Must be a list of products
-			String listFormat = "%11d   %s   %s  %s";
-			System.out.println(String.format("%11s   %s   %s  %s", "Database ID", "UUID", "Sensing Start", "Sensing Stop"));
+			String listFormat = "%11d %-38s %-26s %-26s";
+			System.out.println(String.format("%11s %-38s %-26s %-26s", "Database ID", "UUID", "Sensing Start", "Sensing Stop"));
 			ObjectMapper objectMapper = new ObjectMapper();
 			for (Object resultObject: objectMapper.convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
@@ -764,7 +764,7 @@ public class IngestorCommandRunner {
 				return;
 			} 
 		} else {
-			String listFormat = "%-20s %s";
+			String listFormat = "%-30s %s";
 			System.out.println(String.format(listFormat, "Processing Facility", "Product File Name"));
 			for (RestProductFile productFile: resultList) {
 				System.out.println(String.format(listFormat,
