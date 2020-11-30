@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,11 @@ public class ProcessorCommandRunner {
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
+	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PROCESSOR_NAME = "Processor class name (empty field cancels): ";
 	private static final String PROMPT_PROCESSOR_VERSION = "Processor version (empty field cancels): ";
@@ -100,10 +106,10 @@ public class ProcessorCommandRunner {
 		String processorClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				processorClassFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				processorClassFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -197,10 +203,14 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		String processorClassOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				processorClassOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -238,15 +248,25 @@ public class ProcessorCommandRunner {
 			return;
 		}
 		
-		/* Display the processor class(es) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, processorClassOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the processor class(es) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, processorClassOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of processor classes
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(resultMap.get("processorName"));
+				}
+			}
 		}
 	}
 	
@@ -263,10 +283,10 @@ public class ProcessorCommandRunner {
 		String processorClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				processorClassFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				processorClassFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -483,10 +503,10 @@ public class ProcessorCommandRunner {
 		String processorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				processorFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				processorFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -643,10 +663,14 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		String processorOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				processorOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -690,15 +714,27 @@ public class ProcessorCommandRunner {
 			return;
 		}
 		
-		/* Display the processor class(es) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, processorOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the processor class(es) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, processorOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of processors
+			String listFormat = "%-20s %s";
+			System.out.println(String.format(listFormat, "Processor Name", "Version"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat, resultMap.get("processorName"), resultMap.get("processorVersion")));
+				}
+			}
 		}
 	}
 	
@@ -716,13 +752,13 @@ public class ProcessorCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				processorFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				processorFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -967,10 +1003,10 @@ public class ProcessorCommandRunner {
 		String configurationFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				configurationFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				configurationFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -1076,10 +1112,14 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		String configurationOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				configurationOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -1123,15 +1163,27 @@ public class ProcessorCommandRunner {
 			return;
 		}
 		
-		/* Display the configuration class(es) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, configurationOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the configuration class(es) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, configurationOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of configurations
+			String listFormat = "%-20s %s";
+			System.out.println(String.format(listFormat, "Processor Name", "Configuration Version"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat, resultMap.get("processorName"), resultMap.get("configurationVersion")));
+				}
+			}
 		}
 	}
 	
@@ -1149,13 +1201,13 @@ public class ProcessorCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				configurationFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				configurationFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -1396,10 +1448,10 @@ public class ProcessorCommandRunner {
 		String configuredProcessorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				configuredProcessorFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				configuredProcessorFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -1538,10 +1590,14 @@ public class ProcessorCommandRunner {
 		
 		/* Check command options */
 		String configuredProcessorOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				configuredProcessorOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -1582,15 +1638,32 @@ public class ProcessorCommandRunner {
 			return;
 		}
 		
-		/* Display the configured processor class(es) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, configuredProcessorOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the configured processor class(es) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, configuredProcessorOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of configured processors
+			String listFormat = "%-30s %-38s %-20s %-16s %s";
+			System.out.println(String.format(listFormat, "Identifier", "UUID", "Processor Name", "Processor Version", "Configuration Version"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat,
+							resultMap.get("identifier"),
+							resultMap.get("uuid"),
+							resultMap.get("processorName"),
+							resultMap.get("processorVersion"),
+							resultMap.get("configurationVersion")));
+				}
+			}
 		}
 	}
 	
@@ -1608,10 +1681,10 @@ public class ProcessorCommandRunner {
 		String configuredProcessorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				configuredProcessorFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				configuredProcessorFileFormat = option.getValue().toUpperCase();
 				break;
 			}

@@ -56,6 +56,11 @@ public class IngestorCommandRunner {
 	private static final String CMD_FILE = "file";
 	public static final String CMD_INGEST = "ingest";
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
+	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_CLASS = "Product class (empty field cancels): ";
 	private static final String PROMPT_FILE_CLASS = "File class (empty field cancels): ";
@@ -100,10 +105,10 @@ public class IngestorCommandRunner {
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case CMD_FILE:
+			case OPTION_FILE:
 				productFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				productFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -261,10 +266,10 @@ public class IngestorCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				productOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -349,12 +354,14 @@ public class IngestorCommandRunner {
 			} 
 		} else {
 			// Must be a list of products
+			String listFormat = "%11d %-38s %-26s %-26s";
+			System.out.println(String.format("%11s %-38s %-26s %-26s", "Database ID", "UUID", "Sensing Start", "Sensing Stop"));
 			ObjectMapper objectMapper = new ObjectMapper();
 			for (Object resultObject: objectMapper.convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					@SuppressWarnings("unchecked")
 					Map<String, Object> product = (Map<String, Object>) resultObject;
-					System.out.println(String.format("%10d   %s   %s  %s", 
+					System.out.println(String.format(listFormat, 
 							product.get("id"),
 							product.get("uuid"),
 							product.get("sensingStartTime"),
@@ -381,10 +388,10 @@ public class IngestorCommandRunner {
 			case CMD_FILE:
 				productFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				productFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -597,10 +604,10 @@ public class IngestorCommandRunner {
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
-			case CMD_FILE:
+			case OPTION_FILE:
 				productFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				productFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -668,10 +675,10 @@ public class IngestorCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				productOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -757,8 +764,10 @@ public class IngestorCommandRunner {
 				return;
 			} 
 		} else {
+			String listFormat = "%-30s %s";
+			System.out.println(String.format(listFormat, "Processing Facility", "Product File Name"));
 			for (RestProductFile productFile: resultList) {
-				System.out.println(String.format("%-20s %s",
+				System.out.println(String.format(listFormat,
 						productFile.getProcessingFacilityName(), productFile.getProductFileName()));
 			}
 		}

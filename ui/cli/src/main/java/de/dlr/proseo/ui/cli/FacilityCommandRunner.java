@@ -39,6 +39,11 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 @Component
 public class FacilityCommandRunner {
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_SHOW_PASSWORDS = "showPasswords";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
 	/* General string constants */
 	public static final String CMD_FACILITY = "facility";
 	private static final String CMD_SHOW = "show";
@@ -142,10 +147,10 @@ public class FacilityCommandRunner {
 		String facilityFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				facilityFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				facilityFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -292,13 +297,13 @@ public class FacilityCommandRunner {
 		Boolean isVerbose = false, showPasswords = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				facilityOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
-			case "showPasswords":
+			case OPTION_SHOW_PASSWORDS:
 				showPasswords = true;
 				break;
 			}
@@ -396,13 +401,13 @@ public class FacilityCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				facilityFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				facilityFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}

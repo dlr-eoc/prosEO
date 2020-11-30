@@ -100,6 +100,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give mission details, otherwise show only mission code and name
+              shortForm: v
           parameters:
             - name: missionCode
               type: string
@@ -203,6 +207,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give orbit details, otherwise show only spacecraft code, orbit number and start/stop times
+              shortForm: v
           parameters:
             - name: spacecraftCode
               type: string
@@ -284,6 +292,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give order details, otherwise show only order identifier, UUID, start/stop times, mode and state
+              shortForm: v
           parameters:
             - name: orderId
               type: string
@@ -544,6 +556,10 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give processor class details , otherwise show only processor class name
+                  shortForm: v
               parameters:
                 - name: processorClass
                   type: string
@@ -603,6 +619,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give processor details, otherwise show only processor class name and processor version
+              shortForm: v
           parameters:
             - name: processorClass
               type: string
@@ -683,6 +703,11 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give configured processor details, otherwise show only identifier, UUID and
+                               and key data for linked processor and configuration
+                  shortForm: v
               parameters:
                 - name: configuredProcessorIdentifier
                   type: string
@@ -757,6 +782,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give configuration details, otherwise show only processor class name and configuration version
+              shortForm: v
           parameters:
             - name: processorClass
               type: string
@@ -839,6 +868,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product class details, otherwise show only product class name
+              shortForm: v
           parameters:
             - name: productClass
               type: string
@@ -904,6 +937,10 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { PLAIN, JSON, XML, YAML }; default value PLAIN [rule language]).
+                - name: verbose
+                  type: boolean
+                  description: If set, give rule details including job steps, otherwise show rule as in PLAIN format
+                  shortForm: v
               parameters:
                 - name: targetProductClass
                   type: string

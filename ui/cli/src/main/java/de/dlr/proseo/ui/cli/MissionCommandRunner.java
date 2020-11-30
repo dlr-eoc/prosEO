@@ -52,7 +52,15 @@ public class MissionCommandRunner {
 	private static final String CMD_DELETE = "delete";
 	private static final String CMD_ADD = "add";
 	private static final String CMD_REMOVE = "remove";
-	
+
+	private static final String OPTION_DELETE_PRODUCTS = "delete-products";
+	private static final String OPTION_FORCE = "force";
+	private static final String OPTION_ORBIT_TO = "to";
+	private static final String OPTION_ORBIT_FROM = "from";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
+
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_MISSION_CODE = "Mission code (empty field cancels): ";
 	private static final String PROMPT_MISSION_NAME = "Mission name (empty field cancels): ";
@@ -158,10 +166,10 @@ public class MissionCommandRunner {
 		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				missionFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				missionFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -268,10 +276,14 @@ public class MissionCommandRunner {
 		
 		/* Check command options */
 		String missionOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				missionOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -320,15 +332,27 @@ public class MissionCommandRunner {
 			return;
 		}
 		
-		/* Display the mission(s) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, missionOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the mission(s) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, missionOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of missions
+			String listFormat = "%-6s %s";
+			System.out.println(String.format(listFormat, "Code", "Name"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat, resultMap.get("code"), resultMap.get("name")));
+				}
+			}
 		}
 	}
 	
@@ -345,10 +369,10 @@ public class MissionCommandRunner {
 		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				missionFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				missionFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -453,10 +477,10 @@ public class MissionCommandRunner {
 		boolean deleteProducts = false;
 		for (ParsedOption option: deleteCommand.getOptions()) {
 			switch(option.getName()) {
-			case "force":
+			case OPTION_FORCE:
 				forcedDelete = true;
 				break;
-			case "delete-products":
+			case OPTION_DELETE_PRODUCTS:
 				deleteProducts = true;
 				break;
 			}
@@ -530,10 +554,10 @@ public class MissionCommandRunner {
 		String processorFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: addCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				processorFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				processorFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -737,10 +761,10 @@ public class MissionCommandRunner {
 		String orbitFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				orbitFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				orbitFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -874,16 +898,20 @@ public class MissionCommandRunner {
 		String orbitOutputFormat = CLIUtil.FILE_FORMAT_YAML;
 		Integer fromOrbit = null;
 		Integer toOrbit = null;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "from":
+			case OPTION_ORBIT_FROM:
 				fromOrbit = Integer.parseInt(option.getValue());
 				break;
-			case "to":
+			case OPTION_ORBIT_TO:
 				toOrbit = Integer.parseInt(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				orbitOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -926,15 +954,28 @@ public class MissionCommandRunner {
 			return;
 		}
 		
-		/* Display the orbits found */
-		try {
-			CLIUtil.printObject(System.out, resultList, orbitOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the orbits found */
+			try {
+				CLIUtil.printObject(System.out, resultList, orbitOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of orbits
+			String listFormat = "%-6s %05d %-26s %-26s";
+			System.out.println(String.format("%-6s %-5s %-26s %-26s", "S/C", "Orb-#", "Sensing Start", "Sensing Stop"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat, resultMap.get("spacecraftCode"), resultMap.get("orbitNumber"),
+							resultMap.get("startTime"), resultMap.get("stopTime")));
+				}
+			}
 		}
 	}
 	
@@ -952,10 +993,10 @@ public class MissionCommandRunner {
 		String orbitFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				orbitFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				orbitFileFormat = option.getValue().toUpperCase();
 				break;
 			}
