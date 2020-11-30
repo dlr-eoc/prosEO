@@ -7,10 +7,17 @@ package de.dlr.proseo.ui.cli;
 
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -66,6 +73,14 @@ public class CLIUtil {
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
+	
+	/**
+	 * Helper class to return username and password from a method
+	 */
+	public static class Credentials {
+		public String username;
+		public String password;
+	}
 	
 	/**
 	 * Read the description for an object of the given type from a file in Json, XML or Yaml format
@@ -215,11 +230,21 @@ public class CLIUtil {
 				// Attribute type not supported
 				String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
 				logger.error(message);
+				if (null != System.console()) System.err.println(message);
 				throw new ClassCastException(message);
 			}
+		} catch (ClassCastException e) {
+			// Already formatted, rethrow
+			throw e;
+		} catch (IllegalArgumentException | DateTimeException e) {
+			String message = uiMsg(MSG_ID_INVALID_ATTRIBUTE_TYPE, paramParts[0], attributeField.getType().toString());
+			logger.error(message);
+			if (null != System.console()) System.err.println(message);
+			throw new ClassCastException(message);
 		} catch (Exception e) {
 			String message = uiMsg(MSG_ID_REFLECTION_EXCEPTION, paramParts[0], e.getMessage());
 			logger.error(message);
+			if (null != System.console()) System.err.println(message);
 			throw new RuntimeException(message, e);
 		}
 	}
@@ -300,4 +325,68 @@ public class CLIUtil {
 		return result;
 	}
 	
+	/**
+	 * Read the user credentials from a file consisting of one or two lines, the first line containing the username (without mission
+	 * prefix) and the second line the password.
+	 * The file will only be read, if it is only readable by the current system user (as far as warranted by the operating system).
+	 * 
+	 * @param filePathString path to the file containing the credentials
+	 * @return a Credentials object with username and password set from the file
+	 * @throws SecurityException if the file denoted by the file path does not meet the security criteria
+	 * @throws FileNotFoundException if the file denoted by the file path does not exist
+	 */
+	public static Credentials readIdentFile(String filePathString) throws SecurityException, FileNotFoundException, IOException {
+		if (logger.isTraceEnabled()) logger.trace(">>> readIdentFile({})", filePathString);
+
+		Credentials credentials = new Credentials();
+		
+		try {
+			// Check file permissions
+			Path filePath = Path.of(filePathString);
+			if (Files.exists(filePath)) {
+				PosixFileAttributeView attributeView = Files.getFileAttributeView(filePath, PosixFileAttributeView.class);
+				Set<PosixFilePermission> permissions = attributeView.readAttributes().permissions();
+				if (permissions.contains(PosixFilePermission.GROUP_READ) || permissions.contains(PosixFilePermission.OTHERS_READ)) {
+					String message = uiMsg(MSG_ID_CREDENTIALS_INSECURE, filePathString);
+					logger.error(message);
+					System.err.println(message);
+					throw new SecurityException(message);
+				}
+			} else {
+				String message = uiMsg(MSG_ID_CREDENTIALS_NOT_FOUND, filePathString);
+				logger.error(message);
+				System.err.println(message);
+				throw new FileNotFoundException(message);
+			}
+			
+			// Read the credentials from the file
+			BufferedReader credentialFile = new BufferedReader(new FileReader(filePathString));
+			credentials.username = credentialFile.readLine();
+			if (null == credentials.username || credentials.username.isBlank()) {
+				String message = uiMsg(MSG_ID_INVALID_IDENT_FILE, filePathString);
+				logger.error(message);
+				System.err.println(message);
+				credentialFile.close();
+				throw new SecurityException(message);
+			}
+			credentials.password = credentialFile.readLine();
+			credentialFile.close();
+			if (null == credentials.password || credentials.password.isBlank()) {
+				String message = uiMsg(MSG_ID_INVALID_IDENT_FILE, filePathString);
+				logger.error(message);
+				System.err.println(message);
+				throw new SecurityException(message);
+			}
+		} catch (IOException e) {
+			if (e instanceof FileNotFoundException) throw e;
+			
+			String message = uiMsg(MSG_ID_CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
+			logger.error(message);
+			System.err.println(message);
+			throw new IOException(message, e);
+		}
+		
+		return credentials;
+	}
+
 }
