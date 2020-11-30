@@ -130,23 +130,13 @@ public class CommandLineInterface implements CommandLineRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkArguments({})", Arrays.toString(args));
 		
 		StringBuilder commandBuilder = new StringBuilder();
-		String username = null;
-		String password = null;
+		String identFile = null;
 		String mission = null;
 		
 		for (String arg: args) {
-			if (arg.startsWith("-u")) {
-				// Short form user argument
-				username = arg.substring(2);
-			} else if (arg.startsWith("--user=")) {
+			if (arg.startsWith("--identFile=")) {
 				// Long form user argument
-				username = arg.substring(7);
-			} else if (arg.startsWith("-p")) {
-				// Short form password argument
-				password = arg.substring(2);
-			} else if (arg.startsWith("--password=")) {
-				// Long form password argument
-				password = arg.substring(11);
+				identFile = arg.substring(12);
 			} else if (arg.startsWith("-m")) {
 				// Short form mission argument
 				mission = arg.substring(2);
@@ -159,7 +149,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			}
 		}
 		
-		return Arrays.asList(commandBuilder.toString(), username, password, mission);
+		return Arrays.asList(commandBuilder.toString(), identFile, mission);
 	}
 	
 	/**
@@ -204,6 +194,8 @@ public class CommandLineInterface implements CommandLineRunner {
 			}
 			credentialFile.close();
 		} catch (IOException e) {
+			if (e instanceof FileNotFoundException) throw e;
+			
 			String message = uiMsg(MSG_ID_CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
 			logger.error(message);
 			System.err.println(message);
@@ -256,8 +248,8 @@ public class CommandLineInterface implements CommandLineRunner {
 							username = credentials.username;
 							password = credentials.password;
 						} catch (Exception e) {
-							// IOException needs to be reported, everything else has been handled
-							e.printStackTrace();
+							System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
+							break;
 						}
 					}
 				}
@@ -350,9 +342,18 @@ public class CommandLineInterface implements CommandLineRunner {
 			List<String> proseoCommand = checkArguments(args);
 			
 			// Log in to prosEO, if a username was given
-			String username = proseoCommand.get(1);
-			String password = proseoCommand.get(2);
-			String mission = proseoCommand.get(3);
+			String identFile = proseoCommand.get(1);
+			String mission = proseoCommand.get(2);
+			String username = null, password = null;
+			if (null != identFile) {
+				try {
+					Credentials credentials = readIdentFile(identFile);
+					username = credentials.username;
+					password = credentials.password;
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
+				}
+			}
 			if (null != username) {
 				if (null == password || password.isBlank()) {
 					String message = uiMsg(MSG_ID_PASSWORD_MISSING, username);

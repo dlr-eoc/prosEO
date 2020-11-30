@@ -75,14 +75,11 @@ commands:
     - name: login
       description: Log in to a mission in prosEO. All valid commands except for "mission show" require prior login.
       options:
-        - name: user
+        - name: identFile
           type: string
-          description: User name
-          shortForm: u
-        - name: password
-          type: string
-          description: The user's password
-          shortForm: p
+          description: |
+              Path to a file containing user name and password (in two separate lines);
+              the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
       parameters:
         - name: missionCode
           type: string
