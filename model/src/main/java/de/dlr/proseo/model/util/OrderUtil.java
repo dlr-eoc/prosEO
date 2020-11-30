@@ -19,7 +19,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;

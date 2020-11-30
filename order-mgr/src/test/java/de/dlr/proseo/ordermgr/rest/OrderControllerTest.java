@@ -46,7 +46,7 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.OrderSlicingType;

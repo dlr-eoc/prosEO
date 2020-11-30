@@ -7,6 +7,11 @@ body {
   height: 16px;
   vertical-align: text-bottom;
 }
+.feather-l {
+  width: 20px !important;
+  height: 20px !important;
+  vertical-align: text-bottom !important;
+}
 
 /*
  * Sidebar
@@ -329,6 +334,10 @@ code {
   width: 15em;
 }
 
+.selectdialog {
+  border: 1px;
+}
+
 .thead-proseo {
   position: -webkit-sticky !Important;
   position: sticky !Important;
@@ -559,3 +568,18 @@ code {
   border: 0 !important;
   vertical-align: top !important;
 }
+
+.red {
+  color: red;
+}
+
+.green {
+  color: green;
+}
+
+.word-wrap {
+  word-wrap: break-word;
+  white-space: normal !important;
+}
+}
+  

@@ -45,8 +45,14 @@ import de.dlr.proseo.ui.gui.service.OrderService;
 import reactor.core.publisher.Mono;
 
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
+import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
+import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestProductClass;
+import de.dlr.proseo.model.rest.model.RestSpacecraft;
 
 @Controller
 public class GUIOrderController extends GUIBaseController {
@@ -76,12 +82,17 @@ public class GUIOrderController extends GUIBaseController {
 	 * Date formatter for input type date
 	 */
 	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
-	
+
 	@GetMapping(value ="/order-show")
 	public String showOrder() {
 		ModelAndView modandview = new ModelAndView("order-show");
 		modandview.addObject("message", "TEST");
 		return "order-show";
+	}
+	@GetMapping(value ="/order-edit")
+	public String editOrder() {
+		ModelAndView modandview = new ModelAndView("order-edit");
+		return "order-edit";
 	}
 	@GetMapping(value ="/order")
 	public String order() {
@@ -222,7 +233,7 @@ public class GUIOrderController extends GUIBaseController {
     /**
      * Retrieve the processing facilities
      * 
-     * @return Facility list
+     * @return String list
      */
     @ModelAttribute("facilities")
     public List<String> facilities() {
@@ -270,7 +281,7 @@ public class GUIOrderController extends GUIBaseController {
     /**
      * Retrieve the product classes of mission
      * 
-     * @return Product class list
+     * @return String list
      */
     @ModelAttribute("productclasses")
     public List<String> productclasses() {
@@ -314,6 +325,244 @@ public class GUIOrderController extends GUIBaseController {
         return productclasses;
     }
 
+    /**
+     * Retrieve the configured processors of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("configuredprocessors")
+    public List<String> configuredProcessors() {
+    	List<String> configuredProcessors = new ArrayList<String>();   
+		List<?> resultList = null;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					"/configuredprocessors?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return configuredProcessors;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return configuredProcessors;
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object: resultList) {
+				RestConfiguredProcessor restConfiguredProcessorClass = mapper.convertValue(object, RestConfiguredProcessor.class);
+				configuredProcessors.add(restConfiguredProcessorClass.getIdentifier());
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		configuredProcessors.sort(c);
+        return configuredProcessors;
+    }
+    
+    /**
+     * Retrieve the file classes of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("fileclasses")
+    public List<String> fileClasses() {
+    	List<String> fileClasses = new ArrayList<String>();   
+		List<?> resultList = null;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return fileClasses;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return fileClasses;
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			if (resultList.size() == 1) {
+				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
+				fileClasses.addAll(restMission.getFileClasses());
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		fileClasses.sort(c);
+        return fileClasses;
+    }
+    
+    /**
+     * Retrieve the processing modes of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("processingmodes")
+    public List<String> processingModes() {
+    	List<String> processingModes = new ArrayList<String>();   
+		List<?> resultList = null;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return processingModes;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return processingModes;
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			if (resultList.size() == 1) {
+				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
+				processingModes.addAll(restMission.getProcessingModes());
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		processingModes.sort(c);
+        return processingModes;
+    }
+
+    /**
+     * Retrieve the space crafts of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("spacecrafts")
+    public List<String> spaceCrafts() {
+    	List<String> spaceCrafts = new ArrayList<String>();   
+		List<?> resultList = null;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return spaceCrafts;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return spaceCrafts;
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			if (resultList.size() == 1) {
+				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
+				for (RestSpacecraft spaceCraft : restMission.getSpacecrafts()) {
+					spaceCrafts.add(spaceCraft.getCode());
+				}
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		spaceCrafts.sort(c);
+        return spaceCrafts;
+    }
+
+    /**
+     * Retrieve the production type enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("productiontypes")
+    public List<String> productiontypes() {
+    	List<String> values = new ArrayList<String>(); 
+    	for (ProductionType value: ProductionType.values()) {
+    		values.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		values.sort(c);
+        return values;
+    }
+
+    /**
+     * Retrieve the slicing type enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("slicingtypes")
+    public List<String> slicingtypes() {
+    	List<String> values = new ArrayList<String>(); 
+    	for (OrderSlicingType value: OrderSlicingType.values()) {
+    		values.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		values.sort(c);
+        return values;
+    }
+
+    /**
+     * Retrieve the parameter type enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("parametertypes")
+    public List<String> parametertypes() {
+    	List<String> values = new ArrayList<String>(); 
+    	for (ParameterType value: ParameterType.values()) {
+    		values.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		values.sort(c);
+        return values;
+    }
+    
 	/**
 	 * Retrieve a single order
 	 * 
@@ -350,6 +599,55 @@ public class GUIOrderController extends GUIBaseController {
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
 					deferredResult.setResult("order :: #ordercontent");
+					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
+				});
+			}
+			logger.trace(">>>>MODEL" + model.toString());
+
+		});
+		logger.trace(model.toString() + "MODEL TO STRING");
+		logger.trace(">>>>MONO" + orders.toString());
+		logger.trace(">>>>MODEL" + model.toString());
+		logger.trace("DEREFFERED STRING: {}", deferredResult);
+		return deferredResult;
+	}
+	
+	/**
+	 * Retrieve a single order
+	 * 
+	 * @param id The order id.
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/order-edit/get")
+	public DeferredResult<String> getIdForEdit(
+			@RequestParam(required = true, value = MAPKEY_ID) String id,
+			Model model) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getId({}, model)", id);
+		Mono<ClientResponse> mono = orderService.getId(id);
+		DeferredResult<String> deferredResult = new DeferredResult<String>();
+		List<Object> orders = new ArrayList<>();
+		mono.subscribe(clientResponse -> {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().is5xxServerError()) {
+				logger.trace(">>>Server side error (HTTP status 500)");
+				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+				deferredResult.setResult("order-edit :: #orderedit");
+				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is4xxClientError()) {
+				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
+				deferredResult.setResult("order-edit :: #orderedit");
+				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
+			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
+					orders.add(order);
+					model.addAttribute("orders", orders);
+					logger.trace(model.toString() + "MODEL TO STRING");
+					logger.trace(">>>>MONO" + orders.toString());
+					deferredResult.setResult("order-edit :: #orderedit");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
 			}

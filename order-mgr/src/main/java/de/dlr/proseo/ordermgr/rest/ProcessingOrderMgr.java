@@ -33,7 +33,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.UserRole;

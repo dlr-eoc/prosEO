@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Parameter;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfigurationFile;

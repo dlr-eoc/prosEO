@@ -25,7 +25,7 @@ import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimpleSelectionRule;
-import de.dlr.proseo.model.Parameter.ParameterType;
+import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 

@@ -141,7 +141,7 @@ public class MissionControllerImpl implements MissionController {
 	 * @return a response entity with either a list of missions and HTTP status OK or an error message and an HTTP status indicating failure
 	 */
 	@Override
-	public ResponseEntity<List<RestMission>> getMissions() {
+	public ResponseEntity<List<RestMission>> getMissions(String code) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getMissions");
 
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
@@ -150,19 +150,30 @@ public class MissionControllerImpl implements MissionController {
 		try {
 			result = transactionTemplate.execute((status) -> {
 				List<RestMission> resultList = new ArrayList<>();
+				if (code != null) {
+					Mission mission = RepositoryService.getMissionRepository().findByCode(code);
+					if (mission == null) {
+						throw new NoResultException(String.format(MSG_MISSION_NOT_FOUND, MSG_ID_MISSION_NOT_FOUND, code));
+					}
 
-				List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
-
-				if(modelMissions.isEmpty()) {
-					throw new NoResultException(String.format(MSG_NO_MISSIONS_FOUND, MSG_ID_NO_MISSIONS_FOUND));
-				}
-
-				// Simple case: no search criteria set
-				for (Mission  mission: modelMissions) {
 					if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
 					RestMission resultMission = MissionUtil.toRestMission(mission);
 					if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
-					resultList.add(resultMission);
+					resultList.add(resultMission);					
+				} else {
+					List<Mission> modelMissions = RepositoryService.getMissionRepository().findAll();
+
+					if(modelMissions.isEmpty()) {
+						throw new NoResultException(String.format(MSG_NO_MISSIONS_FOUND, MSG_ID_NO_MISSIONS_FOUND));
+					}
+
+					// Simple case: no search criteria set
+					for (Mission  mission: modelMissions) {
+						if (logger.isDebugEnabled()) logger.debug("Found mission with ID {}", mission.getId());
+						RestMission resultMission = MissionUtil.toRestMission(mission);
+						if (logger.isDebugEnabled()) logger.debug("Created result mission with ID {}", resultMission.getId());
+						resultList.add(resultMission);
+					}
 				}
 				
 				return resultList;
@@ -282,6 +293,7 @@ public class MissionControllerImpl implements MissionController {
 		
 		return new ResponseEntity<>(restMission, HttpStatus.OK);
 	}
+
 
 	/**
 	 * Update the mission with the given ID with the attribute values of the given Json object. 
