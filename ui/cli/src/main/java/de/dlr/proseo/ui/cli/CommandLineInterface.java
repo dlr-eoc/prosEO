@@ -40,6 +40,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
+import de.dlr.proseo.ui.cli.CLIUtil.Credentials;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
@@ -107,14 +108,6 @@ public class CommandLineInterface implements CommandLineRunner {
 	private static Logger logger = LoggerFactory.getLogger(CommandLineInterface.class);
 	
 	/**
-	 * Helper class to return username and password from a method
-	 */
-	private static class Credentials {
-		public String username;
-		public String password;
-	}
-	
-	/**
 	 * Check the program invocation arguments (-u/--user, -p/--password, -m/--mission) and remove them from the command line
 	 * 
 	 * @param args the program invocation arguments
@@ -152,59 +145,6 @@ public class CommandLineInterface implements CommandLineRunner {
 		return Arrays.asList(commandBuilder.toString(), identFile, mission);
 	}
 	
-	/**
-	 * Read the user credentials from a file consisting of one or two lines, the first line containing the username and
-	 * the second line the password.
-	 * The file will only be read, if it is only readable by the current system user (as far as warranted by the operating system).
-	 * 
-	 * @param filePathString path to the file containing the credentials
-	 * @return a Credentials object with username and optionally password set from the file
-	 * @throws SecurityException if the file denoted by the file path does not meet the security criteria
-	 * @throws FileNotFoundException if the file denoted by the file path does not exist
-	 */
-	private Credentials readIdentFile(String filePathString) throws SecurityException, FileNotFoundException, IOException {
-		if (logger.isTraceEnabled()) logger.trace(">>> readIdentFile({})", filePathString);
-
-		Credentials credentials = new Credentials();
-		
-		try {
-			// Check file permissions
-			Path filePath = Path.of(filePathString);
-			if (Files.exists(filePath)) {
-				PosixFileAttributeView attributeView = Files.getFileAttributeView(filePath, PosixFileAttributeView.class);
-				Set<PosixFilePermission> permissions = attributeView.readAttributes().permissions();
-				if (permissions.contains(PosixFilePermission.GROUP_READ) || permissions.contains(PosixFilePermission.OTHERS_READ)) {
-					String message = uiMsg(MSG_ID_CREDENTIALS_UNSAFE, filePathString);
-					logger.error(message);
-					System.err.println(message);
-					throw new SecurityException(message);
-				}
-			} else {
-				String message = uiMsg(MSG_ID_CREDENTIALS_NOT_FOUND, filePathString);
-				logger.error(message);
-				System.err.println(message);
-				throw new FileNotFoundException(message);
-			}
-			
-			// Read the credentials from the file
-			BufferedReader credentialFile = new BufferedReader(new FileReader(filePathString));
-			credentials.username = credentialFile.readLine();
-			if (null != credentials.username) {
-				credentials.password = credentialFile.readLine();
-			}
-			credentialFile.close();
-		} catch (IOException e) {
-			if (e instanceof FileNotFoundException) throw e;
-			
-			String message = uiMsg(MSG_ID_CREDENTIALS_NOT_READABLE, filePathString, e.getMessage());
-			logger.error(message);
-			System.err.println(message);
-			throw new IOException(message, e);
-		}
-		
-		return credentials;
-	}
-
 	/**
 	 * Execute the given command (may result in just evaluating the top-level options; "exit" is handled in main command loop)
 	 * 
@@ -244,7 +184,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				for (ParsedOption option: command.getOptions()) {
 					if ("identFile".equals(option.getName())) {
 						try {
-							Credentials credentials = readIdentFile(option.getValue());
+							Credentials credentials = CLIUtil.readIdentFile(option.getValue());
 							username = credentials.username;
 							password = credentials.password;
 						} catch (Exception e) {
@@ -299,6 +239,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				productclassCommandRunner.executeCommand(command);
 				break;
 			case UserCommandRunner.CMD_USER:
+			case UserCommandRunner.CMD_PASSWORD:
 			case UserCommandRunner.CMD_GROUP:
 				userCommandRunner.executeCommand(command);
 				break;
@@ -347,7 +288,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			String username = null, password = null;
 			if (null != identFile) {
 				try {
-					Credentials credentials = readIdentFile(identFile);
+					Credentials credentials = CLIUtil.readIdentFile(identFile);
 					username = credentials.username;
 					password = credentials.password;
 				} catch (Exception e) {
