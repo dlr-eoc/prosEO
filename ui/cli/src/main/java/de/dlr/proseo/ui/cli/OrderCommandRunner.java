@@ -66,6 +66,12 @@ public class OrderCommandRunner {
 	private static final String CMD_CLOSE = "close";
 	private static final String CMD_RESET = "reset";
 
+	private static final String OPTION_FORCE = "force";
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
+
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_IDENTIFIER = "Order identifier (empty field cancels): ";
 	private static final String PROMPT_SLICING_TYPE = "Slicing type (O)rbit, C)alendar day, T)ime slice; empty field cancels): ";
@@ -175,10 +181,10 @@ public class OrderCommandRunner {
 		String orderFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				orderFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				orderFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -409,10 +415,14 @@ public class OrderCommandRunner {
 		
 		/* Check command options */
 		String orderOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				orderOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -464,15 +474,33 @@ public class OrderCommandRunner {
 			return;
 		}
 		
-		/* Display the order(s) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, orderOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the order(s) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, orderOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of orders
+			String listFormat = "%20s %24s %26s %26s %6s %s";
+			System.out.println(String.format(listFormat, "Identifier", "UUID", "Sensing Start", "Sensing Stop", "Processing Mode", "Order State"));
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(String.format(listFormat,
+							resultMap.get("identifier"),
+							resultMap.get("uuid"),
+							resultMap.get("startTime"),
+							resultMap.get("stopTime"),
+							resultMap.get("processingMode"),
+							resultMap.get("orderState")));
+				}
+			}
 		}
 	}
 	
@@ -490,13 +518,13 @@ public class OrderCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				orderFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				orderFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -805,7 +833,7 @@ public class OrderCommandRunner {
 		String orderOutputFormat = FORMAT_PLAIN;
 		for (ParsedOption option: planCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				orderOutputFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -995,7 +1023,7 @@ public class OrderCommandRunner {
 		boolean isForcing = false;
 		for (ParsedOption option: suspendCommand.getOptions()) {
 			switch(option.getName()) {
-			case "force":
+			case OPTION_FORCE:
 				isForcing = true;
 				break;
 			}

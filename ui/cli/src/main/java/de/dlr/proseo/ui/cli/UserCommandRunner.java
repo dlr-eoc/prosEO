@@ -47,12 +47,6 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 @Component
 public class UserCommandRunner {
 
-	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
-	private static final String OPTION_VERBOSE = "verbose";
-	private static final String OPTION_IDENT_FILE = "identFile";
-	private static final String OPTION_MISSION = "mission";
-	private static final String OPTION_FORMAT = "format";
-	private static final String OPTION_FILE = "file";
 	/* General string constants */
 	public static final String CMD_USER = "user";
 	public static final String CMD_PASSWORD = "password";
@@ -68,6 +62,13 @@ public class UserCommandRunner {
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
+
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_IDENT_FILE = "identFile";
+	private static final String OPTION_MISSION = "mission";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_USER_NAME = "User name (empty field cancels): ";

@@ -8,6 +8,7 @@ package de.dlr.proseo.ui.cli;
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,10 @@ public class JobCommandRunner {
 	private static final String CMD_CANCEL = "cancel";
 	private static final String CMD_RETRY = "retry";
 
+	private static final String OPTION_FORCE = "force";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	
 	private static final String URI_PATH_ORDERS = "/orders";
 	private static final String URI_PATH_JOBS = "/jobs";
 	private static final String URI_PATH_JOBSTEPS = "/jobsteps";
@@ -246,10 +251,10 @@ public class JobCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				jobOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -315,10 +320,12 @@ public class JobCommandRunner {
 				return;
 			}
 		} else {
+			String listFormat = "%11s %-25s %-25s %s %s";
+			System.out.println(String.format(listFormat, "Database ID", "Sensing Start", "Sensing Stop", "Job State", ""));
 			for (Object listObject: resultList) {
 				if (listObject instanceof Map) {
 					Map<?, ?> jobMap = (Map<?, ?>) listObject;
-					System.out.println(String.format("%16s %-25s %-25s %s %s",
+					System.out.println(String.format(listFormat,
 						jobMap.get("id").toString(),
 						jobMap.get("startTime"),
 						jobMap.get("stopTime"),
@@ -341,7 +348,7 @@ public class JobCommandRunner {
 		boolean isForcing = false;
 		for (ParsedOption option: suspendCommand.getOptions()) {
 			switch(option.getName()) {
-			case "force":
+			case OPTION_FORCE:
 				isForcing = true;
 				break;
 			}
@@ -575,10 +582,10 @@ public class JobCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				jobStepOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -601,23 +608,31 @@ public class JobCommandRunner {
 			}
 		}
 		
-		/* Display the job step(s) found */
+		/* Filter job steps */
+		List<RestJobStep> filteredJobSteps = new ArrayList<>();
 		for (RestJobStep restJobStep: restJob.getJobSteps()) {
 			if (null == requestedJobStepState || requestedJobStepState.equals(restJobStep.getJobStepState())) {
-				if (isVerbose) {
-					try {
-						CLIUtil.printObject(System.out, restJobStep, jobStepOutputFormat);
-					} catch (IllegalArgumentException e) {
-						System.err.println(e.getMessage());
-						return;
-					} catch (IOException e) {
-						System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-						return;
-					} 
-				} else {
-					System.out.println(String.format("%16s %-12s %s", restJobStep.getId(), restJobStep.getOutputProductClass(),
-							restJobStep.getJobStepState().toString()));
-				}
+				filteredJobSteps.add(restJobStep);
+			}
+		}
+		
+		/* Display the job step(s) found */
+		if (isVerbose) {
+			try {
+				CLIUtil.printObject(System.out, filteredJobSteps, jobStepOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			String listFormat = "%11s %12s %s";
+			System.out.println(String.format(listFormat, "Database ID", "Output Class", "Job Step State"));
+			for (RestJobStep restJobStep: restJob.getJobSteps()) {
+				System.out.println(String.format(listFormat, restJobStep.getId(), restJobStep.getOutputProductClass(),
+						restJobStep.getJobStepState().toString()));
 			}
 		}
 	}
@@ -634,7 +649,7 @@ public class JobCommandRunner {
 		boolean isForcing = false;
 		for (ParsedOption option: suspendCommand.getOptions()) {
 			switch(option.getName()) {
-			case "force":
+			case OPTION_FORCE:
 				isForcing = true;
 				break;
 			}
