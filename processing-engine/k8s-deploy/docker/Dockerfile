@@ -38,7 +38,7 @@ RUN pipenv install -r ./tools/requirements.txt
 
 # Install kubectl
 COPY kubespray/roles/download/defaults/main.yml ./tools/
-RUN export KUBE_VERSION=$(grep '^kube_version:' ./tools/main.yml | cut -d' ' -f2)
+RUN export KUBE_VERSION=$(grep '^kube_version:' ./tools/main.yml | cut -d' ' -f2) \
       mkdir bin && \
       cd bin && \
       curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl && \
