@@ -9,7 +9,7 @@ BUILD=$(git rev-parse --short HEAD)
 
 cd "${SOURCE_DIR}"
 docker build \
-  -f "${SCRIPT_DIR}/Dockerfile" \
+  -f "${SCRIPT_DIR}/Dockerfile.simple" \
   -t "${TAGNAME}:${BUILD}" \
   -t "${TAGNAME}:latest" \
   .
