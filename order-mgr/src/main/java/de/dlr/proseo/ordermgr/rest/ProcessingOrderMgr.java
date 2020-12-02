@@ -1,5 +1,6 @@
 package de.dlr.proseo.ordermgr.rest;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +36,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.ClassOutputParameter;
+import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -198,7 +200,7 @@ public class ProcessingOrderMgr {
 		
 		ProcessingOrder modelOrder = OrderUtil.toModelOrder(order);
 		// Make sure order has a UUID
-		if (null == modelOrder.getUuid()) {
+		if (null == modelOrder.getUuid() || modelOrder.getUuid().toString().isEmpty()) {
 			modelOrder.setUuid(UUID.randomUUID());
 		} else {
 			// Test if given UUID is not yet in use
@@ -493,15 +495,34 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setExecutionTime(changedOrder.getExecutionTime());
 		}
-		if (!modelOrder.getStartTime().equals(changedOrder.getStartTime())) {
-			orderChanged = true;
-			stateChangeOnly = false;
-			modelOrder.setStartTime(changedOrder.getStartTime());
-		}
-		if (!modelOrder.getStopTime().equals(changedOrder.getStopTime())) {
-			orderChanged = true;
-			stateChangeOnly = false;
-			modelOrder.setStopTime(changedOrder.getStopTime());
+		if (!changedOrder.getSlicingType().equals(OrderSlicingType.ORBIT)) {
+			// use start/stop time only for time slicing. For Orbits it is set below.
+			if (modelOrder.getStartTime() == null) {
+				if (changedOrder.getStartTime() != null) {
+					orderChanged = true;
+					stateChangeOnly = false;
+					modelOrder.setStartTime(changedOrder.getStartTime());	
+				}
+			} else {
+				if (!modelOrder.getStartTime().equals(changedOrder.getStartTime())) {
+					orderChanged = true;
+					stateChangeOnly = false;
+					modelOrder.setStartTime(changedOrder.getStartTime());
+				}
+			}
+			if (modelOrder.getStopTime() == null) {
+				if (changedOrder.getStopTime() != null) {
+					orderChanged = true;
+					stateChangeOnly = false;
+					modelOrder.setStopTime(changedOrder.getStopTime());
+				}			
+			} else {
+				if (!modelOrder.getStopTime().equals(changedOrder.getStopTime())) {
+					orderChanged = true;
+					stateChangeOnly = false;
+					modelOrder.setStopTime(changedOrder.getStopTime());
+				}
+			}
 		}
 		if (!modelOrder.getSlicingType().equals(changedOrder.getSlicingType())) {
 			orderChanged = true;
@@ -534,25 +555,29 @@ public class ProcessingOrderMgr {
 		Map<ProductClass, InputFilter> newInputFilters = new HashMap<>();
 		if (null != order.getInputFilters()) {
 			for (RestInputFilter restInputFilter : order.getInputFilters()) {
-				InputFilter inputFilter = new InputFilter();
-				inputFilter = RepositoryService.getInputFilterRepository().save(inputFilter);
-				for (RestParameter restParam : restInputFilter.getFilterConditions()) {
-					Parameter modelParam = new Parameter();
-					modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-					inputFilter.getFilterConditions().put(restParam.getKey(), modelParam);
-				}
-				ProductClass productClass = RepositoryService.getProductClassRepository()
-						.findByMissionCodeAndProductType(mission.getCode(), restInputFilter.getProductClass());
-				if (null == productClass) {
-					throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
-							restInputFilter.getProductClass(), mission.getCode()));
-				}
-				if (inputFilter.equals(modelOrder.getInputFilters().get(productClass))) {
-					newInputFilters.put(productClass, modelOrder.getInputFilters().get(productClass));
-				} else {
-					orderChanged = true;
-					stateChangeOnly = false;
-					newInputFilters.put(productClass, inputFilter);
+				if (restInputFilter != null) {
+					InputFilter inputFilter = new InputFilter();
+					inputFilter = RepositoryService.getInputFilterRepository().save(inputFilter);
+					for (RestParameter restParam : restInputFilter.getFilterConditions()) {
+						if (restParam != null) {
+							Parameter modelParam = new Parameter();
+							modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
+							inputFilter.getFilterConditions().put(restParam.getKey(), modelParam);
+						}
+					}
+					ProductClass productClass = RepositoryService.getProductClassRepository()
+							.findByMissionCodeAndProductType(mission.getCode(), restInputFilter.getProductClass());
+					if (null == productClass) {
+						throw new IllegalArgumentException(logError(MSG_INVALID_INPUT_CLASS, MSG_ID_INVALID_INPUT_CLASS,
+								restInputFilter.getProductClass(), mission.getCode()));
+					}
+					if (inputFilter.equals(modelOrder.getInputFilters().get(productClass))) {
+						newInputFilters.put(productClass, modelOrder.getInputFilters().get(productClass));
+					} else {
+						orderChanged = true;
+						stateChangeOnly = false;
+						newInputFilters.put(productClass, inputFilter);
+					}
 				}
 			} 
 		}
@@ -567,27 +592,39 @@ public class ProcessingOrderMgr {
 		// Check for changes in requested output products and their parameters
 		Map<ProductClass, ClassOutputParameter> newClassOutputParameters = new HashMap<>();
 		for (RestClassOutputParameter restClassOutputParameter: order.getClassOutputParameters()) {
-			ClassOutputParameter classOutputParameter = new ClassOutputParameter();
-			classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
-			for (RestParameter restParam : restClassOutputParameter.getOutputParameters()) {
-				Parameter modelParam = new Parameter();
-				modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
-				classOutputParameter.getOutputParameters().put(restParam.getKey(), modelParam);
-			} 
-			ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
-					mission.getCode(), restClassOutputParameter.getProductClass());
-			if (null == productClass) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
-						restClassOutputParameter.getProductClass(), mission.getCode()));
-			}
-			if (classOutputParameter.equals(modelOrder.getClassOutputParameters().get(productClass))) {
-				newClassOutputParameters.put(productClass, modelOrder.getClassOutputParameters().get(productClass));
-			} else {
-				orderChanged = true;
-				stateChangeOnly = false;
-				newClassOutputParameters.put(productClass, classOutputParameter);
+			if (restClassOutputParameter != null) {
+				ClassOutputParameter classOutputParameter = new ClassOutputParameter();
+				classOutputParameter = RepositoryService.getClassOutputParameterRepository().save(classOutputParameter);
+				for (RestParameter restParam : restClassOutputParameter.getOutputParameters()) {
+					if (restParam != null) {
+						Parameter modelParam = new Parameter();
+						modelParam.init(ParameterType.valueOf(restParam.getParameterType()), restParam.getParameterValue());
+						classOutputParameter.getOutputParameters().put(restParam.getKey(), modelParam);
+					}
+				} 
+				ProductClass productClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
+						mission.getCode(), restClassOutputParameter.getProductClass());
+				if (null == productClass) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_OUTPUT_CLASS, MSG_ID_INVALID_OUTPUT_CLASS, 
+							restClassOutputParameter.getProductClass(), mission.getCode()));
+				}
+				if (classOutputParameter.equals(modelOrder.getClassOutputParameters().get(productClass))) {
+					newClassOutputParameters.put(productClass, modelOrder.getClassOutputParameters().get(productClass));
+				} else {
+					orderChanged = true;
+					stateChangeOnly = false;
+					newClassOutputParameters.put(productClass, classOutputParameter);
+				}
 			}
 		}
+		// Check for removed output parameters
+		for (ProductClass productClass: modelOrder.getClassOutputParameters().keySet()) {
+			if (null == newClassOutputParameters.get(productClass)) {
+				orderChanged = true;
+				stateChangeOnly = false;
+			}
+		}
+		
 		// Check for new requested product classes
 		Set<ProductClass> newRequestedProductClasses = new HashSet<>();
 		if (null != order.getRequestedProductClasses()) {
@@ -729,13 +766,39 @@ public class ProcessingOrderMgr {
 							changedOrbitQuery.getOrbitNumberTo(),
 							changedOrbitQuery.getSpacecraftCode()));
 				}
+				Instant startTime = null;
+				Instant stopTime = null;
 				for (Orbit changedRequestedOrbit: changedRequestedOrbits) {
+					if (startTime == null) {
+						startTime = changedRequestedOrbit.getStartTime();
+					} else {
+						if (startTime.isAfter(changedRequestedOrbit.getStartTime())) {
+							startTime = changedRequestedOrbit.getStartTime();
+						}
+					}
+					if (stopTime == null) {
+						stopTime = changedRequestedOrbit.getStopTime();
+					} else {
+						if (stopTime.isBefore(changedRequestedOrbit.getStopTime())) {
+							stopTime = changedRequestedOrbit.getStopTime();
+						}
+					}
 					if (!modelOrder.getRequestedOrbits().contains(changedRequestedOrbit)) {
 						// New orbit
 						orderChanged = true;
 						stateChangeOnly = false;
 					}
 					newRequestedOrbits.add(changedRequestedOrbit);
+				}
+				if (!startTime.equals(modelOrder.getStartTime())) {
+					modelOrder.setStartTime(startTime);
+					orderChanged = true;
+					stateChangeOnly = false;
+				}
+				if (!stopTime.equals(modelOrder.getStopTime())) {
+					modelOrder.setStopTime(stopTime);
+					orderChanged = true;
+					stateChangeOnly = false;
 				}
 			}
 		}

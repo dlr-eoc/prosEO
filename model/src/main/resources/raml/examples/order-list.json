@@ -72,7 +72,9 @@
         "processingMode": "OFFL",
         "hasFailedJobSteps": false,
         "jobStepStates": [ "INITIAL", "READY" ],
-        "percentComplete": 80
+        "percentCompleted": 80,
+        "percentFailed": 10,
+        "percentRunning": 5
     },
     {
         "id": 12346,
@@ -149,6 +151,8 @@
         "productionType": "SYSTEMATIC",
         "hasFailedJobSteps": true,
         "jobStepStates": [ "INITIAL", "READY" ],
-        "percentComplete": 80
+        "percentCompleted": 80,
+        "percentFailed": 10,
+        "percentRunning": 5
     }  
 ]

@@ -58,6 +58,14 @@
           th:class="('dropdown-item ' + ((${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
           th:href="'/order-edit?id=' + ${ord?.id}"><span
           th:text="#{edit}">edit</span></a>
+        <a
+          class="dropdown-item enabled"
+          th:href="'/order-edit?id=' + ${ord?.id} + '&cp=true'"><span
+          th:text="#{copy}">copy</span></a>
+        <a
+          th:class="('dropdown-item ' + ((${ord?.orderState} == 'CLOSED' or ${ord?.orderState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setState(' + ${ord?.id} + ', \'DELETE\')'" href="#"><span
+          th:text="#{delete}">delete</span></a>
 			</div>
 		</div>
 	</div>

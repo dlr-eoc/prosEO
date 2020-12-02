@@ -2,8 +2,11 @@ package de.dlr.proseo.ui.gui;
 
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_MODIFIED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PRODUCTCLASSES_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_DATA_INVALID;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_NOT_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.text.ParseException;
@@ -23,14 +26,21 @@ import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.trace.http.HttpTrace.Response;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -46,11 +56,15 @@ import reactor.core.publisher.Mono;
 
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ParameterType;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 
@@ -83,6 +97,21 @@ public class GUIOrderController extends GUIBaseController {
 	 */
 	private static final SimpleDateFormat simpleDateFormatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);	
 
+	private static final String HTTP_HEADER_WARNING = "Warning";
+
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	private HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING, message.replaceAll("\n", " "));
+		responseHeaders.set("error", message.replaceAll("\n", " "));
+		return responseHeaders;
+	}
+	
 	@GetMapping(value ="/order-show")
 	public String showOrder() {
 		ModelAndView modandview = new ModelAndView("order-show");
@@ -660,6 +689,118 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
+	/**
+	 * Retrieve a single order
+	 * 
+	 * @param id The order id.
+	 * @param model The model to hold the data
+	 * @return The result
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/order-submit", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public ResponseEntity<OrderInfo> submitOrder(@RequestBody RestOrder updateOrder) {
+		if (logger.isTraceEnabled())
+			logger.trace(">>> order-submit({}, model)", updateOrder);
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		// some checks on updateOrder
+		if (updateOrder.getInputFilters() != null) {
+			List<RestInputFilter> newList = new ArrayList<RestInputFilter>();
+			for (RestInputFilter ele : updateOrder.getInputFilters()) {
+				if (ele != null) {
+					ele.setFilterConditions(stripNullInParameterList(ele.getFilterConditions()));
+					newList.add(ele);
+				}
+			}
+			updateOrder.setInputFilters(newList);
+		}
+		if (updateOrder.getClassOutputParameters() != null) {
+			List<RestClassOutputParameter> newList = new ArrayList<RestClassOutputParameter>();
+			for (RestClassOutputParameter ele : updateOrder.getClassOutputParameters()) {
+				if (ele != null) {
+					ele.setOutputParameters(stripNullInParameterList(ele.getOutputParameters()));
+					newList.add(ele);
+				}
+			}
+			updateOrder.setClassOutputParameters(newList);
+		}
+		if (updateOrder.getOutputParameters() != null) {
+			updateOrder.setOutputParameters(stripNullInParameterList(updateOrder.getOutputParameters()));
+		}
+		if (updateOrder.getUuid() != null && updateOrder.getUuid().isEmpty()) {
+			updateOrder.setUuid(null);
+		}
+		RestOrder origOrder = null;
+		if (updateOrder.getId() != null && updateOrder.getId() > 0) {
+			origOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),
+					RestOrder.class, auth.getProseoName(), auth.getPassword());
+			if (origOrder != null) {
+				if (origOrder.getOrderState().equals(OrderState.INITIAL.toString())) {
+					try {
+						origOrder = serviceConnection.patchToService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),
+								updateOrder, RestOrder.class, auth.getProseoName(), auth.getPassword());
+						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, origOrder.getId().toString(), ""), HttpStatus.OK);
+					} catch (RestClientResponseException e) {
+						if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+						String message = null;
+						switch (e.getRawStatusCode()) {
+						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+							return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.NOT_MODIFIED, "0", uiMsg(MSG_ID_NOT_MODIFIED)), errorHeaders(uiMsg(MSG_ID_NOT_MODIFIED)), HttpStatus.NOT_MODIFIED);
+						case org.apache.http.HttpStatus.SC_NOT_FOUND:
+							message = uiMsg(MSG_ID_ORDER_NOT_FOUND, updateOrder.getIdentifier());
+							break;
+						case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+							message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+							break;
+						case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+						case org.apache.http.HttpStatus.SC_FORBIDDEN:
+							message = uiMsg(MSG_ID_NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
+							break;
+						default:
+							message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+						}
+						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+					} catch (RuntimeException e) {
+						return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", uiMsg(MSG_ID_EXCEPTION, e.getMessage())), errorHeaders(uiMsg(MSG_ID_EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+					}
+				} else {
+					// order not in initial state, can't update, throw error
+				}
+			} else {
+				// why does the order not exist any more??
+				// TODO create new one?
+			}
+			
+		} else {
+			// this is a new order, create it
+			// first check whether the identifier exists already (should be done by GUI, but anyway...)
+			try {
+				origOrder = serviceConnection.postToService(serviceConfig.getOrderManagerUrl(), "/orders",
+						updateOrder, RestOrder.class, auth.getProseoName(), auth.getPassword());
+				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.CREATED, origOrder.getId().toString(), ""), HttpStatus.CREATED);
+			} catch (RestClientResponseException e) {
+				if (logger.isTraceEnabled()) logger.trace("Caught HttpClientErrorException " + e.getMessage());
+				String message = null;
+				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
+					message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+					break;
+				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
+					message = uiMsg(MSG_ID_NOT_AUTHORIZED, auth.getProseoName(), "orders", auth.getMission());
+					break;
+				default:
+					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				}
+				System.err.println(message);
+				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", message), errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+			} catch (RuntimeException e) {
+				return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.INTERNAL_SERVER_ERROR, "0", uiMsg(MSG_ID_EXCEPTION, e.getMessage())), errorHeaders(uiMsg(MSG_ID_EXCEPTION, e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		}	
+		
+		return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.OK, "0", ""), HttpStatus.OK);
+	}
 
 	/**
 	 * Retrieve all jobs of an order
@@ -796,6 +937,18 @@ public class GUIOrderController extends GUIBaseController {
 		logger.trace(">>>>MODEL" + model.toString());
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
+	}
+	
+	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
+		List<RestParameter> newList = new ArrayList<RestParameter>();
+		if (list!= null) {
+			for (RestParameter p : list) {
+				if (p != null) {
+					newList.add(p);
+				}
+			}
+		}
+		return newList;
 	}
 
 	/**
