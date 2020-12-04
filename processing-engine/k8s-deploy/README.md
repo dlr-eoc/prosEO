@@ -57,7 +57,10 @@ Creating a new Cluster
    cluster to `kubespray/inventory/<clustername>` and adds a few
    configuration files.
 1. Change to the new cluster directory.
-1. Create SSH keys for this cluster:
+
+TODO Terraform provisioning needs to be done first??
+
+1. Create SSH keys for this cluster (within the deployment container, directory `kubespray/inventory/<clustername>`):
    ```bash
    $ ../../../scripts/ssh_config.sh
    ```

@@ -85,6 +85,8 @@ shell within it.
 
 - Docker engine running at your control host
 - unrestricted internet access
+- Kubespray Git submodule in the k8s-deploy directory:
+  `git submodule add https://github.com/kubernetes-sigs/kubespray.git kubespray/`
 
 ### Upgrading
 
@@ -118,5 +120,5 @@ available:
 $ terraform --version
 $ ansible --version
 $ openstack --version
-$ kubectl
+$ kubectl version
 ```

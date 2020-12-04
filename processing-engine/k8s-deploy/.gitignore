@@ -10,3 +10,4 @@ gospace/
 
 # Temporary files
 .*.sw*
+/main.yml

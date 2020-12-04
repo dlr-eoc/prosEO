@@ -22,14 +22,21 @@ its job. The following steps assume you're in your cluster directory, e.g.
    ```bash
    $ ln -s ../../contrib/terraform/openstack/hosts
    ```
-1. Copy the OpenStack template to the autoenv configuration:
+2. Copy the OpenStack template to the autoenv configuration:
    ```bash
-   $ cp ../../templates/terraform_ostack.template config/terraform_ostack.sh
+   $ cp ../../../templates/terraform_ostack.template config/terraform_ostack.sh
    ```
-1. Modify the configuration to include your username, password, etc.
-1. Create your `cluster.tfvars` configuration file. This is outside of the scope
+3. Modify the configuration to include your username, password, etc. Provider-specific information on how to configure
+   Terraform for the Open Telekom Cloud (OTC) can be found on the
+   [Terraform website](https://registry.terraform.io/providers/opentelekomcloud/opentelekomcloud/latest/docs).
+
+4. Create your `cluster.tfvars` configuration file. This is outside of the scope
    of this guide. See [the variables file](https://github.com/kubernetes-sigs/kubespray/contrib/terraform/openstack/variables.tf)
-   for some information on what configuration varaibles exist.
+   for some information on what configuration variables exist.
+   
+The following steps need to be performed from inside the deployment environment
+(e. g. the Docker "proseo-k8s-deployer" container).
+   
 1. Optionally upgrade kubespray's openstack configuration. You will know if
    you need to do this when the next step fails. In fact, the next step will
    output the *exact* commands to use, so treat the following as an example
@@ -37,17 +44,19 @@ its job. The following steps assume you're in your cluster directory, e.g.
    ```bash
    $ echo yes | terraform 0.13upgrade ../../contrib/terraform/openstack
    ```
-1. Using kubespray's openstack configuration combined with the above
+2. Using kubespray's openstack configuration combined with the above
    configuration file, run:
    ```bash
    $ terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
-1. You now have a `.terraform` directory that holds terraform's plugins required
+3. You now have a `.terraform` directory that holds terraform's plugins required
    for this cluster. Now apply this configuration:
    ```bash
    $ terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
-1. Check your configuration with:
+   (You may wish to run `terraform plan` instead of `terraform apply` first to check
+   the expected outcome of the configuration run.)
+4. Check your configuration with:
    ```bash
    $ ./hosts --hostfile
    ```

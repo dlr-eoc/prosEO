@@ -41,7 +41,7 @@ mv "${SSH_HOSTFILE_CACHE}.new" "${SSH_HOSTFILE_CACHE}"
 
 if [ ! -f "${SSH_KEY_FILE}" ] ; then
   echo "Generating SSH key..."
-  ssh-keygen -t "${SSH_KEY_TYPE}" -f "${SSH_KEY_NAME}"
+  ssh-keygen -t "${SSH_KEY_TYPE}" -f "${SSH_KEY_FILE}"
   echo "done."
 fi
 
