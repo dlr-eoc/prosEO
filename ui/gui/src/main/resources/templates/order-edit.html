@@ -37,6 +37,7 @@
                 th:text="${missioncode}">mission</span></a></li>
           <li class="p-breadcrumb-item"><a class="bread-link" href="/order-show"><span
                 th:text="#{order}">order</span></a></li>
+          <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-action" th:text="#{edit}"></span></li>
           <li class="p-breadcrumb-item" aria-current="page"><span id="breadcrumb-order-name"></span></li>
         </ul>
         <div th:replace="fragments/navbar.html :: navbarRight"></div>
@@ -65,7 +66,7 @@
                 th:text="#{name}"></p>
             </div>
             <div class="col-2 pl-lg-0"><input type="text" class="form-control"
-                  id="identifier" name="identifier" required th:value="${ord?.identifier}">
+                  id="identifier" name="identifier" placeholder="Name" required th:value="${ord?.identifier}">
             </div>
             <div class="col-2 pr-lg-0">
               <p class="input-group-text word-wrap"
@@ -125,8 +126,12 @@
                 <input class="form-control" id="sliceOverlap"
                   name="sliceOverlap" type="number" min="0" th:value="${ord?.sliceOverlap}">
                 <div class="input-group-append">
-                  <span class="input-group-text">s</span>
-                </div>
+                      <select id="sliceOverlapMeasurement" th:data-oldmeasure="s" class="custom-select">
+                        <option selected="true">s</option>
+                        <option>min</option>
+                        <option>h</option>
+                      </select>
+                    </div>
               </div>
             </div>
             <div class="col-4">
@@ -166,7 +171,7 @@
 											<p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
 										</div>
 										<input class="form-control" th:id="'orbitNumberTo-'+${iterstat.index}"
-											data-name="orbitNumberTo" type="number" min="0" th:value="${orbit?.orbitNumberTo}">
+											data-name="orbitNumberTo" type="number" min="1" th:value="${orbit?.orbitNumberTo}">
 									</div>
                 </div>
                 <div class="col-1">
@@ -215,7 +220,7 @@
                       <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
                     </div>
                     <input class="form-control" id="orbitNumberTo-0"
-                      data-name="orbitNumberTo" type="number" min="0" value="1">
+                      data-name="orbitNumberTo" type="number" min="1" value="1">
                   </div>
                 </div>
                 <div class="col-1">
@@ -263,7 +268,7 @@
                       <p class="input-group-text word-wrap" th:text="#{orbitto}"></p>
                     </div>
                     <input class="form-control" id="orbitNumberTo-x"
-                      data-name="orbitNumberTo" type="number" min="0" value="1">
+                      data-name="orbitNumberTo" type="number" min="1" value="1">
                   </div>
                 </div>
                 <div class="col-1">
@@ -285,17 +290,17 @@
           <div class="row filtercontent" id="TIME_SLICE">
             <div class="col-12">
               <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1">
+              <div class="row py-lg-1" name="slicingrow">
                 <div class="col-4"></div>
                 <div class="col-3">
                   <div class="input-group">
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
                     </div>
-                    <input type="text" class="form-control" id="startTime"
+                    <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
                       title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
-                      name="startTime" th:value="${ord?.startTime}">
+                      name="startTime" data-type="TIME" th:value="${ord?.startTime}">
                   </div>
                 </div>
                 <div class="col-3">
@@ -303,10 +308,10 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
                     </div>
-                    <input type="text" class="form-control" id="stopTime"
+                    <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
                       title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
-                      name="stopTime" th:value="${ord?.stopTime}">
+                      name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
                   </div>
                 </div>
                 <div class="col-2">
@@ -315,9 +320,13 @@
                       <p class="input-group-text word-wrap" th:text="#{duration}"></p>
                     </div>
                     <input class="form-control" id="sliceDuration"
-                      name="sliceDuration" type="number" min="1"  th:value="${ord?.sliceDuration}">
+                      name="sliceDuration" type="number" min="1"  th:value="(${ord?.sliceDuration}==null or ${ord?.sliceDuration}==null)?'1':${ord?.sliceDuration}">
 										<div class="input-group-append">
-											<span class="input-group-text">s</span>
+											<select id="sliceDurationMeasurement" th:data-oldmeasure="s" class="custom-select">
+                        <option selected="true">s</option>
+                        <option>min</option>
+                        <option>h</option>
+											</select>
 										</div>
 									</div>
                 </div>
@@ -328,17 +337,17 @@
           <div class="row filtercontent" id="CALENDAR_DAY">
             <div class="col-12">
               <!-- Nested rows to hold slicing data -->
-              <div class="row py-lg-1">
+              <div class="row py-lg-1" name="slicingrow">
                 <div class="col-4"></div>
                 <div class="col-3">
                   <div class="input-group">
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
                     </div>
-                    <input type="text" class="form-control" id="start-date"
+                    <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
                       title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
-                      name="startTime" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
+                      name="startTime" data-type="DAY" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
                   </div>
                 </div>
                 <div class="col-3">
@@ -346,10 +355,10 @@
                     <div class="input-group-prepend">
                       <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
                     </div>
-                    <input type="text" class="form-control" id="stop-date"
+                    <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])$"
                       title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
-                      name="stopTime" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
+                      name="stopTime" data-type="DAY" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 10)}">
                   </div>
                 </div>
                 <div class="col-2">
@@ -429,10 +438,10 @@
 								</div>
 							</div>
 								<div th:each="ifilt,iterCls : ${ord?.inputFilters}"
-									name="InClassParameters">
+									name="InClassParameters" data-name="parameterclass">
 									<div th:each="fcond,iterStat : ${ifilt?.filterConditions}">
 										<div th:if="${iterStat.first} == true"
-											class="row pt-lg-2 pb-lg-0" name="InClassParameter"
+											class="row pt-lg-2 pb-lg-0" name="InClassParameter" data-name="parameterrow"
 											th:data-index="${iterStat.index}"
 											th:data-clsindex="${iterCls.index}">
 											<div class="col-1"></div>
@@ -480,7 +489,7 @@
 													<div class="input-group-prepend">
 														<p class="input-group-text word-wrap" th:text="#{value}"></p>
 													</div>
-													<input type="text" class="form-control" id="parameterValue"
+													<input type="text" class="form-control" 
 														data-name="parameterValue"
 														th:value="${fcond?.parameterValue}">
 												</div>
@@ -502,7 +511,7 @@
 										</div>
 										<div th:if="${iterStat.first} == false" class="row py-lg-0"
 											th:data-index="${iterStat.index}"
-											th:data-clsindex="${iterCls.index}" name="InClassParameter">
+											th:data-clsindex="${iterCls.index}" name="InClassParameter" data-name="parameterrow"> 
 											<div class="col-4"></div>
 											<div class="col-2">
 												<div class="input-group">
@@ -530,7 +539,7 @@
 													<div class="input-group-prepend">
 														<p class="input-group-text word-wrap" th:text="#{value}"></p>
 													</div>
-													<input type="text" class="form-control" id="parameterValue"
+													<input type="text" class="form-control" 
 														data-name="parameterValue"
 														th:value="${fcond?.parameterValue}">
 												</div>
@@ -572,9 +581,9 @@
                   </div>
                 </div>
               </div>
-              <div th:each="ifilt,iterCls : ${ord?.classOutputParameters}" name="OutClassParameters" id="OutClassParameters">
+              <div th:each="ifilt,iterCls : ${ord?.classOutputParameters}" name="OutClassParameters" id="OutClassParameters" data-name="parameterclass">
                 <div th:each="fcond,iterStat : ${ifilt?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" data-name="classOutputParameters" name="OutClassParameter" 
+                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0"  data-name="parameterrow" name="OutClassParameter" 
                        th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
                     <div class="col-1"></div>
                     <div class="col-3">
@@ -625,7 +634,7 @@
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
-                        <input type="text" class="form-control" id="parameterValue"
+                        <input type="text" class="form-control" 
                           data-name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
@@ -643,7 +652,7 @@
                       </div>
                     </div>
                   </div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="OutClassParameter"  data-name="classOutputParameters"
+                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="OutClassParameter" data-name="parameterrow"
                        th:data-index="${iterStat.index}" th:data-clsindex="${iterCls.index}">
                     <div class="col-4">
                     </div>
@@ -676,7 +685,7 @@
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
-                        <input type="text" class="form-control" id="parameterValue"
+                        <input type="text" class="form-control" 
                           data-name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
@@ -715,9 +724,10 @@
                   </div>
                 </div>
               </div>
-              <div name="outputParameters[]" id="OutAllClassParameter">
+              <div name="outputParameters[]" id="OutAllClassParameter" data-name="parameterclass">
                 <div th:each="fcond,iterStat : ${ord?.outputParameters}">
-                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}">
+                  <div th:if="${iterStat.first} == true" class="row pt-lg-2 pb-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}"
+                   data-name="parameterrow">
                     <div class="col-1"></div>
                     <div class="col-3">
                       <div class="input-group">
@@ -761,7 +771,7 @@
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
-                        <input type="text" class="form-control" id="parameterValue"
+                        <input type="text" class="form-control" 
                           data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
@@ -779,7 +789,8 @@
 											</div>
 										</div>
 									</div>
-                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}">
+                  <div th:if="${iterStat.first} == false" class="row py-lg-0" name="ParameterAll"  th:data-index="${iterStat.index}"  
+                    data-name="parameterrow">
                     <div class="col-4">
                     </div>
                     <div class="col-2">
@@ -811,7 +822,7 @@
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
-                        <input type="text" class="form-control" id="parameterValue"
+                        <input type="text" class="form-control" 
                           data-name="parameterValue" name="parameterValue" th:value="${fcond?.parameterValue}">
                       </div>
                     </div>
@@ -836,8 +847,8 @@
         <input id="submitButton" class="btn btn-primary" type="submit" th:value="#{submit}"></input>
       </form>
           <!-- Template for all class parameter -->
-              <div class="filtercontent" id="OutAllClassParameterTemplate">
-                  <div class="row pt-lg-2 pb-lg-0" name="ParameterAll" data-index="0">
+              <div class="filtercontent" id="OutAllClassParameterTemplate" data-name="parameterclass">
+                  <div class="row pt-lg-2 pb-lg-0" name="ParameterAll" data-index="0" data-name="parameterrow">
                     <div class="col-1"></div>
                     <div class="col-3">
                       <div class="input-group">
@@ -881,7 +892,7 @@
                         <div class="input-group-prepend">
                           <p class="input-group-text word-wrap" th:text="#{value}"></p>
                         </div>
-                        <input type="text" class="form-control" id="parameterValue"
+                        <input type="text" class="form-control" 
                           name="parameterValue" data-name="parameterValue" value="">
                       </div>
                     </div>
@@ -901,9 +912,9 @@
                   </div>
               </div>
           <!-- Template for parameter row with class select -->
-					<div class="filtercontent" name="InClassParameters"
+					<div class="filtercontent" name="InClassParameters" data-name="parameterclass"
 						id="paramClassTemplate">
-						<div class="row pt-lg-2 pb-lg-0" name="allOutParams">
+						<div class="row pt-lg-2 pb-lg-0" name="allOutParams" data-name="parameterrow">
 							<div class="col-1"></div>
 							<div class="col-3">
 								<div class="input-group">
@@ -950,7 +961,7 @@
 									<div class="input-group-prepend">
 										<p class="input-group-text word-wrap" th:text="#{value}"></p>
 									</div>
-									<input type="text" class="form-control" id="parameterValue"
+									<input type="text" class="form-control" 
 										name="parameterValue" data-name="parameterValue" th:value="${fcond?.parameterValue}">
 								</div>
 							</div>
@@ -967,7 +978,7 @@
 					</div>
 					<!-- Template for parameter row without class select -->
 					<div class="row py-lg-0 filtercontent" name="allOutParams"
-						id="paramTemplate">
+						id="paramTemplate" data-name="parameterrow">
 						<div class="col-4"></div>
 						<div class="col-2">
 							<div class="input-group">
@@ -997,7 +1008,7 @@
 								<div class="input-group-prepend">
 									<p class="input-group-text word-wrap" th:text="#{value}"></p>
 								</div>
-								<input type="text" class="form-control" id="parameterValue"
+								<input type="text" class="form-control" 
 									name="parameterValue" data-name="parameterValue" th:value="${fcond?.parameterValue}">
 							</div>
 						</div>
@@ -1407,20 +1418,21 @@ function enableClasses() {
 
 function addEventHandler() {
   document.getElementById('slicingType').addEventListener('change', enableSlicingData);
-  var elems = $(document).find("select[data-name='inProductClass']");
-  if (elems != null) {
-    for (var i = 0; i < elems.length; i++) {
-      elems[i].addEventListener('click', enableClasses);
-    }
-  }
-  var elems1 = $(document).find("select[data-name='outProductClass']");
-  if (elems1 != null) {
-    for (var i = 0; i < elems1.length; i++) {
-      elems1[i].addEventListener('click', enableClasses);
-    }
-  }
+  $(document).find("select[data-name='inProductClass']").click(enableClasses);
+  $(document).find("select[data-name='outProductClass']").click(enableClasses);
+  $('#identifier').change(updateTitle);
+  $("input[data-name='orbitNumberFrom']").change(checkOrbitNumberFrom);
+  $("input[data-name='orbitNumberTo']").change(checkOrbitNumberTo);
+  $('#sliceDurationMeasurement').change(sliceDurationMeasure);
+  $('#sliceOverlapMeasurement').change(sliceOverlapMeasure);
+  $("input[name='startTime']").change(checkStartTime);
+  $("input[name='stopTime']").change(checkStopTime);
+  $("select[data-name='parameterType']").change(handleParamValue);
+  $("input[data-name='key']").change(ckeckParameterKey);
+  
 };
 
+// prepare for serialisation 
 function countAndSetNames() {
 	  
 	  var orbits = $('#editorder').find("div[data-name='orbitData']");
@@ -1483,155 +1495,452 @@ function countAndSetNames() {
           
         }
     }
-    
+    // set the value of duration inputs to measurement "s"
+
+    $('#sliceDurationMeasurement').val('s');
+    durationMeasure($('#sliceDurationMeasurement'), '#sliceDuration', 'data-oldmeasure', 1);
+    $('#sliceOverlapMeasurement').val('s');
+    durationMeasure($('#sliceOverlapMeasurement'), '#sliceOverlap', 'data-oldmeasure', 0);
+    normDate($("input[name='startTime']"), false);
+    normDate($("input[name='stopTime']"), true);
 	  
 };
 
-function retrieveData(id) {
-  $("#submitButton").prop("disabled", true);
-
-  $('#output').text("");
-  showLoader();
-  var tableRows = $("orderTable").rows;
-  if (tableRows > 1 && tableRows != null) {
-    $("orderTable > tbody").empty();
-  }
-  var url = "/order-edit/get"
-  var divider = "?";
-
-  if (id != null) {
-    url = url + divider + "id=" + id.toString().trim();
-    divider = "&";
-
-    $.ajax({
-      url : url,
-      method : "GET",
-      success : function(res) {
-        $("#orderedit").html(res);
-        var cp = (getURLParam('cp') == 'true');
-        var on = document.getElementById('identifier');
-        if (cp) {
-        	// remove id, uuid, version
-        	$('#id').val(0);
-          $('#version').val(0);
-          $('#uuid').val("");
-          $('#orderState').val("INITIAL");
-          on.value = on.value + "_Copy";
-          history.replaceState(history.state, null, location.origin + location.pathname);
-          // removeURLKey('cp');
-          // removeURLKey('id');
+function normDate(elem, up) {
+  for (var i = 0; i < elem.length; i++) {
+    var type = $(elem[i]).attr('data-type');
+    var val = $(elem[i]).val();
+    if (type == 'DAY') {
+        if (up) {
+          val = val + "T23:59:59";
+        } else {
+          val = val + "T00:00:00";
         }
-        var br = document
-            .getElementById('breadcrumb-order-name');
-        if (on != null && br != null) {
-          br.textContent = on.value;
-          document.title = on.value + " | "
-              + "[[#{proseo}]]";
-        }
-        feather.replace();
-        $('#selinclasses').multiselect({
-          buttonWidth : '99%',
-          enableFiltering : true,
-          numberDisplayed : 0,
-          maxHeight : 400,
-          enableCaseInsensitiveFiltering : true,
-          nonSelectedText : ''
-        });
-        $('#seloutclasses').multiselect({
-          buttonWidth : '99%',
-          enableFiltering : true,
-          numberDisplayed : 0,
-          maxHeight : 400,
-          enableCaseInsensitiveFiltering : true,
-          nonSelectedText : ''
-        });
-        $('#selconfproc').multiselect({
-          buttonWidth : '99%',
-          enableFiltering : true,
-          numberDisplayed : 0,
-          maxHeight : 400,
-          enableCaseInsensitiveFiltering : true,
-          nonSelectedText : ''
-        });
-
-        $("#submitorder").click(function(){
-            //If the user clicks on the button, then submit
-            //the form.
-            $("#editorder").submit();
-        });
-        
-        $("#editorder").submit(function(event){
-          event.preventDefault(); //prevent default action 
-        	if (event.originalEvent.submitter.id == "submitButton") {
-        		$('#output').text("");
-        		showLoader();
-            $("#submitButton").prop("disabled", true);
-            countAndSetNames();
-            var post_url = $(this).attr("action"); //get form action url
-            var request_method = $(this).attr("method"); //get form GET/POST method
-            var form_data = $(this).serialize(); //Encode form elements for submission
-            var form = new FormData($(this)[0]);
-            var x = $(this).serializeJSON();
-            
-            $.ajax({
-              type: "POST",
-              contentType: 'application/json',
-              url : "/order-submit",
-              data: x,
-              processData: false,
-              dataType: "json",
-              cache: false,
-              timeout: 800000,
-              success: function (data) {
-
-                  $("#submitButton").prop("disabled", false);
-                  hideLoader();
-            	     var myId = getURLParam('id');
-            	     if (myId == null) {
-            	    	 myId = data.orderId;
-            	    	 addURLParam('id=' + myId)
-            	     }
-            	     if (myId != null) {
-            	       retrieveData(myId);
-            	     }
-
-              },
-              error: function (e) {
-
-                  $("#output").text(e.responseText);
-                  console.log("ERROR : ", e);
-                  $("#submitButton").prop("disabled", false);
-                  hideLoader();
-
-              }
-            });
+      } else if (type == 'MONTH') {
+          if (up) {
+            var x = new Date(Date.parse(val));
+            var y = x.setMonth(x.getMonth()+1) - 1000;
+            var z = new Date(y);
+            var pattern = getDatePattern('TIME');
+            val = z.toISOString().match(pattern)[0];
+          } else {
+            val = val + "-01T00:00:00";
           }
-        });
-        enableSlicingData();
-        addEventHandler();
-
-        $("#submitButton").prop("disabled", false);
-        hideLoader();
-      },
-      fail : function(err) {
-        console.log(err);
-        prop.innerHTML = "Fehler!" + err;
-        $("#submitButton").prop("disabled", false);
-        hideLoader();
+      } else if (type == 'YEAR') {
+          if (up) {
+              val = val + "-12-31T23:59:59";
+            } else {
+              val = val + "-01-01T00:00:00";
+            }
       }
-    });
+    $(elem[i]).val(val);
   }
-};
+}
 
-function confirm(event) {
-	alert("nix");
-    var form=$(this);
-    
-    var nix = form.serialize();
+function normDateVal(elem) {
+	  for (var i = 0; i < elem.length; i++) {
+	    var type = $(elem[i]).attr('data-type');
+	    var val = $(elem[i]).val();
+	    val = val.match(getDatePattern(type))[0];
+	    $(elem[i]).val(val);
+	  }
+	}
 
-    event.preventDefault();
-};
+function updateTitle() {
+	var title = $('#identifier').val();
+	$('#breadcrumb-order-name').text(title);
+	document.title = title + " | " + "[[#{proseo}]]";
+}
 
+function checkOrbitNumberFrom() {
+  var from = $(this);
+  var to = $('#orbitNumberTo-' + from[0].id.match(/[0-9]+/)[0]);
+  if (to.val() <= from.val()) {
+	  to.val(parseInt(from.val()) + 1);
+  }
+}
+function checkOrbitNumberTo() {
+	  var to = $(this);
+	  var from = $('#orbitNumberFrom-' + to[0].id.match(/[0-9]+/)[0]);
+	  if (to.val() < 1) {
+		  to.val(1);
+		  from.val(0);
+	  } else {
+	    if (to.val() >= from.val()) {
+	      from.val(parseInt(to.val()) - 1);
+	    }
+	  }
+	}
+	
+	function getDate(dateString) {
+		  // Add 'Z' for UTC date
+		  var dateNumber = Date.parse(dateString + 'Z');
+	    if (isNaN(dateNumber)) {
+	    	dateNumber = Date.parse(dateString);
+	    }
+		  if (isNaN(dateNumber)) {
+			  return null;			  
+		  } else {
+			  return new Date(dateNumber)
+		  }
+	}
+
+	  function getDatePattern(type) {
+	    var pattern = null;
+	        if (type == 'DAY') {
+	          pattern = /(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])/;
+	        } else if (type == 'MONTH') {
+	          pattern = /(\d{4})-(0[1-9]|1[012])/;
+	        } else if (type == 'YEAR') {
+	          pattern = /(\d{4})/;      
+	        } else {
+	          pattern = /(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])/;
+	        } 
+	        return pattern;
+	  }
+
+	    function getDeltaDatePlus(x, type, duration) {
+	        // add one second for type = TIME, else return x cause stop is the end of "type"
+	            if (type == 'TIME') {
+	              var delta = duration;
+	              if (delta == null) {
+	                delta = 1;
+	              }
+	              x.setSeconds(x.getSeconds() + delta);
+	              return x
+	            }  else {
+	              return x;
+	            } 
+	      }
+	    function getDeltaDateMinus(x, type, duration) {
+	        // add one second for type = TIME, else return x cause stop is the end of "type"
+	            if (type == 'TIME') {
+	            	var delta = duration;
+	            	if (delta == null) {
+	            		delta = 1;
+	            	}
+	              x.setSeconds(x.getSeconds() - delta);
+	              return x
+	            }  else {
+	              return x;
+	            } 
+	      }
+	
+	function checkStartTime() {
+		var startElem = $(this);
+		var type = startElem.attr('data-type');
+		var start = getDate(startElem.val());
+		if (start != null) {
+			startElem[0].setCustomValidity('');
+		  var stopElem = startElem.parents('div[name="slicingrow"]').find('input[name="stopTime"]');
+		  var duration = parseInt(startElem.parents('div[name="slicingrow"]').find('input[name="sliceDuration"]').val());
+		  if (isNaN(duration)) {
+			  duration = 0;
+		  } else {
+		    var measure = startElem.parents('div[name="slicingrow"]').find('select[id="sliceDurationMeasurement"]').val();
+	      duration = durationInSeconds(duration, measure);
+		  }
+			var stop = getDate(stopElem.val());
+			if (stop != null) {
+			  if ((type == "TIME" && stop.valueOf() <= (start.valueOf() + (duration * 1000))) || (type != "TIME" && stop < start)) {
+				  var pattern = getDatePattern(type);
+				  stop = getDeltaDatePlus(start, type, duration);
+				  if (stop != null) {
+				    stopElem.val(stop.toISOString().match(pattern)[0]);
+				  }
+			  }
+			}
+		} else {
+      startElem[0].setCustomValidity('Invalid Date');
+		}
+	}
+
+	  function checkStopTime() {
+	    var stopElem = $(this);
+	    var type = stopElem.attr('data-type');
+	    var stop = getDate(stopElem.val());
+	    if (stop != null) {
+	    	stopElem[0].setCustomValidity('');
+	      var startElem = stopElem.parents('div[name="slicingrow"]').find('input[name="startTime"]');
+        var duration = parseInt(startElem.parents('div[name="slicingrow"]').find('input[name="sliceDuration"]').val());
+        if (isNaN(duration)) {
+            duration = 0;
+          } else {
+            var measure = stopElem.parents('div[name="slicingrow"]').find('select[id="sliceDurationMeasurement"]').val();
+            duration = durationInSeconds(duration, measure);
+          }
+	      var start = getDate(startElem.val());
+	      if (start != null) {
+	        if ((type == "TIME" && stop.valueOf() <= (start.valueOf() + (duration * 1000))) || (type != "TIME" && stop.valueOf() < start.valueOf())) {
+	          var pattern = getDatePattern(type);
+	          start = getDeltaDateMinus(stop, type, duration);
+	          if (start != null) {
+	            startElem.val(start.toISOString().match(pattern)[0]);
+	          }
+	        }
+	      }
+	    } else {
+	    	stopElem[0].setCustomValidity('Invalid Date');
+	    }
+	  }
+	  
+function durationInSeconds(duration, measure) {
+	if (measure == "min") {
+		return duration * 60;
+	} else if (measure == "h") {
+		return duration * 3600;
+	} else {
+		return duration;
+	}
+}
+
+function sliceDurationMeasure() {
+	durationMeasure($(this), '#sliceDuration', 'data-oldmeasure', 1);
+}
+function sliceOverlapMeasure() {
+	  durationMeasure($(this), '#sliceOverlap', 'data-oldmeasure', 0);
+}
+	function durationMeasure(elem, inId, oldAttr, defaultVal) {
+		var input = $(inId);
+		var val = parseInt(input.val());
+		var newVal = val;
+		var oldmeasure = elem.attr(oldAttr);
+		var newmeasure = elem.val();
+		// check the conversion
+		if (oldmeasure == 's') {
+			if (newmeasure == 'min') {
+				if (val < 60) {
+					newVal = defaultVal;
+				} else {
+					newVal = Math.round(val / 60);
+				}
+			} else if (newmeasure == 'h') {
+				if (val < 3600) {
+					newVal = defaultVal;
+				} else {
+					newVal = Math.round(val / 3600);
+				}
+			}
+		} else if (oldmeasure == 'min') {
+			if (newmeasure == 'h') {
+				if (val < 60) {
+					newVal = defaultVal;
+				} else {
+					newVal = Math.round(val / 60);
+				}
+			} else if (newmeasure == 's') {
+				newVal = val * 60;
+			}
+		} else {
+			if (newmeasure == 'min') {
+				newVal = val * 60;
+			} else if (newmeasure == 's') {
+				newVal = val * 3600;
+			}
+		}
+		elem.attr(oldAttr, newmeasure);
+		input.val(newVal);
+	}
+
+function ckeckParameterKey() {
+	var key = $(this);
+	var keys = $(this).parents('div[data-name="parameterclass"]').find('input[data-name="key"]');
+	var error = false;
+	for (var i = 0; i < keys.length; i++) {
+		if (key[0] != keys[i] && key.val() == $(keys[i]).val()) {
+			// duplicate key, show error
+			key[0].setCustomValidity('Duplicate key');
+			error = true;
+			break;
+		}
+	}
+	if (!error) {
+		key[0].setCustomValidity('');
+	}
+}
+	
+function handleParamValue() {
+	setValuePattern($(this).parents("div[data-name='parameterrow']"));
+}
+	
+function setValuePattern(aRow) {
+	var rows = aRow;
+	if (rows == null || rows.length == 0) {
+		rows = $("div[data-name='parameterrow']");	
+	}
+	for (var i = 0; i < rows.length; i++) {
+		var type = $(rows[i]).find("select[data-name='parameterType']").val();
+		var valueIn = $(rows[i]).find("input[data-name='parameterValue']");
+		if (type == 'BOOLEAN') {
+			$(valueIn).attr('pattern', "true|false");
+			$(valueIn).attr('required', 'true');
+		} else if (type == 'INTEGER') {
+			$(valueIn).attr('pattern', "[+-]?[0-9]+");
+		  $(valueIn).attr('required', 'true');
+		} else if (type == 'DOUBLE') {
+			$(valueIn).attr('pattern', "[\\x00-\\x20]*[+-]?(NaN|Infinity|(((((0[xX][0-9a-fA-F]+(\\.)?)|(0[xX][0-9a-fA-F]+(\\.)[0-9a-fA-F]+))[pP][+-]?[0-9]+)|([0-9]+(\\.)?([0-9]*)([eE][+-]?[0-9]+)?)|(\\.([0-9]+)([eE][+-]?[0-9]+)?))[fFdD]?))[\\x00-\\x20]*");
+		  $(valueIn).attr('required', 'true');
+		} else {
+			$(valueIn).attr('pattern', ".*");
+		  $(valueIn).removeAttr('required');
+		}
+	}
+}
+
+	function retrieveData(id) {
+		$("#submitButton").prop("disabled", true);
+
+		$('#output').text("");
+		showLoader();
+		var tableRows = $("orderTable").rows;
+		if (tableRows > 1 && tableRows != null) {
+			$("orderTable > tbody").empty();
+		}
+		var url = "/order-edit/get"
+		var divider = "?";
+
+		if (id != null) {
+			url = url + divider + "id=" + id.toString().trim();
+			divider = "&";
+
+			$
+					.ajax({
+						url : url,
+						method : "GET",
+						success : function(res) {
+							$("#orderedit").html(res);
+							var cp = (getURLParam('cp') == 'true');
+							var on = document.getElementById('identifier');
+							if (cp) {
+								// remove id, uuid, version
+								$('#id').val(0);
+								$('#version').val(0);
+								$('#uuid').val("");
+								$('#orderState').val("INITIAL");
+								on.value = on.value + "_Copy";
+								history.replaceState(history.state, null,
+										location.origin + location.pathname);
+								// removeURLKey('cp');
+								// removeURLKey('id');
+							}
+							updateTitle();
+							feather.replace();
+							setValuePattern();
+							$('#selinclasses').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+							$('#seloutclasses').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+							$('#selconfproc').multiselect({
+								buttonWidth : '99%',
+								enableFiltering : true,
+								numberDisplayed : 0,
+								maxHeight : 400,
+								enableCaseInsensitiveFiltering : true,
+								nonSelectedText : ''
+							});
+
+							$("#submitorder").click(function() {
+								//If the user clicks on the button, then submit
+								//the form.
+								$("#editorder").submit();
+							});
+
+							$("#editorder")
+									.submit(
+											function(event) {
+												event.preventDefault(); //prevent default action 
+												if (event.originalEvent.submitter.id == "submitButton") {
+													$('#output').text("");
+													showLoader();
+													$("#submitButton").prop("disabled", true);
+													countAndSetNames();
+													var post_url = $(this).attr("action"); //get form action url
+													var request_method = $(this).attr("method"); //get form GET/POST method
+													var form_data = $(this).serialize(); //Encode form elements for submission
+													var form = new FormData($(this)[0]);
+													var x = $(this).serializeJSON();
+													$.ajax({
+																type : "POST",
+																contentType : 'application/json',
+																url : "/order-submit",
+																data : x,
+																processData : false,
+																dataType : "json",
+																cache : false,
+																timeout : 800000,
+																success : function(data) {
+																	$("#submitButton").prop("disabled", false);
+									                normDateVal($("input[name='startTime']"));
+									                normDateVal($("input[name='stopTime']"));
+																	hideLoader();
+																
+																	if (!(typeof data === "undefined") && (data.status == "OK" || data.status == "CREATED")) {
+																		var myId = getURLParam('id');
+																		if (myId == null) {
+																			myId = data.orderId;
+																			addURLParam('id=' + myId)
+																		}
+																		if (myId != null) {
+																			retrieveData(myId);
+																		}
+																	} else {
+																		$("#output").text(data.status + ": " + data.message);
+																	}
+
+																},
+																error : function(e) {
+																	$("#submitButton").prop("disabled", false);
+														      updateTitle();
+														      normDateVal($("input[name='startTime']"));
+														      normDateVal($("input[name='stopTime']"));
+																	hideLoader();
+																	if (e.state() == 'rejected') {
+																		// location.href = "/customlogin";
+																		$("#output").text(e.responseText);
+																	} else {
+																		$("#output").text(e.responseText);
+																		console.log("ERROR : ", e);
+																	}
+																}
+															});
+												}
+											});
+							enableSlicingData();
+							addEventHandler();
+
+							$("#submitButton").prop("disabled", false);
+							hideLoader();
+						},
+						fail : function(err) {
+							console.log(err);
+							prop.innerHTML = "Fehler!" + err;
+							$("#submitButton").prop("disabled", false);
+							hideLoader();
+						}
+					});
+		}
+	};
+
+	function confirm(event) {
+		alert("nix");
+		var form = $(this);
+
+		var nix = form.serialize();
+
+		event.preventDefault();
+	};
 </script>
 
 <script>

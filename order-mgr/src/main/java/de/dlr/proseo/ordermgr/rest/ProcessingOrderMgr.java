@@ -489,8 +489,8 @@ public class ProcessingOrderMgr {
 						modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString()));
 			}
 		}
-		if (null == modelOrder.getExecutionTime() && null != changedOrder.getExecutionTime()
-				|| null != modelOrder.getExecutionTime() && !modelOrder.getOrderState().equals(changedOrder.getOrderState())) {
+		if ((null == modelOrder.getExecutionTime() && null != changedOrder.getExecutionTime())
+				|| null != modelOrder.getExecutionTime() && !modelOrder.getExecutionTime().equals(changedOrder.getExecutionTime())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setExecutionTime(changedOrder.getExecutionTime());

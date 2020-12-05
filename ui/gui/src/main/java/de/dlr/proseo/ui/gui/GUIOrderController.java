@@ -75,6 +75,43 @@ public class GUIOrderController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIOrderController.class);
 	
+	/**
+	 * List with cached data
+	 */
+	private List<String> facilities = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> productclasses = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> configuredProcessors = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> fileClasses = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> processingModes = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> spaceCrafts = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> productiontypes = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> slicingtypes = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> parametertypes = null;
+			
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -266,7 +303,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("facilities")
     public List<String> facilities() {
-    	List<String> facilities = new ArrayList<String>();   
+    	if (facilities != null && !facilities.isEmpty()) return facilities;
+    	
+    	facilities = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -314,7 +353,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("productclasses")
     public List<String> productclasses() {
-    	List<String> productclasses = new ArrayList<String>();   
+    	if (productclasses != null && !productclasses.isEmpty()) return productclasses;
+    	
+    	productclasses = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -361,7 +402,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("configuredprocessors")
     public List<String> configuredProcessors() {
-    	List<String> configuredProcessors = new ArrayList<String>();   
+    	if (configuredProcessors != null && !configuredProcessors.isEmpty()) return configuredProcessors;
+    	
+    	configuredProcessors = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -408,7 +451,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("fileclasses")
     public List<String> fileClasses() {
-    	List<String> fileClasses = new ArrayList<String>();   
+    	if (fileClasses != null && !fileClasses.isEmpty()) return fileClasses;
+    	
+    	fileClasses = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -455,7 +500,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("processingmodes")
     public List<String> processingModes() {
-    	List<String> processingModes = new ArrayList<String>();   
+    	if (processingModes != null && !processingModes.isEmpty()) return processingModes;
+    	
+    	processingModes = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -502,7 +549,9 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("spacecrafts")
     public List<String> spaceCrafts() {
-    	List<String> spaceCrafts = new ArrayList<String>();   
+    	if (spaceCrafts != null && !spaceCrafts.isEmpty()) return spaceCrafts;
+    	
+    	spaceCrafts = new ArrayList<String>();   
 		List<?> resultList = null;
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -551,13 +600,15 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("productiontypes")
     public List<String> productiontypes() {
-    	List<String> values = new ArrayList<String>(); 
+    	if (productiontypes != null && !productiontypes.isEmpty()) return productiontypes;
+    	
+    	productiontypes = new ArrayList<String>(); 
     	for (ProductionType value: ProductionType.values()) {
-    		values.add(value.toString());
+    		productiontypes.add(value.toString());
     	}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		values.sort(c);
-        return values;
+		productiontypes.sort(c);
+        return productiontypes;
     }
 
     /**
@@ -567,13 +618,15 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("slicingtypes")
     public List<String> slicingtypes() {
-    	List<String> values = new ArrayList<String>(); 
+    	if (slicingtypes != null && !slicingtypes.isEmpty()) return slicingtypes;
+    	
+    	slicingtypes = new ArrayList<String>(); 
     	for (OrderSlicingType value: OrderSlicingType.values()) {
-    		values.add(value.toString());
+    		slicingtypes.add(value.toString());
     	}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		values.sort(c);
-        return values;
+		slicingtypes.sort(c);
+        return slicingtypes;
     }
 
     /**
@@ -583,14 +636,17 @@ public class GUIOrderController extends GUIBaseController {
      */
     @ModelAttribute("parametertypes")
     public List<String> parametertypes() {
-    	List<String> values = new ArrayList<String>(); 
+    	if (parametertypes != null && !parametertypes.isEmpty()) return parametertypes;
+    	
+    	parametertypes = new ArrayList<String>(); 
     	for (ParameterType value: ParameterType.values()) {
-    		values.add(value.toString());
+    		parametertypes.add(value.toString());
     	}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		values.sort(c);
-        return values;
+		parametertypes.sort(c);
+        return parametertypes;
     }
+    
     
 	/**
 	 * Retrieve a single order
@@ -745,7 +801,7 @@ public class GUIOrderController extends GUIBaseController {
 						String message = null;
 						switch (e.getRawStatusCode()) {
 						case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
-							return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.NOT_MODIFIED, "0", uiMsg(MSG_ID_NOT_MODIFIED)), errorHeaders(uiMsg(MSG_ID_NOT_MODIFIED)), HttpStatus.NOT_MODIFIED);
+							return new ResponseEntity<OrderInfo>(new OrderInfo(HttpStatus.NOT_MODIFIED, "0", uiMsg(MSG_ID_NOT_MODIFIED)), HttpStatus.OK);
 						case org.apache.http.HttpStatus.SC_NOT_FOUND:
 							message = uiMsg(MSG_ID_ORDER_NOT_FOUND, updateOrder.getIdentifier());
 							break;

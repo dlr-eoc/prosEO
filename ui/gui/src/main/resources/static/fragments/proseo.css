@@ -126,12 +126,12 @@ dropdown-item {
   display: -ms-flexbox;
   display: flex;
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .p-breadcrumb-item + .p-breadcrumb-item {
   padding-left: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .p-breadcrumb-item + .p-breadcrumb-item::before {
@@ -143,12 +143,12 @@ dropdown-item {
 
 .p-breadcrumb-item.active {
   color: #007bff;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .bread-link {
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .bread-link:hover, .bread-link:focus {
