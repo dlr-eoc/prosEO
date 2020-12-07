@@ -49,14 +49,22 @@ The following steps need to be performed from inside the deployment environment
    ```bash
    $ terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
-3. You now have a `.terraform` directory that holds terraform's plugins required
+3. If pre-existing bastion IPs shall be used, import them from the cloud provider. To determine existing IPs and their IDs:
+   ```bash
+   $ openstack floating ip list
+   ```
+   Import the resource into terraform:
+   ```
+   terraform import -config=../../contrib/terraform/openstack 'module.ips.openstack_networking_floatingip_v2.bastion[0]' <floating IP id>
+   ```
+4. You now have a `.terraform` directory that holds terraform's plugins required
    for this cluster. Now apply this configuration:
    ```bash
    $ terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
    ```
    (You may wish to run `terraform plan` instead of `terraform apply` first to check
    the expected outcome of the configuration run.)
-4. Check your configuration with:
+5. Check your configuration with:
    ```bash
    $ ./hosts --hostfile
    ```

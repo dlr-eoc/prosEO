@@ -20,7 +20,7 @@ RUN yum -y install \
       python3-pip
 
 # Helpers
-RUN yum -y install openssh which unzip
+RUN yum -y install openssh openssh-clients which unzip
 
 # Setup Python environment
 RUN pip3 install pipenv

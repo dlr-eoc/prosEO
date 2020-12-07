@@ -20,7 +20,7 @@ RUN yum -y install \
       golang
       
 # Helpers
-RUN yum -y install openssh which
+RUN yum -y install openssh openssh-clients which
 
 # Setup Python environment
 RUN pip3 install pipenv

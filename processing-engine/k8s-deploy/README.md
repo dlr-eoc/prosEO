@@ -125,7 +125,7 @@ the bastion:
 
 ```bash
 # In cluster directory
-$ ansible-playbook -i hosts ../../../scripts/ansible/bastion-preinstall.yml
+$ ansible-playbook -i hosts --private-key ssh-keys/cluster-key ../../../scripts/ansible/bastion-preinstall.yml
 ```
 
 ### K8S Deployment
@@ -138,6 +138,8 @@ whether this works by running:
 # In cluster directory
 $ ansible -i hosts -m ping all
 ```
+If the connection cannot be established at the first attempt, check the `group_vars/no_floating.yml` file (e. g. correct
+bastion host IP?) and establish a tunneled connection manually first.
 
 We need to run some configuration on all the nodes first. This is a little
 specific to the operating system you're running on.
