@@ -71,5 +71,7 @@
     "processingMode": "OFFL",
     "hasFailedJobSteps": false,
     "jobStepStates": [ "INITIAL", "READY" ],
-    "percentComplete": 80
+    "percentCompleted": 80,
+    "percentFailed": 10,
+    "percentRunning": 5
 }

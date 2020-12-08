@@ -146,11 +146,18 @@
     }
 
 
-    function showLoader() {
+    function showLoaderO() {
       document.getElementById("loader").style.display = "block";
     }
-    function hideLoader() {
+    function hideLoaderO() {
         document.getElementById("loader").style.display = "none";
+    }
+
+    function showLoader() {
+    	$(".loading")[0].style.display = "block";
+    }
+    function hideLoader() {
+        $(".loading")[0].style.display = "none";
     }
     
 

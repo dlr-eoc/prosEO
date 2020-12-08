@@ -42,11 +42,23 @@ public interface JobStepRepository extends JpaRepository<JobStep, Long> {
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1")
 	public int countJobStepByOrderId(long id);
 
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState = 'COMPLETED'")
+	public int countJobStepCompletedByJobId(long id);
+	
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState = 'FAILED'")
 	public int countJobStepFailedByJobId(long id);
 	
 	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.id = ?1 AND  js.jobStepState = 'RUNNING'")
 	public int countJobStepRunningByJobId(long id);
+
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1 AND  js.jobStepState = 'COMPLETED'")
+	public int countJobStepCompletedByOrderId(long id);
+	
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1 AND  js.jobStepState = 'FAILED'")
+	public int countJobStepFailedByOrderId(long id);
+	
+	@Query("SELECT COUNT(*) FROM JobStep js WHERE js.job.processingOrder.id = ?1 AND  js.jobStepState = 'RUNNING'")
+	public int countJobStepRunningByOrderId(long id);
 
 	@Query("SELECT DISTINCT(js.jobStepState) FROM JobStep js WHERE js.job.processingOrder.id = ?1")
 	public List<String> findDistinctJobStepStatesByOrderId(long id);

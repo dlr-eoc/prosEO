@@ -443,10 +443,10 @@
                 popupContainer: '<div class="multiselect-container dropdown-menu"></div>',
                 filter: '<div class="multiselect-filter"><div class="input-group input-group-sm p-1"><div class="input-group-prepend"><i class="input-group-text fas fa-search"></i></div><input class="form-control multiselect-search" type="text" /></div></div>',
                 filterClearBtn: '<div class="input-group-append"><button class="multiselect-clear-filter input-group-text" type="button"><i class="fas fa-times"></i></button></div>',
-                option: '<button class="multiselect-option dropdown-item"></button>',
+                option: '<button type="button" class="multiselect-option dropdown-item"></button>',
                 divider: '<div class="dropdown-divider"></div>',
-                optionGroup: '<button class="multiselect-group dropdown-item"></button>',
-                resetButton: '<div class="multiselect-reset text-center p-2"><button class="btn btn-sm btn-block btn-outline-secondary"></button></div>'
+                optionGroup: '<button type="button" class="multiselect-group dropdown-item"></button>',
+                resetButton: '<div class="multiselect-reset text-center p-2"><button type="button" class="btn btn-sm btn-block btn-outline-secondary"></button></div>'
             }
         },
 

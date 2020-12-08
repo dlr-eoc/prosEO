@@ -197,13 +197,25 @@ public class OrderUtil {
 		
 		// Calculate the percentage of finished job steps
 
-		Long percentComplete = (long) 0;
+		Long percentCompleted = (long) 0;
+		Long percentFailed = (long) 0;
+		Long percentRunning = (long) 0;
 		Long jsCount = (long) RepositoryService.getJobStepRepository().countJobStepByOrderId(processingOrder.getId());
 		if (jsCount != null && jsCount > 0) {
-			Long jsCountNotFinished = (long) RepositoryService.getJobStepRepository().countJobStepNotFinishedByOrderId(processingOrder.getId());
-			percentComplete = 100 - (jsCountNotFinished * 100 / jsCount);
+			Long jsCountCompleted = (long) RepositoryService.getJobStepRepository().countJobStepCompletedByOrderId(processingOrder.getId());
+			percentCompleted = (jsCountCompleted * 100 / jsCount);
 		}
-		restOrder.setPercentComplete(percentComplete);
+		restOrder.setPercentCompleted(percentCompleted);
+		if (jsCount != null && jsCount > 0) {
+			Long jsCountFailed = (long) RepositoryService.getJobStepRepository().countJobStepFailedByOrderId(processingOrder.getId());
+			percentFailed = (jsCountFailed * 100 / jsCount);
+		}
+		restOrder.setPercentFailed(percentFailed);
+		if (jsCount != null && jsCount > 0) {
+			Long jsCountRunning = (long) RepositoryService.getJobStepRepository().countJobStepRunningByOrderId(processingOrder.getId());
+			percentRunning = (jsCountRunning * 100 / jsCount);
+		}
+		restOrder.setPercentRunning(percentRunning);
 		return restOrder;
 	}
 

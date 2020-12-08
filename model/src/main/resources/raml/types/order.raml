@@ -78,6 +78,12 @@
       jobStepStates?:
         type: string[]
         description: The different existing job step states of order
-      percentComplete?:
+      percentCompleted?:
         type: integer
-        description: Percentage of finished (completed or failed) job steps
+        description: Percentage of completed job steps
+      percentFailed?:
+        type: integer
+        description: Percentage of failed job steps
+      percentRunning?:
+        type: integer
+        description: Percentage of running job steps

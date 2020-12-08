@@ -16,7 +16,9 @@
   </head>
 
   <body>
-    <div style="display:none;" id="loader"></div>
+    <div style="display:none;" class="loading">
+      <div class="loader"></div>
+    </div>
     <nav id="proseo-nav"
       class="navbar bg-light fixed-top flex-md-nowrap p-0 shadow navbar-expand-md">
       <div class="container-fluid pl-0 pr-0">
@@ -121,10 +123,19 @@
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
                     <td>
-                      <div th:title="${ord?.percentComplete} + '%'" class="progress">
-                        <div class="progress-bar" role="progressbar" th:style="'width: ' + ${ord?.percentComplete} + '%;'" 
-                            th:aria-valuenow="${ord?.percentComplete}" aria-valuemin="0" aria-valuemax="100"
-                            th:text="${ord?.percentComplete} + '%'"></div>
+                      <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
+                        <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'" 
+                            th:aria-valuenow="${ord?.percentCompleted}" aria-valuemin="0" aria-valuemax="100"
+                            th:text="${ord?.percentCompleted} + '%'"
+                            th:title="${ord?.percentCompleted} + '% completed'"></div>
+                        <div class="progress-bar FAILED" role="progressbar" th:style="'width: ' + ${ord?.percentFailed} + '%;'" 
+                            th:aria-valuenow="${ord?.percentFailed}" aria-valuemin="0" aria-valuemax="100"
+                            th:text="${ord?.percentFailed} + '%'"
+                            th:title="${ord?.percentFailed} + '% failed'"></div>
+                        <div class="progress-bar RUNNING" role="progressbar" th:style="'width: ' + ${ord?.percentRunning} + '%;'" 
+                            th:aria-valuenow="${ord?.percentRunning}" aria-valuemin="0" aria-valuemax="100"
+                            th:text="${ord?.percentRunning} + '%'"
+                            th:title="${ord?.percentRunning} + '% running'"></div>
                       </div></td>
                     <td>&nbsp;</td>
                   </tr>
