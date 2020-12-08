@@ -1,0 +1,4 @@
+---
+- include_tasks: rkhunter.yml
+- include_tasks: yum_cron.yml
+- include_tasks: clamav.yml

@@ -1,0 +1,5 @@
+---
+- hosts: bastion
+  become: true
+  roles:
+  - configure_sshd
