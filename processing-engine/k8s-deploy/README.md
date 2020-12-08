@@ -128,6 +128,9 @@ the bastion:
 $ ansible-playbook -i hosts --private-key ssh-keys/cluster-key ../../../scripts/ansible/bastion-preinstall.yml
 ```
 
+Further to that copy the SSH key files in `ssh-keys/cluster-key*` to the `.ssh` directory of the `linux` user
+on the bastion host to facilitate automated SSH logins to the cluster nodes via the bastion host.
+
 ### K8S Deployment
 
 Once the VMs are fully provisioned, and optional bastion hosts are configured,
@@ -139,7 +142,11 @@ whether this works by running:
 $ ansible -i hosts -m ping all
 ```
 If the connection cannot be established at the first attempt, check the `group_vars/no_floating.yml` file (e. g. correct
-bastion host IP?) and establish a tunneled connection manually first.
+bastion host IP?). For an installation with a bastion host it should look something like:
+
+```
+ansible_ssh_common_args: "-o ProxyCommand='ssh -i ssh-keys/cluster-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q linux@<bastion IP>' -i ssh-keys/cluster-key -o StrictHostKeyChecking=no"
+```
 
 We need to run some configuration on all the nodes first. This is a little
 specific to the operating system you're running on.
@@ -154,8 +161,8 @@ need to run commands from the kubespray directory now, and specify the cluster
 inventory.
 
 ```
-# In /kubespray directory
-$ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
+# In cluster directory
+$ ansible-playbook -i hosts --become ../../cluster.yml --flush-cache
 ```
 
 *Note:* It may be that the worker nodes cannot join to the cluster with an

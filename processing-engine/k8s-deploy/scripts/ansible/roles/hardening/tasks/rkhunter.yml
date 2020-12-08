@@ -1,3 +1,7 @@
+- name: Ensure EPEL repository is present
+  yum:
+    name: epel-release
+
 - name: Install rkhunter
   yum:
     name: rkhunter
