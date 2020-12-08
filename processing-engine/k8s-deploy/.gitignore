@@ -3,3 +3,4 @@ cluster-key.*
 *.pem
 *.retry
 .ostackrc
+/main.yml
