@@ -753,16 +753,15 @@ public class OrderDispatcher {
 			// search the configured processors with expected processing mode
 			List <ConfiguredProcessor> cplistFoundWithMode = new ArrayList<ConfiguredProcessor>();
 			for (ConfiguredProcessor cp : cplistFound) {
-				Parameter processingModeParam = cp.getConfiguration().getDynProcParameters().get("Processing_Mode");
-				if (null != processingModeParam && processingModeParam.getStringValue().equals(processingMode)) {
+				String configProcessingMode = cp.getConfiguration().getMode();
+				if (null != configProcessingMode && configProcessingMode.equals(processingMode)) {
 					cplistFoundWithMode.add(cp);
 					if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} intended for mode {}", cp.getIdentifier(), processingMode);
 				}
 			}
 			if (cplistFoundWithMode.isEmpty()) {
 				for (ConfiguredProcessor cp : cplistFound) {
-					Parameter processingModeParam = cp.getConfiguration().getDynProcParameters().get("Processing_Mode");
-					if (null == processingModeParam) {
+					if (null == cp.getConfiguration().getMode()) {
 						cplistFoundWithMode.add(cp);
 						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} suitable for mode {}", cp.getIdentifier(), processingMode);
 					}

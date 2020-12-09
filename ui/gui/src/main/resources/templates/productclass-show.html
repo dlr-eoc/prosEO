@@ -60,11 +60,10 @@
                   </tr>
                   <tr>
                     <th><span>&nbsp;</span></th>
-                    <th><span>&nbsp;</span></th>
+                    <th><span th:text="#{visibility}">visibility</span></th>
                     <th><span th:text="#{defaultslicingtype}">defaultslicingtype</span></th>
                     <th><span th:text="#{defaultslicingduration}">defaultslicingduration</span></th>
-                    <th><span th:text="#{componentclasses}">componentclasses</span></th>
-                    <th><span th:text="#{visibility}">visibility</span></th>
+                    <th colspan="2"><span th:text="#{componentclasses}">componentclasses</span></th>
                     <th><span th:text="#{selectionrules}">selectionrules</span></th>
                   </tr>
                 </thead>
@@ -90,13 +89,12 @@
 							</tr>
 							<tr class="proseo-row-divider">
 								<td><span>&nbsp;</span></td>
-                                <td><span>&nbsp;</span></td>
-								<td th:text="${class?.defaultSlicingType}"></td>
+							    <td th:text="${class?.visibility}"></td>
+							    <td th:text="${class?.defaultSlicingType}"></td>
 								<td th:text="${class?.defaultSliceDuration}"></td>
-								<td><a th:each="comp : ${class?.componentClasses}"
+								<td colspan="2"><a th:each="comp : ${class?.componentClasses}"
 									class="proseo-list-item" th:href="'#' + ${comp}"><span
 										th:text="${comp}"></span></a></td>
-								<td th:text="${class?.visibility}"></td>
 								<td>
 									<table class="table table-hover  rounded" th:if="${not #lists.isEmpty(class?.sortedSelectionRules)}">
 										<thead>

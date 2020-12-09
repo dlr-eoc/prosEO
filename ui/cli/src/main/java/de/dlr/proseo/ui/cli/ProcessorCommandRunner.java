@@ -1292,6 +1292,9 @@ public class ProcessorCommandRunner {
 
 		/* Compare attributes of database configuration with updated configuration */
 		// No modification of ID, version, mission code, processor class name, configuration version or configured processors allowed
+		if (isDeleteAttributes || (null != updatedConfiguration.getMode() && !updatedConfiguration.getMode().isBlank())) {
+			restConfiguration.setMode(updatedConfiguration.getMode());
+		}
 		if (null != updatedConfiguration.getDynProcParameters() && (isDeleteAttributes || !updatedConfiguration.getDynProcParameters().isEmpty())) {
 			restConfiguration.getDynProcParameters().clear();
 			restConfiguration.getDynProcParameters().addAll(updatedConfiguration.getDynProcParameters());

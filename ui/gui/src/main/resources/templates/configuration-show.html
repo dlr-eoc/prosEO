@@ -54,13 +54,14 @@
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{processorclass}">processorname</span></th>
                     <th><span th:text="#{configurationversion}">configurationversion</span></th>
+                    <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{productquality}">productquality</span></th>
                     <th><span th:text="#{configuredprocessors}">configuredprocessors</span></th>
                     <th><span th:text="#{dockerrunparameters}">dockerrunparameters</span></th>
               </tr>
               <tr>   
               <th>&nbsp;</th>           
-              <th><span th:text="#{dynprocparameters}">dynprocparameters</span></th>
+              <th colspan="2"><span th:text="#{dynprocparameters}">dynprocparameters</span></th>
               <th colspan="2"><span th:text="#{configurationfiles}">configurationfiles</span></th>
               <th colspan="2"><span th:text="#{staticinputfiles}">staticinputfiles</span></th>
               </tr>
@@ -71,6 +72,7 @@
                 <td th:id="${configuration?.id}" th:rowspan="2" class="first-row" th:text="${configuration?.id}"></td>
                 <td class="first-row"> <a th:href="'/processor-class-show?pc=' + ${configuration?.processorName}" th:text="${configuration?.processorName}"></a></td>
                 <td class="first-row" th:text="${configuration?.configurationVersion}"></td>
+                <td class="first-row" th:text="${configuration?.mode}"></td>
                 <td class="first-row" th:text="${configuration?.productQuality}"></td>
                 <td class="first-row"><a th:each="comp : ${configuration?.configuredProcessors}" 
                        class="proseo-list-item"  
@@ -86,7 +88,8 @@
                 </table></td>
               </tr>
               <tr>              
-              <td>
+              <td>&nbsp;</td>           
+              <td colspan="2">
                 <table class="table">
                   <tbody>
                     <tr th:each="elem : ${configuration?.dynProcParameters}">
