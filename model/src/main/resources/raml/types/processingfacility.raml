@@ -12,18 +12,18 @@
       name:
         type: string
         description: The facility name (unique key)
+      facilityState:
+        type: string
+        description: The run state the facility currently is in
       description?:
         type: string
         description: A short description of the processing facility
       processingEngineUrl?:
         type: string
         description: The URL to access this facility's processing engine (Kubernetes instance)
-      processingEngineUser?:
+      processingEngineToken?:
         type: string
-        description: User name for connecting to this facility's processing engine (Kubernetes instance)
-      processingEnginePassword?:
-        type: string
-        description: Password for connecting to this facility's processing engine (Kubernetes instance)
+        description: Authentication token for connecting to this facility's processing engine (Kubernetes instance)
       storageManagerUrl:
         type: string
         description: The URL to access this facility's storage manager

@@ -22,6 +22,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -184,6 +185,11 @@ public class FacilityCommandRunner {
 					return;
 				}
 			}
+		}
+		
+		/* Set default attribute values where appropriate */
+		if (null == restFacility.getFacilityState() || restFacility.getFacilityState().isBlank()) {
+			restFacility.setFacilityState(FacilityState.DISABLED.toString());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -463,14 +469,14 @@ public class FacilityCommandRunner {
 				null != updatedFacility.getDescription() && !updatedFacility.getDescription().isBlank()) {
 			restFacility.setDescription(updatedFacility.getDescription());
 		}
+		if (null != updatedFacility.getFacilityState() && !updatedFacility.getFacilityState().isBlank()) {
+			restFacility.setFacilityState(updatedFacility.getFacilityState());
+		}
 		if (null != updatedFacility.getProcessingEngineUrl() && !updatedFacility.getProcessingEngineUrl().isBlank()) {
 			restFacility.setProcessingEngineUrl(updatedFacility.getProcessingEngineUrl());
 		}
-		if (null != updatedFacility.getProcessingEngineUser() && !updatedFacility.getProcessingEngineUser().isBlank()) {
-			restFacility.setProcessingEngineUser(updatedFacility.getProcessingEngineUser());
-		}
-		if (null != updatedFacility.getProcessingEnginePassword() && !updatedFacility.getProcessingEnginePassword().isBlank()) {
-			restFacility.setProcessingEnginePassword(updatedFacility.getProcessingEnginePassword());
+		if (null != updatedFacility.getProcessingEngineToken() && !updatedFacility.getProcessingEngineToken().isBlank()) {
+			restFacility.setProcessingEngineToken(updatedFacility.getProcessingEngineToken());
 		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());

@@ -55,11 +55,10 @@
                     <th><span th:text="#{name}">name</span></th>
                     <th colspan="2"><span th:text="#{description}">description</span></th>
                     <th><span th:text="#{facilityurl}">facilityurl</span></th>
-                    <th><span th:text="#{facilityuser}">facilityuser</span></th>
-                    <th><span th:text="#{facilitypw}">facilitypw</span></th>
+                    <th colspan="2"><span th:text="#{facilitytoken}">facilitytoken</span></th>
               </tr>
               <tr>   
-              <th>&nbsp;</th>           
+              <th><span th:text="#{facilitystate}">facilitystate</span></th>           
               <th><span th:text="#{storagemanagerurl}">storagemanagerurl</span></th>
               <th colspan="2"><span th:text="#{localstoragemanagerurl}">localstoragemanagerurl</span></th>
               <th><span th:text="#{storagetype}">storagetype</span></th>
@@ -74,12 +73,12 @@
                 <td class="first-row" th:text="${facility?.name}"></td>
                 <td colspan="2" class="first-row" th:text="${facility?.description}"></td>
                 <td class="first-row" th:text="${facility?.processingEngineUrl}"></td>
-                <td class="first-row" th:text="${facility?.processingEngineUser}"></td>
-                <td class="first-row"><input th:id="'pepwdi' + ${facility?.id}" th:value="${facility?.processingEnginePassword}" type="password" readonly></input> <a 
+                <td colspan="2" class="first-row"><input th:id="'pepwdi' + ${facility?.id}" th:value="${facility?.processingEngineToken}" type="password" readonly></input> <a 
                   class="eye" th:id="'pepwda' + ${facility?.id}" th:onclick="'showPEPwd(' + ${facility?.id} + ')'"><span 
                   data-feather="eye"></span></a></td>
               </tr>
               <tr>  
+                <td th:text="${facility?.facilityState}"></td>
                 <td th:text="${facility?.storageManagerUrl}"></td>
                 <td colspan="2" th:text="${facility?.localStorageManagerUrl}"></td>
                 <td th:text="${facility?.defaultStorageType}"></td>
