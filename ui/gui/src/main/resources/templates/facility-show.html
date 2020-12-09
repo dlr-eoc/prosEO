@@ -75,12 +75,11 @@
                 <td colspan="2" class="first-row" th:text="${facility?.description}"></td>
                 <td th:text="${facility?.facilityState}"></td>
                 <td class="first-row" th:text="${facility?.processingEngineUrl}"></td>
-                <td class="first-row"><input th:id="'pepwdi' + ${facility?.id}" th:value="${facility?.processingEngineToken}" type="password" readonly></input> <a 
+                <td class="first-row"><input th:id="'pepwdi' + ${facility?.id}" th:value="${facility?.processingEngineToken}?:''" type="password" readonly></input> <a 
                   class="eye" th:id="'pepwda' + ${facility?.id}" th:onclick="'showPEPwd(' + ${facility?.id} + ')'"><span 
                   data-feather="eye"></span></a></td>
               </tr>
               <tr>
-                <td>&nbsp;</td>
                 <td th:text="${facility?.storageManagerUrl}"></td>
                 <td colspan="2" th:text="${facility?.localStorageManagerUrl}"></td>
                 <td th:text="${facility?.defaultStorageType}"></td>
