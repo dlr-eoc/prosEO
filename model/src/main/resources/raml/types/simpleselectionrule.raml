@@ -9,9 +9,9 @@
       version?:
         type: integer
         description: A version identifier to track updates to the object (especially to detect concurrent update attempts)
-      mode:
+      mode?:
         type: string
-        description: Processing modes as defined for the enclosing mission, plus the default value "ALWAYS"
+        description: Processing modes as defined for the enclosing mission
       isMandatory:
         type: boolean
         description: Indicates whether the required source product is mandatory for the production of the target product

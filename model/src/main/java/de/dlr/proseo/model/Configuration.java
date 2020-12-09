@@ -46,6 +46,16 @@ public class Configuration extends PersistentObject {
 	private String configurationVersion;
 	
 	/**
+	 * The processing mode, for which this configuration is valid; optional attribute, if set, it must match one of the processing
+	 * modes for the mission. If not set, this configuration is valid for all processing modes; if for any individual planning case
+	 * both a configu- ration without a mode and a configuration with a mode matching the requested processing mode exists, the more
+	 * specific configuration prevails.
+	 * Note that this does not make the "Processing_Mode" dynamic parameter obsolete: Since this parameter is mission-specific,
+	 * no generic approach can ensure that it is set properly (or at all).
+	 */
+	private String mode;
+	
+	/**
 	 * Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator
 	 * ("List_of_Dyn_ProcParam" from Generic IPF Interface Specifications, sec. 4.1.3).
 	 */
@@ -122,6 +132,22 @@ public class Configuration extends PersistentObject {
 	 */
 	public void setConfigurationVersion(String configurationVersion) {
 		this.configurationVersion = configurationVersion;
+	}
+
+	/**
+	 * Gets the processing mode
+	 * @return the processing mode
+	 */
+	public String getMode() {
+		return mode;
+	}
+
+	/**
+	 * Sets the processing mode
+	 * @param mode the processing mode to set
+	 */
+	public void setMode(String mode) {
+		this.mode = mode;
 	}
 
 	/**

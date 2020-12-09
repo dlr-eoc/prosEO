@@ -70,6 +70,7 @@ public class ConfigurationManager {
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	private static final int MSG_ID_INVALID_PROCESSING_MODE = 2102;
 	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 
 	/* Message string constants */
@@ -85,6 +86,7 @@ public class ConfigurationManager {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The configuration with ID %d has been modified since retrieval by the client";
 	private static final String MSG_DUPLICATE_CONFIGURATION = "(E%d) Duplicate configuration for mission %s with processor name %s and configuration version %s";
 	private static final String MSG_CONFIGURATION_HAS_PROC = "(E%d) Configuration for mission %s with processor name %s and configuration version %s cannot be deleted, because it has configured processors";
+	private static final String MSG_INVALID_PROCESSING_MODE = "(E%d) Processing mode %s not defined for mission %s";
 
 	private static final String MSG_CONFIGURATION_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, processor name %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURATION_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -231,6 +233,13 @@ public class ConfigurationManager {
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 		
+		// Make sure the processing mode, if set, is valid
+		if (null != modelConfiguration.getMode()
+				&& !modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(modelConfiguration.getMode())) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+					modelConfiguration.getMode(), modelConfiguration.getProcessorClass().getMission().getCode()));
+		}
+		
 		// Make sure a configuration with the same processor class name and configuration version does not yet exist
 		if (null != RepositoryService.getConfigurationRepository().findByMissionCodeAndProcessorNameAndConfigurationVersion(
 				configuration.getMissionCode(), configuration.getProcessorName(), configuration.getConfigurationVersion())) {
@@ -351,6 +360,15 @@ public class ConfigurationManager {
 		if (!modelConfiguration.getConfigurationVersion().equals(changedConfiguration.getConfigurationVersion())) {
 			configurationChanged = true;
 			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
+		}
+		if (!modelConfiguration.getMode().equals(changedConfiguration.getMode())) {
+			if (modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(changedConfiguration.getMode())) {
+				configurationChanged = true;
+				modelConfiguration.setMode(changedConfiguration.getMode());
+			} else {
+				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+						changedConfiguration.getMode(), modelConfiguration.getProcessorClass().getMission().getCode()));
+			}
 		}
 		if (!modelConfiguration.getProductQuality().equals(changedConfiguration.getProductQuality())) {
 			configurationChanged = true;

@@ -5,6 +5,7 @@ This document describes how to deploy a prosEO processing facility on a new set 
 (virtual) machines, e. g. as provisioned by some cloud service provider.
 
 # Installation Requirements
+
 The (virtual) machines need to at least fulfil the following requirements:
 - Linux installed
 - Ability to run Docker and Kubernetes (i. e. standard CentOS kernel, no provider-specific builds)
@@ -13,21 +14,114 @@ The (virtual) machines need to at least fulfil the following requirements:
 - more TBD
 - Optional: Access to some object storage conforming to the AWS S3 protocol
 
+
 # Installation Process
+
 ## Step 1: Install Docker and Kubernetes
-TBD
 
-## Step 2: Deploy the prosEO Storage Manager
-TBD
+For the automated deployment of Kubernetes and Docker on the processing facility using Terraform and Kubespray
+see [the documentation for Kubernetes](k8s-deploy/README.md).
 
-## Step 3 (optional): Deploy Alluxio as Storage Provider
-TBD
+You may also want to deploy the Kubernetes Dashboard GUI. The following steps are best performed on the bastion host,
+which has a fully configured `kubectl` deployment, when the automated deployment is completed.
+1. Create a directory to gather the files:
+   ```
+   mkdir $HOME/kubernetes-dashboard
+   cd $HOME/kubernetes-dashboard
+   ```
+1. Download the recommended dashboard configuration from
+   <https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta8/aio/deploy/recommended.yaml>.
+2. Run the dashboard:
+   ```
+   kubectl apply -f recommended.yaml
+   ```
+3. To create a Kubernetes administrator account with full privileges, first put the following lines in `kube-admin.yaml`:
+   ```
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: admin-user
+      namespace: kubernetes-dashboard
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: admin-user
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: cluster-admin
+    subjects:
+    - kind: ServiceAccount
+      name: admin-user
+      namespace: kubernetes-dashboard
+   ```
+   Then create the administrator account:
+   ```
+   kubectl apply -f kube-admin.yaml
+   ```
+4. Find the account's secret and copy the token to a safe place (note that there is no line break between the end of the
+   token and the prompt for the next shell command):
+   ```
+   kubectl get secret -n kubernetes-dashboard \
+      $(kubectl get serviceaccount admin-user -n kubernetes-dashboard -o jsonpath="{.secrets[0].name}") \
+      -o jsonpath="{.data.token}" | base64 --decode 
+   ```
 
-## Step 4 (optional): Deploy Minio as S3 Object Storage Provider
-TBD
+You can now access the Kubernetes dashboard from any browser (e. g. on your local workstation) using the URL
+<https://your.bastion.host/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>
+clicking on "Token" at the login screen and providing the saved token string as input.
 
-## Step 5: Configure kubectl for acces to the new cluster
-Add a new cluster to the kubectl configuration file (usually $HOME/.kube/config):
+
+## Step 2: Configure the NFS File Server
+
+The NFS file server is required for providing a file system cache to the Storage Manager on one hand, and to ingest
+data into the Storage Manager on the other hand. It is a data link between the "outside world" and the processing
+facility.
+
+On the bastion host, perform the following steps:
+1. Make sure a sufficiently large disk is attached, say at device `/dev/vdb` with one partition (use `lsblk` to check).
+2. Mount the disk at the intended mount point:
+   ```
+   mkdir -p /exports
+   mount /dev/vdb1 /exports
+   ```
+3. Make the file system mount persistent by adding it to `/etc/fstab`:
+   ```
+   blkid /dev/vdb1
+   # For a GUID volume output is a line including a quoted UUID
+   ```
+   Add the following line to  `/etc/fstab`:
+   ```
+   UUID=<detected UUID> /exports defaults 0 2
+   ```
+4. The NFS server service has already been installed and launched in step 1, but it may be a good idea to relaunch
+   it at this point, because the exported directory was not available before:
+   ```
+   systemctl restart nfs-server.service
+   ```
+
+
+## Step 3: Deploy the prosEO Storage Manager
+
+The steps to deploy the prosEO Storage Manager can be found in the [Storage Manager deployment README](storage-mgr-deploy/README.md).
+
+
+## Step 4 (optional): Deploy Alluxio as Storage Provider
+
+Currently not supported.
+
+
+## Step 5 (optional): Deploy Minio as S3 Object Storage Provider
+
+See [Minio documentation](https://docs.min.io/).
+
+For the purpose of this document it is assumed that an S3-compatible object storage is available from the Cloud provider.
+
+
+## Step 6: Configure kubectl for Access to the New Cluster
+
+Add a new cluster to the kubectl configuration file (usually `$HOME/.kube/config`):
 - With nginx proxy (assuming nginx accepts Kubernetes API calls on port 443):
   ```
   kubectl config set-cluster <cluster nickname> --server=<server DNS name without port> --certificate-authority=<path to nginx(!) CA file>
@@ -87,6 +181,7 @@ facility create --file=<JSON file name>
 
 ## Alternative 2: Using the prosEO GUI
 Not yet implemented.
+
 
 # Example: Setting up a Single-Node Processing Facility
 Assuming there is a MacOS or Windows machine available with sufficient RAM and disk capacity, a single-node setup

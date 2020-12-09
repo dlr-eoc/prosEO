@@ -15,6 +15,7 @@ import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductVisibility;
 
 /**
@@ -49,6 +50,9 @@ public class ProductClassUtil {
 		}
 		restProductClass.setProductType(modelProductClass.getProductType());
 		restProductClass.setTypeDescription(modelProductClass.getDescription());
+		if (null != modelProductClass.getProcessingLevel()) {
+			restProductClass.setProcessingLevel(modelProductClass.getProcessingLevel().toString());
+		}
 		if (null != modelProductClass.getVisibility()) {
 			restProductClass.setVisibility(modelProductClass.getVisibility().toString());
 		}
@@ -67,7 +71,6 @@ public class ProductClassUtil {
 		for (ProductClass componentClass: modelProductClass.getComponentClasses()) {
 			restProductClass.getComponentClasses().add(componentClass.getProductType());
 		}
-		Boolean first = true;
 		for (SimpleSelectionRule simpleSelectionRule: modelProductClass.getRequiredSelectionRules()) {
 			RestSimpleSelectionRule restSimpleSelectionRule = new RestSimpleSelectionRule();
 			restSimpleSelectionRule.setId(simpleSelectionRule.getId());
@@ -131,6 +134,9 @@ public class ProductClassUtil {
 		
 		modelProductClass.setProductType(restProductClass.getProductType());
 		modelProductClass.setDescription(restProductClass.getTypeDescription());
+		if (null != restProductClass.getProcessingLevel()) {
+			modelProductClass.setProcessingLevel(ProcessingLevel.valueOf(restProductClass.getProcessingLevel()));
+		}
 		if (null != restProductClass.getVisibility()) {
 			modelProductClass.setVisibility(ProductVisibility.valueOf(restProductClass.getVisibility()));
 		}
