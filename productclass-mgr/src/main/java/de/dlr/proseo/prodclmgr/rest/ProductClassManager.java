@@ -557,6 +557,11 @@ public class ProductClassManager {
 			productClassChanged = true;
 			modelProductClass.setDescription(changedProductClass.getDescription());
 		}
+		if (null == modelProductClass.getProcessingLevel() && null != changedProductClass.getProcessingLevel()
+				|| null != modelProductClass.getProcessingLevel() && !modelProductClass.getProcessingLevel().equals(changedProductClass.getProcessingLevel())) {
+			productClassChanged = true;
+			modelProductClass.setProcessingLevel(changedProductClass.getProcessingLevel());
+		}
 		if (null == modelProductClass.getVisibility() && null != changedProductClass.getVisibility()
 				|| null != modelProductClass.getVisibility() && !modelProductClass.getVisibility().equals(changedProductClass.getVisibility())) {
 			productClassChanged = true;

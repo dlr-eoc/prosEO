@@ -185,14 +185,14 @@ public class ProductUtil {
 						null == restProduct.getConfiguredProcessor() ? 0 : restProduct.getConfiguredProcessor().getProcessorVersion()));
 		attributes.getEntities().add(processorVersion);
 		
-		// TODO Add processing level to ProductClass?
 		Entity processingLevel = new Entity();
 		processingLevel.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		processingLevel
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, "processingLevel"))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE, ""));
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE, 
+						null == restProduct.getProcessingLevel() ? "" : restProduct.getProcessingLevel()));
 		attributes.getEntities().add(processingLevel);
 		
 		Entity processingMode = new Entity();

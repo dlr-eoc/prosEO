@@ -447,6 +447,9 @@ public class ProductclassCommandRunner {
 		if (isDeleteAttributes || (null != updatedProductClass.getTypeDescription() && 0 != updatedProductClass.getTypeDescription().length())) {
 			restProductClass.setTypeDescription(updatedProductClass.getTypeDescription());
 		}
+		if (null != updatedProductClass.getProcessingLevel() && !updatedProductClass.getProcessingLevel().isBlank()) {
+			restProductClass.setProcessingLevel(updatedProductClass.getProcessingLevel());
+		}
 		if (null != updatedProductClass.getVisibility() && !updatedProductClass.getVisibility().isBlank()) {
 			restProductClass.setVisibility(updatedProductClass.getVisibility());
 		}

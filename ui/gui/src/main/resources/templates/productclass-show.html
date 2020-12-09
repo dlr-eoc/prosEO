@@ -52,12 +52,14 @@
                   <tr>
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{producttype}">producttype</span></th>
+                    <th><span th:text="#{processinglevel}">processinglevel</span></th>
                     <th><span th:text="#{description}">typedescription</span></th>
                     <th><span th:text="#{enclosingclass}">enclosingclass</span></th>
                     <th><span th:text="#{processorclass}">processorclass</span></th>
                     <th><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
                   </tr>
                   <tr>
+                    <th><span>&nbsp;</span></th>
                     <th><span>&nbsp;</span></th>
                     <th><span th:text="#{defaultslicingtype}">defaultslicingtype</span></th>
                     <th><span th:text="#{defaultslicingduration}">defaultslicingduration</span></th>
@@ -73,6 +75,7 @@
 								<td class="first-row"><a
 									th:href="'/product-show?productClass=' + ${class?.productType}"
 									th:text="${class?.productType}"></a></td>
+                                <td th:text="${class?.processingLevel}" class="first-row"></td>
 								<td th:text="${class?.typeDescription}" class="first-row"></td>
 								<td class="first-row"><a
 									th:href="'#' + ${class?.enclosingClass}"><span
@@ -87,6 +90,7 @@
 							</tr>
 							<tr class="proseo-row-divider">
 								<td><span>&nbsp;</span></td>
+                                <td><span>&nbsp;</span></td>
 								<td th:text="${class?.defaultSlicingType}"></td>
 								<td th:text="${class?.defaultSliceDuration}"></td>
 								<td><a th:each="comp : ${class?.componentClasses}"

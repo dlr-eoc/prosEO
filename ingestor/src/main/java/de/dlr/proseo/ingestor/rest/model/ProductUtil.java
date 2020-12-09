@@ -97,6 +97,9 @@ public class ProductUtil {
 		}
 		restProduct.setFileClass(modelProduct.getFileClass());
 		restProduct.setMode(modelProduct.getMode());
+		if (null != modelProduct.getProductClass().getProcessingLevel()) {
+			restProduct.setProcessingLevel(modelProduct.getProductClass().getProcessingLevel().toString());
+		}
 		if (null != modelProduct.getProductQuality()) {
 			restProduct.setProductQuality(modelProduct.getProductQuality().toString());
 		}
