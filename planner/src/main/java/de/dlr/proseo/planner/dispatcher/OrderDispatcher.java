@@ -410,7 +410,7 @@ public class OrderDispatcher {
 		}
 		if (selectedSelectionRules.isEmpty()) {
 			for (SimpleSelectionRule selectionRule : productClass.getRequiredSelectionRules()) {
-				if (selectionRule.getMode() == null || selectionRule.getMode().equalsIgnoreCase("ALWAYS")) {
+				if (selectionRule.getMode() == null) {
 					selectedSelectionRules.add(selectionRule);
 				}
 			}
@@ -762,7 +762,7 @@ public class OrderDispatcher {
 			if (cplistFoundWithMode.isEmpty()) {
 				for (ConfiguredProcessor cp : cplistFound) {
 					Parameter processingModeParam = cp.getConfiguration().getDynProcParameters().get("Processing_Mode");
-					if (null == processingModeParam || processingModeParam.getStringValue().equals("ALWAYS")) {
+					if (null == processingModeParam) {
 						cplistFoundWithMode.add(cp);
 						if (logger.isDebugEnabled()) logger.debug("Candidate configured processor {} suitable for mode {}", cp.getIdentifier(), processingMode);
 					}

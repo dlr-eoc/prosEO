@@ -61,7 +61,6 @@ public class ProductclassCommandRunner {
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
 
-	private static final String MODE_ALWAYS = "ALWAYS";
 	private static final String FORMAT_PLAIN = "PLAIN";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
@@ -160,7 +159,7 @@ public class ProductclassCommandRunner {
 	 * Create a selection rule string from a plain text file with selection rules in Rule Language
 	 * 
 	 * @param selectionRuleFile the file name of the selection rule file
-	 * @return a SelectionRuleString object with the content of the file and default mode ALWAYS
+	 * @return a SelectionRuleString object with the content of the file and default mode null
 	 * @throws FileNotFoundException if the given file does not exist or is not a readable file
 	 * @throws IOException if a low-level I/O error occurs
 	 */
@@ -175,7 +174,7 @@ public class ProductclassCommandRunner {
 		/* Create and return a selection rule string object */
 		SelectionRuleString selectionRuleString = new SelectionRuleString();
 		selectionRuleString.setSelectionRule(ruleString);
-		selectionRuleString.setMode(MODE_ALWAYS);
+		selectionRuleString.setMode(null);
 		
 		return selectionRuleString;
 	}
@@ -665,12 +664,12 @@ public class ProductclassCommandRunner {
 				}
 			}
 			/* Set missing attributes to default values where possible */
-			if (null == restSelectionRule.getMode() || 0 == restSelectionRule.getMode().length()) {
-				restSelectionRule.setMode(MODE_ALWAYS);
+			if (null != restSelectionRule.getMode() && restSelectionRule.getMode().isBlank()) {
+				restSelectionRule.setMode(null);
 			}
 			
 			/* Prompt user for missing mandatory attributes */
-			if (null == restSelectionRule.getSelectionRule() || 0 == restSelectionRule.getSelectionRule().length()) {
+			if (null == restSelectionRule.getSelectionRule() || restSelectionRule.getSelectionRule().isBlank()) {
 				System.out.println(PROMPT_SELECTION_RULE);
 				String response = readTextFromConsole();
 				if (response.isBlank()) {
