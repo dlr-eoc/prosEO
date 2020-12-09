@@ -1,63 +1,53 @@
-prosEO-storage-mgr-deploy
-=========================
+prosEO Storage Manager Deployment
+=================================
 
-## prerequisites
-- for k8s-deployment you need a working kubectl config at your host (make sure kubectl is configured with the correct credentials)
+## Prerequisites
 
-## standalone docker-image
-TODO: This section does not apply any more (no `./docker` directory), to be rewritten
-- copy file `docker/application.yml.template` to `docker/application.yml`
-- edit all relevant properties
-- build modified docker image of storage-mgr (apllication.yml is copied next to storage-mgr.jar)
-```sh
-#goto prosEO-repo-root
-cd ../..
-#build storage mgr artifacts & docker-image
-mvn clean package -pl storage-mgr -am -DskipTests
-#go back to this dir
-cd processing-engine/storage-mgr-deploy/
-cd docker
-./build.sh
-#-->image name:tag is localhost:5000/proseo-storage-mgr:0.1.0-SNAPSHOT-rc1
-```
+The following instructions assume that a working `kubectl` configuration for your cluster (including all the necessary credentials)
+is configured at the deployment host.
 
-## push to some registry
-- in case of insecure-registry create a file `/etc/docker/daemon.json`
-```js
-{
-"insecure-registries": ["<registry-url>"]
-}
-```
-- restart docker-engine (sudo systemctl restart docker)
-- login to the registry
-```sh
-docker login <registry-url>
-```
-- re-tag our docker-image
-```sh
-docker tag localhost:5000/proseo-storage-mgr:0.0.1-SNAPSHOT-rc1 <registry-url>/<repo>/proseo-storage-mgr:latest
-docker push <registry-url>/<repo>/proseo-storage-mgr:latest
-```
+Furthermore on the local (development) workstation a Docker instance and a local registry (at `localhost:5000`) is assumed,
+as is a production registry at `<registry-url>`.
 
-## kubernetes
-See also: <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>
 
-- create k8s-secret holding credentials for private registry
-  ```sh
-  # on some host where kubectl is configured (not a Docker Desktop host!)
-  docker login <registry-url>
-  # check if docker-client file is under ~/.docker/config.json, and make sure it actually contains the desired credentials
-  cat ~/.docker/config.json
-  # create k8s-secret
-  kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson
-  ```
+## Build prosEO Storage Manager
 
-- build and push docker image (steps above)
+The Storage Manager Docker image is built and pushed to a local (development) registry as part of the Maven `install` phase.
+We assume this has been performed, and the image is now available at `localhost:5000/proseo-storage-mgr:<module version>`.
 
-- deploy the storage-mgr service
-    ```sh
-    cd kubernetes
-    sed "s/proseo-nfs-server.default.svc.cluster.local/<bastion host IP>/" <nfs-pv.yaml.template >nfs-pv.yaml
-    kubectl apply -f nfs-pv.yaml
-    kubectl apply -f storage-mgr.yaml
-    ```
+Execute the following commands on the local workstation to tag and push the image to the production environment: 
+1. Login to production registry (if not already done):
+   ```sh
+   docker login <registry-url>
+   ```
+2. Re-tag and push the Docker image:
+   ```sh
+   docker tag localhost:5000/proseo-storage-mgr:<module version> <registry-url>/proseo-storage-mgr:latest
+   docker push <registry-url>/proseo-storage-mgr:latest
+   ```
+
+## Deploy Storage Manager in Kubernetes
+
+The following steps need to be performed:
+
+1. Create a Kubernetes secret holding the credentials for the private registry on some host, which has both `kubectl` and Docker
+   (not Docker Desktop!) configured (e. g. the Kubernetes master node):
+   ```sh
+   docker login <registry-url>
+   # Check if docker client file is under ~/.docker/config.json, and make sure it actually contains the desired credentials
+   cat ~/.docker/config.json
+   # Create Kubernetes secret
+   kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson
+   ```
+   See also: <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>
+
+2. Deploy the Storage Manager service using the files in `storage-mgr-deploy/kubernetes` (from any host with a suitably configured
+   `kubectl`, including the local development workstation):
+   ```sh
+   cd kubernetes
+   sed "s/proseo-nfs-server.default.svc.cluster.local/<bastion host IP>/" <nfs-pv.yaml.template >nfs-pv.yaml
+   kubectl apply -f nfs-pv.yaml
+   kubectl apply -f storage-mgr.yaml
+   ```
+    
+    
