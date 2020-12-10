@@ -8,8 +8,12 @@ package de.dlr.proseo.ordermgr.rest;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.validation.Valid;
 
 import org.slf4j.LoggerFactory;
@@ -20,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.rest.OrderController;
 import de.dlr.proseo.model.rest.model.RestOrder;
@@ -46,6 +51,11 @@ public class OrderControllerImpl implements OrderController {
 	/** The processing order manager */
 	@Autowired
 	private ProcessingOrderMgr procOrderManager;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+
 	
 	/**
 	 * Create an HTTP "Warning" header with the given text message
@@ -188,5 +198,55 @@ public class OrderControllerImpl implements OrderController {
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
+	}
+	/**
+	 * Count orders filtered by mission, identifier and id not equal nid.
+	 * 
+	 * @param mission The mission code
+	 * @param identifier The identifier of an order
+	 * @param nid The ids of orbit(s) found has to be not equal nid 
+	 * @return The number of orders found
+	 */
+
+	@Transactional
+	@Override
+	public ResponseEntity<String> countOrders(String mission, String identifier, Long nid) {
+		if (logger.isTraceEnabled()) logger.trace(">>> contOrders{}");
+		
+		// Find using search parameters
+		String jpqlQuery = "select count(x) from ProcessingOrder x ";
+		String divider = " where ";
+		if (mission != null) {
+			jpqlQuery += divider + " x.mission.code = :mission";
+			divider = " and ";
+		}
+		if (null != identifier) {
+			jpqlQuery += divider + " x.identifier = :identifier";
+			divider = " and ";
+		}
+		if (null != nid) {
+			jpqlQuery += divider + " x.id <> :nid";
+			divider = " and ";
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		if (null != mission) {
+			query.setParameter("mission", mission);
+		}
+		if (null != identifier) {
+			query.setParameter("identifier", identifier);
+		}
+		if (null != identifier) {
+			query.setParameter("nid", nid);
+		}
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return new ResponseEntity<>(((Long)resultObject).toString(), HttpStatus.OK);	
+		}
+		if (resultObject instanceof String) {
+			return new ResponseEntity<>((String) resultObject, HttpStatus.OK);	
+		}
+		return new ResponseEntity<>("0", HttpStatus.OK);	
+			
 	}
 }

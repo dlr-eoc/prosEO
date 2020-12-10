@@ -238,12 +238,15 @@ public class OrderCommandRunner {
 		}
 		// Get order slicing type
 		while (!Arrays.asList(OrderSlicingType.ORBIT.toString(), OrderSlicingType.CALENDAR_DAY.toString(), 
+				OrderSlicingType.CALENDAR_MONTH.toString(), OrderSlicingType.CALENDAR_YEAR.toString(),
 				OrderSlicingType.TIME_SLICE.toString()).contains(restOrder.getSlicingType())) {
 			System.out.print(PROMPT_SLICING_TYPE);
 			String response = System.console().readLine().toUpperCase();
 			switch (response) {
 			case "O":	restOrder.setSlicingType(OrderSlicingType.ORBIT.toString()); break;
 			case "C":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_DAY.toString()); break;
+			case "M":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_MONTH.toString()); break;
+			case "y":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_YEAR.toString()); break;
 			case "T":	restOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString()); break;
 			case "":
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
@@ -267,9 +270,11 @@ public class OrderCommandRunner {
 				System.err.println(uiMsg(MSG_ID_INVALID_SLICE_DURATION, response));
 			}
 		}
-		// For TIME_SLICE and CALENDAR_DAY orders, get start and end time
+		// For TIME_SLICE and CALENDAR_DAY/MONTH/YEAR orders, get start and end time
 		if (OrderSlicingType.TIME_SLICE.toString().equals(restOrder.getSlicingType()) 
-				|| OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())) {
+				|| OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())
+				|| OrderSlicingType.CALENDAR_MONTH.toString().equals(restOrder.getSlicingType())
+				|| OrderSlicingType.CALENDAR_YEAR.toString().equals(restOrder.getSlicingType())) {
 			while (null == restOrder.getStartTime()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
@@ -593,12 +598,16 @@ public class OrderCommandRunner {
 			restOrder.setSlicingType(updatedOrder.getSlicingType());
 		}
 		if ((isDeleteAttributes && !OrderSlicingType.TIME_SLICE.toString().equals(restOrder.getSlicingType())
-				&& !OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())) 
+				&& !OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())
+				&& !OrderSlicingType.CALENDAR_MONTH.toString().equals(restOrder.getSlicingType())
+				&& !OrderSlicingType.CALENDAR_YEAR.toString().equals(restOrder.getSlicingType())) 
 				|| null != updatedOrder.getStartTime()) { // mandatory for TIME_SLICE and CALENDAR_DAY
 			restOrder.setStartTime(updatedOrder.getStartTime());
 		}
 		if ((isDeleteAttributes && !OrderSlicingType.TIME_SLICE.toString().equals(restOrder.getSlicingType())
-				&& !OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())) 
+				&& !OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())
+				&& !OrderSlicingType.CALENDAR_MONTH.toString().equals(restOrder.getSlicingType())
+				&& !OrderSlicingType.CALENDAR_YEAR.toString().equals(restOrder.getSlicingType())) 
 				|| null != updatedOrder.getStopTime()) { // mandatory for TIME_SLICE and CALENDAR_DAY
 			restOrder.setStopTime(updatedOrder.getStopTime());
 		}

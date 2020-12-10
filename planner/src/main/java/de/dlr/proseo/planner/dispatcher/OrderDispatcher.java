@@ -7,11 +7,17 @@ package de.dlr.proseo.planner.dispatcher;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -79,6 +85,12 @@ public class OrderDispatcher {
 				switch (order.getSlicingType()) {
 				case CALENDAR_DAY:
 					answer = createJobsForDay(order, pf);
+					break;
+				case CALENDAR_MONTH:
+					answer = createJobsForMonth(order, pf);
+					break;
+				case CALENDAR_YEAR:
+					answer = createJobsForYear(order, pf);
 					break;
 				case ORBIT:
 					answer = createJobsForOrbit(order, pf);
@@ -217,6 +229,123 @@ public class OrderDispatcher {
 						if (!answer) break;
 						startT = sliceStopT;
 						sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+					} 
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+
+	/**
+	 * Create the needed job for an order of type month
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
+	public boolean createJobsForMonth(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForMonth({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
+		boolean answer = true;
+
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		try {
+			// get first day
+			
+			if (order.getStartTime() == null || order.getStopTime() == null) {
+				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
+				answer = false;
+			} else {
+				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
+				Calendar calStart = GregorianCalendar.from(zdt);
+				calStart.set(Calendar.DAY_OF_MONTH, 1);
+				calStart.set(Calendar.HOUR_OF_DAY, 0);
+				calStart.set(Calendar.MINUTE, 0);
+				calStart.set(Calendar.SECOND, 0);
+				calStart.set(Calendar.MILLISECOND, 0);
+				Calendar calStop = (Calendar) calStart.clone();
+				calStop.add(Calendar.MONTH, 1);				
+				stopT = order.getStopTime();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
+					answer = false;
+				} else {
+					// create jobs for each day
+					startT = calStart.toInstant();
+					while (startT.isBefore(stopT)) {
+						// create job (without orbit association)
+						sliceStopT = calStop.toInstant();
+						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+						if (!answer) break;
+						calStart = (Calendar) calStop.clone();
+						calStop.add(Calendar.MONTH, 1);
+						startT = calStart.toInstant();
+					} 
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+
+	/**
+	 * Create the needed job for an order of type year
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
+	public boolean createJobsForYear(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForYear({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
+		boolean answer = true;
+
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		try {
+			// get first day
+			
+			if (order.getStartTime() == null || order.getStopTime() == null) {
+				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
+				answer = false;
+			} else {
+				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
+				Calendar calStart = GregorianCalendar.from(zdt);
+				calStart.set(Calendar.MONTH, 0);
+				calStart.set(Calendar.DAY_OF_MONTH, 1);
+				calStart.set(Calendar.HOUR_OF_DAY, 0);
+				calStart.set(Calendar.MINUTE, 0);
+				calStart.set(Calendar.SECOND, 0);
+				calStart.set(Calendar.MILLISECOND, 0);
+				Calendar calStop = (Calendar) calStart.clone();
+				calStop.add(Calendar.YEAR, 1);				
+				stopT = order.getStopTime();
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
+					answer = false;
+				} else {
+					// create jobs for each day
+					startT = calStart.toInstant();
+					while (startT.isBefore(stopT)) {
+						// create job (without orbit association)
+						sliceStopT = calStop.toInstant();
+						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
+						if (!answer) break;
+						calStart = (Calendar) calStop.clone();
+						calStop.add(Calendar.YEAR, 1);
+						startT = calStart.toInstant();
 					} 
 				}
 			}

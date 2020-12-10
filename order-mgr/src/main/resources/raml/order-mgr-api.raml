@@ -95,6 +95,19 @@ resourceTypes:
           application/json:
             type: RestOrder
             example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /count:
+    type: standard
+    get:
+      description: Get number of orders, filtered by mission, user-defined identifier and id not equal nid
+      displayName: countOrders
+      queryParameters:
+        mission?: string
+        identifier?: string
+        nid?: integer
+      responses:
+        200:
+          body:
+            text/plain:
   /{id}:
     uriParameters:
       id:

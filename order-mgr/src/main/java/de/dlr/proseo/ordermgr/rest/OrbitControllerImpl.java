@@ -579,10 +579,10 @@ public class OrbitControllerImpl implements OrbitController {
 		query.setParameter("spacecraftCode", spacecraftCode);
 
 		if (null != orbitNumberFrom) {
-			query.setParameter("orbitNumberFrom",orbitNumberFrom);
+			query.setParameter("orbitNumberFrom", Integer.valueOf(orbitNumberFrom.toString()));
 		}
 		if (null != orbitNumberTo) {
-			query.setParameter("orbitNumberTo", orbitNumberTo);
+			query.setParameter("orbitNumberTo", Integer.valueOf(orbitNumberTo.toString()));
 		}
 		if (null != startTimeFrom) {
 			query.setParameter("startTimeFrom",startTimeFrom.toInstant());

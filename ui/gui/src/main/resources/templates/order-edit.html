@@ -366,6 +366,72 @@
               </div>
             </div>
           </div>
+          <!-- CALENDAR_MONTH data -->
+          <div class="row filtercontent" id="CALENDAR_MONTH">
+            <div class="col-12">
+              <!-- Nested rows to hold slicing data -->
+              <div class="row py-lg-1" name="slicingrow">
+                <div class="col-4"></div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})-(0[1-9]|1[012])$"
+                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      name="startTime" data-type="MONTH" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})-(0[1-9]|1[012])$"
+                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      name="stopTime" data-type="MONTH" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
+                  </div>
+                </div>
+                <div class="col-2">
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- CALENDAR_YEAR data -->
+          <div class="row filtercontent" id="CALENDAR_YEAR">
+            <div class="col-12">
+              <!-- Nested rows to hold slicing data -->
+              <div class="row py-lg-1" name="slicingrow">
+                <div class="col-4"></div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})$"
+                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      name="startTime" data-type="YEAR" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})$"
+                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      name="stopTime" data-type="YEAR" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
+                  </div>
+                </div>
+                <div class="col-2">
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="row py-lg-1">
             <div class="col-12 border"></div>
           </div>
@@ -1510,16 +1576,19 @@ function normDate(elem, up) {
   for (var i = 0; i < elem.length; i++) {
     var type = $(elem[i]).attr('data-type');
     var val = $(elem[i]).val();
+    var date = new Date(Date.parse(val));
     if (type == 'DAY') {
         if (up) {
-          val = val + "T23:59:59";
+            var y = date.setDate(date.getDate() + 1);
+            var z = new Date(y);
+            var pattern = getDatePattern('TIME');
+            val = z.toISOString().match(pattern)[0];
         } else {
           val = val + "T00:00:00";
         }
       } else if (type == 'MONTH') {
           if (up) {
-            var x = new Date(Date.parse(val));
-            var y = x.setMonth(x.getMonth()+1) - 1000;
+            var y = date.setMonth(date.getMonth() + 1);
             var z = new Date(y);
             var pattern = getDatePattern('TIME');
             val = z.toISOString().match(pattern)[0];
@@ -1528,7 +1597,10 @@ function normDate(elem, up) {
           }
       } else if (type == 'YEAR') {
           if (up) {
-              val = val + "-12-31T23:59:59";
+              var y = date.setFullYear(date.getFullYear() + 1);
+              var z = new Date(y);
+              var pattern = getDatePattern('TIME');
+              val = z.toISOString().match(pattern)[0];
             } else {
               val = val + "-01-01T00:00:00";
             }
@@ -1537,10 +1609,24 @@ function normDate(elem, up) {
   }
 }
 
-function normDateVal(elem) {
+function normDateVal(elem, delta) {
 	  for (var i = 0; i < elem.length; i++) {
 	    var type = $(elem[i]).attr('data-type');
 	    var val = $(elem[i]).val();
+	    var date = new Date(Date.parse(val));
+	    if (type == 'DAY') {
+	            var y = date.setDate(date.getDate() - delta);
+	            var z = new Date(y);
+	            val = z.toISOString();
+	      } else if (type == 'MONTH') {
+	            var y = date.setMonth(date.getMonth() - delta);
+	            var z = new Date(y);
+	            val = z.toISOString();
+	      } else if (type == 'YEAR') {
+	              var y = date.setFullYear(date.getFullYear() - delta);
+	              var z = new Date(y);
+	              val = z.toISOString();
+	      }
 	    val = val.match(getDatePattern(type))[0];
 	    $(elem[i]).val(val);
 	  }
@@ -1548,28 +1634,50 @@ function normDateVal(elem) {
 
 function updateTitle() {
 	var title = $('#identifier').val();
-	$('#breadcrumb-order-name').text(title);
-	document.title = title + " | " + "[[#{proseo}]]";
+	var id = $('#id').val();
+  $('#identifier')[0].setCustomValidity('');
+	if (hasOrder(title, id)) {
+		$('#identifier')[0].setCustomValidity('already exists');
+	} else {
+	  $('#breadcrumb-order-name').text(title);
+	  document.title = title + " | " + "[[#{proseo}]]";
+	}
 }
 
 function checkOrbitNumberFrom() {
   var from = $(this);
   var to = $('#orbitNumberTo-' + from[0].id.match(/[0-9]+/)[0]);
+  var spacecraft = $('#spacecraftCode-' + from[0].id.match(/[0-9]+/)[0]);
   if (to.val() <= from.val()) {
-	  to.val(parseInt(from.val()) + 1);
+	  to.val(parseInt(from.val()));
+  }
+  if (hasOrbits(spacecraft.val(), from.val(), to.val())) {
+	  from[0].setCustomValidity('');
+	  to[0].setCustomValidity('');
+  } else { 
+	    from[0].setCustomValidity('no orbits in range');
+	    to[0].setCustomValidity('no orbits in range');
   }
 }
 function checkOrbitNumberTo() {
 	  var to = $(this);
 	  var from = $('#orbitNumberFrom-' + to[0].id.match(/[0-9]+/)[0]);
+	  var spacecraft = $('#spacecraftCode-' + to[0].id.match(/[0-9]+/)[0]);
 	  if (to.val() < 1) {
-		  to.val(1);
+		  to.val(0);
 		  from.val(0);
 	  } else {
-	    if (to.val() >= from.val()) {
-	      from.val(parseInt(to.val()) - 1);
+	    if (to.val() <= from.val()) {
+	      from.val(parseInt(to.val()));
 	    }
 	  }
+	  if (hasOrbits(spacecraft.val(), from.val(), to.val())) {
+		    from[0].setCustomValidity('');
+		    to[0].setCustomValidity('');
+		  } else { 
+		      from[0].setCustomValidity('no orbits in range');
+		      to[0].setCustomValidity('no orbits in range');
+		  }
 	}
 	
 	function getDate(dateString) {
@@ -1787,6 +1895,33 @@ function setValuePattern(aRow) {
 	}
 }
 
+
+function hasOrbits(spacecraft, from, to) {
+	  if (spacecraft != null && from != null && to != null) {
+	    var theUrl = "/hasorbits?";
+	    theUrl += "spacecraft=" + spacecraft + "&from=" + from + "&to=" + to;
+	    var xmlHttp = new XMLHttpRequest();
+	    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+	    xmlHttp.send( null );
+	    return xmlHttp.responseText == 'true';
+	  } else {
+	    return false;
+	  }
+	};
+	
+	function hasOrder(identifier, id) {
+		  if (identifier != null) {
+		    var theUrl = "/hasorder?";
+		    theUrl += "identifier=" + identifier + "&nid=" + id;
+		    var xmlHttp = new XMLHttpRequest();
+		    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+		    xmlHttp.send( null );
+		    return xmlHttp.responseText == 'true';
+		  } else {
+		    return false;
+		  }
+		};
+
 	function retrieveData(id) {
 		$("#submitButton").prop("disabled", true);
 
@@ -1826,6 +1961,8 @@ function setValuePattern(aRow) {
 							updateTitle();
 							feather.replace();
 							setValuePattern();
+              normDateVal($("input[name='startTime']"), 0);
+              normDateVal($("input[name='stopTime']"), 1);
 							$('#selinclasses').multiselect({
 								buttonWidth : '99%',
 								enableFiltering : true,
@@ -1866,24 +2003,20 @@ function setValuePattern(aRow) {
 													showLoader();
 													$("#submitButton").prop("disabled", true);
 													countAndSetNames();
-													var post_url = $(this).attr("action"); //get form action url
-													var request_method = $(this).attr("method"); //get form GET/POST method
-													var form_data = $(this).serialize(); //Encode form elements for submission
-													var form = new FormData($(this)[0]);
-													var x = $(this).serializeJSON();
+													var postData = $(this).serializeJSON();
 													$.ajax({
 																type : "POST",
 																contentType : 'application/json',
 																url : "/order-submit",
-																data : x,
+																data : postData,
 																processData : false,
 																dataType : "json",
 																cache : false,
 																timeout : 800000,
 																success : function(data) {
 																	$("#submitButton").prop("disabled", false);
-									                normDateVal($("input[name='startTime']"));
-									                normDateVal($("input[name='stopTime']"));
+									                normDateVal($("input[name='startTime']"), 0);
+									                normDateVal($("input[name='stopTime']"), 1);
 																	hideLoader();
 																
 																	if (!(typeof data === "undefined") && (data.status == "OK" || data.status == "CREATED")) {
@@ -1903,8 +2036,8 @@ function setValuePattern(aRow) {
 																error : function(e) {
 																	$("#submitButton").prop("disabled", false);
 														      updateTitle();
-														      normDateVal($("input[name='startTime']"));
-														      normDateVal($("input[name='stopTime']"));
+														      normDateVal($("input[name='startTime']"), 0);
+														      normDateVal($("input[name='stopTime']"), 1);
 																	hideLoader();
 																	if (e.state() == 'rejected') {
 																		// location.href = "/customlogin";

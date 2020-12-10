@@ -100,7 +100,9 @@
                     <td th:if="${ord?.slicingType} == 'TIME_SLICE'"><span th:text="#{timeslice}">timeslice</span>: 
                       <span th:text="#{duration}">duration</span>: <span th:text="${ord?.sliceDuration}">sliceDuration</span>, 
                       <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
-                    <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'">calendarday</td>
+                    <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'"><span th:text="#{calendarday}">calendarday</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
@@ -524,7 +526,8 @@
         });
       }
     };
-
+    
+    
     function retrieveDataPage(from, to) {
       var myid = getURLParam('id');
       retrieveJobs(myid, from, to, null);
