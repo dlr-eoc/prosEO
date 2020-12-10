@@ -1444,6 +1444,7 @@ function enableSlicingData() {
       $(ele).detach();
       if (type == slicingType.value) {
         if ($(ele).hasClass("filtercontent")) {
+        	checkStartTime($(ele).find("input[name='startTime']")[0]);
           $(ele).removeClass("filtercontent");
           $(ele).insertAfter($(slicingTop));
         } else {
@@ -1576,9 +1577,9 @@ function normDate(elem, up) {
   for (var i = 0; i < elem.length; i++) {
     var type = $(elem[i]).attr('data-type');
     var val = $(elem[i]).val();
-    var date = new Date(Date.parse(val));
     if (type == 'DAY') {
         if (up) {
+            var date = getDate(val + "T00:00:00");
             var y = date.setDate(date.getDate() + 1);
             var z = new Date(y);
             var pattern = getDatePattern('TIME');
@@ -1588,6 +1589,7 @@ function normDate(elem, up) {
         }
       } else if (type == 'MONTH') {
           if (up) {
+              var date = getDate(val + "-01T00:00:00");
             var y = date.setMonth(date.getMonth() + 1);
             var z = new Date(y);
             var pattern = getDatePattern('TIME');
@@ -1597,6 +1599,7 @@ function normDate(elem, up) {
           }
       } else if (type == 'YEAR') {
           if (up) {
+              var date = getDate(val + "-01-01T00:00:00");
               var y = date.setFullYear(date.getFullYear() + 1);
               var z = new Date(y);
               var pattern = getDatePattern('TIME');
@@ -1609,11 +1612,16 @@ function normDate(elem, up) {
   }
 }
 
-function normDateVal(elem, delta) {
+function normDateVal(elem, delta, utc) {
 	  for (var i = 0; i < elem.length; i++) {
 	    var type = $(elem[i]).attr('data-type');
 	    var val = $(elem[i]).val();
-	    var date = new Date(Date.parse(val));
+	    var date = null;
+	    if (utc) {
+	    	date = getDate(val);
+	    } else {
+	    	date = new Date(Date.parse(val));
+	    }
 	    if (type == 'DAY') {
 	            var y = date.setDate(date.getDate() - delta);
 	            var z = new Date(y);
@@ -1734,9 +1742,15 @@ function checkOrbitNumberTo() {
 	            } 
 	      }
 	
-	function checkStartTime() {
-		var startElem = $(this);
+	function checkStartTime(elem) {
+	  var startElem = null;
+		if (elem != null) {
+			startElem = $(elem);
+		} else {
+			startElem = $(this);
+		}
 		var type = startElem.attr('data-type');
+		if (type == null) return;
 		var start = getDate(startElem.val());
 		if (start != null) {
 			startElem[0].setCustomValidity('');
@@ -1957,12 +1971,19 @@ function hasOrbits(spacecraft, from, to) {
 										location.origin + location.pathname);
 								// removeURLKey('cp');
 								// removeURLKey('id');
+							} else {
+								  var myid = getURLParam('id');
+								  if (myid == 0) {
+									  // new order
+				                history.replaceState(history.state, null,
+				                    location.origin + location.pathname);
+								  }
 							}
 							updateTitle();
 							feather.replace();
 							setValuePattern();
-              normDateVal($("input[name='startTime']"), 0);
-              normDateVal($("input[name='stopTime']"), 1);
+              normDateVal($("input[name='startTime']"), 0, false);
+              normDateVal($("input[name='stopTime']"), 1, false);
 							$('#selinclasses').multiselect({
 								buttonWidth : '99%',
 								enableFiltering : true,
@@ -2003,6 +2024,7 @@ function hasOrbits(spacecraft, from, to) {
 													showLoader();
 													$("#submitButton").prop("disabled", true);
 													countAndSetNames();
+													updateTitle();
 													var postData = $(this).serializeJSON();
 													$.ajax({
 																type : "POST",
@@ -2015,8 +2037,6 @@ function hasOrbits(spacecraft, from, to) {
 																timeout : 800000,
 																success : function(data) {
 																	$("#submitButton").prop("disabled", false);
-									                normDateVal($("input[name='startTime']"), 0);
-									                normDateVal($("input[name='stopTime']"), 1);
 																	hideLoader();
 																
 																	if (!(typeof data === "undefined") && (data.status == "OK" || data.status == "CREATED")) {
@@ -2029,6 +2049,8 @@ function hasOrbits(spacecraft, from, to) {
 																			retrieveData(myId);
 																		}
 																	} else {
+										                normDateVal($("input[name='startTime']"), 0, true);
+										                normDateVal($("input[name='stopTime']"), 1, true);
 																		$("#output").text(data.status + ": " + data.message);
 																	}
 
@@ -2036,8 +2058,8 @@ function hasOrbits(spacecraft, from, to) {
 																error : function(e) {
 																	$("#submitButton").prop("disabled", false);
 														      updateTitle();
-														      normDateVal($("input[name='startTime']"), 0);
-														      normDateVal($("input[name='stopTime']"), 1);
+							                    normDateVal($("input[name='startTime']"), 0, true);
+							                    normDateVal($("input[name='stopTime']"), 1, true);
 																	hideLoader();
 																	if (e.state() == 'rejected') {
 																		// location.href = "/customlogin";

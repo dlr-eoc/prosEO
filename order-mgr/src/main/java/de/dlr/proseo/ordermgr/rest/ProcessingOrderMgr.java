@@ -1,11 +1,15 @@
 package de.dlr.proseo.ordermgr.rest;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -402,22 +406,46 @@ public class ProcessingOrderMgr {
 		if (null == id) {
 			throw new IllegalArgumentException(logError(MSG_ORDER_ID_MISSING, MSG_ID_ORDER_MISSING, id));
 		}
-		
-		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
-		
-		if (modelOrder.isEmpty()) {
-			throw new NoResultException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND, id));
+		if (id == 0) {
+			// new order from "scratch", used at least if GUI
+			RestOrder newOrder = new RestOrder();
+			newOrder.setIdentifier("New");
+			newOrder.setId((long) 0);
+			newOrder.setConfiguredProcessors(new ArrayList<>());
+			newOrder.setClassOutputParameters(new ArrayList<>());
+			newOrder.setInputFilters(new ArrayList<>());
+			newOrder.setInputProductClasses(new ArrayList<>());
+			newOrder.setOrbits(new ArrayList<>());
+			newOrder.setOutputParameters(new ArrayList<>());
+			newOrder.setRequestedProductClasses(new ArrayList<>());
+			newOrder.setVersion((long) 0);		
+			newOrder.setSliceDuration((long) 1);
+			newOrder.setSliceOverlap((long) 0);			
+			newOrder.setOrderState(OrderState.INITIAL.toString());
+			newOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString());
+			ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("UTC"));
+			Calendar cal = GregorianCalendar.from(zdt);
+			newOrder.setStartTime(Date.from(cal.toInstant()));
+			cal.add(Calendar.SECOND, 1);
+			newOrder.setStopTime(Date.from(cal.toInstant()));
+			return newOrder;
+		} else {
+			Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
+
+			if (modelOrder.isEmpty()) {
+				throw new NoResultException(logError(MSG_ORDER_NOT_FOUND, MSG_ID_ORDER_NOT_FOUND, id));
+			}
+
+			// Ensure user is authorized for the order mission
+			if (!securityService.isAuthorizedForMission(modelOrder.get().getMission().getCode())) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						modelOrder.get().getMission().getCode(), securityService.getMission()));			
+			}
+
+			logInfo(MSG_ORDER_RETRIEVED, MSG_ID_ORDER_RETRIEVED, id);
+
+			return OrderUtil.toRestOrder(modelOrder.get());
 		}
-		
-		// Ensure user is authorized for the order mission
-		if (!securityService.isAuthorizedForMission(modelOrder.get().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					modelOrder.get().getMission().getCode(), securityService.getMission()));			
-		}
-		
-		logInfo(MSG_ORDER_RETRIEVED, MSG_ID_ORDER_RETRIEVED, id);
-		
-		return OrderUtil.toRestOrder(modelOrder.get());
 	}
 	
 	/**

@@ -197,6 +197,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
+		// clearCache();
 		String myIdent = null;
 		if (identifier != null && identifier.indexOf("*") < 0) {
 			myIdent = identifier;
@@ -667,6 +668,7 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+		// clearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
@@ -716,9 +718,12 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+		// clearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -733,6 +738,7 @@ public class GUIOrderController extends GUIBaseController {
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
+					order.put("missionCode", mission);
 					orders.add(order);
 					model.addAttribute("orders", orders);
 					logger.trace(model.toString() + "MODEL TO STRING");
@@ -1260,6 +1266,15 @@ public Long countOrders(String orderName, String nid) {
 	}
 	
     return result;
+	}
+
+	private void clearCache() {
+		configuredProcessors = null;
+		facilities = null;
+		productclasses = null;
+		spaceCrafts = null;
+		fileClasses = null;
+		processingModes = null;
 	}
 }
 
