@@ -361,8 +361,10 @@ public class ConfigurationManager {
 			configurationChanged = true;
 			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
 		}
-		if (!modelConfiguration.getMode().equals(changedConfiguration.getMode())) {
-			if (modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(changedConfiguration.getMode())) {
+		if (null == modelConfiguration.getMode() && null != changedConfiguration.getMode()
+				|| !modelConfiguration.getMode().equals(changedConfiguration.getMode())) {
+			if (null == changedConfiguration.getMode() 
+					|| modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(changedConfiguration.getMode())) {
 				configurationChanged = true;
 				modelConfiguration.setMode(changedConfiguration.getMode());
 			} else {
