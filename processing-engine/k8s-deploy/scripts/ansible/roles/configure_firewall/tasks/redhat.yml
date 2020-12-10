@@ -1,0 +1,15 @@
+---
+- name: Enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Configure services
+  firewalld:
+    zone: public
+    service: "{{ item }}"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop: "{{ firewall_services|union(['dhcpv6-client', 'ssh']) }}"

@@ -5,6 +5,7 @@
         "missionCode": "S5P",
         "processorName": "KNMI L2",
         "configurationVersion": "2019-03-30",
+        "mode": "OFFL",
         "dynProcParameters": [
             {
                 "key": "logging.root",

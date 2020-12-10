@@ -48,6 +48,9 @@ public class ConfigurationUtil {
 		restConfiguration.setMissionCode(modelConfiguration.getProcessorClass().getMission().getCode());
 		restConfiguration.setProcessorName(modelConfiguration.getProcessorClass().getProcessorName());
 		restConfiguration.setConfigurationVersion(modelConfiguration.getConfigurationVersion());
+		if (null != modelConfiguration.getMode()) {
+			restConfiguration.setMode(modelConfiguration.getMode());
+		}
 		if (null != modelConfiguration.getProductQuality()) {
 			restConfiguration.setProductQuality(modelConfiguration.getProductQuality().toString());
 		}
@@ -107,6 +110,9 @@ public class ConfigurationUtil {
 			} 
 		}
 		modelConfiguration.setConfigurationVersion(restConfiguration.getConfigurationVersion());
+		if (null != restConfiguration.getMode()) {
+			modelConfiguration.setMode(restConfiguration.getMode());
+		}
 		if (null != restConfiguration.getProductQuality()) {
 			modelConfiguration.setProductQuality(ProductQuality.valueOf(restConfiguration.getProductQuality()));
 		}

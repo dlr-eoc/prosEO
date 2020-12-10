@@ -48,14 +48,12 @@ options:
       type: boolean
       description: Show the prosEO CLI version and exit (only for call from shell command line)
       shortForm: V
-    - name: user
+    - name: identFile
       type: string
-      description: The user name for login to prosEO.
-      shortForm: u
-    - name: password
-      type: string
-      description: The password for login to prosEO (only valid if a user name for login is given).
-      shortForm: p
+      description: |
+          Path to a file containing user name (without mission prefix) and password (in two separate lines);
+          the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+      shortForm: i
     - name: mission
       type: string
       description: The mission to login to (only valid if a user name for login is given)
@@ -78,14 +76,12 @@ commands:
     - name: login
       description: Log in to a mission in prosEO. All valid commands except for "mission show" require prior login.
       options:
-        - name: user
+        - name: identFile
           type: string
-          description: User name
-          shortForm: u
-        - name: password
-          type: string
-          description: The user's password
-          shortForm: p
+          description: |
+              Path to a file containing user name (without mission prefix) and password (in two separate lines);
+              the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+          shortForm: i
       parameters:
         - name: missionCode
           type: string
@@ -104,6 +100,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give mission details, otherwise show only mission code and name
+              shortForm: v
           parameters:
             - name: missionCode
               type: string
@@ -207,6 +207,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give orbit details, otherwise show only spacecraft code, orbit number and start/stop times
+              shortForm: v
           parameters:
             - name: spacecraftCode
               type: string
@@ -288,6 +292,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give order details, otherwise show only order identifier, UUID, start/stop times, mode and state
+              shortForm: v
           parameters:
             - name: orderId
               type: string
@@ -548,6 +556,10 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give processor class details , otherwise show only processor class name
+                  shortForm: v
               parameters:
                 - name: processorClass
                   type: string
@@ -607,6 +619,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give processor details, otherwise show only processor class name and processor version
+              shortForm: v
           parameters:
             - name: processorClass
               type: string
@@ -687,6 +703,11 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+                - name: verbose
+                  type: boolean
+                  description: If set, give configured processor details, otherwise show only identifier, UUID and
+                               and key data for linked processor and configuration
+                  shortForm: v
               parameters:
                 - name: configuredProcessorIdentifier
                   type: string
@@ -761,6 +782,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give configuration details, otherwise show only processor class name and configuration version
+              shortForm: v
           parameters:
             - name: processorClass
               type: string
@@ -843,6 +868,10 @@ commands:
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
+            - name: verbose
+              type: boolean
+              description: If set, give product class details, otherwise show only product class name
+              shortForm: v
           parameters:
             - name: productClass
               type: string
@@ -908,6 +937,10 @@ commands:
                 - name: format
                   type: string
                   description: The output format (one of { PLAIN, JSON, XML, YAML }; default value PLAIN [rule language]).
+                - name: verbose
+                  type: boolean
+                  description: If set, give rule details including job steps, otherwise show rule as in PLAIN format
+                  shortForm: v
               parameters:
                 - name: targetProductClass
                   type: string
@@ -1160,6 +1193,12 @@ commands:
               description: The mission to create the user for (only valid if not yet logged in into a mission;
                            basically intended for creating a single user with "ROLE_USERMGR" for a new mission)
               shortForm: m
+            - name: identFile
+              type: string
+              description: |
+                  Path to a file containing user name (without mission prefix) and password (in two separate lines);
+                  the file will only be read, if it is only readable by the current system user (as far as warranted by the operating system)
+              shortForm: i
           parameters:
             - name: userName
               type: string
@@ -1250,6 +1289,15 @@ commands:
               optional: false
               repeatable: true
               description: An authority to revoke (multiple authorities allowed)
+    - name: password
+      description: |
+          Interactively change the password of the logged in user, or of the named user,
+          if executed by a user with user manager permissions
+      parameters:
+        - name: userName
+          type: string
+          optional: true
+          description: The name of the user account to change the password for (default is the logged in user)
     - name: group
       description: Commands for managing groups (note that group names are stored with a mission prefix in the user database,
                    but the mission prefix is not used in the command-line interface)
@@ -1402,6 +1450,10 @@ commands:
               description: If set, give facility details, otherwise show facility names only (setting facilityName parameter
                            implies verbose)
               shortForm: v
+            - name: showPasswords
+              type: boolean
+              description: If set, show passwords for Processing Facility users, otherwise show placeholder
+              shortForm: s
           parameters:
             - name: facilityName
               type: string

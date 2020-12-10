@@ -15,14 +15,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -85,6 +89,14 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	private Map<Long, Map<String, String>> orderPwCache = new HashMap<>();
 	
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+
 	/**
 	 * Get the user/pw for processing order
 	 * 
@@ -167,6 +179,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Walk through ProcessingFacility list of DB and try to connect each.
 	 * Disconnect and remove KubeConfigs not defined in this list.
 	 */
+	@Transactional
 	public void updateKubeConfigs() {
 		KubeConfig kubeConfig = null;
 			
@@ -262,7 +275,18 @@ public class ProductionPlanner implements CommandLineRunner {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		this.updateKubeConfigs();
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+
+		try {
+			@SuppressWarnings("unused")
+			String dummy = transactionTemplate.execute((status) -> {
+				this.updateKubeConfigs();
+				return null;
+			});
+		} catch (TransactionException e) {
+			e.printStackTrace();
+		}
+		
 		this.startDispatcher();
 	}
 

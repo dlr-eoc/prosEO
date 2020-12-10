@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -48,6 +49,10 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 @Component
 public class ProductclassCommandRunner {
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
 	/* General string constants */
 	public static final String CMD_PRODUCTCLASS = "productclass";
 	private static final String CMD_RULE = "rule";
@@ -56,7 +61,6 @@ public class ProductclassCommandRunner {
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
 
-	private static final String MODE_ALWAYS = "ALWAYS";
 	private static final String FORMAT_PLAIN = "PLAIN";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
@@ -155,7 +159,7 @@ public class ProductclassCommandRunner {
 	 * Create a selection rule string from a plain text file with selection rules in Rule Language
 	 * 
 	 * @param selectionRuleFile the file name of the selection rule file
-	 * @return a SelectionRuleString object with the content of the file and default mode ALWAYS
+	 * @return a SelectionRuleString object with the content of the file and default mode null
 	 * @throws FileNotFoundException if the given file does not exist or is not a readable file
 	 * @throws IOException if a low-level I/O error occurs
 	 */
@@ -170,7 +174,7 @@ public class ProductclassCommandRunner {
 		/* Create and return a selection rule string object */
 		SelectionRuleString selectionRuleString = new SelectionRuleString();
 		selectionRuleString.setSelectionRule(ruleString);
-		selectionRuleString.setMode(MODE_ALWAYS);
+		selectionRuleString.setMode(null);
 		
 		return selectionRuleString;
 	}
@@ -189,10 +193,10 @@ public class ProductclassCommandRunner {
 		String productClassFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				productClassFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				productClassFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -303,10 +307,14 @@ public class ProductclassCommandRunner {
 		
 		/* Check command options */
 		String productClassOutputFormat = CLIUtil.FILE_FORMAT_YAML;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				productClassOutputFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 				break;
 			}
 		}
@@ -344,15 +352,25 @@ public class ProductclassCommandRunner {
 			return;
 		}
 		
-		/* Display the product class(es) found */
-		try {
-			CLIUtil.printObject(System.out, resultList, productClassOutputFormat);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e.getMessage());
-			return;
-		} catch (IOException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return;
+		if (isVerbose) {
+			/* Display the product class(es) found */
+			try {
+				CLIUtil.printObject(System.out, resultList, productClassOutputFormat);
+			} catch (IllegalArgumentException e) {
+				System.err.println(e.getMessage());
+				return;
+			} catch (IOException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return;
+			} 
+		} else {
+			// Must be a list of product classes
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					Map<?, ?> resultMap = (Map<?, ?>) resultObject;
+					System.out.println(resultMap.get("productType"));
+				}
+			}
 		}
 	}
 	
@@ -370,13 +388,13 @@ public class ProductclassCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				productClassFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				productClassFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -428,6 +446,9 @@ public class ProductclassCommandRunner {
 		// No modification of ID, version, mission code or product class name allowed
 		if (isDeleteAttributes || (null != updatedProductClass.getTypeDescription() && 0 != updatedProductClass.getTypeDescription().length())) {
 			restProductClass.setTypeDescription(updatedProductClass.getTypeDescription());
+		}
+		if (null != updatedProductClass.getProcessingLevel() && !updatedProductClass.getProcessingLevel().isBlank()) {
+			restProductClass.setProcessingLevel(updatedProductClass.getProcessingLevel());
 		}
 		if (null != updatedProductClass.getVisibility() && !updatedProductClass.getVisibility().isBlank()) {
 			restProductClass.setVisibility(updatedProductClass.getVisibility());
@@ -566,10 +587,10 @@ public class ProductclassCommandRunner {
 		String selectionRuleFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				selectionRuleFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				selectionRuleFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -646,12 +667,12 @@ public class ProductclassCommandRunner {
 				}
 			}
 			/* Set missing attributes to default values where possible */
-			if (null == restSelectionRule.getMode() || 0 == restSelectionRule.getMode().length()) {
-				restSelectionRule.setMode(MODE_ALWAYS);
+			if (null != restSelectionRule.getMode() && restSelectionRule.getMode().isBlank()) {
+				restSelectionRule.setMode(null);
 			}
 			
 			/* Prompt user for missing mandatory attributes */
-			if (null == restSelectionRule.getSelectionRule() || 0 == restSelectionRule.getSelectionRule().length()) {
+			if (null == restSelectionRule.getSelectionRule() || restSelectionRule.getSelectionRule().isBlank()) {
 				System.out.println(PROMPT_SELECTION_RULE);
 				String response = readTextFromConsole();
 				if (response.isBlank()) {
@@ -703,11 +724,14 @@ public class ProductclassCommandRunner {
 		
 		/* Check command options */
 		String selectionRuleOutputFormat = FORMAT_PLAIN;
+		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				selectionRuleOutputFormat = option.getValue().toUpperCase();
 				break;
+			case OPTION_VERBOSE:
+				isVerbose = true;
 			}
 		}
 		
@@ -761,7 +785,7 @@ public class ProductclassCommandRunner {
 		}
 		
 		/* Display the processor class(es) found */
-		if (FORMAT_PLAIN.equals(selectionRuleOutputFormat)) {
+		if (FORMAT_PLAIN.equals(selectionRuleOutputFormat) || !isVerbose) {
 			ObjectMapper mapper = new ObjectMapper();
 			for (Object resultObject: resultList) {
 				SelectionRuleString selectionRule = mapper.convertValue(resultObject, SelectionRuleString.class);
@@ -795,13 +819,13 @@ public class ProductclassCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				selectionRuleFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				selectionRuleFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}

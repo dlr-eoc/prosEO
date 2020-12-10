@@ -89,6 +89,7 @@ public class UserManager {
 	/* Other string constants */
 	private static final String ROLE_ROOT = UserRole.ROOT.asRoleString();
 	private static final String ROLE_USERMGR = UserRole.USERMGR.asRoleString();
+	private static final String PWD_PLACEHOLDER = "********";
 
 	/** Repository for User objects */
 	@Autowired
@@ -186,7 +187,8 @@ public class UserManager {
 		
 		RestUser restUser = new RestUser();
 		restUser.setUsername(modelUser.getUsername());
-		restUser.setPassword(modelUser.getPassword());
+		// Never return the password hash
+		restUser.setPassword(PWD_PLACEHOLDER);
 		restUser.setEnabled(modelUser.getEnabled());
 		if (null != modelUser.getExpirationDate()) {
 			restUser.setExpirationDate(modelUser.getExpirationDate());

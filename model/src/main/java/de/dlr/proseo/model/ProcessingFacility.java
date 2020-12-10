@@ -14,6 +14,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.Table;
 
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 
 /**
@@ -25,6 +26,9 @@ import de.dlr.proseo.model.enums.StorageType;
 @Entity
 @Table(indexes = { @Index(unique = true, columnList = "name") })
 public class ProcessingFacility extends PersistentObject {
+	
+	/* Message strings */
+	private static final String MSG_ILLEGAL_STATE_TRANSITION = "Illegal facility state transition from %s to %s";
 
 	/** The facility name (unique key) */
 	@Column(nullable = false)
@@ -33,14 +37,16 @@ public class ProcessingFacility extends PersistentObject {
 	/** A short description of the processing facility */
 	private String description;
 	
+	/** The run state the facility currently is in */
+	@Enumerated(EnumType.STRING)
+	private FacilityState facilityState;
+	
 	/** The URL to access this facility's processing engine (Kubernetes instance) */
 	private String processingEngineUrl;
 	
-	/** User name for connecting to this facility's processing engine (Kubernetes instance) */
-	private String processingEngineUser;
-	
-	/** Password for connecting to this facility's processing engine (Kubernetes instance) */
-	private String processingEnginePassword;
+	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
+	private String processingEngineToken;
 	
 	/** The URL to access this facility's storage manager */
 	private String storageManagerUrl;
@@ -94,6 +100,28 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
+	 * Gets the run state of the processing facility
+	 * @return the facility state
+	 */
+	public FacilityState getFacilityState() {
+		return facilityState;
+	}
+
+	/**
+	 * Sets the run state of the processing facility
+	 * @param facilityState the facility state to set
+	 * @throws IllegalStateException if the intended facility state transition is illegal
+	 */
+	public void setFacilityState(FacilityState facilityState) throws IllegalStateException {
+		if (null == this.facilityState || this.facilityState.equals(facilityState) || this.facilityState.isLegalTransition(facilityState)) {
+			this.facilityState = facilityState;
+		} else {
+			throw new IllegalStateException(String.format(MSG_ILLEGAL_STATE_TRANSITION,
+					this.facilityState.toString(), facilityState.toString()));
+		}
+	}
+
+	/**
 	 * Gets the URL of the facility's processing engine (Kubernetes instance)
 	 * 
 	 * @return the URL of the processing engine
@@ -112,39 +140,21 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
-	 * Gets the user name for the processing engine
+	 * Gets the authentication token for the processing engine
 	 * 
-	 * @return the processing engine user
+	 * @return the processing engine token
 	 */
-	public String getProcessingEngineUser() {
-		return processingEngineUser;
+	public String getProcessingEngineToken() {
+		return processingEngineToken;
 	}
 
 	/**
-	 * Sets the user name for the processing engine
+	 * Sets the authentication token for the processing engine
 	 * 
-	 * @param processingEngineUser the processing engine user to set
+	 * @param processingEngineToken the processing engine token to set
 	 */
-	public void setProcessingEngineUser(String processingEngineUser) {
-		this.processingEngineUser = processingEngineUser;
-	}
-
-	/**
-	 * Gets the password for the processing engine
-	 * 
-	 * @return the processing engine password
-	 */
-	public String getProcessingEnginePassword() {
-		return processingEnginePassword;
-	}
-
-	/**
-	 * Sets the password for the processing engine
-	 * 
-	 * @param processingEnginePassword the processing engine password to set
-	 */
-	public void setProcessingEnginePassword(String processingEnginePassword) {
-		this.processingEnginePassword = processingEnginePassword;
+	public void setProcessingEngineToken(String processingEngineToken) {
+		this.processingEngineToken = processingEngineToken;
 	}
 
 	/**

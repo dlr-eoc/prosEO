@@ -4,6 +4,7 @@
     "missionCode": "S5P",
     "productType": "L2__NPP___",
     "typeDescription": "Suomi-NPP VIIRS Clouds",
+    "processingLevel": "L2",
     "visibility": "PUBLIC",
     "defaultSlicingType": "ORBIT",
     "componentClasses": [ "L2__NP_BD3", "L2__NP_BD6", "L2__NP_BD7" ],

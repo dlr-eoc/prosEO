@@ -42,6 +42,7 @@ import de.dlr.proseo.facmgr.FacilitymgrSecurityConfig;
 import de.dlr.proseo.facmgr.rest.model.FacmgrUtil;
 import de.dlr.proseo.facmgr.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -54,6 +55,7 @@ public class FacmgrControllerTest {
 	private static String FACILITY_BASE_URI = "/proseo/facility-mgr/v0.1";
 	
 	// Some users and passwords
+	private static final String TEST_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6I…kJqHrdXRWtaUyFN7w";
 	private static final String TEST_USER = "testUser";
 	private static final String TEST_PASSWORD = "testPassword";
 
@@ -109,9 +111,9 @@ public class FacmgrControllerTest {
 			//testFacility.setId(Long.parseLong(testData[0]));
 			testFacility.setName(testData[2]);
 			testFacility.setDescription(testData[3]);
+			testFacility.setFacilityState(FacilityState.RUNNING);
 			testFacility.setProcessingEngineUrl(testData[4]);
-			testFacility.setProcessingEngineUser(TEST_USER);
-			testFacility.setProcessingEnginePassword(TEST_PASSWORD);
+			testFacility.setProcessingEngineToken(TEST_TOKEN);
 			testFacility.setStorageManagerUrl(testData[5]);
 			testFacility.setLocalStorageManagerUrl(testData[5]);
 			testFacility.setStorageManagerUser(TEST_USER);

@@ -18,6 +18,9 @@
       configurationVersion:
         type: string
         description: Version identification of the configuration environment
+      mode?:
+        type: string
+        description: The processing mode, for which this configuration is valid; optional, if set, must match mission processing modes
       dynProcParameters:
         type: RestParameter[]
         description: Dynamic processing parameters, the values denoting default values, which may be changed by the Job Order File generator

@@ -1,0 +1,57 @@
+FROM centos:7
+LABEL maintainer="Jens Finkhaeuser <jens@finkhaeuser.de>"
+
+# Build args
+ARG WORK_DIR=/prosEO
+ARG TERRAFORM_VERSION=0.13.5
+WORKDIR ${WORK_DIR}
+
+# Initial setup
+RUN yum -y install epel-release
+RUN yum -y update
+
+ENV LC_ALL=en_US.utf8
+ENV LANG=en_US.utf8
+
+
+# Programming languages
+RUN yum -y install \
+      python3 \
+      python3-pip
+
+# Helpers
+RUN yum -y install openssh openssh-clients which unzip
+
+# Setup Python environment
+RUN pip3 install pipenv
+COPY Pipfile .
+RUN pipenv install --three
+
+# Install Terraform
+RUN curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_0.13.5_linux_amd64.zip && \
+      unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+      chmod +x terraform && \
+      mv terraform /usr/local/bin && \
+      rm terraform*.zip
+
+# Install kubespray requirements. Note that the requirements may change if
+# this image is older than the kubespray path mapped at run-time.
+COPY kubespray/requirements.txt ./tools/
+RUN pipenv install -r ./tools/requirements.txt
+
+# Install kubectl
+#COPY kubespray/roles/download/defaults/main.yml ./tools/ \
+COPY main.yml ./tools/
+RUN export KUBE_VERSION=$(grep '^kube_version:' ./tools/main.yml | cut -d' ' -f2) && \
+      mkdir bin && \
+      cd bin && \
+      curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl && \
+      chmod +x kubectl
+
+# Setup PATH
+ENV PATH=${WORK_DIR}/bin:${WORK_DIR}/scripts:${PATH}
+
+# Entry point
+ENV PIPENV_SHELL=/bin/bash
+ENV PIPENV_SHELL_FANCY=true
+ENTRYPOINT pipenv shell

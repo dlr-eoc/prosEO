@@ -244,6 +244,17 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setDescription(changedFacility.getDescription());
 		}	
+		if (null == modelFacility.getFacilityState()) {
+			if (null == changedFacility.getDescription()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setFacilityState(changedFacility.getFacilityState());
+			}
+		} else if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
+			facilityChanged = true;
+			modelFacility.setDescription(changedFacility.getDescription());
+		}	
 		if (null == modelFacility.getProcessingEngineUrl()) {
 			if (null == changedFacility.getProcessingEngineUrl()) {
 				// No change
@@ -255,27 +266,16 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setProcessingEngineUrl(changedFacility.getProcessingEngineUrl());
 		}	
-		if (null == modelFacility.getProcessingEngineUser()) {
-			if (null == changedFacility.getProcessingEngineUser()) {
+		if (null == modelFacility.getProcessingEngineToken()) {
+			if (null == changedFacility.getProcessingEngineToken()) {
 				// No change
 			} else {
 				facilityChanged = true;
-				modelFacility.setProcessingEngineUser(changedFacility.getProcessingEngineUser());
+				modelFacility.setProcessingEngineToken(changedFacility.getProcessingEngineToken());
 			}
-		} else if (!modelFacility.getProcessingEngineUser().equals(changedFacility.getProcessingEngineUser())) {
+		} else if (!modelFacility.getProcessingEngineToken().equals(changedFacility.getProcessingEngineToken())) {
 			facilityChanged = true;
-			modelFacility.setProcessingEngineUser(changedFacility.getProcessingEngineUser());
-		}	
-		if (null == modelFacility.getProcessingEnginePassword()) {
-			if (null == changedFacility.getProcessingEnginePassword()) {
-				// No change
-			} else {
-				facilityChanged = true;
-				modelFacility.setProcessingEnginePassword(changedFacility.getProcessingEnginePassword());
-			}
-		} else if (!modelFacility.getProcessingEnginePassword().equals(changedFacility.getProcessingEnginePassword())) {
-			facilityChanged = true;
-			modelFacility.setProcessingEnginePassword(changedFacility.getProcessingEnginePassword());
+			modelFacility.setProcessingEngineToken(changedFacility.getProcessingEngineToken());
 		}	
 		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
 			facilityChanged = true;

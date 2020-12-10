@@ -5,6 +5,9 @@
  */
 package de.dlr.proseo.ui.backend;
 
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_MANDATORY_ATTRIBUTE_MISSING;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,6 +35,7 @@ public class UIMessages {
 	public static final int MSG_ID_EXCEPTION = 2806;
 	public static final int MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION = 2807;
 	public static final int MSG_ID_NOT_MODIFIED = 2808;
+	public static final int MSG_ID_MANDATORY_ATTRIBUTE_MISSING = 2809;
 	public static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	// Service connection
@@ -41,6 +45,7 @@ public class UIMessages {
 	public static final int MSG_ID_SERIALIZATION_FAILED = 2813;
 	public static final int MSG_ID_INVALID_URL = 2814;
 	public static final int MSG_ID_UNEXPECTED_STATUS = 2815;
+	// 2816, 2817, 2818 used for CLI Util
 	
 	// Login Manager
 	public static final int MSG_ID_HTTP_CONNECTION_FAILURE = 2820;
@@ -63,6 +68,9 @@ public class UIMessages {
 	public static final int MSG_ID_REFLECTION_EXCEPTION = 2835;
 	public static final int MSG_ID_GENERATION_EXCEPTION = 2836;
 	public static final int MSG_ID_MAPPING_EXCEPTION = 2837;
+	public static final int MSG_ID_CREDENTIALS_INSECURE = 2816;
+	public static final int MSG_ID_CREDENTIALS_NOT_FOUND = 2817;
+	public static final int MSG_ID_CREDENTIALS_NOT_READABLE = 2818;
 
 	// CLI Parser
 	public static final int MSG_ID_SYNTAX_LOADED = 2900;
@@ -274,6 +282,12 @@ public class UIMessages {
 	public static final int MSG_ID_USERS_ADDED = 2727;
 	public static final int MSG_ID_USERS_REMOVED = 2728;
 	public static final int MSG_ID_NO_USERS_FOUND_IN_GROUP = 2729;
+	public static final int MSG_ID_PASSWORD_CHANGED = 2730;
+	public static final int MSG_ID_PASSWORD_STRENGTH_INSUFFICIENT = 2731;
+	public static final int MSG_ID_INVALID_IDENT_FILE = 2732;
+	public static final int MSG_ID_USERNAME_MISMATCH = 2733;
+	public static final int MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED = 2734;
+	public static final int MSG_ID_PASSWORDS_MUST_DIFFER = 2735;
 
 	// Facility CLI
 	public static final int MSG_ID_NO_FACILITIES_FOUND = 2740;
@@ -301,6 +315,7 @@ public class UIMessages {
 		MSG_NOT_AUTHORIZED ("(E%d) User %s not authorized to manage %s for mission %s", MSG_ID_NOT_AUTHORIZED),
 		MSG_EXCEPTION ("(E%d) Command failed (cause: %s)", MSG_ID_EXCEPTION),
 		MSG_INVALID_TIME ("(E%d) Time format %s not parseable", MSG_ID_INVALID_TIME),
+		MSG_MANDATORY_ATTRIBUTE_MISSING ("(E%d) Mandatory attribute '%s' missing", MSG_ID_MANDATORY_ATTRIBUTE_MISSING),
 		MSG_NOT_IMPLEMENTED ("(E%d) Command %s not implemented", MSG_ID_NOT_IMPLEMENTED),
 
 		// Login Manager
@@ -441,6 +456,13 @@ public class UIMessages {
 		MSG_GROUP_DELETE_FAILED ("(E%d) Deletion of user group %s failed (cause: %s)", MSG_ID_GROUP_DELETE_FAILED),
 		MSG_NO_USERS_GIVEN ("(E%d) No users given in command", MSG_ID_NO_USERS_GIVEN),
 		MSG_NO_USERS_FOUND_IN_GROUP ("(E%d) No user accounts found for user group %s", MSG_ID_NO_USERS_FOUND_IN_GROUP),
+		MSG_PASSWORD_STRENGTH_INSUFFICIENT ("(E%d) Password strength insufficient (min. length %d characters, min. %d types of the "
+				+ "four element groups lowercase letters, uppercase letters, digits and special characters '%s' required)",
+				MSG_ID_PASSWORD_STRENGTH_INSUFFICIENT),
+		MSG_INVALID_IDENT_FILE ("(E%d) Credentials file %s invalid (does not contain username and password)", MSG_ID_INVALID_IDENT_FILE),
+		MSG_USERNAME_MISMATCH ("(E%d) Username %s to update does not match username %s from credentials file %s", MSG_ID_USERNAME_MISMATCH),
+		MSG_PASSWORD_CHANGE_NOT_ALLOWED ("(E%d) Password change not allowed in non-interactive mode", MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED),
+		MSG_PASSWORDS_MUST_DIFFER ("(E%d) Old and new password must be different", MSG_ID_PASSWORDS_MUST_DIFFER),
 
 		// Facility CLI
 		MSG_NO_FACILITIES_FOUND ("(E%d) No processing facilities found", MSG_ID_NO_FACILITIES_FOUND),
@@ -460,6 +482,9 @@ public class UIMessages {
 		MSG_REFLECTION_EXCEPTION ("(E%d) Reflection exception setting attribute %s (cause: %s)", MSG_ID_REFLECTION_EXCEPTION),
 		MSG_GENERATION_EXCEPTION ("(E%d) Write exception serializing object %s to format %s (cause: %s)", MSG_ID_GENERATION_EXCEPTION),
 		MSG_MAPPING_EXCEPTION ("(E%d) Exception mapping object %s to format %s (cause: %s)", MSG_ID_MAPPING_EXCEPTION),
+		MSG_CREDENTIALS_INSECURE ("(E%d) Credential file %s ignored, because it is insecure (group or world readable)", MSG_ID_CREDENTIALS_INSECURE),
+		MSG_CREDENTIALS_NOT_FOUND ("(E%d) Credential file %s not found", MSG_ID_CREDENTIALS_NOT_FOUND),
+		MSG_CREDENTIALS_NOT_READABLE ("(E%d) Credential file %s not readable (cause: %s)", MSG_ID_CREDENTIALS_NOT_READABLE),
 		
 		// CLI Parser
 		MSG_ILLEGAL_PARAMETER_TYPE ("(E%d) Illegal parameter type %s, expected one of %s", MSG_ID_ILLEGAL_PARAMETER_TYPE),
@@ -563,6 +588,7 @@ public class UIMessages {
 		MSG_GROUP_AUTHORITIES_REVOKED ("(I%d) Authorities %s revoked from group %s", MSG_ID_GROUP_AUTHORITIES_REVOKED),
 		MSG_USERS_ADDED ("(I%d) Users %s added to group %s", MSG_ID_USERS_ADDED),
 		MSG_USERS_REMOVED ("(I%d) Users %s removed from group %s", MSG_ID_USERS_REMOVED),
+		MSG_PASSWORD_CHANGED ("(I%d) Password changed for user %s", MSG_ID_PASSWORD_CHANGED),
 		
 		// Facility CLI
 		MSG_FACILITY_CREATED ("(I%d) Processing facility %s created (database ID %d)", MSG_ID_FACILITY_CREATED),

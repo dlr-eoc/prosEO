@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
@@ -109,6 +110,11 @@ public class KubeConfig {
 	private String description;
 	
 	/**
+	 * The run state the facility currently is in 
+	 */
+	private FacilityState facilityState;
+	
+	/**
 	 * The url of the facility 
 	 */
 	private String url;
@@ -123,12 +129,9 @@ public class KubeConfig {
 	 */
 	private StorageType storageType;
 	
-	/** User name for connecting to this facility's processing engine (Kubernetes instance) */
-	private String processingEngineUser;
+	/** Authentication token for connecting to this facility's processing engine (Kubernetes instance) */
+	private String processingEngineToken;
 	
-	/** Password for connecting to this facility's processing engine (Kubernetes instance) */
-	private String processingEnginePassword;
-
 	/**
 	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
 	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
@@ -156,17 +159,10 @@ public class KubeConfig {
 	}
 
 	/**
-	 * @return the processingEngineUser
+	 * @return the processingEngineToken
 	 */
-	public String getProcessingEngineUser() {
-		return processingEngineUser;
-	}
-
-	/**
-	 * @return the processingEnginePassword
-	 */
-	public String getProcessingEnginePassword() {
-		return processingEnginePassword;
+	public String getProcessingEngineToken() {
+		return processingEngineToken;
 	}
 
 	/**
@@ -191,17 +187,10 @@ public class KubeConfig {
 	}
 
 	/**
-	 * @param processingEngineUser the processingEngineUser to set
+	 * @param processingEngineToken the processingEngineToken to set
 	 */
-	public void setProcessingEngineUser(String processingEngineUser) {
-		this.processingEngineUser = processingEngineUser;
-	}
-
-	/**
-	 * @param processingEnginePassword the processingEnginePassword to set
-	 */
-	public void setProcessingEnginePassword(String processingEnginePassword) {
-		this.processingEnginePassword = processingEnginePassword;
+	public void setProcessingEngineToken(String processingEngineToken) {
+		this.processingEngineToken = processingEngineToken;
 	}
 
 	/**
@@ -287,12 +276,12 @@ public class KubeConfig {
 		longId = pf.getId();
 		version = pf.getVersion();
 		description = pf.getDescription();
+		facilityState = pf.getFacilityState();
 		url = pf.getProcessingEngineUrl();
 		storageManagerUrl = pf.getStorageManagerUrl();
 		storageType = pf.getDefaultStorageType();
 		localStorageManagerUrl = pf.getLocalStorageManagerUrl();
-		processingEngineUser = pf.getProcessingEngineUser();
-		processingEnginePassword = pf.getProcessingEnginePassword();
+		processingEngineToken = pf.getProcessingEngineToken();
 		storageManagerUser = pf.getStorageManagerUser();
 		storageManagerPassword = pf.getStorageManagerPassword();
 		processingFacility = pf;
@@ -343,11 +332,9 @@ public class KubeConfig {
 			return true;
 		} else {
 			kubeJobList = new HashMap<String, KubeJob>();
-			if (processingEngineUser != null && !processingEngineUser.isEmpty() 
-					&& processingEnginePassword != null && !processingEnginePassword.isEmpty()) {
-				client = Config.fromUserPassword(url, 
-						 processingEngineUser, 
-						 processingEnginePassword, 
+			if (processingEngineToken != null && !processingEngineToken.isEmpty()) {
+				client = Config.fromToken(url, 
+						 processingEngineToken, 
 						 false);
 			} else {
                 try {
@@ -711,6 +698,20 @@ public class KubeConfig {
 		return description;
 	}
 	
+	/**
+	 * @return the facility state
+	 */
+	public FacilityState getFacilityState() {
+		return facilityState;
+	}
+
+	/**
+	 * @param facilityState the facility state to set
+	 */
+	public void setFacilityState(FacilityState facilityState) {
+		this.facilityState = facilityState;
+	}
+
 	/**
 	 * Delete a job
 	 * 

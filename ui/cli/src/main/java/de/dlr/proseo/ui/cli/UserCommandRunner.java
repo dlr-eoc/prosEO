@@ -33,6 +33,7 @@ import de.dlr.proseo.model.rest.model.RestUser;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
+import de.dlr.proseo.ui.cli.CLIUtil.Credentials;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
 import de.dlr.proseo.ui.cli.parser.ParsedParameter;
@@ -48,6 +49,7 @@ public class UserCommandRunner {
 
 	/* General string constants */
 	public static final String CMD_USER = "user";
+	public static final String CMD_PASSWORD = "password";
 	public static final String CMD_GROUP = "group";
 	private static final String CMD_ADD = "add";
 	private static final String CMD_REMOVE = "remove";
@@ -60,6 +62,13 @@ public class UserCommandRunner {
 	private static final String CMD_CREATE = "create";
 	private static final String CMD_UPDATE = "update";
 	private static final String CMD_DELETE = "delete";
+
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_IDENT_FILE = "identFile";
+	private static final String OPTION_MISSION = "mission";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_USER_NAME = "User name (empty field cancels): ";
@@ -281,22 +290,26 @@ public class UserCommandRunner {
 		/* Check command options */
 		File userAccountFile = null;
 		String userAccountFileFormat = CLIUtil.FILE_FORMAT_JSON;
-		String missionCode = loginManager.getMission();
+		String missionPrefix = loginManager.getMissionPrefix();
+		String identFile = null;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				userAccountFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				userAccountFileFormat = option.getValue().toUpperCase();
 				break;
-			case "mission":
-				if (null == missionCode) {
-					missionCode = option.getValue().toUpperCase();
+			case OPTION_MISSION:
+				if (missionPrefix.isBlank()) {
+					missionPrefix = option.getValue().toUpperCase() + LoginManager.MISSION_PREFIX_CHAR;
 				} else {
-					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, missionCode));
+					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, loginManager.getMission()));
 					return;
 				}
+				break;
+			case OPTION_IDENT_FILE:
+				identFile = option.getValue();
 				break;
 			}
 		}
@@ -319,18 +332,13 @@ public class UserCommandRunner {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is user account name
-				restUser.setUsername((null == missionCode ? "" : missionCode + "-") + param.getValue());
+				restUser.setUsername(missionPrefix + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
-					// Handle special case: Password is unencrypted on command line
-					if (param.getValue().startsWith("password=")) {
-						// Due to parsing guaranteed to be "password=value"
-						param.setValue("password=" + passwordEncoder.encode(param.getValue().split("=")[1]));
-					}
 					CLIUtil.setAttribute(restUser, param.getValue());
 				} catch (Exception e) {
-					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+					// Already logged and printed
 					return;
 				}
 			}
@@ -342,23 +350,55 @@ public class UserCommandRunner {
 		}
 		
 		/* Prompt user for missing mandatory attributes */
-		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null != System.console()) System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 
 		if (null == restUser.getUsername() || restUser.getUsername().isEmpty()) {
+			if (null == System.console()) {
+				logger.error(uiMsg(MSG_ID_MANDATORY_ATTRIBUTE_MISSING, "username"));
+				return;
+			}
 			System.out.print(PROMPT_USER_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
-			restUser.setUsername((null == missionCode ? "" : missionCode + "-") + response);
+			restUser.setUsername(missionPrefix + response);
+		}
+		// Handle safe password setting for user creation (--identFile ?)
+		restUser.setPassword(null); // Never mind what the account file said!
+		if (null != identFile) {
+			try {
+				Credentials credentials = CLIUtil.readIdentFile(identFile);
+				String bareUserName = (restUser.getUsername().startsWith(missionPrefix) ?
+						restUser.getUsername().substring(missionPrefix.length()) :
+						restUser.getUsername());
+				if (!credentials.username.equals(bareUserName)) {
+					String message = uiMsg(MSG_ID_USERNAME_MISMATCH, bareUserName, credentials.username, identFile);
+					logger.error(message);
+					if (null != System.console()) System.err.println(message);
+					return;
+				}
+				restUser.setPassword(passwordEncoder.encode(credentials.password));
+			} catch (Exception e) {
+				// Error already handled
+				return;
+			}
 		}
 		while (null == restUser.getPassword() || restUser.getPassword().isEmpty()) {
+			if (null == System.console()) {
+				logger.error(uiMsg(MSG_ID_MANDATORY_ATTRIBUTE_MISSING, "password"));
+				return;
+			}
 			System.out.print(PROMPT_PASSWORD);
 			String response = new String(System.console().readPassword());
 			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
+			}
+			if (!loginManager.isPasswordStrengthOk(response)) {
+				// Error handled in called method
+				continue;
 			}
 			System.out.print(PROMPT_PASSWORD_REPEAT);
 			String response2 = new String(System.console().readPassword());
@@ -413,10 +453,10 @@ public class UserCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				userAccountOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -457,7 +497,7 @@ public class UserCommandRunner {
 			// Only user name allowed as parameter
 			String username = showCommand.getParameters().get(0).getValue();
 			isVerbose = true; // implied, if only a single user is requested
-			result = readUser(loginManager.getMission() + "-" + username);
+			result = readUser(loginManager.getMissionPrefix() + username);
 			if (null == result)	{
 				// Error handled by called method
 				return;
@@ -500,13 +540,13 @@ public class UserCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				userFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				userFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -530,15 +570,10 @@ public class UserCommandRunner {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is username
-				updatedUser.setUsername(loginManager.getMission() + "-" + param.getValue());
+				updatedUser.setUsername(loginManager.getMissionPrefix() + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
-					// Handle special case: Password is unencrypted on command line
-					if (param.getValue().startsWith("password=")) {
-						// Due to parsing guaranteed to be "password=value"
-						param.setValue("password=" + passwordEncoder.encode(param.getValue().split("=")[1]));
-					}
 					CLIUtil.setAttribute(updatedUser, param.getValue());
 				} catch (Exception e) {
 					System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
@@ -555,10 +590,7 @@ public class UserCommandRunner {
 		}
 
 		/* Compare attributes of database user with updated user */
-		// No modification of username allowed
-		if (null != updatedUser.getPassword() && !updatedUser.getPassword().isBlank()) {
-			restUser.setPassword(updatedUser.getPassword());
-		}
+		// No modification of username or password allowed
 		if (null != updatedUser.getEnabled()) {
 			restUser.setEnabled(updatedUser.getEnabled());
 		}
@@ -603,14 +635,14 @@ public class UserCommandRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteUser({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
 		/* Check command options */
-		String missionCode = loginManager.getMission();
+		String missionPrefix = loginManager.getMissionPrefix();
 		for (ParsedOption option: deleteCommand.getOptions()) {
 			switch(option.getName()) {
-			case "mission":
-				if (null == missionCode) {
-					missionCode = option.getValue().toUpperCase();
+			case OPTION_MISSION:
+				if (missionPrefix.isBlank()) {
+					missionPrefix = option.getValue().toUpperCase() + LoginManager.MISSION_PREFIX_CHAR;
 				} else {
-					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, missionCode));
+					System.err.println(uiMsg(MSG_ID_MISSION_ALREADY_SET, missionPrefix));
 					return;
 				}
 				break;
@@ -623,7 +655,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = (null == missionCode ? "" : missionCode + "-") + deleteCommand.getParameters().get(0).getValue();
+		String username = missionPrefix + deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the user using User Manager service */
 		RestUser restUser = readUser(username);
@@ -676,7 +708,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String username = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Read original user from User service */
 		RestUser restUser = readUser(username);
@@ -715,7 +747,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String username = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Read original user from User service */
 		RestUser restUser = readUser(username);
@@ -754,7 +786,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String username = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
@@ -808,7 +840,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_USERNAME_GIVEN));
 			return;
 		}
-		String username = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String username = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
@@ -845,6 +877,84 @@ public class UserCommandRunner {
 	}
 
 	/**
+	 * Interactively change the password of the logged in user,
+	 * or of the named user, if executed by a user with user manager permissions
+	 * 
+	 * @param passwordCommand the parsed "password" command
+	 */
+	private void changePassword(ParsedCommand passwordCommand) {
+		if (logger.isTraceEnabled()) logger.trace(">>> changePassword({})", (null == passwordCommand ? "null" : passwordCommand));
+		
+		if (null == System.console()) {
+			logger.error(uiMsg(MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED));
+			return;
+		}
+
+		/* Check command parameters */
+		String userName = loginManager.getUser();
+		if (0 < passwordCommand.getParameters().size()) {
+			userName = loginManager.getMissionPrefix() + passwordCommand.getParameters().get(0).getValue();
+		}
+		
+		/* Find the given user */
+		RestUser restUser = readUser(userName);
+		if (null == restUser) {
+			// Error handled by called method
+			return;
+		}
+		
+		/* Prompt user for new password */
+		restUser.setPassword(null);
+		String newPassword = null;
+		while (null == restUser.getPassword() || restUser.getPassword().isEmpty()) {
+			System.out.print(PROMPT_PASSWORD);
+			newPassword = new String(System.console().readPassword());
+			if (newPassword.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			// Password must be different from previous password (as far as we can tell, i.e. only for the logged-in user)
+			if (userName.equals(loginManager.getUser()) && newPassword.equals(loginManager.getPassword())) {
+				System.out.println(uiMsg(MSG_ID_PASSWORDS_MUST_DIFFER));
+				continue;
+			}
+			// Ensure password strength
+			if (!loginManager.isPasswordStrengthOk(newPassword)) {
+				// Error handled in called method
+				continue;
+			}
+			// Repeat password
+			System.out.print(PROMPT_PASSWORD_REPEAT);
+			String response2 = new String(System.console().readPassword());
+			if (!newPassword.equals(response2)) {
+				System.out.println(uiMsg(MSG_ID_PASSWORD_MISMATCH));
+				continue;
+			}
+			restUser.setPassword(passwordEncoder.encode(newPassword));
+		}
+		
+		/* Update user using User Manager service */
+		restUser = modifyUser(restUser);
+		if (null == restUser) {
+			// Error handled by called method;
+			return;
+		}
+		
+		/* If the password of the logged-in user was changed, notify the Login Manager */
+		if (userName.equals(loginManager.getUser())) {
+			String bareUserName = (userName.startsWith(loginManager.getMissionPrefix()) ? 
+					userName.substring(loginManager.getMissionPrefix().length()) : 
+					userName);
+			loginManager.doLogin(bareUserName, newPassword, loginManager.getMission(), false);
+		}
+		
+		/* Report success */
+		String message = uiMsg(MSG_ID_PASSWORD_CHANGED, restUser.getUsername());
+		logger.info(message);
+		System.out.println(message);
+	}
+
+	/**
 	 * Create a new user group; if the input is not from a file, the user will be prompted for mandatory attributes
 	 * not given on the command line
 	 * 
@@ -858,10 +968,10 @@ public class UserCommandRunner {
 		String groupAccountFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				groupAccountFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				groupAccountFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -885,7 +995,7 @@ public class UserCommandRunner {
 			ParsedParameter param = createCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is user group name
-				restGroup.setGroupname(loginManager.getMission() + "-" + param.getValue());
+				restGroup.setGroupname(loginManager.getMissionPrefix() + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -898,16 +1008,20 @@ public class UserCommandRunner {
 		}
 		
 		/* Prompt user for missing mandatory attributes */
-		System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
+		if (null != System.console()) System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
 
 		if (null == restGroup.getGroupname() || restGroup.getGroupname().isEmpty()) {
+			if (null == System.console()) {
+				logger.error(uiMsg(MSG_ID_MANDATORY_ATTRIBUTE_MISSING, "groupname"));
+				return;
+			}
 			System.out.print(PROMPT_GROUP_NAME);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
 			}
-			restGroup.setGroupname(loginManager.getMission() + "-" + response);
+			restGroup.setGroupname(loginManager.getMissionPrefix() + response);
 		}
 		
 		/* Create user group */
@@ -954,10 +1068,10 @@ public class UserCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				userAccountOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -998,7 +1112,7 @@ public class UserCommandRunner {
 			String groupName = showCommand.getParameters().get(0).getValue();
 			isVerbose = true; // implied, if only a single user is requested
 			
-			result = readGroup(loginManager.getMission() + "-" + groupName);
+			result = readGroup(loginManager.getMissionPrefix() + groupName);
 			if (null == result)	{
 				// Error handled by called method
 				return;
@@ -1040,13 +1154,13 @@ public class UserCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				groupFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				groupFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -1070,7 +1184,7 @@ public class UserCommandRunner {
 			ParsedParameter param = updateCommand.getParameters().get(i);
 			if (0 == i) {
 				// First parameter is group name
-				updatedGroup.setGroupname(loginManager.getMission() + "-" + param.getValue());
+				updatedGroup.setGroupname(loginManager.getMissionPrefix() + param.getValue());
 			} else {
 				// Remaining parameters are "attribute=value" parameters
 				try {
@@ -1123,7 +1237,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + deleteCommand.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + deleteCommand.getParameters().get(0).getValue();
 		
 		/* Retrieve the group using User Manager service */
 		RestGroup restGroup = readGroup(groupname);
@@ -1176,12 +1290,12 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get user name(s) from command parameters */
 		List<String> usernames = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			usernames.add(loginManager.getMission() + "-" + command.getParameters().get(i).getValue());
+			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
 		if (usernames.isEmpty()) {
 			// No users to add given
@@ -1254,12 +1368,12 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get user name(s) from command parameters */
 		List<String> usernames = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			usernames.add(loginManager.getMission() + "-" + command.getParameters().get(i).getValue());
+			usernames.add(loginManager.getMissionPrefix() + command.getParameters().get(i).getValue());
 		}
 		if (usernames.isEmpty()) {
 			// No users to add given
@@ -1332,10 +1446,10 @@ public class UserCommandRunner {
 		boolean isVerbose = false;
 		for (ParsedOption option: command.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				userAccountOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
 				break;
 			}
@@ -1347,7 +1461,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Read original group from User service */
 		RestGroup restGroup = readGroup(groupname);
@@ -1419,7 +1533,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
@@ -1473,7 +1587,7 @@ public class UserCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_GROUPNAME_GIVEN));
 			return;
 		}
-		String groupname = loginManager.getMission() + "-" + command.getParameters().get(0).getValue();
+		String groupname = loginManager.getMissionPrefix() + command.getParameters().get(0).getValue();
 		
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
@@ -1524,7 +1638,9 @@ public class UserCommandRunner {
 		}
 		if (null == loginManager.getMission()) {
 			if (CMD_USER.equals(command.getName()) && null != command.getSubcommand() && CMD_CREATE.equals(command.getSubcommand().getName()) ) {
-				// OK, "user create" allowed without login to a specific mission
+				// OK, "user create" allowed without login to a specific mission (for administrator only)
+			} else if (CMD_PASSWORD.equals(command.getName())) {
+				// OK, "password" allowed without login to a specific mission (for administrator only)
 			} else {
 				System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN_TO_MISSION, command.getName()));
 				return;
@@ -1532,20 +1648,21 @@ public class UserCommandRunner {
 		}
 		
 		/* Check argument */
-		if (!CMD_USER.equals(command.getName()) && !CMD_GROUP.equals(command.getName())) {
+		if (!CMD_USER.equals(command.getName()) && !CMD_PASSWORD.equals(command.getName()) && !CMD_GROUP.equals(command.getName())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_COMMAND_NAME, command.getName()));
 			return;
 		}
 		
-		/* Make sure a subcommand is given */
-		if (null == command.getSubcommand() || null == command.getSubcommand().getName()) {
+		/* Make sure a subcommand is given for "user" and "group" */
+		if (!CMD_PASSWORD.equals(command.getName()) &&
+				(null == command.getSubcommand() || null == command.getSubcommand().getName())) {
 			System.err.println(uiMsg(MSG_ID_SUBCOMMAND_MISSING, command.getName()));
 			return;
 		}
 		
 		/* Check for subcommand help request */
 		ParsedCommand subcommand = command.getSubcommand();
-		if (subcommand.isHelpRequested()) {
+		if (!CMD_PASSWORD.equals(command.getName()) && subcommand.isHelpRequested()) {
 			subcommand.getSyntaxCommand().printHelp(System.out);
 			return;
 		}
@@ -1567,6 +1684,8 @@ public class UserCommandRunner {
 				System.err.println(uiMsg(MSG_ID_NOT_IMPLEMENTED, command.getName() + " " + subcommand.getName()));
 				return;
 			}
+		case CMD_PASSWORD:
+			changePassword(command); break COMMAND;
 		case CMD_GROUP:
 			switch (subcommand.getName()) {
 			case CMD_CREATE:	createGroup(subcommand); break COMMAND;
@@ -1584,4 +1703,5 @@ public class UserCommandRunner {
 			}
 		}
 	}
+
 }

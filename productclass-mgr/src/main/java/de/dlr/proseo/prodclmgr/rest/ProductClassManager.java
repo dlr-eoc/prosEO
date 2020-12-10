@@ -76,7 +76,7 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_CLASS_SAVE_FAILED = 2113;
 	private static final int MSG_ID_PRODUCT_CLASS_CREATED = 2114;
 	private static final int MSG_ID_PRODUCT_CLASS_NOT_FOUND = 2115;
-	private static final int MSG_ID_PROCESSING_MODE_MISSING = 2116;
+//	private static final int MSG_ID_PROCESSING_MODE_MISSING = 2116;
 	private static final int MSG_ID_RULE_STRING_MISSING = 2117;
 	private static final int MSG_ID_INVALID_RULE_STRING = 2118;
 	private static final int MSG_ID_SELECTION_RULES_CREATED = 2119;
@@ -119,9 +119,7 @@ public class ProductClassManager {
 	/* Message string constants */
 	private static final String MSG_PRODUCT_CLASS_MISSING = "(E%d) Product class not set";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND = "(E%d) Product class with ID %d not found";
-//	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_TYPE = "(E%d) Product class %s not found for mission %s";
 	private static final String MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH = "(E%d) No product classes found for mission %s and product type %s";
-	private static final String MSG_PROCESSING_MODE_MISSING = "(E%d) Processing mode missing in selection rule string %s";
 	private static final String MSG_INVALID_MISSION_CODE = "(E%d) Invalid mission code %s";
 	private static final String MSG_RULE_STRING_MISSING = "(E%d) Selection rule missing in selection rule string %s";
 	private static final String MSG_INVALID_RULE_STRING = "(E%d) Syntax error in selection rule %s: %s";
@@ -559,6 +557,11 @@ public class ProductClassManager {
 			productClassChanged = true;
 			modelProductClass.setDescription(changedProductClass.getDescription());
 		}
+		if (null == modelProductClass.getProcessingLevel() && null != changedProductClass.getProcessingLevel()
+				|| null != modelProductClass.getProcessingLevel() && !modelProductClass.getProcessingLevel().equals(changedProductClass.getProcessingLevel())) {
+			productClassChanged = true;
+			modelProductClass.setProcessingLevel(changedProductClass.getProcessingLevel());
+		}
 		if (null == modelProductClass.getVisibility() && null != changedProductClass.getVisibility()
 				|| null != modelProductClass.getVisibility() && !modelProductClass.getVisibility().equals(changedProductClass.getVisibility())) {
 			productClassChanged = true;
@@ -830,13 +833,13 @@ public class ProductClassManager {
 		for (SelectionRuleString restRuleString: selectionRuleStrings) {
 			// Check the selection rule parameters
 			String processingMode = restRuleString.getMode();
-			if (null == processingMode || "".equals(processingMode)) {
-				throw new IllegalArgumentException(logError(MSG_PROCESSING_MODE_MISSING, MSG_ID_PROCESSING_MODE_MISSING, restRuleString.toString()));
-			}
-			if (!SimpleSelectionRule.PROCESSING_MODE_ALWAYS.equals(processingMode) 
-					&& !productClass.getMission().getProcessingModes().contains(processingMode)) {
-				throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
-						processingMode, productClass.getMission().getCode()));
+			if (null != processingMode) {
+				if (processingMode.isBlank()) {
+					processingMode = null;
+				} else if (!productClass.getMission().getProcessingModes().contains(processingMode)) {
+					throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+							processingMode, productClass.getMission().getCode()));
+				}
 			}
 			
 			Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();

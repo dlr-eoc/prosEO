@@ -8,10 +8,19 @@ package de.dlr.proseo.ui.cli;
 
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -31,6 +40,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.ui.backend.LoginManager;
+import de.dlr.proseo.ui.cli.CLIUtil.Credentials;
 import de.dlr.proseo.ui.cli.parser.CLIParser;
 import de.dlr.proseo.ui.cli.parser.ParsedCommand;
 import de.dlr.proseo.ui.cli.parser.ParsedOption;
@@ -113,23 +123,16 @@ public class CommandLineInterface implements CommandLineRunner {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkArguments({})", Arrays.toString(args));
 		
 		StringBuilder commandBuilder = new StringBuilder();
-		String username = null;
-		String password = null;
+		String identFile = null;
 		String mission = null;
 		
 		for (String arg: args) {
-			if (arg.startsWith("-u")) {
-				// Short form user argument
-				username = arg.substring(2);
-			} else if (arg.startsWith("--user=")) {
-				// Long form user argument
-				username = arg.substring(7);
-			} else if (arg.startsWith("-p")) {
-				// Short form password argument
-				password = arg.substring(2);
-			} else if (arg.startsWith("--password=")) {
-				// Long form password argument
-				password = arg.substring(11);
+			if (arg.startsWith("-i")) {
+				// Short form ident file argument
+				identFile = arg.substring(2);
+			} else if (arg.startsWith("--identFile=")) {
+				// Long form ident file argument
+				identFile = arg.substring(12);
 			} else if (arg.startsWith("-m")) {
 				// Short form mission argument
 				mission = arg.substring(2);
@@ -142,7 +145,7 @@ public class CommandLineInterface implements CommandLineRunner {
 			}
 		}
 		
-		return Arrays.asList(commandBuilder.toString(), username, password, mission);
+		return Arrays.asList(commandBuilder.toString(), identFile, mission);
 	}
 	
 	/**
@@ -182,8 +185,16 @@ public class CommandLineInterface implements CommandLineRunner {
 			case CMD_LOGIN:
 				String username = null, password = null, mission = null;
 				for (ParsedOption option: command.getOptions()) {
-					if ("user".equals(option.getName())) username = option.getValue();
-					if ("password".equals(option.getName())) password = option.getValue();
+					if ("identFile".equals(option.getName())) {
+						try {
+							Credentials credentials = CLIUtil.readIdentFile(option.getValue());
+							username = credentials.username;
+							password = credentials.password;
+						} catch (Exception e) {
+							System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
+							break;
+						}
+					}
 				}
 				if (0 < command.getParameters().size()) {
 					mission = command.getParameters().get(0).getValue();
@@ -231,6 +242,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				productclassCommandRunner.executeCommand(command);
 				break;
 			case UserCommandRunner.CMD_USER:
+			case UserCommandRunner.CMD_PASSWORD:
 			case UserCommandRunner.CMD_GROUP:
 				userCommandRunner.executeCommand(command);
 				break;
@@ -274,9 +286,18 @@ public class CommandLineInterface implements CommandLineRunner {
 			List<String> proseoCommand = checkArguments(args);
 			
 			// Log in to prosEO, if a username was given
-			String username = proseoCommand.get(1);
-			String password = proseoCommand.get(2);
-			String mission = proseoCommand.get(3);
+			String identFile = proseoCommand.get(1);
+			String mission = proseoCommand.get(2);
+			String username = null, password = null;
+			if (null != identFile) {
+				try {
+					Credentials credentials = CLIUtil.readIdentFile(identFile);
+					username = credentials.username;
+					password = credentials.password;
+				} catch (Exception e) {
+					System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
+				}
+			}
 			if (null != username) {
 				if (null == password || password.isBlank()) {
 					String message = uiMsg(MSG_ID_PASSWORD_MISSING, username);

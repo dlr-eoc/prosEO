@@ -1,0 +1,12 @@
+---
+- name: Fetch admin.conf from first master
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ inventory_dir }}/kubectl.conf"
+    flat: yes
+
+- name: Fetch kubectl
+  fetch:
+    src: /usr/local/bin/kubectl
+    dest: "{{ inventory_dir }}/bin/kubectl"
+    flat: yes

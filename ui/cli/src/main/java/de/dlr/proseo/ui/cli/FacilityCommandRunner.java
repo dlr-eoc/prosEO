@@ -22,6 +22,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.ui.backend.LoginManager;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -39,6 +40,11 @@ import de.dlr.proseo.ui.cli.parser.ParsedParameter;
 @Component
 public class FacilityCommandRunner {
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
+	private static final String OPTION_SHOW_PASSWORDS = "showPasswords";
+	private static final String OPTION_VERBOSE = "verbose";
+	private static final String OPTION_FORMAT = "format";
+	private static final String OPTION_FILE = "file";
 	/* General string constants */
 	public static final String CMD_FACILITY = "facility";
 	private static final String CMD_SHOW = "show";
@@ -58,6 +64,8 @@ public class FacilityCommandRunner {
 	private static final String URI_PATH_FACILITIES = "/facilities";
 	
 	private static final String FACILITIES = "facilities";
+	
+	private static final String PWD_PLACEHOLDER = "********";
 
 	/** The user manager used by all command runners */
 	@Autowired
@@ -140,10 +148,10 @@ public class FacilityCommandRunner {
 		String facilityFileFormat = CLIUtil.FILE_FORMAT_JSON;
 		for (ParsedOption option: createCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				facilityFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				facilityFileFormat = option.getValue().toUpperCase();
 				break;
 			}
@@ -177,6 +185,11 @@ public class FacilityCommandRunner {
 					return;
 				}
 			}
+		}
+		
+		/* Set default attribute values where appropriate */
+		if (null == restFacility.getFacilityState() || restFacility.getFacilityState().isBlank()) {
+			restFacility.setFacilityState(FacilityState.DISABLED.toString());
 		}
 		
 		/* Prompt user for missing mandatory attributes */
@@ -281,19 +294,23 @@ public class FacilityCommandRunner {
 	 * 
 	 * @param showCommand the parsed "facility show" command
 	 */
+	@SuppressWarnings("unchecked")
 	private void showFacility(ParsedCommand showCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> showFacility({})", (null == showCommand ? "null" : showCommand.getName()));
 		
 		/* Check command options */
 		String facilityOutputFormat = CLIUtil.FILE_FORMAT_YAML;
-		Boolean isVerbose = false;
+		Boolean isVerbose = false, showPasswords = false;
 		for (ParsedOption option: showCommand.getOptions()) {
 			switch(option.getName()) {
-			case "format":
+			case OPTION_FORMAT:
 				facilityOutputFormat = option.getValue().toUpperCase();
 				break;
-			case "verbose":
+			case OPTION_VERBOSE:
 				isVerbose = true;
+				break;
+			case OPTION_SHOW_PASSWORDS:
+				showPasswords = true;
 				break;
 			}
 		}
@@ -342,8 +359,20 @@ public class FacilityCommandRunner {
 			return;
 		}
 		
+		// Remove passwords unless explicitly requested
+		if (!showPasswords) {
+			// Must be a list of processing facilities
+			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
+				if (resultObject instanceof Map) {
+					((Map<String, Object>) resultObject).put("processingEnginePassword", PWD_PLACEHOLDER);
+					((Map<String, Object>) resultObject).put("storageManagerPassword", PWD_PLACEHOLDER);
+				}
+			}
+		}
+		
+		/* Display the facility(s) found */
 		if (isVerbose) {
-			/* Display the facility(s) found */
+			// Print facility details
 			try {
 				CLIUtil.printObject(System.out, resultList, facilityOutputFormat);
 			} catch (IllegalArgumentException e) {
@@ -354,7 +383,7 @@ public class FacilityCommandRunner {
 				return;
 			} 
 		} else {
-			// Must be a list of processing facilities
+			// Print facility names only; resultList must be a list of processing facilities
 			for (Object resultObject: (new ObjectMapper()).convertValue(resultList, List.class)) {
 				if (resultObject instanceof Map) {
 					System.out.println(((Map<?, ?>) resultObject).get("name"));
@@ -378,13 +407,13 @@ public class FacilityCommandRunner {
 		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
-			case "file":
+			case OPTION_FILE:
 				facilityFile = new File(option.getValue());
 				break;
-			case "format":
+			case OPTION_FORMAT:
 				facilityFileFormat = option.getValue().toUpperCase();
 				break;
-			case "delete-attributes":
+			case OPTION_DELETE_ATTRIBUTES:
 				isDeleteAttributes = true;
 				break;
 			}
@@ -440,14 +469,14 @@ public class FacilityCommandRunner {
 				null != updatedFacility.getDescription() && !updatedFacility.getDescription().isBlank()) {
 			restFacility.setDescription(updatedFacility.getDescription());
 		}
+		if (null != updatedFacility.getFacilityState() && !updatedFacility.getFacilityState().isBlank()) {
+			restFacility.setFacilityState(updatedFacility.getFacilityState());
+		}
 		if (null != updatedFacility.getProcessingEngineUrl() && !updatedFacility.getProcessingEngineUrl().isBlank()) {
 			restFacility.setProcessingEngineUrl(updatedFacility.getProcessingEngineUrl());
 		}
-		if (null != updatedFacility.getProcessingEngineUser() && !updatedFacility.getProcessingEngineUser().isBlank()) {
-			restFacility.setProcessingEngineUser(updatedFacility.getProcessingEngineUser());
-		}
-		if (null != updatedFacility.getProcessingEnginePassword() && !updatedFacility.getProcessingEnginePassword().isBlank()) {
-			restFacility.setProcessingEnginePassword(updatedFacility.getProcessingEnginePassword());
+		if (null != updatedFacility.getProcessingEngineToken() && !updatedFacility.getProcessingEngineToken().isBlank()) {
+			restFacility.setProcessingEngineToken(updatedFacility.getProcessingEngineToken());
 		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());

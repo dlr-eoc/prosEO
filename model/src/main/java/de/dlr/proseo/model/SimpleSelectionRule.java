@@ -35,9 +35,6 @@ import de.dlr.proseo.model.util.SelectionItem;
 @Entity
 public class SimpleSelectionRule extends PersistentObject {
 	
-	/** Default processing mode (representing any processing mode for the applicable mission) */
-	public static final String PROCESSING_MODE_ALWAYS = "ALWAYS";
-	
 	/* Error messages */
 	private static final String MSG_NO_ITEM_FOUND = "No item found or not enough time coverage for selection rule '%s' and time interval (%s, %s)";
 	private static final String MSG_INVALID_ITEM_TYPE = "Item with different item type found ";
@@ -45,10 +42,9 @@ public class SimpleSelectionRule extends PersistentObject {
 	
 	/**
 	 * Processing mode, for which this selection rule is valid (level 7 "Mode" from Generic IPF Interface Specifications, sec. 4.1.3);
-	 * this is restricted by the processing modes defined for the mission, but the (self evident and default) special value "ALWAYS"
-	 * is always valid.
+	 * the attribute is optional, its values are restricted by the processing modes defined for the mission.
 	 */
-	private String mode = PROCESSING_MODE_ALWAYS;
+	private String mode = null;
 	
 	/**
 	 * Indicates whether the required source product is mandatory for the production of the target product

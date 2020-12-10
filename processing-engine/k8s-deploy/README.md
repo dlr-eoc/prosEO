@@ -1,205 +1,235 @@
-prosEO k8s setup (OpenStack)
-===========================
-deploy a k8s-cluster using terraform & kubespray
+Kubernetes Deployment of proSEO
+===============================
 
-## Prerequisites
-The following must be provided on your local control host (e. g. development machine)
-- Docker engine (for building images and running the deployer),
-- `kubectl` (to control the Kubernetes cluster, optional)
-- `ssh-keygen` (part of OpenSSL),
-- Unrestricted Internet access
+There are two ways you can set up for your k8s deployment: directly on a
+UNIX-like operating system, or in a Docker container.
 
-Additionally if there is a previous deployment of the Processing Facility running, which
-will be upgraded or replaced, download and store the following files for future reuse
-(these are created manually during the installation process, therefore there is no way
-to re-create the contents automatically):
-- `/etc/nginx/.htpasswd` (the login credentials for external API and Dashboard users),
-- The certificate files `cert.pem`, `chain.pem`, `fullchain.pem` and `privkey.pem` from
-  `/etc/letsencrypt/live/<bastion host name>/`.
+The design rationale either way is to have the most up-to-date tooling
+available, without keeping it in the repository. At the same time,
+configuration data must be kept in the repository.
 
-## Deploy steps
-Perform this on your local development machine from the prosEO source repository
-sub-directory `processing-engine/k8s-deploy`:
-- Create public and private SSH keys (e.g. by using ssh-keygen) and copy the keys to:
-  - ssh-keys/`cluster-key.pem` (private key)
-  - ssh-keys/`cluster-key.pub` (public key)
-- Create the file `terraform/.ostackrc` and edit the credential information for the Cloud Provider:
-  ```sh
-  cp terraform/.ostackrc.template terraform/.ostackrc
-  vi terraform/.ostackrc
-  ```
+The exception to this up-to-date tooling is `kubectl` - that we want in the
+version we're deploying kubernetes in.
 
-  The file should look something like:
-  ```sh
-  # .bashrc
-  # User specific aliases and functions
-  alias rm='rm -i'
-  alias cp='cp -i'
-  alias mv='mv -i'
-  # Source global definitions
-  if [ -f /etc/bashrc ]; then
-          . /etc/bashrc
-  fi
+See [Initial Setup](docs/SETUP.md) for initial setup instructions. You may need
+to re-run these if you upgrade the tooling, but for merely deploying a cluster,
+it is not necessary.
 
-  export OS_PASSWORD=XXXX
-  export OS_USERNAME=XXXX
-  export OS_TENANT_NAME=eu-de
-  export OS_PROJECT_NAME=eu-de
-  export OS_USER_DOMAIN_NAME=OTC-EU-DE-XXXX
-  export OS_AUTH_URL=https://iam.eu-de.otc.t-systems.com:443/v3
-  export OS_PROJECT_DOMAIN_NAME=XXXX
-  export OS_IDENTITY_API_VERSION=3
-  export OS_REGION_NAME=eu-de
-  export OS_VOLUME_API_VERSION=2
-  export OS_IMAGE_API_VERSION=2
-  export OS_ENDPOINT_TYPE=publicURL
-  export NOVA_ENDPOINT_TYPE=publicURL
-  export CINDER_ENDPOINT_TYPE=publicURL
-  ```
-- Build the deployer docker image by running `./build.sh`.
+Entering a Deployment Environment
+---------------------------------
 
-### Run the deployer Docker image
-On your local control host, still in the directory `processing-engine/k8s-deploy`, run the script `./run.sh`
-to open a shell within the deployer Docker image. The following steps are performed from this shell unless
-noted otherwise.
+As outlined in the setup document, you can enter your deployment environment
+either by running `$ pipenv shell`, or by running `$ docker/run.sh`.
 
-### Run Terraform (inside container)
-Terraform is responsible for the provisioning of the VMs and network-interfaces. 
-The current state of the deployment is stored outside the container in `processing-engine/k8s-deploy/terraform/state`,
-so container restarts are uncritical.
-```sh
-terraform init -var-file=cluster.tfvars ../../contrib/terraform/openstack
-terraform apply -var-file=cluster.tfvars ../../contrib/terraform/openstack
+Either deployment environment is not bound to a particular cluster
+configuration; you can administer multiple different clusters with them. They
+are, however, bound to a particular version of the tooling.
+
+Cluster Management
+==================
+
+We use kubespray to provision machines with a kubernetes installation.
+Kubespray is fine with managing multiple clusters. Each cluster configuration
+lives in its own subdirectory in `kubespray/inventory`, e.g.
+`kubespray/inventory/foo`.
+
+All detail guides assume that this is your working directory.
+
+Kubespray knows how to integrate with tools that set up VMs, such as
+terraform. It also is capable of provisioning a cluster through a bastion
+host. In fact, this is the setup we're going for here. You can safely
+skip sections that do not apply to you.
+
+Choosing a Cluster
+------------------
+
+Simply `$ cd kubespray/inventory/<yourcluster>` and run commands from there.
+
+Creating a new Cluster
+----------------------
+
+1. Make a cluster directory. This assumes you are currently in the `k8s-deploy`
+   directory:
+   ```bash
+   $ scripts/make_cluster.sh <clustername>
+   ```
+   The script copies files from kubespray's `kubespray/inventory/sample`
+   cluster to `kubespray/inventory/<clustername>` and adds a few
+   configuration files.
+1. Change to the new cluster directory.
+
+TODO Terraform provisioning needs to be done first??
+
+1. Create SSH keys for this cluster (within the deployment container, directory `kubespray/inventory/<clustername>`):
+   ```bash
+   $ ../../../scripts/ssh_config.sh
+   ```
+1. TODO: the previous step could be done as part of the `make_cluster.sh` script.
+
+**Notes:**
+- The `.autoenv` file gets executed whenever you enter the directory it
+  lives in. The file reads bash configurations from `config/*.sh`, and
+  sets up a bash prompt.
+- We make use of this automatic configuration loading; when switching
+  between clusters, this helps re-set the environment of the cluster
+  we're managing.
+- The `clustername.sh` file is entirely optional, but it sets the bash
+  prompt, indicating which cluster's environment is currently loaded.
+
+All your cluster configuration lives in this directory. You can copy
+it anywhere, and adjust the relative paths to scripts in further
+steps accordingly, e.g.  for managing the cluster configuration in a separate
+repository.
+
+It would also be possible to create a symbolic link from
+`kubespray/inventory/<clustername>` to this repository - however, there
+are some issues with using the docker environment. The
+[Initial Setup](docs/SETUP.md) guide has some details here.
+
+In either case, the guide assumes that commands are run from your cluster
+directory, and that your cluster directory lives in the path that
+`make_cluster.sh` creates.
+
+### VM Provisioning
+
+How you would set up machines is specific to the hosting provider you're
+using. We can collect guides here, though for now there is only one for
+terraform.
+
+- [Terraform VM Provisioning](docs/PROV_TERRAFORM.md)
+
+It's best to re-run the SSH configuration script after this step is done.
+It will configure the deploy environment with regards to SSH settings.
+
+```bash
+$ ../../../scripts/ssh_config.sh
 ```
 
-Leave the container for the next step with `exit`.
+Amongst other things, this will create a configuration for the `ssh` command
+and an alias that uses this configuration that should allow you to SSH into
+any of the provisioned VMs, so that the below should work:
 
-### Prepare created bastion VM (from local control host)
-When first logging in to the bastion host, copy your SSH public key first, and change the password of the
-`linux` user immediately after login. Remember, you're in the wild, wild Internet ...
-
-Perform the following steps from the local control host:
-```sh
-ssh-copy-id linux@<bastion host> # Assuming you already created a public/private key pair using ssh-keygen
-ssh linux@<bastion host>         # Use IP address given at end of terraform apply output
-passwd                           # Immediately change the password for the linux user!
-sudo vi /etc/ssh/sshd_config
-  # modify: AllowTcpForwarding yes
-sudo systemctl restart sshd
-exit                             # Leave bastion host
+```bash
+$ ./hosts --hostfile
+# Pick any hostname/IP
+$ ssh <hostname|ip>
 ```
 
-### Prepare bastion host tunneling (from inside container)
-Restart the container with `./run.sh`.
+If you have bastion hosts, you need to run the following section first.
 
-Kubespray can generate a SSH configuration that lets you tunnel through the
-bastion host. Before you can run the complete kubespray setup, you need to run
-this.
-```sh
-cd /kubespray
-ansible-playbook -i inventory/proseo-spray/hosts --become  cluster.yml --flush-cache -l bastion
+#### Bastion Hosts
+
+If your configuration includes bastion hosts, then after the VMs are
+provisioned, you need to enable SSH forwarding on those hosts. SSH into
+the bastion:
+
+```bash
+# In cluster directory
+$ ansible-playbook -i hosts --private-key ssh-keys/cluster-key ../../../scripts/ansible/bastion-preinstall.yml
 ```
 
-This generates a `ssh-bastion.conf`, which is most easily used by copying it to
-the user configuration file.
-```sh
-cd /kubespray
-cp ssh-bastion.conf ~/.ssh/config
+Further to that copy the SSH key files in `ssh-keys/cluster-key*` to the `.ssh` directory of the `linux` user
+on the bastion host to facilitate automated SSH logins to the cluster nodes via the bastion host.
+
+### K8S Deployment
+
+Once the VMs are fully provisioned, and optional bastion hosts are configured,
+ansible should be able to connect to all hosts in the cluster. You can find out
+whether this works by running:
+
+```bash
+# In cluster directory
+$ ansible -i hosts -m ping all
+```
+If the connection cannot be established at the first attempt, check the `group_vars/no_floating.yml` file (e. g. correct
+bastion host IP?). For an installation with a bastion host it should look something like:
+
+```
+ansible_ssh_common_args: "-o ProxyCommand='ssh -i ssh-keys/cluster-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q linux@<bastion IP>' -i ssh-keys/cluster-key -o StrictHostKeyChecking=no"
 ```
 
-SSH tunnels through the bastion host will be set up when any of the cluster-
-internal IP addresses are accessed.
+We need to run some configuration on all the nodes first. This is a little
+specific to the operating system you're running on.
 
-### Check SSH connectivity between nodes (inside container)
-```sh
-cd /kubespray/inventory/proseo-spray/
-ANSIBLE_HOST_KEY_CHECKING=False ansible -i hosts -m ping all
+```bash
+# In cluster directory
+$ ansible-playbook -i hosts ../../../scripts/ansible/cluster-preinstall.yml
 ```
 
-*Note 1:* Ansible is not good at letting you accept host SSH keys. Setting
-this environment variable to `False` bypasses checks, which is not usually
-safe. However, when using terraform, the keys were just generated - there is
-not much you can do to verify the keys by any means that will apply
-everywhere.
+Now it's up to kubespray to configure all VMs for running a K8S cluster. We
+need to run commands from the kubespray directory now, and specify the cluster
+inventory.
 
-*Note 2:* As a result of the ping command, SSH tunnels have been established
-from the deploy container through the bastion host to internal nodes. You
-can verify this by running `ps` and seeing a lot of SSH processes. If ansible
-fails because a tunnel is not working, re-running this ping command should
-work to create them.
-
-### Run Kubespray (inside container)
-Kubespray is responsible for the complete software configuration of all Kubernetes components.
-```sh
-cd /kubespray
-ansible-playbook -i inventory/proseo-spray/hosts --become  cluster.yml --flush-cache
+```
+# In cluster directory
+$ ansible-playbook -i hosts --become ../../cluster.yml --flush-cache
 ```
 
-### Run post install recipe (inside container)
-The `postinstall.yml` is responsible for creating a stable nginx reverse proxy configuration for publishing the
-Kubernetes APIs (and other services provided by the bastion host or the Cloud Provider via the bastion host,
-e. g. the object storage API).
-```sh
-cd /kubespray
-ansible-playbook -i inventory/proseo-spray/hosts --become  postinstall.yml --flush-cache
+*Note:* It may be that the worker nodes cannot join to the cluster with an
+error message stating the kubeadm configuration file version is outdated. If
+that happens, there's only one thing to do: update the configuration. From the
+cluster directory, run:
+
+```bash
+# In cluster directory
+$ ansible-playbook -i hosts ../../../scripts/ansible/migrate-kubeadm-config.yml
 ```
 
-Leave the container for the next step with `exit`.
+Then re-start the kubespray playbook.
 
-This is probably the best point in the procedure to populate the `/etc/nginx/.htpasswd` file on the
-bastion host, either by creating a new file or by copying the one saved in the first step.
-- To create a new file (starting on your local control host):
-  ```
-  ssh linux@<bastion host>
-  sudo htpasswd /etc/nginx/.htpasswd <new nginx user>
-    # Enter and repeat password
-  # Repeat for as many users as needed
-  exit
-  ```
-- To copy the saved `.htpasswd` file (starting on your local control host):
-  ```
-  scp <path to file>/.htpasswd linux@<bastion host>:/home/linux/.htpasswd
-  ssh linux@<bastion host>
-  sudo mv .htpasswd /etc/nginx/
-  exit
-  ```
+Congratulations, you have a kubernetes cluster! You now should also configure
+the bastion host to forward traffic, etc:
 
-### Configure local kubectl for new Processing Facility (optional, but recommended)
-The following steps are required to setup kubectl for controlling the new Processing Facility. They assume
-that Nginx on the bastion host has been configured with access credentials for at least one user.
-```
-kubectl config set-cluster <cluster nickname> --server=<bastion host> --certificate-authority=path/to/certificate/authority
-kubectl config set-credentials <user nickname> --username=<nginx username> --password=<nginx password>
-kubectl config set-context <context nickname> --cluster=<cluster nickname> --user=<user nickname>
+*Note:* This last step requires certificate files to be installed in the
+cluster directory's `certs/servercert.pem` and `certs/privkey.pem` respectively.
+- For creating self-signed certificates, use [a guide such as this](https://www.cyberithub.com/create-a-self-signed-certificate/)
+- For using ACME/Let's Encrypt certificates, [dehydrated](https://github.com/dehydrated-io/dehydrated)
+  is recommended.
+
+*Note 2:* You probably also want to configure users that can access the API
+exposed by the bastion configuration. Since it's not a great idea to store
+plaintext passwords here, we'll leave that up to you. You need to pass to
+ansible the `nginx_users` dict, where keys are user names and values are
+plaintext passwords.
+
+One option would be to create a file `kubespray/inventory/<cluster>/group_vars/bastion/nginx.yml`:
+
+```yaml
+# <cluster directory>/group_vars/bastion/nginx.yml
+---
+nginx_users
+  foo: bar  # creates user foo with password bar
 ```
 
-### Install k8s-dashboard (from bastion host)
-To install the dashboard, perform the following steps on any machine, where kubectl is configured for the new
-Processing Facility (local host, if the preceding step was performed, or log in to the bastion host with
-`ssh linux@<bastion host>`):
-```sh
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta5/aio/deploy/recommended.yaml
-kubectl create serviceaccount k8s-poweruser
-kubectl create clusterrolebinding k8s-poweruser-cadmin --clusterrole=cluster-admin --serviceaccount=default:k8s-poweruser
-kubectl create clusterrolebinding k8s-poweruser-admin --clusterrole=admin --serviceaccount=default:k8s-poweruser
-```
-The dashboard URL will be 
-`https://<bastion host name>/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/`
+Without that step, the API proxy will be inaccessible by anyone.
 
-Get the dashboard login token (use last line from terminal output):
-```
-kubectl -n default describe secret $(kubectl -n default get secret | awk '/^k8s-poweruser-token-/{print $1}') | awk '$1=="token:"{print $2}'
+```bash
+# In cluster directory
+$ ansible-playbook -i hosts ../../../scripts/ansible/postinstall.yml
 ```
 
-### Create Kubernetes secret holding credentials for private registry
-This secret is used when Kubernetes needs to pull images from some private registry. Perform the following on
-any machine, where Docker is installed **and** kubectl is configured for the new Processing Facility (local host, if the preceding step
-was performed, or one of the newly created Kubernetes nodes; the bastion host will not do, as it lacks Docker):
-```sh
-docker login <registry URL>
-# Make sure Docker configuration file is under ~/.docker/config.json
-cat ~/.docker/config.json
-# Create Kubernetes secret
-kubectl create secret generic regcred  --from-file=.dockerconfigjson=.docker/config.json --type=kubernetes.io/dockerconfigjson
-```
+Updating a Cluster
+------------------
+
+1. Use your provisioner to create new machines. This should result in a new
+   inventory for kubespray.
+1. Change to your cluster directory, if you haven't already.
+1. Update your SSH config - this gets regenerated when you modified your
+   inventory.
+   ```bash
+   # In cluster directory
+   $ ../../../scripts/ssh_config.sh
+   ```
+1. Re-run the `bastion-preinstall.yml` or `cluster-preinstall.yml` scripts as
+   needed, depending on whether you added/modified bastions or other nodes or
+   both (see above).
+1. Go to the kubespray directory, and run the `cluster.yml` script again.
+   ```bash
+   # In /kubespray directory
+   $ ansible-playbook -i inventory/<clustername>/hosts --become cluster.yml --flush-cache
+   ```
+
+*Note:* The `upgrade-cluster.yml` script can be used to bring kubernetes to
+the latest version on already existing clusters. Do not use it to grow a
+cluster.
 

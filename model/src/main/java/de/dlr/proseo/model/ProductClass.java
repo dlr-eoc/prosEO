@@ -20,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
+import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductVisibility;
 
 /**
@@ -45,6 +46,13 @@ public class ProductClass extends PersistentObject {
 	
 	/** A short description of the product type to display as informational text on the user interface */
 	private String description;
+	
+	/**
+	 * The level of processing required for this product class (roughly equivalent to the number of processing steps required
+	 * to produce data of this product class from unprocessed [level 0] data)
+	 */
+	@Enumerated(EnumType.STRING)
+	private ProcessingLevel processingLevel;
 	
 	/** Visibility of products of this class to external users (internally all products are visible at all times) */
 	@Enumerated(EnumType.STRING)
@@ -142,6 +150,22 @@ public class ProductClass extends PersistentObject {
 		this.description = description;
 	}
 	
+	/**
+	 * Gets the processing level
+	 * @return the processing level
+	 */
+	public ProcessingLevel getProcessingLevel() {
+		return processingLevel;
+	}
+
+	/**
+	 * Sets the processing level
+	 * @param processingLevel the processing level to set
+	 */
+	public void setProcessingLevel(ProcessingLevel processingLevel) {
+		this.processingLevel = processingLevel;
+	}
+
 	/**
 	 * Gets the product visibility to external users
 	 * 

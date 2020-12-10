@@ -3,6 +3,7 @@ package de.dlr.proseo.facmgr.rest.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
 
 
@@ -36,16 +37,16 @@ public class FacmgrUtil {
 			restFacility.setDescription(modelFacility.getDescription());
 
 		}	
+		if (null != modelFacility.getFacilityState()) {
+			restFacility.setFacilityState(modelFacility.getFacilityState().toString());
+
+		}
 		if (null != modelFacility.getProcessingEngineUrl()) {
 			restFacility.setProcessingEngineUrl(modelFacility.getProcessingEngineUrl());
 
 		}	
-		if (null != modelFacility.getProcessingEngineUser()) {
-			restFacility.setProcessingEngineUser(modelFacility.getProcessingEngineUser());
-
-		}
-		if (null != modelFacility.getProcessingEnginePassword()) {
-			restFacility.setProcessingEnginePassword(modelFacility.getProcessingEnginePassword());
+		if (null != modelFacility.getProcessingEngineToken()) {
+			restFacility.setProcessingEngineToken(modelFacility.getProcessingEngineToken());
 
 		}
 		if (null != modelFacility.getStorageManagerUrl()) {
@@ -103,16 +104,16 @@ public class FacmgrUtil {
 			modelFacility.setDescription(restFacility.getDescription());
 
 		}	
+		if (null != restFacility.getFacilityState()) {
+			modelFacility.setFacilityState(FacilityState.valueOf(restFacility.getFacilityState()));
+
+		}	
 		if (null != restFacility.getProcessingEngineUrl()) {
 			modelFacility.setProcessingEngineUrl(restFacility.getProcessingEngineUrl());
 
 		}	
-		if (null != restFacility.getProcessingEngineUser()) {
-			modelFacility.setProcessingEngineUser(restFacility.getProcessingEngineUser());
-
-		}	
-		if (null != restFacility.getProcessingEnginePassword()) {
-			modelFacility.setProcessingEnginePassword(restFacility.getProcessingEnginePassword());
+		if (null != restFacility.getProcessingEngineToken()) {
+			modelFacility.setProcessingEngineToken(restFacility.getProcessingEngineToken());
 
 		}	
 		if (null != restFacility.getStorageManagerUrl()) {
