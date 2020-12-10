@@ -177,6 +177,7 @@ my @configurations = (
     { 
     	processorName => 'PTML1B', 
     	configurationVersion => 'OPER_2020-03-25', 
+    	mode => 'OPER',
     	dynProcParameters => [ 
     	   { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
@@ -192,6 +193,7 @@ my @configurations = (
     { 
     	processorName => 'PTML2', 
     	configurationVersion => 'OPER_2020-03-25', 
+        mode => 'OPER',
         dynProcParameters => [ 
            { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
@@ -207,6 +209,7 @@ my @configurations = (
     { 
     	processorName => 'PTML3', 
     	configurationVersion => 'OPER_2020-03-25', 
+        mode => 'OPER',
         dynProcParameters => [ 
            { key => 'logging.root', parameterType => 'STRING', parameterValue => 'notice' },
            { key => 'logging.dumplog', parameterType => 'STRING', parameterValue => 'null' },
@@ -244,6 +247,7 @@ my @configured_processors = (
 #
 my %product_types;
 my %enclosing_product_types;
+my %processing_levels;
 my %product_processor_class;
 my %slicing_types;
 my %slice_durations;
@@ -262,6 +266,9 @@ $product_types{'L1B_PART1'} = 'L1B_PART1';
 $product_types{'L1B_PART2'} = 'L1B_PART2';
 $enclosing_product_types{'L1B_PART1'} = 'L1B_______';
 $enclosing_product_types{'L1B_PART2'} = 'L1B_______';
+$processing_levels{'L1B_______'} = 'L1B';
+$processing_levels{'L1B_PART1'} = 'L1B';
+$processing_levels{'L1B_PART2'} = 'L1B';
 $slicing_types{'L1B_______'} = 'ORBIT';
 $product_processor_class{'L1B_______'} = 'PTML1B';
 # Output L1B
@@ -275,6 +282,7 @@ $applicable_processors{'L1B_______'} = [ 'PTML1B_0.1.0_OPER_2020-03-25' ];
 
 # Output PTM_L2A
 $product_types{'PTM_L2A'} = 'PTM_L2A';
+$processing_levels{'PTM_L2A'} = 'L2A';
 $slicing_types{'PTM_L2A'} = 'ORBIT';
 $product_processor_class{'PTM_L2A'} = 'PTML2';
 $selection_rules{'PTM_L2A'} = '
@@ -282,6 +290,7 @@ $selection_rules{'PTM_L2A'} = '
 $applicable_processors{'PTM_L2A'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
 # Output PTM_L2B
 $product_types{'PTM_L2B'} = 'PTM_L2B';
+$processing_levels{'PTM_L2B'} = 'L2B';
 $slicing_types{'PTM_L2B'} = 'ORBIT';
 $product_processor_class{'PTM_L2B'} = 'PTML2';
 $selection_rules{'PTM_L2B'} = '
@@ -292,6 +301,7 @@ $applicable_processors{'PTM_L2B'} = [ 'PTML2_0.1.0_OPER_2020-03-25' ];
 # Expected time coverage of the L3 products is 4 hours
 # Output PTM_L3
 $product_types{'PTM_L3'} = 'PTM_L3';
+$processing_levels{'PTM_L3'} = 'L3';
 $slicing_types{'PTM_L3'} = 'TIME_SLICE';
 $slice_durations{'PTM_L3'} = 14400;
 $product_processor_class{'PTM_L3'} = 'PTML3';
@@ -461,6 +471,7 @@ foreach my $configuration ( @configurations ) {
     print $fh '{ "missionCode": "' . $mission->{code} 
         . '", "processorName": "' . $configuration->{processorName} 
         . '", "configurationVersion": "' . $configuration->{configurationVersion} 
+        . ( $configuration->{mode} ? '", "mode": "' .$configuration->{mode} : '' )
         . '", "productQuality": "' . $defaults->{configuration_product_quality} 
         . '", "dynProcParameters": [ ';
     my $innerfirst = 1;
@@ -533,6 +544,9 @@ foreach my $product_class ( @class_key_sequence ) {
 	print $fh '{ ';
 	print $fh '"missionCode": "' . $mission->{code} . '"';
 	print $fh ', "productType": "' . $product_types{$product_class} . '"';
+    if ( $processing_levels{$product_class} ) {
+        print $fh ', "processingLevel": "' . $processing_levels{$product_class} . '"';
+    }
     print $fh ', "visibility": "' . $defaults->{product_class_visibility} . '"';
 	if ( $product_processor_class{$product_class} ) {
         print $fh ', "processorClass": "' . $product_processor_class{$product_class} . '"';

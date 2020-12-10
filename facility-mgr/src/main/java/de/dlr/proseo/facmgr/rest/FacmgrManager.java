@@ -251,9 +251,9 @@ public class FacmgrManager {
 				facilityChanged = true;
 				modelFacility.setFacilityState(changedFacility.getFacilityState());
 			}
-		} else if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
+		} else if (!modelFacility.getFacilityState().equals(changedFacility.getFacilityState())) {
 			facilityChanged = true;
-			modelFacility.setDescription(changedFacility.getDescription());
+			modelFacility.setFacilityState(changedFacility.getFacilityState());
 		}	
 		if (null == modelFacility.getProcessingEngineUrl()) {
 			if (null == changedFacility.getProcessingEngineUrl()) {

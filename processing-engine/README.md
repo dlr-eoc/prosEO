@@ -9,10 +9,13 @@ This document describes how to deploy a prosEO processing facility on a new set 
 The (virtual) machines need to at least fulfil the following requirements:
 - Linux installed
 - Ability to run Docker and Kubernetes (i. e. standard CentOS kernel, no provider-specific builds)
-- TBD GB RAM
-- TBD GB online storage
-- more TBD
-- Optional: Access to some object storage conforming to the AWS S3 protocol
+
+Suggested sizing for a small to medium installation:
+- CPUs: Bastion host and Kubernetes master 4 CPUs each, worker nodes 8-16 CPUs each (depending on the processors to be run)
+- RAM: Bastion host and Kubernetes master 8-16 GB each, worker nodes 32 GB or more (again depending on the processors)
+- Disk: Bastion host 40 GB system, 0.5–1 TB data (for NFS server); Kubernetes master 40 GB system; worker nodes 40 GB system,
+  400 GB Docker library, 400 GB scratch working area (depening on processor needs)
+- Optional: Access to some object storage conforming to the AWS S3 protocol (if not, more disk space will be needed for the NFS server)
 
 
 # Installation Process
@@ -60,6 +63,9 @@ which has a fully configured `kubectl` deployment, when the automated deployment
    ```
    kubectl apply -f kube-admin.yaml
    ```
+   __CAUTION:__ This will grant full super-user access to your cluster! For information on how to create a role binding
+   with more restricted privileges, please see
+   [the Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 4. Find the account's secret and copy the token to a safe place (note that there is no line break between the end of the
    token and the prompt for the next shell command):
    ```
@@ -153,9 +159,11 @@ kubectl config set-context <context nickname> --cluster=<cluster nickname> --use
 
 
 # prosEO Configuration
-Add the new storage facility to the prosEO Control Instance configuration:
+
+Add the new processing facility to the prosEO Control Instance configuration:
 
 ## Alternative 1: Using Command Line Interface
+
 Run a prosEO CLI connected to the prosEO Control Instance to configure. Log in with
 facility management privileges and issue the following command (note the quotes around the
 description parameter to include blanks in the description):
@@ -179,11 +187,68 @@ Then in the prosEO CLI issue the command:
 facility create --file=<JSON file name>
 ```
 
+
 ## Alternative 2: Using the prosEO GUI
+
 Not yet implemented.
 
 
+## Create Planner Account
+
+For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
+information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
+Create a file `planner-account.yaml` like this:
+```
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proseo-planner
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: proseo-planner-role
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["jobs", "pods"]
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: proseo-planner-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: proseo-planner-role
+subjects:
+- kind: ServiceAccount
+  name: proseo-planner
+  namespace: default
+```
+
+Create the account, role and role binding, and retrieve the authentication token for the new account:
+```bash
+kubectl apply -f ../planner-account.yaml
+kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
+```
+
+Add the token to the database entry of the processing facility, e. g. in the prosEO CLI:
+```
+facility update <facility name> processingEngineToken=<retrieved token>
+```
+(If you are concerned about the privacy of the token, you may provide the update information from a JSON file as above, adding
+a line with `"processingEngineToken": "<retrieved token>"` and issuing the command with the `-f` option.)
+
+
 # Example: Setting up a Single-Node Processing Facility
+
 Assuming there is a MacOS or Windows machine available with sufficient RAM and disk capacity, a single-node setup
 can be achieved for both the prosEO Control Instance and the prosEO Processing Facility. The following
 example shows a setup based on MacOS.
@@ -191,7 +256,9 @@ example shows a setup based on MacOS.
 Note that for the following to work the target machine must have unrestricted access
 to resources on the Internet.
 
+
 ## Step 1: Install Docker and Kubernetes
+
 Download Docker Desktop from <https://www.docker.com/products/docker-desktop>.
 
 Install and run Docker Desktop and activate Kubernetes as described here:
