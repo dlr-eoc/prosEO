@@ -127,8 +127,11 @@ public class CommandLineInterface implements CommandLineRunner {
 		String mission = null;
 		
 		for (String arg: args) {
-			if (arg.startsWith("--identFile=")) {
-				// Long form user argument
+			if (arg.startsWith("-i")) {
+				// Short form ident file argument
+				identFile = arg.substring(2);
+			} else if (arg.startsWith("--identFile=")) {
+				// Long form ident file argument
 				identFile = arg.substring(12);
 			} else if (arg.startsWith("-m")) {
 				// Short form mission argument
