@@ -247,6 +247,24 @@ facility update <facility name> processingEngineToken=<retrieved token>
 a line with `"processingEngineToken": "<retrieved token>"` and issuing the command with the `-f` option.)
 
 
+## Create a Storage Manager Account
+
+All accounts accessing the prosEO Storage Manager must be registered in the nginx password file at the bastion host. This includes
+PRIP API accounts and the functional accounts configured in the processing facility metadata. On the bastion host perform
+(as super-user):
+```
+cd /etc/nginx
+htpasswd ./htpasswd <username>
+```
+
+For a functional account update the processing facility metadata through the prosEO CLI:
+```
+facility update <facility name> storageManagerUser=<username> storageManagerPassword=<password>
+```
+(Again this can be done via a JSON file to avoid typing a password in clear text on the command line.)
+
+
+
 # Example: Setting up a Single-Node Processing Facility
 
 Assuming there is a MacOS or Windows machine available with sufficient RAM and disk capacity, a single-node setup
