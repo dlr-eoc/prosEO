@@ -1,3 +1,3 @@
-FROM localhost:5000/proseo-storage-mgr:0.6.0
+FROM localhost:5000/proseo-storage-mgr:0.7.0
 ADD application.yml /usr/share/proseo-storage-mgr/application.yml
 WORKDIR /usr/share/proseo-storage-mgr/

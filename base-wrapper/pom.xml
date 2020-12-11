@@ -5,7 +5,7 @@
     <parent>
         <groupId>de.dlr.proseo</groupId>
         <artifactId>proseo</artifactId>
-        <version>0.6.0</version>
+        <version>0.7.0</version>
     </parent>
 
 	<artifactId>proseo-base-wrapper</artifactId>
@@ -19,7 +19,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.6.0</module.version>
+		<module.version>0.7.0</module.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
