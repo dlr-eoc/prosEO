@@ -31,7 +31,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +46,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClient.Builder;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,8 +56,9 @@ import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.OrderService;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
-
+import reactor.netty.http.client.HttpClient;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -192,6 +197,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
+		// clearCache();
 		String myIdent = null;
 		if (identifier != null && identifier.indexOf("*") < 0) {
 			myIdent = identifier;
@@ -662,6 +668,7 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+		// clearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
@@ -711,9 +718,12 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+		// clearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -728,6 +738,7 @@ public class GUIOrderController extends GUIBaseController {
 				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
+					order.put("missionCode", mission);
 					orders.add(order);
 					model.addAttribute("orders", orders);
 					logger.trace(model.toString() + "MODEL TO STRING");
@@ -995,6 +1006,21 @@ public class GUIOrderController extends GUIBaseController {
 		return deferredResult;
 	}
 	
+	@GetMapping("/hasorbits")
+	public ResponseEntity<?> hasorbits(@RequestParam(required = true, value = "spacecraft") String spacecraft,
+			@RequestParam(required = true, value = "from") Long from,
+			@RequestParam(required = true, value = "to") Long to){
+		Boolean result = countOrbits(spacecraft, from, to) > 0;
+	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+	}
+
+	@GetMapping("/hasorder")
+	public ResponseEntity<?> hasorder(@RequestParam(required = true, value = "identifier") String identifier,
+			@RequestParam(required = true, value = "nid") String id){
+		Boolean result = countOrders(identifier, id) > 0;
+	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+	}
+
 	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
 		List<RestParameter> newList = new ArrayList<RestParameter>();
 		if (list!= null) {
@@ -1146,6 +1172,109 @@ public class GUIOrderController extends GUIBaseController {
 		
         return result;
     }
-}
+    
 
+    private Long countOrbits(String spacecraft, Long from, Long to)  {	    	
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = "/orbits/count";
+		String divider = "?";
+		if (spacecraft != null) {
+			uri += divider + "spacecraftCode=" + spacecraft;
+			divider ="&";
+		}
+		if (from != null) {
+			uri += divider + "orbitNumberFrom=" + from;
+			divider ="&";
+		}
+		if (to != null) {
+			uri += divider + "orbitNumberTo=" + to;
+			divider ="&";
+		}
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
+
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		
+        return result;
+    }
+
+public Long countOrders(String orderName, String nid) {
+	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+	Long result = (long) -1;
+	String mission = auth.getMission();
+	String uri = "/orders/count";
+	String divider = "?";
+	if(null != mission) {
+		uri += divider + "mission=" + mission;
+		divider = "&";
+	}
+	if (null != orderName && !orderName.trim().isEmpty()) {
+		uri += divider + "identifier=" + orderName.trim();
+	}
+	if (null != nid && !nid.trim().isEmpty()) {
+		uri += divider + "nid=" + nid.trim();
+	}
+
+	try {
+		String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+				uri, String.class, auth.getProseoName(), auth.getPassword());
+
+		if (resStr != null && resStr.length() > 0) {
+			result = Long.valueOf(resStr);
+		}
+	} catch (RestClientResponseException e) {
+		String message = null;
+		switch (e.getRawStatusCode()) {
+		case org.apache.http.HttpStatus.SC_NOT_FOUND:
+			break;
+		case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+		case org.apache.http.HttpStatus.SC_FORBIDDEN:
+			message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+			break;
+		default:
+			message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+		}
+		System.err.println(message);
+		return result;
+	} catch (RuntimeException e) {
+		System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+		return result;
+	}
+	
+    return result;
+	}
+
+	private void clearCache() {
+		configuredProcessors = null;
+		facilities = null;
+		productclasses = null;
+		spaceCrafts = null;
+		fileClasses = null;
+		processingModes = null;
+	}
+}
 

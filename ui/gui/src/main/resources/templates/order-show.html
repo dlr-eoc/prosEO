@@ -101,6 +101,11 @@
             <div class="container-fluid">
               <h5>
                 <span th:text="#{order}"></span>
+                <span>&nbsp;</span>
+                <a id="neworder" type="button"
+                        class="bread-link" 
+                        href="/order-edit?id=0"
+                      ><span class="feather-l" data-feather="plus-circle"></span></a>
               </h5>
 
               <div id="orderscontent" name="orderscontent">

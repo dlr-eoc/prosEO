@@ -56,8 +56,6 @@ public class InputFilter extends PersistentObject {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
 		if (!(obj instanceof InputFilter))
 			return false;
 		InputFilter other = (InputFilter) obj;

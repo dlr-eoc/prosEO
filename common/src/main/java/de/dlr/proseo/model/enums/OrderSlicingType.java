@@ -22,5 +22,5 @@ package de.dlr.proseo.model.enums;
  *
  */
 public enum OrderSlicingType {
-	ORBIT, CALENDAR_DAY, TIME_SLICE
+	ORBIT, CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR, TIME_SLICE
 }

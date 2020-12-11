@@ -53,8 +53,6 @@ public class ClassOutputParameter extends PersistentObject {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
-		if (!super.equals(obj))
-			return false;
 		if (!(obj instanceof ClassOutputParameter))
 			return false;
 		ClassOutputParameter other = (ClassOutputParameter) obj;
