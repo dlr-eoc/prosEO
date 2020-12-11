@@ -592,8 +592,8 @@ public class UIMessages {
 		
 		// Facility CLI
 		MSG_FACILITY_CREATED ("(I%d) Processing facility %s created (database ID %d)", MSG_ID_FACILITY_CREATED),
-		MSG_FACILITY_UPDATED ("(I%d) Processing facility %s updated (database ID %d)", MSG_ID_FACILITY_UPDATED),
-		MSG_FACILITY_DELETED ("(I%d) Processing facility %s deleted (database ID %d)", MSG_ID_FACILITY_DELETED),
+		MSG_FACILITY_UPDATED ("(I%d) Processing facility with database ID %d updated (new version %d)", MSG_ID_FACILITY_UPDATED),
+		MSG_FACILITY_DELETED ("(I%d) Processing facility with database ID %d deleted", MSG_ID_FACILITY_DELETED),
 		
 		// Processor CLI
 		MSG_PROCESSORCLASS_CREATED ("(I%d) Processor class %s created (database ID %d)", MSG_ID_PROCESSORCLASS_CREATED),
