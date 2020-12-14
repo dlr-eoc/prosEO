@@ -32,10 +32,6 @@ public class GUIProductClassController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIProductClassController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
@@ -113,6 +109,7 @@ public class GUIProductClassController extends GUIBaseController {
 
 		}
 		
+		@SuppressWarnings("unchecked")
 		private void sortSelectionRules(List<Object> productclasses) {
 			if (productclasses != null) {
 				for(Object o1 : productclasses) {

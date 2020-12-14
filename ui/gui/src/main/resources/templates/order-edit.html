@@ -1645,7 +1645,7 @@ function updateTitle() {
 	var id = $('#id').val();
   $('#identifier')[0].setCustomValidity('');
 	if (hasOrder(title, id)) {
-		$('#identifier')[0].setCustomValidity('already exists');
+		$('#identifier')[0].setCustomValidity("[[#{identifierexists}]]");
 	} else {
 	  $('#breadcrumb-order-name').text(title);
 	  document.title = title + " | " + "[[#{proseo}]]";
@@ -1663,8 +1663,8 @@ function checkOrbitNumberFrom() {
 	  from[0].setCustomValidity('');
 	  to[0].setCustomValidity('');
   } else { 
-	    from[0].setCustomValidity('no orbits in range');
-	    to[0].setCustomValidity('no orbits in range');
+	    from[0].setCustomValidity("[[#{noorbits}]]");
+	    to[0].setCustomValidity("[[#{noorbits}]]");
   }
 }
 function checkOrbitNumberTo() {
@@ -1683,8 +1683,8 @@ function checkOrbitNumberTo() {
 		    from[0].setCustomValidity('');
 		    to[0].setCustomValidity('');
 		  } else { 
-		      from[0].setCustomValidity('no orbits in range');
-		      to[0].setCustomValidity('no orbits in range');
+		      from[0].setCustomValidity("[[#{noorbits}]]");
+		      to[0].setCustomValidity("[[#{noorbits}]]");
 		  }
 	}
 	
@@ -1773,7 +1773,7 @@ function checkOrbitNumberTo() {
 			  }
 			}
 		} else {
-      startElem[0].setCustomValidity('Invalid Date');
+      startElem[0].setCustomValidity("[[#{invaliddate}]]");
 		}
 	}
 
@@ -1802,7 +1802,7 @@ function checkOrbitNumberTo() {
 	        }
 	      }
 	    } else {
-	    	stopElem[0].setCustomValidity('Invalid Date');
+	    	stopElem[0].setCustomValidity("[[#{invaliddate}]]");
 	    }
 	  }
 	  
@@ -1871,7 +1871,7 @@ function ckeckParameterKey() {
 	for (var i = 0; i < keys.length; i++) {
 		if (key[0] != keys[i] && key.val() == $(keys[i]).val()) {
 			// duplicate key, show error
-			key[0].setCustomValidity('Duplicate key');
+			key[0].setCustomValidity("[[#{duplicatekey}]]");
 			error = true;
 			break;
 		}

@@ -331,7 +331,8 @@ code {
 }
 
 .plandialog {
-  width: 15em;
+  width: 30em;
+  border: 1px;
 }
 
 .selectdialog {

@@ -42,6 +42,7 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 				newAuthentication.setPrincipal(newPrincipal);
 				newAuthentication.setCredentials(authentication.getCredentials());
 				newAuthentication.setDetails(mission);
+				newAuthentication.setNewLogin(true);
 				newAuthentication.setAuthenticated(true);
 				return newAuthentication;
 			} else {

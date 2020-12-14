@@ -7,7 +7,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,12 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.jca.cci.RecordTypeNotSupportedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
@@ -30,12 +27,8 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -46,10 +39,6 @@ public class GUIProductController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIProductClassController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;

@@ -801,7 +801,10 @@ public class OrderDispatcher {
 		if (null != js) {
 			p.setMode(js.getProcessingMode());
 		}
-		p.setEnclosingProduct(enclosingProduct);		
+		p.setEnclosingProduct(enclosingProduct);
+		if ((enclosingProduct != null) && (p.getMode() == null || p.getMode().isEmpty())) {
+			p.setMode(enclosingProduct.getMode());
+		}
 		// check if product exists
 		// use configured processor, product class, sensing start and stop time
 		for (Product foundProduct : RepositoryService.getProductRepository()
@@ -923,4 +926,5 @@ public class OrderDispatcher {
 		
 		return cpFound;
 	}
+	
 }

@@ -32,10 +32,6 @@ public class GUIProcessorController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIProcessorController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
