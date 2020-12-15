@@ -186,7 +186,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = productIngestor.getFacilityByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
@@ -248,7 +248,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = productIngestor.getFacilityByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
@@ -294,7 +294,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = productIngestor.getFacilityByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
@@ -351,7 +351,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = productIngestor.getFacilityByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
@@ -400,7 +400,7 @@ public class IngestControllerImpl implements IngestController {
 					errorHeaders(logError(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage())), 
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		final ProcessingFacility facility = RepositoryService.getFacilityRepository().findByName(processingFacility);
+		final ProcessingFacility facility = productIngestor.getFacilityByName(processingFacility);
 		if (null == facility) {
 			return new ResponseEntity<>(
 					errorHeaders(logError(MSG_INVALID_PROCESSING_FACILITY, MSG_ID_INVALID_FACILITY, processingFacility)), 
