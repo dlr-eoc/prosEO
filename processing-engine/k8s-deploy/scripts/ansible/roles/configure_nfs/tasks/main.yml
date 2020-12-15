@@ -8,7 +8,7 @@
     dest: /etc/exports
     create: yes
     block: |
-      /exports {{ network_cidr }} (rw,sync)
+      /exports {{ network_cidr }}(rw,sync)
 
 - name: Enable NFS
   service:
