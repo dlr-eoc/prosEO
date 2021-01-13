@@ -61,6 +61,7 @@
                     <th><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
                   </tr>
                 </thead>
+            <div  th:unless="${productclasses} == null">
             <div th:each="class : ${productclasses}">
 							<tbody>
 								<tr th:id="${class?.productType}">
@@ -149,6 +150,7 @@
 									</td>
 								</tr>
 							</tbody>
+						</div>
 						</div>
               </table>
           </div>

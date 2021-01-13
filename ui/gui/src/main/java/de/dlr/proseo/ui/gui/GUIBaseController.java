@@ -93,7 +93,7 @@ public class GUIBaseController {
      * 
      * @return String list
      */
-    @ModelAttribute("facilities")
+    @ModelAttribute("facilitynames")
     public List<String> facilities() {
     	checkClearCache();
     	if (facilities != null && !facilities.isEmpty()) return facilities;
@@ -144,7 +144,7 @@ public class GUIBaseController {
      * 
      * @return String list
      */
-    @ModelAttribute("productclasses")
+    @ModelAttribute("productclassnames")
     public List<String> productclasses() {
     	checkClearCache();
     	if (productclasses != null && !productclasses.isEmpty()) return productclasses;
@@ -194,7 +194,7 @@ public class GUIBaseController {
      * 
      * @return String list
      */
-    @ModelAttribute("configuredprocessors")
+    @ModelAttribute("configuredprocessornames")
     public List<String> configuredProcessors() {
     	checkClearCache();
     	if (configuredProcessors != null && !configuredProcessors.isEmpty()) return configuredProcessors;
