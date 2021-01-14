@@ -46,12 +46,16 @@ public class SimplePolicy extends PersistentObject {
 	private static final String MSG_POLICY_TYPE_NOT_IMPLEMENTED = "Policy type %s not implemented";
 
 	/**
-	 * Available policy types as defined in ESA's Generic IPF Interface Specifications.
+	 * Available policy types as defined in ESA's Generic IPF Interface Specifications and other sources (e. g. Sentinel-1/3 IPF ICDs).
 	 * 
 	 * Note: For Sentinel-5P only the policies LatestValCover, LatestValIntersect, ValIntersect, LatestValidityClosest, LatestValidity are used.
 	 */
-	public enum PolicyType { ValCover, LatestValCover, ValIntersect, LatestValIntersect, LatestValidityClosest,
-		BestCenteredCover, LatestValCoverClosest, LargestOverlap, LargestOverlap85, LatestValidity, LatestValCoverNewestValidity 
+	public enum PolicyType {
+		// Standard policies according to the Generic IPF Interface Specifications
+		ValCover, LatestValCover, ValIntersect, LatestValIntersect, LatestValidityClosest,
+		BestCenteredCover, LatestValCoverClosest, LargestOverlap, LargestOverlap85, LatestValidity, LatestValCoverNewestValidity,
+		// Additional policies for Sentinel-1 and Sentinel-3
+		ClosestStartValidity, ClosestStopValidity, LatestStartValidity, LatestStopValidity, ValIntersectWithoutDuplicates, LastCreated
 	}
 	
 	/** The policy type to use */
