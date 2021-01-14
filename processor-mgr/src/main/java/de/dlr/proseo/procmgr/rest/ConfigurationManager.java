@@ -233,13 +233,6 @@ public class ConfigurationManager {
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 		
-		// Make sure the processing mode, if set, is valid
-		if (null != modelConfiguration.getMode()
-				&& !modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(modelConfiguration.getMode())) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
-					modelConfiguration.getMode(), modelConfiguration.getProcessorClass().getMission().getCode()));
-		}
-		
 		// Make sure a configuration with the same processor class name and configuration version does not yet exist
 		if (null != RepositoryService.getConfigurationRepository().findByMissionCodeAndProcessorNameAndConfigurationVersion(
 				configuration.getMissionCode(), configuration.getProcessorName(), configuration.getConfigurationVersion())) {
@@ -254,6 +247,13 @@ public class ConfigurationManager {
 		if (null == modelConfiguration.getProcessorClass()) {
 			throw new IllegalArgumentException(logError(MSG_PROCESSOR_CLASS_INVALID, MSG_ID_PROCESSOR_CLASS_INVALID,
 							configuration.getProcessorName(), configuration.getMissionCode()));
+		}
+		
+		// Make sure the processing mode, if set, is valid
+		if (null != modelConfiguration.getMode()
+				&& !modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(modelConfiguration.getMode())) {
+			throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSING_MODE, MSG_ID_INVALID_PROCESSING_MODE,
+					modelConfiguration.getMode(), modelConfiguration.getProcessorClass().getMission().getCode()));
 		}
 		
 		for (RestConfigurationInputFile staticInputFile: configuration.getStaticInputFiles()) {

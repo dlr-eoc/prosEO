@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
@@ -269,7 +270,8 @@ public class KubeJob {
 		}
 		
 		JobStep jobStep = js.get();
-		if (!jobStep.getOutputProduct().getConfiguredProcessor().getEnabled()) {
+		ConfiguredProcessor configuredProcessor = jobStep.getOutputProduct().getConfiguredProcessor();
+		if (null == configuredProcessor || !configuredProcessor.getEnabled()) {
 			Messages.CONFIG_PROC_DISABLED.log(logger, jobStep.getOutputProduct().getConfiguredProcessor().getIdentifier());
 			return null;
 		}
@@ -299,7 +301,7 @@ public class KubeJob {
 			logger.error(errStr);
 			throw new Exception(errStr);
 		}
-		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder);
+		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder, configuredProcessor.getProcessor().getJobOrderVersion());
 		if (jobOrder == null) {
 			String errStr = String.format("Sending of job order to Storage Manager failed for job step %d", jobStep.getId());
 			logger.error(errStr);

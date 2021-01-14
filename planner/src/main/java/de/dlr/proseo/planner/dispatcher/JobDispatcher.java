@@ -38,6 +38,7 @@ import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
+import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.enums.StorageType;
 
 /**
@@ -287,9 +288,10 @@ public class JobDispatcher {
 	 * 
 	 * @param kubeConfig The processing facility used 
 	 * @param jobOrder The job order file
+	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @return job order
 	 */
-	public JobOrder sendJobOrderToStorageManager(KubeConfig kubeConfig, JobOrder jobOrder) {
+	public JobOrder sendJobOrderToStorageManager(KubeConfig kubeConfig, JobOrder jobOrder, JobOrderVersion jobOrderVersion) {
 		if (logger.isTraceEnabled()) logger.trace(">>> sendJobOrderToStorageManager({}, {})", kubeConfig, jobOrder);
 		
 		String storageManagerUrl = kubeConfig.getStorageManagerUrl();
@@ -304,7 +306,7 @@ public class JobDispatcher {
 			RestTemplate restTemplate = rtb.setConnectTimeout(Duration.ofMillis(5000))
 					.basicAuthentication(kubeConfig.getStorageManagerUser(), kubeConfig.getStorageManagerPassword()).build();
 			String restUrl = "/joborders";
-			String b64String = jobOrder.buildBase64String(true);
+			String b64String = jobOrder.buildBase64String(jobOrderVersion, true);
 			RestJoborder jo = new RestJoborder();
 			switch (kubeConfig.getStorageType()) {
 			case S3:

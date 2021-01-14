@@ -843,6 +843,12 @@ public class ProcessorCommandRunner {
 
 		/* Compare attributes of database processor with updated processor */
 		// No modification of ID, version, mission code, processor class name or version allowed
+		if (null != updatedProcessor.getJobOrderVersion()) { // not null
+			restProcessor.setJobOrderVersion(updatedProcessor.getJobOrderVersion());
+		}
+		if (null != updatedProcessor.getUseInputFileTimeIntervals()) { // not null
+			restProcessor.setUseInputFileTimeIntervals(updatedProcessor.getUseInputFileTimeIntervals());
+		}
 		if (null != updatedProcessor.getIsTest()) { // not null
 			restProcessor.setIsTest(updatedProcessor.getIsTest());
 		}

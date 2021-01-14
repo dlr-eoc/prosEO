@@ -108,15 +108,14 @@ public class CommandLineInterface implements CommandLineRunner {
 	private static Logger logger = LoggerFactory.getLogger(CommandLineInterface.class);
 	
 	/**
-	 * Check the program invocation arguments (-u/--user, -p/--password, -m/--mission) and remove them from the command line
+	 * Check the program invocation arguments (-i/--identFile, -m/--mission) and remove them from the command line
 	 * 
 	 * @param args the program invocation arguments
 	 * @return a list of strings containing:
 	 *   <ol>
 	 *     <li>the prosEO command after removal of the invocation arguments</li>
-	 *     <li>the username</li>
-	 *     <li>the user's password</li>
-	 *     <li>the mission to execute the command for</li>
+	 *     <li>the path to the ident file, if given</li>
+	 *     <li>the mission to execute the command for, if given</li>
 	 *  </ol>
 	 */
 	private static List<String> checkArguments(String[] args) {
@@ -215,7 +214,7 @@ public class CommandLineInterface implements CommandLineRunner {
 				break;
 			case CMD_CLEAR:
 				if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-					Runtime.getRuntime().exec("cls");
+					new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
 				} else {
 					System.out.print(CLEAR_SCREEN_SEQUENCE);
 				}
@@ -294,7 +293,12 @@ public class CommandLineInterface implements CommandLineRunner {
 					Credentials credentials = CLIUtil.readIdentFile(identFile);
 					username = credentials.username;
 					password = credentials.password;
+				} catch (SecurityException | IOException e) {
+					System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
 				} catch (Exception e) {
+					String message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+					logger.error(message, e);
+					System.err.println(message);
 					System.err.println(uiMsg(MSG_ID_USER_NOT_LOGGED_IN));
 				}
 			}

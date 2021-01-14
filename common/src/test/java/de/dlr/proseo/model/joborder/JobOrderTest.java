@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import de.dlr.proseo.model.enums.JobOrderVersion;
+
 
 public class JobOrderTest {
 
@@ -85,7 +87,7 @@ public class JobOrderTest {
 		pr.getListOfOutputs().add(io);
 		jo.getListOfProcs().add(pr);
 		ByteArrayOutputStream jofStream = new ByteArrayOutputStream();
-		jo.writeXMLToStream(jofStream, true);
+		jo.writeXMLToStream(jofStream, true, JobOrderVersion.MMFI_1_8);
 
 		JobOrder jo2 = new JobOrder();
 		jo2.read(jofStream.toString());
