@@ -334,6 +334,7 @@ public class CLIUtil {
 	 * @return a Credentials object with username and password set from the file
 	 * @throws SecurityException if the file denoted by the file path does not meet the security criteria
 	 * @throws FileNotFoundException if the file denoted by the file path does not exist
+	 * @throws IOException if the file is not readable
 	 */
 	public static Credentials readIdentFile(String filePathString) throws SecurityException, FileNotFoundException, IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> readIdentFile({})", filePathString);
@@ -344,9 +345,18 @@ public class CLIUtil {
 			// Check file permissions
 			Path filePath = Path.of(filePathString);
 			if (Files.exists(filePath)) {
-				PosixFileAttributeView attributeView = Files.getFileAttributeView(filePath, PosixFileAttributeView.class);
-				Set<PosixFilePermission> permissions = attributeView.readAttributes().permissions();
-				if (permissions.contains(PosixFilePermission.GROUP_READ) || permissions.contains(PosixFilePermission.OTHERS_READ)) {
+				Set<PosixFilePermission> permissions;
+				try {
+					permissions = Files.getPosixFilePermissions(filePath);
+				} catch (UnsupportedOperationException e) {
+					// On file systems not supporting POSIX permissions (e. g. Windows FAT) we shrug and just log a warning
+					String message = uiMsg(MSG_ID_CREDENTIALS_INSECURE, filePathString);
+					logger.warn(message);
+					permissions = null;
+				}
+				if (null != permissions && 
+						(permissions.contains(PosixFilePermission.GROUP_READ) 
+					  || permissions.contains(PosixFilePermission.OTHERS_READ))) {
 					String message = uiMsg(MSG_ID_CREDENTIALS_INSECURE, filePathString);
 					logger.error(message);
 					System.err.println(message);
@@ -386,6 +396,7 @@ public class CLIUtil {
 			throw new IOException(message, e);
 		}
 		
+		logger.trace("<<< readIdentFile()");
 		return credentials;
 	}
 

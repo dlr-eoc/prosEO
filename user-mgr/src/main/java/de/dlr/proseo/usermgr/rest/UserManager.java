@@ -50,6 +50,7 @@ public class UserManager {
 	private static final int MSG_ID_USER_LIST_RETRIEVED = 2751;
 	private static final int MSG_ID_USER_RETRIEVED = 2752;
 	private static final int MSG_ID_USER_MISSING = 2753;
+	private static final int MSG_ID_PASSWORD_MISSING = 2753;
 	private static final int MSG_ID_USER_CREATED = 2755;
 	private static final int MSG_ID_USERNAME_MISSING = 2756;
 	private static final int MSG_ID_USERNAME_NOT_FOUND = 2757;
@@ -68,6 +69,7 @@ public class UserManager {
 	/* Message string constants */
 	private static final String MSG_USER_NOT_FOUND = "(E%d) No user found for mission %s";
 	private static final String MSG_USER_MISSING = "(E%d) User not set";
+	private static final String MSG_PASSWORD_MISSING = "(E%d) Password not set";
 	private static final String MSG_USERNAME_MISSING = "(E%d) User name not set";
 	private static final String MSG_USERNAME_NOT_FOUND = "(E%d) User %s not found";
 	private static final String MSG_USER_DATA_MISSING = "(E%d) User data not set";
@@ -89,7 +91,6 @@ public class UserManager {
 	/* Other string constants */
 	private static final String ROLE_ROOT = UserRole.ROOT.asRoleString();
 	private static final String ROLE_USERMGR = UserRole.USERMGR.asRoleString();
-	private static final String PWD_PLACEHOLDER = "********";
 
 	/** Repository for User objects */
 	@Autowired
@@ -157,7 +158,9 @@ public class UserManager {
 		
 		User modelUser = new User();
 		modelUser.setUsername(restUser.getUsername());
-		modelUser.setPassword(restUser.getPassword());
+		if (null != restUser.getPassword()) {
+			modelUser.setPassword(restUser.getPassword());
+		}
 		modelUser.setEnabled(restUser.getEnabled());
 		if (null != restUser.getExpirationDate()) {
 			modelUser.setExpirationDate(restUser.getExpirationDate());
@@ -188,7 +191,6 @@ public class UserManager {
 		RestUser restUser = new RestUser();
 		restUser.setUsername(modelUser.getUsername());
 		// Never return the password hash
-		restUser.setPassword(PWD_PLACEHOLDER);
 		restUser.setEnabled(modelUser.getEnabled());
 		if (null != modelUser.getExpirationDate()) {
 			restUser.setExpirationDate(modelUser.getExpirationDate());
@@ -219,6 +221,9 @@ public class UserManager {
 		}
 		if (null == restUser.getUsername() || restUser.getUsername().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_USERNAME_MISSING, MSG_ID_USERNAME_MISSING));
+		}
+		if (null == restUser.getPassword() || restUser.getPassword().isBlank()) {
+			throw new IllegalArgumentException(logError(MSG_PASSWORD_MISSING, MSG_ID_PASSWORD_MISSING));
 		}
 		
 		// Make sure user does not exist already
@@ -435,7 +440,7 @@ public class UserManager {
 			userChanged = true;
 			modelUser.setEnabled(changedUser.getEnabled());
 		}
-		// Change expiration dates only if the modification is by at least one day
+		// Change expiration dates only if modified by at least one day
 		if (24*60*60*1000 <= Math.abs(modelUser.getExpirationDate().getTime() - changedUser.getExpirationDate().getTime()))	{
 			if (logger.isTraceEnabled()) logger.trace("Expiration changed from {} to {}", modelUser.getExpirationDate(), changedUser.getExpirationDate());
 			if (!isUserManager) {
@@ -452,7 +457,7 @@ public class UserManager {
 			userChanged = true;
 			modelUser.setPasswordExpirationDate(changedUser.getPasswordExpirationDate());
 		}
-		if (!modelUser.getPassword().equals(changedUser.getPassword())) {
+		if (null != changedUser.getPassword() && !modelUser.getPassword().equals(changedUser.getPassword())) {
 			userChanged = true;
 			modelUser.setPassword(changedUser.getPassword());
 			

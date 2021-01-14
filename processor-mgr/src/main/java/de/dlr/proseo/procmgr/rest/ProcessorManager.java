@@ -342,6 +342,14 @@ public class ProcessorManager {
 			processorChanged = true;
 			modelProcessor.setProcessorVersion(changedProcessor.getProcessorVersion());
 		}
+		if (!modelProcessor.getJobOrderVersion().equals(changedProcessor.getJobOrderVersion())) {
+			processorChanged = true;
+			modelProcessor.setJobOrderVersion(changedProcessor.getJobOrderVersion());
+		}
+		if (!modelProcessor.getUseInputFileTimeIntervals().equals(changedProcessor.getUseInputFileTimeIntervals())) {
+			processorChanged = true;
+			modelProcessor.setUseInputFileTimeIntervals(changedProcessor.getUseInputFileTimeIntervals());
+		}
 		if (!modelProcessor.getIsTest().equals(changedProcessor.getIsTest())) {
 			processorChanged = true;
 			modelProcessor.setIsTest(changedProcessor.getIsTest());

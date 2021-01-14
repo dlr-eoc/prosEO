@@ -18,6 +18,12 @@
       processorVersion:
         type: string
         description: Version identification of the processor executable (Docker image)
+      jobOrderVersion?:
+        type: string
+        description: Version identification of the Job Order file specification (allowed values MMFI_1_8 [default], GMES_1_1)
+      useInputFileTimeIntervals?:
+        type: boolean
+        description: Indicates whether time intervals shall be used for input files in the Job Order file (default false)
       isTest?:
         type: boolean
         default: false

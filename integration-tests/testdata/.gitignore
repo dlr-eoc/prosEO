@@ -4,3 +4,4 @@
 /create_data.sh
 /proseo-ui-cli.*
 /application.yml
+*.cred

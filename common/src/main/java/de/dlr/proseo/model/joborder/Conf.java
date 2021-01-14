@@ -10,6 +10,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import de.dlr.proseo.model.enums.JobOrderVersion;
+
 
 /**
  * Representation of the Ipf_Conf Job Order element
@@ -279,9 +281,10 @@ public class Conf {
 	 * 
 	 * @param doc the Document to use
 	 * @param parentElement the node to add this as child to
+	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
-	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
+	public void buildXML(Document doc, Element parentElement, JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
 
 	    Element configEle = doc.createElement("Ipf_Conf");
 	    parentElement.appendChild(configEle);
@@ -324,20 +327,23 @@ public class Conf {
         	sensingTime.buildXML(doc, configEle, prosEOAttributes);
         }
 
-        Element configFilesEle = doc.createElement("Config_Files");
+        Element configFilesEle =
+        	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Config_Files" : "List_of_Config_Files");
         configEle.appendChild(configFilesEle);
         
         Element configFileNameEle = null;
         for (String item : configFileNames) {
-        	configFileNameEle =  doc.createElement("Conf_File_Name");
+        	configFileNameEle =
+        		doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Conf_File_Name" : "Config_File");
         	configFileNameEle.appendChild(doc.createTextNode(item));
         	configFilesEle.appendChild(configFileNameEle);
         }
-        Element dynProcParamsEle = doc.createElement("Dynamic_Processing_Parameters");
+        Element dynProcParamsEle =
+        	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Dynamic_Processing_Parameters" : "List_of_Dyn_Processing_Parameters");
         configEle.appendChild(dynProcParamsEle);
         
         for (ProcessingParameter item : dynamicProcessingParameters) {
-        	item.buildXML(doc, dynProcParamsEle, prosEOAttributes);
+        	item.buildXML(doc, dynProcParamsEle, jobOrderVersion, prosEOAttributes);
         }
 	}
 	

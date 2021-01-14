@@ -233,7 +233,6 @@ public class ConfigurationManager {
 		
 		Configuration modelConfiguration = ConfigurationUtil.toModelConfiguration(configuration);
 		
-		
 		// Make sure a configuration with the same processor class name and configuration version does not yet exist
 		if (null != RepositoryService.getConfigurationRepository().findByMissionCodeAndProcessorNameAndConfigurationVersion(
 				configuration.getMissionCode(), configuration.getProcessorName(), configuration.getConfigurationVersion())) {

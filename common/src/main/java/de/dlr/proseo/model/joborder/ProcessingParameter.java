@@ -7,6 +7,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import de.dlr.proseo.model.enums.JobOrderVersion;
+
 /**
  * Processing_Parameter information
  * 
@@ -74,10 +76,12 @@ public class ProcessingParameter {
 	 * Add contents of this to XML node parentElement. Use doc to create elements
 	 * @param doc The Document
 	 * @param parentElement The node to add this as child
+	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 */
-	public void buildXML(Document doc, Element parentElement, Boolean prosEOAttributes) {
-	    Element procParamEle = doc.createElement("Processing_Parameter");
+	public void buildXML(Document doc, Element parentElement, JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
+	    Element procParamEle =
+	    	doc.createElement(jobOrderVersion == JobOrderVersion.MMFI_1_8 ? "Processing_Parameter" : "Dyn_Processing_Parameter");
 	    parentElement.appendChild(procParamEle);
 
         Element nameEle = doc.createElement("Name");

@@ -4,6 +4,8 @@
     "missionCode": "S5P",
     "processorName": "KNMI L2",
     "processorVersion": "01.03.02",
+    "jobOrderVersion": "GMES_1_1",
+    "useInputFileTimeIntervals": true,
     "isTest": false,
     "minDiskSpace": 1024,
     "maxTime": 300,

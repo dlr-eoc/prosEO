@@ -74,7 +74,7 @@ public class OrderCommandRunner {
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_IDENTIFIER = "Order identifier (empty field cancels): ";
-	private static final String PROMPT_SLICING_TYPE = "Slicing type (O)rbit, C)alendar day, T)ime slice; empty field cancels): ";
+	private static final String PROMPT_SLICING_TYPE = "Slicing type (O)rbit, C)alendar day, calendar M)onth, calendar Y)ear, T)ime slice; empty field cancels): ";
 	private static final String PROMPT_SLICE_DURATION = "Time slice duration (empty field cancels): ";
 	private static final String PROMPT_START_TIME = "Order time interval start (YYYY-MM-DDTHH:MM:SS; emtpy field cancels): ";
 	private static final String PROMPT_STOP_TIME = "Order time interval end (YYYY-MM-DDTHH:MM:SS; emtpy field cancels): ";
@@ -252,7 +252,7 @@ public class OrderCommandRunner {
 			case "O":	restOrder.setSlicingType(OrderSlicingType.ORBIT.toString()); break;
 			case "C":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_DAY.toString()); break;
 			case "M":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_MONTH.toString()); break;
-			case "y":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_YEAR.toString()); break;
+			case "Y":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_YEAR.toString()); break;
 			case "T":	restOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString()); break;
 			case "":
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));

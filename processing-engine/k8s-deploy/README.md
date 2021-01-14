@@ -185,6 +185,34 @@ cluster directory's `certs/servercert.pem` and `certs/privkey.pem` respectively.
 - For creating self-signed certificates, use [a guide such as this](https://www.cyberithub.com/create-a-self-signed-certificate/)
 - For using ACME/Let's Encrypt certificates, [dehydrated](https://github.com/dehydrated-io/dehydrated)
   is recommended.
+  
+Manual procedure to create a Let's Encrypt certificate using Certbot (on the bastion host):
+```
+# Prerequisite: Install snapd
+sudo yum -y install snapd
+sudo systemctl enable --now snapd.socket
+sudo ln -s /var/lib/snapd/snap /snap
+# Log out and back in again to set snapd's paths right, wait a few seconds
+sudo snap install core
+sudo snap refresh core
+
+# Make sure certbot is not installed as a CentOS package
+sudo yum list certbot
+# IF it is installed:
+sudo yum remove certbot
+# END IF
+
+# Install certbot as snap package
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+# Get and install certificates
+sudo certbot --nginx
+
+# Test/check automatic renewal
+sudo certbot renew --dry-run
+systemctl list-timers
+```
 
 *Note 2:* You probably also want to configure users that can access the API
 exposed by the bastion configuration. Since it's not a great idea to store

@@ -47,6 +47,8 @@ public class FacmgrManager {
 	private static final int MSG_ID_DUPLICATE_FACILITY = 1024;
 	private static final int MSG_ID_FACILITY_HAS_PRODUCTS = 1025;
 
+	// Same as in other services
+	private static final int MSG_ID_ILLEGAL_STATE_TRANSITION = 1129;
 
 	/* Message string constants */
 	private static final String MSG_FACILITY_NOT_FOUND = "(E%d) No facility found for ID %d";
@@ -57,6 +59,7 @@ public class FacmgrManager {
 	private static final String MSG_FACILITY_ID_MISSING = "(E%d) Facility ID not set";
 	private static final String MSG_DUPLICATE_FACILITY = "(E%d) Facility %s exists already";
 	private static final String MSG_FACILITY_HAS_PRODUCTS = "(E%d) Cannot delete facility %s due to existing products";
+	private static final String MSG_ILLEGAL_STATE_TRANSITION = "(E%d) Illegal order state transition from %s to %s";
 
 	private static final String MSG_FACILITY_RETRIEVED = "(I%d) Facility with ID %s retrieved";
 	private static final String MSG_FACILITY_NOT_MODIFIED = "(I%d) Facility with id %d not modified (no changes)";
@@ -251,9 +254,14 @@ public class FacmgrManager {
 				facilityChanged = true;
 				modelFacility.setFacilityState(changedFacility.getFacilityState());
 			}
-		} else if (!modelFacility.getDescription().equals(changedFacility.getDescription())) {
+		} else if (!modelFacility.getFacilityState().equals(changedFacility.getFacilityState())) {
 			facilityChanged = true;
-			modelFacility.setDescription(changedFacility.getDescription());
+			try {
+				modelFacility.setFacilityState(changedFacility.getFacilityState());
+			} catch (IllegalStateException e) {
+				throw new IllegalArgumentException(logError(MSG_ILLEGAL_STATE_TRANSITION, MSG_ID_ILLEGAL_STATE_TRANSITION,
+						modelFacility.getFacilityState().toString(), changedFacility.getFacilityState().toString()));
+			}
 		}	
 		if (null == modelFacility.getProcessingEngineUrl()) {
 			if (null == changedFacility.getProcessingEngineUrl()) {

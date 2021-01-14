@@ -188,6 +188,16 @@ public class ProductIngestor {
 		return message;
 	}
 	
+	/**
+	 * Find a processing facility by name (transaction wrapper for repository method)
+	 * 
+	 * @param facilityName the name of the facility to retrieve
+	 * @return the processing facility found or null, if no such processing facility exists
+	 */
+	public ProcessingFacility getFacilityByName(String facilityName) {
+		return RepositoryService.getFacilityRepository().findByName(facilityName);
+	}
+	
     /**
      * Ingest all given products into the storage manager of the given processing facility. If the ID of a product to ingest
      * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated

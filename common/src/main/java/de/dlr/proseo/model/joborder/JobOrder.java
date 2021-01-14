@@ -30,6 +30,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import de.dlr.proseo.model.enums.JobOrderVersion;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,7 +131,7 @@ public class JobOrder {
 	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
 		try {
 			FileOutputStream fout = new FileOutputStream(fileName);
-			writeXMLToStream(fout, prosEOAttributes);
+			writeXMLToStream(fout, prosEOAttributes, JobOrderVersion.MMFI_1_8);
 			fout.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -145,13 +147,14 @@ public class JobOrder {
 
 	/**
 	 * Create a Base64-coded string from the XML representation of this Job Order
+	 * @param jobOrderVersion TODO
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return the Base64-coded string
 	 */
-	public String buildBase64String(Boolean prosEOAttributes) {
+	public String buildBase64String(JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			writeXMLToStream(baos, prosEOAttributes);	
+			writeXMLToStream(baos, prosEOAttributes, jobOrderVersion);	
 			String xmlString = baos.toString();
 			baos.close();
 			byte[] bytes = java.util.Base64.getEncoder().encode(xmlString.getBytes());
@@ -164,12 +167,24 @@ public class JobOrder {
 	}
 	
 	/**
-	 * Writes the content of the Job Order to an XML-formatted output stream
+	 * Writes the content of the Job Order to an XML-formatted output stream conforming to the MMFI_1_8 Job Order file syntax
 	 * @param aStream the stream to write to
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
 	 * @return true, if the operation completed successfully, false otherwise
+	 * @deprecated Use {@link #writeXMLToStream(OutputStream,Boolean,JobOrderVersion)} instead
 	 */
 	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes) {
+		return writeXMLToStream(aStream, prosEOAttributes, JobOrderVersion.MMFI_1_8);
+	}
+
+	/**
+	 * Writes the content of the Job Order to an XML-formatted output stream
+	 * @param aStream the stream to write to
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
+	 * @param jobOrderVersion the Job Order file specification version to apply
+	 * @return true, if the operation completed successfully, false otherwise
+	 */
+	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes, JobOrderVersion jobOrderVersion) {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -177,7 +192,7 @@ public class JobOrder {
 			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("Ipf_Job_Order");
 			doc.appendChild(rootElement);
-			conf.buildXML(doc, rootElement, prosEOAttributes);
+			conf.buildXML(doc, rootElement, jobOrderVersion, prosEOAttributes);
 			Element listEle = doc.createElement("List_of_Ipf_Procs");
 		    Attr attr = doc.createAttribute("count");
 		    attr.setValue(Integer.toString(listOfProcs.size()));
