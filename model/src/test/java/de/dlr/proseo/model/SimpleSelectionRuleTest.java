@@ -48,7 +48,13 @@ public class SimpleSelectionRuleTest {
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 H, 1 H) OR LatestValidity OPTIONAL",
 			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT ValIntersect(1 H, 1 H) OR LatestValIntersect(1 H, 1 H) OPTIONAL",
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValidityClosest(1 H, 1 H)",
-			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValCover(1 H, 1 H)"
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT LatestValCover(1 H, 1 H)",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT ClosestStartValidity(1 H, 1 H)",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT ClosestStopValidity(1 H, 1 H)",
+			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestStartValidity",
+			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LatestStopValidity",
+			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersectWithoutDuplicates(1 H, 1 H)",
+			"FOR " + TEST_PRODUCT_TYPE_IR + " SELECT LastCreated"
 	};
 	private static final Instant TEST_START_TIME = Instant.parse("2016-11-02T00:00:00Z");
 	private static final Instant TEST_STOP_TIME = Instant.parse("2016-11-02T00:00:05Z");
@@ -107,7 +113,45 @@ public class SimpleSelectionRuleTest {
 				+ "p.generationTime >= (select max(p2.generationTime) from Product p2 where "
 				+ "p2.productClass.id = 4711 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_START_TIME + "' and "
-				+ "p2.sensingStopTime >= '" + EXPECTED_STOP_TIME + "')"
+				+ "p2.sensingStopTime >= '" + EXPECTED_STOP_TIME + "')",
+			"select p from Product p where p.productClass.id = 4711 and "
+				+ "(p.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "' and "
+				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
+				+ "p2.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "') or "
+				+ "p.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "' and "
+				+ "p.sensingStartTime < (select min(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
+				+ "p2.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "'))",
+			"select p from Product p where p.productClass.id = 4711 and "
+				+ "(p.sensingStopTime <= '" + EXPECTED_CENTRE_TIME + "' and "
+				+ "p.sensingStopTime >= (select max(p2.sensingStopTime) from Product p2 where p2.productClass.id = 4711 and "
+				+ "p2.sensingStopTime <= '" + EXPECTED_CENTRE_TIME + "') or "
+				+ "p.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "' and "
+				+ "p.sensingStopTime < (select min(p2.sensingStopTime) from Product p2 where p2.productClass.id = 4711 and "
+				+ "p2.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "'))",
+			"select p from Product p "
+				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "where p.productClass.id = 815 and "
+				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where "
+				+ "p2.productClass.id = 815) and "
+				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
+				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0'",
+			"select p from Product p "
+				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "where p.productClass.id = 815 and "
+				+ "p.sensingStopTime >= (select max(p2.sensingStopTime) from Product p2 where "
+				+ "p2.productClass.id = 815) and "
+				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
+				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0'",
+			"select p from Product p where p.productClass.id = 4711 and "
+				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
+				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "'",
+			"select p from Product p "
+				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "where p.productClass.id = 815 and "
+				+ "p.generationTime >= (select max(p2.generationTime) from Product p2 where "
+				+ "p2.productClass.id = 815) and "
+				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
+				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0'"
 	};
 
 	private static final String[] expectedSqlQueries = {
@@ -161,7 +205,48 @@ public class SimpleSelectionRuleTest {
 				+ "p.generation_time >= (SELECT MAX(p2.generation_time) FROM product p2 WHERE "
 				+ "p2.product_class_id = 4711 AND "
 				+ "p2.sensing_start_time <= '" + EXPECTED_START_TIME + "' AND "
-				+ "p2.sensing_stop_time >= '" + EXPECTED_STOP_TIME + "')"
+				+ "p2.sensing_stop_time >= '" + EXPECTED_STOP_TIME + "')",
+			"SELECT * FROM product p WHERE p.product_class_id = 4711 AND "
+				+ "(p.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "' AND "
+				+ "p.sensing_start_time >= (SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
+				+ "p2.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "') OR "
+				+ "p.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "' AND "
+				+ "p.sensing_start_time < (SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
+				+ "p2.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "'))",
+			"SELECT * FROM product p WHERE p.product_class_id = 4711 AND "
+				+ "(p.sensing_stop_time <= '" + EXPECTED_CENTRE_TIME + "' AND "
+				+ "p.sensing_stop_time >= (SELECT MAX(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
+				+ "p2.sensing_stop_time <= '" + EXPECTED_CENTRE_TIME + "') OR "
+				+ "p.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "' AND "
+				+ "p.sensing_stop_time < (SELECT MIN(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
+				+ "p2.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "'))",
+			"SELECT * FROM product p "
+				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
+				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
+				+ "WHERE p.product_class_id = 815 AND "
+				+ "p.sensing_start_time >= (SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE "
+				+ "p2.product_class_id = 815) AND "
+				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
+				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0'",
+			"SELECT * FROM product p "
+				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
+				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
+				+ "WHERE p.product_class_id = 815 AND "
+				+ "p.sensing_stop_time >= (SELECT MAX(p2.sensing_stop_time) FROM product p2 WHERE "
+				+ "p2.product_class_id = 815) AND "
+				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
+				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0'",
+			"SELECT * FROM product p WHERE p.product_class_id = 4711 AND "
+				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
+				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "'",
+			"SELECT * FROM product p "
+				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
+				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
+				+ "WHERE p.product_class_id = 815 AND "
+				+ "p.generation_time >= (SELECT MAX(p2.generation_time) FROM product p2 WHERE "
+				+ "p2.product_class_id = 815) AND "
+				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
+				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0'"
 	};
 
 	/* Test objects */

@@ -44,16 +44,17 @@ import de.dlr.proseo.model.SimplePolicy.DeltaTime;
  * simple_policy ::= policy_name [ ( delta_time , delta_time ) ]
  * policy_name ::= 'ValCover' | 'LatestValCover' | 'ValIntersect' | 'latestValIntersect' | 'LatestValidityClosest' |
  *                 'BestCenteredCover' | 'LatestValCoverClosest' | 'LargestOverlap' | 'LargestOverlap85' | 
- *                 'LatestValidity' | 'LatestValCoverNewestValidity'
+ *                 'LatestValidity' | 'LatestValCoverNewestValidity' | 'ClosestStartValidity' | 'ClosestStopValidity' |
+ *                 'LatestStartValidity' | 'LatestStopValidity' | 'ValIntersectWithoutDuplicates' | 'LastCreated'
  * source_product_type ::= product_type[/parameter_key:parameter_value[,parameter_key:parameter_value] ...] 
- * delta_time ::= digit ... [ 'd' | 'h' | 'm' | 's' ]
+ * delta_time ::= digit ... [ 'd' | 'h' | 'm' | 's' | 'ms' ]
  * digit ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9</pre>
  * 
  * Key words are not case sensitive, this includes the names of selection policies. Punctuation characters need not (but may) be
  * enclosed by white space.
  * <p>
  * If for a simple rule neither OPTIONAL nor MINCOVER or MANDATORY is specified, MANDATORY is the default. If for a delta time, neither 'd'
- * (days), 'h' (hours), 'm' (minutes) nor 's' (seconds) is specified, 'd' (days) is the default.
+ * (days), 'h' (hours), 'm' (minutes), 's' (seconds) or 'ms' (microseconds) is specified, 'd' (days) is the default.
  * <p>
  * A simple rule marked as OPTIONAL is fulfilled even if no items satisfy the rule. For a simple rule marked MANDATORY at
  * least one item must fulfil the rule criteria. If the rule is marked as MINCOVER(n), the set of items fulfilling the rule
@@ -124,10 +125,17 @@ public class SelectionRule {
 	public static final String RULE_POLICY_OVERLAP85 = "LARGESTOVERLAP85";
 	public static final String RULE_POLICY_LATVALCOVNEW = "LATESTVALCOVERNEWESTVALIDITY";
 	public static final String RULE_POLICY_LATVAL = "LATESTVALIDITY";
+	public static final String RULE_POLICY_CLOSTA = "CLOSESTSTARTVALIDITY";
+	public static final String RULE_POLICY_CLOSTO = "CLOSESTSTOPVALIDITY";
+	public static final String RULE_POLICY_LATSTA = "LATESTSTARTVALIDITY";
+	public static final String RULE_POLICY_LATSTO = "LATESTSTOPVALIDITY";
+	public static final String RULE_POLICY_VALINTNOD = "VALINTERSECTWITHOUTDUPLICATES";
+	public static final String RULE_POLICY_LASCRE = "LASTCREATED";
 	public static final String RULE_DELTA_DAYS = "D";
 	public static final String RULE_DELTA_HOURS = "H";
 	public static final String RULE_DELTA_MINS = "M";
 	public static final String RULE_DELTA_SECS = "S";
+	public static final String RULE_DELTA_MILLIS = "MS";
 	
 	/* Messages for parsing errors */
 	private static final String RULE_EMPTY_ERROR = "Syntax error: The rule string is empty.";
@@ -139,18 +147,23 @@ public class SelectionRule {
 	private static final String RULE_SELECT_EXPECTED_ERROR = "Syntax error: Expected '" + RULE_SELECT + "' keyword, found: ";
 	private static final String RULE_POLICY_INVALID_ERROR = "Syntax error: Allowed policies are '" + RULE_POLICY_VALINT
 			+ "', '" + RULE_POLICY_LATVALINT + "', '" + RULE_POLICY_LATVAL + "', '" + RULE_POLICY_LATVALCLO
-			+ "' and '" + RULE_POLICY_LATVALCOV + "', found: ";
+			+ "', '" + RULE_POLICY_LATVALCOV + "', '" + RULE_POLICY_CLOSTA + "', '" + RULE_POLICY_CLOSTO 
+			+ "', '" + RULE_POLICY_LATSTA + "', '" + RULE_POLICY_LATSTO + "' and '" + RULE_POLICY_VALINTNOD 
+			+ "', '" + RULE_POLICY_LASCRE + "', found: ";
 	private static final String RULE_POLICY_TIMES_ERROR = "Error: For policies '" + RULE_POLICY_VALINT + "', '"
-			+ RULE_POLICY_LATVALINT + "', '" + RULE_POLICY_LATVALCLO + "' and '"
-			+ RULE_POLICY_LATVALCOV + "' delta times must be specified as parameter, found: ";
-	private static final String RULE_POLICY_LATVAL_ERROR = "Error: For the policy '" + RULE_POLICY_LATVAL
+			+ RULE_POLICY_LATVALINT + "', '" + RULE_POLICY_LATVALCLO + "', '"
+			+ RULE_POLICY_LATVALCOV + "', '" + RULE_POLICY_CLOSTA + "' and '"
+			+ RULE_POLICY_CLOSTO + "' delta times must be specified as parameter, found: ";
+	private static final String RULE_POLICY_LATVAL_ERROR = "Error: For the policies '" + RULE_POLICY_LATVAL
+			+ "', '" + RULE_POLICY_LATSTA + "', '" + RULE_POLICY_LATSTO + "' and '" + RULE_POLICY_LASCRE 
 			+ "' no delta times may be specified, found: ";
 	private static final String RULE_POLICY_SYNTAX_ERROR = "Syntax error: A policy must follow the pattern policy_name [ " +
 			RULE_PAREN_OPEN + " delta_time " + RULE_COMMA + " delta_time " + RULE_PAREN_CLOSE + " ], found: ";
 	private static final String RULE_POLICY_END_ERROR = "Syntax error: Expected end of text or one of {'" + RULE_POLICY_OR + "', '"
 			+ RULE_OPTIONAL + "', '" + RULE_MANDATORY + "', '" + RULE_MINCOVER + "', '" + RULE_SEPARATOR + "'}, found: ";
 	private static final String RULE_TIME_FORMAT_ERROR = "Syntax error: Delta time must be of the form digit ... [ '"
-			+ RULE_DELTA_DAYS + "' | '" + RULE_DELTA_HOURS + "' | '" + RULE_DELTA_MINS + "' | '" + RULE_DELTA_SECS + "'], found: ";
+			+ RULE_DELTA_DAYS + "' | '" + RULE_DELTA_HOURS + "' | '" + RULE_DELTA_MINS + "' | '" + RULE_DELTA_SECS
+			+ "' | '" + RULE_DELTA_MILLIS + "'], found: ";
 	private static final String RULE_MALFORMED_PRODUCT_TYPE_ERROR = "Product type contains more than one slash ('/'): ";
 	private static final String RULE_MISSING_FILTER_ERROR = "Product type with slash ('/') does not contain filter conditions, found: ";
 	private static final String RULE_EMPTY_FILTER_ERROR = "Product type contains empty filter condition, found: ";
@@ -403,6 +416,24 @@ public class SelectionRule {
 			case RULE_POLICY_LATVALCOV:
 				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LatestValCover);
 				break;
+			case RULE_POLICY_CLOSTA:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.ClosestStartValidity);
+				break;
+			case RULE_POLICY_CLOSTO:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.ClosestStopValidity);
+				break;
+			case RULE_POLICY_LATSTA:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LatestStartValidity);
+				break;
+			case RULE_POLICY_LATSTO:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LatestStopValidity);
+				break;
+			case RULE_POLICY_VALINTNOD:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.ValIntersectWithoutDuplicates);
+				break;
+			case RULE_POLICY_LASCRE:
+				simplePolicy.setPolicyType(SimplePolicy.PolicyType.LastCreated);
+				break;
 			default:
 				throw new ParseException(RULE_POLICY_INVALID_ERROR + policyParts[0], offset);
 		}
@@ -411,12 +442,15 @@ public class SelectionRule {
 		// Analyse policy parameters, if present
 		if (2 > policyParts.length) {
 			if (RULE_POLICY_VALINT.equals(policyParts[0])    || RULE_POLICY_LATVALINT.equals(policyParts[0])
-			||  RULE_POLICY_LATVALCLO.equals(policyParts[0]) || RULE_POLICY_LATVALCOV.equals(policyParts[0])) {
+			||  RULE_POLICY_LATVALCLO.equals(policyParts[0]) || RULE_POLICY_LATVALCOV.equals(policyParts[0])
+			||  RULE_POLICY_CLOSTA.equals(policyParts[0])    || RULE_POLICY_CLOSTO.equals(policyParts[0])
+			||  RULE_POLICY_VALINTNOD.equals(policyParts[0])) {
 				throw new ParseException(RULE_POLICY_TIMES_ERROR + "<none>", offset + simplePolicyString.length());
 			}
-			// otherwise OK: LatestValidity has no parameters
+			// otherwise OK: LatestValidity, LatestStartValidity, LatestStopValidity and LastCreated have no parameters
 		} else {
-			if (RULE_POLICY_LATVAL.equals(policyParts[0])) {
+			if (RULE_POLICY_LATVAL.equals(policyParts[0]) || RULE_POLICY_LATSTA.equals(policyParts[0])
+			||  RULE_POLICY_LATSTO.equals(policyParts[0]) || RULE_POLICY_LASCRE.equals(policyParts[0])) {
 				int parenPos = simplePolicyString.indexOf(RULE_PAREN_OPEN);
 				throw new ParseException(RULE_POLICY_LATVAL_ERROR + simplePolicyString.substring(parenPos), offset + parenPos);
 			}
@@ -432,21 +466,26 @@ public class SelectionRule {
 			simplePolicy.setDeltaTimeT1(parseDeltaTime(deltaTimeT1,
 					offset + simplePolicyString.indexOf(policyParts[1]) + commaPos + 1
 					+ simplePolicyString.substring(simplePolicyString.indexOf(policyParts[1]) + commaPos + 1).indexOf(deltaTimeT1)));
-			// Normalize delta times for LatestValidityClosest, so that at least one of the delta times is zero
-			if (SimplePolicy.PolicyType.LatestValidityClosest.equals(simplePolicy.getPolicyType())) {
-				long diffSeconds = simplePolicy.getDeltaTimeT1().toSeconds() - simplePolicy.getDeltaTimeT0().toSeconds();
-				if (0 < diffSeconds) {
+			// Normalize delta times for LatestValidityClosest, ClosestStartValidity and ClosestStopValidity so that at least 
+			// one of the delta times is zero
+			if (SimplePolicy.PolicyType.LatestValidityClosest.equals(simplePolicy.getPolicyType())
+			||  SimplePolicy.PolicyType.ClosestStartValidity.equals(simplePolicy.getPolicyType())
+			||  SimplePolicy.PolicyType.ClosestStopValidity.equals(simplePolicy.getPolicyType())) {
+				long diffMillis = simplePolicy.getDeltaTimeT1().toMilliseconds() - simplePolicy.getDeltaTimeT0().toMilliseconds();
+				if (0 < diffMillis) {
 					simplePolicy.getDeltaTimeT0().duration = 0;
-					simplePolicy.getDeltaTimeT1().duration = diffSeconds / 60;
-					simplePolicy.getDeltaTimeT1().unit = TimeUnit.MINUTES;
-				} else if (0 == diffSeconds) {
+					simplePolicy.getDeltaTimeT1().duration = diffMillis;
+					simplePolicy.getDeltaTimeT1().unit = TimeUnit.MILLISECONDS;
+				} else if (0 == diffMillis) {
 					simplePolicy.getDeltaTimeT0().duration = 0;
 					simplePolicy.getDeltaTimeT1().duration = 0;					
 				} else {
-					simplePolicy.getDeltaTimeT0().duration = - diffSeconds / 60;
-					simplePolicy.getDeltaTimeT0().unit = TimeUnit.MINUTES;
+					simplePolicy.getDeltaTimeT0().duration = - diffMillis;
+					simplePolicy.getDeltaTimeT0().unit = TimeUnit.MILLISECONDS;
 					simplePolicy.getDeltaTimeT1().duration = 0;
 				}
+				simplePolicy.getDeltaTimeT0().normalize();
+				simplePolicy.getDeltaTimeT1().normalize();
 				logger.debug(String.format("... delta times %s/%s normalized to %s/%s", deltaTimeT0, deltaTimeT1,
 						simplePolicy.getDeltaTimeT0().toString(), simplePolicy.getDeltaTimeT1().toString()));
 			}
@@ -461,7 +500,7 @@ public class SelectionRule {
 	}
 	
 	/**
-	 * Syntactical analysis of a delta time: digit ... [ d | h | m | s ]]
+	 * Syntactical analysis of a delta time: digit ... [ d | h | m | s | ms ]]
 	 * (see {@link SelectionRule grammar definition})
 	 * 
 	 * @param deltaTimeString the text string containing the delta time to analyse (without preceding or trailing white space)
@@ -473,7 +512,7 @@ public class SelectionRule {
 		DeltaTime deltaTime = new DeltaTime();
 		
 		String patternString = "(\\d+)\\s*(?:\\s("
-				+ RULE_DELTA_DAYS + "|" + RULE_DELTA_HOURS + "|" + RULE_DELTA_MINS + "|" + RULE_DELTA_SECS
+				+ RULE_DELTA_DAYS + "|" + RULE_DELTA_HOURS + "|" + RULE_DELTA_MINS + "|" + RULE_DELTA_SECS + "|" + RULE_DELTA_MILLIS
 				+ "))?";
 		logger.debug(String.format("... parsing delta time '%s' against pattern '%s'", deltaTimeString, patternString));
 		Pattern deltaTimePattern = Pattern.compile(patternString);
@@ -493,11 +532,15 @@ public class SelectionRule {
 				case RULE_DELTA_SECS:
 					deltaTime.unit = TimeUnit.SECONDS;
 					break;
+				case RULE_DELTA_MILLIS:
+					deltaTime.unit = TimeUnit.MILLISECONDS;
+					break;
 				case RULE_DELTA_DAYS:
 				default:
 					deltaTime.unit = TimeUnit.DAYS;
 				}
 			}
+			deltaTime.normalize();
 			logger.debug("... found delta time with duration '" + deltaTime.duration + "' and unit '" + deltaTime.unit + "'");
 		} else {
 			throw new ParseException(RULE_TIME_FORMAT_ERROR + deltaTimeString, offset);
