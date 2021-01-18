@@ -1,7 +1,4 @@
-cluster-key.*
-*.pub
-*.pem
-*.retry
+ssh-keys/
 .ostackrc
 
 # Tool directories
