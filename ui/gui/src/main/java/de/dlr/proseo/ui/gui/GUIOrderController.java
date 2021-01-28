@@ -72,6 +72,7 @@ import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 @Controller
 public class GUIOrderController extends GUIBaseController {
@@ -1103,10 +1104,10 @@ public class GUIOrderController extends GUIBaseController {
 							if (!stateArray.contains(order.getOrderState())) found = false;
 						}
 						if (fromTime != null && order.getStartTime() != null) {
-							if (fromTime.compareTo(order.getStartTime()) > 0) found = false;
+							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
 						}
 						if (toTime != null && order.getStopTime() != null) {
-							if (toTime.compareTo(order.getStopTime()) < 0) found = false;
+							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
 						}
 						if (productArray != null && order.getRequestedProductClasses() != null) {
 							Boolean lfound = false;
