@@ -23,8 +23,24 @@ public class GUIAuthenticationToken implements Authentication {
 	private Object credentials;
 	private UserDetails principal;
 	private String mission;
+	private boolean isNewLogin = true;
 	private boolean isAuthenticated;
 
+
+	/**
+	 * @return the isNewLogin
+	 */
+	public boolean isNewLogin() {
+		return isNewLogin;
+	}
+
+	/**
+	 * @param isNewLogin the isNewLogin to set
+	 */
+	public void setNewLogin(boolean isNewLogin) {
+		this.isNewLogin = isNewLogin;
+	}
+	
 	@Override
 	public String getName() {
 		return principal.getUsername();

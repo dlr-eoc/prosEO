@@ -4,7 +4,6 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_MODIFIED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PRODUCTCLASSES_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_DATA_INVALID;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_NOT_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
@@ -13,11 +12,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -26,18 +21,14 @@ import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.trace.http.HttpTrace.Response;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,33 +37,20 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.Builder;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
+import de.dlr.proseo.model.rest.model.RestInputFilter;
+import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import de.dlr.proseo.ui.gui.service.OrderService;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
-import de.dlr.proseo.model.rest.model.RestProcessingFacility;
-import de.dlr.proseo.model.enums.OrderSlicingType;
-import de.dlr.proseo.model.enums.OrderState;
-import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.enums.ProductionType;
-import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
-import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
-import de.dlr.proseo.model.rest.model.RestInputFilter;
-import de.dlr.proseo.model.rest.model.RestMission;
-import de.dlr.proseo.model.rest.model.RestOrder;
-import de.dlr.proseo.model.rest.model.RestParameter;
-import de.dlr.proseo.model.rest.model.RestProductClass;
-import de.dlr.proseo.model.rest.model.RestSpacecraft;
-import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 @Controller
 public class GUIOrderController extends GUIBaseController {
@@ -81,43 +59,6 @@ public class GUIOrderController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIOrderController.class);
 	
-	/**
-	 * List with cached data
-	 */
-	private List<String> facilities = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> productclasses = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> configuredProcessors = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> fileClasses = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> processingModes = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> spaceCrafts = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> productiontypes = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> slicingtypes = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> parametertypes = null;
-			
 	/** The GUI configuration */
 	@Autowired
 	private GUIConfiguration config;
@@ -157,19 +98,14 @@ public class GUIOrderController extends GUIBaseController {
 	
 	@GetMapping(value ="/order-show")
 	public String showOrder() {
-		ModelAndView modandview = new ModelAndView("order-show");
-		modandview.addObject("message", "TEST");
 		return "order-show";
 	}
 	@GetMapping(value ="/order-edit")
 	public String editOrder() {
-		ModelAndView modandview = new ModelAndView("order-edit");
 		return "order-edit";
 	}
 	@GetMapping(value ="/order")
 	public String order() {
-		ModelAndView modandview = new ModelAndView("order");
-		modandview.addObject("message", "TEST");
 		return "order";
 	}
     
@@ -198,7 +134,7 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getIdentifier({}, {}, model)", identifier, identifier);
-		// clearCache();
+    	checkClearCache();
 		String myIdent = null;
 		if (identifier != null && identifier.indexOf("*") < 0) {
 			myIdent = identifier;
@@ -258,7 +194,6 @@ public class GUIOrderController extends GUIBaseController {
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
-	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-state/post")
 	public DeferredResult<String> setState(
 			@RequestParam(required = true, value = MAPKEY_ID) String id, 
@@ -303,357 +238,6 @@ public class GUIOrderController extends GUIBaseController {
 		return deferredResult;
 	}
 	
-    /**
-     * Retrieve the processing facilities
-     * 
-     * @return String list
-     */
-    @ModelAttribute("facilities")
-    public List<String> facilities() {
-    	if (facilities != null && !facilities.isEmpty()) return facilities;
-    	
-    	facilities = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(config.getProductionPlanner(),
-					"/processingfacilities", List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return facilities;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return facilities;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			for (Object object: resultList) {
-				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
-				facilities.add(restFacility.getName());
-			}
-		}
-
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		facilities.sort(c);
-        return facilities;
-    }
-    
-    /**
-     * Retrieve the product classes of mission
-     * 
-     * @return String list
-     */
-    @ModelAttribute("productclasses")
-    public List<String> productclasses() {
-    	if (productclasses != null && !productclasses.isEmpty()) return productclasses;
-    	
-    	productclasses = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
-					"/productclasses?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return productclasses;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return productclasses;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			for (Object object: resultList) {
-				RestProductClass restProductClass = mapper.convertValue(object, RestProductClass.class);
-				productclasses.add(restProductClass.getProductType());
-			}
-		}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		productclasses.sort(c);
-        return productclasses;
-    }
-
-    /**
-     * Retrieve the configured processors of mission
-     * 
-     * @return String list
-     */
-    @ModelAttribute("configuredprocessors")
-    public List<String> configuredProcessors() {
-    	if (configuredProcessors != null && !configuredProcessors.isEmpty()) return configuredProcessors;
-    	
-    	configuredProcessors = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
-					"/configuredprocessors?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return configuredProcessors;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return configuredProcessors;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			for (Object object: resultList) {
-				RestConfiguredProcessor restConfiguredProcessorClass = mapper.convertValue(object, RestConfiguredProcessor.class);
-				configuredProcessors.add(restConfiguredProcessorClass.getIdentifier());
-			}
-		}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		configuredProcessors.sort(c);
-        return configuredProcessors;
-    }
-    
-    /**
-     * Retrieve the file classes of mission
-     * 
-     * @return String list
-     */
-    @ModelAttribute("fileclasses")
-    public List<String> fileClasses() {
-    	if (fileClasses != null && !fileClasses.isEmpty()) return fileClasses;
-    	
-    	fileClasses = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return fileClasses;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return fileClasses;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			if (resultList.size() == 1) {
-				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
-				fileClasses.addAll(restMission.getFileClasses());
-			}
-		}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		fileClasses.sort(c);
-        return fileClasses;
-    }
-    
-    /**
-     * Retrieve the processing modes of mission
-     * 
-     * @return String list
-     */
-    @ModelAttribute("processingmodes")
-    public List<String> processingModes() {
-    	if (processingModes != null && !processingModes.isEmpty()) return processingModes;
-    	
-    	processingModes = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return processingModes;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return processingModes;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			if (resultList.size() == 1) {
-				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
-				processingModes.addAll(restMission.getProcessingModes());
-			}
-		}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		processingModes.sort(c);
-        return processingModes;
-    }
-
-    /**
-     * Retrieve the space crafts of mission
-     * 
-     * @return String list
-     */
-    @ModelAttribute("spacecrafts")
-    public List<String> spaceCrafts() {
-    	if (spaceCrafts != null && !spaceCrafts.isEmpty()) return spaceCrafts;
-    	
-    	spaceCrafts = new ArrayList<String>();   
-		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
-		
-		try {
-			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					"/missions?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
-		} catch (RestClientResponseException e) {
-			String message = null;
-			switch (e.getRawStatusCode()) {
-			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
-				break;
-			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-				break;
-			default:
-				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-			}
-			System.err.println(message);
-			return spaceCrafts;
-		} catch (RuntimeException e) {
-			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return spaceCrafts;
-		}
-		
-		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
-			if (resultList.size() == 1) {
-				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
-				for (RestSpacecraft spaceCraft : restMission.getSpacecrafts()) {
-					spaceCrafts.add(spaceCraft.getCode());
-				}
-			}
-		}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		spaceCrafts.sort(c);
-        return spaceCrafts;
-    }
-
-    /**
-     * Retrieve the production type enum
-     * 
-     * @return String list
-     */
-    @ModelAttribute("productiontypes")
-    public List<String> productiontypes() {
-    	if (productiontypes != null && !productiontypes.isEmpty()) return productiontypes;
-    	
-    	productiontypes = new ArrayList<String>(); 
-    	for (ProductionType value: ProductionType.values()) {
-    		productiontypes.add(value.toString());
-    	}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		productiontypes.sort(c);
-        return productiontypes;
-    }
-
-    /**
-     * Retrieve the slicing type enum
-     * 
-     * @return String list
-     */
-    @ModelAttribute("slicingtypes")
-    public List<String> slicingtypes() {
-    	if (slicingtypes != null && !slicingtypes.isEmpty()) return slicingtypes;
-    	
-    	slicingtypes = new ArrayList<String>(); 
-    	for (OrderSlicingType value: OrderSlicingType.values()) {
-    		slicingtypes.add(value.toString());
-    	}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		slicingtypes.sort(c);
-        return slicingtypes;
-    }
-
-    /**
-     * Retrieve the parameter type enum
-     * 
-     * @return String list
-     */
-    @ModelAttribute("parametertypes")
-    public List<String> parametertypes() {
-    	if (parametertypes != null && !parametertypes.isEmpty()) return parametertypes;
-    	
-    	parametertypes = new ArrayList<String>(); 
-    	for (ParameterType value: ParameterType.values()) {
-    		parametertypes.add(value.toString());
-    	}
-		Comparator<String> c = Comparator.comparing((String x) -> x);
-		parametertypes.sort(c);
-        return parametertypes;
-    }
-    
     
 	/**
 	 * Retrieve a single order
@@ -662,14 +246,13 @@ public class GUIOrderController extends GUIBaseController {
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
-	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order/get")
 	public DeferredResult<String> getId(
 			@RequestParam(required = true, value = MAPKEY_ID) String id,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-		// clearCache();
+    	checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
@@ -719,7 +302,7 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
-		// clearCache();
+    	checkClearCache();
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
@@ -764,12 +347,12 @@ public class GUIOrderController extends GUIBaseController {
 	 * @param model The model to hold the data
 	 * @return The result
 	 */
-	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/order-submit", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public ResponseEntity<OrderInfo> submitOrder(@RequestBody RestOrder updateOrder) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> order-submit({}, model)", updateOrder);
+    	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		// some checks on updateOrder
 		if (updateOrder.getInputFilters() != null) {
@@ -888,6 +471,7 @@ public class GUIOrderController extends GUIBaseController {
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+    	checkClearCache();
 		Long from = null;
 		Long to = null;
 		if (fromIndex != null && fromIndex >= 0) {
@@ -909,7 +493,6 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -965,13 +548,13 @@ public class GUIOrderController extends GUIBaseController {
 		return deferredResult;
 	}
 
-	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/jobs/graph")
 	public DeferredResult<String> getGraphOfJob(
 			@RequestParam(required = true, value = "jobid") String id,
 			Model model) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getId({}, model)", id);
+    	checkClearCache();
 		Mono<ClientResponse> mono = orderService.getGraphOfJob(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
@@ -1136,7 +719,6 @@ public class GUIOrderController extends GUIBaseController {
 
     private Long countJobs(String id)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
 		String uri = "/jobs/count";
 		String divider = "?";
 		if (id != null) {
@@ -1177,7 +759,6 @@ public class GUIOrderController extends GUIBaseController {
 
     private Long countOrbits(String spacecraft, Long from, Long to)  {	    	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-		String mission = auth.getMission();
 		String uri = "/orbits/count";
 		String divider = "?";
 		if (spacecraft != null) {
@@ -1223,59 +804,50 @@ public class GUIOrderController extends GUIBaseController {
         return result;
     }
 
-public Long countOrders(String orderName, String nid) {
-	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-	Long result = (long) -1;
-	String mission = auth.getMission();
-	String uri = "/orders/count";
-	String divider = "?";
-	if(null != mission) {
-		uri += divider + "mission=" + mission;
-		divider = "&";
-	}
-	if (null != orderName && !orderName.trim().isEmpty()) {
-		uri += divider + "identifier=" + orderName.trim();
-	}
-	if (null != nid && !nid.trim().isEmpty()) {
-		uri += divider + "nid=" + nid.trim();
-	}
+    public Long countOrders(String orderName, String nid) {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	Long result = (long) -1;
+    	String mission = auth.getMission();
+    	String uri = "/orders/count";
+    	String divider = "?";
+    	if(null != mission) {
+    		uri += divider + "mission=" + mission;
+    		divider = "&";
+    	}
+    	if (null != orderName && !orderName.trim().isEmpty()) {
+    		uri += divider + "identifier=" + orderName.trim();
+    	}
+    	if (null != nid && !nid.trim().isEmpty()) {
+    		uri += divider + "nid=" + nid.trim();
+    	}
 
-	try {
-		String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-				uri, String.class, auth.getProseoName(), auth.getPassword());
+    	try {
+    		String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+    				uri, String.class, auth.getProseoName(), auth.getPassword());
 
-		if (resStr != null && resStr.length() > 0) {
-			result = Long.valueOf(resStr);
-		}
-	} catch (RestClientResponseException e) {
-		String message = null;
-		switch (e.getRawStatusCode()) {
-		case org.apache.http.HttpStatus.SC_NOT_FOUND:
-			break;
-		case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-		case org.apache.http.HttpStatus.SC_FORBIDDEN:
-			message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
-			break;
-		default:
-			message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
-		}
-		System.err.println(message);
-		return result;
-	} catch (RuntimeException e) {
-		System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-		return result;
-	}
-	
-    return result;
-	}
+    		if (resStr != null && resStr.length() > 0) {
+    			result = Long.valueOf(resStr);
+    		}
+    	} catch (RestClientResponseException e) {
+    		String message = null;
+    		switch (e.getRawStatusCode()) {
+    		case org.apache.http.HttpStatus.SC_NOT_FOUND:
+    			break;
+    		case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+    		case org.apache.http.HttpStatus.SC_FORBIDDEN:
+    			message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+    			break;
+    		default:
+    			message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+    		}
+    		System.err.println(message);
+    		return result;
+    	} catch (RuntimeException e) {
+    		System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+    		return result;
+    	}
 
-	private void clearCache() {
-		configuredProcessors = null;
-		facilities = null;
-		productclasses = null;
-		spaceCrafts = null;
-		fileClasses = null;
-		processingModes = null;
-	}
+    	return result;
+    }
 }
 

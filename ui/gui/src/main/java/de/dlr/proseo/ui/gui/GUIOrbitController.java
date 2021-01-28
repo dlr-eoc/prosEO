@@ -36,10 +36,6 @@ public class GUIOrbitController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIConfigurationController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
@@ -148,7 +144,6 @@ public class GUIOrbitController extends GUIBaseController {
 
 		private Mono<ClientResponse> get(String spacecraft, Long from, Long to) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-			String mission = auth.getMission();
 			String uri = serviceConfig.getOrderManagerUrl() + "/orbits";
 			String divider = "?";
 			if (spacecraft != null) {
@@ -180,7 +175,6 @@ public class GUIOrbitController extends GUIBaseController {
 
 	    private Long countOrbits(String spacecraft)  {	    	
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-			String mission = auth.getMission();
 			String uri = "/orbits/count";
 			String divider = "?";
 			if (spacecraft != null) {

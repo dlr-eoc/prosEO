@@ -24,17 +24,9 @@ public class GUIStatisticsController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIStatisticsController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-
 	/** WebClient-Service-Builder */
 	@Autowired
 	private StatisticsService statisticsService;
-
-	/** The connector service to the prosEO backend services */
-	@Autowired
-	private ServiceConnection serviceConnection;
 
 	@GetMapping(value = "/dashboard")
 	public String dashboard() {
@@ -63,7 +55,6 @@ public class GUIStatisticsController extends GUIBaseController {
 		Mono<ClientResponse> mono = statisticsService.getJobsteps("FAILED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {
@@ -118,7 +109,6 @@ public class GUIStatisticsController extends GUIBaseController {
 		Mono<ClientResponse> mono = statisticsService.getJobsteps("COMPLETED", count.longValue());
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobsteps = new ArrayList<>();
-		GUIAuthenticationToken auth = (GUIAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		mono.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is5xxServerError()) {

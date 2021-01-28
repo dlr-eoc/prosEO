@@ -328,6 +328,10 @@ public class KubeConfig {
 	 * @return true if connected, otherwise false
 	 */
 	public boolean connect() {
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
+			// nothing to do
+			return false;
+		
 		if (isConnected()) {
 			return true;
 		} else {
@@ -378,7 +382,7 @@ public class KubeConfig {
 	 * @return true if connected, otherwise false
 	 */
 	public boolean isConnected() {
-	    if (apiV1 == null) {
+		if (getFacilityState() == FacilityState.DISABLED || apiV1 == null) {
 	    	return false;
 	    } else {
 	    	return true;
@@ -391,6 +395,11 @@ public class KubeConfig {
 	 * @return
 	 */
 	public boolean couldJobRun() {
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED 
+				|| getFacilityState() == FacilityState.STOPPING)
+			// not available for jobs
+			return false;
+		
 		return (kubeJobList.size() < (getWorkerCnt() + nodesDelta));
 	}
 
@@ -398,6 +407,10 @@ public class KubeConfig {
 	 * Synchronize Kubernetes cluster and planner 
 	 */
 	public void sync() {
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
+			// nothing to do
+			return;
+		
 		// rebuild runtime data 
 		V1JobList k8sJobList = null;
 		getNodeInfo();

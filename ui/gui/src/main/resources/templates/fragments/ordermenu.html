@@ -7,7 +7,7 @@
 		<div class="dialogtitle" th:text="#{selectfacility}">selectfacility</div>
 		<div class="selectfacility">
 			<select name="facilities" th:id="'facilities' + ${ord?.id}">
-				<option th:each="fac : ${facilities}" th:text="${fac}"
+				<option th:each="fac : ${facilitynames}" th:text="${fac}"
 					th:label="${fac}">facilities</option>
 			</select>
 		</div>

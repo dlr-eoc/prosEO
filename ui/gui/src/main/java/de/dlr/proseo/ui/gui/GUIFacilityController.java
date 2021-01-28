@@ -30,10 +30,6 @@ public class GUIFacilityController extends GUIBaseController {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(GUIFacilityController.class);
 
-	/** The GUI configuration */
-	@Autowired
-	private GUIConfiguration config;
-	
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
@@ -100,7 +96,6 @@ public class GUIFacilityController extends GUIBaseController {
 
 		private Mono<ClientResponse> get() {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-			String mission = auth.getMission();
 			String uri = serviceConfig.getProductionPlannerUrl() + "/processingfacilities";
 			
 			logger.trace("URI " + uri);

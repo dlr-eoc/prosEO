@@ -249,6 +249,20 @@
 	        $(elehide).show();
 	    }
 	  }
+
+
+	  function initPlusMinus() {
+          var x = document.getElementsByClassName('prodshow');
+          for (var i = 0; i < x.length; i++) {
+            var ele = x[i];
+            $(ele).show();
+          } 
+          var y = document.getElementsByClassName('prodhide');
+          for (var i = 0; i < y.length; i++) {
+            var ele = y[i];
+            $(ele).hide();
+          }
+	  }
   
   function productref(ref) {
 	  var id = getURLParam('id');
@@ -311,16 +325,7 @@
           success : function(res) {
             $("#productcontent").html(res);
             hideLoader();
-            var x = document.getElementsByClassName('prodshow');
-            for (var i = 0; i < x.length; i++) {
-              var ele = x[i];
-              $(ele).show();
-            } 
-            var y = document.getElementsByClassName('prodhide');
-            for (var i = 0; i < y.length; i++) {
-              var ele = y[i];
-              $(ele).hide();
-            }
+            initPlusMinus();
             feather.replace();  
             if (id != null) {
               scrollToElem(id);
