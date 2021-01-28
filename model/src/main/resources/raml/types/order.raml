@@ -26,13 +26,15 @@
         type: datetime-only
         description: Expected execution time (optional, used for scheduling)
       startTime?:
-        type: datetime-only
-        description: The start time of the time interval to process. If a range of orbit numbers is given, this time is set to 
-                     the earliest start time of the selected orbits.
+        type: string
+        description: The start time of the time interval to process in orbit format (YYYY-MM-DDThh:mm:ss[.SSSSSS]). If a range of
+                     orbit numbers is given, this time is set to the earliest start time of the selected orbits.
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$
       stopTime?:
-        type: datetime-only
-        description: The end time of the time interval to process. If a range of orbit numbers is given, this time is set to 
-                     the latest stop time of the selected orbits.
+        type: string
+        description: The end time of the time interval to process in orbit format (YYYY-MM-DDThh:mm:ss[.SSSSSS]). If a range of
+                     orbit numbers is given, this time is set to the latest stop time of the selected orbits.
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$
       slicingType:
         type: string
         description: One of { "ORBIT", "CALENDAR_DAY", "CALENDAR_MONTH", "CALENDAR_YEAR", "TIME_SLICE" }

@@ -33,6 +33,7 @@ import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
 import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -289,7 +290,7 @@ public class OrderCommandRunner {
 					return;
 				}
 				try {
-					restOrder.setStartTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
+					restOrder.setStartTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response)));
 				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
@@ -302,7 +303,7 @@ public class OrderCommandRunner {
 					return;
 				}
 				try {
-					restOrder.setStopTime(java.util.Date.from(CLIUtil.parseDateTime(response)));
+					restOrder.setStopTime(OrbitTimeFormatter.format(CLIUtil.parseDateTime(response)));
 				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
