@@ -24,7 +24,7 @@
 
 	<properties>
 		<module.version>0.7.1</module.version>
-		<kubernetes.client.version>7.0.0</kubernetes.client.version>
+		<kubernetes.client.version>11.0.0</kubernetes.client.version>
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/planner-api.raml</raml-path>
     <raml-base-package>de.dlr.proseo.model.rest</raml-base-package>
