@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -361,8 +362,7 @@ public class ConfigurationManager {
 			configurationChanged = true;
 			modelConfiguration.setConfigurationVersion(changedConfiguration.getConfigurationVersion());
 		}
-		if (null == modelConfiguration.getMode() && null != changedConfiguration.getMode()
-				|| !modelConfiguration.getMode().equals(changedConfiguration.getMode())) {
+		if (!Objects.equals(modelConfiguration.getMode(), changedConfiguration.getMode())) {
 			if (null == changedConfiguration.getMode() 
 					|| modelConfiguration.getProcessorClass().getMission().getProcessingModes().contains(changedConfiguration.getMode())) {
 				configurationChanged = true;
