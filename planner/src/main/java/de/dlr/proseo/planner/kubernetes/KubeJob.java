@@ -443,7 +443,7 @@ public class KubeJob {
 			V1PodList pl;
 			try {
 				pl = kubeConfig.getApiV1().listNamespacedPod(kubeConfig.getNamespace(), null, null, null, 
-						null, null, null, null, 30, null);
+						null, null, null, null, null, 30, null);
 				podNames.clear();
 				for (V1Pod p : pl.getItems()) {
 					String pn = p.getMetadata().getName();
@@ -477,7 +477,7 @@ public class KubeJob {
 				String cn = this.getContainerName();
 				if (cn != null && !podNames.isEmpty()) {
 					try {
-						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
+						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
 						aPlan.setLog(log);
 					} catch (ApiException e1) {
 						// TODO Auto-generated catch block
@@ -554,7 +554,7 @@ public class KubeJob {
 				String cn = this.getContainerName();
 				if (cn != null && !podNames.isEmpty()) {
 					try {
-						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null);
+						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
 						aPlan.setLog(log);
 					} catch (ApiException e1) {
 						// TODO Auto-generated catch block

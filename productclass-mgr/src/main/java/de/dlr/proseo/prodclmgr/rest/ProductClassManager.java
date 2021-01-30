@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -871,7 +872,7 @@ public class ProductClassManager {
 				// Check for duplicates
 				for (SimpleSelectionRule existingRule: productClass.getRequiredSelectionRules()) {
 					if (existingRule.getSourceProductClass().equals(simpleSelectionRule.getSourceProductClass())
-							&& existingRule.getMode().equals(simpleSelectionRule.getMode())) {
+							&& Objects.equals(existingRule.getMode(), simpleSelectionRule.getMode())) {
 						// Duplicate candidate - check applicable configured processors
 						if (existingRule.getApplicableConfiguredProcessors().isEmpty() || simpleSelectionRule.getApplicableConfiguredProcessors().isEmpty()) {
 							// At least one of the rules is applicable for all configured processors, so this is a duplicate
@@ -1030,8 +1031,8 @@ public class ProductClassManager {
 					modelRule.setSourceProductClass(changedSimpleRule.getSourceProductClass());
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 				}
-				// Check mode change
-				if (!modelRule.getMode().equals(selectionRuleString.getMode())) {
+				// Check mode change (including from/to null)
+				if (!Objects.equals(modelRule.getMode(), selectionRuleString.getMode())) {
 					ruleChanged = true;
 					modelRule.setMode(selectionRuleString.getMode());
 				}
