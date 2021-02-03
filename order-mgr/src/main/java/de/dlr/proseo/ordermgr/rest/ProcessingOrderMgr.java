@@ -45,6 +45,7 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
@@ -425,9 +426,9 @@ public class ProcessingOrderMgr {
 			newOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString());
 			ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.now(), ZoneId.of("UTC"));
 			Calendar cal = GregorianCalendar.from(zdt);
-			newOrder.setStartTime(Date.from(cal.toInstant()));
+			newOrder.setStartTime(OrbitTimeFormatter.format(cal.toInstant()));
 			cal.add(Calendar.SECOND, 1);
-			newOrder.setStopTime(Date.from(cal.toInstant()));
+			newOrder.setStopTime(OrbitTimeFormatter.format(cal.toInstant()));
 			return newOrder;
 		} else {
 			Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);

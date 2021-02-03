@@ -37,20 +37,20 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.dlr.proseo.ui.backend.ServiceConfiguration;
-import de.dlr.proseo.ui.backend.ServiceConnection;
-import de.dlr.proseo.ui.gui.service.MapComparator;
-import de.dlr.proseo.ui.gui.service.OrderService;
-import reactor.core.publisher.Mono;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.rest.model.RestParameter;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.backend.ServiceConnection;
+import de.dlr.proseo.ui.gui.service.MapComparator;
+import de.dlr.proseo.ui.gui.service.OrderService;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class GUIOrderController extends GUIBaseController {
@@ -687,10 +687,10 @@ public class GUIOrderController extends GUIBaseController {
 							if (!stateArray.contains(order.getOrderState())) found = false;
 						}
 						if (fromTime != null && order.getStartTime() != null) {
-							if (fromTime.compareTo(order.getStartTime()) > 0) found = false;
+							if (fromTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStartTime())))) > 0) found = false;
 						}
 						if (toTime != null && order.getStopTime() != null) {
-							if (toTime.compareTo(order.getStopTime()) < 0) found = false;
+							if (toTime.compareTo(Date.from(Instant.from(OrbitTimeFormatter.parse(order.getStopTime())))) < 0) found = false;
 						}
 						if (productArray != null && order.getRequestedProductClasses() != null) {
 							Boolean lfound = false;

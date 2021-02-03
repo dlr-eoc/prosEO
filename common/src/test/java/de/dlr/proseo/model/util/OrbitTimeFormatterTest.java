@@ -8,6 +8,7 @@ package de.dlr.proseo.model.util;
 import static org.junit.Assert.*;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 import org.junit.Test;
 
@@ -42,6 +43,34 @@ public class OrbitTimeFormatterTest {
 		
 		assertEquals("Parsing without timezone failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
 		
+		inputNoTimezone = "2020-03-23T15:46:17";
+		
+		testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
+		
+		assertEquals("Parsing without timezone and fraction of seconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
+		
+		inputNoTimezone = "2020-03-23T15:46:17.456";
+		
+		testInstantNoTimezone = Instant.parse(inputNoTimezone + "Z");
+		
+		assertEquals("Parsing without timezone and with milliseconds failed:", testInstantNoTimezone, Instant.from(OrbitTimeFormatter.parse(inputNoTimezone)));
+		
+		// --- Test invalid inputs ---
+		String invalidInput = "something weird";
+		try {
+			OrbitTimeFormatter.parse(invalidInput);
+			fail("DateTimeParseException expected on input '" + invalidInput + "'");
+		} catch (DateTimeParseException e) {
+			assertEquals("Unexpected error message", "Cannot parse date/time string " + invalidInput + " at index 0", e.getMessage());
+		}
+		
+		invalidInput = "2020-03-23T15:16GGG";
+		try {
+			OrbitTimeFormatter.parse(invalidInput);
+			fail("DateTimeParseException expected on input '" + invalidInput + "'");
+		} catch (DateTimeParseException e) {
+			assertEquals("Unexpected error message", "Cannot parse date/time string " + invalidInput + " at index " + invalidInput.indexOf('G'), e.getMessage());
+		}
 	}
 
 }

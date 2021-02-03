@@ -127,11 +127,23 @@ public class JobOrder {
 	 * @param fileName the file name
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return true after success, else false
+	 * @deprecated Use {@link #writeXML(String,JobOrderVersion,Boolean)} instead
 	 */
 	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
+		return writeXML(fileName, JobOrderVersion.MMFI_1_8, prosEOAttributes);
+	}
+
+	/**
+	 * Build XML tree and write it to file named fileName.
+	 * @param fileName the file name
+	 * @param jobOrderVersion the Job Order file specification version to apply
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
+	 * @return true after success, else false
+	 */
+	public Boolean writeXML(String fileName, JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
 		try {
 			FileOutputStream fout = new FileOutputStream(fileName);
-			writeXMLToStream(fout, prosEOAttributes, JobOrderVersion.MMFI_1_8);
+			writeXMLToStream(fout, prosEOAttributes, jobOrderVersion);
 			fout.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -147,7 +159,7 @@ public class JobOrder {
 
 	/**
 	 * Create a Base64-coded string from the XML representation of this Job Order
-	 * @param jobOrderVersion TODO
+	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return the Base64-coded string
 	 */

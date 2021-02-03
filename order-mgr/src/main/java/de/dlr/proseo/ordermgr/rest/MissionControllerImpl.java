@@ -346,10 +346,12 @@ public class MissionControllerImpl implements MissionController {
 					modelMission.setProductFileTemplate(changedMission.getProductFileTemplate());
 				}
 				if (!modelMission.getFileClasses().equals(changedMission.getFileClasses()))	{
+					missionChanged = true;
 					modelMission.getFileClasses().clear();
 					modelMission.getFileClasses().addAll(changedMission.getFileClasses());
 				}
 				if (!modelMission.getProcessingModes().equals(changedMission.getProcessingModes())) {
+					missionChanged = true;
 					modelMission.getProcessingModes().clear();
 					modelMission.getProcessingModes().addAll(changedMission.getProcessingModes());
 				}

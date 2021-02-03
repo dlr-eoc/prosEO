@@ -28,10 +28,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
+import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.InputOutput;
 import de.dlr.proseo.model.joborder.IpfFileName;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
+import de.dlr.proseo.model.joborder.TimeInterval;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -63,8 +65,13 @@ public class BaseWrapper {
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
 	/** Current timestamp used for output-file prefixes*/
 	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
-	/** Auto-created path/filename of JobOrderFile within container */
-	private static final String CONTAINER_JOF_PATH = WORKING_DIR.toString()+File.separator+String.valueOf(WRAPPER_TIMESTAMP)+".xml";
+	/** Auto-created path/filename of JobOrderFile within container (according to Generic IPF Interface Specifications) */
+	private static final String CONTAINER_JOF_PATH =
+			WORKING_DIR.toString() +
+			File.separator +
+			"JobOrder." +
+			String.valueOf(WRAPPER_TIMESTAMP) +
+			".xml";
 	/** Directory prefix of produced output data (available for wrapper subclasses) */
 	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
 
@@ -126,6 +133,7 @@ public class BaseWrapper {
 	 */
 	protected enum ENV_VARS {
 		JOBORDER_FILE
+		, JOBORDER_VERSION
 		, STORAGE_ENDPOINT
 		, STORAGE_USER
 		, STORAGE_PASSWORD
@@ -143,6 +151,8 @@ public class BaseWrapper {
 	// Variables to be provided by Production Planner during invocation
 	/** Path to Job Order File, format according to file system type */
 	private String ENV_JOBORDER_FILE = System.getenv(ENV_VARS.JOBORDER_FILE.toString());
+	/** Path to Job Order File, format according to file system type */
+	private String ENV_JOBORDER_VERSION = System.getenv(ENV_VARS.JOBORDER_VERSION.toString());
 	
 	/** HTTP endpoint for local Storage Manager */
 	private String ENV_STORAGE_ENDPOINT = System.getenv(ENV_VARS.STORAGE_ENDPOINT.toString());
@@ -218,6 +228,9 @@ public class BaseWrapper {
 		if (ENV_JOBORDER_FILE == null || ENV_JOBORDER_FILE.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.JOBORDER_FILE);
 			envOK = false;
+		}
+		if (ENV_JOBORDER_VERSION == null || ENV_JOBORDER_VERSION.isEmpty()) {
+			ENV_JOBORDER_VERSION = JobOrderVersion.MMFI_1_8.toString();
 		}
 		if (ENV_STORAGE_ENDPOINT == null || ENV_STORAGE_ENDPOINT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.STORAGE_ENDPOINT);
@@ -368,7 +381,15 @@ public class BaseWrapper {
 						return null;
 					}
 
-					fn.setFileName(responseInfo.gethttpResponse());
+					// Update file name to new file name on POSIX file system
+					String inputFileName = responseInfo.gethttpResponse();
+					fn.setFileName(inputFileName);
+					// Check for time intervals for this file and update their file names, too
+					for (TimeInterval ti: io.getTimeIntervals()) {
+						if (ti.getFileName().equals(fn.getOriginalFileName())) {
+							ti.setFileName(inputFileName);
+						}
+					}
 					++numberOfInputs;
 				}
 			}
@@ -434,7 +455,7 @@ public class BaseWrapper {
 	private Boolean provideContainerJOF(JobOrder jo, String path) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> provideContainerJOF(JOF, {})", path);
 
-		return jo.writeXML(path, false);
+		return jo.writeXML(path, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION), false);
 	}
 
 	/**

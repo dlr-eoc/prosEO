@@ -156,7 +156,7 @@ public class JobDispatcher {
 					ip = InetAddress.getLocalHost();
 					String hostname = ip.getHostName();
 					if (hostname.equalsIgnoreCase("ME580")) {
-						jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", true);						
+						jobOrder.writeXML("c:\\tmp\\jo" + jobStep.getId() + ".xml", JobOrderVersion.MMFI_1_8, true);						
 					}
 				} catch (UnknownHostException e) {
 					// do nothing		

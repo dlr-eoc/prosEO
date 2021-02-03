@@ -2,6 +2,7 @@ package de.dlr.proseo.model.util;
 
 import java.time.DateTimeException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -64,10 +65,10 @@ public class OrderUtil {
 			restOrder.setOrderState(processingOrder.getOrderState().toString());
 		}
 		if (null != processingOrder.getStartTime()) {
-			restOrder.setStartTime(Date.from(processingOrder.getStartTime()));
+			restOrder.setStartTime(OrbitTimeFormatter.format(processingOrder.getStartTime()));
 		}
 		if (null != processingOrder.getStopTime()) {
-			restOrder.setStopTime(Date.from(processingOrder.getStopTime()));
+			restOrder.setStopTime(OrbitTimeFormatter.format(processingOrder.getStopTime()));
 		}
 		if (null != processingOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(Date.from(processingOrder.getExecutionTime()));
@@ -243,7 +244,7 @@ public class OrderUtil {
 
 		if (null != restOrder.getStartTime()) {
 			try {
-				processingOrder.setStartTime(restOrder.getStartTime().toInstant());
+				processingOrder.setStartTime(Instant.from(OrbitTimeFormatter.parse(restOrder.getStartTime())));
 
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(String.format("Invalid sensing start time '%s'", restOrder.getStartTime()));
@@ -251,7 +252,7 @@ public class OrderUtil {
 		}
 		if (null != restOrder.getStopTime()) {
 			try {
-				processingOrder.setStopTime(restOrder.getStopTime().toInstant());
+				processingOrder.setStopTime(Instant.from(OrbitTimeFormatter.parse(restOrder.getStopTime())));
 			} catch (DateTimeException e) {
 				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getStartTime()));
 			} 

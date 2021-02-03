@@ -16,14 +16,10 @@ import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,12 +32,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -51,25 +47,12 @@ import java.util.regex.Pattern;
  */
 public class CLIUtil {
 
-	private static final String MSG_CANNOT_PARSE_DATE_TIME_STRING = "Cannot parse date/time string '%s'";
 	/** YAML file format */
 	public static final String FILE_FORMAT_YAML = "YAML";
 	/** JSON file format */
 	public static final String FILE_FORMAT_JSON = "JSON";
 	/** XML file format */
 	public static final String FILE_FORMAT_XML = "XML";
-	
-	/** Lenient date/time parsing pattern */
-	private static Pattern dateTimePattern = Pattern.compile(
-			"(?<year>\\d\\d\\d\\d)-(?<month>\\d\\d)-(?<day>\\d\\d)" + 	// date (groups 1-3)
-			"(?:T(?<hour>\\d\\d)\\:(?<minute>\\d\\d)" + 				// optional hour and minute (groups 4 and 5)
-				"(?:\\:(?<second>\\d\\d)" + 							// optional second (group 6)
-					"(?:\\.(?<frac>\\d{1,6})" + 							// optional fraction of a second (group 7)
-					")?" +
-				")?" +
-			")?" +
-			"(?<zone>[GZz+-].*)?"										// optional time zone (group 8)
-			);
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(CLIUtil.class);
@@ -268,57 +251,12 @@ public class CLIUtil {
 	public static Instant parseDateTime(String dateTime) throws DateTimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseDateTime({})", dateTime);
 		
-		// Check the format of the input string
-		Matcher m = dateTimePattern.matcher(dateTime);
-		
-		if (!m.matches()) {
-			throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
+		Instant result;
+		try {
+			result = Instant.from(OrbitTimeFormatter.parse(dateTime));
+		} catch (DateTimeParseException e) {
+			throw new DateTimeException(e.getMessage(), e);
 		}
-		if (null != m.group("hour") && null == m.group("minute")) {
-			// If an hour is given, a minute must also be specified
-			throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
-		}
-		
-		// Check which parts of the date/time string are available
-		int year = Integer.parseInt(m.group("year"));
-		int month = Integer.parseInt(m.group("month"));
-		int day = Integer.parseInt(m.group("day"));
-		int hour = ( null == m.group("hour") ? 0 : Integer.parseInt(m.group("hour")) );
-		int minute =  (null == m.group("minute") ? 0 : Integer.parseInt(m.group("minute")) );
-		int second = ( null == m.group("second") ? 0 : Integer.parseInt(m.group("second")) );
-		// Nanoseconds need to padded with trailing zeroes
-		int nano = 0;
-		if (null != m.group("frac")) {
-			StringBuilder milliString = new StringBuilder(m.group("frac"));
-			for (int i = milliString.length(); i < 6; ++i) {
-				milliString.append('0');
-			}
-			nano = Integer.parseInt(milliString.toString()) * 1000;
-		}
-		
-		// Check the time zone
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-		if (null != m.group("zone")) {
-			String tzString = m.group("zone");
-			if ("Z".equals(tzString.toUpperCase())) {
-				// do nothing, that's the default
-			} else if (tzString.matches("GMT[+-]\\d\\d?:?\\d?\\d?")) {
-				// Java time zone
-				tz = TimeZone.getTimeZone(tzString);
-			} else if (tzString.matches("[+-]\\d\\d?:?\\d?\\d?")) {
-				// ISO 8601 or RFC 822 time zone
-				tz = TimeZone.getTimeZone("GMT" + tzString);
-			} else {
-				throw new DateTimeException(String.format(MSG_CANNOT_PARSE_DATE_TIME_STRING, dateTime));
-			}
-		}
-		
-		// Try to create an instant from the given numbers
-		LocalDate date = LocalDate.of(year, month, day);
-		LocalTime time = LocalTime.of(hour, minute, second, nano);
-		ZonedDateTime zonedDateTime = ZonedDateTime.of(LocalDateTime.of(date, time), tz.toZoneId());
-		Instant result = Instant.from(zonedDateTime);
-		result.minusNanos(0); // force nano component of Instant
 		
 		if (logger.isTraceEnabled()) logger.trace(String.format("... converted input string %s to Instant %s", dateTime, result.toString()));
 		

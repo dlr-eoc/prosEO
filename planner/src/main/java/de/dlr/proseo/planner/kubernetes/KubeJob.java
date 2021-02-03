@@ -23,6 +23,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -301,7 +302,8 @@ public class KubeJob {
 			logger.error(errStr);
 			throw new Exception(errStr);
 		}
-		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder, configuredProcessor.getProcessor().getJobOrderVersion());
+		JobOrderVersion joVersion = configuredProcessor.getProcessor().getJobOrderVersion();
+		jobOrder = jd.sendJobOrderToStorageManager(kubeConfig, jobOrder, joVersion);
 		if (jobOrder == null) {
 			String errStr = String.format("Sending of job order to Storage Manager failed for job step %d", jobStep.getId());
 			logger.error(errStr);
@@ -346,6 +348,10 @@ public class KubeJob {
 				.addNewEnv()
 				.withName("JOBORDER_FILE")
 				.withValue(jobOrder.getFileName())
+				.endEnv()
+				.addNewEnv()
+				.withName("JOBORDER_VERSION")
+				.withValue(joVersion.toString())
 				.endEnv()
 				.addNewEnv()
 				.withName("STORAGE_ENDPOINT")

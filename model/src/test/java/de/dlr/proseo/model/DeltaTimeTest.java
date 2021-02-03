@@ -29,14 +29,14 @@ public class DeltaTimeTest {
 		DeltaTime dt1 = new DeltaTime(7, TimeUnit.MINUTES);
 		DeltaTime dt2 = new DeltaTime(63, TimeUnit.SECONDS);
 		DeltaTime dt = dt1.merge(dt2);
-		assertEquals("Unexpected merged duration (1)", 7L * 60, dt.duration);
-		assertEquals("Unexpected merged unit (1)", TimeUnit.SECONDS, dt.unit);
+		assertEquals("Unexpected merged duration (1)", 7L, dt.duration);
+		assertEquals("Unexpected merged unit (1)", TimeUnit.MINUTES, dt.unit);
 
 		dt1 = new DeltaTime(7, TimeUnit.MINUTES);
 		dt2 = new DeltaTime(1800, TimeUnit.SECONDS);
 		dt = dt1.merge(dt2);
-		assertEquals("Unexpected merged duration (2)", 1800L, dt.duration);
-		assertEquals("Unexpected merged unit (2)", TimeUnit.SECONDS, dt.unit);
+		assertEquals("Unexpected merged duration (2)", 30L, dt.duration);
+		assertEquals("Unexpected merged unit (2)", TimeUnit.MINUTES, dt.unit);
 	}
 
 	@Test
