@@ -8,9 +8,7 @@
         <version>0.7.1</version>
     </parent>
 
-	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo-common</artifactId>
-	<version>0.7.1</version>
 	<name>prosEO Common Classes</name>
 	
 	<description>
@@ -38,20 +36,17 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-to-slf4j</artifactId>
-			<version>2.13.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

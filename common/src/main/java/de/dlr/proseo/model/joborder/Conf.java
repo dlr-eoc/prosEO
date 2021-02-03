@@ -386,6 +386,7 @@ public class Conf {
 					this.getSensingTime().read(child);
 					break;
 				case "config_files" : 
+				case "list_of_config_files" : 
 					Node cfn = child.getFirstChild();
 					while (cfn != null) {
 						this.getConfigFileNames().add(cfn.getTextContent().strip());
@@ -393,6 +394,7 @@ public class Conf {
 					}						
 					break;
 				case "dynamic_processing_parameters" : 
+				case "list_of_dyn_processing_parameters" : 
 					Node dpp = child.getFirstChild();
 					while (dpp != null) {
 						ProcessingParameter pp = new ProcessingParameter();
