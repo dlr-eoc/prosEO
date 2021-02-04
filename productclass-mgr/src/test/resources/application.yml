@@ -2,6 +2,7 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
         hibernate.ddl-auto: update
+        properties.hibernate.jdbc.time_zone: UTC
     datasource:
         url: jdbc:postgresql://localhost:5432/proseo
         username: postgres

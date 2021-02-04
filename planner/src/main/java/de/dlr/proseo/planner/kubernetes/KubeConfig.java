@@ -415,7 +415,7 @@ public class KubeConfig {
 		V1JobList k8sJobList = null;
 		getNodeInfo();
 		try {
-			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -485,7 +485,7 @@ public class KubeConfig {
 	public V1PodList getPodList() {
 		V1PodList list = null;
 		try {
-			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -501,7 +501,7 @@ public class KubeConfig {
 	public V1JobList getJobList() {
 		V1JobList list = null;
 		try {
-			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null);
+			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 			
 		} catch (ApiException e) {
 			// TODO Auto-generated catch block
@@ -769,7 +769,7 @@ public class KubeConfig {
 		kubeNodes = null;
 		workerCnt = 0;
 		try {
-			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null);
+			kubeNodes = apiV1.listNode(null, null, null, null, null, null, null, null, null, null);
 			if (kubeNodes != null) {
 				for (V1Node node : kubeNodes.getItems()) {
 					if (node.getSpec() != null) {
