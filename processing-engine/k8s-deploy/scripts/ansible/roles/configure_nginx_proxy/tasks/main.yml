@@ -60,6 +60,8 @@
           proxy_pass http://127.0.0.1:{{ kubectl_proxy_port }}/;
           auth_basic             'prosEO dev area';
           auth_basic_user_file   /etc/nginx/htpasswd;
+          # Long timeout to allow for upload and download of very large files
+          proxy_read_timeout     1800s;
         }
         # API requests must be authenticated by token (Kubernetes)
         location /k8sapi/ {
