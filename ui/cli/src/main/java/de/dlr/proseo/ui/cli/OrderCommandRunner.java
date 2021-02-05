@@ -75,7 +75,7 @@ public class OrderCommandRunner {
 
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_IDENTIFIER = "Order identifier (empty field cancels): ";
-	private static final String PROMPT_SLICING_TYPE = "Slicing type (O)rbit, C)alendar day, calendar M)onth, calendar Y)ear, T)ime slice; empty field cancels): ";
+	private static final String PROMPT_SLICING_TYPE = "Slicing type (O)rbit, C)alendar day, calendar M)onth, calendar Y)ear, T)ime slice, N)one; empty field cancels): ";
 	private static final String PROMPT_SLICE_DURATION = "Time slice duration (empty field cancels): ";
 	private static final String PROMPT_START_TIME = "Order time interval start (YYYY-MM-DDTHH:MM:SS; emtpy field cancels): ";
 	private static final String PROMPT_STOP_TIME = "Order time interval end (YYYY-MM-DDTHH:MM:SS; emtpy field cancels): ";
@@ -246,7 +246,7 @@ public class OrderCommandRunner {
 		// Get order slicing type
 		while (!Arrays.asList(OrderSlicingType.ORBIT.toString(), OrderSlicingType.CALENDAR_DAY.toString(), 
 				OrderSlicingType.CALENDAR_MONTH.toString(), OrderSlicingType.CALENDAR_YEAR.toString(),
-				OrderSlicingType.TIME_SLICE.toString()).contains(restOrder.getSlicingType())) {
+				OrderSlicingType.TIME_SLICE.toString(), OrderSlicingType.NONE.toString()).contains(restOrder.getSlicingType())) {
 			System.out.print(PROMPT_SLICING_TYPE);
 			String response = System.console().readLine().toUpperCase();
 			switch (response) {
@@ -255,6 +255,7 @@ public class OrderCommandRunner {
 			case "M":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_MONTH.toString()); break;
 			case "Y":	restOrder.setSlicingType(OrderSlicingType.CALENDAR_YEAR.toString()); break;
 			case "T":	restOrder.setSlicingType(OrderSlicingType.TIME_SLICE.toString()); break;
+			case "N":	restOrder.setSlicingType(OrderSlicingType.NONE.toString()); break;
 			case "":
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 				return;
@@ -281,7 +282,8 @@ public class OrderCommandRunner {
 		if (OrderSlicingType.TIME_SLICE.toString().equals(restOrder.getSlicingType()) 
 				|| OrderSlicingType.CALENDAR_DAY.toString().equals(restOrder.getSlicingType())
 				|| OrderSlicingType.CALENDAR_MONTH.toString().equals(restOrder.getSlicingType())
-				|| OrderSlicingType.CALENDAR_YEAR.toString().equals(restOrder.getSlicingType())) {
+				|| OrderSlicingType.CALENDAR_YEAR.toString().equals(restOrder.getSlicingType())
+				|| OrderSlicingType.NONE.toString().equals(restOrder.getSlicingType())) {
 			while (null == restOrder.getStartTime()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();

@@ -55,6 +55,8 @@ public class ProcessingOrder extends PersistentObject {
 
 	private static final String MSG_SLICING_DURATION_NOT_ALLOWED = "Setting of slicing duration not allowed for slicing type ";
 
+	private static final String MSG_SLICING_OVERLAP_NOT_ALLOWED = "Setting of slicing overlap not allowed for slicing type ";
+
 	/** Mission, to which this order belongs */
 	@ManyToOne
 	private Mission mission;
@@ -300,9 +302,13 @@ public class ProcessingOrder extends PersistentObject {
 	}
 
 	/**
-	 * Sets the method for partitioning the orbit time interval (if the slicing type is TIME_SLICE and the slice duration
+	 * Sets the method for partitioning the orbit time interval.
+	 * 
+	 * If the slicing type is set to TIME_SLICE and the slice duration
 	 * has not yet been set, then the slice duration will be set to a default value of one day; for other slicing types
-	 * the current slice duration will be deleted)
+	 * the current slice duration will be deleted.
+	 * 
+	 * If the slicing type is set to NONE, the slice overlap will be set to zero.
 	 * 
 	 * @param slicingType the slicing type to set
 	 */
@@ -314,6 +320,9 @@ public class ProcessingOrder extends PersistentObject {
 			}
 		} else {
 			sliceDuration = null;
+		}
+		if (OrderSlicingType.NONE.equals(slicingType)) {
+			sliceOverlap = Duration.ZERO;
 		}
 	}
 
@@ -330,8 +339,9 @@ public class ProcessingOrder extends PersistentObject {
 	 * Sets the duration for a single slice (for slicing type TIME_SLICE only)
 	 * 
 	 * @param sliceDuration the sliceDuration to set
+	 * @throws IllegalStateException if setting a slice duration for orders with slicing type other than TIME_SLICE is attempted
 	 */
-	public void setSliceDuration(Duration sliceDuration) {
+	public void setSliceDuration(Duration sliceDuration) throws IllegalStateException {
 		if (OrderSlicingType.TIME_SLICE.equals(slicingType)) {
 			this.sliceDuration = sliceDuration;
 		} else {
@@ -352,9 +362,14 @@ public class ProcessingOrder extends PersistentObject {
 	 * Sets the overlap time between slices
 	 * 
 	 * @param sliceOverlap the slice overlap to set
+	 * @throws IllegalStateException if setting an overlap other than 0 for orders with slicing type NONE is attempted
 	 */
-	public void setSliceOverlap(Duration sliceOverlap) {
-		this.sliceOverlap = sliceOverlap;
+	public void setSliceOverlap(Duration sliceOverlap) throws IllegalStateException {
+		if (OrderSlicingType.NONE.equals(slicingType) && !Duration.ZERO.equals(sliceOverlap)) {
+			throw new IllegalStateException(MSG_SLICING_OVERLAP_NOT_ALLOWED + slicingType);
+		} else {
+			this.sliceOverlap = sliceOverlap;
+		}
 	}
 
 	/**

@@ -14,13 +14,16 @@ package de.dlr.proseo.model.enums;
  *            jobs will be linked to their respective orbits)</li>
  * <li>CALENDAR_DAY: Create jobs by calendar day (in such a way that the first job starts no later than the beginning of
  *            the order time interval and the last job ends no earlier than the end of the time interval)</li>
+ * <li>CALENDAR_MONTH, CALENDAR_YEAR: Same as CALENDAR_DAY, but for calendar months and years, respectively</li>
  * <li>TIME_SLICE: Create jobs in fixed time slices, starting with the start time of the order time interval and ending
  *            no earlier than the end of the time interval</li>
+ * <li>NONE:  Do not attempt to create slices, but create a single job spanning exactly the time interval from startTime
+ *            to stopTime</LI>
  * </ul>
  * 
  * @author Dr. Thomas Bassler
  *
  */
 public enum OrderSlicingType {
-	ORBIT, CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR, TIME_SLICE
+	ORBIT, CALENDAR_DAY, CALENDAR_MONTH, CALENDAR_YEAR, TIME_SLICE, NONE
 }

@@ -37,13 +37,13 @@
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d{1,6})?$
       slicingType:
         type: string
-        description: One of { "ORBIT", "CALENDAR_DAY", "CALENDAR_MONTH", "CALENDAR_YEAR", "TIME_SLICE" }
+        description: One of { "ORBIT", "CALENDAR_DAY", "CALENDAR_MONTH", "CALENDAR_YEAR", "TIME_SLICE", "NONE" }
       sliceDuration?:
         type: integer
-        description: Duration of a slice in seconds (only if slicingType == "TIME_SLICE")
-      sliceOverlap:
+        description: Duration of a slice in seconds (only for slicingType TIME_SLICE)
+      sliceOverlap?:
         type: integer
-        description: Overlap between adjacent slices in seconds
+        description: Overlap between adjacent slices in seconds (applicable for all slicingTypes except NONE, default 0)
       inputFilters?:
         type: RestInputFilter[]
         description: Filter conditions to apply to input products

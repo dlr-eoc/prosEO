@@ -333,6 +333,39 @@
               </div>
             </div>
           </div>
+                    <!-- NONE data -->
+          <div class="row filtercontent" id="NONE">
+            <div class="col-12">
+              <!-- Nested rows to hold slicing data -->
+              <div class="row py-lg-1" name="slicingrow">
+                <div class="col-4"></div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
+                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      name="startTime" data-type="TIME" th:value="${ord?.startTime}">
+                  </div>
+                </div>
+                <div class="col-3">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
+                    </div>
+                    <input type="text" class="form-control" 
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
+                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
+                  </div>
+                </div>
+                <div class="col-2">
+                </div>
+              </div>
+            </div>
+          </div>
           <!-- CALENDAR_DAY data -->
           <div class="row filtercontent" id="CALENDAR_DAY">
             <div class="col-12">
