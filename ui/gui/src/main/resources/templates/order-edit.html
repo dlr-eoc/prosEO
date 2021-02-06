@@ -117,11 +117,11 @@
                   th:label="${obj}" th:selected="${obj}==${ord?.slicingType}?'true':'false'"></option>
                 </select>
             </div>
-            <div class="col-2 pr-lg-0">
+            <div class="col-2 pr-lg-0" id="sliceOverlapTitle">
               <p class="input-group-text word-wrap"
                 th:text="#{overlap}"></p>
             </div>
-            <div class="col-2 pl-lg-0">
+            <div class="col-2 pl-lg-0" id="sliceOverlapDiv">
               <div class="input-group">
                 <input class="form-control" id="sliceOverlap"
                   name="sliceOverlap" type="number" min="0" th:value="${ord?.sliceOverlap}">
@@ -1496,6 +1496,13 @@ function enableSlicingData() {
                 }
                 $(mainEle).append($(ele));
             }
+        }
+        if ("NONE" == slicingType.value) {
+            document.getElementById("sliceOverlapTitle").style.display = "none";
+            document.getElementById("sliceOverlapDiv").style.display = "none";
+        } else {
+            document.getElementById("sliceOverlapTitle").style.display = "block";
+            document.getElementById("sliceOverlapDiv").style.display = "block";
         }
     }
 };
