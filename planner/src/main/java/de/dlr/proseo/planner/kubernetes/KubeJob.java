@@ -32,6 +32,8 @@ import de.dlr.proseo.planner.rest.model.PodKube;
 import de.dlr.proseo.planner.util.UtilService;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.models.CoreV1Event;
+import io.kubernetes.client.openapi.models.CoreV1EventList;
 import io.kubernetes.client.openapi.models.V1EnvVarSource;
 import io.kubernetes.client.openapi.models.V1EnvVarSourceBuilder;
 import io.kubernetes.client.openapi.models.V1Job;
@@ -41,6 +43,7 @@ import io.kubernetes.client.openapi.models.V1JobSpec;
 import io.kubernetes.client.openapi.models.V1JobSpecBuilder;
 import io.kubernetes.client.openapi.models.V1LocalObjectReference;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 
@@ -577,8 +580,9 @@ public class KubeJob {
 				searchPod();
 			}
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
-			
+
 			if (aPod != null) {
+				String podMessages = "";
 				PodKube aPlan = new PodKube(aJob);
 				String cn = this.getContainerName();
 				if (cn != null && !podNames.isEmpty()) {
@@ -586,8 +590,7 @@ public class KubeJob {
 						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
 						aPlan.setLog(log);
 					} catch (ApiException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						// ignore, normally the pod has no log
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -613,40 +616,71 @@ public class KubeJob {
 									// pod exists! 
 								}
 							}
-							
 							if (aJob.getStatus().getConditions() != null) {
 								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
-								for (V1JobCondition jc : jobCondList) {
-									if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
-										js.get().setJobStepState(JobStepState.COMPLETED);	
-										js.get().incrementVersion();
-										if (cd == null) {
-											cd = jc.getLastProbeTime();
-											js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+
+								if (jobCondList != null) {
+									for (V1JobCondition jc : jobCondList) {
+										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+											js.get().setJobStepState(JobStepState.COMPLETED);	
+											js.get().incrementVersion();
+											if (cd == null) {
+												cd = jc.getLastProbeTime();
+												js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+											}
+											success = true;
+										} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
+											js.get().setJobStepState(JobStepState.FAILED);	
+											js.get().incrementVersion();	
+											if (cd == null) {
+												cd = jc.getLastProbeTime();
+												js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+											}
+											success = true;
 										}
-										success = true;
-									} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
-										js.get().setJobStepState(JobStepState.FAILED);	
-										js.get().incrementVersion();	
-										if (cd == null) {
-											cd = jc.getLastProbeTime();
-											js.get().setProcessingCompletionTime(cd.toDate().toInstant());
-										}
-										success = true;
 									}
 								}
 							}
-							
+							// Check conditions
+							// if one is false, read events for more detailed info
+							if (!success && aPod.getStatus().getConditions() != null) {
+								podMessages += "Job Step Conditions (Type - Status):\n";
+								List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
+								for (V1PodCondition pc : pobCondList) {
+									podMessages += "  " + pc.getType() + " - " + pc.getStatus() + "\n";
+								}
+								String fieldSelector = "involvedObject.name==" + aPod.getMetadata().getName();
+								CoreV1EventList el = null;
+								try {
+									el = kubeConfig.getApiV1().listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
+									if (el != null) {
+										podMessages += "Job Step Events (Type - Reason - Count - Message):\n";
+										for (CoreV1Event ev : el.getItems()) {
+											podMessages += "  " + ev.getType() + " - " + ev.getReason() + " - " + ev.getCount() + " - " + ev.getMessage()  + "\n";
+										}
+										podMessages += "\n\n";
+									}
+								} catch (ApiException e2) {
+									// TODO Auto-generated catch block
+									e2.printStackTrace();
+								}
+							}
+							// cancel pod and job, write reasons into job step log
+
+
 							// TODO check whether pod is in normal state or has an Error/Warning event
 							// example
 							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
-							
-						}
-						if (aPlan.getLog() != null) {
-							js.get().setProcessingStdOut(aPlan.getLog());
+
+
 						}
 					} catch (Exception e) {
 						e.printStackTrace();						
+					}
+					if (aPlan.getLog() != null) {
+						js.get().setProcessingStdOut(podMessages + aPlan.getLog());
+					} else {
+						js.get().setProcessingStdOut(podMessages);
 					}
 					RepositoryService.getJobStepRepository().save(js.get());	
 				}

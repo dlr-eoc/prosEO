@@ -36,6 +36,7 @@ import de.dlr.proseo.model.joborder.JobOrder;
 import de.dlr.proseo.model.joborder.Proc;
 import de.dlr.proseo.model.joborder.ProcessingParameter;
 import de.dlr.proseo.model.joborder.SensingTime;
+import de.dlr.proseo.model.joborder.TimeInterval;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.interfaces.rest.model.RestJoborder;
 import de.dlr.proseo.model.enums.JobOrderVersion;
@@ -138,7 +139,7 @@ public class JobDispatcher {
 							addProductToMap(p, productClasses);
 						}
 					}
-					addIpfIOInput(productClasses, proc, jobStep);
+					addIpfIOInput(productClasses, proc, jobStep, t.getProcessor().getUseInputFileTimeIntervals());
 					Product p = jobStep.getOutputProduct();
 					addIpfIOOutput(p, proc, jobStep, ""); 
 					jobOrder.getListOfProcs().add(proc);
@@ -172,9 +173,11 @@ public class JobDispatcher {
 	 * @param proc The Ipf_Proc
 	 * @param jobStep Job step
 	 */
-	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep) {
+	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput({}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId());
 
+		String start = timeFormatter.format(jobStep.getJob().getStartTime());
+		String stop =  timeFormatter.format(jobStep.getJob().getStopTime());
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
 				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), InputOutput.FN_TYPE_PHYSICAL, 
@@ -182,12 +185,16 @@ public class JobDispatcher {
 				String filePath = pf.getFilePath();
 				String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
 				sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
+				if (useTimeintervals) {
+					TimeInterval ti = new TimeInterval(start, stop, productFilePathAndName);
+					sio.getTimeIntervals().add(ti);
+				}
 				proc.getListOfInputs().add(sio);
 				if (logger.isTraceEnabled()) logger.trace("... added product {} to input files", p.getId());
 			}
 		} else {
 			for (Product sp : p.getComponentProducts()) {
-				addIpfIOInput(sp, proc, jobStep);
+				addIpfIOInput(sp, proc, jobStep, useTimeintervals);
 			}
 		}
 	}
@@ -199,9 +206,11 @@ public class JobDispatcher {
 	 * @param proc the Ipf_Proc element to add the input to
 	 * @param jobStep the job step, for which the Job Order is generated
 	 */
-	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep) {
+	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
 		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {})", proc.getTaskName(), jobStep.getId());
 
+		String start = timeFormatter.format(jobStep.getJob().getStartTime());
+		String stop =  timeFormatter.format(jobStep.getJob().getStopTime());
 		for (ProductClass pc : productClasses.keySet()) {
 			InputOutput sio = new InputOutput(pc.getProductType(), InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
 			for (Product p : productClasses.get(pc)) {
@@ -209,6 +218,10 @@ public class JobDispatcher {
 					for (ProductFile pf : p.getProductFile()) {
 						String filePath = pf.getFilePath();
 						String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
+						if (useTimeintervals) {
+							TimeInterval ti = new TimeInterval(start, stop, productFilePathAndName);
+							sio.getTimeIntervals().add(ti);
+						}
 						sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
 						if (logger.isTraceEnabled()) logger.trace("... added product {} to input files", p.getId());
 					}
