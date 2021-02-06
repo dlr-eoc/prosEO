@@ -1,5 +1,6 @@
 package de.dlr.proseo.ordermgr.rest;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -93,6 +94,8 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ORDER_MODIFICATION_FORBIDDEN = 1131;
 	private static final int MSG_ID_ILLEGAL_ORDER_STATE = 1132;
 	private static final int MSG_ID_ILLEGAL_CREATION_STATE = 1133;
+	private static final int MSG_ID_SLICE_DURATION_MISSING = 1134;
+	private static final int MSG_ID_INVALID_SLICE_OVERLAP = 1135;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -122,6 +125,8 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_MODIFICATION_FORBIDDEN = "(E%d) Order modification other than state change not allowed for user %s";
 	private static final String MSG_ILLEGAL_ORDER_STATE = "(E%d) Order update only allowed in INITIAL state";
 	private static final String MSG_ILLEGAL_CREATION_STATE = "(E%d) Orders must be created in INITIAL state (found state %s)";
+	private static final String MSG_SLICE_DURATION_MISSING = "(E%d) Time slice duration missing for order %s of slicing type TIME_SLICE";
+	private static final String MSG_INVALID_SLICE_OVERLAP = "(E%d) Order %s with slicing type NONE has invalid slice overlap %s (no overlap allowed)";
 
 	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
 	private static final String MSG_ORDER_RETRIEVED = "(I%d) Order with ID %s retrieved";
@@ -240,6 +245,14 @@ public class ProcessingOrderMgr {
 		if (order.getOrbits().isEmpty()) {
 			if (null == modelOrder.getStartTime() || null == modelOrder.getStopTime()) {
 				throw new IllegalArgumentException(logError(MSG_ORDER_TIME_INTERVAL_MISSING, MSG_ID_ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
+			}
+			// Ensure slice duration is given for slicing type TIME_SLICE
+			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == modelOrder.getSliceDuration()) {
+				throw new IllegalArgumentException(logError(MSG_SLICE_DURATION_MISSING, MSG_ID_SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
+			}
+			// Ensure no slice overlap (or 0) is set for slicing type NONE
+			if (OrderSlicingType.NONE.equals(modelOrder.getSlicingType()) && !Duration.ZERO.equals(modelOrder.getSliceOverlap()) ) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_SLICE_OVERLAP, MSG_ID_INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), modelOrder.getSliceOverlap().toString()));
 			}
 		} else {
 			// Find all requested orbit ranges
@@ -560,11 +573,19 @@ public class ProcessingOrderMgr {
 		}
 		if (null == modelOrder.getSliceDuration() && null != changedOrder.getSliceDuration()
 				|| null != modelOrder.getSliceDuration() && !modelOrder.getSliceDuration().equals(changedOrder.getSliceDuration())) {
+			// Ensure slice duration is given for slicing type TIME_SLICE
+			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == changedOrder.getSliceDuration()) {
+				throw new IllegalArgumentException(logError(MSG_SLICE_DURATION_MISSING, MSG_ID_SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
+			}
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setSliceDuration(changedOrder.getSliceDuration());
 		}
 		if (!modelOrder.getSliceOverlap().equals(changedOrder.getSliceOverlap())) {
+			// Ensure no slice overlap (or 0) is set for slicing type NONE
+			if (OrderSlicingType.NONE.equals(modelOrder.getSlicingType()) && !Duration.ZERO.equals(changedOrder.getSliceOverlap()) ) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_SLICE_OVERLAP, MSG_ID_INVALID_SLICE_OVERLAP, modelOrder.getIdentifier(), changedOrder.getSliceOverlap().toString()));
+			}
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setSliceOverlap(changedOrder.getSliceOverlap());

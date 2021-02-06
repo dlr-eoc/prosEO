@@ -98,6 +98,9 @@ public class OrderDispatcher {
 				case TIME_SLICE:
 					answer = createJobsForTimeSlices(order, pf);
 					break;
+				case NONE:
+					answer = createSingleJob(order, pf);
+					break;
 				default:
 					Messages.ORDER_SLICING_TYPE_NOT_SET.log(logger, order.getIdentifier());
 					break;
@@ -405,6 +408,39 @@ public class OrderDispatcher {
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
 					}
+				} 
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			answer = false;
+		}
+
+		return answer;
+	}
+	
+	/**
+	 * Create the needed job for an order without slicing
+	 * 
+	 * @param order The processing order
+	 * @param pf The processing facility 
+	 * @return true after success, else false
+	 */
+	public boolean createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createSingleJob({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
+		
+		boolean answer = true;
+
+		try {
+			if (order.getStartTime() == null || order.getStopTime() == null) {
+				Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
+				answer = false;
+			} else {
+				Set<ProductClass> productClasses = order.getRequestedProductClasses();
+				if (productClasses.isEmpty()) {
+					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
+					answer = false;
+				} else {
+					answer = createJobForOrbitOrTime(order, null, order.getStartTime(), order.getStopTime(), pf);
 				} 
 			}
 		} catch (Exception ex) {

@@ -103,6 +103,7 @@
                     <td th:if="${ord?.slicingType} == 'CALENDAR_DAY'"><span th:text="#{calendarday}">calendarday</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
+                    <td th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
                     <td><a th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
