@@ -172,12 +172,11 @@ public class JobDispatcher {
 	 * @param p Product
 	 * @param proc The Ipf_Proc
 	 * @param jobStep Job step
+	 * @param useTimeIntervals if true, generates TimeInterval elements to the input definition
 	 */
 	public void addIpfIOInput(Product p, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
-		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput({}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput({}, {}, {}, {})", p.getId(), proc.getTaskName(), jobStep.getId(), useTimeintervals);
 
-		String start = timeFormatter.format(jobStep.getJob().getStartTime());
-		String stop =  timeFormatter.format(jobStep.getJob().getStopTime());
 		if (p.getComponentProducts().isEmpty()) {
 			for (ProductFile pf : p.getProductFile()) {
 				InputOutput sio = new InputOutput(p.getProductClass().getProductType(), InputOutput.FN_TYPE_PHYSICAL, 
@@ -186,7 +185,10 @@ public class JobDispatcher {
 				String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
 				sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
 				if (useTimeintervals) {
-					TimeInterval ti = new TimeInterval(start, stop, productFilePathAndName);
+					TimeInterval ti = new TimeInterval(
+						timeFormatter.format(p.getSensingStartTime()),
+						timeFormatter.format(p.getSensingStopTime()),
+						productFilePathAndName);
 					sio.getTimeIntervals().add(ti);
 				}
 				proc.getListOfInputs().add(sio);
@@ -205,12 +207,11 @@ public class JobDispatcher {
 	 * @param productClasses a map of products accessible by product class
 	 * @param proc the Ipf_Proc element to add the input to
 	 * @param jobStep the job step, for which the Job Order is generated
+	 * @param useTimeIntervals if true, generates TimeInterval elements to the input definition
 	 */
 	public void addIpfIOInput(Map<ProductClass, List<Product>> productClasses, Proc proc, JobStep jobStep, Boolean useTimeintervals) {
-		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {})", proc.getTaskName(), jobStep.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> addIpfIOInput(<...>, {}, {}, {})", proc.getTaskName(), jobStep.getId(), useTimeintervals);
 
-		String start = timeFormatter.format(jobStep.getJob().getStartTime());
-		String stop =  timeFormatter.format(jobStep.getJob().getStopTime());
 		for (ProductClass pc : productClasses.keySet()) {
 			InputOutput sio = new InputOutput(pc.getProductType(), InputOutput.FN_TYPE_PHYSICAL, InputOutput.IO_TYPE_INPUT, null);
 			for (Product p : productClasses.get(pc)) {
@@ -219,7 +220,10 @@ public class JobDispatcher {
 						String filePath = pf.getFilePath();
 						String productFilePathAndName = (null == filePath || filePath.isBlank() ? "" : filePath + "/") + pf.getProductFileName();
 						if (useTimeintervals) {
-							TimeInterval ti = new TimeInterval(start, stop, productFilePathAndName);
+							TimeInterval ti = new TimeInterval(
+									timeFormatter.format(p.getSensingStartTime()),
+									timeFormatter.format(p.getSensingStopTime()),
+									productFilePathAndName);
 							sio.getTimeIntervals().add(ti);
 						}
 						sio.getFileNames().add(new IpfFileName(productFilePathAndName, pf.getStorageType().name()));
