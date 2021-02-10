@@ -125,22 +125,13 @@ public class JobOrder {
 	/**
 	 * Build XML tree and write it to file named fileName.
 	 * @param fileName the file name
-	 * @param prosEOAttributes if true, write attributes of prosEO specific data
-	 * @return true after success, else false
-	 * @deprecated Use {@link #writeXML(String,JobOrderVersion,Boolean)} instead
-	 */
-	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
-		return writeXML(fileName, JobOrderVersion.MMFI_1_8, prosEOAttributes);
-	}
-
-	/**
-	 * Build XML tree and write it to file named fileName.
-	 * @param fileName the file name
 	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return true after success, else false
 	 */
 	public Boolean writeXML(String fileName, JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
+		if (logger.isTraceEnabled()) logger.trace(">>> writeXML({}, {}, {})", fileName, jobOrderVersion, prosEOAttributes);
+
 		try {
 			FileOutputStream fout = new FileOutputStream(fileName);
 			writeXMLToStream(fout, prosEOAttributes, jobOrderVersion);
@@ -164,6 +155,8 @@ public class JobOrder {
 	 * @return the Base64-coded string
 	 */
 	public String buildBase64String(JobOrderVersion jobOrderVersion, Boolean prosEOAttributes) {
+		if (logger.isTraceEnabled()) logger.trace(">>> buildBase64String({}, {})", jobOrderVersion, prosEOAttributes);
+
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			writeXMLToStream(baos, prosEOAttributes, jobOrderVersion);	
@@ -179,17 +172,6 @@ public class JobOrder {
 	}
 	
 	/**
-	 * Writes the content of the Job Order to an XML-formatted output stream conforming to the MMFI_1_8 Job Order file syntax
-	 * @param aStream the stream to write to
-	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
-	 * @return true, if the operation completed successfully, false otherwise
-	 * @deprecated Use {@link #writeXMLToStream(OutputStream,Boolean,JobOrderVersion)} instead
-	 */
-	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes) {
-		return writeXMLToStream(aStream, prosEOAttributes, JobOrderVersion.MMFI_1_8);
-	}
-
-	/**
 	 * Writes the content of the Job Order to an XML-formatted output stream
 	 * @param aStream the stream to write to
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
@@ -197,6 +179,8 @@ public class JobOrder {
 	 * @return true, if the operation completed successfully, false otherwise
 	 */
 	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes, JobOrderVersion jobOrderVersion) {
+		if (logger.isTraceEnabled()) logger.trace(">>> writeXMLToStream(OutputStream, {}, {})", prosEOAttributes, jobOrderVersion);
+
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder;
 		try {
@@ -243,6 +227,8 @@ public class JobOrder {
 	 * @return a Job Order object
 	 */
 	public JobOrder read(String jobOrderString) {
+		if (logger.isTraceEnabled()) logger.trace(">>> read({})", jobOrderString.substring(0, 30) + "...");
+
 		InputStream aStream = new ByteArrayInputStream(jobOrderString.getBytes());
 
 		DocumentBuilder docBuilder = null;
@@ -256,7 +242,7 @@ public class JobOrder {
 		try {
 			jobOrderDoc = docBuilder.parse(aStream);
 		} catch (SAXException | IOException e) {
-			logger.error(MSG_JOF_NOT_PARSEABLE, e.getMessage());
+			logger.error(MSG_JOF_NOT_PARSEABLE, jobOrderString, e.getMessage());
 			return null;
 		}
 		// now we have the document, fill tree structure

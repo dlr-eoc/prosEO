@@ -2,6 +2,7 @@
  * InputOutput.java
  */
 package de.dlr.proseo.model.joborder;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -276,9 +277,13 @@ public class InputOutput {
 					this.getFileNames().add(fn);
 					break;
 				case "list_of_time_intervals":
-					TimeInterval ti = new TimeInterval();
-					ti.read(child);
-					this.getTimeIntervals().add(ti);
+					Node tiele = child.getFirstChild();
+					while (null != tiele) {
+						TimeInterval ti = new TimeInterval();
+						ti.read(tiele);
+						this.getTimeIntervals().add(ti);
+						tiele = tiele.getNextSibling();
+					}
 					break;
 				}
 				child = child.getNextSibling();
