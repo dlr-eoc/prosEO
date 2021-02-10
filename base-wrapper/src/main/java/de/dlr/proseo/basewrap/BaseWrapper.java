@@ -333,6 +333,16 @@ public class BaseWrapper {
 	}
 
 	/**
+	 * Hook for mission-specific modifications to the job order document after fetching input data
+	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param jobOrderDoc the job order document to modify
+	 */
+	protected void postFetchInputHook(JobOrder jobOrderDoc) {
+		// No operation
+	}
+
+	/**
 	 * Fetch remote input-data to container-workdir and return valid JobOrder object for container-runtime-context. (=remapped file-pathes)
 	 * 
 	 * @param jo the JobOrder file to parse
@@ -762,7 +772,12 @@ public class BaseWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [6] Create Job Order File in file system for container context */
+		/* STEP [6 - Optional] Modify fetched data and Job Order document for processor operation */
+
+		/* Hook for additional mission-specific post-fetch operations on the job order document */
+		postFetchInputHook(jobOrderDoc);
+
+		/* STEP [7] Create Job Order File in file system for container context */
 
 		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
 		if (!containerJOF) {
@@ -771,7 +786,7 @@ public class BaseWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [7] Execute Processor */
+		/* STEP [8] Execute Processor */
 
 		Boolean procRun = runProcessor(CONTAINER_JOF_PATH);
 		if (!procRun) {
@@ -780,12 +795,12 @@ public class BaseWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [8] Perform processor-specific updates to the Job Order document */
+		/* STEP [9] Perform processor-specific updates to the Job Order document */
 
 		/* Hook for additional post-processing operations on the job order document */
 		postProcessingHook(joWork);
 
-		/* STEP [9] Push Processing Results to prosEO Storage, if any */
+		/* STEP [10] Push Processing Results to prosEO Storage, if any */
 
 		ArrayList<RestProductFile> pushedProducts = pushResults(joWork);
 		if (null == pushedProducts) {
@@ -794,7 +809,7 @@ public class BaseWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [10] Register pushed products using with prosEO Ingestor */
+		/* STEP [11] Register pushed products using with prosEO Ingestor */
 
 		boolean ingestOK = ingestPushedOutputs(pushedProducts);
 		if (!ingestOK) {
@@ -803,7 +818,7 @@ public class BaseWrapper {
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [11] Report success to Production Planner */
+		/* STEP [12] Report success to Production Planner */
 
 		callBack(CALLBACK_STATUS_SUCCESS);
 
