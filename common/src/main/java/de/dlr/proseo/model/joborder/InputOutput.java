@@ -274,6 +274,12 @@ public class InputOutput {
 					IpfFileName fn = new IpfFileName();
 					fn.read(child);
 					this.getFileNames().add(fn);
+					break;
+				case "list_of_time_intervals":
+					TimeInterval ti = new TimeInterval();
+					ti.read(child);
+					this.getTimeIntervals().add(ti);
+					break;
 				}
 				child = child.getNextSibling();
 			}
