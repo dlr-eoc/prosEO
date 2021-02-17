@@ -125,6 +125,17 @@ public class JobOrder {
 	/**
 	 * Build XML tree and write it to file named fileName.
 	 * @param fileName the file name
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data
+	 * @return true after success, else false
+	 * @deprecated Use {@link #writeXML(String,JobOrderVersion,Boolean)} instead
+	 */
+	public Boolean writeXML(String fileName, Boolean prosEOAttributes) {
+		return writeXML(fileName, JobOrderVersion.MMFI_1_8, prosEOAttributes);
+	}
+
+	/**
+	 * Build XML tree and write it to file named fileName.
+	 * @param fileName the file name
 	 * @param jobOrderVersion the Job Order file specification version to apply
 	 * @param prosEOAttributes if true, write attributes of prosEO specific data
 	 * @return true after success, else false
@@ -171,6 +182,17 @@ public class JobOrder {
 		}
 	}
 	
+	/**
+	 * Writes the content of the Job Order to an XML-formatted output stream conforming to the MMFI_1_8 Job Order file syntax
+	 * @param aStream the stream to write to
+	 * @param prosEOAttributes if true, write attributes of prosEO specific data 
+	 * @return true, if the operation completed successfully, false otherwise
+	 * @deprecated Use {@link #writeXMLToStream(OutputStream,Boolean,JobOrderVersion)} instead
+	 */
+	public Boolean writeXMLToStream(OutputStream aStream, Boolean prosEOAttributes) {
+		return writeXMLToStream(aStream, prosEOAttributes, JobOrderVersion.MMFI_1_8);
+	}
+
 	/**
 	 * Writes the content of the Job Order to an XML-formatted output stream
 	 * @param aStream the stream to write to

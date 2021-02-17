@@ -287,15 +287,6 @@ public class InputOutput {
 					fn.read(child);
 					this.getFileNames().add(fn);
 					break;
-				case "list_of_time_intervals":
-					Node tiele = child.getFirstChild();
-					while (null != tiele) {
-						TimeInterval ti = new TimeInterval();
-						ti.read(tiele);
-						this.getTimeIntervals().add(ti);
-						tiele = tiele.getNextSibling();
-					}
-					break;
 				}
 				child = child.getNextSibling();
 			}
