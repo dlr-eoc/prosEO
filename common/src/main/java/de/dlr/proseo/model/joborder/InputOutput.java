@@ -270,6 +270,17 @@ public class InputOutput {
 						fnele = fnele.getNextSibling();
 					}						
 					break;
+				case "list_of_time_intervals" : 
+					Node tiele = child.getFirstChild();
+					while (tiele != null) {
+						if (tiele.getNodeName().equalsIgnoreCase("Time_Interval")) {
+							TimeInterval ti = new TimeInterval();
+							ti.read(tiele);
+							this.getTimeIntervals().add(ti);
+						}
+						tiele = tiele.getNextSibling();
+					}						
+					break;
 				case "file_name" :
 					IpfFileName fn = new IpfFileName();
 					fn.read(child);

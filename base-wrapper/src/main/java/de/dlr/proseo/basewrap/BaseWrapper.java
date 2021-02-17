@@ -9,6 +9,7 @@ package de.dlr.proseo.basewrap;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,9 +65,15 @@ public class BaseWrapper {
 	/** Current directory of this program is used as work-dir */
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
 	/** Current timestamp used for output-file prefixes*/
-	private static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
+	protected static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
 	/** Auto-created path/filename of JobOrderFile within container (according to Generic IPF Interface Specifications) */
-	private static final String CONTAINER_JOF_PATH =
+	protected String CONTAINER_JOF_PATH =
+			WORKING_DIR.toString() +
+			File.separator +
+			"JobOrder." +
+			String.valueOf(WRAPPER_TIMESTAMP) +
+			".xml";
+	protected String REL_CONTAINER_JOF_PATH =
 			WORKING_DIR.toString() +
 			File.separator +
 			"JobOrder." +
@@ -183,7 +190,7 @@ public class BaseWrapper {
 
 	// Variables to be provided by the processor or wrapper image
 	/** Shell command to run the processor (with path to Job Order File as sole parameter) */
-	private String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
+	protected String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 
 	/**
 	 * Remove protocol information, leading and trailing slashes from given file name
@@ -462,7 +469,7 @@ public class BaseWrapper {
 	 * @param path file path of newly created JOF
 	 * @return True/False
 	 */
-	private Boolean provideContainerJOF(JobOrder jo, String path) {	
+	protected Boolean provideContainerJOF(JobOrder jo, String path) {	
 		if (logger.isTraceEnabled()) logger.trace(">>> provideContainerJOF(JOF, {})", path);
 
 		return jo.writeXML(path, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION), false);
@@ -483,9 +490,12 @@ public class BaseWrapper {
 		processBuilder.redirectErrorStream(true); 
 
 		processBuilder.command((ENV_PROCESSOR_SHELL_COMMAND + " " + jofPath).split(" "));
+		processBuilder.redirectErrorStream(true);
+		
 		int exitCode = EXIT_CODE_FAILURE; // Failure
 		try {
 			Process process = processBuilder.start();
+			
 			BufferedReader reader =
 					new BufferedReader(new InputStreamReader(process.getInputStream()));
 			String line;
@@ -788,7 +798,7 @@ public class BaseWrapper {
 
 		/* STEP [8] Execute Processor */
 
-		Boolean procRun = runProcessor(CONTAINER_JOF_PATH);
+		Boolean procRun = runProcessor(REL_CONTAINER_JOF_PATH);
 		if (!procRun) {
 			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
