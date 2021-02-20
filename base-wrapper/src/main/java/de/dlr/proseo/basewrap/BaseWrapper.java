@@ -6,11 +6,9 @@
  */
 package de.dlr.proseo.basewrap;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,6 +45,9 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  */
 public class BaseWrapper {
 
+	private static final String MSG_WRAPPER_CANNOT_BE_LAUNCHED = "Requested wrapper class {} cannot be launched (cause: {})";
+	private static final String MSG_WRAPPER_NOT_SUBCLASS_OF_BASE_WRAPPER = "Requested wrapper class {} is not a subclass of BaseWrapper";
+	private static final String MSG_WRAPPER_CLASS_NOT_FOUND = "Requested wrapper class {} not found";
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
 	/** Exit code for completion with warning */
@@ -88,13 +89,17 @@ public class BaseWrapper {
 	private static final String MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED = "Different storage types assigned by Storage Manager for files of same product ID {}";
 	private static final String MSG_DIRECTORY_NOT_EMPTY = "Output directory {} is not empty";
 	private static final String MSG_ENVIRONMENT_CHECK_PASSED = "Check of environment variables passed";
+	private static final String MSG_ENVIRONMENT_CHECK_FAILED = "Check of environment variables failed";
 	private static final String MSG_ERROR_CALLING_PLANNER = "Error calling Production Planner (HTTP status code: {})";
 	private static final String MSG_ERROR_CONVERTING_INGESTOR_PRODUCT = "Error converting ingestor product with ID {} to JSON (cause: {})";
 	private static final String MSG_ERROR_PUSHING_OUTPUT_FILE = "Error pushing output file {}, HTTP status code {}";
 	private static final String MSG_ERROR_REGISTERING_PRODUCT = "Error registering product with ID {} with Ingestor (HTTP status code: {})";
 	private static final String MSG_ERROR_RETRIEVING_INPUT_FILE = "Error retrieving input file {}, HTTP status code {}";
 	private static final String MSG_ERROR_RETRIEVING_JOB_ORDER = "Error retrieving Job Order File, HTTP status code {}";
+	private static final String MSG_EXCEPTION_RETRIEVING_JOB_ORDER = "Exception encountered retrieving Job Order File (cause: {})";
+	private static final String MSG_ERROR_PARSING_JOB_ORDER = "Error parsing Job Order File";
 	private static final String MSG_ERROR_RUNNING_PROCESSOR = "Error running processor (cause: {})";
+	private static final String MSG_ERROR_WRITING_JOF = "Error writing Job Order document to XML file";
 	private static final String MSG_FETCHED_INPUT_FILES = "Fetched {} input files and prepared directories for {} outputs -- Ready for processing using Container-JOF {}";
 	private static final String MSG_INVALID_VALUE_OF_ENVVAR = "Invalid value of EnvVar: {}";
 	private static final String MSG_LEAVING_BASE_WRAPPER = "Leaving base-wrapper with exit code {} ({})";
@@ -102,7 +107,9 @@ public class BaseWrapper {
 	private static final String MSG_NOT_A_DIRECTORY = "Output path {} is not a directory";
 	private static final String MSG_PLANNER_RESPONSE = "Production Planner response for callback is {} ({})";
 	private static final String MSG_PREFIX_TIMESTAMP_FOR_NAMING = "Prefix timestamp used for JobOrderFile naming and results is {}";
-	private static final String MSG_PROCESSING_FINISHED = "Processing finished with return code {}";
+	private static final String MSG_PROCESSING_FINISHED_OK = "Processing finished with return code {} (OK)";
+	private static final String MSG_PROCESSING_FINISHED_WARNING = "Processing finished with return code {} (WARNING)";
+	private static final String MSG_PROCESSING_FINISHED_ERROR = "Processing finished with return code {} (ERROR)";
 	private static final String MSG_PRODUCT_ID_NOT_PARSEABLE = "Product ID {} not parseable as long integer";
 	private static final String MSG_PRODUCTS_REGISTERED = "{} products registered with Ingestor";
 	private static final String MSG_PRODUCTS_UPLOADED = "{} products with {} files uploaded to Storage Manager";
@@ -115,6 +122,8 @@ public class BaseWrapper {
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
 	private static final String MSG_SKIPPING_INPUT_ENTRY = "Skipping input entry of type {} with filename type {}";
 	private static final String MSG_WARNING_INPUT_FILENAME_MISSING = "Skipping input entry of type {} without filename";
+	private static final String MSG_PROCESSOR_EXECUTION_INTERRUPTED = "Processor execution interrupted (cause: {})";
+	private static final String MSG_ERROR_IN_PLANNER_CALLBACK = "Error calling back Production Planner at endpoint {} (cause: {})";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -193,6 +202,12 @@ public class BaseWrapper {
 	protected String ENV_PROCESSOR_SHELL_COMMAND = System.getenv(ENV_VARS.PROCESSOR_SHELL_COMMAND.toString());
 
 	/**
+	 * Class for raising wrapper-generated runtime exceptions
+	 */
+	@SuppressWarnings("serial")
+	public static class WrapperException extends RuntimeException {};
+	
+	/**
 	 * Remove protocol information, leading and trailing slashes from given file name
 	 * 
 	 * @param fileName String
@@ -221,9 +236,9 @@ public class BaseWrapper {
 
 	/**
 	 * Check presence and values of all required Environment Variables
-	 * @return true/false
+	 * @throws WrapperException if the check does not pass for any reason
 	 */
-	private Boolean checkEnvironment() {
+	private void checkEnvironment() {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkEnv()");
 
 		logger.info(MSG_CHECKING_ENVIRONMENT, ENV_VARS.values().length);
@@ -283,15 +298,18 @@ public class BaseWrapper {
 		if (envOK) {
 			logger.info(MSG_ENVIRONMENT_CHECK_PASSED);
 			logger.info(MSG_PREFIX_TIMESTAMP_FOR_NAMING, WRAPPER_TIMESTAMP);
+		} else {
+			logger.error(MSG_ENVIRONMENT_CHECK_FAILED);
+			throw new WrapperException();
 		}
-		return envOK;
 	}
 	/**
 	 * Fetch Job Order file from Storage Manager
 	 * 
 	 * @return the Job Order file as String
+	 * @throws WrapperException if the Job Order file cannot be read
 	 */
-	private String provideInitialJOF() {
+	private String provideInitialJOF() throws WrapperException {
 		if (logger.isTraceEnabled()) logger.trace(">>> provideInitialJOF()");
 		// Call Storage Manager to retrieve Job Order File as Base64-encoded string
 		try {
@@ -304,11 +322,11 @@ public class BaseWrapper {
 				return new String(Base64.getDecoder().decode(responseInfo.gethttpResponse()));
 			} else {
 				logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, responseInfo.gethttpCode());
-				return null;
+				throw new WrapperException();
 			}
 		} catch (Exception e) {
-			logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, "Error in RestOps.restApiCall");
-			return null;
+			logger.error(MSG_EXCEPTION_RETRIEVING_JOB_ORDER, e.getMessage());
+			throw new WrapperException();
 		}
 	}
 
@@ -317,15 +335,19 @@ public class BaseWrapper {
 	 * 
 	 * @param jobOrderFile the XML file to parse
 	 * @return JobOrder Object
+	 * @throws WrapperException if the Job Order string cannot be parsed into a Job Order document
 	 */
-	private JobOrder parseJobOrderFile(String jobOrderFile) {
+	private JobOrder parseJobOrderFile(String jobOrderFile) throws WrapperException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseJobOrderFile(JOF)");
 
 		JobOrder jobOrderDoc = null;
 		jobOrderDoc = new JobOrder();
-		jobOrderDoc.read(jobOrderFile);
+		jobOrderDoc = jobOrderDoc.read(jobOrderFile);
+		if (null == jobOrderDoc) {
+			logger.error(MSG_ERROR_PARSING_JOB_ORDER);
+			throw new WrapperException();
+		}
 
-		//jobOrderDoc = docBuilder.parse(jobOrderFile);
 		return jobOrderDoc;
 	}
 
@@ -334,18 +356,9 @@ public class BaseWrapper {
 	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
 	 * 
 	 * @param jobOrderDoc the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
-	protected void preFetchInputHook(JobOrder jobOrderDoc) {
-		// No operation
-	}
-
-	/**
-	 * Hook for mission-specific modifications to the job order document after fetching input data
-	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
-	 * 
-	 * @param jobOrderDoc the job order document to modify
-	 */
-	protected void postFetchInputHook(JobOrder jobOrderDoc) {
+	protected void preFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {
 		// No operation
 	}
 
@@ -354,8 +367,9 @@ public class BaseWrapper {
 	 * 
 	 * @param jo the JobOrder file to parse
 	 * @return JobOrder object valid for container-context
+	 * @throws WrapperException if input data cannot be found or output directories cannot be created
 	 */
-	private JobOrder fetchInputData(JobOrder jo) {
+	private JobOrder fetchInputData(JobOrder jo) throws WrapperException {
 		if (logger.isTraceEnabled()) logger.trace(">>> fetchInputData(JOF)");
 
 		int numberOfInputs = 0, numberOfOutputs = 0;
@@ -395,7 +409,7 @@ public class BaseWrapper {
 
 					if (200 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_RETRIEVING_INPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
-						return null;
+						throw new WrapperException();
 					}
 
 					// Update file name to new file name on POSIX file system
@@ -430,18 +444,18 @@ public class BaseWrapper {
 						if (Files.exists(filePath)) {
 							if (!Files.isDirectory(filePath)) {
 								logger.error(MSG_NOT_A_DIRECTORY, fn.getFileName());
-								return null;
+								throw new WrapperException();
 							}
 							if (0 != filePath.toFile().list().length) {
 								logger.error(MSG_DIRECTORY_NOT_EMPTY, fn.getFileName());
-								return null;
+								throw new WrapperException();
 							}
 						}
 						try {
 							Files.createDirectories(filePath);
 						} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath);
-							return null;
+							throw new WrapperException();
 						}
 					} else {
 						try {
@@ -449,7 +463,7 @@ public class BaseWrapper {
 							Files.createDirectories(filePath.getParent());
 						} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath.getParent());
-							return null;
+							throw new WrapperException();
 						}
 					}
 
@@ -463,25 +477,40 @@ public class BaseWrapper {
 	}
 
 	/**
+	 * Hook for mission-specific modifications to the job order document after fetching input data
+	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
+	 * 
+	 * @param jobOrderDoc the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
+	 */
+	protected void postFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {
+		// No operation
+	}
+
+	/**
 	 * Creates valid container-context JobOrderFile under given path
 	 * 
 	 * @param jo JobOrder remapped JobOrder object
 	 * @param path file path of newly created JOF
-	 * @return True/False
+	 * @throws WrapperException if the Job Order document cannot be written to an XML file
 	 */
-	protected Boolean provideContainerJOF(JobOrder jo, String path) {	
+	protected void provideContainerJOF(JobOrder jo, String path) throws WrapperException {	
 		if (logger.isTraceEnabled()) logger.trace(">>> provideContainerJOF(JOF, {})", path);
 
-		return jo.writeXML(path, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION), false);
+		boolean ok = jo.writeXML(path, JobOrderVersion.valueOf(ENV_JOBORDER_VERSION), false);
+		if (!ok) {
+			logger.error(MSG_ERROR_WRITING_JOF);
+			throw new WrapperException();
+		}
 	}
 
 	/**
 	 * Executes the processor
 	 * 
 	 * @param jofPath path of re-mapped JobOrder file valid in container context
-	 * @return True/False
+	 * @throws WrapperException if the process was interrupted or some other exception occurred during processing
 	 */
-	private Boolean runProcessor(String jofPath) {
+	private void runProcessor(String jofPath) throws WrapperException  {
 		if (logger.isTraceEnabled()) logger.trace(">>> runProcessor({}, {})", jofPath);
 
 		logger.info(MSG_STARTING_PROCESSOR, ENV_PROCESSOR_SHELL_COMMAND, jofPath);
@@ -491,30 +520,27 @@ public class BaseWrapper {
 
 		processBuilder.command((ENV_PROCESSOR_SHELL_COMMAND + " " + jofPath).split(" "));
 		processBuilder.redirectErrorStream(true);
+		processBuilder.redirectOutput(Redirect.INHERIT);
 		
 		int exitCode = EXIT_CODE_FAILURE; // Failure
 		try {
-			Process process = processBuilder.start();
-			
-			BufferedReader reader =
-					new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			while ((line = reader.readLine()) != null) {
-				logger.info("... " + line);
-			}
-			exitCode = process.waitFor();
+			exitCode = processBuilder.start().waitFor();
 			
 			if (EXIT_CODE_OK == exitCode) {
-				logger.info(MSG_PROCESSING_FINISHED, exitCode);
+				logger.info(MSG_PROCESSING_FINISHED_OK, exitCode);
 			} else if (EXIT_CODE_WARNING >= exitCode) {
-				logger.warn(MSG_PROCESSING_FINISHED, exitCode);
+				logger.warn(MSG_PROCESSING_FINISHED_WARNING, exitCode);
 			} else {
-				logger.error(MSG_PROCESSING_FINISHED, exitCode);
+				logger.error(MSG_PROCESSING_FINISHED_ERROR, exitCode);
+				throw new WrapperException();
 			}
-		} catch (IOException | InterruptedException e) {
+		} catch (InterruptedException e) {
+			logger.error(MSG_PROCESSOR_EXECUTION_INTERRUPTED, e.getMessage());
+			throw new WrapperException();
+		} catch (IOException e) {
 			logger.error(MSG_ERROR_RUNNING_PROCESSOR, e.getMessage());
+			throw new WrapperException();
 		}
-		return exitCode <= EXIT_CODE_WARNING;
 	}
 
 	/**
@@ -531,8 +557,9 @@ public class BaseWrapper {
 	 * Intended for override by mission-specific wrapper classes, NO-OP in BaseWrapper.
 	 * 
 	 * @param joWork the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
-	protected void postProcessingHook(JobOrder joWork) {
+	protected void postProcessingHook(JobOrder joWork) throws WrapperException {
 		// No operation
 	}
 
@@ -541,8 +568,9 @@ public class BaseWrapper {
 	 * 
 	 * @param jo jobOrder  JobOrder-Object (valid in container context)
 	 * @return ArrayList all infos of pushed products
+	 * @throws WrapperException if the product ID cannot be retrieved or the product upload failed
 	 */
-	private ArrayList<RestProductFile> pushResults(JobOrder jo) {
+	private ArrayList<RestProductFile> pushResults(JobOrder jo) throws WrapperException {
 		if (logger.isTraceEnabled()) logger.trace(">>> pushResults(JOF)");
 
 		logger.info(MSG_UPLOADING_RESULTS);
@@ -565,7 +593,7 @@ public class BaseWrapper {
 					productFile.setProductId(Long.parseLong((io.getProductID())));
 				} catch (NumberFormatException e) {
 					logger.error(MSG_PRODUCT_ID_NOT_PARSEABLE, io.getProductID());
-					return null;
+					throw new WrapperException();
 				}
 				productFile.setProcessingFacilityName(ENV_PROCESSING_FACILITY_NAME);
 				pushedOutputs.add(productFile);
@@ -581,13 +609,13 @@ public class BaseWrapper {
 
 					if (201 != responseInfo.gethttpCode()) {
 						logger.error(MSG_ERROR_PUSHING_OUTPUT_FILE, fn.getFileName(), responseInfo.gethttpCode());
-						return null;
+						throw new WrapperException();
 					}
 
 					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]", 2);  // pipe sign is a symbol of regex, escaped with brackets
 					if (2 != fileTypeAndName.length) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
-						return null;
+						throw new WrapperException();
 					}
 					
 					// Make sure all product files have the same storage tpye
@@ -595,7 +623,7 @@ public class BaseWrapper {
 						productFile.setStorageType(fileTypeAndName[0]);
 					} else if (!productFile.getStorageType().equals(fileTypeAndName[0])) {
 						logger.error(MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED, productFile.getProductId());
-						return null;
+						throw new WrapperException();
 					}
 					
 					// Separate the file path into a directory path and a file name
@@ -609,7 +637,7 @@ public class BaseWrapper {
 						productFile.setFilePath(parentPath);
 					} else if (!productFile.getFilePath().equals(parentPath)) {
 						logger.error(MSG_DIFFERENT_FILE_PATHS_ASSIGNED, productFile.getProductId());
-						return null;
+						throw new WrapperException();
 					}
 					
 					// Create metadata for this file
@@ -618,7 +646,7 @@ public class BaseWrapper {
 						// must only be used once
 						if (null != productFile.getZipFileName()) {
 							logger.error(MSG_MORE_THAN_ONE_ZIP_ARCHIVE, productFile.getProductId());
-							return null;
+							throw new WrapperException();
 						}
 						productFile.setZipFileName(fileName);
 						File primaryProductFile = new File(fn.getFileName()); // The full path to the file in the local file system
@@ -628,7 +656,7 @@ public class BaseWrapper {
 							productFile.setZipChecksumTime(OrbitTimeFormatter.format(Instant.now()));
 						} catch (IOException e) {
 							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
-							return null;
+							throw new WrapperException();
 						}
 					} else if (null == productFile.getProductFileName()) {
 						// The first (non-archive) file is taken as the main product file
@@ -640,7 +668,7 @@ public class BaseWrapper {
 							productFile.setChecksumTime(OrbitTimeFormatter.format(Instant.now()));
 						} catch (IOException e) {
 							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
-							return null;
+							throw new WrapperException();
 						}
 					} else {
 						// Subsequent (non-archive) files are auxiliary files
@@ -668,9 +696,9 @@ public class BaseWrapper {
 	 * Register pushed Products using prosEO-Ingestor REST API
 	 * 
 	 * @param pushedProducts ArrayList
-	 * @return HTTP response code of Ingestor-API
+	 * @throws WrapperException if the product cannot be registered with the Ingestor
 	 */
-	private boolean ingestPushedOutputs(ArrayList<RestProductFile> pushedProducts) {
+	private void ingestPushedOutputs(ArrayList<RestProductFile> pushedProducts) {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestPushedOutputs(RestProductFile[{}])", pushedProducts.size());
 
 		logger.info(MSG_REGISTERING_PRODUCTS, pushedProducts.size(), ENV_INGESTOR_ENDPOINT);
@@ -685,7 +713,7 @@ public class BaseWrapper {
 				jsonRequest = obj.writeValueAsString(productFile);
 			} catch (JsonProcessingException e) {
 				logger.error(MSG_ERROR_CONVERTING_INGESTOR_PRODUCT, productFile.getProductId(), e.getMessage());
-				return false;
+				throw new WrapperException();
 			} 
 			HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_PROSEO_USER, ENV_PROSEO_PW, ENV_INGESTOR_ENDPOINT,
 					ingestorRestUrl, jsonRequest, null, RestOps.HttpMethod.POST);
@@ -693,12 +721,11 @@ public class BaseWrapper {
 			if (null == responseInfo || 201 != responseInfo.gethttpCode()) {
 				logger.error(MSG_ERROR_REGISTERING_PRODUCT,
 						productFile.getProductId(), (null == responseInfo ? 500 : responseInfo.gethttpCode()));
-				return false;
+				throw new WrapperException();
 			}
 		}
 
 		logger.info(MSG_PRODUCTS_REGISTERED, pushedProducts.size());
-		return true;
 	}
 
 
@@ -723,7 +750,7 @@ public class BaseWrapper {
 
 			logger.info(MSG_PLANNER_RESPONSE, responseInfo.gethttpResponse(), responseInfo.gethttpCode());
 		} catch (Exception e) {
-			logger.error(MSG_ERROR_RETRIEVING_JOB_ORDER, "Error in RestOps.restApiCall");
+			logger.error(MSG_ERROR_IN_PLANNER_CALLBACK, ENV_STATE_CALLBACK_ENDPOINT, e.getMessage());
 			return;
 		}
 		
@@ -740,95 +767,69 @@ public class BaseWrapper {
 		/* ProcessorWrapperFlow */
 		/* ==================== */
 
-		/* STEP [1] Check environment variables (acting as invocation parameters) */
-
 		logger.info(MSG_STARTING_BASE_WRAPPER,  ENV_JOBORDER_FILE);
-		Boolean check = checkEnvironment();
-		if (!check) {
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
 
-		/* STEP [2] Fetch the JobOrder file from the Storage Manager */
+		try {
+			/* STEP [1] Check environment variables (acting as invocation parameters) */
 
-		String jobOrderFile = provideInitialJOF();
-		if (null == jobOrderFile) {
+			checkEnvironment();
+
+			/* STEP [2] Fetch the JobOrder file from the Storage Manager */
+
+			String jobOrderFile = provideInitialJOF();
+
+			/* STEP [3] Create a Job Order document from the JobOrder file */
+
+			JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
+
+			/* STEP [4 - Optional] Modify Job Order document for processor operation */
+
+			/* Hook for additional mission-specific pre-fetch operations on the job order document */
+			preFetchInputHook(jobOrderDoc);
+
+			/* STEP [5] Fetch input files and remap file names in Job Order */
+
+			JobOrder joWork = fetchInputData(jobOrderDoc);
+
+			/* STEP [6 - Optional] Modify fetched data and Job Order document for processor operation */
+
+			/* Hook for additional mission-specific post-fetch operations on the job order document */
+			postFetchInputHook(joWork);
+
+			/* STEP [7] Create Job Order File in file system for container context */
+
+			provideContainerJOF(joWork, CONTAINER_JOF_PATH);
+
+			/* STEP [8] Execute Processor */
+
+			runProcessor(REL_CONTAINER_JOF_PATH);
+
+			/* STEP [9] Perform processor-specific updates to the Job Order document */
+
+			/* Hook for additional post-processing operations on the job order document */
+			postProcessingHook(joWork);
+
+			/* STEP [10] Push Processing Results to prosEO Storage, if any */
+
+			ArrayList<RestProductFile> pushedProducts = pushResults(joWork);
+			if (null == pushedProducts) {
+				callBack(CALLBACK_STATUS_FAILURE);
+				logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
+				return EXIT_CODE_FAILURE;
+			}
+
+			/* STEP [11] Register pushed products using with prosEO Ingestor */
+
+			ingestPushedOutputs(pushedProducts);
+
+		} catch (WrapperException e) {
+			/* STEP [12A] Report failure to Production Planner */
 			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
 		}
 
-		/* STEP [3] Create a Job Order document from the JobOrder file */
-
-		JobOrder jobOrderDoc = parseJobOrderFile(jobOrderFile);
-		if (null == jobOrderDoc) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [4 - Optional] Modify Job Order document for processor operation */
-
-		/* Hook for additional mission-specific pre-fetch operations on the job order document */
-		preFetchInputHook(jobOrderDoc);
-
-		/* STEP [5] Fetch input files and remap file names in Job Order */
-
-		JobOrder joWork = null;
-		joWork = fetchInputData(jobOrderDoc);
-		if (null == joWork) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [6 - Optional] Modify fetched data and Job Order document for processor operation */
-
-		/* Hook for additional mission-specific post-fetch operations on the job order document */
-		postFetchInputHook(jobOrderDoc);
-
-		/* STEP [7] Create Job Order File in file system for container context */
-
-		Boolean containerJOF = provideContainerJOF(joWork, CONTAINER_JOF_PATH);
-		if (!containerJOF) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [8] Execute Processor */
-
-		Boolean procRun = runProcessor(REL_CONTAINER_JOF_PATH);
-		if (!procRun) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [9] Perform processor-specific updates to the Job Order document */
-
-		/* Hook for additional post-processing operations on the job order document */
-		postProcessingHook(joWork);
-
-		/* STEP [10] Push Processing Results to prosEO Storage, if any */
-
-		ArrayList<RestProductFile> pushedProducts = pushResults(joWork);
-		if (null == pushedProducts) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [11] Register pushed products using with prosEO Ingestor */
-
-		boolean ingestOK = ingestPushedOutputs(pushedProducts);
-		if (!ingestOK) {
-			callBack(CALLBACK_STATUS_FAILURE);
-			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
-			return EXIT_CODE_FAILURE;
-		}
-
-		/* STEP [12] Report success to Production Planner */
+		/* STEP [12B] Report success to Production Planner */
 
 		callBack(CALLBACK_STATUS_SUCCESS);
 
@@ -847,18 +848,18 @@ public class BaseWrapper {
 		try {
 			clazz = ( 0 == args.length ? BaseWrapper.class : ClassLoader.getSystemClassLoader().loadClass(args[0]) );
 		} catch (ClassNotFoundException e) {
-			logger.error("Requested wrapper class {} not found", args[0]);
+			logger.error(MSG_WRAPPER_CLASS_NOT_FOUND, args[0]);
 			System.exit(EXIT_CODE_FAILURE);
 		}
 		if (!BaseWrapper.class.isAssignableFrom(clazz)) {
-			logger.error("Requested wrapper class {} is not a subclass of BaseWrapper", clazz.getName());
+			logger.error(MSG_WRAPPER_NOT_SUBCLASS_OF_BASE_WRAPPER, clazz.getName());
 			System.exit(EXIT_CODE_FAILURE);
 		}
 		try {
 			System.exit(((BaseWrapper) clazz.getDeclaredConstructor().newInstance()).run());
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("Requested wrapper class {} cannot be launched (cause: {})", clazz.getName(), e.getMessage());
+			logger.error(MSG_WRAPPER_CANNOT_BE_LAUNCHED, clazz.getName(), e.getMessage());
 			System.exit(EXIT_CODE_FAILURE);
 		}
 	}

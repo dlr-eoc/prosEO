@@ -246,7 +246,7 @@ public class JobOrder {
 	/**
 	 * Read a Job Order  from an XML-formatted string
 	 * @param jobOrderString the XML-formatted Job Order File
-	 * @return a Job Order object
+	 * @return the modified Job Order object or null, if the string cannot be parsed into a Job Order object
 	 */
 	public JobOrder read(String jobOrderString) {
 		if (logger.isTraceEnabled()) logger.trace(">>> read({})", jobOrderString.substring(0, 30) + "...");

@@ -1,6 +1,7 @@
 package de.dlr.proseo.samplewrap;
 
 import de.dlr.proseo.basewrap.BaseWrapper;
+import de.dlr.proseo.basewrap.BaseWrapper.WrapperException;
 import de.dlr.proseo.model.joborder.JobOrder;
 
 /**
@@ -14,8 +15,9 @@ public class SampleWrapper extends BaseWrapper {
 	 * Sample for mission-specific modifications to the job order document before fetching input data
 	 * 
 	 * @param jobOrderDoc the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
-	protected void preFetchInputHook(JobOrder jobOrderDoc) {
+	protected void preFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {
 		// Mission-specific modifications go here ...
 	}
 
@@ -24,8 +26,9 @@ public class SampleWrapper extends BaseWrapper {
 	 * Sample for mission-specific modifications to the job order document after fetching input data
 	 * 
 	 * @param jobOrderDoc the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
-	protected void postFetchInputHook(JobOrder jobOrderDoc) {
+	protected void postFetchInputHook(JobOrder jobOrderDoc) throws WrapperException {
 		// Mission-specific modifications go here ...
 	}
 
@@ -34,9 +37,10 @@ public class SampleWrapper extends BaseWrapper {
 	 * results).
 	 * 
 	 * @param joWork the job order document to modify
+	 * @throws WrapperException if some error occurred which forces wrapper termination
 	 */
 	@Override
-	protected void postProcessingHook(JobOrder joWork) {
+	protected void postProcessingHook(JobOrder joWork) throws WrapperException {
 		// Mission-specific modifications go here ...
 	}
 
