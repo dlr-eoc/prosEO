@@ -25,6 +25,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.ProcessorClass;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
 
@@ -40,6 +44,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 @AutoConfigureTestEntityManager
 public class ConfiguredProcessorRepositoryTest {
 
+	private static final String TEST_PROCESSOR_CLASS = "myproc";
+	private static final String TEST_MISSIONCODE = "ABC123";
 	private static final String TEST_IDENTIFIER = "myConfProc";
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ConfiguredProcessorRepositoryTest.class);
@@ -77,13 +83,31 @@ public class ConfiguredProcessorRepositoryTest {
 	 */
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_MISSIONCODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
+		ProcessorClass pc = new ProcessorClass();
+		pc.setMission(mission);
+		pc.setProcessorName(TEST_PROCESSOR_CLASS);
+		pc = RepositoryService.getProcessorClassRepository().save(pc);
+		mission.getProcessorClasses().add(pc);
+		
+		Processor p = new Processor();
+		p.setProcessorClass(pc);
+		p.setProcessorVersion("1.0");
+		p = RepositoryService.getProcessorRepository().save(p);
+		pc.getProcessors().add(p);
+		
 		ConfiguredProcessor confProc = new ConfiguredProcessor();
 		confProc.setIdentifier(TEST_IDENTIFIER);
 		confProc.setUuid(UUID.randomUUID());
-		RepositoryService.getConfiguredProcessorRepository().save(confProc);
+		confProc.setProcessor(p);
+		confProc = RepositoryService.getConfiguredProcessorRepository().save(confProc);
+		p.getConfiguredProcessors().add(confProc);
 		
 		// Test findByIdentifier
-		confProc = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(TEST_IDENTIFIER);
+		confProc = RepositoryService.getConfiguredProcessorRepository().findByMissionCodeAndIdentifier(TEST_MISSIONCODE, TEST_IDENTIFIER);
 		assertNotNull("Find by identifier failed for ConfiguredProcessor", confProc);
 		
 		logger.info("OK: Test for findByIdentifier completed");

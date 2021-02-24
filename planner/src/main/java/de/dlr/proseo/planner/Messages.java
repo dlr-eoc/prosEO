@@ -50,7 +50,7 @@ public enum Messages {
 	ORDER_ALREADY_CLOSED			(false, MessageType.W, "Processing order '%s' already closed"), 
 	ORDER_COULD_NOT_RETRY			(false, MessageType.E, "Processing order '%s' has to be in state FAILED to retry"), 
 	ORDER_HASTOBE_FINISHED			(false, MessageType.E, "Processing order '%s' has to be finished (completed or failed)"), 
-	ORDER_NOT_EXIST					(false, MessageType.E, "Processing order '%s' does not exist"),
+	ORDER_NOT_EXIST					(false, MessageType.E, "Processing order '%s' does not exist in the current mission"),
 	ORDER_FACILITY_NOT_EXIST		(false, MessageType.E, "Processing order '%s' and processing facility '%s' does not exist"),
 	ORDER_SLICING_TYPE_NOT_SET		(false, MessageType.E, "Processing order '%s' slicing type not set"),
 	ORDER_MISSION_NOT_SET			(false, MessageType.E, "Processing order '%s' mission not set"),
@@ -122,6 +122,9 @@ public enum Messages {
 	CONFIG_PROC_DISABLED            (false, MessageType.W, "Configured processor %s is disabled"), 
 	PLANNING_CHECK_COMPLETE			(true, MessageType.I, "Planning check complete for product with ID %d"),
 	PLANNING_CHECK_FAILED			(false, MessageType.E, "Planning check failed for product with ID %d (cause: %s)"),
+
+	// Same as in other services
+	ILLEGAL_CROSS_MISSION_ACCESS 	(false, MessageType.E, "Illegal cross-mission access to mission %s (logged in to %s)"),
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;

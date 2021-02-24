@@ -301,7 +301,8 @@ public class OrbitControllerImpl implements OrbitController {
 							tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getOrbitNumber().intValue());
 					if (null == updateOrbit) {
 						//Adding spacecraft object to modelOrbit
-						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
+						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
+								.findByMissionAndCode(tomodelOrbit.getMissionCode(), tomodelOrbit.getSpacecraftCode());
 						if (null == spacecraft) {
 							throw new IllegalArgumentException(String.format(
 									MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, tomodelOrbit.getSpacecraftCode()));
@@ -419,7 +420,8 @@ public class OrbitControllerImpl implements OrbitController {
 				Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
 
 				//Adding spacecraft object to modelOrbit
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
+						.findByMissionAndCode(orbit.getMissionCode(), orbit.getSpacecraftCode());
 				if (null == spacecraft) {
 					throw new IllegalArgumentException(String.format(
 							MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));

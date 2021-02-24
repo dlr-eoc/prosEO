@@ -427,7 +427,8 @@ public class ProductClassManager {
 			}
 			
 			for (String configuredProcessor: rule.getApplicableConfiguredProcessors()) {
-				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(productClass.getMissionCode(), configuredProcessor);
 				if (null == modelProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}
@@ -845,7 +846,8 @@ public class ProductClassManager {
 			
 			Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 			for (String configuredProcessorIdentifier: restRuleString.getConfiguredProcessors()) {
-				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessorIdentifier);
+				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(optProductClass.get().getMission().getCode(), configuredProcessorIdentifier);
 				if (null == configuredProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessorIdentifier));
 				}
@@ -1039,7 +1041,8 @@ public class ProductClassManager {
 				// Check for new configured processors
 				Set<ConfiguredProcessor> newConfiguredProcessors = new HashSet<>();
 				for (String changedProcessorName: selectionRuleString.getConfiguredProcessors()) {
-					ConfiguredProcessor changedProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedProcessorName);
+					ConfiguredProcessor changedProcessor = RepositoryService.getConfiguredProcessorRepository()
+							.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), changedProcessorName);
 					if (null == changedProcessor) {
 						throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, changedProcessorName));
 					}
@@ -1187,7 +1190,8 @@ public class ProductClassManager {
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
 			if (modelRule.getId() == id.longValue()) {
 				// Retrieve the processor
-				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), configuredProcessor);
 				if (null == newProcessor) {
 					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}
@@ -1259,7 +1263,8 @@ public class ProductClassManager {
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
 			if (modelRule.getId() == id.longValue()) {
 				// Retrieve the processor
-				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), configuredProcessor);
 				if (null == newProcessor) {
 					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}

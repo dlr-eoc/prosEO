@@ -261,7 +261,8 @@ public class ConfiguredProcessorManager {
 		}
 		
 		// Make sure a configured processor with the same identifier does not yet exist for the mission
-		if (null != RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor.getIdentifier())) {
+		if (null != RepositoryService.getConfiguredProcessorRepository()
+				.findByMissionCodeAndIdentifier(configuredProcessor.getMissionCode(), configuredProcessor.getIdentifier())) {
 			throw new IllegalArgumentException(logError(MSG_DUPLICATE_CONFPROC_ID, MSG_ID_DUPLICATE_CONFPROC_ID,
 					configuredProcessor.getIdentifier()));
 		}

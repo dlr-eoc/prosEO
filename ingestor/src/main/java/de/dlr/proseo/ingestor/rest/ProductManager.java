@@ -417,7 +417,7 @@ public class ProductManager {
 		// Add configured processor, if given
 		if (null != product.getConfiguredProcessor()) {
 			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
-					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+					.findByMissionCodeAndIdentifier(product.getMissionCode(), product.getConfiguredProcessor().getIdentifier());
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
 						product.getConfiguredProcessor().getIdentifier()));
@@ -689,7 +689,7 @@ public class ProductManager {
 		} else if (null == modelProduct.getConfiguredProcessor() 
 				|| !modelProduct.getConfiguredProcessor().getIdentifier().equals(product.getConfiguredProcessor().getIdentifier())) {
 			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
-					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+					.findByMissionCodeAndIdentifier(product.getMissionCode(), product.getConfiguredProcessor().getIdentifier());
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
 						product.getConfiguredProcessor().getIdentifier()));

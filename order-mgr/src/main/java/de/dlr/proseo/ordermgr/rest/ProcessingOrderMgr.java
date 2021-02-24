@@ -114,7 +114,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_INVALID_CONFIGURED_PROCESSOR = "(E%d) Configured processor %s not found";
 	private static final String MSG_INVALID_ORBIT_RANGE = "(E%d) No orbits defined between orbit number %d and %d for spacecraft %s";
 	private static final String MSG_ORDER_IDENTIFIER_MISSING = "(E%d) Order identifier not set";
-	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists";
+	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists within mission %s";
 	private static final String MSG_ORDER_TIME_INTERVAL_MISSING = "(E%d) Time interval (orbit or time range) missing for order %s";
 	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
 	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
@@ -224,8 +224,9 @@ public class ProcessingOrderMgr {
 		if (null == modelOrder.getIdentifier() || modelOrder.getIdentifier().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_ORDER_IDENTIFIER_MISSING, MSG_ID_ORDER_IDENTIFIER_MISSING));
 		}
-		if (null != RepositoryService.getOrderRepository().findByIdentifier(modelOrder.getIdentifier())) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, modelOrder.getIdentifier()));
+		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, 
+					modelOrder.getIdentifier(), order.getMissionCode()));
 		}
 		
 		// Orders must always created in state INITIAL
@@ -341,7 +342,8 @@ public class ProcessingOrderMgr {
 		}		
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
-			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier);
+			ConfiguredProcessor configuredProcessor = 
+					RepositoryService.getConfiguredProcessorRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), identifier);
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
 						identifier));
@@ -785,7 +787,8 @@ public class ProcessingOrderMgr {
 				// New component class
 				orderChanged = true;
 				stateChangeOnly = false;
-				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedConfiguredProcessor);
+				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(order.getMissionCode(), changedConfiguredProcessor);
 				if (null == newConfiguredProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
 							changedConfiguredProcessor));
