@@ -99,7 +99,7 @@ public class JobStep extends PersistentObject {
 		public boolean isLegalTransition(JobStepState other) {
 			switch(this) {
 			case INITIAL:
-				return other.equals(WAITING_INPUT) || other.equals(READY);
+				return other.equals(WAITING_INPUT) || other.equals(READY) || other.equals(FAILED);
 			case COMPLETED:
 				return false; // End state
 			case FAILED:

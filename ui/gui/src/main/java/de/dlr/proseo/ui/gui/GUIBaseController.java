@@ -448,9 +448,11 @@ public class GUIBaseController {
 
     public void checkClearCache() {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
-    	if (auth.isNewLogin()) {
+    	//TODO Handling of threads is not correct! Use ThreadLocal<T> or no caching at all (current workaround)
+    	//if (auth.isNewLogin()) {
+        if (auth.isNewLogin()) {
     		if (logger.isTraceEnabled())
-    			logger.trace("Cache in GUIOrderController cleared");
+    			logger.trace("Cache in GUIBaseController cleared");
     		clearCache();
     		auth.setNewLogin(false);
     	}
