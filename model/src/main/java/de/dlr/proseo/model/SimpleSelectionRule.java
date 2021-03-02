@@ -395,7 +395,7 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Check required coverage
-		return minimumCoverage <= (residualDuration * 100) / initialDuration;
+		return minimumCoverage <= ((initialDuration - residualDuration) * 100) / initialDuration;
 	}
 	
 	/**
