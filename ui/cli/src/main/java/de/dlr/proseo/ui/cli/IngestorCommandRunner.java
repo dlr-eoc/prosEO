@@ -447,7 +447,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
+				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, updatedProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
