@@ -65,23 +65,24 @@ public class BaseWrapper {
 
 	/** Current directory of this program is used as work-dir */
 	private static final Path WORKING_DIR = Paths.get(System.getProperty("user.dir"));
-	/** Current timestamp used for output-file prefixes*/
-	protected static final long WRAPPER_TIMESTAMP = System.currentTimeMillis()/1000;
+	/** 
+	 * Order ID for job order file (according to Generic IPF Interface Specifications, sec. 4.2.2); 
+	 * limited to 31 bits (int), because some IPFs cannot handle larger order IDs (apparently they take the word "integer" literally)
+	 */
+	protected static final int JOB_ORDER_ID = (int) (Math.random() * Integer.MAX_VALUE);
+	/** Current timestamp used for output-file prefixes */
+	@Deprecated
+	protected static final long WRAPPER_TIMESTAMP = JOB_ORDER_ID;
 	/** Auto-created path/filename of JobOrderFile within container (according to Generic IPF Interface Specifications) */
 	protected String CONTAINER_JOF_PATH =
 			WORKING_DIR.toString() +
 			File.separator +
 			"JobOrder." +
-			String.valueOf(WRAPPER_TIMESTAMP) +
+			JOB_ORDER_ID +
 			".xml";
-	protected String REL_CONTAINER_JOF_PATH =
-			WORKING_DIR.toString() +
-			File.separator +
-			"JobOrder." +
-			String.valueOf(WRAPPER_TIMESTAMP) +
-			".xml";
+	protected String REL_CONTAINER_JOF_PATH = CONTAINER_JOF_PATH;
 	/** Directory prefix of produced output data (available for wrapper subclasses) */
-	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(WRAPPER_TIMESTAMP);
+	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(JOB_ORDER_ID);
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -297,7 +298,7 @@ public class BaseWrapper {
 
 		if (envOK) {
 			logger.info(MSG_ENVIRONMENT_CHECK_PASSED);
-			logger.info(MSG_PREFIX_TIMESTAMP_FOR_NAMING, WRAPPER_TIMESTAMP);
+			logger.info(MSG_PREFIX_TIMESTAMP_FOR_NAMING, JOB_ORDER_ID);
 		} else {
 			logger.error(MSG_ENVIRONMENT_CHECK_FAILED);
 			throw new WrapperException();
