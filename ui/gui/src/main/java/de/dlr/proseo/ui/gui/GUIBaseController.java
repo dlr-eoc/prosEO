@@ -50,30 +50,6 @@ public class GUIBaseController {
 	/**
 	 * List with cached data
 	 */
-	private List<String> facilities = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> productclasses = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> configuredProcessors = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> fileClasses = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> processingModes = null;
-	/**
-	 * List with cached data
-	 */
-	private List<String> spaceCrafts = null;
-	/**
-	 * List with cached data
-	 */
 	private List<String> productiontypes = null;
 	/**
 	 * List with cached data
@@ -96,12 +72,12 @@ public class GUIBaseController {
     @ModelAttribute("facilitynames")
     public List<String> facilities() {
     	checkClearCache();
-    	if (facilities != null && !facilities.isEmpty()) return facilities;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getFacilities() != null && !auth.getDataCache().getFacilities().isEmpty()) return auth.getDataCache().getFacilities();
     	
     	logger.trace("Get facilities");
-    	facilities = new ArrayList<String>();   
+    	auth.getDataCache().setFacilities(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(config.getProductionPlanner(),
@@ -120,23 +96,23 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return facilities;
+			return auth.getDataCache().getFacilities();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return facilities;
+			return auth.getDataCache().getFacilities();
 		}
 		
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			for (Object object: resultList) {
 				RestProcessingFacility restFacility = mapper.convertValue(object, RestProcessingFacility.class);
-				facilities.add(restFacility.getName());
+				auth.getDataCache().getFacilities().add(restFacility.getName());
 			}
 		}
 
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		facilities.sort(c);
-        return facilities;
+		auth.getDataCache().getFacilities().sort(c);
+        return auth.getDataCache().getFacilities();
     }
     
     /**
@@ -147,12 +123,12 @@ public class GUIBaseController {
     @ModelAttribute("productclassnames")
     public List<String> productclasses() {
     	checkClearCache();
-    	if (productclasses != null && !productclasses.isEmpty()) return productclasses;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getProductclasses() != null && !auth.getDataCache().getProductclasses().isEmpty()) return auth.getDataCache().getProductclasses();
 
     	logger.trace("Get productclasses");
-    	productclasses = new ArrayList<String>();   
+    	auth.getDataCache().setProductclasses(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
@@ -171,22 +147,22 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return productclasses;
+			return auth.getDataCache().getProductclasses();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return productclasses;
+			return auth.getDataCache().getProductclasses();
 		}
 		
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			for (Object object: resultList) {
 				RestProductClass restProductClass = mapper.convertValue(object, RestProductClass.class);
-				productclasses.add(restProductClass.getProductType());
+				auth.getDataCache().getProductclasses().add(restProductClass.getProductType());
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		productclasses.sort(c);
-        return productclasses;
+		auth.getDataCache().getProductclasses().sort(c);
+        return auth.getDataCache().getProductclasses();
     }
 
     /**
@@ -197,12 +173,12 @@ public class GUIBaseController {
     @ModelAttribute("configuredprocessornames")
     public List<String> configuredProcessors() {
     	checkClearCache();
-    	if (configuredProcessors != null && !configuredProcessors.isEmpty()) return configuredProcessors;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getConfiguredProcessors() != null && !auth.getDataCache().getConfiguredProcessors().isEmpty()) return auth.getDataCache().getConfiguredProcessors();
 
     	logger.trace("Get configuredprocessors");
-    	configuredProcessors = new ArrayList<String>();   
+    	auth.getDataCache().setConfiguredProcessors(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
@@ -221,22 +197,22 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return configuredProcessors;
+			return auth.getDataCache().getConfiguredProcessors();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return configuredProcessors;
+			return auth.getDataCache().getConfiguredProcessors();
 		}
 		
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			for (Object object: resultList) {
 				RestConfiguredProcessor restConfiguredProcessorClass = mapper.convertValue(object, RestConfiguredProcessor.class);
-				configuredProcessors.add(restConfiguredProcessorClass.getIdentifier());
+				auth.getDataCache().getConfiguredProcessors().add(restConfiguredProcessorClass.getIdentifier());
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		configuredProcessors.sort(c);
-        return configuredProcessors;
+		auth.getDataCache().getConfiguredProcessors().sort(c);
+        return auth.getDataCache().getConfiguredProcessors();
     }
     
     /**
@@ -247,12 +223,12 @@ public class GUIBaseController {
     @ModelAttribute("fileclasses")
     public List<String> fileClasses() {
     	checkClearCache();
-    	if (fileClasses != null && !fileClasses.isEmpty()) return fileClasses;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getFileClasses() != null && !auth.getDataCache().getFileClasses().isEmpty()) return auth.getDataCache().getFileClasses();
 
     	logger.trace("Get fileclasses");
-    	fileClasses = new ArrayList<String>();   
+    	auth.getDataCache().setFileClasses(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
@@ -271,22 +247,22 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return fileClasses;
+			return auth.getDataCache().getFileClasses();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return fileClasses;
+			return auth.getDataCache().getFileClasses();
 		}
 		
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			if (resultList.size() == 1) {
 				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
-				fileClasses.addAll(restMission.getFileClasses());
+				auth.getDataCache().getFileClasses().addAll(restMission.getFileClasses());
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		fileClasses.sort(c);
-        return fileClasses;
+		auth.getDataCache().getFileClasses().sort(c);
+        return auth.getDataCache().getFileClasses();
     }
     
     /**
@@ -297,12 +273,12 @@ public class GUIBaseController {
     @ModelAttribute("processingmodes")
     public List<String> processingModes() {
     	checkClearCache();
-    	if (processingModes != null && !processingModes.isEmpty()) return processingModes;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getProcessingModes() != null && !auth.getDataCache().getProcessingModes().isEmpty()) return auth.getDataCache().getProcessingModes();
 
     	logger.trace("Get processingmodes");
-    	processingModes = new ArrayList<String>();   
+    	auth.getDataCache().setProcessingModes(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
@@ -321,22 +297,22 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return processingModes;
+			return auth.getDataCache().getProcessingModes();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return processingModes;
+			return auth.getDataCache().getProcessingModes();
 		}
 		
 		if (resultList != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			if (resultList.size() == 1) {
 				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
-				processingModes.addAll(restMission.getProcessingModes());
+				auth.getDataCache().getProcessingModes().addAll(restMission.getProcessingModes());
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		processingModes.sort(c);
-        return processingModes;
+		auth.getDataCache().getProcessingModes().sort(c);
+        return auth.getDataCache().getProcessingModes();
     }
 
     /**
@@ -347,12 +323,12 @@ public class GUIBaseController {
     @ModelAttribute("spacecrafts")
     public List<String> spaceCrafts() {
     	checkClearCache();
-    	if (spaceCrafts != null && !spaceCrafts.isEmpty()) return spaceCrafts;
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getSpaceCrafts() != null && !auth.getDataCache().getSpaceCrafts().isEmpty()) return auth.getDataCache().getSpaceCrafts();
 
     	logger.trace("Get spacecrafts");
-    	spaceCrafts = new ArrayList<String>();   
+    	auth.getDataCache().setSpaceCrafts(new ArrayList<String>());   
 		List<?> resultList = null;
-		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
@@ -371,10 +347,10 @@ public class GUIBaseController {
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
 			}
 			System.err.println(message);
-			return spaceCrafts;
+			return auth.getDataCache().getSpaceCrafts();
 		} catch (RuntimeException e) {
 			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
-			return spaceCrafts;
+			return auth.getDataCache().getSpaceCrafts();
 		}
 		
 		if (resultList != null) {
@@ -382,13 +358,13 @@ public class GUIBaseController {
 			if (resultList.size() == 1) {
 				RestMission restMission =  mapper.convertValue(resultList.get(0), RestMission.class);
 				for (RestSpacecraft spaceCraft : restMission.getSpacecrafts()) {
-					spaceCrafts.add(spaceCraft.getCode());
+					auth.getDataCache().getSpaceCrafts().add(spaceCraft.getCode());
 				}
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);
-		spaceCrafts.sort(c);
-        return spaceCrafts;
+		auth.getDataCache().getSpaceCrafts().sort(c);
+        return auth.getDataCache().getSpaceCrafts();
     }
 
     /**
@@ -450,7 +426,7 @@ public class GUIBaseController {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	//TODO Handling of threads is not correct! Use ThreadLocal<T> or no caching at all (current workaround)
     	//if (auth.isNewLogin()) {
-        if (true) {
+        if (auth.isNewLogin()) {
     		if (logger.isTraceEnabled())
     			logger.trace("Cache in GUIBaseController cleared");
     		clearCache();
@@ -459,12 +435,8 @@ public class GUIBaseController {
     }
     
 	private void clearCache() {
-		configuredProcessors = null;
-		facilities = null;
-		productclasses = null;
-		spaceCrafts = null;
-		fileClasses = null;
-		processingModes = null;
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		auth.getDataCache().clear();
 	}
     /**
      * @return The mission code of the authenticated user

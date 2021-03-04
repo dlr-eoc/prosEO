@@ -25,7 +25,22 @@ public class GUIAuthenticationToken implements Authentication {
 	private String mission;
 	private boolean isNewLogin = true;
 	private boolean isAuthenticated;
+	
+	private DataCache dataCache = new DataCache();
 
+	/**
+	 * @return the dataCache
+	 */
+	public DataCache getDataCache() {
+		return dataCache;
+	}
+
+	/**
+	 * @param dataCache the dataCache to set
+	 */
+	public void setDataCache(DataCache dataCache) {
+		this.dataCache = dataCache;
+	}
 
 	/**
 	 * @return the isNewLogin
