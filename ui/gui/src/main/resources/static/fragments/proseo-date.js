@@ -1,5 +1,5 @@
 
-
+// Get the pattern to match a date string
 function getDatePattern(type) {
     var pattern = null;
     if (type == 'DAY') {
@@ -18,20 +18,9 @@ function getDatePattern(type) {
     return pattern;
 }
 
-function getDate(dateString) {
-    // Add 'Z' for UTC date
-    var dateNumber = Date.parse(dateString + 'Z');
-    if (isNaN(dateNumber)) {
-        dateNumber = Date.parse(dateString);
-    }
-    if (isNaN(dateNumber)) {
-        return null;        
-    } else {
-        return new Date(dateNumber)
-    }
-}
-
+// Class to hold a date with microseconds
 class ProseoDate {
+  // Create a ProseoDate object by parsing the dateString of type type
   constructor(dateString, type) {
     this.type = type;
     this.dateString = dateString;
@@ -69,12 +58,18 @@ class ProseoDate {
       this.micros = match[1];
     }
   } 
+  
+  // Check for valid date
   isValid() {
     return this.date != null;
   } 
+  
+  // Return a copy of self
   copy() {
     return new ProseoDate(this.dateString, this.type);
   }
+  
+  // Create a copy and add sec seconds to the date
   addSeconds(sec) {
     if (this.isValid()) {
       var copyDate = this.copy();
@@ -84,6 +79,8 @@ class ProseoDate {
       return this;
     }
   }
+  
+  // greather than
   gt(other) {
     if (this.date.getTime() > other.date.getTime()) {
       return true;
@@ -93,6 +90,8 @@ class ProseoDate {
     }
     return false;
   }
+  
+  // less than
   lt(other) {
     if (this.date.getTime() < other.date.getTime()) {
       return true;
@@ -102,6 +101,8 @@ class ProseoDate {
     }
     return false;
   }
+  
+  // equal
   eq(other) {
     if (   (this.date.getTime() == other.date.getTime())
         && (this.micros == other.micros)) {
@@ -109,6 +110,8 @@ class ProseoDate {
     }
     return false;
   }
+  
+  // Return the complete date string "yyyy-mm-ddThh:mm:ss.ssssss"
   toString() {
     if (this.isValid()) {
       var dStr = this.date.toISOString().match(getDatePattern("DAYHOURS"))[0];
@@ -117,17 +120,21 @@ class ProseoDate {
     }
     return "";
   }
+  
+  // Return the date string corresponding to type
   toTypeString() {
     return this.toString().match(getDatePattern(this.type))[0];
   }
+  
+  // Prepare the date for display in edit box
   norm(delta) {
     if (this.isValid()) {
       if (this.type == 'DAY') {
-        var y = this.date.setDate(this.date.getDate() - delta);
+        this.date.setDate(this.date.getDate() - delta);
       } else if (this.type == 'MONTH') {
-        var y = this.date.setMonth(this.date.getMonth() - delta);
+        this.date.setMonth(this.date.getMonth() - delta);
       } else if (this.type == 'YEAR') {
-         var y = this.date.setFullYear(this.date.getFullYear() - delta);
+         this.date.setFullYear(this.date.getFullYear() - delta);
       }
     }
     return this.toTypeString();

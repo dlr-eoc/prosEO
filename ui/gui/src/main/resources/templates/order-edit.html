@@ -1536,6 +1536,7 @@ function addEventHandler() {
     $("input[data-name='orbitNumberFrom']").change(checkOrbitNumberFrom);
     $("input[data-name='orbitNumberTo']").change(checkOrbitNumberTo);
     $('#sliceDurationMeasurement').change(sliceDurationMeasure);
+    $('#sliceDuration').change(sliceDurationChange);
     $('#sliceOverlapMeasurement').change(sliceOverlapMeasure);
     $("input[name='startTime']").change(checkStartTime);
     $("input[name='stopTime']").change(checkStopTime);
@@ -1741,10 +1742,9 @@ function checkStartTime(elem) {
 			  var stop = new ProseoDate(stopElem.val(), type);
 			  if (stop != null) {
 			      if (type == "TIME" || type == "NONE") {
-			    	  var copyStop = stop.addSeconds(duration);
-			    	  if (stop.lt(copyStop) || stop.eq(copyStop)) {
-			    		  copyStop = start.addSeconds(duration);
-			    		  stopElem.val(copyStop.toTypeString());
+			    	  var copyStart = start.addSeconds(duration);
+			    	  if (stop.lt(copyStart) || stop.eq(copyStart)) {
+			    		  stopElem.val(copyStart.toTypeString());
 			    	  } 
 			      } else {
 			    	  if (stop.lt(start)) {
@@ -1757,8 +1757,13 @@ function checkStartTime(elem) {
 		}
 }
 
-function checkStopTime() {
-	  var stopElem = $(this);
+function checkStopTime(elem) {
+    var stopElem = null;
+    if (elem != null && $(elem).is('input')) {
+    	stopElem = $(elem);
+    } else {
+    	stopElem = $(this);
+    }
 	  var type = stopElem.attr('data-type');
 	  if (type == null) return;
 	  var stop = new ProseoDate(stopElem.val(), type);
@@ -1775,10 +1780,9 @@ function checkStopTime() {
         var start = new ProseoDate(startElem.val(), type);
 	      if (start != null) {
             if (type == "TIME" || type == "NONE") {
-	              var copyStart = start.addSeconds(duration);
-	              if (stop.lt(copyStart) || stop.eq(copyStart)) {
-	                  copyStart = stop.addSeconds(duration);
-	                  startElem.val(copyStart.toTypeString());
+	              var copyStop = stop.addSeconds(duration);
+	              if (start.gt(copyStop) || start.eq(copyStop)) {
+	                  startElem.val(copyStop.toTypeString());
 	              } 
 	          } else {
 	              if (stop.lt(start)) {
@@ -1801,8 +1805,13 @@ function durationInSeconds(duration, measure) {
 	  }
 }
 
+function sliceDurationChange() {
+	checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
+}
+
 function sliceDurationMeasure() {
-	  durationMeasure($(this), '#sliceDuration', 'data-oldmeasure', 1);
+    durationMeasure($(this), '#sliceDuration', 'data-oldmeasure', 1);
+    checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
 }
 
 function sliceOverlapMeasure() {
