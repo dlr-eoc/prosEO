@@ -104,9 +104,15 @@
                     <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
-                    <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                    <td><a 
+                       th:if="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:unless="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:text="' ' + ${comp}"></span></td>
                       <td>
                         <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
@@ -122,9 +128,15 @@
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
                     <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                    <td><a th:each="comp : ${ord?.inputProductClasses}" 
+                    <td><a 
+                       th:if="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:unless="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:text="' ' + ${comp}"></span></td>
                     <td>
                       <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
                         <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'" 
@@ -144,9 +156,15 @@
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <td class="tr-rowspan"><span>&nbsp;</span></td>
-                    <td colspan="6"><a th:each="comp : ${ord?.configuredProcessors}" 
+                    <td colspan="6"><a 
+                       th:if="${hasroleconfigurationreader}"
+                       th:each="comp : ${ord?.configuredProcessors}" 
                        class="proseo-list-item"  
-                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
+                       th:unless="${hasroleconfigurationreader}"
+                       th:each="comp : ${ord?.configuredProcessors}" 
+                       class="proseo-list-item"  
+                       th:text="${comp}"></span></td>
                     <td><span>&nbsp;</span></td>
                   </tr>
                 </tbody>
@@ -267,11 +285,23 @@
                               <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
                               <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
-                              <td class="first-row"><a th:href="'/configured-processor-show?cp=' + ${jobstep?.configuredProcessor}"><span th:text="${jobstep?.configuredProcessor}"></span></a></td>
-                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
-                              <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
-                                    class="proseo-list-item"  
-                                    th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a></td>
+                              <td class="first-row"><a 
+                                th:if="${hasroleconfigurationreader}"
+                                th:href="'/configured-processor-show?cp=' + ${jobstep?.configuredProcessor}"><span th:text="${jobstep?.configuredProcessor}"></span></a><span 
+                                th:unless="${hasroleconfigurationreader}"><span th:text="${jobstep?.configuredProcessor}"></span></span></td>
+                              <td class="first-row"><a  
+                                th:if="${hasroleproductreader}"
+                                th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a><span  
+                                th:unless="${hasroleproductreader}"><span th:text="${jobstep?.outputProductClass}"></span></span></td>
+                              <td class="first-row"><a 
+                                th:if="${hasroleproductreader}"
+                                th:each="comp : ${jobstep?.inputProductClasses}" 
+                                class="proseo-list-item"  
+                                th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a><span 
+                                th:unless="${hasroleproductreader}"
+                                th:each="comp : ${jobstep?.inputProductClasses}" 
+                                class="proseo-list-item"  
+                                th:text="' ' + ${comp}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>

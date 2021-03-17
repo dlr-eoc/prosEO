@@ -78,15 +78,26 @@
               <div th:each="processor : ${processors}">
               <tr>
                 <td th:id="${processor?.processorName}" class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}" th:text="${processor?.id}"></td>
-                <td class="first-row"> <a th:href="'/processor-class-show#' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
+                <td class="first-row"> <a 
+                  th:if="${hasroleprocessorreader}"
+                  th:href="'/processor-class-show#' + ${processor?.processorName}" 
+                  th:text="${processor?.processorName}"></a><span 
+                  th:unless="${hasroleprocessorreader}"
+                  th:text="${processor?.processorName}"></span></td>
                 <td th:id="${processor?.processorName} + '-' + ${processor?.processorVersion}" class="first-row" th:text="${processor?.processorVersion}"></td>
                 <td class="first-row" th:text="${processor?.isTest}"></td>
                 <td class="first-row" th:text="${processor?.minDiskSpace}"></td>
                 <td class="first-row" th:text="${processor?.maxTime}"></td>
                 <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
-                <td class="first-row"><a th:each="comp : ${processor?.configuredProcessors}" 
-                       class="proseo-list-item"  
-                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                <td class="first-row"><a 
+                  th:if="${hasroleconfigurationreader}"
+                  th:each="comp : ${processor?.configuredProcessors}" 
+                  class="proseo-list-item"  
+                  th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
+                  th:unless="${hasroleconfigurationreader}"
+                  th:each="comp : ${processor?.configuredProcessors}" 
+                  class="proseo-list-item"  
+                  th:text="${comp}"></span></td>
                 <td class="first-row" th:text="${processor?.dockerImage}"></td>
                 <td class="first-row" th:rowspan="${#lists.size(processor?.tasks) + 1}">
                 <table class="table">

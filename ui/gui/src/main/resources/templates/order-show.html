@@ -132,16 +132,20 @@
                     <!-- 				  table-success  - light green -->
                     <tr th:each="ord : ${orders}"
                       th:id="${ord?.id}">
-                      <td><a th:href="'/order?id=' + ${ord?.id}"
-                          th:text="${ord?.id}"></a></td>
-                      <td><a th:href="'/order?id=' + ${ord?.id}"
-                          th:text="${ord?.identifier}"></a></td>
+                      <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.id}"></a><span th:unless="${hasroleorderreader}"
+                          th:text="${ord?.id}"></span></td>
+                      <td><a th:if="${hasroleorderreader}" th:href="'/order?id=' + ${ord?.id}"
+                          th:text="${ord?.identifier}"></a><span th:unless="${hasroleorderreader}"
+                          th:text="${ord?.identifier}"></span></td>
                       <td th:class="(${ord?.hasFailedJobSteps} == true) ? 'FAILED' : ${ord?.orderState}"
                           th:text="${ord?.orderState}"></td>
                       <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                      <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                      <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:text="' ' + ${comp}"></span></td>
                       <td>
                         <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>

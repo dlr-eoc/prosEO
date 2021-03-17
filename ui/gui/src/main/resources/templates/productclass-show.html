@@ -78,16 +78,22 @@
 										class="cursorpointer first-row no-left-border"
 										th:onclick="'toggleProd(' + ${class?.id} + ')'"></td>
 									<td class="first-row"><a
-										th:href="'/product-show?productClass=' + ${class?.productType}"
-										th:text="${class?.productType}"></a></td>
+                    th:if="${hasroleproductreader}"
+                    th:href="'/product-show?productClass=' + ${class?.productType}"
+                    th:text="${class?.productType}"></a><span
+                    th:unless="${hasroleproductreader}"
+                    th:text="${class?.productType}"></span></td>
 									<td th:text="${class?.processingLevel}" class="first-row"></td>
 									<td th:text="${class?.typeDescription}" class="first-row"></td>
 									<td class="first-row"><a
 										th:href="'#' + ${class?.enclosingClass}"><span
 											th:text="${class?.enclosingClass}"></span></a></td>
 									<td class="first-row"><a
+									  th:if="${hasroleprocessorreader}"
 										th:href="'/processor-class-show?pc=' + ${class?.processorClass}"><span
-											th:text="${class?.processorClass}"></span></a></td>
+											th:text="${class?.processorClass}"></span></a><span
+                      th:unless="${hasroleprocessorreader}"
+                      th:text="${class?.processorClass}"></span></td>
 									<td class="first-row"><textarea
 											th:if="${class?.productFileTemplate} != null"
 											class="mission-template" readonly wrap="soft"
@@ -139,10 +145,15 @@
 																th:if="${i.count} == 2" th:href="'#' + ${word}"><span
 																	class="code" th:text="${word}"></span></a></span></td>
 														<td><a
+														  th:if="${hasroleprocessorreader}"
 															th:each="acp : ${rule?.applicableConfiguredProcessors}"
 															class="proseo-list-item"
 															th:href="'/configured-processor-show?cp=' + ${acp}"
-															th:text="${acp}"></a></td>
+															th:text="${acp}"></a><span
+                              th:unless="${hasroleprocessorreader}"
+                              th:each="acp : ${rule?.applicableConfiguredProcessors}"
+                              class="proseo-list-item"
+                              th:text="${acp}"></span></td>
 													</tr>
 												</tbody>
 											</div>

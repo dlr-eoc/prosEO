@@ -71,6 +71,9 @@ public class GUIBaseController {
      */
     @ModelAttribute("facilitynames")
     public List<String> facilities() {
+    	if (!hasrolefacilityreader()) {
+    		return new ArrayList<String>();
+    	}
     	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	if (auth.getDataCache().getFacilities() != null && !auth.getDataCache().getFacilities().isEmpty()) return auth.getDataCache().getFacilities();
@@ -122,6 +125,9 @@ public class GUIBaseController {
      */
     @ModelAttribute("productclassnames")
     public List<String> productclasses() {
+    	if (!hasroleproductclassreader()) {
+    		return new ArrayList<String>();
+    	}
     	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	if (auth.getDataCache().getProductclasses() != null && !auth.getDataCache().getProductclasses().isEmpty()) return auth.getDataCache().getProductclasses();
@@ -172,6 +178,9 @@ public class GUIBaseController {
      */
     @ModelAttribute("configuredprocessornames")
     public List<String> configuredProcessors() {
+    	if (!hasroleprocessorreader()) {
+    		return new ArrayList<String>();
+    	}
     	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	if (auth.getDataCache().getConfiguredProcessors() != null && !auth.getDataCache().getConfiguredProcessors().isEmpty()) return auth.getDataCache().getConfiguredProcessors();
@@ -272,6 +281,9 @@ public class GUIBaseController {
      */
     @ModelAttribute("processingmodes")
     public List<String> processingModes() {
+    	if (!hasroleorderreader()) {
+    		return new ArrayList<String>();
+    	}
     	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	if (auth.getDataCache().getProcessingModes() != null && !auth.getDataCache().getProcessingModes().isEmpty()) return auth.getDataCache().getProcessingModes();
@@ -322,6 +334,9 @@ public class GUIBaseController {
      */
     @ModelAttribute("spacecrafts")
     public List<String> spaceCrafts() {
+    	if (!hasrolemissionreader()) {
+    		return new ArrayList<String>();
+    	}
     	checkClearCache();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
     	if (auth.getDataCache().getSpaceCrafts() != null && !auth.getDataCache().getSpaceCrafts().isEmpty()) return auth.getDataCache().getSpaceCrafts();
@@ -455,4 +470,171 @@ public class GUIBaseController {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
         return auth.getName();
     }
+    
+    /**
+     * @return The roles of authenticated user
+     */
+    @ModelAttribute("userroles")
+    public List<String> userroles() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles();
+    }
+	
+	/** Read access to missions, spacecrafts and orbits */
+    @ModelAttribute("hasrolemissionreader")
+    public Boolean hasrolemissionreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("MISSION_READER");
+    }
+
+	/** Read and update access to missions, spacecrafts and orbits */
+    @ModelAttribute("hasrolemissionmgr")
+    public Boolean hasrolemissionmgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("MISSION_MGR");
+    }
+	
+	/** Read access to product classes and selection rules */
+    @ModelAttribute("hasroleproductclassreader")
+    public Boolean hasroleproductclassreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCTCLASS_READER");
+    }
+    
+	/** Create, update and delete access to product classes and selection rules */
+    @ModelAttribute("hasroleproductclassmgr")
+    public Boolean hasroleproductclassmgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCTCLASS_MGR");
+    }
+	
+	/** Query and download public products */
+    @ModelAttribute("hasroleproductreader")
+    public Boolean hasroleproductreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCT_READER") | auth.getUserRoles().contains("PRODUCT_READER_ALL")
+        		 | auth.getUserRoles().contains("PRODUCT_READER_RESTRICTED");
+    }
+	
+	/** Query and download public and restricted products */
+    @ModelAttribute("hasroleproductrestrictedreader")
+    public Boolean hasroleproductrestrictedreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCT_READER_RESTRICTED");
+    }
+
+	/** Query and download all products */
+    @ModelAttribute("hasroleproductreaderall")
+    public Boolean hasroleproductreaderall() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCT_READER_ALL");
+    }
+	
+	/** Upload products from external source */
+	// PRODUCT_INGESTOR,
+	
+	/** Upload products from internal source */
+	// PRODUCT_GENERATOR,
+	
+	/** Update and delete products and product files */
+    @ModelAttribute("hasroleprodutcmgr")
+    public Boolean hasroleproductmgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PRODUCT_MGR");
+    }	
+	
+	// Processor management roles
+	
+	/** Read access to processor classes, processors, configurations, configured processors and any sub-objects of them */
+    @ModelAttribute("hasroleprocessorreader")
+    public Boolean hasroleprocessorreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PROCESSOR_READER");
+    }	
+	
+	/** Create, update and delete access to processor classes, processors and tasks */
+    @ModelAttribute("hasroleprocessorclassmgr")
+    public Boolean hasroleprocessorclassmgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PROCESSORCLASS_MGR");
+    }	
+	
+	/** Read access to configurations and configured processors */
+    @ModelAttribute("hasroleconfigurationreader")
+    public Boolean hasroleconfigurationreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("PROCESSOR_READER");
+    }	
+    
+	/** Create, update and delete access to configurations and configured processors */
+    @ModelAttribute("hasroleconfigurationmgr")
+    public Boolean hasroleconfigurationmgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("CONFIGURATION_MGR");
+    }	
+	
+	// Processing facility management roles
+	
+	/** Read access to processing facilities */
+    @ModelAttribute("hasrolefacilityreader")
+    public Boolean hasrolefacilityreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("FACILITY_READER");
+    }	
+	
+	/** Create, update and delete access to processing facilities */
+    @ModelAttribute("hasrolefacilitymgr")
+    public Boolean hasrolefacilitymgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("FACILITY_MGR");
+    }	
+    
+	/** Read access to facility monitoring data */
+    @ModelAttribute("hasrolefacilitymonitor")
+    public Boolean hasrolefacilitymonitor() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("FACILITY_MONITOR");
+    }	
+	
+	/** Read access to processing order, jobs and job steps */
+    @ModelAttribute("hasroleorderreader")
+    public Boolean hasroleorderreader() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("ORDER_READER");
+    }	
+	
+	/** Create, update, close and delete orders */
+    @ModelAttribute("hasroleordermgr")
+    public Boolean hasroleordermgr() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("ORDER_MGR") ;
+    }	
+	
+	/** Approve orders */
+    @ModelAttribute("hasroleorderapprover")
+    public Boolean hasroleorderapprover() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("ORDER_APPROVER");
+    }	
+	
+	/** Plan, release, suspend, cancel and retry orders, jobs and job steps */
+    @ModelAttribute("hasroleorderplanner")
+    public Boolean hasroleorderplanner() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("ORDER_PLANNER");
+    }	
+	
+	/** Read access to order monitoring data */
+    @ModelAttribute("hasroleordermonitor")
+    public Boolean hasroleordermonitor() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("ORDER_MONITOR");
+    }	
+	
+	/** Notify of job step completion */
+    @ModelAttribute("hasrolejobstepprocessor")
+    public Boolean hasrolejobstepprocessor() {
+    	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+        return auth.getUserRoles().contains("JOBSTEP_PROCESSOR");
+    }	
 }

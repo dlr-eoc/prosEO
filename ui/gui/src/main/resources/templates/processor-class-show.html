@@ -60,10 +60,20 @@
 						<tbody th:unless="${procs} == null">
 							<tr th:each="processor : ${procs}">
 								<td th:id="${processor?.processorName}" th:text="${processor?.id}"></td>
-                <td><a th:href="'/processor-show?processorName=' + ${processor?.processorName}" th:text="${processor?.processorName}"></a></td>
-								<td><a th:each="comp : ${processor?.productClasses}" 
-								       class="proseo-list-item"  
-								       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                <td><a 
+                  th:if="${hasroleprocessorreader}"
+                  th:href="'/processor-show?processorName=' + ${processor?.processorName}" 
+                  th:text="${processor?.processorName}"></a><span 
+                  th:unless="${hasroleprocessorreader}"
+                  th:text="${processor?.processorName}"></span></td>
+								<td><a 
+                  th:if="${hasroleproductreader}"
+                  th:each="comp : ${processor?.productClasses}" 
+								  class="proseo-list-item"  
+								  th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                  th:unless="${hasroleproductreader}"
+                  class="proseo-list-item"  
+                  th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></span></td>
 							</tr>
 						</tbody>
 					</table>

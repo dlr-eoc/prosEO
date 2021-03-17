@@ -70,9 +70,24 @@
                 <td class="first-row" th:text="${configuredprocessor?.identifier}"></td>
 <!--                 <td class="first-row"> <a th:href="'/configuredprocessor-class-show#' + ${configuredprocessor?.configuredprocessorName}" th:text="${configuredprocessor?.configuredprocessorName}"></a></td> -->
                 <td class="first-row" th:text="${configuredprocessor?.uuid}"></td>
-                <td class="first-row"><a th:href="'/processor-show#' + ${configuredprocessor?.processorName}" th:text="${configuredprocessor?.processorName}"></a></td>
-                <td class="first-row"><a th:href="'/processor-show#' + ${configuredprocessor?.processorName} + '-' + ${configuredprocessor?.processorVersion}" th:text="${configuredprocessor?.processorVersion}"></a></td>
-                <td class="first-row"><a th:href="'/configuration-show#' + ${configuredprocessor?.configurationVersion}" th:text="${configuredprocessor?.configurationVersion}"></td>
+                <td class="first-row"><a 
+                  th:if="${hasroleprocessorreader}"
+                  th:href="'/processor-show#' + ${configuredprocessor?.processorName}" 
+                  th:text="${configuredprocessor?.processorName}"></a><span 
+                  th:unless="${hasroleprocessorreader}"
+                  th:text="${configuredprocessor?.processorName}"></span></td>
+                <td class="first-row"><a 
+                  th:if="${hasroleprocessorreader}"
+                  th:href="'/processor-show#' + ${configuredprocessor?.processorName} + '-' + ${configuredprocessor?.processorVersion}" 
+                  th:text="${configuredprocessor?.processorVersion}"></a><span 
+                  th:unless="${hasroleprocessorreader}"
+                  th:text="${configuredprocessor?.processorVersion}"></span></td>
+                <td class="first-row"><a 
+                  th:if="${hasroleconfigurationreader}"
+                  th:href="'/configuration-show#' + ${configuredprocessor?.configurationVersion}" 
+                  th:text="${configuredprocessor?.configurationVersion}"></a><span 
+                  th:unless="${hasroleconfigurationreader}"
+                  th:text="${configuredprocessor?.configurationVersion}"></span></td>
                 <td class="first-row" th:text="${configuredprocessor?.enabled}"></td>
               </div>
             </tbody>

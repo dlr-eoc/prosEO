@@ -129,5 +129,10 @@ public class DataCache {
 	
 	public void clear() {
 		productclasses = null;
+		configuredProcessors = null;
+		facilities = null;
+		fileClasses = null;
+		processingModes = null;
+		spaceCrafts = null;
 	}
 }

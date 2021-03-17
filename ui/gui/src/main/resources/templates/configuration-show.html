@@ -73,13 +73,24 @@
               <div th:each="configuration : ${configurations}">
               <tr>
                 <td th:id="${configuration?.id}" th:rowspan="2" class="first-row" th:text="${configuration?.id}"></td>
-                <td class="first-row"> <a th:href="'/processor-class-show?pc=' + ${configuration?.processorName}" th:text="${configuration?.processorName}"></a></td>
+                <td class="first-row"> <a 
+                  th:if="${hasroleprocessorreader}"
+                  th:href="'/processor-class-show?pc=' + ${configuration?.processorName}" 
+                  th:text="${configuration?.processorName}"></a><span 
+                  th:unless="${hasroleprocessorreader}"
+                  th:text="${configuration?.processorName}"></span></td>
                 <td class="first-row" th:text="${configuration?.configurationVersion}"></td>
                 <td class="first-row" th:text="${configuration?.mode}"></td>
                 <td class="first-row" th:text="${configuration?.productQuality}"></td>
-                <td class="first-row"><a th:each="comp : ${configuration?.configuredProcessors}" 
-                       class="proseo-list-item"  
-                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                <td class="first-row"><a 
+                  th:if="${hasroleconfigurationreader}"
+                  th:each="comp : ${configuration?.configuredProcessors}" 
+                  class="proseo-list-item"  
+                  th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
+                  th:unless="${hasroleconfigurationreader}"
+                  th:each="comp : ${configuration?.configuredProcessors}" 
+                  class="proseo-list-item"  
+                  th:text="${comp}"></span></td>
                 <td class="first-row">
                 <table class="table">
                   <tbody>

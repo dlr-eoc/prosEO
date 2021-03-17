@@ -78,9 +78,12 @@
 								<td th:id="${elem?.id}" th:text="${elem?.id}"
 									class="cursorpointer first-row no-left-border"
                   th:onclick="'toggleProd(' + ${elem?.id} + ')'"></td>
-								<td class="first-row"><a
+								<td class="first-row"><a 
+								  th:if="${hasroleproductclassreader}"
 									th:href="'/productclass-show?pc=' + ${elem?.productClass}"
-									th:text="${elem?.productClass}"></a></td>
+									th:text="${elem?.productClass}"></a><span 
+                  th:unless="${hasroleproductclassreader}"
+                  th:text="${elem?.productClass}"></span></td>
 								<td th:text="${elem?.generationTime}" class="first-row"></td>
 								<td th:text="${elem?.mode}" class="first-row"></td>
 								<td th:text="${elem?.sensingStartTime}" class="first-row"></td>
@@ -114,10 +117,13 @@
 										th:text="${elem?.enclosingProductId}"></span></a></td>
 								<td><span th:text="${elem?.orbit?.spacecraftCode}"></span>
 									&ndash; <span th:text="${elem?.orbit?.orbitNumber}"></span></td>
-								<td><a
-									th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
-									th:text="${elem?.configuredProcessor.identifier}"
-									th:if="null != ${elem?.configuredProcessor}"></a></td>
+								<td><span 
+                  th:if="null != ${elem?.configuredProcessor}"><a
+								    th:if="${hasroleprocessorreader}"
+									  th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
+									  th:text="${elem?.configuredProcessor.identifier}"></a><span
+                    th:unless="${hasroleprocessorreader}"
+                    th:text="${elem?.configuredProcessor.identifier}"></span></span></td>
 								<td colspan="2">
 									<table class="table-inline">
 										<tr th:each="comp : ${elem?.parameters}">
@@ -166,8 +172,11 @@
 													<td th:id="${file?.id}" th:text="${file?.id}"
 														class="first-row"></td>
 													<td colspan="2" class="first-row"><a
+													  th:if="${hasrolefacilityreader}"
 														th:href="'/facility-show?f=' + ${file?.processingFacilityName}"
-														th:text="${file?.processingFacilityName}"></a></td>
+														th:text="${file?.processingFacilityName}"></a><span
+                            th:unless="${hasrolefacilityreader}"
+                            th:text="${file?.processingFacilityName}"></span></td>
 													<td th:text="${file?.storageType}" class="first-row"></td>
 													<td colspan="3" th:text="${file?.filePath}"
 														class="first-row"></td>

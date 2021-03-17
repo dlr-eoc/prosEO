@@ -1,5 +1,9 @@
 package de.dlr.proseo.ui.gui;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,13 @@ public class GUIAuthenticationProvider implements AuthenticationProvider {
 				newAuthentication.setDetails(mission);
 				newAuthentication.setNewLogin(true);
 				newAuthentication.setAuthenticated(true);
+				List<String> roles = new ArrayList<String>();
+				for (String role : loginManager.getRoles()) {
+					roles.add(role.replaceFirst("ROLE_", ""));
+				};
+				Comparator<String> c = Comparator.comparing((String x) -> x);
+				roles.sort(c);
+				newAuthentication.setUserRoles(roles);
 				return newAuthentication;
 			} else {
 				logger.error("Login failed for user: " + userName);
