@@ -48,7 +48,13 @@
       <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
       <div class="proseo-top-div"></div>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:unless="${hasrolemissionreader}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5>
+          <br> <span th:text="#{noroleright}"></span> (MISSION_READER)
+        </h5>
+      </main>
+      <main th:if="${hasrolemissionreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
 
         <div id="missioncontent" name="missioncontent">
           <table class="table" id="missionTable" name="missionTable">

@@ -46,7 +46,13 @@
 			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
 			<div class="proseo-top-div"></div>
 
-			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+			<main th:unless="${hasroleproductreader}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5>
+          <br> <span th:text="#{noroleright}"></span> (PRODUCT_READER)
+        </h5>
+      </main>
+      <main th:if="${hasroleproductreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
       <p th:text="${countProducts}"></p>
 			<div id="productcontent" name="productcontent">
 				<table class="table table-hover" id="productTable"
