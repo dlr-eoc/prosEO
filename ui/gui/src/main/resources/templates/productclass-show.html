@@ -169,7 +169,8 @@
 							</tbody>
 						</div>
 						</div>
-              </table>
+          </table>
+          <div th:replace="fragments/navbar.html :: pagenav"></div>
           </div>
           
           <div th:insert="fragments/footer.html :: footer"></div>
@@ -230,46 +231,58 @@
             $(ele).hide();
           }
 	  }
-	  
-    function retrieveData() {
-        showLoader();
+
+	  function retrieveDataPage(from, to) {
+	    retrieveData(from, to);
+	  }
+    function retrieveData(from, to) {
+      showLoader();
       var tableRows = $("productclassTable").rows;
       if (tableRows > 1 && tableRows != null) {
         $("productclassTable > tbody").empty();
       }
-      var url = "/productclass/get"
+      var url = "/productclass/get";
+      var divider = "?";
 
-        $.ajax({
-          url : url,
-          method : "GET",
-          success : function(res) {
-            $("#productclasscontent").html(res);
-            initPlusMinus();
-            feather.replace();  
-            if (!scrollToHash()) {
-              var t = getURLParams('pc'); 
-              for (var i = 0; i < t.length; i++) {
-            	  scrollToElem(t[i]);
-              }
-            }
-            hideLoader();
-          },
-          fail : function(err) {
-              hideLoader();
-            console.log(err);
-            prop.innerHTML = "Fehler!" + err;
-          }
-        });
-    };
-    
-  </script>
+			if (from != null) {
+					url = url + divider + "recordFrom=" + from;
+					divider = "&";
+				}
+				if (to != null) {
+					url = url + divider + "recordTo=" + to;
+					divider = "&";
+				}
+
+				$.ajax({
+					url : url,
+					method : "GET",
+					success : function(res) {
+						$("#productclasscontent").html(res);
+						initPlusMinus();
+						feather.replace();
+						if (!scrollToHash()) {
+							var t = getURLParams('pc');
+							for (var i = 0; i < t.length; i++) {
+								scrollToElem(t[i]);
+							}
+						}
+						hideLoader();
+					},
+					fail : function(err) {
+						hideLoader();
+						console.log(err);
+						prop.innerHTML = "Fehler!" + err;
+					}
+				});
+			};
+		</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();
      var elem = document.getElementById('sb-product-class');
      $(elem).addClass('active');
      feather.replace();
-     retrieveData();
+     retrieveDataPage(0, 15);
      
      // correct scroll due to "sticky" elements
      var handler = function ( ) {

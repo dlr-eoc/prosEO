@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -35,6 +37,8 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductVisibility;
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
@@ -298,7 +302,8 @@ public class ProductClassManager {
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
      */
-	public List<RestProductClass> getRestProductClass(String mission, String productType) throws NoResultException, SecurityException {
+	public List<RestProductClass> getRestProductClass(String mission, String productType, 
+			Long recordFrom, Long recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		if (null == mission) {
@@ -313,15 +318,7 @@ public class ProductClassManager {
 		
 		List<RestProductClass> result = new ArrayList<>();
 		
-		String jpqlQuery = "select pc from ProductClass pc where mission.code = :missionCode";
-		if (null != productType) {
-			jpqlQuery += " and productType = :productType";
-		}
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("missionCode", mission);
-		if (null != productType) {
-			query.setParameter("productType", productType);
-		}
+		Query query = createProductClassesQuery(mission, productType, recordFrom, recordTo, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
 				result.add(ProductClassUtil.toRestProductClass((de.dlr.proseo.model.ProductClass) resultObject));
@@ -336,7 +333,141 @@ public class ProductClassManager {
 		
 		return result;
 	}
+	
+    /**
+     * Count product classes, optionally filtered by mission and/or product type
+     * 
+     * @param mission the mission code
+     * @param productType the prosEO product type
+     * @return a list of product classes conforming to the search criteria
+	 * @throws NoResultException if no product classes matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
+     */
+	public String countProductClasses(String mission, String productType) throws NoResultException, SecurityException {
 
+		if (logger.isTraceEnabled()) logger.trace(">>> countProductClasses({})", mission);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
+		Query query = createProductClassesQuery(mission, productType, null, null, null, true);
+		Object resultObject = query.getSingleResult();
+		if (resultObject instanceof Long) {
+			return ((Long)resultObject).toString();
+		}
+		if (resultObject instanceof String) {
+			return (String) resultObject;
+		}
+		return "0";
+	}
+
+    /**
+     * Count product classes, optionally filtered by mission and/or product type
+     * 
+     * @param mission the mission code
+     * @param productType the prosEO product type
+     * @return a list of product classes conforming to the search criteria
+	 * @throws NoResultException if no product classes matching the given search criteria could be found
+     * @throws SecurityException if a cross-mission data access was attempted
+     */
+    public List<String> getProductClassNames(java.lang.String mission, java.lang.String productType) throws NoResultException, SecurityException {
+
+		if (logger.isTraceEnabled()) logger.trace(">>> countProductClasses({})", mission);
+		
+		if (null == mission) {
+			mission = securityService.getMission();
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+						mission, securityService.getMission()));
+			} 
+		}
+		String jpqlQuery = null;
+		String join = "";
+		jpqlQuery = "select distinct p.productType from ProductClass p " + join + " where p.mission.code = :missionCode";
+
+		if (null != productType) {
+			jpqlQuery += " and productType = :productType";
+		}
+				
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+
+		if (productType != null) {
+			query.setParameter("productType", productType);
+		}
+		ArrayList<String> result = new ArrayList<String>();
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof String) {
+				result.add((String)resultObject);
+			}
+		}
+		if (result.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, MSG_ID_PRODUCT_CLASS_NOT_FOUND_BY_SEARCH, 
+					mission, productType));
+		}
+
+		logInfo(MSG_PRODUCT_CLASS_LIST_RETRIEVED, MSG_ID_PRODUCT_CLASS_LIST_RETRIEVED, mission, productType);
+		
+		return result;
+	}
+
+	/*
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param productType product type string
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return JPQL Query
+	 */
+	private Query createProductClassesQuery(String mission, String productType,
+			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(p) from ProductClass p " + join + " where p.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from ProductClass p " + join + " where p.mission.code = :missionCode";
+		}
+
+		if (null != productType) {
+			jpqlQuery += " and productType = :productType";
+		}
+				
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += "p.";
+				jpqlQuery += orderBy[i];
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		query.setParameter("missionCode", mission);
+
+		if (productType != null) {
+			query.setParameter("productType", productType);
+		}
+
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
+	}
+	
     /**
      * Create a new product class
      * 

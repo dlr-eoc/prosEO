@@ -1,5 +1,10 @@
 package de.dlr.proseo.ui.gui;
 
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,12 +21,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.Builder;
 
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
+import de.dlr.proseo.ui.backend.ServiceConnection;
 import de.dlr.proseo.ui.gui.service.MapComparator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
@@ -35,6 +42,10 @@ public class GUIProductClassController extends GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
+	
+	/** The connector service to the prosEO backend services */
+	@Autowired
+	private ServiceConnection serviceConnection;
 
 	    @RequestMapping(value = "/productclass-show")
 	    public String showProductClass() {
@@ -46,10 +57,29 @@ public class GUIProductClassController extends GUIBaseController {
 		@RequestMapping(value = "/productclass/get")
 		public DeferredResult<String> getProductClasses(
 				@RequestParam(required = false, value = "sortby") String sortby,
-				@RequestParam(required = false, value = "up") Boolean up, Model model) {
+				@RequestParam(required = false, value = "up") Boolean up, 
+				@RequestParam(required = false, value = "recordFrom") Long fromIndex,
+				@RequestParam(required = false, value = "recordTo") Long toIndex, Model model) {
 			if (logger.isTraceEnabled())
-				logger.trace(">>> getProductClasses(model)");
-			Mono<ClientResponse> mono = get();
+				logger.trace(">>> getProductClasses({}, {}, model)", fromIndex, toIndex);
+			Long from = null;
+			Long to = null;
+			if (fromIndex != null && fromIndex >= 0) {
+				from = fromIndex;
+			} else {
+				from = (long) 0;
+			}
+			Long count = countProductClasses();
+			if (toIndex != null && from != null && toIndex > from) {
+				to = toIndex;
+			} else if (from != null) {
+				to = count;
+			}
+			Long pageSize = to - from;
+			Long deltaPage = (long) ((count % pageSize)==0?0:1);
+			Long pages = (count / pageSize) + deltaPage;
+			Long page = (from / pageSize) + 1;
+			Mono<ClientResponse> mono = get(from, to);
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> productclasses = new ArrayList<>();
 			mono.subscribe(clientResponse -> {
@@ -74,6 +104,23 @@ public class GUIProductClassController extends GUIBaseController {
 						sortSelectionRules(productclasses);
 						
 						model.addAttribute("productclasses", productclasses);
+						model.addAttribute("count", count);
+						model.addAttribute("pageSize", pageSize);
+						model.addAttribute("pageCount", pages);
+						model.addAttribute("page", page);
+						List<Long> showPages = new ArrayList<Long>();
+						Long start = Math.max(page - 4, 1);
+						Long end = Math.min(page + 4, pages);
+						if (page < 5) {
+							end = Math.min(end + (5 - page), pages);
+						}
+						if (pages - page < 5) {
+							start = Math.max(start - (4 - (pages - page)), 1);
+						}
+						for (Long i = start; i <= end; i++) {
+							showPages.add(i);
+						}
+						model.addAttribute("showPages", showPages);
 						logger.trace(model.toString() + "MODEL TO STRING");
 						logger.trace(">>>>MONO" + productclasses.toString());
 						deferredResult.setResult("productclass-show :: #productclasscontent");
@@ -90,11 +137,64 @@ public class GUIProductClassController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		private Mono<ClientResponse> get() {
+	    private Long countProductClasses() {
+	    	
+			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+			String mission = auth.getMission();
+			String divider = "?";
+			String uri = "/productclasses/count";
+			if (mission != null && !mission.isEmpty()) {
+				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			Long result = (long) -1;
+			try {
+				String resStr = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
+						uri, String.class, auth.getProseoName(), auth.getPassword());
+
+				if (resStr != null && resStr.length() > 0) {
+					result = Long.valueOf(resStr);
+				}
+			} catch (RestClientResponseException e) {
+				String message = null;
+				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_FOUND:
+					message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+					break;
+				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+				case org.apache.http.HttpStatus.SC_FORBIDDEN:
+					message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+					break;
+				default:
+					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+				}
+				System.err.println(message);
+				return result;
+			} catch (RuntimeException e) {
+				System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				return result;
+			}
+			
+	        return result;
+	    }
+		private Mono<ClientResponse> get(Long from, Long to) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProductClassManagerUrl() + "/productclasses";
-			uri += "?mission=" + mission;
+			String divider = "?";
+			if (mission != null && !mission.isEmpty()) {
+				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			if (from != null) {
+				uri += divider + "recordFrom=" + from;
+				divider ="&";
+			}
+			if (to != null) {
+				uri += divider + "recordTo=" + to;
+				divider ="&";
+			}
+			uri += divider + "orderBy=productType ASC";
 			logger.trace("URI " + uri);
 			Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 					HttpClient.create().followRedirect((req, res) -> {

@@ -138,7 +138,7 @@ public class GUIBaseController {
 		
 		try {
 			resultList = serviceConnection.getFromService(serviceConfig.getProductClassManagerUrl(),
-					"/productclasses?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+					"/productclasses/names?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
@@ -160,10 +160,8 @@ public class GUIBaseController {
 		}
 		
 		if (resultList != null) {
-			ObjectMapper mapper = new ObjectMapper();
 			for (Object object: resultList) {
-				RestProductClass restProductClass = mapper.convertValue(object, RestProductClass.class);
-				auth.getDataCache().getProductclasses().add(restProductClass.getProductType());
+				auth.getDataCache().getProductclasses().add((String)object);
 			}
 		}
 		Comparator<String> c = Comparator.comparing((String x) -> x);

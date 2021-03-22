@@ -289,7 +289,7 @@ public class GUIProductController extends GUIBaseController {
 			uri += "/" + id.toString();
 		} else {
 			String divider = "?";
-			if (productClass != mission && !mission.isEmpty()) {
+			if (mission != null && !mission.isEmpty()) {
 				uri += divider + "mission=" + mission;
 				divider ="&";
 			}
