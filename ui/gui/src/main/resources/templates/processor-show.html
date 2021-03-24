@@ -54,6 +54,10 @@
         </h5>
       </main>
       <main th:if="${hasroleprocessorreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
 
         <div id="processorcontent" name="processorcontent">
           <table class="table" id="processorTable" name="processorTable">
@@ -150,37 +154,39 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-<script type="text/javascript">
-  function retrieveData(processorName) {
-      showLoader();
-    var tableRows = $("processorTable").rows;
-    if(tableRows > 1 && tableRows != null) {
-    $("processorTable > tbody").empty();
-    }
-      var url = "/processor-show/get";      
+<script type="text/javascript" th:inline="javascript">
+    function retrieveData(processorName) {
+        if ([[${hasroleprocessorreader}]]) {
+            showLoader();
+            var tableRows = $("processorTable").rows;
+            if(tableRows > 1 && tableRows != null) {
+                $("processorTable > tbody").empty();
+            }
+            var url = "/processor-show/get";      
 
-      var divider = "?";
-      if (processorName != null) {
-          url = url + divider + "processorName=" + processorName.toString().trim();
-          divider = "&";
-      }
-      
-      $.ajax({
-      url: url,
-      method: "GET",
-      success: function (res) {
-          $("#processorcontent").html(res);
-          scrollToHash();
-          hideLoader();
-      },
-      fail: function (err) {
-          hideLoader();
-          console.log(err);
-          prop.innerHTML = "Fehler!" + err;
-      }
+            var divider = "?";
+            if (processorName != null) {
+                url = url + divider + "processorName=" + processorName.toString().trim();
+                divider = "&";
+            }
+            
+            $.ajax({
+                url: url,
+                method: "GET",
+                success: function (res) {
+                    $("#processorcontent").html(res);
+                    scrollToHash();
+                    hideLoader();
+                },
+                fail: function (err) {
+                    hideLoader();
+                    console.log(err);
+                    prop.innerHTML = "Fehler!" + err;
+                }
 
-  });
-  };
+            });
+        }
+    };
 </script>
 <script>
     window.onload = function () {

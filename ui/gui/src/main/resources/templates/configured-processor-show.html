@@ -54,7 +54,11 @@
           <br> <span th:text="#{noroleright}"></span> (PROCESSOR_READER)
         </h5>
       </main>
-      <main th:if="${hasroleprocessorreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:if="${hasroleprocessorreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">   
+	      <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+	        <h5>
+	          <br> <span th:text="${errormsg}"></span></h5>
+	      </div>
 
         <div id="configuredprocessorcontent" name="configuredprocessorcontent">
           <table class="table" id="configuredprocessorTable" name="configuredprocessorTable">
@@ -121,37 +125,39 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-<script type="text/javascript">
-  function retrieveData(configuredprocessorName) {
-      showLoader();
-    var tableRows = $("configuredprocessorTable").rows;
-    if(tableRows > 1 && tableRows != null) {
-    $("configuredprocessorTable > tbody").empty();
-    }
-      var url = "/configuredprocessor/get";      
+<script type="text/javascript" th:inline="javascript">
+    function retrieveData(configuredprocessorName) {
+        if ([[${hasroleprocessorreader}]]) {
+            showLoader();
+            var tableRows = $("configuredprocessorTable").rows;
+            if(tableRows > 1 && tableRows != null) {
+                $("configuredprocessorTable > tbody").empty();
+            }
+            var url = "/configuredprocessor/get";      
 
-      var divider = "?";
-      if (configuredprocessorName != null) {
-          url = url + divider + "processorName=" + configuredprocessorName.toString().trim();
-          divider = "&";
-      }
-      
-      $.ajax({
-      url: url,
-      method: "GET",
-      success: function (res) {
-          $("#configuredprocessorcontent").html(res);
-          scrollToHash();
-          hideLoader();
-      },
-      fail: function (err) {
-          hideLoader();
-          console.log(err);
-          prop.innerHTML = "Fehler!" + err;
-      }
+            var divider = "?";
+            if (configuredprocessorName != null) {
+                url = url + divider + "processorName=" + configuredprocessorName.toString().trim();
+                divider = "&";
+            }
+            
+            $.ajax({
+                url: url,
+                method: "GET",
+                success: function (res) {
+                    $("#configuredprocessorcontent").html(res);
+                    scrollToHash();
+                    hideLoader();
+                },
+                fail: function (err) {
+                    hideLoader();
+                    console.log(err);
+                    prop.innerHTML = "Fehler!" + err;
+                }
 
-  });
-  };
+            });
+        }
+    };
 </script>
 <script>
     window.onload = function () {

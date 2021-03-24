@@ -135,7 +135,11 @@
 			</main>
 			<main th:if="${hasroleordermonitor}" role="main"
 				class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-				<h5>
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
+				<h5 th:unless="${errormsg != null}">
 					<span th:text="#{lastfailed}"></span> <span th:text="#{jobsteps}"></span>
 				</h5>
 				<div id="failedjs" name="failedjs">
@@ -184,7 +188,7 @@
 					</div>
 				</div>
 
-				<h5>
+				<h5 th:unless="${errormsg != null}">
 					<span th:text="#{lastcompleted}"></span> <span
 						th:text="#{jobsteps}"></span>
 				</h5>
@@ -233,7 +237,7 @@
 						</table>
 					</div>
 				</div>
-				<div class="row">
+				<div th:unless="${errormsg != null}" class="row">
 					<div class="col-md-3">
 						<div class="bg-white rounded-lg p-5 shadow">
 							<h2 class="h6 font-weight-bold text-center mb-4">Completed
@@ -290,62 +294,66 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-  <script type="text/javascript">
-  function getFailedJobSteps(count) {
-      showLoader();
+  <script type="text/javascript" th:inline="javascript">
+    function getFailedJobSteps(count) {
+        if ([[${hasroleordermonitor}]]) {
+            showLoader();
 
-      var url = "/failedjobsteps/get"
-      var divider = "?";
-      
-      if (count != null) {
-        url = url + divider + "latest=" + count.toString().trim();
-        divider = "&";
+            var url = "/failedjobsteps/get"
+            var divider = "?";
+            
+            if (count != null) {
+                url = url + divider + "latest=" + count.toString().trim();
+                divider = "&";
 
-        $.ajax({
-          url : url,
-          method : "GET",
-          success : function(res) {
-            $("#failedjs").html(res);
-            // loader is closed by getCompletedJobSteps 
-            // hideLoader();
-          },
-          fail : function(err) {
-              hideLoader();
-            console.log(err);
-            prop.innerHTML = "Fehler!" + err;
-          }
-        });
-      }
+                $.ajax({
+                    url : url,
+                    method : "GET",
+                    success : function(res) {
+                        $("#failedjs").html(res);
+                        // loader is closed by getCompletedJobSteps 
+                        // hideLoader();
+                    },
+                    fail : function(err) {
+                        hideLoader();
+                        console.log(err);
+                        prop.innerHTML = "Fehler!" + err;
+                    }
+                });
+            }
+        }
     };
-    function getCompletedJobSteps(count) {
+function getCompletedJobSteps(count) {
+    if ([[${hasroleordermonitor}]]) {
         showLoader();
 
         var url = "/completedjobsteps/get"
         var divider = "?";
         
         if (count != null) {
-          url = url + divider + "latest=" + count.toString().trim();
-          divider = "&";
+            url = url + divider + "latest=" + count.toString().trim();
+            divider = "&";
 
-          $.ajax({
-            url : url,
-            method : "GET",
-            success : function(res) {
-              $("#completedjs").html(res);
-              hideLoader();
-            },
-            fail : function(err) {
-                hideLoader();
-              console.log(err);
-              prop.innerHTML = "Fehler!" + err;
-            }
-          });
+            $.ajax({
+                url : url,
+                method : "GET",
+                success : function(res) {
+                    $("#completedjs").html(res);
+                    hideLoader();
+                },
+                fail : function(err) {
+                    hideLoader();
+                    console.log(err);
+                    prop.innerHTML = "Fehler!" + err;
+                }
+            });
         }
-      };
-      function updateJobSteps() {
-    	     getFailedJobSteps(10);
-    	     getCompletedJobSteps(10);
-      }
+    }
+};
+function updateJobSteps() {
+    getFailedJobSteps(10);
+    getCompletedJobSteps(10);
+}
 </script>
 <script>
     window.onload = function () {

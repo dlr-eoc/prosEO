@@ -9,13 +9,18 @@ import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -635,4 +640,19 @@ public class GUIBaseController {
     	GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
         return auth.getUserRoles().contains("JOBSTEP_PROCESSOR");
     }	
+    
+    protected void handleHTTPError(ClientResponse clientResponse, Model model) {
+		if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			model.addAttribute("errormsg", "No elements found");
+		} else if (clientResponse.statusCode().is5xxServerError()) {
+			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			model.addAttribute("errormsg", "Server error " + clientResponse.statusCode().toString() + ": " + clientResponse.statusCode().getReasonPhrase());
+		} else if (clientResponse.statusCode().is4xxClientError()) {
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			model.addAttribute("errormsg", "Client error " + clientResponse.statusCode().toString() + ": " + clientResponse.statusCode().getReasonPhrase());
+		} else {
+			// do nothing
+		}
+    }
 }

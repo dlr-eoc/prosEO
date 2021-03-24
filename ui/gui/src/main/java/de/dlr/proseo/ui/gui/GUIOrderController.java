@@ -142,19 +142,13 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.get(myIdent);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order-show :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order-show :: #orderscontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order-show :: #orderscontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(orderList -> {
 					orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
 					String key = MAPKEY_ID;
@@ -174,9 +168,16 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order-show :: #orderscontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("order-show :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order-show :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + orders.toString());
@@ -256,19 +257,13 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.getId(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order :: #ordercontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order :: #ordercontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
 					orders.add(order);
 					model.addAttribute("orders", orders);
@@ -277,9 +272,16 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order :: #ordercontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("order :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + orders.toString());
@@ -308,19 +310,13 @@ public class GUIOrderController extends GUIBaseController {
 		List<Object> orders = new ArrayList<>();
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order-edit :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order-edit :: #orderedit");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order-edit :: #orderedit");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(order -> {
 					order.put("missionCode", mission);
 					orders.add(order);
@@ -330,9 +326,16 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order-edit :: #orderedit");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("order-edit :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order-edit :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + orders.toString());
@@ -493,18 +496,20 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.getJobsOfOrder(id, from, to);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
+			if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+				// this is no error cause only already planned orders have job steps
+				model.addAttribute("jobs", jobs);
+				model.addAttribute("count", 0);
+				model.addAttribute("pageSize", 0);
+				model.addAttribute("pageCount", 0);
+				model.addAttribute("page", 0);
 				deferredResult.setResult("order :: #jobscontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order :: #jobscontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
 			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(jobList -> {
 					jobs.addAll(jobList);
@@ -537,9 +542,16 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order :: #jobscontent");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("order :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + jobs.toString());
@@ -558,19 +570,13 @@ public class GUIOrderController extends GUIBaseController {
 		Mono<ClientResponse> mono = orderService.getGraphOfJob(id);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> jobs = new ArrayList<>();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order :: #jobscontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order :: #jobscontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(HashMap.class).subscribe(jobgraph -> {
 					jobs.add(jobgraph);
 					model.addAttribute("jobgraph", jobs);
@@ -579,9 +585,16 @@ public class GUIOrderController extends GUIBaseController {
 					deferredResult.setResult("order :: #jobgraph");
 					logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 				});
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("order :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("order :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + jobs.toString());

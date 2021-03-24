@@ -56,6 +56,7 @@ public class GUIProductClassController extends GUIBaseController {
 		@SuppressWarnings("unchecked")
 		@RequestMapping(value = "/productclass/get")
 		public DeferredResult<String> getProductClasses(
+				@RequestParam(required = false, value = "productClass") String productClass,
 				@RequestParam(required = false, value = "sortby") String sortby,
 				@RequestParam(required = false, value = "up") Boolean up, 
 				@RequestParam(required = false, value = "recordFrom") Long fromIndex,
@@ -79,22 +80,16 @@ public class GUIProductClassController extends GUIBaseController {
 			Long deltaPage = (long) ((count % pageSize)==0?0:1);
 			Long pages = (count / pageSize) + deltaPage;
 			Long page = (from / pageSize) + 1;
-			Mono<ClientResponse> mono = get(from, to);
+			Mono<ClientResponse> mono = get(productClass, from, to);
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> productclasses = new ArrayList<>();
-			mono.subscribe(clientResponse -> {
+			mono.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productclass-show :: #errormsg");
+			})
+		 	.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
-				if (clientResponse.statusCode().is5xxServerError()) {
-					logger.trace(">>>Server side error (HTTP status 500)");
-					model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-					deferredResult.setResult("productclass-show :: #productclasscontent");
-					logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is4xxClientError()) {
-					logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					deferredResult.setResult("productclass-show :: #productclasscontent");
-					logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						productclasses.addAll(pcList);
 						
@@ -126,9 +121,16 @@ public class GUIProductClassController extends GUIBaseController {
 						deferredResult.setResult("productclass-show :: #productclasscontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
+				} else {
+					handleHTTPError(clientResponse, model);
+					deferredResult.setResult("productclass-show :: #errormsg");
 				}
 				logger.trace(">>>>MODEL" + model.toString());
 
+			},
+			e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("productclass-show :: #errormsg");
 			});
 			logger.trace(model.toString() + "MODEL TO STRING");
 			logger.trace(">>>>MONO" + productclasses.toString());
@@ -177,13 +179,17 @@ public class GUIProductClassController extends GUIBaseController {
 			
 	        return result;
 	    }
-		private Mono<ClientResponse> get(Long from, Long to) {
+		private Mono<ClientResponse> get(String productType, Long from, Long to) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProductClassManagerUrl() + "/productclasses";
 			String divider = "?";
 			if (mission != null && !mission.isEmpty()) {
 				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			if (productType != null) {
+				uri += divider + "productType=" + productType;
 				divider ="&";
 			}
 			if (from != null) {

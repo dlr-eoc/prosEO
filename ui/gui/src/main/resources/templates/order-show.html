@@ -53,9 +53,13 @@
         </h5>
       </main>
       <main th:if="${hasroleorderreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-          <div class="container-fluid">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
+        <div th:unless="${errormsg != null}" class="container-fluid">
             <p>&nbsp;</p>
-				<form name="ord-shw" id="ord-shw" action="javascript:retrieveData();">
+				<form th:unless="${errormsg != null}" name="ord-shw" id="ord-shw" action="javascript:retrieveData();">
 					<table class="select-table table-borderless">
 						<tbody>
 							<tr>
@@ -103,7 +107,7 @@
 				</form>
 
 			</div>
-          <div>
+          <div th:unless="${errormsg != null}">
             <div class="container-fluid">
               <h5>
                 <span th:text="#{order}"></span>
@@ -210,59 +214,59 @@
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
 <script>
-  var input = document.getElementById("orderid");
-  input.addEventListener("keyup", function(event) {
+    var input = document.getElementById("orderid");
+input.addEventListener("keyup", function(event) {
     if (event.keyCode === 13) {
-      event.preventDefault();
-      document.getElementById("orderselect").click();
+        event.preventDefault();
+        document.getElementById("orderselect").click();
     }
-  });
+});
 </script>
-  <script type="text/javascript">
+  <script type="text/javascript" th:inline="javascript">
 
-			function selectOrder(ele, others) {
-				var elem = $("#" + ele);
-				var sel = "select-down";
-				var newsel = "select-up";
-				var styles = $(elem).attr("class");
-				if (styles != null) {
-					var styless = styles.split(" ");
-					for (i = 0; i < styless.length; i++) {
+function selectOrder(ele, others) {
+		var elem = $("#" + ele);
+		var sel = "select-down";
+		var newsel = "select-up";
+		var styles = $(elem).attr("class");
+		if (styles != null) {
+				var styless = styles.split(" ");
+				for (i = 0; i < styless.length; i++) {
 						var s = styless[i];
 						if (s == "select-up") {
-							sel = "select-up";
-							newsel = "select-down";
-							break;
+							  sel = "select-up";
+							  newsel = "select-down";
+							  break;
 						} else if (s == "select-down") {
-							sel = "select-down";
-							newsel = "select-up";
-							break;
+							  sel = "select-down";
+							  newsel = "select-up";
+							  break;
 						}
-					}
 				}
-				$(elem).removeClass(sel);
-				$(elem).addClass(newsel);
-				for (i = 0; i < others.length; i++) {
-					var e = others[i];
-					var eleidentifier = $("#" + e);
-					$(eleidentifier).removeClass("select-up");
-					$(eleidentifier).removeClass("select-down");
-				}
-				retrieveData();
-			};
+		}
+		$(elem).removeClass(sel);
+		$(elem).addClass(newsel);
+		for (i = 0; i < others.length; i++) {
+				var e = others[i];
+				var eleidentifier = $("#" + e);
+				$(eleidentifier).removeClass("select-up");
+				$(eleidentifier).removeClass("select-down");
+		}
+		retrieveData();
+};
 
 
-			function plan(oId, state) {
-				var dialog = document.getElementById('plan' + oId);
-				var ok = document.getElementById('ok' + oId);
-				var cancel = document.getElementById('cancel' + oId);
-				if (!dialog.hasAttribute('open')) {
-					// show the dialog 
-					var div = document.createElement('div');
-					div.id = 'backdrop';
-					document.body.appendChild(div);
-					dialog.setAttribute('open', 'open');
-					ok.addEventListener('click', function() {
+function plan(oId, state) {
+		var dialog = document.getElementById('plan' + oId);
+		var ok = document.getElementById('ok' + oId);
+		var cancel = document.getElementById('cancel' + oId);
+		if (!dialog.hasAttribute('open')) {
+				// show the dialog 
+				var div = document.createElement('div');
+				div.id = 'backdrop';
+				document.body.appendChild(div);
+				dialog.setAttribute('open', 'open');
+				ok.addEventListener('click', function() {
 						var menu = document.getElementById('facilities' + oId);
 						var facility = menu.options[menu.selectedIndex].value;
 						doPlan(oId, facility);
@@ -270,77 +274,82 @@
 						dialog.removeAttribute('open');
 						var div = document.querySelector('#backdrop');
 						if (div != null) {
-							div.parentNode.removeChild(div);
+							  div.parentNode.removeChild(div);
 						}
-					});
-					cancel.addEventListener('click', function() {
+				});
+				cancel.addEventListener('click', function() {
 						var dialog = document.getElementById('plan' + oId);
 						dialog.removeAttribute('open');
 						var div = document.querySelector('#backdrop');
 						if (div != null) {
-							div.parentNode.removeChild(div);
+							  div.parentNode.removeChild(div);
 						}
-					});
-				}
-			};
-
-			function doPlan(oId, facility) {
-				showLoader();
-				var url = "/order-state/post?id=" + oId
-						+ "&state=PLAN&facility=" + facility;
-				var row = document.getElementById(oId);
-
-				$.ajax({
-					url : url,
-					method : "POST",
-					success : function(res) {
-						hideLoader();
-						retrieveData();
-					},
-					fail : function(err) {
-						hideLoader();
-						console.log(err);
-						prop.innerHTML = "Fehler!" + err;
-					}
 				});
-			};
+		}
+};
 
-			function setState(oId, state) {
-				showLoader();
-				var url = "/order-state/post?id=" + oId + "&state=" + state;
-				var row = document.getElementById(oId);
+function doPlan(oId, facility) {
+    if ([[${hasroleorderreader}]]) {
+		    showLoader();
+		    var url = "/order-state/post?id=" + oId
+				    + "&state=PLAN&facility=" + facility;
+		    var row = document.getElementById(oId);
 
-				var method = 'POST';
-				if (state == 'DELETE') {
-					method = 'DELETE';
-				} else {
-				}
-				$.ajax({
-					url : url,
-					method : method,
-					success : function() {
-						hideLoader();
-						retrieveData();
-					},
-					fail : function(err) {
-						hideLoader();
-						console.log(err);
-						prop.innerHTML = "Fehler!" + err;
-					},
-					complete : function() {
-						hideLoader();
-						if (state == 'DELETE') {
-							retrieveData();
-						}
-					}
-				});
-			};
+		    $.ajax({
+				    url : url,
+				    method : "POST",
+				    success : function(res) {
+						    hideLoader();
+						    retrieveData();
+				    },
+				    fail : function(err) {
+						    hideLoader();
+						    console.log(err);
+						    prop.innerHTML = "Fehler!" + err;
+				    }
+		    });
+    }
+};
 
-			function retrieveData() {
+function setState(oId, state) {
+    if ([[${hasroleorderreader}]]) {
+		    showLoader();
+		    var url = "/order-state/post?id=" + oId + "&state=" + state;
+		    var row = document.getElementById(oId);
+
+		    var method = 'POST';
+		    if (state == 'DELETE') {
+				    method = 'DELETE';
+		    } else {
+		    }
+		    $.ajax({
+				    url : url,
+				    method : method,
+				    success : function() {
+						    hideLoader();
+						    retrieveData();
+				    },
+				    fail : function(err) {
+						    hideLoader();
+						    console.log(err);
+						    prop.innerHTML = "Fehler!" + err;
+				    },
+				    complete : function() {
+						    hideLoader();
+						    if (state == 'DELETE') {
+							      retrieveData();
+						    }
+				    }
+		    });
+    }
+};
+
+function retrieveData() {
+    if ([[${hasroleorderreader}]]) {
 				showLoader();
 				var tableRows = $("orderTable").rows;
 				if (tableRows > 1 && tableRows != null) {
-					$("orderTable > tbody").empty();
+					  $("orderTable > tbody").empty();
 				}
 				var url = "/order-show/get"
 				var divider = "?";
@@ -350,115 +359,115 @@
 				var elem = $("#select-identifier");
 				var styles = $(elem).attr("class");
 				if (styles != null) {
-					var styless = styles.split(" ");
-					for (i = 0; i < styless.length; i++) {
-						var s = styless[i];
-						if (s == "select-up") {
-							done = true;
-							sortcol = "identifier";
-							up = true;
-							break;
-						} else if (s == "select-down") {
-							done = true;
-							sortcol = "identifier";
-							up = false;
-							break;
-						}
-					}
+					  var styless = styles.split(" ");
+					  for (i = 0; i < styless.length; i++) {
+						    var s = styless[i];
+						    if (s == "select-up") {
+							      done = true;
+							      sortcol = "identifier";
+							      up = true;
+							      break;
+						    } else if (s == "select-down") {
+							      done = true;
+							      sortcol = "identifier";
+							      up = false;
+							      break;
+						    }
+					  }
 				}
 				if (!done) {
-					var elem = $("#select-id");
-					styles = $(elem).attr("class");
-					if (styles != null) {
-						var styless = styles.split(" ");
-						for (i = 0; i < styless.length; i++) {
-							var s = styless[i];
-							if (s == "select-up") {
-								done = true;
-								sortcol = "id";
-								up = true;
-								break;
-							} else if (s == "select-down") {
-								done = true;
-								sortcol = "id";
-								up = false;
-								break;
-							}
-						}
-					}
+					  var elem = $("#select-id");
+					  styles = $(elem).attr("class");
+					  if (styles != null) {
+						    var styless = styles.split(" ");
+						    for (i = 0; i < styless.length; i++) {
+							      var s = styless[i];
+							      if (s == "select-up") {
+								        done = true;
+								        sortcol = "id";
+								        up = true;
+								        break;
+							      } else if (s == "select-down") {
+								        done = true;
+								        sortcol = "id";
+								        up = false;
+								        break;
+							      }
+						    }
+					  }
 				}
 				if (!done) {
-					var elem = $("#select-state");
-					styles = $(elem).attr("class");
-					if (styles != null) {
-						var styless = styles.split(" ");
-						for (i = 0; i < styless.length; i++) {
-							var s = styless[i];
-							if (s == "select-up") {
-								done = true;
-								sortcol = "orderState";
-								up = true;
-								break;
-							} else if (s == "select-down") {
-								done = true;
-								sortcol = "orderState";
-								up = false;
-								break;
-							}
-						}
-					}
+					  var elem = $("#select-state");
+					  styles = $(elem).attr("class");
+					  if (styles != null) {
+						    var styless = styles.split(" ");
+						    for (i = 0; i < styless.length; i++) {
+							      var s = styless[i];
+							      if (s == "select-up") {
+								        done = true;
+								        sortcol = "orderState";
+								        up = true;
+								        break;
+							      } else if (s == "select-down") {
+								        done = true;
+								        sortcol = "orderState";
+								        up = false;
+								        break;
+							      }
+						    }
+					  }
 				}
 
-			var ident = document.getElementById('orderid').value;
+			  var ident = document.getElementById('orderid').value;
 				if (ident != null && ident.length > 0) {
-					url = url + divider + "identifier=" + ident.trim();
-					divider = "&";
+					  url = url + divider + "identifier=" + ident.trim();
+					  divider = "&";
 				}
 				// <select>.selectedOptions does not work for IE, loop over options instead
 				var states = document.getElementById('orderstates').options;
 				if (states != null && states.length > 0) {
-					var first = true;
-					for (i = 0; i < states.length; i++) {
-						if (states[i].selected) {
-							if (first) {
-								url = url + divider + "states=";
-								divider = "&";
-								first = false;
-							} else {
-								url = url + ":";
-							}
-							url = url + states[i].value;
-						}
-					}
+					  var first = true;
+					  for (i = 0; i < states.length; i++) {
+						    if (states[i].selected) {
+							      if (first) {
+								        url = url + divider + "states=";
+								        divider = "&";
+								        first = false;
+							      } else {
+								        url = url + ":";
+							      }
+							      url = url + states[i].value;
+						    }
+					  }
 				}
 
 				var from = document.getElementById('fromDate').value;
 				if (from != null && from.length > 0) {
-					url = url + divider + "from=" + from.trim();
-					divider = "&";
+					  url = url + divider + "from=" + from.trim();
+					  divider = "&";
 				}
 				var to = document.getElementById('toDate').value;
 				if (to != null && to.length > 0) {
-					url = url + divider + "to=" + to.trim();
-					divider = "&";
+					  url = url + divider + "to=" + to.trim();
+					  divider = "&";
 				}
 
-			// <select>.selectedOptions does not work for IE, loop over options instead
+			  // <select>.selectedOptions does not work for IE, loop over options instead
 				var products = document.getElementById('products').options;
 				if (products != null && products.length > 0) {
-					var first = true;
-					for (i = 0; i < products.length; i++) {
-						if (products[i].selected) {
-							if (first) {
-								url = url + divider + "products=";
-								divider = "&";
-								first = false;
-							} else {
-								url = url + ":";
-							}
-							url = url + products[i].value;
-						}
-					}
+					  var first = true;
+					  for (i = 0; i < products.length; i++) {
+						    if (products[i].selected) {
+							      if (first) {
+								        url = url + divider + "products=";
+								        divider = "&";
+								        first = false;
+							      } else {
+								        url = url + ":";
+							      }
+							      url = url + products[i].value;
+						    }
+					  }
 				}
 
 				url = url + divider + "sortby=" + sortcol;
@@ -467,38 +476,38 @@
 				divider = "&";
 
 				$.ajax({
-					url : url,
-					method : "GET",
-					success : function(res) {
-						$("#orderscontent").html(res);
-						hideLoader();
-						document.title = "[[#{order}]]" + " | "
-								+ "[[#{proseo}]]";
-					},
-					fail : function(err) {
-						hideLoader();
-						console.log(err);
-						prop.innerHTML = "Fehler!" + err;
-					}
+					  url : url,
+					  method : "GET",
+					  success : function(res) {
+						    $("#orderscontent").html(res);
+						    hideLoader();
+						    document.title = [[#{order}]] + " | " + [[#{proseo}]];
+					  },
+					  fail : function(err) {
+						    hideLoader();
+						    console.log(err);
+						    prop.innerHTML = "Fehler!" + err;
+					  }
 				});
-			};
-		</script>
+		}
+};
+</script>
 <script>
     window.onload = function () {
-     // $('.collapse').collapse();
-     var elem = document.getElementById('sb-order');
-     $(elem).addClass('active');
-     feather.replace();
-     retrieveData();
-     
-     // correct scroll due to "sticky" elements
-     var handler = function ( ) {
-        var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
-    			      + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
-        window.scrollBy(0, h);
-      };
-      window.addEventListener('hashchange', handler);
-     
+        // $('.collapse').collapse();
+        var elem = document.getElementById('sb-order');
+        $(elem).addClass('active');
+        feather.replace();
+        retrieveData();
+        
+        // correct scroll due to "sticky" elements
+        var handler = function ( ) {
+            var h = (document.getElementById('proseo-thead').getBoundingClientRect().height 
+    			           + document.getElementById('proseo-nav').getBoundingClientRect().height) * (-1);
+            window.scrollBy(0, h);
+        };
+        window.addEventListener('hashchange', handler);
+        
     }
 </script>
 

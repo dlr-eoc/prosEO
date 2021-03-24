@@ -53,6 +53,10 @@
         </h5>
       </main>
       <main th:if="${hasroleproductclassreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
           
           <div id="productclasscontent" name="productclasscontent">
               <table class="table table-hover rounded" id="productclassTable">
@@ -80,7 +84,7 @@
 										<div class="prodshow" th:id="'prods' + ${class?.id}">
 											<span data-feather="plus-circle"></span>
 										</div></td>
-									<td th:id="${class?.id}" th:text="${class?.id}"
+									<td th:id="${class?.id}" th:name="${class?.productType}" th:text="${class?.id}"
 										class="cursorpointer first-row no-left-border"
 										th:onclick="'toggleProd(' + ${class?.id} + ')'"></td>
 									<td class="first-row"><a
@@ -92,7 +96,7 @@
 									<td th:text="${class?.processingLevel}" class="first-row"></td>
 									<td th:text="${class?.typeDescription}" class="first-row"></td>
 									<td class="first-row"><a
-										th:href="'#' + ${class?.enclosingClass}"><span
+										th:href="'/productclass-show?pc=' + ${class?.enclosingClass}"><span
 											th:text="${class?.enclosingClass}"></span></a></td>
 									<td class="first-row"><a
 									  th:if="${hasroleprocessorreader}"
@@ -126,7 +130,7 @@
 									<td th:text="${class?.defaultSliceDuration}"></td>
 									<td colspan="2"><a
 										th:each="comp : ${class?.componentClasses}"
-										class="proseo-list-item" th:href="'#' + ${comp}"><span
+										class="proseo-list-item" th:href="'/productclass-show?pc=' + ${comp}"><span
 											th:text="${comp}"></span></a></td>
 									<td colspan="2">
 										<table class="table table-hover  rounded"
@@ -148,7 +152,7 @@
 															th:each="word,i : ${#strings.arraySplit(rule?.ruleString,' ')}"><span
 																th:if="${i.first} == false">&nbsp;</span><span
 																th:if="${i.count} != 2" class="code" th:text="${word}"></span><a
-																th:if="${i.count} == 2" th:href="'#' + ${word}"><span
+																th:if="${i.count} == 2" th:href="'/productclass-show?pc=' + ${word}"><span
 																	class="code" th:text="${word}"></span></a></span></td>
 														<td><a
 														  th:if="${hasroleprocessorreader}"
@@ -195,87 +199,103 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-  <script type="text/javascript">   
-  function toggleProd(id) {
-	    var content = document.getElementById("prodcont" + id);
-	    var eleshow = document.getElementById("prods" + id);
-	    var elehide = document.getElementById("prodh" + id);
-	    $(content).toggleClass("filtercontent");
-	    if ($(content).css("display") === "none") {
-	        $(eleshow).show();
-	        $(elehide).hide();
-	    } else {
-	        $(eleshow).hide();
-	        $(elehide).show();
-	    }
-	  }
-	  function openProd(id) {
+  <script type="text/javascript" th:inline="javascript">   
+    function toggleProd(id) {
 	      var content = document.getElementById("prodcont" + id);
 	      var eleshow = document.getElementById("prods" + id);
 	      var elehide = document.getElementById("prodh" + id);
+	      $(content).toggleClass("filtercontent");
 	      if ($(content).css("display") === "none") {
-	          $(content).toggleClass("filtercontent");
+	          $(eleshow).show();
+	          $(elehide).hide();
+	      } else {
 	          $(eleshow).hide();
 	          $(elehide).show();
 	      }
-	    }
-	  function initPlusMinus() {
-          var x = document.getElementsByClassName('prodshow');
-          for (var i = 0; i < x.length; i++) {
-            var ele = x[i];
-            $(ele).show();
-          } 
-          var y = document.getElementsByClassName('prodhide');
-          for (var i = 0; i < y.length; i++) {
-            var ele = y[i];
-            $(ele).hide();
-          }
 	  }
-
-	  function retrieveDataPage(from, to) {
-	    retrieveData(from, to);
+function openProd(id) {
+	  var content = document.getElementById("prodcont" + id);
+	  var eleshow = document.getElementById("prods" + id);
+	  var elehide = document.getElementById("prodh" + id);
+	  if ($(content).css("display") === "none") {
+	      $(content).toggleClass("filtercontent");
+	      $(eleshow).hide();
+	      $(elehide).show();
 	  }
-    function retrieveData(from, to) {
-      showLoader();
-      var tableRows = $("productclassTable").rows;
-      if (tableRows > 1 && tableRows != null) {
-        $("productclassTable > tbody").empty();
-      }
-      var url = "/productclass/get";
-      var divider = "?";
+}
+function initPlusMinus() {
+    var x = document.getElementsByClassName('prodshow');
+    for (var i = 0; i < x.length; i++) {
+        var ele = x[i];
+        $(ele).show();
+    } 
+    var y = document.getElementsByClassName('prodhide');
+    for (var i = 0; i < y.length; i++) {
+        var ele = y[i];
+        $(ele).hide();
+    }
+}
 
-			if (from != null) {
-					url = url + divider + "recordFrom=" + from;
-					divider = "&";
+function retrieveDataPage(from, to) {
+		var productClass = getURLParam('pc');
+		if (productClass != null) {
+			  from = null;
+			  to = null;
+		}
+	  retrieveData(productClass, from, to);
+}
+function retrieveData(productClass, from, to) {
+    if ([[${hasroleproductclassreader}]]) {
+        showLoader();
+        var tableRows = $("productclassTable").rows;
+        if (tableRows > 1 && tableRows != null) {
+            $("productclassTable > tbody").empty();
+        }
+        var url = "/productclass/get";
+        var divider = "?";
+
+        if (productClass != null) {
+            url = url + divider + "productClass=" + productClass.toString().trim();
+            divider = "&";
+        }
+			  if (from != null) {
+					  url = url + divider + "recordFrom=" + from;
+					  divider = "&";
 				}
 				if (to != null) {
-					url = url + divider + "recordTo=" + to;
-					divider = "&";
+					  url = url + divider + "recordTo=" + to;
+					  divider = "&";
 				}
 
 				$.ajax({
-					url : url,
-					method : "GET",
-					success : function(res) {
-						$("#productclasscontent").html(res);
-						initPlusMinus();
-						feather.replace();
-						if (!scrollToHash()) {
-							var t = getURLParams('pc');
-							for (var i = 0; i < t.length; i++) {
-								scrollToElem(t[i]);
-							}
-						}
-						hideLoader();
-					},
-					fail : function(err) {
-						hideLoader();
-						console.log(err);
-						prop.innerHTML = "Fehler!" + err;
-					}
+					  url : url,
+					  method : "GET",
+					  success : function(res) {
+						    $("#productclasscontent").html(res);
+						    initPlusMinus();
+						    feather.replace();
+			          hideLoader();
+                if (productClass != null) {
+                    scrollToElem(productClass);
+                    var elems = document.getElementsByName(productClass);
+                    var id = null;
+                    if (elems != null && elems.length > 0) {
+                	      id = elems[0].getAttribute("id");
+                	      if (id != null) {
+                            openProd(id);
+                	      }
+                    }
+                }
+					  },
+					  fail : function(err) {
+						    hideLoader();
+						    console.log(err);
+						    prop.innerHTML = "Fehler!" + err;
+					  }
 				});
-			};
-		</script>
+		}
+};
+</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();

@@ -428,6 +428,8 @@ public class ProductClassManager {
 	private Query createProductClassesQuery(String mission, String productType,
 			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
 
+		if (logger.isTraceEnabled()) logger.trace(">>> createProductClassesQuery({}, {}, {}, {}, {}, {})", mission, productType, recordFrom, recordTo, orderBy, count);
+		
 		// Find using search parameters
 		String jpqlQuery = null;
 		String join = "";
@@ -437,7 +439,7 @@ public class ProductClassManager {
 			jpqlQuery = "select p from ProductClass p " + join + " where p.mission.code = :missionCode";
 		}
 
-		if (null != productType) {
+		if (null != productType && !productType.isBlank()) {
 			jpqlQuery += " and productType = :productType";
 		}
 				
@@ -454,7 +456,7 @@ public class ProductClassManager {
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 
-		if (productType != null) {
+		if (productType != null && !productType.isBlank()) {
 			query.setParameter("productType", productType);
 		}
 
