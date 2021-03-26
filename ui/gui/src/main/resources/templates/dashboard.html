@@ -309,15 +309,15 @@
                 $.ajax({
                     url : url,
                     method : "GET",
-                    success : function(res) {
+                    success : function(res, textStatus, jqXHR) {
                         $("#failedjs").html(res);
                         // loader is closed by getCompletedJobSteps 
                         // hideLoader();
                     },
-                    fail : function(err) {
+                    error : function(jqXHR, textStatus, errorThrown) {
                         hideLoader();
-                        console.log(err);
-                        prop.innerHTML = "Fehler!" + err;
+                        console.log(textStatus + errorThrown);
+                        alert("Error: " + errorThrown);
                     }
                 });
             }
@@ -337,14 +337,14 @@ function getCompletedJobSteps(count) {
             $.ajax({
                 url : url,
                 method : "GET",
-                success : function(res) {
+                success : function(res, textStatus, jqXHR) {
                     $("#completedjs").html(res);
                     hideLoader();
                 },
-                fail : function(err) {
+                error : function(jqXHR, textStatus, errorThrown) {
                     hideLoader();
-                    console.log(err);
-                    prop.innerHTML = "Fehler!" + err;
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
                 }
             });
         }

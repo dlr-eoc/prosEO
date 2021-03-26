@@ -1962,7 +1962,7 @@ function retrieveData(id) {
 			      $.ajax({
 						    url : url,
 						    method : "GET",
-						    success : function(res) {
+						    success : function(res, textStatus, jqXHR) {
 							      $("#orderedit").html(res);
 							      var cp = (getURLParam('cp') == 'true');
 							      var on = document.getElementById('identifier');
@@ -2041,7 +2041,7 @@ function retrieveData(id) {
 																        dataType : "json",
 																        cache : false,
 																        timeout : 800000,
-																        success : function(data) {
+																        success : function(data, textStatus, jqXHR) {
 																	          $("#submitButton").prop("disabled", false);
 																	          hideLoader();
 																            
@@ -2084,12 +2084,11 @@ function retrieveData(id) {
 							      $("#submitButton").prop("disabled", false);
 							      hideLoader();
 						    },
-						    fail : function(err) {
-							      console.log(err);
-							      prop.innerHTML = "Fehler!" + err;
-							      $("#submitButton").prop("disabled", false);
-							      hideLoader();
-						    }
+						    error : function(jqXHR, textStatus, errorThrown) {
+                    hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
+                }
 					  });
 		    }
     }

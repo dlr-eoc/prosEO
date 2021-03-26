@@ -482,7 +482,7 @@ function doPlan(oId, facility) {
               error : function(jqXHR, textStatus, errorThrown) {
                   hideLoader();
                   console.log(errorThrown);
-                  alert("Fehler!" + errorThrown);
+                  alert("Error: " + errorThrown);
               }
         });
     }
@@ -520,7 +520,7 @@ function setState(oId, state) {
         error : function(jqXHR, textStatus, errorThrown) {
             hideLoader();
             console.log(errorThrown);
-            alert("Fehler!" + errorThrown);
+            alert("Error: " + errorThrown);
             if (state == 'DELETE') {
                 location.href = location.origin + '/order-show';                  
             }
@@ -545,7 +545,7 @@ function retrieveData(id) {
             $.ajax({
                 url : url,
                 method : "GET",
-                success : function(res) {
+                success : function(res, textStatus, jqXHR) {
                     $("#ordercontent").html(res);
                     var on = document.getElementById('order-name');
                     var br = document.getElementById('breadcrumb-order-name');
@@ -570,10 +570,10 @@ function retrieveData(id) {
                     }
                     retrieveJobs(id, 0, 20, aJob); 
                 },
-                fail : function(err) {
-                    console.log(err);
-                    prop.innerHTML = "Fehler!" + err;
+                error : function(jqXHR, textStatus, errorThrown) {
                     hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
                 }
             });
         }
@@ -615,7 +615,7 @@ function retrieveJobs(id, from, to, aJob) {
             $.ajax({
                 url : url,
                 method : "GET",
-                success : function(res, state, x) {
+                success : function(res, textStatus, jqXHR) {
                     $("#jobscontent").html(res);
                     hideLoader();
                     var eleshow = document.getElementById("jobsshow");
@@ -660,10 +660,10 @@ function retrieveJobs(id, from, to, aJob) {
                         }
                     }
                 },
-                fail : function(err) {
+                error : function(jqXHR, textStatus, errorThrown) {
                     hideLoader();
-                    console.log(err);
-                    prop.innerHTML = "Fehler!" + err;
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
                 }
             });
         }

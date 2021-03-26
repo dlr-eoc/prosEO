@@ -270,7 +270,7 @@ function retrieveData(productClass, from, to) {
 				$.ajax({
 					  url : url,
 					  method : "GET",
-					  success : function(res) {
+					  success : function(res, textStatus, jqXHR) {
 						    $("#productclasscontent").html(res);
 						    initPlusMinus();
 						    feather.replace();
@@ -287,11 +287,11 @@ function retrieveData(productClass, from, to) {
                     }
                 }
 					  },
-					  fail : function(err) {
-						    hideLoader();
-						    console.log(err);
-						    prop.innerHTML = "Fehler!" + err;
-					  }
+					  error : function(jqXHR, textStatus, errorThrown) {
+                hideLoader();
+                console.log(textStatus + errorThrown);
+                alert("Error: " + errorThrown);
+            }
 				});
 		}
 };

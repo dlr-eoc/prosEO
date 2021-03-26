@@ -355,7 +355,7 @@ function retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to, jo
             error : function(jqXHR, textStatus, errorThrown) {
                 hideLoader();
                 console.log(textStatus + errorThrown);
-                alert("Error: " + textStatus);
+                alert("Error: " + errorThrown);
             }
         });
     }

@@ -168,15 +168,15 @@ function retrieveData(id) {
         $.ajax({
             url : url,
             method : "GET",
-            success : function(res) {
+            success : function(res, textStatus, jqXHR) {
                 $("#productfilecontent").html(res);
                 scrollToHash();
                 hideLoader();
             },
-            fail : function(err) {
+            error : function(jqXHR, textStatus, errorThrown) {
                 hideLoader();
-                console.log(err);
-                prop.innerHTML = "Fehler!" + err;
+                console.log(textStatus + errorThrown);
+                alert("Error: " + errorThrown);
             }
         });
     }

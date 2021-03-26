@@ -313,7 +313,7 @@ function doPlan(oId, facility) {
 				    error : function(jqXHR, textStatus, errorThrown) {
 						    hideLoader();
 						    console.log(errorThrown);
-						    alert("Fehler!" + errorThrown);
+						    alert("Error: " + errorThrown);
 				    }
 		    });
     }
@@ -344,7 +344,7 @@ function setState(oId, state) {
               error : function(jqXHR, textStatus, errorThrown) {
                   hideLoader();
                   console.log(errorThrown);
-                  alert("Fehler!" + errorThrown);
+                  alert("Error: " + errorThrown);
               }
 		    });
     }
@@ -484,16 +484,16 @@ function retrieveData() {
 				$.ajax({
 					  url : url,
 					  method : "GET",
-					  success : function(res) {
+					  success : function(res, textStatus, jqXHR) {
 						    $("#orderscontent").html(res);
 						    hideLoader();
 						    document.title = [[#{order}]] + " | " + [[#{proseo}]];
 					  },
 					  error : function(jqXHR, textStatus, errorThrown) {
-						    hideLoader();
-						    console.log(err);
-						    prop.innerHTML = "Fehler!" + err;
-					  }
+                hideLoader();
+                console.log(textStatus + errorThrown);
+                alert("Error: " + errorThrow);
+            }
 				});
 		}
 };
