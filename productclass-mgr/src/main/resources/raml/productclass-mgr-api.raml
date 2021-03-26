@@ -67,6 +67,11 @@ resourceTypes:
     queryParameters:
       mission?: string
       productType?: string
+      recordFrom?: integer
+      recordTo?: integer
+      orderBy?:
+        type: string[]
+        description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
     responses:
       200:
         body:
@@ -85,6 +90,29 @@ resourceTypes:
           application/json:
             type: RestProductClass
             example: !include ../../../../../model/src/main/resources/raml/examples/productclass.json
+  /count:
+    get:
+      description: Number of product classes available
+      displayName: countProductClasses
+      queryParameters:
+        mission?: string
+        productType?: string
+      responses:
+        200:
+          body:
+            text/plain:
+  /names:
+    get:
+      description: List of product class names
+      displayName: getProductClassNames
+      queryParameters:
+        mission?: string
+        productType?: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: string[]
   /{id}:
     uriParameters:
       id:

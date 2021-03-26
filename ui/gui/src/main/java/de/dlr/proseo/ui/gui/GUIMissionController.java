@@ -60,19 +60,13 @@ public class GUIMissionController extends GUIBaseController {
 			Mono<ClientResponse> mono = get();
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> missions = new ArrayList<>();
-			mono.subscribe(clientResponse -> {
+			mono.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("mission-show :: #errormsg");
+			})
+		 	.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
-				if (clientResponse.statusCode().is5xxServerError()) {
-					logger.trace(">>>Server side error (HTTP status 500)");
-					model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-					deferredResult.setResult("mission-show :: #missioncontent");
-					logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is4xxClientError()) {
-					logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					deferredResult.setResult("mission-show :: #missioncontent");
-					logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						missions.addAll(pcList);
 						
@@ -85,9 +79,16 @@ public class GUIMissionController extends GUIBaseController {
 						deferredResult.setResult("mission-show :: #missioncontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
+				} else {
+					handleHTTPError(clientResponse, model);
+					deferredResult.setResult("mission-show :: #errormsg");
 				}
 				logger.trace(">>>>MODEL" + model.toString());
 
+			},
+			e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("mission-show :: #errormsg");
 			});
 			logger.trace(model.toString() + "MODEL TO STRING");
 			logger.trace(">>>>MONO" + missions.toString());

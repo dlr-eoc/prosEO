@@ -123,6 +123,8 @@ public enum Messages {
 	PLANNING_CHECK_COMPLETE			(true, MessageType.I, "Planning check complete for product with ID %d"),
 	PLANNING_CHECK_FAILED			(false, MessageType.E, "Planning check failed for product with ID %d (cause: %s)"),
 	
+	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s is not available cause it is: %s"),
+	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;
 	

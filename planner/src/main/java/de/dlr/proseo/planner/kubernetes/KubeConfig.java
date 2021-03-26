@@ -396,7 +396,7 @@ public class KubeConfig {
 	 */
 	public boolean couldJobRun() {
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED 
-				|| getFacilityState() == FacilityState.STOPPING)
+				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING)
 			// not available for jobs
 			return false;
 		
@@ -407,7 +407,7 @@ public class KubeConfig {
 	 * Synchronize Kubernetes cluster and planner 
 	 */
 	public void sync() {
-		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
+		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED || getFacilityState() == FacilityState.STARTING)
 			// nothing to do
 			return;
 		

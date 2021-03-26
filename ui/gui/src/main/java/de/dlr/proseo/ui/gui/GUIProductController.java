@@ -104,19 +104,13 @@ public class GUIProductController extends GUIBaseController {
 		Long deltaPage = (long) ((count % pageSize)==0?0:1);
 		Long pages = (count / pageSize) + deltaPage;
 		Long page = (from / pageSize) + 1;
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("product-show :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("product-show :: #productcontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("product-show :: #productcontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				if (id != null && id > 0) {
 					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
 						products.add(p);
@@ -159,12 +153,20 @@ public class GUIProductController extends GUIBaseController {
 						if (logger.isTraceEnabled()) logger.trace(model.toString() + "MODEL TO STRING");
 						if (logger.isTraceEnabled()) logger.trace(">>>>MONO" + products.toString());
 						deferredResult.setResult("product-show :: #productcontent");
+						
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
 				}
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("product-show :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("product-show :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + products.toString());
@@ -192,19 +194,13 @@ public class GUIProductController extends GUIBaseController {
 		Mono<ClientResponse> mono = get(id, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> productfiles = new ArrayList<>();
-		mono.subscribe(clientResponse -> {
+		mono.doOnError(e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("productfile-show :: #errormsg");
+		})
+	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("productfile-show :: #productfilecontent");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("productfile-show :: #productfilecontent");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				if (id != null && id > 0) {
 					clientResponse.bodyToMono(HashMap.class).subscribe(p -> {
 						productfiles.addAll((Collection<? extends Object>) p.get("productFile"));
@@ -215,9 +211,16 @@ public class GUIProductController extends GUIBaseController {
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
 				}
+			} else {
+				handleHTTPError(clientResponse, model);
+				deferredResult.setResult("productfile-show :: #errormsg");
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("errormsg", e.getMessage());
+			deferredResult.setResult("productfile-show :: #errormsg");
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MONO" + productfiles.toString());
@@ -289,7 +292,7 @@ public class GUIProductController extends GUIBaseController {
 			uri += "/" + id.toString();
 		} else {
 			String divider = "?";
-			if (productClass != mission && !mission.isEmpty()) {
+			if (mission != null && !mission.isEmpty()) {
 				uri += divider + "mission=" + mission;
 				divider ="&";
 			}

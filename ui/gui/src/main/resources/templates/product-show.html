@@ -46,9 +46,19 @@
 			<div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
 			<div class="proseo-top-div"></div>
 
-			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-      <p th:text="${countProducts}"></p>
+			<main th:unless="${hasroleproductreader}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (PRODUCT_READER) <br>&nbsp;
+        </h5>
+      </main>
+      <main th:if="${hasroleproductreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">      
+      <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+        <h5>
+          <br> <span th:text="${errormsg}"></span></h5>
+      </div>
 			<div id="productcontent" name="productcontent">
+      <p th:text="${errormsg}"></p>
 				<table class="table table-hover" id="productTable"
 					th:if="${products != null and (not #lists.isEmpty(products))}">
 					<thead class="thead-proseo" id="proseo-thead">
@@ -211,7 +221,7 @@
 					</tbody>
 				</table>
         <div th:replace="fragments/navbar.html :: pagenav"></div>
-
+      </div>
 			<div th:insert="fragments/footer.html :: footer"></div>
 			</main>
 		</div>
@@ -234,122 +244,124 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-  <script type="text/javascript"> 
-  function toggleProd(id) {
-    var content = document.getElementById("prodcont" + id);
-    var eleshow = document.getElementById("prods" + id);
-    var elehide = document.getElementById("prodh" + id);
-    $(content).toggleClass("filtercontent");
-    if ($(content).css("display") === "none") {
-        $(eleshow).show();
-        $(elehide).hide();
-    } else {
-        $(eleshow).hide();
-        $(elehide).show();
+  <script type="text/javascript" th:inline="javascript"> 
+    function toggleProd(id) {
+        var content = document.getElementById("prodcont" + id);
+        var eleshow = document.getElementById("prods" + id);
+        var elehide = document.getElementById("prodh" + id);
+        $(content).toggleClass("filtercontent");
+        if ($(content).css("display") === "none") {
+            $(eleshow).show();
+            $(elehide).hide();
+        } else {
+            $(eleshow).hide();
+            $(elehide).show();
+        }
     }
-  }
-  function openProd(id) {
-	    var content = document.getElementById("prodcont" + id);
-	    var eleshow = document.getElementById("prods" + id);
-	    var elehide = document.getElementById("prodh" + id);
-	    if ($(content).css("display") === "none") {
-	        $(content).toggleClass("filtercontent");
-	        $(eleshow).hide();
-	        $(elehide).show();
-	    }
+function openProd(id) {
+	  var content = document.getElementById("prodcont" + id);
+	  var eleshow = document.getElementById("prods" + id);
+	  var elehide = document.getElementById("prodh" + id);
+	  if ($(content).css("display") === "none") {
+	      $(content).toggleClass("filtercontent");
+	      $(eleshow).hide();
+	      $(elehide).show();
 	  }
+}
 
 
-	  function initPlusMinus() {
-          var x = document.getElementsByClassName('prodshow');
-          for (var i = 0; i < x.length; i++) {
-            var ele = x[i];
-            $(ele).show();
-          } 
-          var y = document.getElementsByClassName('prodhide');
-          for (var i = 0; i < y.length; i++) {
-            var ele = y[i];
-            $(ele).hide();
-          }
-	  }
-  
-  function productref(ref) {
+function initPlusMinus() {
+    var x = document.getElementsByClassName('prodshow');
+    for (var i = 0; i < x.length; i++) {
+        var ele = x[i];
+        $(ele).show();
+    } 
+    var y = document.getElementsByClassName('prodhide');
+    for (var i = 0; i < y.length; i++) {
+        var ele = y[i];
+        $(ele).hide();
+    }
+}
+
+function productref(ref) {
 	  var id = getURLParam('id');
 	  var pc = getURLParam('productClass');
-	    if (pc == null && id == null) {
+	  if (pc == null && id == null) {
 		    scrollToElem(ref);
 		    openProd(ref);
- 	    } else {
+ 	  } else {
 		    window.location.href = '/product-show?id=' + ref;
-	    }
-  }
-  
-  function retrieveDataPage(from, to) {
+	  }
+}
+
+function retrieveDataPage(from, to) {
     var productClass = getURLParam('productClass');
     var startTimeFrom = getURLParam('startTimeFrom');
     var startTimeTo = getURLParam('startTimeTo');
     var id = getURLParam('id');
     var jobStepId = getURLParam('jobStep');
     retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to, jobStepId);
-  }
-    function retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to, jobStepId) {
-      showLoader();
-      var tableRows = $("productTable").rows;
-      if (tableRows > 1 && tableRows != null) {
-        $("productTable > tbody").empty();
-      }
-      var url = "/product/get"
-      var divider = "?";
-      if (productClass != null) {
-          url = url + divider + "productClass=" + productClass.toString().trim();
-          divider = "&";
-    }
-      if (startTimeFrom != null) {
-          url = url + divider + "startTimeFrom=" + startTimeFrom.toString().trim();
-          divider = "&";
-    }
-      if (startTimeTo != null) {
-          url = url + divider + "startTimeTo=" + startTimeTo.toString().trim();
-          divider = "&";
-    }
-    if (from != null) {
-          url = url + divider + "recordFrom=" + from;
-          divider = "&";
-    }
-    if (to != null) {
-          url = url + divider + "recordTo=" + to;
-          divider = "&";
-    }
-    if (id != null) {
-        url = url + divider + "id=" + id.toString().trim();
-        divider = "&";
-  }
-    if (jobStepId != null) {
-        url = url + divider + "jobStepId=" + jobStepId.toString().trim();
-        divider = "&";
-  }
+}
+function retrieveData(id, productClass, startTimeFrom, startTimeTo, from, to, jobStepId) {
+    if ([[${hasroleproductreader}]]) {
+	      showLoader();
+	      var tableRows = $("productTable").rows;
+	      if (tableRows > 1 && tableRows != null) {
+	          $("productTable > tbody").empty();
+	      }
+	      var url = "/product/get";
+	      var divider = "?";
+	      if (productClass != null) {
+	          url = url + divider + "productClass=" + productClass.toString().trim();
+	          divider = "&";
+	      }
+	      if (startTimeFrom != null) {
+	          url = url + divider + "startTimeFrom=" + startTimeFrom.toString().trim();
+	          divider = "&";
+	      }
+	      if (startTimeTo != null) {
+	    	    url = url + divider + "startTimeTo=" + startTimeTo.toString().trim();
+	    	    divider = "&";
+		    }
+		    if (from != null) {
+		        url = url + divider + "recordFrom=" + from;
+		        divider = "&";
+		    }
+		    if (to != null) {
+		        url = url + divider + "recordTo=" + to;
+		        divider = "&";
+		    }
+		    if (id != null) {
+		        url = url + divider + "id=" + id.toString().trim();
+		        divider = "&";
+		    }
+		    if (jobStepId != null) {
+		        url = url + divider + "jobStepId=" + jobStepId.toString().trim();
+		        divider = "&";
+		    }
         $.ajax({
-          url : url,
-          method : "GET",
-          success : function(res) {
-            $("#productcontent").html(res);
-            hideLoader();
-            initPlusMinus();
-            feather.replace();  
-            if (id != null) {
-              scrollToElem(id);
-            	openProd(id);
+            url : url,
+            method : "GET",
+            success : function(res, textStatus, jqXHR) {
+                $("#productcontent").html(res);
+                hideLoader();
+                initPlusMinus();
+                feather.replace();  
+                if (id != null) {
+                    scrollToElem(id);
+            	      openProd(id);
+                }
+            },
+            error : function(jqXHR, textStatus, errorThrown) {
+                hideLoader();
+                console.log(textStatus + errorThrown);
+                alert("Error: " + errorThrown);
             }
-          },
-          fail : function(err) {
-            hideLoader();
-            console.log(err);
-            prop.innerHTML = "Fehler!" + err;
-          }
         });
-    };
-        
-  </script>
+    }
+};
+
+</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();

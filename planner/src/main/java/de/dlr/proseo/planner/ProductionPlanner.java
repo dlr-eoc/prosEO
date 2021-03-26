@@ -15,6 +15,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,8 @@ import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.enums.FacilityState;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.JobStepUtil;
@@ -321,5 +326,33 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 		kubeDispatcher = null;
+	}
+	
+	/**
+	 * Check availability processing facility for actions
+	 * 
+	 * @param pf Processing facility 
+	 * @return RestEntity if not available, null otherwise
+	 */
+	public ResponseEntity<?> checkFacility(ProcessingFacility procf) {
+		if (procf == null) {
+			String message = Messages.FACILITY_NOT_EXIST.format("unknown");
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);		
+		} else {
+			ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(procf.getName());
+			if ((pf != null) && (pf.getFacilityState() != FacilityState.RUNNING)) {				
+				String message = Messages.FACILITY_NOT_AVAILABLE.format(pf.getName(), pf.getFacilityState().toString());
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+				if (pf.getFacilityState() == FacilityState.DISABLED) {
+					return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
+				} else {
+					return new ResponseEntity<>(responseHeaders, HttpStatus.SERVICE_UNAVAILABLE);
+				}
+			}
+		}
+		return null;
 	}
 }

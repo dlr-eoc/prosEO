@@ -49,7 +49,17 @@
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
       <div class="proseo-top-div"></div>
 
-        <main id="main" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:unless="${hasroleordermgr}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (ORDER_MGR) <br>&nbsp;
+        </h5>
+      </main>
+      <main th:if="${hasroleordermgr}" id="main" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
 
             <p>&nbsp;</p>
       <div id="orderedit" name="orderedit">
@@ -1148,7 +1158,7 @@
   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
   
-<script type="text/javascript"> 
+<script type="text/javascript" th:inline="javascript"> 
 
 function findElementInListByDataIndex(elems, index) {
     if (elems != null) {
@@ -1646,10 +1656,10 @@ function updateTitle() {
 	  var id = $('#id').val();
     $('#identifier')[0].setCustomValidity('');
 	  if (hasOrder(title, id)) {
-		    $('#identifier')[0].setCustomValidity("[[#{identifierexists}]]");
+		    $('#identifier')[0].setCustomValidity([[#{identifierexists}]]);
 	  } else {
 	      $('#breadcrumb-order-name').text(title);
-	      document.title = title + " | " + "[[#{proseo}]]";
+	      document.title = title + " | " + [[#{proseo}]];
 	  }
 }
 
@@ -1664,8 +1674,8 @@ function checkOrbitNumberFrom() {
 	      from[0].setCustomValidity('');
 	      to[0].setCustomValidity('');
     } else { 
-	      from[0].setCustomValidity("[[#{noorbits}]]");
-	      to[0].setCustomValidity("[[#{noorbits}]]");
+	      from[0].setCustomValidity([[#{noorbits}]]);
+	      to[0].setCustomValidity([[#{noorbits}]]);
     }
 }
 
@@ -1685,8 +1695,8 @@ function checkOrbitNumberTo() {
 		    from[0].setCustomValidity('');
 		    to[0].setCustomValidity('');
 		} else { 
-		    from[0].setCustomValidity("[[#{noorbits}]]");
-		    to[0].setCustomValidity("[[#{noorbits}]]");
+		    from[0].setCustomValidity([[#{noorbits}]]);
+		    to[0].setCustomValidity([[#{noorbits}]]);
 		}
 }
 
@@ -1753,7 +1763,7 @@ function checkStartTime(elem) {
 			      }
 			  }
 		} else {
-        startElem[0].setCustomValidity("[[#{invaliddate}]]");
+        startElem[0].setCustomValidity([[#{invaliddate}]]);
 		}
 }
 
@@ -1791,7 +1801,7 @@ function checkStopTime(elem) {
 	          }
 	      }
 	  } else {
-	    	stopElem[0].setCustomValidity("[[#{invaliddate}]]");
+	    	stopElem[0].setCustomValidity([[#{invaliddate}]]);
 	  }
 }
 
@@ -1806,7 +1816,7 @@ function durationInSeconds(duration, measure) {
 }
 
 function sliceDurationChange() {
-	checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
+	  checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
 }
 
 function sliceDurationMeasure() {
@@ -1867,7 +1877,7 @@ function ckeckParameterKey() {
 	  for (var i = 0; i < keys.length; i++) {
 		    if (key[0] != keys[i] && key.val() == $(keys[i]).val()) {
 			      // duplicate key, show error
-			      key[0].setCustomValidity("[[#{duplicatekey}]]");
+			      key[0].setCustomValidity([[#{duplicatekey}]]);
 			      error = true;
 			      break;
 		    }
@@ -1933,26 +1943,26 @@ function hasOrder(identifier, id) {
 };
 
 function retrieveData(id) {
-		$("#submitButton").prop("disabled", true);
+    if ([[${hasroleordermgr}]]) {
+		    $("#submitButton").prop("disabled", true);
 
-		$('#output').text("");
-		showLoader();
-		var tableRows = $("orderTable").rows;
-		if (tableRows > 1 && tableRows != null) {
-			  $("orderTable > tbody").empty();
-		}
-		var url = "/order-edit/get"
-		var divider = "?";
+		    $('#output').text("");
+		    showLoader();
+		    var tableRows = $("orderTable").rows;
+		    if (tableRows > 1 && tableRows != null) {
+			      $("orderTable > tbody").empty();
+		    }
+		    var url = "/order-edit/get"
+		    var divider = "?";
 
-		if (id != null) {
-			  url = url + divider + "id=" + id.toString().trim();
-			  divider = "&";
+		    if (id != null) {
+			      url = url + divider + "id=" + id.toString().trim();
+			      divider = "&";
 
-			  $
-					  .ajax({
+			      $.ajax({
 						    url : url,
 						    method : "GET",
-						    success : function(res) {
+						    success : function(res, textStatus, jqXHR) {
 							      $("#orderedit").html(res);
 							      var cp = (getURLParam('cp') == 'true');
 							      var on = document.getElementById('identifier');
@@ -2031,7 +2041,7 @@ function retrieveData(id) {
 																        dataType : "json",
 																        cache : false,
 																        timeout : 800000,
-																        success : function(data) {
+																        success : function(data, textStatus, jqXHR) {
 																	          $("#submitButton").prop("disabled", false);
 																	          hideLoader();
 																            
@@ -2074,14 +2084,14 @@ function retrieveData(id) {
 							      $("#submitButton").prop("disabled", false);
 							      hideLoader();
 						    },
-						    fail : function(err) {
-							      console.log(err);
-							      prop.innerHTML = "Fehler!" + err;
-							      $("#submitButton").prop("disabled", false);
-							      hideLoader();
-						    }
+						    error : function(jqXHR, textStatus, errorThrown) {
+                    hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
+                }
 					  });
-		}
+		    }
+    }
 };
 
 function confirm(event) {
