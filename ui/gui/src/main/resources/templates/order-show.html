@@ -48,12 +48,16 @@
 
       <main th:unless="${hasroleorderreader}" role="main"
         class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <h5>
-          <br> <span th:text="#{noroleright}"></span> (ORDER_READER)
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
         </h5>
       </main>
       <main th:if="${hasroleorderreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+        <div th:if="${warnmsg != null}" id="warnmsg" name="warnmsg">
+          <h5>
+            <br> <span th:text="${warnmsg}"></span></h5>
+        </div>
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
           <h5>
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
@@ -289,7 +293,7 @@ function plan(oId, state) {
 };
 
 function doPlan(oId, facility) {
-    if ([[${hasroleorderreader}]]) {
+    if ([[${hasroleorderplanner}]]) {
 		    showLoader();
 		    var url = "/order-state/post?id=" + oId
 				    + "&state=PLAN&facility=" + facility;
@@ -298,14 +302,18 @@ function doPlan(oId, facility) {
 		    $.ajax({
 				    url : url,
 				    method : "POST",
-				    success : function(res) {
-						    hideLoader();
-						    retrieveData();
+				    success : function(res, textStatus, jqXHR) {
+		          hideLoader();
+				    	if (jqXHR.getResponseHeader("warnstatus") != null) {
+				    		  alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+				    	} else {
+						      retrieveData();
+						  }
 				    },
-				    fail : function(err) {
+				    error : function(jqXHR, textStatus, errorThrown) {
 						    hideLoader();
-						    console.log(err);
-						    prop.innerHTML = "Fehler!" + err;
+						    console.log(errorThrown);
+						    alert("Fehler!" + errorThrown);
 				    }
 		    });
     }
@@ -325,21 +333,19 @@ function setState(oId, state) {
 		    $.ajax({
 				    url : url,
 				    method : method,
-				    success : function() {
-						    hideLoader();
-						    retrieveData();
-				    },
-				    fail : function(err) {
-						    hideLoader();
-						    console.log(err);
-						    prop.innerHTML = "Fehler!" + err;
-				    },
-				    complete : function() {
-						    hideLoader();
-						    if (state == 'DELETE') {
-							      retrieveData();
-						    }
-				    }
+            success : function(res, textStatus, jqXHR) {
+                hideLoader();
+                if (jqXHR.getResponseHeader("warnstatus") != null) {
+                    alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                } else {
+                    retrieveData();
+                }
+              },
+              error : function(jqXHR, textStatus, errorThrown) {
+                  hideLoader();
+                  console.log(errorThrown);
+                  alert("Fehler!" + errorThrown);
+              }
 		    });
     }
 };
@@ -483,7 +489,7 @@ function retrieveData() {
 						    hideLoader();
 						    document.title = [[#{order}]] + " | " + [[#{proseo}]];
 					  },
-					  fail : function(err) {
+					  error : function(jqXHR, textStatus, errorThrown) {
 						    hideLoader();
 						    console.log(err);
 						    prop.innerHTML = "Fehler!" + err;

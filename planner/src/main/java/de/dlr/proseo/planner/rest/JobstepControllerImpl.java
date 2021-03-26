@@ -22,6 +22,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.rest.JobstepController;
+import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.planner.Messages;
@@ -135,6 +136,11 @@ public class JobstepControllerImpl implements JobstepController {
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
+			@SuppressWarnings("unchecked")
+			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility()); 
+			if (re != null) {
+				return re;
+			}
 			Messages msg = jobStepUtil.resume(js, true);
 			if (msg.isTrue()) {
 				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
@@ -205,6 +211,11 @@ public class JobstepControllerImpl implements JobstepController {
 	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean force) {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
+			@SuppressWarnings("unchecked")
+			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility()); 
+			if (re != null) {
+				return re;
+			}
 			Messages msg = jobStepUtil.suspend(js, force); 
 			if (msg.isTrue()) {
 				// suspended

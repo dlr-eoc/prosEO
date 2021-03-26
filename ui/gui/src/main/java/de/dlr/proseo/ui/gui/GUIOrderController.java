@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +37,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -200,24 +205,19 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = true, value = MAPKEY_ID) String id, 
 			@RequestParam(required = true, value = "state") String state,
 			@RequestParam(required = false, value = "facility") String facility,
-			Model model) {
+			Model model,
+			HttpServletResponse httpResponse) {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setState({}, {}, model)", id, state, facility);
 		Mono<ClientResponse> mono = orderService.setState(id, state, facility);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
-		mono.timeout(Duration.ofMillis(config.getTimeout())).subscribe(clientResponse -> {
+		mono.timeout(Duration.ofMillis(config.getTimeout())).doOnError(e -> {
+			model.addAttribute("warnmsg", e.getMessage());
+			// deferredResult.setResult("order-show :: #warnmsg");
+			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
+		}).subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is5xxServerError()) {
-				logger.trace(">>>Server side error (HTTP status 500)");
-				model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-				deferredResult.setResult("order-show :: #content");
-				logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is4xxClientError()) {
-				logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-				deferredResult.setResult("order-show :: #content");
-				logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-			} else if (clientResponse.statusCode().is2xxSuccessful()) {
+			if (clientResponse.statusCode().is2xxSuccessful()) {
 				if (clientResponse.statusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
 					deferredResult.setResult("no content");
 				} else {
@@ -225,13 +225,24 @@ public class GUIOrderController extends GUIBaseController {
 						model.addAttribute("ord", orderList);
 						logger.trace(model.toString() + "MODEL TO STRING");
 						logger.trace(">>>>MONO" + orderList.toString());
-						deferredResult.setResult("order-show :: #content");
+						deferredResult.setResult("order-show :: #ordercontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
 				}
+			} else {
+				handleHTTPWarning(clientResponse, model, httpResponse);
+				deferredResult.setResult("order-show :: #warnmsg");
+				clientResponse.bodyToMono(String.class). subscribe(body -> {
+					httpResponse.setHeader("warndesc", body);
+				});
 			}
 			logger.trace(">>>>MODEL" + model.toString());
 
+		},
+		e -> {
+			model.addAttribute("warnmsg", e.getMessage());
+			// deferredResult.setResult("order-show :: #warnmsg");
+			deferredResult.setErrorResult(model.asMap().get("warnmsg"));
 		});
 		logger.trace(model.toString() + "MODEL TO STRING");
 		logger.trace(">>>>MODEL" + model.toString());

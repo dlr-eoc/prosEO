@@ -49,12 +49,12 @@
 
       <main th:unless="${hasroleorderreader}" role="main"
         class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <h5>
-          <br> <span th:text="#{noroleright}"></span> (ORDER_READER)
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
         </h5>
       </main>
       <main th:if="${hasroleorderreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
           <h5>
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
@@ -471,14 +471,19 @@ function doPlan(oId, facility) {
         $.ajax({
             url : url,
             method : "POST",
-            success : function(res) {
+            success : function(res, textStatus, jqXHR) {
                 hideLoader();
-                retrieveData(oId);
-            },
-            fail : function(err) {
-                console.log(err);
-                prop.innerHTML = "Fehler!" + err;
-            }
+                if (jqXHR.getResponseHeader("warnstatus") != null) {
+                    alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                } else {
+                    retrieveData(oId);
+                }
+              },
+              error : function(jqXHR, textStatus, errorThrown) {
+                  hideLoader();
+                  console.log(errorThrown);
+                  alert("Fehler!" + errorThrown);
+              }
         });
     }
 };
@@ -495,24 +500,27 @@ function setState(oId, state) {
     $.ajax({
         url : url,
         method : method,
-        success : function() {
+        success : function(res, textStatus, jqXHR) {
             hideLoader();
-            if (state == 'DELETE') {
-                location.href = location.origin + '/order-show';  
-            } else if (state == 'RESET') {
-                removeURLKey('jsh');
-                removeURLKey('fsh');
-                removeURLKey('jh');
-                retrieveData(oId);
+            if (jqXHR.getResponseHeader("warnstatus") != null) {
+                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
             } else {
-                retrieveData(oId);
+		            if (state == 'DELETE') {
+		                location.href = location.origin + '/order-show';  
+		            } else if (state == 'RESET') {
+		                removeURLKey('jsh');
+		                removeURLKey('fsh');
+		                removeURLKey('jh');
+		                retrieveData(oId);
+		            } else {
+		                retrieveData(oId);
+		            }
             }
         },
-        fail : function(err) {
-            console.log(err);
-            location.href = location.origin + '/order-show';  
-        },
-        complete: function() {
+        error : function(jqXHR, textStatus, errorThrown) {
+            hideLoader();
+            console.log(errorThrown);
+            alert("Fehler!" + errorThrown);
             if (state == 'DELETE') {
                 location.href = location.origin + '/order-show';                  
             }

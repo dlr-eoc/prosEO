@@ -11,6 +11,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -651,6 +654,37 @@ public class GUIBaseController {
 		} else if (clientResponse.statusCode().is4xxClientError()) {
 			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
 			model.addAttribute("errormsg", "Client error " + clientResponse.statusCode().toString() + ": " + clientResponse.statusCode().getReasonPhrase());
+		} else {
+			// do nothing
+		}
+    }
+    
+    protected void handleHTTPWarning(ClientResponse clientResponse, Model model, HttpServletResponse httpResponse) {
+		if (clientResponse.statusCode().is5xxServerError()) {
+			logger.trace(">>>Server error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			model.addAttribute("warnmsg", "Server error " + clientResponse.statusCode().toString() + ": " + clientResponse.statusCode().getReasonPhrase());
+			List<String> descList = clientResponse.headers().header("Warning");
+			String desc = "";
+			for (String d : descList) {
+				desc += d + " ";
+			}
+			model.addAttribute("warndesc", desc);
+			model.addAttribute("warnstatus", clientResponse.statusCode().toString());
+			httpResponse.setHeader("warnstatus", (String) model.asMap().get("warnstatus"));
+			httpResponse.setHeader("warnmsg", (String) model.asMap().get("warnmsg"));
+			httpResponse.setHeader("warndesc", (String) model.asMap().get("warndesc"));
+		} else if (clientResponse.statusCode().is4xxClientError()) {
+			logger.trace(">>>Client error ({}, {})", clientResponse.statusCode(), clientResponse.statusCode().getReasonPhrase());
+			model.addAttribute("warnmsg", "Client error " + clientResponse.statusCode().toString() + ": " + clientResponse.statusCode().getReasonPhrase());
+			List<String> descList = clientResponse.headers().header("Warning");
+			String desc = "";
+			for (String d : descList) {
+				desc += d + " ";
+			}
+			model.addAttribute("warndesc", desc);model.addAttribute("warnstatus", clientResponse.statusCode().toString());
+			httpResponse.setHeader("warnstatus", (String) model.asMap().get("warnstatus"));
+			httpResponse.setHeader("warnmsg", (String) model.asMap().get("warnmsg"));
+			httpResponse.setHeader("warndesc", (String) model.asMap().get("warndesc"));
 		} else {
 			// do nothing
 		}

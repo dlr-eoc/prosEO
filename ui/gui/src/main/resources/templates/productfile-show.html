@@ -48,12 +48,12 @@
 
         <main th:unless="${hasroleproductreader}" role="main"
         class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <h5>
-          <br> <span th:text="#{noroleright}"></span> (PRODUCT_READER)
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (PRODUCT_READER) <br>&nbsp;
         </h5>
       </main>
       <main th:if="${hasroleproductreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-        <div th:if="${errormsg != null}" id="errormsg" name="errormsg">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
           <h5>
             <br> <span th:text="${errormsg}"></span></h5>
         </div>

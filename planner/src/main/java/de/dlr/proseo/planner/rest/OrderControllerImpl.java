@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -203,6 +204,15 @@ public class OrderControllerImpl implements OrderController {
 			if (kc != null) {
 				pf = kc.getProcessingFacility();
 			}
+			if (pf == null) {
+				pf = RepositoryService.getFacilityRepository().findByName(facility);
+			}
+			@SuppressWarnings("unchecked")
+			ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+			if (re != null) {
+				return re;
+			}
+				
 			if (order != null && pf != null) {
 				Messages msg = orderUtil.plan(order, pf);
 				if (msg.isTrue()) {
@@ -271,6 +281,11 @@ public class OrderControllerImpl implements OrderController {
 			Messages msg = orderUtil.resume(order);
 			boolean found = false;
 			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+				@SuppressWarnings("unchecked")
+				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+				if (re != null) {
+					return re;
+				}
 				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
 				if (kc != null) {
 					found = true;
@@ -376,6 +391,13 @@ public class OrderControllerImpl implements OrderController {
 	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
+			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+				@SuppressWarnings("unchecked")
+				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+				if (re != null) {
+					return re;
+				}
+			}
 			Messages msg = orderUtil.suspend(order, force);
 			if (msg.isTrue()) {
 				// canceled
