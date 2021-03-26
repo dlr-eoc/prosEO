@@ -238,8 +238,10 @@ public class ProductIngestor {
 		postData.put("productId", String.valueOf(newProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
 		filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + ingestorProduct.getProductFileName());
-		for (String auxFile: ingestorProduct.getAuxFileNames()) {
-			filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
+		if (null != ingestorProduct.getAuxFileNames()) {
+			for (String auxFile : ingestorProduct.getAuxFileNames()) {
+				filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
+			} 
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
