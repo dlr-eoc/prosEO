@@ -166,6 +166,8 @@ public class IngestControllerImpl implements IngestController {
      * ingested products, should it not have been notified.
      * 
      * @param processingFacility the processing facility to ingest products to
+     * @param copyFiles indicates, whether to copy the files to a different storage area
+     *      (default "true"; only applicable if source and target storage type are the same)
      * @param ingestorProducts a list of product descriptions with product file locations
      * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
@@ -174,7 +176,7 @@ public class IngestControllerImpl implements IngestController {
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts,
+	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, Boolean copyFiles, @Valid List<IngestorProduct> ingestorProducts,
 			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProducts({}, IngestorProduct[{}])", processingFacility, ingestorProducts.size());
 		
@@ -201,7 +203,7 @@ public class IngestControllerImpl implements IngestController {
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
-				RestProduct restProduct = productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]);
+				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
 				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");

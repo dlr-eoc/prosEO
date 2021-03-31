@@ -192,6 +192,12 @@ resourceTypes:
     post:
       description: Ingest all given products into the storage manager of the given processing facility
       displayName: ingestProducts
+      queryParameters:
+        copyFiles?:
+          type: boolean
+          description: |
+            Copy the files to a different storage area
+            (default "true"; only applicable if source and target storage type are the same)
       body:
         application/json:
           type: IngestorProduct[]

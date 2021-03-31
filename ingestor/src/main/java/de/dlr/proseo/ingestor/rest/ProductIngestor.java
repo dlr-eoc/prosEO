@@ -203,6 +203,8 @@ public class ProductIngestor {
      * is null or 0 (zero), then the product will be created, otherwise a matching product will be looked up and updated
      * 
      * @param facility the processing facility to ingest products to
+     * @param copyFiles indicates, whether to copy the files to a different storage area
+     *      (default "true"; only applicable if source and target storage type are the same)
      * @param ingestorProduct a product description with product file locations
      * @param user the username to pass on to the Production Planner
      * @param password the password to pass on to the Production Planner
@@ -211,7 +213,7 @@ public class ProductIngestor {
      * @throws ProcessingException if the communication with the Storage Manager fails
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public RestProduct ingestProduct(ProcessingFacility facility, IngestorProduct ingestorProduct, String user, String password)
+	public RestProduct ingestProduct(ProcessingFacility facility, Boolean copyFiles, IngestorProduct ingestorProduct, String user, String password)
 			throws IllegalArgumentException, ProcessingException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProduct({}, {}, {}, PWD)", facility.getName(), ingestorProduct.getProductClass(), user);
 		
@@ -221,7 +223,16 @@ public class ProductIngestor {
 					ingestorProduct.getMissionCode(), securityService.getMission()));			
 		}
 		
-		// Create a new product in the metadata database
+		// Default is to copy files, if query parameter is not set
+		if (null == copyFiles) {
+			copyFiles = true;
+		}
+		// If the list of auxiliary file names has been set to null, we assume an empty list
+		if (null == ingestorProduct.getAuxFileNames()) {
+			ingestorProduct.setAuxFileNames(new ArrayList<>());
+		}
+		
+		// Create a new product or find an existing product in the metadata database
 		RestProduct newProduct;
 		try {
 			if (null == ingestorProduct.getId() || 0 == ingestorProduct.getId()) {
@@ -233,15 +244,67 @@ public class ProductIngestor {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_INGESTION_FAILED, MSG_ID_PRODUCT_INGESTION_FAILED, e.getMessage()));
 		}
 		
+		// Create product file object in database for the stored files
+		de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
+		newProductFile.setProcessingFacility(facility);
+
+		if (copyFiles || !ingestorProduct.getSourceStorageType().equals(facility.getDefaultStorageType().toString())) {
+			// Ingest product file and auxiliary files to Storage Manager
+			String targetFilePath = ingestToStorageManager(facility, ingestorProduct, newProduct, copyFiles);
+
+			newProductFile.setFilePath(targetFilePath);
+		} else {
+			// No ingestion required, the files will be used as provided
+			newProductFile.setFilePath(ingestorProduct.getFilePath());
+		}
+		
+		newProductFile.setProductFileName(ingestorProduct.getProductFileName());
+		for (String auxFile: ingestorProduct.getAuxFileNames()) {
+			newProductFile.getAuxFileNames().add(auxFile);
+		}
+		try {
+			newProductFile.setStorageType(StorageType.valueOf(facility.getDefaultStorageType().toString()));
+		} catch (Exception e) {
+			newProductFile.setStorageType(StorageType.OTHER);
+		}
+		newProductFile.setFileSize(ingestorProduct.getFileSize());
+		newProductFile.setChecksum(ingestorProduct.getChecksum());
+		newProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(ingestorProduct.getChecksumTime())));
+		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
+		newProductFile.setProduct(newModelProduct);
+		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+		newModelProduct.getProductFile().add(newProductFile);
+		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
+		
+		
+		// Product ingestion successful
+		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
+
+		return ProductUtil.toRestProduct(newModelProduct);
+	}
+
+	/**
+	 * Store the given model product with the location information from the ingestor product at the given processing facility
+	 * 
+	 * @param facility the processing facility to store to
+	 * @param ingestorProduct product description including file paths for upload
+	 * @param modelProduct product model from metadata database
+	 * @param copyFiles indicates, whether to copy the files to a different storage area
+	 * @return path to the ingested product in the processing facility
+	 * @throws ProcessingException if an exception or an error occurred during uploading
+	 * @throws IllegalArgumentException if the result object from the Storage Manager cannot be mapped to the return class
+	 */
+	private String ingestToStorageManager(ProcessingFacility facility, IngestorProduct ingestorProduct,
+			RestProduct modelProduct, Boolean copyFiles) throws ProcessingException, IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> ingestToStorageManager({}, {}, {})", facility.getName(), ingestorProduct.getProductClass(), modelProduct.getId());
+		
 		// Build post data for storage manager
 		Map<String, Object> postData = new HashMap<>();
-		postData.put("productId", String.valueOf(newProduct.getId()));
+		postData.put("productId", String.valueOf(modelProduct.getId()));
 		List<String> filePaths = new ArrayList<>();
 		filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + ingestorProduct.getProductFileName());
-		if (null != ingestorProduct.getAuxFileNames()) {
-			for (String auxFile : ingestorProduct.getAuxFileNames()) {
-				filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
-			} 
+		for (String auxFile : ingestorProduct.getAuxFileNames()) {
+			filePaths.add(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath() + "/" + auxFile);
 		}
 		postData.put("sourceFilePaths", filePaths);
 		postData.put("sourceStorageType", ingestorProduct.getSourceStorageType());
@@ -275,42 +338,18 @@ public class ProductIngestor {
 		// Extract the product file paths from the response
 		ObjectMapper mapper = new ObjectMapper();
 		RestProductFS restProductFs = mapper.convertValue(responseEntity.getBody(), RestProductFS.class);
+
 		List<String> responseFilePaths = restProductFs.getRegisteredFilesList();
 		if (null == responseFilePaths || responseFilePaths.size() != filePaths.size()) {
 			throw new ProcessingException(logError(MSG_UNEXPECTED_NUMBER_OF_FILE_PATHS, MSG_ID_UNEXPECTED_NUMBER_OF_FILE_PATHS,
-					responseFilePaths.size(), filePaths.size(), facility.getName()));
+					(null == responseFilePaths ? 0 : responseFilePaths.size()), filePaths.size(), facility.getName()));
 		}
-		de.dlr.proseo.model.ProductFile newProductFile = new de.dlr.proseo.model.ProductFile();
-		newProductFile.setProcessingFacility(facility);
 		String s = responseFilePaths.get(0);
 		int last = s.lastIndexOf('/');
 		if (last > 0) {
 			s = s.substring(0, last);
 		}
-		newProductFile.setFilePath(s);
-		newProductFile.setProductFileName(ingestorProduct.getProductFileName());
-		for (String auxFile: ingestorProduct.getAuxFileNames()) {
-			newProductFile.getAuxFileNames().add(auxFile);
-		}
-		try {
-			newProductFile.setStorageType(StorageType.valueOf(restProductFs.getTargetStorageType().toString()));
-		} catch (Exception e) {
-			newProductFile.setStorageType(StorageType.OTHER);
-		}
-		newProductFile.setFileSize(ingestorProduct.getFileSize());
-		newProductFile.setChecksum(ingestorProduct.getChecksum());
-		newProductFile.setChecksumTime(Instant.from(OrbitTimeFormatter.parse(ingestorProduct.getChecksumTime())));
-		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
-		newProductFile.setProduct(newModelProduct);
-		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
-		newModelProduct.getProductFile().add(newProductFile);
-		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
-		
-		
-		// Product ingestion successful
-		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
-
-		return ProductUtil.toRestProduct(newModelProduct);
+		return s;
 	}
 
     /**
