@@ -8,6 +8,8 @@ package de.dlr.proseo.ui.cli;
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +112,7 @@ public class JobCommandRunner {
 		try {
 			List<?> resultList = null;
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					URI_PATH_ORDERS + "?identifier=" + orderIdentifier,
+					URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(orderIdentifier, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
