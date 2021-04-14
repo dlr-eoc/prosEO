@@ -133,8 +133,14 @@ public class ProductQueryServiceTest {
 		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		ProductFile testProductFile = new ProductFile();
 		testProductFile.setProcessingFacility(facility);
+		testProductFile.setProduct(testProduct);
+		testProductFile = RepositoryService.getProductFileRepository().save(testProductFile);
+		
+		logger.info("Created test product file {} with processing facility = {} and product = {}", testProductFile.getId(), testProductFile.getProcessingFacility().getName(), testProductFile.getProduct().getId());
+
 		testProduct.getProductFile().add(testProductFile);
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		

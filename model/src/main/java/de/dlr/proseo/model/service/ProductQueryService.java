@@ -34,6 +34,10 @@ import de.dlr.proseo.model.util.SelectionItem;
 @Service
 public class ProductQueryService {
 	
+	private static final String FACILITY_QUERY_SQL = ":facility_id IN (SELECT pf.processing_facility_id FROM product_file pf WHERE pf.product_id = p.id)";
+
+	private static final String FACILITY_QUERY_JPQL = "exists (select pf from ProductFile pf where pf.product = p and pf.processingFacility = :facility)";
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -79,20 +83,25 @@ public class ProductQueryService {
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
+
+		// Determine the requested processing facility
+		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
 		
 		// Execute the query
 		List<Product> products = null;
 		if (useNativeSQL) {
-			String sqlQuery = productQuery.getSqlQueryCondition();
+			String sqlQuery = productQuery.getSqlQueryCondition() + " AND " + FACILITY_QUERY_SQL;
 			if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
 			Query query = em.createNativeQuery(sqlQuery, Product.class);
+			query.setParameter("facility_id", facility.getId());
 			@SuppressWarnings("unchecked")
 			List<Product> uncheckedProducts = (List<Product>) query.getResultList(); // Only to restrict scope of @SuppressWarnings("unchecked")
 			products = uncheckedProducts;
 		} else {
-			String jpqlQuery = productQuery.getJpqlQueryCondition();
+			String jpqlQuery = productQuery.getJpqlQueryCondition() + " and " + FACILITY_QUERY_JPQL;
 			if (logger.isDebugEnabled()) logger.debug("Executing JPQL query: " + jpqlQuery);
 			TypedQuery<Product> query = em.createQuery(jpqlQuery, Product.class);
+			query.setParameter("facility", facility);
 			products = query.getResultList();
 		}
 		if (logger.isTraceEnabled()) {
@@ -107,15 +116,6 @@ public class ProductQueryService {
 		}
 		
 		// Check if there is any result at all
-		if (products.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery, checkOnly);
-		}
-		
-		// Filter products available at the requested processing facility
-		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
-		products = getProductsAtFacility(products, facility);
-		if (logger.isTraceEnabled()) logger.trace("Number of products after check of processing facility: " + products.size());
 		if (products.isEmpty()) {
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 			return testOptionalSatisfied(productQuery, checkOnly);
@@ -176,39 +176,6 @@ public class ProductQueryService {
 		}		
 		if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 		return true;
-	}
-	
-	/**
-	 * Check, which of the products given (or all of their component products) are present at the given processing facility
-	 * 
-	 * @param products the list of products to check
-	 * @param facility the processing facility
-	 * 
-	 * @return list of products available at the facility
-	 */
-	private List<Product> getProductsAtFacility(final List<Product> products, final ProcessingFacility facility) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductsAtFacility([...], {})", facility);
-
-		List<Product> productsAtFacility = new ArrayList<>();
-		for (Product product: products) {
-			if (product.getComponentProducts().isEmpty()) {
-				// Add product without component products to result list, if any of its product files is present at the facility
-				for (ProductFile productFile: product.getProductFile()) {
-					if (facility.equals(productFile.getProcessingFacility())) {
-						productsAtFacility.add(product);
-						break;
-					}
-				}
-			} else {
-				List<Product> componentProducts = new ArrayList<Product>();
-				componentProducts.addAll(product.getComponentProducts());
-				// Add product to result list, if all (!) component products are present at the facility
-				if (getProductsAtFacility(componentProducts, facility).size() == componentProducts.size()) {
-					productsAtFacility.add(product);
-				}
-			}
-		}
-		return productsAtFacility;
 	}
 	
 	/**

@@ -498,7 +498,8 @@ public class SimpleSelectionRule extends PersistentObject {
 	
 	
 	/**
-	 * Format this rule as an JPQL (Jave Persistence Query Language) query
+	 * Format this rule as a JPQL (Jave Persistence Query Language) query. The condition in the "where" clause
+	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
 	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
@@ -516,7 +517,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			simpleRuleQuery.append(String.format("join p.parameters pp%d ", i, i));
 		}
 		
-		simpleRuleQuery.append("where p.productClass.id = ").append(sourceProductClass.getId()).append(" and ");
+		simpleRuleQuery.append("where (p.productClass.id = ").append(sourceProductClass.getId()).append(" and ");
 		
 		// Ensure canonical ordering of policies
 		simplePolicies.sort(new Comparator<SimplePolicy>() {
@@ -561,11 +562,12 @@ public class SimpleSelectionRule extends PersistentObject {
 			}
 			++i;
 		}
-		return simpleRuleQuery.toString();
+		return simpleRuleQuery.append(')').toString();
 	}
 	
 	/**
-	 * Format this rule as a native SQL query
+	 * Format this rule as a native SQL query. The condition in the "where" clause
+	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
 	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
 	 * given time interval. It is up to the calling program to select the applicable product.
@@ -584,7 +586,7 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Select correct product class		
-		simpleRuleQuery.append("WHERE p.product_class_id = ").append(sourceProductClass.getId()).append(" AND ");
+		simpleRuleQuery.append("WHERE (p.product_class_id = ").append(sourceProductClass.getId()).append(" AND ");
 		
 		// Ensure canonical ordering of policies
 		simplePolicies.sort(new Comparator<SimplePolicy>() {
@@ -631,7 +633,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			++i;
 		}
 
-		return simpleRuleQuery.toString();
+		return simpleRuleQuery.append(')').toString();
 	}
 	
 	/* (non-Javadoc)
