@@ -255,7 +255,7 @@ public class ProductIngestor {
 			newProductFile.setFilePath(targetFilePath);
 		} else {
 			// No ingestion required, the files will be used as provided
-			newProductFile.setFilePath(ingestorProduct.getFilePath());
+			newProductFile.setFilePath(ingestorProduct.getMountPoint() + "/" + ingestorProduct.getFilePath());
 		}
 		
 		newProductFile.setProductFileName(ingestorProduct.getProductFileName());

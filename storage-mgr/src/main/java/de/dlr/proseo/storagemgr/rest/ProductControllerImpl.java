@@ -46,10 +46,12 @@ public class ProductControllerImpl implements ProductController {
 	/* Message IDs */
 	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
 	private static final int MSG_ID_FILE_NOT_FOUND = 4002;
+	private static final int MSG_ID_INVALID_PATH = 4003;
 
 	/* Message strings */
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_FILE_NOT_FOUND = "(E%d) File %s not found";
+	private static final String MSG_INVALID_PATH = "(E%d) Invalid path %s";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
@@ -218,6 +220,10 @@ public class ProductControllerImpl implements ProductController {
 		if (pathInfo != null) {
 			try {
 				ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+				if (sourceFile == null) {
+					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH,
+							pathInfo), HttpStatus.BAD_REQUEST);
+				}
 				InputStream stream = sourceFile.getDataAsInputStream();
 				if (stream == null) {
 					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,

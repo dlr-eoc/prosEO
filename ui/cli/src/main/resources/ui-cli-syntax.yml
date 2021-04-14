@@ -1152,6 +1152,10 @@ commands:
         - name: format
           type: string
           description: The file format (one of { JSON, XML, YAML }; default value JSON)
+        - name: noCopy
+          type: boolean
+          description: If set, files will not be copied to a new location, if source and target storage types are equal
+          shortForm: n
       parameters:
         - name: processingFacility
           type: string

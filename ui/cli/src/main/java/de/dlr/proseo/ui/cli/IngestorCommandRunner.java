@@ -60,6 +60,7 @@ public class IngestorCommandRunner {
 	private static final String OPTION_VERBOSE = "verbose";
 	private static final String OPTION_FORMAT = "format";
 	private static final String OPTION_FILE = "file";
+	private static final String OPTION_NOCOPY = "noCopy";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_CLASS = "Product class (empty field cancels): ";
@@ -602,6 +603,7 @@ public class IngestorCommandRunner {
 		/* Check command options */
 		File productFile = null;
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		boolean copyFiles = true;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
 			case OPTION_FILE:
@@ -609,6 +611,9 @@ public class IngestorCommandRunner {
 				break;
 			case OPTION_FORMAT:
 				productFileFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_NOCOPY:
+				copyFiles = false;
 				break;
 			}
 		}
@@ -637,7 +642,7 @@ public class IngestorCommandRunner {
 		List<?> ingestedProducts = null;
 		try {
 			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + processingFacility,
+					URI_PATH_INGESTOR + "/" + processingFacility +"?copyFiles=" + copyFiles,
 					productsToIngest, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

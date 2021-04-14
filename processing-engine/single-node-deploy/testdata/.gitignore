@@ -5,3 +5,4 @@ cli_*.txt
 proseo
 stop_brain.sh
 *.cred
+/ingestor_test.json
