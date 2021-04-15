@@ -282,7 +282,7 @@ public class CLIUtil {
 		try {
 			// Check file permissions
 			Path filePath = Path.of(filePathString);
-			if (Files.exists(filePath)) {
+			if (Files.isReadable(filePath)) {
 				Set<PosixFilePermission> permissions;
 				try {
 					permissions = Files.getPosixFilePermissions(filePath);

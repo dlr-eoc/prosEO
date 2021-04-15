@@ -1135,6 +1135,11 @@ commands:
 #                  description: The processing facility, at which the product file is stored
             - name: delete
               description: Delete a product file for a given product and processing facility
+              options:
+                - name: noErase
+                  type: boolean
+                  description: Do not erase the data file(s) from the storage area, e. g. if they are read-only (default "false")
+                  shortForm: n
               parameters:
                 - name: productId
                   type: integer

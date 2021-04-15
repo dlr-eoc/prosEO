@@ -253,6 +253,12 @@ resourceTypes:
       delete:
         description: Delete a product file for a product from a given processing facility (metadata and actual data file(s))
         displayName: deleteProductFile
+        queryParameters:
+          eraseFiles?:
+            type: boolean
+            description: |
+              Erase the data file(s) from the storage area (default "true"; for cases where files have been created
+              with the 'copyFiles=false' option, and only removal from the metadata database is required)
         responses:
           204:
         

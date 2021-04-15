@@ -61,6 +61,7 @@ public class IngestorCommandRunner {
 	private static final String OPTION_FORMAT = "format";
 	private static final String OPTION_FILE = "file";
 	private static final String OPTION_NOCOPY = "noCopy";
+	private static final String OPTION_NOERASE = "noErase";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_CLASS = "Product class (empty field cancels): ";
@@ -642,7 +643,7 @@ public class IngestorCommandRunner {
 		List<?> ingestedProducts = null;
 		try {
 			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + processingFacility +"?copyFiles=" + copyFiles,
+					URI_PATH_INGESTOR + "/" + processingFacility + "?copyFiles=" + copyFiles,
 					productsToIngest, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -786,6 +787,16 @@ public class IngestorCommandRunner {
 	private void deleteProductFile(ParsedCommand deleteCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
+		/* Check command options */
+		boolean eraseFiles = true;
+		for (ParsedOption option: deleteCommand.getOptions()) {
+			switch(option.getName()) {
+			case OPTION_NOERASE:
+				eraseFiles = false;
+				break;
+			}
+		}
+		
 		/* Get product database ID and processing facility from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
@@ -805,7 +816,8 @@ public class IngestorCommandRunner {
 		/* Delete product using Ingestor service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) + "/" + productIdString, 
+					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) 
+					+ "/" + productIdString + "?eraseFiles=" + eraseFiles, 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;

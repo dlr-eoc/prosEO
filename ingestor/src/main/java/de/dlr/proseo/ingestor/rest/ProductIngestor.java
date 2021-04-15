@@ -453,15 +453,21 @@ public class ProductIngestor {
      * 
      * @param productId the ID of the product to retrieve
      * @param facility the processing facility, from which the files shall be deleted
+     * @param eraseFiles erase the data file(s) from the storage area (default "true")
      * @throws EntityNotFoundException if the product or the product file could not be found
      * @throws RuntimeException if the deletion failed
  	 * @throws ProcessingException if the communication with the Storage Manager fails
  	 * @throws IllegalArgumentException if the product currently satisfies a product query for the given processing facility
      * @throws SecurityException if a cross-mission data access was attempted
      */
-	public void deleteProductFile(Long productId, ProcessingFacility facility) throws 
+	public void deleteProductFile(Long productId, ProcessingFacility facility, Boolean eraseFiles) throws 
 			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, facility.getName());
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {}, {})", productId, facility.getName(), eraseFiles);
+		
+		// Default is to erase data files from storage area
+		if (null == eraseFiles) {
+			eraseFiles = true;
+		}
 
 		// Find the product with the given ID
 		Optional<Product> product = RepositoryService.getProductRepository().findById(productId);
@@ -494,24 +500,25 @@ public class ProductIngestor {
 			}
 		}
 		
-		// Remove the product file from the processing facility storage: Delete all files individually by path name
-		List<String> allFiles = new ArrayList<>(modelProductFile.getAuxFileNames());
-		allFiles.add(modelProductFile.getProductFileName());
-		if (null != modelProductFile.getZipFileName()) {
-			allFiles.add(modelProductFile.getZipFileName());
-		}
-		for (String fileName: allFiles) {
-			String storageManagerUrl = facility.getStorageManagerUrl()
-					+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
-			
-			RestTemplate restTemplate = rtb
-					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
-					.build();
-			try {
-				restTemplate.delete(storageManagerUrl);
-			} catch (RestClientException e) {
-				throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
-						product.get().getId(), facility.getName(), e.getMessage()));
+		if (eraseFiles) {
+			// Remove the product file from the processing facility storage: Delete all files individually by path name
+			List<String> allFiles = new ArrayList<>(modelProductFile.getAuxFileNames());
+			allFiles.add(modelProductFile.getProductFileName());
+			if (null != modelProductFile.getZipFileName()) {
+				allFiles.add(modelProductFile.getZipFileName());
+			}
+			for (String fileName : allFiles) {
+				String storageManagerUrl = facility.getStorageManagerUrl()
+						+ String.format(URL_STORAGE_MANAGER_DELETE, modelProductFile.getFilePath() + "/" + fileName); // file separator is always '/' in Storage Manager
+
+				RestTemplate restTemplate = rtb
+						.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword()).build();
+				try {
+					restTemplate.delete(storageManagerUrl);
+				} catch (RestClientException e) {
+					throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
+							product.get().getId(), facility.getName(), e.getMessage()));
+				}
 			} 
 		}
 		

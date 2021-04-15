@@ -333,6 +333,7 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, from which the files shall be deleted
+     * @param eraseFiles erase the data file(s) from the storage area (default "true")
      * @param httpHeaders the HTTP request headers (injected)
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
@@ -342,7 +343,7 @@ public class IngestControllerImpl implements IngestController {
     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, HttpHeaders httpHeaders) {
+	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, Boolean eraseFiles, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, processingFacility);
 
 		// Check whether the given processing facility is valid
@@ -361,7 +362,7 @@ public class IngestControllerImpl implements IngestController {
 		}
 		
 		try {
-			productIngestor.deleteProductFile(productId, facility);
+			productIngestor.deleteProductFile(productId, facility, eraseFiles);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
