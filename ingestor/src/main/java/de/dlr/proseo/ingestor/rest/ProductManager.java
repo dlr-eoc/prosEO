@@ -396,8 +396,8 @@ public class ProductManager {
 
 		// Add orbit, if given
 		if (null != product.getOrbit()) {
-			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-					product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+			Orbit orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+					product.getMissionCode(), product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
 				throw new IllegalArgumentException(logError(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
 						product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()));
@@ -584,8 +584,8 @@ public class ProductManager {
 			modelProduct.setOrbit(null);
 		} else if (null == modelProduct.getOrbit() 
 				|| !modelProduct.getOrbit().getOrbitNumber().equals(product.getOrbit().getOrbitNumber().intValue())) {
-			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-					product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+			Orbit orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+					product.getMissionCode(), product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
 				throw new IllegalArgumentException(logError(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
 						product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()));

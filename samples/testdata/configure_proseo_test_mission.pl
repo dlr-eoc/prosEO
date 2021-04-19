@@ -445,7 +445,7 @@ foreach my $orbit ( @orbits ) {
 	else {
 		print $fh ",\n";
 	}
-	print $fh '    { "spacecraftCode": "' . $spacecraft->{code} . '", "orbitNumber": ' , $orbit->{orbitNumber} . ', "startTime": "' . $orbit->{startTime} . '", "stopTime": "' . $orbit->{stopTime} . '" }';
+	print $fh '    { "missionCode": "' . $mission->{code} . '", "spacecraftCode": "' . $spacecraft->{code} . '", "orbitNumber": ' , $orbit->{orbitNumber} . ', "startTime": "' . $orbit->{startTime} . '", "stopTime": "' . $orbit->{stopTime} . '" }';
 }
 print $fh "\n]\n";
 $fh->close();

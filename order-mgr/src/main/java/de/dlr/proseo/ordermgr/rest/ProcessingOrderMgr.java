@@ -259,7 +259,8 @@ public class ProcessingOrderMgr {
 			// Find all requested orbit ranges
 			modelOrder.getRequestedOrbits().clear();
 			for (RestOrbitQuery orbitQuery : order.getOrbits()) {
-				List<Orbit> orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+				List<Orbit> orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(
+						mission.getCode(),
 						orbitQuery.getSpacecraftCode(),
 						orbitQuery.getOrbitNumberFrom().intValue(),
 						orbitQuery.getOrbitNumberTo().intValue());
@@ -809,7 +810,8 @@ public class ProcessingOrderMgr {
 		List<Orbit> newRequestedOrbits = new ArrayList<>();
 		if (null != order.getOrbits()) {
 			for (RestOrbitQuery changedOrbitQuery: order.getOrbits()) {
-				List<Orbit> changedRequestedOrbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+				List<Orbit> changedRequestedOrbits = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(
+						mission.getCode(),
 						changedOrbitQuery.getSpacecraftCode(),
 						changedOrbitQuery.getOrbitNumberFrom().intValue(),
 						changedOrbitQuery.getOrbitNumberTo().intValue());
