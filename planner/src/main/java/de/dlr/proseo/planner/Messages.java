@@ -126,6 +126,8 @@ public enum Messages {
 	// Same as in other services
 	ILLEGAL_CROSS_MISSION_ACCESS 	(false, MessageType.E, "Illegal cross-mission access to mission %s (logged in to %s)"),
 	
+	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s is not available cause it is: %s"),
+	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;
 	

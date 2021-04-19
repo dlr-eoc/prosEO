@@ -27,11 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Orbit;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobGraph;
 import de.dlr.proseo.model.rest.model.RestOrbit;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -218,6 +220,11 @@ public class JobControllerImpl implements JobController {
 	public ResponseEntity<RestJob> resumeJob(String jobId) {
 		Job job = this.findJobById(jobId);
 		if (job != null) {
+			@SuppressWarnings("unchecked")
+			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(job.getProcessingFacility()); 
+			if (re != null) {
+				return re;
+			}
 			Messages msg = jobUtil.resume(job);
 			if (msg.isTrue()) {
 				UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
@@ -286,6 +293,11 @@ public class JobControllerImpl implements JobController {
 	public ResponseEntity<RestJob> suspendJob(String jobId, Boolean force) {
 		Job j = this.findJobById(jobId);
 		if (j != null) {
+			@SuppressWarnings("unchecked")
+			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(j.getProcessingFacility()); 
+			if (re != null) {
+				return re;
+			}
 			Messages msg = jobUtil.suspend(j, force);
 			if (msg.isTrue()) {
 				RestJob pj = RestUtil.createRestJob(j);

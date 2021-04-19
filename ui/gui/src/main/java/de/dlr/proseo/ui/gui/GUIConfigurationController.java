@@ -59,19 +59,13 @@ public class GUIConfigurationController extends GUIBaseController {
 			Mono<ClientResponse> mono = get();
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> configurations = new ArrayList<>();
-			mono.subscribe(clientResponse -> {
+			mono.doOnError(e -> {
+				model.addAttribute("errormsg", e.getMessage());
+				deferredResult.setResult("configuration-show :: #errormsg");
+			})
+		 	.subscribe(clientResponse -> {
 				logger.trace("Now in Consumer::accept({})", clientResponse);
-				if (clientResponse.statusCode().is5xxServerError()) {
-					logger.trace(">>>Server side error (HTTP status 500)");
-					model.addAttribute("errormsg", "Server side error (HTTP status 500)");
-					deferredResult.setResult("configuration-show :: #configurationcontent");
-					logger.trace(">>DEFERREDRES 500: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is4xxClientError()) {
-					logger.trace(">>>Warning Header: {}", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					model.addAttribute("errormsg", clientResponse.headers().asHttpHeaders().getFirst("Warning"));
-					deferredResult.setResult("configuration-show :: #configurationcontent");
-					logger.trace(">>DEFERREDRES 4xx: {}", deferredResult.getResult());
-				} else if (clientResponse.statusCode().is2xxSuccessful()) {
+				if (clientResponse.statusCode().is2xxSuccessful()) {
 					clientResponse.bodyToMono(List.class).subscribe(pcList -> {
 						configurations.addAll(pcList);
 					
@@ -81,10 +75,17 @@ public class GUIConfigurationController extends GUIBaseController {
 						deferredResult.setResult("configuration-show :: #configurationcontent");
 						logger.trace(">>DEFERREDRES: {}", deferredResult.getResult());
 					});
-				}
-				logger.trace(">>>>MODEL" + model.toString());
+				} else {
+						handleHTTPError(clientResponse, model);
+						deferredResult.setResult("configuration-show :: #errormsg");
+					}
+					logger.trace(">>>>MODEL" + model.toString());
 
-			});
+				},
+				e -> {
+					model.addAttribute("errormsg", e.getMessage());
+					deferredResult.setResult("configuration-show :: #errormsg");
+				});
 			logger.trace(model.toString() + "MODEL TO STRING");
 			logger.trace(">>>>MONO" + configurations.toString());
 			logger.trace(">>>>MODEL" + model.toString());

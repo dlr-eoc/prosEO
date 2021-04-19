@@ -49,7 +49,17 @@
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
       <div class="proseo-top-div"></div>
 
-        <main id="main" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:unless="${hasroleordermgr}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (ORDER_MGR) <br>&nbsp;
+        </h5>
+      </main>
+      <main th:if="${hasroleordermgr}" id="main" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
 
             <p>&nbsp;</p>
       <div id="orderedit" name="orderedit">
@@ -298,8 +308,8 @@
                       <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
                     </div>
                     <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
-                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
                       name="startTime" data-type="TIME" th:value="${ord?.startTime}">
                   </div>
                 </div>
@@ -309,8 +319,8 @@
                       <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
                     </div>
                     <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
-                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
                       name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
                   </div>
                 </div>
@@ -345,8 +355,8 @@
                       <p class="input-group-text word-wrap" th:text="#{starttime}"></p>
                     </div>
                     <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
-                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
                       name="startTime" data-type="TIME" th:value="${ord?.startTime}">
                   </div>
                 </div>
@@ -356,8 +366,8 @@
                       <p class="input-group-text word-wrap" th:text="#{stoptime}"></p>
                     </div>
                     <input type="text" class="form-control" 
-                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
-                      title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" required
+                      pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6})$"
+                      title="yyyy-mm-ddThh:mm:ss.ssssss" placeholder="yyyy-mm-ddThh:mm:ss.ssssss" required
                       name="stopTime" data-type="TIME" th:value="${ord?.stopTime}">
                   </div>
                 </div>
@@ -412,7 +422,7 @@
                     </div>
                     <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      title="yyyy-mm" placeholder="yyyy-mm" required
                       name="startTime" data-type="MONTH" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
                   </div>
                 </div>
@@ -423,7 +433,7 @@
                     </div>
                     <input type="text" class="form-control" 
                       pattern="^(\d{4})-(0[1-9]|1[012])$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      title="yyyy-mm" placeholder="yyyy-mm" required
                       name="stopTime" data-type="MONTH" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 7):#strings.substring(#dates.createNow(), 0, 10)}">
                   </div>
                 </div>
@@ -445,7 +455,7 @@
                     </div>
                     <input type="text" class="form-control" 
                       pattern="^(\d{4})$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      title="yyyy" placeholder="yyyy" required
                       name="startTime" data-type="YEAR" th:value="${(ord?.startTime!=null&&ord?.startTime!='')?#strings.substring(ord?.startTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
                   </div>
                 </div>
@@ -456,7 +466,7 @@
                     </div>
                     <input type="text" class="form-control" 
                       pattern="^(\d{4})$"
-                      title="yyyy-mm-dd" placeholder="yyyy-mm-dd" required
+                      title="yyyy" placeholder="yyyy" required
                       name="stopTime" data-type="YEAR" th:value="${(ord?.stopTime!=null&&ord?.stopTime!='')?#strings.substring(ord?.stopTime, 0, 10):#strings.substring(#dates.createNow(), 0, 4)}">
                   </div>
                 </div>
@@ -1143,11 +1153,12 @@
     crossorigin="anonymous"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
-  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>          
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>     
+  <script src="../static/fragments/proseo-date.js" th:src="@{/fragments/proseo-date.js}" type="text/javascript"></script>          
   <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
   <script src="../static/fragments/jquery.serialize-object.js" th:src="@{/fragments/jquery.serialize-object.js}" type="text/javascript"></script>
   
-<script type="text/javascript"> 
+<script type="text/javascript" th:inline="javascript"> 
 
 function findElementInListByDataIndex(elems, index) {
     if (elems != null) {
@@ -1535,6 +1546,7 @@ function addEventHandler() {
     $("input[data-name='orbitNumberFrom']").change(checkOrbitNumberFrom);
     $("input[data-name='orbitNumberTo']").change(checkOrbitNumberTo);
     $('#sliceDurationMeasurement').change(sliceDurationMeasure);
+    $('#sliceDuration').change(sliceDurationChange);
     $('#sliceOverlapMeasurement').change(sliceOverlapMeasure);
     $("input[name='startTime']").change(checkStartTime);
     $("input[name='stopTime']").change(checkStopTime);
@@ -1621,38 +1633,12 @@ function normDate(elem, up) {
     for (var i = 0; i < elem.length; i++) {
         var type = $(elem[i]).attr('data-type');
         var val = $(elem[i]).val();
-        if (type == 'DAY') {
-            if (up) {
-                var date = getDate(val + "T00:00:00");
-                var y = date.setDate(date.getDate() + 1);
-                var z = new Date(y);
-                var pattern = getDatePattern('TIME');
-                val = z.toISOString().match(pattern)[0];
-            } else {
-                val = val + "T00:00:00";
-            }
-        } else if (type == 'MONTH') {
-            if (up) {
-                var date = getDate(val + "-01T00:00:00");
-                var y = date.setMonth(date.getMonth() + 1);
-                var z = new Date(y);
-                var pattern = getDatePattern('TIME');
-                val = z.toISOString().match(pattern)[0];
-            } else {
-                val = val + "-01T00:00:00";
-            }
-        } else if (type == 'YEAR') {
-            if (up) {
-                var date = getDate(val + "-01-01T00:00:00");
-                var y = date.setFullYear(date.getFullYear() + 1);
-                var z = new Date(y);
-                var pattern = getDatePattern('TIME');
-                val = z.toISOString().match(pattern)[0];
-            } else {
-                val = val + "-01-01T00:00:00";
-            }
+        var delta = 0;
+        if (up) {
+        	delta = (-1);
         }
-        $(elem[i]).val(val);
+        var date = new ProseoDate(val, type);
+        $(elem[i]).val(date.norm(delta));
     }
 }
 
@@ -1660,27 +1646,8 @@ function normDateVal(elem, delta, utc) {
 	  for (var i = 0; i < elem.length; i++) {
 	      var type = $(elem[i]).attr('data-type');
 	      var val = $(elem[i]).val();
-	      var date = null;
-	      if (utc) {
-	    	    date = getDate(val);
-	      } else {
-	    	    date = new Date(Date.parse(val));
-	      }
-	      if (type == 'DAY') {
-	          var y = date.setDate(date.getDate() - delta);
-	          var z = new Date(y);
-	          val = z.toISOString();
-	      } else if (type == 'MONTH') {
-	          var y = date.setMonth(date.getMonth() - delta);
-	          var z = new Date(y);
-	          val = z.toISOString();
-	      } else if (type == 'YEAR') {
-	          var y = date.setFullYear(date.getFullYear() - delta);
-	          var z = new Date(y);
-	          val = z.toISOString();
-	      }
-	      val = val.match(getDatePattern(type))[0];
-	      $(elem[i]).val(val);
+	      var date = new ProseoDate(val, type);
+	      $(elem[i]).val(date.norm(delta));
 	  }
 }
 
@@ -1689,10 +1656,10 @@ function updateTitle() {
 	  var id = $('#id').val();
     $('#identifier')[0].setCustomValidity('');
 	  if (hasOrder(title, id)) {
-		    $('#identifier')[0].setCustomValidity("[[#{identifierexists}]]");
+		    $('#identifier')[0].setCustomValidity([[#{identifierexists}]]);
 	  } else {
 	      $('#breadcrumb-order-name').text(title);
-	      document.title = title + " | " + "[[#{proseo}]]";
+	      document.title = title + " | " + [[#{proseo}]];
 	  }
 }
 
@@ -1707,8 +1674,8 @@ function checkOrbitNumberFrom() {
 	      from[0].setCustomValidity('');
 	      to[0].setCustomValidity('');
     } else { 
-	      from[0].setCustomValidity("[[#{noorbits}]]");
-	      to[0].setCustomValidity("[[#{noorbits}]]");
+	      from[0].setCustomValidity([[#{noorbits}]]);
+	      to[0].setCustomValidity([[#{noorbits}]]);
     }
 }
 
@@ -1728,37 +1695,11 @@ function checkOrbitNumberTo() {
 		    from[0].setCustomValidity('');
 		    to[0].setCustomValidity('');
 		} else { 
-		    from[0].setCustomValidity("[[#{noorbits}]]");
-		    to[0].setCustomValidity("[[#{noorbits}]]");
+		    from[0].setCustomValidity([[#{noorbits}]]);
+		    to[0].setCustomValidity([[#{noorbits}]]);
 		}
 }
 
-function getDate(dateString) {
-		// Add 'Z' for UTC date
-		var dateNumber = Date.parse(dateString + 'Z');
-	  if (isNaN(dateNumber)) {
-	    	dateNumber = Date.parse(dateString);
-	  }
-		if (isNaN(dateNumber)) {
-			  return null;			  
-		} else {
-			  return new Date(dateNumber)
-		}
-}
-
-function getDatePattern(type) {
-	  var pattern = null;
-	  if (type == 'DAY') {
-	      pattern = /(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])/;
-	  } else if (type == 'MONTH') {
-	      pattern = /(\d{4})-(0[1-9]|1[012])/;
-	  } else if (type == 'YEAR') {
-	      pattern = /(\d{4})/;      
-	  } else {
-	      pattern = /(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])/;
-	  } 
-	  return pattern;
-}
 
 function getDeltaDatePlus(x, type, duration) {
 	  // add one second for type = TIME, else return x cause stop is the end of "type"
@@ -1790,65 +1731,77 @@ function getDeltaDateMinus(x, type, duration) {
 
 function checkStartTime(elem) {
 	  var startElem = null;
-		if (elem != null) {
+		if (elem != null && $(elem).is('input')) {
 			  startElem = $(elem);
 		} else {
 			  startElem = $(this);
 		}
 		var type = startElem.attr('data-type');
 		if (type == null) return;
-		var start = getDate(startElem.val());
+		var start = new ProseoDate(startElem.val(), type);
 		if (start != null) {
 			  startElem[0].setCustomValidity('');
 		    var stopElem = startElem.parents('div[name="slicingrow"]').find('input[name="stopTime"]');
 		    var duration = parseInt(startElem.parents('div[name="slicingrow"]').find('input[name="sliceDuration"]').val());
 		    if (isNaN(duration)) {
-			      duration = 0;
+			      duration = 1;
 		    } else {
 		        var measure = startElem.parents('div[name="slicingrow"]').find('select[id="sliceDurationMeasurement"]').val();
 	          duration = durationInSeconds(duration, measure);
 		    }
-			  var stop = getDate(stopElem.val());
+			  var stop = new ProseoDate(stopElem.val(), type);
 			  if (stop != null) {
-			      if ((type == "TIME" && stop.valueOf() <= (start.valueOf() + (duration * 1000))) || (type != "TIME" && stop < start)) {
-				        var pattern = getDatePattern(type);
-				        stop = getDeltaDatePlus(start, type, duration);
-				        if (stop != null) {
-				            stopElem.val(stop.toISOString().match(pattern)[0]);
-				        }
+			      if (type == "TIME" || type == "NONE") {
+			    	  var copyStart = start.addSeconds(duration);
+			    	  if (stop.lt(copyStart) || stop.eq(copyStart)) {
+			    		  stopElem.val(copyStart.toTypeString());
+			    	  } 
+			      } else {
+			    	  if (stop.lt(start)) {
+				        stopElem.val(start.toTypeString());
+				      }
 			      }
 			  }
 		} else {
-        startElem[0].setCustomValidity("[[#{invaliddate}]]");
+        startElem[0].setCustomValidity([[#{invaliddate}]]);
 		}
 }
 
-function checkStopTime() {
-	  var stopElem = $(this);
+function checkStopTime(elem) {
+    var stopElem = null;
+    if (elem != null && $(elem).is('input')) {
+    	stopElem = $(elem);
+    } else {
+    	stopElem = $(this);
+    }
 	  var type = stopElem.attr('data-type');
-	  var stop = getDate(stopElem.val());
+	  if (type == null) return;
+	  var stop = new ProseoDate(stopElem.val(), type);
 	  if (stop != null) {
 	    	stopElem[0].setCustomValidity('');
 	      var startElem = stopElem.parents('div[name="slicingrow"]').find('input[name="startTime"]');
         var duration = parseInt(startElem.parents('div[name="slicingrow"]').find('input[name="sliceDuration"]').val());
         if (isNaN(duration)) {
-            duration = 0;
+            duration = (-1);
         } else {
             var measure = stopElem.parents('div[name="slicingrow"]').find('select[id="sliceDurationMeasurement"]').val();
-            duration = durationInSeconds(duration, measure);
+            duration = durationInSeconds(duration, measure) * (-1);
         }
-	      var start = getDate(startElem.val());
+        var start = new ProseoDate(startElem.val(), type);
 	      if (start != null) {
-	          if ((type == "TIME" && stop.valueOf() <= (start.valueOf() + (duration * 1000))) || (type != "TIME" && stop.valueOf() < start.valueOf())) {
-	              var pattern = getDatePattern(type);
-	              start = getDeltaDateMinus(stop, type, duration);
-	              if (start != null) {
-	                  startElem.val(start.toISOString().match(pattern)[0]);
+            if (type == "TIME" || type == "NONE") {
+	              var copyStop = stop.addSeconds(duration);
+	              if (start.gt(copyStop) || start.eq(copyStop)) {
+	                  startElem.val(copyStop.toTypeString());
+	              } 
+	          } else {
+	              if (stop.lt(start)) {
+	                  startElem.val(stop.toTypeString());
 	              }
 	          }
 	      }
 	  } else {
-	    	stopElem[0].setCustomValidity("[[#{invaliddate}]]");
+	    	stopElem[0].setCustomValidity([[#{invaliddate}]]);
 	  }
 }
 
@@ -1862,8 +1815,13 @@ function durationInSeconds(duration, measure) {
 	  }
 }
 
+function sliceDurationChange() {
+	  checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
+}
+
 function sliceDurationMeasure() {
-	  durationMeasure($(this), '#sliceDuration', 'data-oldmeasure', 1);
+    durationMeasure($(this), '#sliceDuration', 'data-oldmeasure', 1);
+    checkStartTime($(this).parents('div[name="slicingrow"]').find('input[name="startTime"]'));
 }
 
 function sliceOverlapMeasure() {
@@ -1919,7 +1877,7 @@ function ckeckParameterKey() {
 	  for (var i = 0; i < keys.length; i++) {
 		    if (key[0] != keys[i] && key.val() == $(keys[i]).val()) {
 			      // duplicate key, show error
-			      key[0].setCustomValidity("[[#{duplicatekey}]]");
+			      key[0].setCustomValidity([[#{duplicatekey}]]);
 			      error = true;
 			      break;
 		    }
@@ -1985,26 +1943,26 @@ function hasOrder(identifier, id) {
 };
 
 function retrieveData(id) {
-		$("#submitButton").prop("disabled", true);
+    if ([[${hasroleordermgr}]]) {
+		    $("#submitButton").prop("disabled", true);
 
-		$('#output').text("");
-		showLoader();
-		var tableRows = $("orderTable").rows;
-		if (tableRows > 1 && tableRows != null) {
-			  $("orderTable > tbody").empty();
-		}
-		var url = "/order-edit/get"
-		var divider = "?";
+		    $('#output').text("");
+		    showLoader();
+		    var tableRows = $("orderTable").rows;
+		    if (tableRows > 1 && tableRows != null) {
+			      $("orderTable > tbody").empty();
+		    }
+		    var url = "/order-edit/get"
+		    var divider = "?";
 
-		if (id != null) {
-			  url = url + divider + "id=" + id.toString().trim();
-			  divider = "&";
+		    if (id != null) {
+			      url = url + divider + "id=" + id.toString().trim();
+			      divider = "&";
 
-			  $
-					  .ajax({
+			      $.ajax({
 						    url : url,
 						    method : "GET",
-						    success : function(res) {
+						    success : function(res, textStatus, jqXHR) {
 							      $("#orderedit").html(res);
 							      var cp = (getURLParam('cp') == 'true');
 							      var on = document.getElementById('identifier');
@@ -2083,7 +2041,7 @@ function retrieveData(id) {
 																        dataType : "json",
 																        cache : false,
 																        timeout : 800000,
-																        success : function(data) {
+																        success : function(data, textStatus, jqXHR) {
 																	          $("#submitButton").prop("disabled", false);
 																	          hideLoader();
 																            
@@ -2126,14 +2084,14 @@ function retrieveData(id) {
 							      $("#submitButton").prop("disabled", false);
 							      hideLoader();
 						    },
-						    fail : function(err) {
-							      console.log(err);
-							      prop.innerHTML = "Fehler!" + err;
-							      $("#submitButton").prop("disabled", false);
-							      hideLoader();
-						    }
+						    error : function(jqXHR, textStatus, errorThrown) {
+                    hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
+                }
 					  });
-		}
+		    }
+    }
 };
 
 function confirm(event) {

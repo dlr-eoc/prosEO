@@ -181,7 +181,9 @@ public abstract class ProseoFile {
 	 * @return The new file object or null, if the operation failed
 	 */
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {
-		if (pathInfo != null) {
+		if (pathInfo == null) {
+			logger.warn("pathInfo not set");
+		} else {
 			String aPath = pathInfo.trim();
 			// Find storage type
 			if (aPath.startsWith("s3:") || aPath.startsWith("S3:")) {
@@ -193,7 +195,6 @@ public abstract class ProseoFile {
 			}
 			logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
-		logger.warn("pathInfo not set");
 		return null;
 	}
 	

@@ -166,6 +166,8 @@ public class IngestControllerImpl implements IngestController {
      * ingested products, should it not have been notified.
      * 
      * @param processingFacility the processing facility to ingest products to
+     * @param copyFiles indicates, whether to copy the files to a different storage area
+     *      (default "true"; only applicable if source and target storage type are the same)
      * @param ingestorProducts a list of product descriptions with product file locations
      * @param httpHeaders the HTTP request headers (injected)
      * @return HTTP status "CREATED" and a Json list of the products updated and/or created including their product files or
@@ -174,7 +176,7 @@ public class IngestControllerImpl implements IngestController {
      *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, @Valid List<IngestorProduct> ingestorProducts,
+	public ResponseEntity<List<RestProduct>> ingestProducts(String processingFacility, Boolean copyFiles, @Valid List<IngestorProduct> ingestorProducts,
 			HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> ingestProducts({}, IngestorProduct[{}])", processingFacility, ingestorProducts.size());
 		
@@ -201,7 +203,7 @@ public class IngestControllerImpl implements IngestController {
 
 		for (IngestorProduct ingestorProduct: ingestorProducts) {
 			try {
-				RestProduct restProduct = productIngestor.ingestProduct(facility, ingestorProduct, userPassword[0], userPassword[1]);
+				RestProduct restProduct = productIngestor.ingestProduct(facility, copyFiles, ingestorProduct, userPassword[0], userPassword[1]);
 				result.add(restProduct);
 				ingestorProduct.setId(restProduct.getId());
 				if (logger.isTraceEnabled()) logger.trace("... product ingested, now notifying planner");
@@ -331,6 +333,7 @@ public class IngestControllerImpl implements IngestController {
      * 
      * @param productId the ID of the product to retrieve
      * @param processingFacility the name of the processing facility, from which the files shall be deleted
+     * @param eraseFiles erase the data file(s) from the storage area (default "true")
      * @param httpHeaders the HTTP request headers (injected)
 	 * @return a response entity with HTTP status "NO_CONTENT", if the deletion was successful, or
 	 *         HTTP status "NOT_FOUND", if the processing facility, the product or the product file did not exist, or
@@ -340,7 +343,7 @@ public class IngestControllerImpl implements IngestController {
     *         HTTP status "INTERNAL_SERVER_ERROR", if the communication to the Storage Manager or to the Production Planner failed
      */
 	@Override
-	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, HttpHeaders httpHeaders) {
+	public ResponseEntity<?> deleteProductFile(Long productId, String processingFacility, Boolean eraseFiles, HttpHeaders httpHeaders) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {})", productId, processingFacility);
 
 		// Check whether the given processing facility is valid
@@ -359,7 +362,7 @@ public class IngestControllerImpl implements IngestController {
 		}
 		
 		try {
-			productIngestor.deleteProductFile(productId, facility);
+			productIngestor.deleteProductFile(productId, facility, eraseFiles);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);

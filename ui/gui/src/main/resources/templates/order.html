@@ -47,7 +47,17 @@
         <div th:insert="fragments/sidebar.html :: sidebarMenu"></div>
       <div class="proseo-top-div"></div>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+      <main th:unless="${hasroleorderreader}" role="main"
+        class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <h5 class="FAILED">
+          <br> <span th:text="#{noroleright}"></span> (ORDER_READER) <br>&nbsp;
+        </h5>
+      </main>
+      <main th:if="${hasroleorderreader}" role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div th:if="${errormsg != null}" id="errormsg" name="errormsg" class="FAILED">
+          <h5>
+            <br> <span th:text="${errormsg}"></span></h5>
+        </div>
           
           <div id="ordercontent" name="ordercontent">
             <div th:each="ord : ${orders}">
@@ -104,9 +114,15 @@
                     <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
-                    <td><a th:each="comp : ${ord?.requestedProductClasses}" 
+                    <td><a 
+                       th:if="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:unless="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.requestedProductClasses}" 
+                       class="proseo-list-item"  
+                       th:text="' ' + ${comp}"></span></td>
                       <td>
                         <span title="READY" th:class="${#lists.contains(ord?.jobStepStates, 'READY')} == true?'READY-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
                         <span title="WAITING_INPUT" th:class="${#lists.contains(ord?.jobStepStates, 'WAITING_INPUT')} == true?'WAITING_INPUT-c':'jobstepstate'"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg></span>
@@ -122,9 +138,15 @@
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
                     <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
-                    <td><a th:each="comp : ${ord?.inputProductClasses}" 
+                    <td><a 
+                       th:if="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a></td>
+                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:unless="${hasroleproductclassreader}"
+                       th:each="comp : ${ord?.inputProductClasses}" 
+                       class="proseo-list-item"  
+                       th:text="' ' + ${comp}"></span></td>
                     <td>
                       <div th:title="${ord?.percentCompleted + ord?.percentFailed} + '% finished'" class="progress">
                         <div class="progress-bar COMPLETED" role="progressbar" th:style="'width: ' + ${ord?.percentCompleted} + '%;'" 
@@ -144,9 +166,15 @@
                   </tr>
                   <tr th:unless="${#lists.isEmpty(ord?.configuredProcessors)}">
                     <td class="tr-rowspan"><span>&nbsp;</span></td>
-                    <td colspan="6"><a th:each="comp : ${ord?.configuredProcessors}" 
+                    <td colspan="6"><a 
+                       th:if="${hasroleconfigurationreader}"
+                       th:each="comp : ${ord?.configuredProcessors}" 
                        class="proseo-list-item"  
-                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a></td>
+                       th:href="'/configured-processor-show?cp=' + ${comp}" th:text="${comp}"></a><span 
+                       th:unless="${hasroleconfigurationreader}"
+                       th:each="comp : ${ord?.configuredProcessors}" 
+                       class="proseo-list-item"  
+                       th:text="${comp}"></span></td>
                     <td><span>&nbsp;</span></td>
                   </tr>
                 </tbody>
@@ -267,11 +295,23 @@
                               <td class="first-row" th:id="${jobstep?.id}"><span th:text="${jobstep?.id}"></span></td>
                               <td th:class="${jobstep?.jobStepState} + ' first-row'"><span th:text="${jobstep?.jobStepState}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingMode}"></span></td>
-                              <td class="first-row"><a th:href="'/configured-processor-show?cp=' + ${jobstep?.configuredProcessor}"><span th:text="${jobstep?.configuredProcessor}"></span></a></td>
-                              <td class="first-row"><a th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a></td>
-                              <td class="first-row"><a th:each="comp : ${jobstep?.inputProductClasses}" 
-                                    class="proseo-list-item"  
-                                    th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a></td>
+                              <td class="first-row"><a 
+                                th:if="${hasroleconfigurationreader}"
+                                th:href="'/configured-processor-show?cp=' + ${jobstep?.configuredProcessor}"><span th:text="${jobstep?.configuredProcessor}"></span></a><span 
+                                th:unless="${hasroleconfigurationreader}"><span th:text="${jobstep?.configuredProcessor}"></span></span></td>
+                              <td class="first-row"><a  
+                                th:if="${hasroleproductreader}"
+                                th:href="'/product-show?id=' + ${jobstep?.outputProduct}"><span th:text="${jobstep?.outputProductClass}"></span></a><span  
+                                th:unless="${hasroleproductreader}"><span th:text="${jobstep?.outputProductClass}"></span></span></td>
+                              <td class="first-row"><a 
+                                th:if="${hasroleproductreader}"
+                                th:each="comp : ${jobstep?.inputProductClasses}" 
+                                class="proseo-list-item"  
+                                th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a><span 
+                                th:unless="${hasroleproductreader}"
+                                th:each="comp : ${jobstep?.inputProductClasses}" 
+                                class="proseo-list-item"  
+                                th:text="' ' + ${comp}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingStartTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
@@ -327,28 +367,28 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
   <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
 
-  <script type="text/javascript"> 
-  function toggleFilter() {
-	    var eleshow = document.getElementById("filtershow");
-	    var elehide = document.getElementById("filterhide");
-    var content = document.getElementById("togglefiltercontent");
-    $(content).toggleClass("filtercontent");
-    if ($(content).css("display") === "none") {
-        $(eleshow).show();
-        $(elehide).hide();
-        removeURLParam('fsh=true');
-    } else {
-        $(eleshow).hide();
-        $(elehide).show();
-        addURLParam('fsh=true');
+<script type="text/javascript" th:inline="javascript"> 
+    function toggleFilter() {
+	      var eleshow = document.getElementById("filtershow");
+	      var elehide = document.getElementById("filterhide");
+        var content = document.getElementById("togglefiltercontent");
+        $(content).toggleClass("filtercontent");
+        if ($(content).css("display") === "none") {
+            $(eleshow).show();
+            $(elehide).hide();
+            removeURLParam('fsh=true');
+        } else {
+            $(eleshow).hide();
+            $(elehide).show();
+            addURLParam('fsh=true');
+        }
     }
-  }
 
-  function toggleJS(id) {
-      var eleshow = document.getElementById("jss" + id);
-      var elehide = document.getElementById("jsh" + id);
-      var content2 = document.getElementById("togglejsb2" + id);
-      var content3 = document.getElementById("togglejsb3" + id);
+function toggleJS(id) {
+    var eleshow = document.getElementById("jss" + id);
+    var elehide = document.getElementById("jsh" + id);
+    var content2 = document.getElementById("togglejsb2" + id);
+    var content3 = document.getElementById("togglejsb3" + id);
     var secondhead = document.getElementById("togglejsh2" + id);
     var thirdhead = document.getElementById("togglejsh3" + id);
     $(secondhead).toggleClass("filtercontent");   
@@ -364,12 +404,12 @@
         $(elehide).show();
         addURLParam('jsh=' + id);
     }
-  }
-  function toggleJob(id) {
-      var eleshow = document.getElementById("jobs" + id);
-      var elehide = document.getElementById("jobh" + id);
-      var content = document.getElementById("togglejobb" + id);
-      var graph = document.getElementById("togglejobg" + id);
+}
+function toggleJob(id) {
+    var eleshow = document.getElementById("jobs" + id);
+    var elehide = document.getElementById("jobh" + id);
+    var content = document.getElementById("togglejobb" + id);
+    var graph = document.getElementById("togglejobg" + id);
     //var secondhead = document.getElementById("togglejsh2" + id);
     //var thirdhead = document.getElementById("togglejsh3" + id);
     //$(secondhead).toggleClass("filtercontent");   
@@ -385,238 +425,252 @@
         $(elehide).show();
         addURLParam('jh=' + id);
     }
-  }
-    function plan(oId, state) {
-      var dialog = document.getElementById('plan' + oId);
-      var ok = document.getElementById('ok' + oId);
-      var cancel = document.getElementById('cancel' + oId);
-      if (!dialog.hasAttribute('open')) {
-          // show the dialog 
-          var div = document.createElement('div');
-          div.id = 'backdrop';
-          document.body.appendChild(div); 
-          dialog.setAttribute('open','open');
-          ok.addEventListener('click', 
-            function () {
-              var menu = document.getElementById('facilities' + oId);
-              var facility = menu.options[menu.selectedIndex].value;
-              doPlan(oId, facility);
-                var dialog = document.getElementById('plan' + oId);
-                dialog.removeAttribute('open');  
-                var div = document.querySelector('#backdrop');
-                  if (div != null) {
-                      div.parentNode.removeChild(div);
-                    }
-            }
-          );
-          cancel.addEventListener('click',  
-            function () {
-                var dialog = document.getElementById('plan' + oId);
-                dialog.removeAttribute('open');  
-                var div = document.querySelector('#backdrop');
-                if (div != null) {
-                  div.parentNode.removeChild(div);
-                }
-            }
-          );
-      }
-    };
+}
+function plan(oId, state) {
+    var dialog = document.getElementById('plan' + oId);
+    var ok = document.getElementById('ok' + oId);
+    var cancel = document.getElementById('cancel' + oId);
+    if (!dialog.hasAttribute('open')) {
+        // show the dialog 
+        var div = document.createElement('div');
+        div.id = 'backdrop';
+        document.body.appendChild(div); 
+        dialog.setAttribute('open','open');
+        ok.addEventListener('click', 
+                            function () {
+                                var menu = document.getElementById('facilities' + oId);
+                                var facility = menu.options[menu.selectedIndex].value;
+                                doPlan(oId, facility);
+                                var dialog = document.getElementById('plan' + oId);
+                                dialog.removeAttribute('open');  
+                                var div = document.querySelector('#backdrop');
+                                if (div != null) {
+                                    div.parentNode.removeChild(div);
+                                }
+                            }
+                           );
+        cancel.addEventListener('click',  
+                                function () {
+                                    var dialog = document.getElementById('plan' + oId);
+                                    dialog.removeAttribute('open');  
+                                    var div = document.querySelector('#backdrop');
+                                    if (div != null) {
+                                        div.parentNode.removeChild(div);
+                                    }
+                                }
+                               );
+    }
+};
 
-    function doPlan(oId, facility) {
-      showLoader();
-      var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
-      var row = document.getElementById(oId);
-      
-      $.ajax({
-        url : url,
-        method : "POST",
-        success : function(res) {
-          hideLoader();
-          retrieveData(oId);
-        },
-        fail : function(err) {
-          console.log(err);
-          prop.innerHTML = "Fehler!" + err;
-        }
-      });
-    };
-    
-    function setState(oId, state) {
+function doPlan(oId, facility) {
+    if ([[${hasroleorderplanner}]]) {
         showLoader();
-        var url = "/order-state/post?id=" + oId + "&state=" + state;
+        var url = "/order-state/post?id=" + oId + "&state=PLAN&facility=" + facility;
         var row = document.getElementById(oId);
-        var method = 'POST';
-        if (state == 'DELETE') {
-           method = 'DELETE';
-        } else {
-        }
+        
         $.ajax({
             url : url,
-            method : method,
-            success : function() {
-              hideLoader();
-              if (state == 'DELETE') {
-                location.href = location.origin + '/order-show';  
-              } else if (state == 'RESET') {
-                removeURLKey('jsh');
-                removeURLKey('fsh');
-                removeURLKey('jh');
-                retrieveData(oId);
-              } else {
-                retrieveData(oId);
-              }
-            },
-            fail : function(err) {
-              console.log(err);
-              location.href = location.origin + '/order-show';  
-            },
-            complete: function() {
-                if (state == 'DELETE') {
-                    location.href = location.origin + '/order-show';                  
+            method : "POST",
+            success : function(res, textStatus, jqXHR) {
+                hideLoader();
+                if (jqXHR.getResponseHeader("warnstatus") != null) {
+                    alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                } else {
+                    retrieveData(oId);
                 }
-            }
-          });
-      };
-    
-    function retrieveData(id) {
-    	showLoader();
-      var tableRows = $("orderTable").rows;
-      if (tableRows > 1 && tableRows != null) {
-        $("orderTable > tbody").empty();
-      }
-      var url = "/order/get"
-      var divider = "?";
-      
-      if (id != null) {
-        url = url + divider + "id=" + id.toString().trim();
-        divider = "&";
-
-        $.ajax({
-          url : url,
-          method : "GET",
-          success : function(res) {
-            $("#ordercontent").html(res);
-            var on = document.getElementById('order-name');
-            var br = document.getElementById('breadcrumb-order-name');
-            br.textContent = on.textContent; 
-            document.title = on.textContent + " | " + "[[#{proseo}]]";
-            var eleshow = document.getElementById("filtershow");
-            var elehide = document.getElementById("filterhide");
-            $(eleshow).show();
-            $(elehide).hide();  
-            feather.replace(); 
-            var showit = getURLParams('fsh'); 
-            for (var i = 0; i < showit.length; i++) {
-              if (showit[i] == 'true') {
-                toggleFilter();
+              },
+              error : function(jqXHR, textStatus, errorThrown) {
+                  hideLoader();
+                  console.log(errorThrown);
+                  alert("Error: " + errorThrown);
               }
-            }
-            hideLoader();
-            var aJob = null;
-            var jh = getURLParams('jh'); 
-            if (jh.length > 0) {
-              aJob = jh[0];
-            }
-            retrieveJobs(id, 0, 20, aJob); 
-          },
-          fail : function(err) {
-            console.log(err);
-            prop.innerHTML = "Fehler!" + err;
-            hideLoader();
-          }
         });
-      }
-    };
-    
-    
-    function retrieveDataPage(from, to) {
-      var myid = getURLParam('id');
-      retrieveJobs(myid, from, to, null);
     }
-    
-    function retrieveJobs(id, from, to, aJob) {
+};
+
+function setState(oId, state) {
+    showLoader();
+    var url = "/order-state/post?id=" + oId + "&state=" + state;
+    var row = document.getElementById(oId);
+    var method = 'POST';
+    if (state == 'DELETE') {
+        method = 'DELETE';
+    } else {
+    }
+    $.ajax({
+        url : url,
+        method : method,
+        success : function(res, textStatus, jqXHR) {
+            hideLoader();
+            if (jqXHR.getResponseHeader("warnstatus") != null) {
+                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+            } else {
+		            if (state == 'DELETE') {
+		                location.href = location.origin + '/order-show';  
+		            } else if (state == 'RESET') {
+		                removeURLKey('jsh');
+		                removeURLKey('fsh');
+		                removeURLKey('jh');
+		                retrieveData(oId);
+		            } else {
+		                retrieveData(oId);
+		            }
+            }
+        },
+        error : function(jqXHR, textStatus, errorThrown) {
+            hideLoader();
+            console.log(errorThrown);
+            alert("Error: " + errorThrown);
+            if (state == 'DELETE') {
+                location.href = location.origin + '/order-show';                  
+            }
+        }
+    });
+};
+
+function retrieveData(id) {
+    if ([[${hasroleorderreader}]]) {
+    	  showLoader();
+        var tableRows = $("orderTable").rows;
+        if (tableRows > 1 && tableRows != null) {
+            $("orderTable > tbody").empty();
+        }
+        var url = "/order/get"
+        var divider = "?";
+        
+        if (id != null) {
+            url = url + divider + "id=" + id.toString().trim();
+            divider = "&";
+
+            $.ajax({
+                url : url,
+                method : "GET",
+                success : function(res, textStatus, jqXHR) {
+                    $("#ordercontent").html(res);
+                    var on = document.getElementById('order-name');
+                    var br = document.getElementById('breadcrumb-order-name');
+                    br.textContent = on.textContent; 
+                    document.title = on.textContent + " | " + [[#{proseo}]];
+                    var eleshow = document.getElementById("filtershow");
+                    var elehide = document.getElementById("filterhide");
+                    $(eleshow).show();
+                    $(elehide).hide();  
+                    feather.replace(); 
+                    var showit = getURLParams('fsh'); 
+                    for (var i = 0; i < showit.length; i++) {
+                        if (showit[i] == 'true') {
+                            toggleFilter();
+                        }
+                    }
+                    hideLoader();
+                    var aJob = null;
+                    var jh = getURLParams('jh'); 
+                    if (jh.length > 0) {
+                        aJob = jh[0];
+                    }
+                    retrieveJobs(id, 0, 20, aJob); 
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    }
+};
+
+
+function retrieveDataPage(from, to) {
+    var myid = getURLParam('id');
+    retrieveJobs(myid, from, to, null);
+}
+
+function retrieveJobs(id, from, to, aJob) {
+    if ([[${hasroleorderreader}]]) {
         showLoader();
         var tableRows = $("jobs").rows;
         if (tableRows > 1 && tableRows != null) {
-          $("jobs > tbody").empty();
+            $("jobs > tbody").empty();
         }
         var url = "/jobs/get"
         var divider = "?";
         
         if (id != null) {
-          url = url + divider + "orderid=" + id.toString().trim();
-          divider = "&";
+            url = url + divider + "orderid=" + id.toString().trim();
+            divider = "&";
 
-          if (from != null) {
+            if (from != null) {
                 url = url + divider + "recordFrom=" + from;
                 divider = "&";
-          }
-          if (to != null) {
+            }
+            if (to != null) {
                 url = url + divider + "recordTo=" + to;
                 divider = "&";
-          }
-          if (aJob != null) {
-            url = url + divider + "job=" + aJob;
-          }
-
-          $.ajax({
-            url : url,
-            method : "GET",
-            success : function(res, state, x) {
-              $("#jobscontent").html(res);
-              hideLoader();
-              var eleshow = document.getElementById("jobsshow");
-              var elehide = document.getElementById("jobshide");
-              $(eleshow).show();
-              $(elehide).hide(); 
-              var jx = document.getElementsByClassName('jobshow');
-              for (var i = 0; i < jx.length; i++) {
-                var ele = jx[i];
-                $(ele).show();
-              } 
-              var jy = document.getElementsByClassName('jobhide');
-              for (var i = 0; i < jy.length; i++) {
-                var ele = jy[i];
-                $(ele).hide();
-              }
-              var x = document.getElementsByClassName('jsshow');
-              for (var i = 0; i < x.length; i++) {
-            	  var ele = x[i];
-            	  $(ele).show();
-              } 
-              var y = document.getElementsByClassName('jshide');
-              for (var i = 0; i < y.length; i++) {
-                var ele = y[i];
-            	  $(ele).hide();
-              }
-              feather.replace(); 
-
-              var jh = getURLParams('jh'); 
-              for (var i = 0; i < jh.length; i++) {
-                  toggleJob(jh[i]);
-              }
-              var jsh = getURLParams('jsh'); 
-              for (var i = 0; i < jsh.length; i++) {
-                  toggleJS(jsh[i]);
-              }
-              if (!scrollToHash()) {
-                var t = getURLParams('t'); 
-                for (var i = 0; i < t.length; i++) {
-            	    scrollToElem(t[i]);
-            	    removeURLKey('t');
-                }
-              }
-            },
-            fail : function(err) {
-                hideLoader();
-              console.log(err);
-              prop.innerHTML = "Fehler!" + err;
             }
-          });
+            if (aJob != null) {
+                url = url + divider + "job=" + aJob;
+            }
+
+            $.ajax({
+                url : url,
+                method : "GET",
+                success : function(res, textStatus, jqXHR) {
+                    $("#jobscontent").html(res);
+                    hideLoader();
+                    var eleshow = document.getElementById("jobsshow");
+                    var elehide = document.getElementById("jobshide");
+                    $(eleshow).show();
+                    $(elehide).hide(); 
+                    var jx = document.getElementsByClassName('jobshow');
+                    for (var i = 0; i < jx.length; i++) {
+                        var ele = jx[i];
+                        $(ele).show();
+                    } 
+                    var jy = document.getElementsByClassName('jobhide');
+                    for (var i = 0; i < jy.length; i++) {
+                        var ele = jy[i];
+                        $(ele).hide();
+                    }
+                    var x = document.getElementsByClassName('jsshow');
+                    for (var i = 0; i < x.length; i++) {
+            	          var ele = x[i];
+            	          $(ele).show();
+                    } 
+                    var y = document.getElementsByClassName('jshide');
+                    for (var i = 0; i < y.length; i++) {
+                        var ele = y[i];
+            	          $(ele).hide();
+                    }
+                    feather.replace(); 
+
+                    var jh = getURLParams('jh'); 
+                    for (var i = 0; i < jh.length; i++) {
+                        toggleJob(jh[i]);
+                    }
+                    var jsh = getURLParams('jsh'); 
+                    for (var i = 0; i < jsh.length; i++) {
+                        toggleJS(jsh[i]);
+                    }
+                    if (!scrollToHash()) {
+                        var t = getURLParams('t'); 
+                        for (var i = 0; i < t.length; i++) {
+            	              scrollToElem(t[i]);
+            	              removeURLKey('t');
+                        }
+                    }
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    hideLoader();
+                    console.log(textStatus + errorThrown);
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
-      };
-      
-  </script>
+    }
+};
+
+</script>
 <script>
     window.onload = function () {
      // $('.collapse').collapse();

@@ -72,7 +72,7 @@ services:
       - proseo-processor-mgr
       - proseo-facility-mgr
   proseo-pgadmin:
-    image: ${REGISTRY_URL}/dpage/pgadmin4:2019-11-12-2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/dpage/pgadmin4:latest-integration-rc1-${PROSEO_REVISION}
     environment:
       - PGADMIN_ENABLE_TLS=True
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}

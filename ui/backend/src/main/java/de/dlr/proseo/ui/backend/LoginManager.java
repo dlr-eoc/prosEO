@@ -226,7 +226,7 @@ public class LoginManager {
 	public List<String> getAuthorities() {
 		return authorities.get();
 	}
-	
+
 	/**
 	 * Checks whether the logged in user has the given role
 	 * 
@@ -235,6 +235,15 @@ public class LoginManager {
 	 */
 	public boolean hasRole(UserRole role) {
 		return authorities.get().contains(role.asRoleString());
+	}
+	
+	/**
+	 * Get user roles
+	 * 
+	 * @return string list with user roles
+	 */
+	public List<String> getRoles() {
+		return authorities.get();
 	}
 	
 	/**

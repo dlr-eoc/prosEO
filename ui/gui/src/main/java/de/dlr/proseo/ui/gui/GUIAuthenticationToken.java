@@ -3,7 +3,9 @@
  */
 package de.dlr.proseo.ui.gui;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,7 +27,37 @@ public class GUIAuthenticationToken implements Authentication {
 	private String mission;
 	private boolean isNewLogin = true;
 	private boolean isAuthenticated;
+	private List<String> userRoles;
+	
+	private DataCache dataCache = new DataCache();
 
+	/**
+	 * @return the dataCache
+	 */
+	public DataCache getDataCache() {
+		return dataCache;
+	}
+
+	/**
+	 * @param dataCache the dataCache to set
+	 */
+	public void setDataCache(DataCache dataCache) {
+		this.dataCache = dataCache;
+	}
+
+	/**
+	 * @return the userRoles
+	 */
+	public List<String> getUserRoles() {
+		return userRoles;
+	}
+
+	/**
+	 * @param userRoles the userRoles to set
+	 */
+	public void setUserRoles(List<String> userRoles) {
+		this.userRoles = userRoles;
+	}
 
 	/**
 	 * @return the isNewLogin
@@ -67,7 +99,8 @@ public class GUIAuthenticationToken implements Authentication {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		// TODO Auto-generated method stub
-		return null;
+		// must not be null
+		return new ArrayList<>();
 	}
 
 	@Override

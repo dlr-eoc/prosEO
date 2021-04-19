@@ -562,7 +562,7 @@ public class OrderDispatcher {
 	 *         but it does not match the selection rules of the given product class
 	 */
 	private void findOrCreateProductQuery(JobStep jobStep, ProductClass productClass) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> findOrCreateSelectionRule({}, {})",
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrCreateProductQuery({}, {})",
 				(null == jobStep ? "null": jobStep.getId()), (null == productClass ? "null" : productClass.getProductType()));
 		
 		String mode = jobStep.getProcessingMode();
@@ -580,7 +580,20 @@ public class OrderDispatcher {
 				}
 			}
 		}
+		RULE_LOOP:
 		for (SimpleSelectionRule selectionRule : selectedSelectionRules) {
+			// Skip selection rules not applicable for the selected configured processor
+			if (!selectionRule.getApplicableConfiguredProcessors().isEmpty()) {
+				Set<ConfiguredProcessor> requestedProcessors = jobStep.getJob().getProcessingOrder().getRequestedConfiguredProcessors();
+				// Check whether any of the requested processors in the order is applicable for the given product class
+				for (ConfiguredProcessor requestedProcessor: requestedProcessors) {
+					if (requestedProcessor.getProcessor().getProcessorClass().getProductClasses().contains(productClass)
+							&& !selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
+						// requestedProcessor is to be used, but selectionRule is not applicable for it, so skip it
+						continue RULE_LOOP;
+					}
+				}
+			}
 			// Check whether job step already has a product query for the given product class
 			Boolean exist = false;
 			for (ProductQuery productQuery: jobStep.getInputProductQueries()) {

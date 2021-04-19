@@ -622,6 +622,10 @@ public class KubeJob {
 								if (jobCondList != null) {
 									for (V1JobCondition jc : jobCondList) {
 										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+											if (JobStepState.READY.equals(js.get().getJobStepState())) {
+												// Sometimes we don't get the state transition to RUNNING
+												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
+											}
 											js.get().setJobStepState(JobStepState.COMPLETED);	
 											js.get().incrementVersion();
 											if (cd == null) {
