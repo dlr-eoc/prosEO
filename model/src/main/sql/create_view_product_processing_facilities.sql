@@ -4,7 +4,6 @@
 -- The recursive part checks for cycles in the product tree (which should not occur, but we play it safe here)
 --
 -- Adapted from the PostgreSQL documentation (https://www.postgresql.org/docs/11/queries-with.html#QUERIES-WITH-SELECT)
--- File is named "data.sql" for automatic execution by Spring, when the database is created
 --
 
 CREATE OR REPLACE VIEW product_processing_facilities AS
