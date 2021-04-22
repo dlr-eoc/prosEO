@@ -196,14 +196,14 @@ commands:
       description: Commands for managing orbits for a given spacecraft
       subcommands:
         - name: show
-          description: Lists orbits, optionally restricted to a given orbit range
+          description: Lists orbits, optionally restricted to a given orbit number range
           options:
             - name: from
               type: integer
-              description: Lower bound of orbit range
+              description: Lower bound of orbit number range
             - name: to
               type: integer
-              description: Upper bound of orbit range
+              description: Upper bound of orbit number range
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -216,7 +216,7 @@ commands:
               type: string
               description: The code of the spacecraft the orbits belong to
         - name: create
-          description: Add a set of orbits for the given spacecraft
+          description: Add or update a set of orbits for the given spacecraft (existing orbits will be updated)
           options:
             - name: file
               type: string

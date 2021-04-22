@@ -142,6 +142,7 @@ public class UserControllerImpl implements UserController {
 	 * @param username the name of the user to update
 	 * @param restUser a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the user after modification or 
+	 *         HTTP status "NOT_MODIFIED" and a warning message, if the input date was the same as the database data, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no user with the given name exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "UNAUTHORIZED" and an error message, if a user (not user mgr) attempted to change anything but their own password, or
@@ -153,6 +154,8 @@ public class UserControllerImpl implements UserController {
 		
 		try {
 			return new ResponseEntity<>(userManager.modifyUser(username, restUser), HttpStatus.OK);
+		} catch (UserManager.NotModifiedException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {

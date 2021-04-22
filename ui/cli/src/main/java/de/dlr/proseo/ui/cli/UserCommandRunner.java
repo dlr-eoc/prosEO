@@ -28,6 +28,7 @@ import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestGroup;
 import de.dlr.proseo.model.rest.model.RestUser;
 import de.dlr.proseo.ui.backend.LoginManager;
@@ -791,7 +792,14 @@ public class UserCommandRunner {
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			authorities.add(command.getParameters().get(i).getValue());
+			String authority = command.getParameters().get(i).getValue();
+			try {
+				UserRole.asRole(authority);
+			} catch (IllegalArgumentException e) {
+				System.err.println(uiMsg(MSG_ID_SKIPPING_INVALID_AUTHORITY, authority));
+				continue;
+			}
+			authorities.add(authority);
 		}
 		if (authorities.isEmpty()) {
 			// No authorities to grant given
@@ -845,7 +853,14 @@ public class UserCommandRunner {
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			authorities.add(command.getParameters().get(i).getValue());
+			String authority = command.getParameters().get(i).getValue();
+			try {
+				UserRole.asRole(authority);
+			} catch (IllegalArgumentException e) {
+				System.err.println(uiMsg(MSG_ID_SKIPPING_INVALID_AUTHORITY, authority));
+				continue;
+			}
+			authorities.add(authority);
 		}
 		if (authorities.isEmpty()) {
 			// No authorities to grant given
@@ -1311,11 +1326,11 @@ public class UserCommandRunner {
 		}
 		
 		/* Check that the users exist and add each one to the group's list of members */
+		List<String> addedUsers = new ArrayList<>();
 		for (String username: usernames) {
 			RestUser restUser = readUser(username);
 			if (null == restUser) {
-				// Invalid user name (at least for the selected mission)
-				System.err.println(uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username, loginManager.getMission()));
+				// Invalid user name (at least for the selected mission) - already logged
 				continue;
 			}
 			
@@ -1324,9 +1339,13 @@ public class UserCommandRunner {
 				serviceConnection.postToService(serviceConfig.getUserManagerUrl(),
 						URI_PATH_GROUPS + "/" + restGroup.getId() + "/members?username=" + username,
 						restGroup, List.class, loginManager.getUser(), loginManager.getPassword());
+				addedUsers.add(username);
 			} catch (RestClientResponseException e) {
 				String message = null;
 				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+					System.out.println(uiMsg(MSG_ID_ALREADY_MEMBER, username, restGroup.getGroupname()));
+					continue;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 					break;
@@ -1348,10 +1367,12 @@ public class UserCommandRunner {
 			}
 		}
 		
-		/* Report success */
-		String message = uiMsg(MSG_ID_USERS_ADDED, Arrays.toString(usernames.toArray()), restGroup.getGroupname());
-		logger.info(message);
-		System.out.println(message);
+		/* Report success, if valid users were added */
+		if (0 < addedUsers.size()) {
+			String message = uiMsg(MSG_ID_USERS_ADDED, Arrays.toString(addedUsers.toArray()), restGroup.getGroupname());
+			logger.info(message);
+			System.out.println(message);
+		}
 	}
 
 	/**
@@ -1389,11 +1410,11 @@ public class UserCommandRunner {
 		}
 		
 		/* Check that the users exist and remove each one from the group's list of members */
+		List<String> removedUsers = new ArrayList<>();
 		for (String username: usernames) {
 			RestUser restUser = readUser(username);
 			if (null == restUser) {
-				// Invalid user name (at least for the selected mission)
-				System.err.println(uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, username, loginManager.getMission()));
+				// Invalid user name (at least for the selected mission) - already logged
 				continue;
 			}
 			
@@ -1402,9 +1423,13 @@ public class UserCommandRunner {
 				serviceConnection.deleteFromService(serviceConfig.getUserManagerUrl(),
 						URI_PATH_GROUPS + "/" + restGroup.getId() + "/members?username=" + username,
 						loginManager.getUser(), loginManager.getPassword());
+				removedUsers.add(username);
 			} catch (RestClientResponseException e) {
 				String message = null;
 				switch (e.getRawStatusCode()) {
+				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
+					System.out.println(uiMsg(MSG_ID_NOT_MEMBER, username, restGroup.getGroupname()));
+					continue;
 				case org.apache.http.HttpStatus.SC_NOT_FOUND:
 					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 					break;
@@ -1426,10 +1451,12 @@ public class UserCommandRunner {
 			}
 		}
 		
-		/* Report success */
-		String message = uiMsg(MSG_ID_USERS_REMOVED, Arrays.toString(usernames.toArray()), restGroup.getGroupname());
-		logger.info(message);
-		System.out.println(message);
+		/* Report success, if valid users were removed */
+		if (0 < removedUsers.size()) {
+			String message = uiMsg(MSG_ID_USERS_REMOVED, Arrays.toString(removedUsers.toArray()), restGroup.getGroupname());
+			logger.info(message);
+			System.out.println(message);
+		}
 	}
 
 	/**
@@ -1538,7 +1565,14 @@ public class UserCommandRunner {
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			authorities.add(command.getParameters().get(i).getValue());
+			String authority = command.getParameters().get(i).getValue();
+			try {
+				UserRole.asRole(authority);
+			} catch (IllegalArgumentException e) {
+				System.err.println(uiMsg(MSG_ID_SKIPPING_INVALID_AUTHORITY, authority));
+				continue;
+			}
+			authorities.add(authority);
 		}
 		if (authorities.isEmpty()) {
 			// No authorities to grant given
@@ -1592,7 +1626,14 @@ public class UserCommandRunner {
 		/* Get granted authorities from command parameters */
 		List<String> authorities = new ArrayList<>();
 		for (int i = 1; i < command.getParameters().size(); ++i) {
-			authorities.add(command.getParameters().get(i).getValue());
+			String authority = command.getParameters().get(i).getValue();
+			try {
+				UserRole.asRole(authority);
+			} catch (IllegalArgumentException e) {
+				System.err.println(uiMsg(MSG_ID_SKIPPING_INVALID_AUTHORITY, authority));
+				continue;
+			}
+			authorities.add(authority);
 		}
 		if (authorities.isEmpty()) {
 			// No authorities to grant given

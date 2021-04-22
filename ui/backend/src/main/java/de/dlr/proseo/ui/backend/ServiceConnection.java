@@ -9,6 +9,7 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -35,6 +36,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -216,7 +218,13 @@ public class ServiceConnection {
 			throw new RuntimeException(e);
 		}
 		
-		// All POST requests should return HTTP status CREATED
+		// Check for NOT_MODIFIED (POST used for creating sub-objects)
+		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
+			throw new RestClientResponseException(entity.getHeaders().getFirst("Warning"), HttpStatus.NOT_MODIFIED.value(),
+					HttpStatus.NOT_MODIFIED.toString(), entity.getHeaders(), "".getBytes(), Charset.defaultCharset());
+		}
+		
+		// All successful POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
 			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
 					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));

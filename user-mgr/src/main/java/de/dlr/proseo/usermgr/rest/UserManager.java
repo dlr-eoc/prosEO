@@ -106,6 +106,18 @@ public class UserManager {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(UserManager.class);
+	
+	/**
+	 * Exception to indicate unmodified data to caller
+	 */
+	public static class NotModifiedException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public NotModifiedException(String message) {
+			super(message);
+		}
+	}
 
 	/**
 	 * Create and log a formatted informational message
@@ -115,7 +127,7 @@ public class UserManager {
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted info mesage
 	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
+	private static String logInfo(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -135,7 +147,7 @@ public class UserManager {
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted error message
 	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
+	private static String logError(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -152,8 +164,9 @@ public class UserManager {
 	 * 
 	 * @param restUser the REST user to convert
 	 * @return the converted model user
+	 * @throws IllegalArgumentException if an invalid authority value was given
 	 */
-	/* package */ static User toModelUser(RestUser restUser) {
+	/* package */ static User toModelUser(RestUser restUser) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelUser({})", (null == restUser ? "MISSING" : restUser.getUsername()));
 		
 		User modelUser = new User();
@@ -169,6 +182,13 @@ public class UserManager {
 			modelUser.setPasswordExpirationDate(restUser.getPasswordExpirationDate());
 		}
 		for (String restAuthority: restUser.getAuthorities()) {
+			// Test whether authority is legal
+			try {
+				UserRole.asRole(restAuthority);
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+			}
+			
 			Authority modelAuthority = new Authority();
 			modelAuthority.setAuthority(restAuthority);
 			modelAuthority.setUser(modelUser);
@@ -387,9 +407,10 @@ public class UserManager {
 	 * @return a response containing a Json object corresponding to the user after modification
 	 * @throws EntityNotFoundException if no user with the given user name exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws NotModifiedException if the user data was not modified (input data same as database data)
 	 */
 	public RestUser modifyUser(String username, RestUser restUser) throws
-			EntityNotFoundException, IllegalArgumentException {
+			EntityNotFoundException, IllegalArgumentException, NotModifiedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyUser({}, {})", username, (null == restUser ? "MISSING" : restUser.getUsername()));
 		
 		// Check arguments
@@ -502,11 +523,6 @@ public class UserManager {
 			}
 			if (authorityChanged) {
 				// This authority was added
-				try {
-					UserRole.asRole(restAuthority);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
-				}
 				if (!isUserManager) {
 					throw new SecurityException(logError(MSG_ILLEGAL_DATA_MODIFICATION, MSG_ID_ILLEGAL_DATA_MODIFICATION, loginUsername));
 				}
@@ -525,7 +541,7 @@ public class UserManager {
 			modelUser = userRepository.save(modelUser);
 			logInfo(MSG_USER_MODIFIED, MSG_ID_USER_MODIFIED, username);
 		} else {
-			logInfo(MSG_USER_NOT_MODIFIED, MSG_ID_USER_NOT_MODIFIED, username);
+			throw new NotModifiedException(logInfo(MSG_USER_NOT_MODIFIED, MSG_ID_USER_NOT_MODIFIED, username));
 		}
 		
 		// Return the changed user

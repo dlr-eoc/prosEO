@@ -7,6 +7,7 @@ package de.dlr.proseo.ui.backend;
 
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_MANDATORY_ATTRIBUTE_MISSING;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_SKIPPING_INVALID_AUTHORITY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,7 +107,6 @@ public class UIMessages {
 	public static final int MSG_ID_MISSION_NOT_READABLE = 2844;
 	public static final int MSG_ID_SPACECRAFT_EXISTS = 2845;
 	public static final int MSG_ID_SPACECRAFT_ADDED = 2846;
-	public static final int MSG_ID_SPACECRAFT_NOT_FOUND = 2846;
 	public static final int MSG_ID_SPACECRAFT_REMOVED = 2847;
 	public static final int MSG_ID_NO_SPACECRAFT_CODE_GIVEN = 2848;
 	public static final int MSG_ID_ORBIT_NUMBER_INVALID = 2849;
@@ -125,6 +125,7 @@ public class UIMessages {
 	public static final int MSG_ID_DELETE_PRODUCTS_WITHOUT_FORCE = 2782;
 	public static final int MSG_ID_MISSION_DELETE_FAILED = 2783;
 	public static final int MSG_ID_LOGGED_IN_TO_MISSION = 2784;
+	public static final int MSG_ID_SPACECRAFT_NOT_FOUND = 2785;
 	
 	// Product class CLI
 	public static final int MSG_ID_PRODUCTCLASS_DATA_INVALID = 2860;
@@ -258,11 +259,11 @@ public class UIMessages {
 	public static final int MSG_ID_USER_NOT_FOUND_BY_NAME = 2703;
 	public static final int MSG_ID_PASSWORD_MISMATCH = 2704;
 	public static final int MSG_ID_NO_USERNAME_GIVEN = 2705;
-	public static final int MSG_ID_USER_UPDATED = 2705;
-	public static final int MSG_ID_USER_DELETE_FAILED = 2706;
-	public static final int MSG_ID_USER_DELETED = 2707;
-	public static final int MSG_ID_USER_ENABLED = 2708;
-	public static final int MSG_ID_USER_DISABLED = 2709;
+	public static final int MSG_ID_USER_UPDATED = 2706;
+	public static final int MSG_ID_USER_DELETE_FAILED = 2707;
+	public static final int MSG_ID_USER_DELETED = 2708;
+	public static final int MSG_ID_USER_ENABLED = 2709;
+	public static final int MSG_ID_USER_DISABLED = 2710;
 	public static final int MSG_ID_AUTHORITIES_GRANTED = 2711;
 	public static final int MSG_ID_AUTHORITIES_REVOKED = 2712;
 	public static final int MSG_ID_NO_AUTHORITIES_GIVEN = 2713;
@@ -288,6 +289,9 @@ public class UIMessages {
 	public static final int MSG_ID_USERNAME_MISMATCH = 2733;
 	public static final int MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED = 2734;
 	public static final int MSG_ID_PASSWORDS_MUST_DIFFER = 2735;
+	public static final int MSG_ID_SKIPPING_INVALID_AUTHORITY = 2736;
+	public static final int MSG_ID_ALREADY_MEMBER = 2737;
+	public static final int MSG_ID_NOT_MEMBER = 2738;
 
 	// Facility CLI
 	public static final int MSG_ID_NO_FACILITIES_FOUND = 2740;
@@ -446,7 +450,7 @@ public class UIMessages {
 		MSG_PASSWORD_MISMATCH ("(E%d) Passwords do not match", MSG_ID_PASSWORD_MISMATCH),
 		MSG_NO_USERNAME_GIVEN ("(E%d) No username given", MSG_ID_NO_USERNAME_GIVEN),
 		MSG_USER_DELETE_FAILED ("(E%d) Deletion of user account %s failed (cause: %s)", MSG_ID_USER_DELETE_FAILED),
-		MSG_NO_AUTHORITIES_GIVEN ("(E%d) No authorities given in command", MSG_ID_NO_AUTHORITIES_GIVEN),
+		MSG_NO_AUTHORITIES_GIVEN ("(E%d) No valid authorities given in command", MSG_ID_NO_AUTHORITIES_GIVEN),
 		MSG_NO_GROUPNAME_GIVEN ("(E%d) No group name given", MSG_ID_NO_GROUPNAME_GIVEN),
 		MSG_GROUP_NOT_FOUND_BY_ID ("(E%d) Group with database ID %d not found", MSG_ID_GROUP_NOT_FOUND_BY_ID),
 		MSG_GROUP_DATA_INVALID ("(E%d) User group data invalid (cause: %s)", MSG_ID_GROUP_DATA_INVALID),
@@ -463,6 +467,9 @@ public class UIMessages {
 		MSG_USERNAME_MISMATCH ("(E%d) Username %s to update does not match username %s from credentials file %s", MSG_ID_USERNAME_MISMATCH),
 		MSG_PASSWORD_CHANGE_NOT_ALLOWED ("(E%d) Password change not allowed in non-interactive mode", MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED),
 		MSG_PASSWORDS_MUST_DIFFER ("(E%d) Old and new password must be different", MSG_ID_PASSWORDS_MUST_DIFFER),
+		MSG_SKIPPING_INVALID_AUTHORITY ("(E%d) Skipping invalid authority %s", MSG_ID_SKIPPING_INVALID_AUTHORITY),
+		MSG_ALREADY_MEMBER ("(E%d) User %s is already a member of group %s", MSG_ID_ALREADY_MEMBER),
+		MSG_NOT_MEMBER ("(E%d) User %s is not a member of group %s", MSG_ID_NOT_MEMBER),
 
 		// Facility CLI
 		MSG_NO_FACILITIES_FOUND ("(E%d) No processing facilities found", MSG_ID_NO_FACILITIES_FOUND),
