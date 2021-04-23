@@ -1,0 +1,29 @@
+{
+  "id" : 28,
+  "version" : 5,
+  "missionCode" : "PTM",
+  "processorName" : "PTML2",
+  "processorVersion" : "0.1.0",
+  "jobOrderVersion" : "MMFI_1_8",
+  "useInputFileTimeIntervals" : false,
+  "isTest" : false,
+  "minDiskSpace" : 1024,
+  "maxTime" : 0,
+  "sensingTimeFlag" : true,
+  "configuredProcessors" : [ "PTML2_0.1.0_OPER_2020-03-25" ],
+  "tasks" : [ {
+    "id" : 29,
+    "version" : 1,
+    "missionCode" : "PTM",
+    "processorName" : "PTML2",
+    "processorVersion" : "0.1.0",
+    "taskName" : "ptm_l2",
+    "taskVersion" : "0.1.0",
+    "isCritical" : true,
+    "criticalityLevel" : 20,
+    "numberOfCpus" : 16,
+    "breakpointFileNames" : [ ]
+  } ],
+  "dockerImage" : "localhost:5000/proseo-sample-wrapper:0.7.1",
+  "dockerRunParameters" : [ ]
+}

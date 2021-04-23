@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
@@ -62,6 +63,7 @@ public class ProcessorManager {
 	private static final int MSG_ID_DUPLICATE_PROCESSOR = 2265;
 	private static final int MSG_ID_PROCESSOR_HAS_CONFIG = 2266;
 	private static final int MSG_ID_PROCESSOR_NAME_MISSING = 2267;
+	private static final int MSG_ID_CRITICALITY_LEVEL_MISSING = 2268;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -80,6 +82,7 @@ public class ProcessorManager {
 	private static final String MSG_CONCURRENT_UPDATE = "(E%d) The processor with ID %d has been modified since retrieval by the client";
 	private static final String MSG_DUPLICATE_PROCESSOR = "(E%d) Duplicate processor for mission %s, processor name %s and processor version %s";
 	private static final String MSG_PROCESSOR_HAS_CONFIG = "(E%d) Processor for mission %s with processor name %s and processor version %s cannot be deleted, because it has configured processors";
+	private static final String MSG_CRITICALITY_LEVEL_MISSING = "(E%d) Task %s defined as critical, but no criticality level given";
 
 	private static final String MSG_PROCESSOR_LIST_RETRIEVED = "(I%d) Processor(s) for mission %s, processor name %s and processor version %s retrieved";
 	private static final String MSG_PROCESSOR_RETRIEVED = "(I%d) Processor with ID %d retrieved";
@@ -190,6 +193,9 @@ public class ProcessorManager {
 		
 		for (RestTask task: processor.getTasks()) {
 			Task modelTask = TaskUtil.toModelTask(task);
+			if (modelTask.getIsCritical() && null == modelTask.getCriticalityLevel()) {
+				throw new IllegalArgumentException(logError(MSG_CRITICALITY_LEVEL_MISSING, MSG_ID_CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
+			}
 			modelTask.setProcessor(modelProcessor);
 			modelTask = RepositoryService.getTaskRepository().save(modelTask);
 		}
@@ -370,11 +376,11 @@ public class ProcessorManager {
 			processorChanged = true;
 			modelProcessor.setDockerImage(changedProcessor.getDockerImage());
 		}
-		if (null == modelProcessor.getDockerRunParameters() && null != changedProcessor.getDockerRunParameters()
-				|| null != modelProcessor.getDockerRunParameters() && !modelProcessor.getDockerRunParameters().equals(changedProcessor.getDockerRunParameters())) {
+		if (!Objects.equals(modelProcessor.getDockerRunParameters(), changedProcessor.getDockerRunParameters())) {
 			processorChanged = true;
 			modelProcessor.setDockerRunParameters(changedProcessor.getDockerRunParameters());
 		}
+		if (logger.isTraceEnabled()) logger.trace("... scalar attributes for processor have changed: " + processorChanged);
 		
 		// Check task changes (modifications in sequence also count as changes)
 		List<Task> newTasks = new ArrayList<>();
@@ -384,36 +390,52 @@ public class ProcessorManager {
 			Task modelTask = null;
 			if (modelProcessor.getTasks().size() <= i) {
 				// More tasks in new list
+				if (logger.isTraceEnabled()) logger.trace("... new task added");
 				processorChanged = true;
 				modelTask = RepositoryService.getTaskRepository().save(changedTask);
 			} else {
 				// Compare tasks
 				modelTask = modelProcessor.getTasks().get(i);
 				if (!modelTask.getTaskName().equals(changedTask.getTaskName())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task name changed from %s to %s", modelTask.getTaskName(), changedTask.getTaskName()));
 					processorChanged = true;
 					modelTask.setTaskName(changedTask.getTaskName());
 				}
 				if (!modelTask.getTaskVersion().equals(changedTask.getTaskVersion())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task version changed from %s to %s", modelTask.getTaskVersion(), changedTask.getTaskVersion()));
 					processorChanged = true;
 					modelTask.setTaskVersion(changedTask.getTaskVersion());
 				}
+				
 				if (!modelTask.getIsCritical().equals(changedTask.getIsCritical())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task criticality changed from %s to %s", modelTask.getIsCritical().toString(), changedTask.getIsCritical().toString()));
 					processorChanged = true;
 					modelTask.setIsCritical(changedTask.getIsCritical());
 				}
-				if (!modelTask.getCriticalityLevel().equals(changedTask.getCriticalityLevel())) {
+				if (!Objects.equals(modelTask.getCriticalityLevel(), changedTask.getCriticalityLevel())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task criticality level changed from %d to %d", modelTask.getCriticalityLevel(), changedTask.getCriticalityLevel()));
 					processorChanged = true;
 					modelTask.setCriticalityLevel(changedTask.getCriticalityLevel());
 				}
-				if (null == modelTask.getNumberOfCpus() && null != changedTask.getNumberOfCpus()
-						|| null != modelTask.getNumberOfCpus() && !modelTask.getNumberOfCpus().equals(changedTask.getNumberOfCpus())) {
+				if (modelTask.getIsCritical() && null == modelTask.getCriticalityLevel()) {
+					throw new IllegalArgumentException(logError(MSG_CRITICALITY_LEVEL_MISSING, MSG_ID_CRITICALITY_LEVEL_MISSING, modelTask.getTaskName()));
+				}
+				
+				if (!Objects.equals(modelTask.getNumberOfCpus(), changedTask.getNumberOfCpus())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task number of cpus changed from %s to %s", String.valueOf(modelTask.getNumberOfCpus()), String.valueOf(changedTask.getNumberOfCpus())));
 					processorChanged = true;
 					modelTask.setNumberOfCpus(changedTask.getNumberOfCpus());
 				}
 				if (!modelTask.getBreakpointFileNames().equals(changedTask.getBreakpointFileNames())) {
-					processorChanged = true;
-					modelTask.setBreakpointFileNames(changedTask.getBreakpointFileNames());
+					if (modelTask.getBreakpointFileNames().isEmpty() && changedTask.getBreakpointFileNames().isEmpty()) {
+						if (logger.isTraceEnabled()) logger.trace("... task breakpoint files 'not equal', although both are empty");
+					} else {
+						if (logger.isTraceEnabled()) logger.trace(String.format("... task breakpoint files changed from %s to %s", modelTask.getBreakpointFileNames().toString(), changedTask.getBreakpointFileNames().toString()));
+						processorChanged = true;
+						modelTask.setBreakpointFileNames(changedTask.getBreakpointFileNames());
+					}
 				}
+				if (logger.isTraceEnabled()) logger.trace("... processor has changed after task " + i + ": " + processorChanged);
 			}
 			newTasks.add(modelTask);
 		}
