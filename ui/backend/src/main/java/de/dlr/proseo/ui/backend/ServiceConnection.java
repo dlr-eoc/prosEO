@@ -82,6 +82,8 @@ public class ServiceConnection {
 	 * @return a formatted error message
 	 */
 	private String createMessageFromHeaders(HttpStatus httpStatus, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createMessageFromHeaders({}, httpHeaders)", httpStatus);
+
 		String warningHeader = httpHeaders.getFirst("Warning");
 		if (null == warningHeader) {
 			return uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
@@ -92,7 +94,7 @@ public class ServiceConnection {
 				return uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
 						httpStatus.value(), httpStatus.toString(), warningHeader);
 			} else {
-				return warningHeader;
+				return message;
 			}
 		}
 	}
@@ -104,10 +106,13 @@ public class ServiceConnection {
 	 * @return the prosEO-compliant message, if there is one, or null otherwise
 	 */
 	private String extractProseoMessage(String warningHeader) {
+		if (logger.isTraceEnabled()) logger.trace(">>> extractProseoMessage({})", warningHeader);
+
 		Matcher m = PROSEO_MESSAGE_TEMPLATE.matcher(warningHeader);
 		if (m.matches()) {
 			return m.group("message");
 		}
+		if (logger.isTraceEnabled()) logger.trace("... no prosEO message found: [" + warningHeader + "]");
 		return null;
 	}
 	
@@ -247,7 +252,7 @@ public class ServiceConnection {
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
 			String message = createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
 			logger.error(message);
-			throw HttpClientErrorException.create(e.getStatusCode(), message, e.getResponseHeaders(), e.getResponseBodyAsByteArray(), null);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
 			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
 			throw e;

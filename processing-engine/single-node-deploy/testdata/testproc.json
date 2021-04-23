@@ -20,7 +20,6 @@
     "taskName" : "ptm_l2",
     "taskVersion" : "0.1.0",
     "isCritical" : true,
-    "criticalityLevel" : 20,
     "numberOfCpus" : 16,
     "breakpointFileNames" : [ ]
   } ],

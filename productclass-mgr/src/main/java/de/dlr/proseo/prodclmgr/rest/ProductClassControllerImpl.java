@@ -37,7 +37,6 @@ public class ProductClassControllerImpl implements ProductclassController {
 	//private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
 	/* Message string constants */
-	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-productclass-mgr ";
 
 	/** The product class manager */
@@ -55,7 +54,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
+		responseHeaders.set(HttpHeaders.WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
 		return responseHeaders;
 	}
 	

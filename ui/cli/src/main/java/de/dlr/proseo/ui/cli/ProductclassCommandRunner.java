@@ -599,6 +599,7 @@ public class ProductclassCommandRunner {
 		/* Read selection rule file, if any */
 		List<Object> selectionRuleList = new ArrayList<>();
 		if (null == selectionRuleFile) {
+			selectionRuleFileFormat = FORMAT_PLAIN; // No file given, so we assume interactive rule language input
 			SelectionRuleString restSelectionRule = new SelectionRuleString();
 			selectionRuleList.add(restSelectionRule);
 		} else if (FORMAT_PLAIN.equals(selectionRuleFileFormat)) {
@@ -789,6 +790,7 @@ public class ProductclassCommandRunner {
 			ObjectMapper mapper = new ObjectMapper();
 			for (Object resultObject: resultList) {
 				SelectionRuleString selectionRule = mapper.convertValue(resultObject, SelectionRuleString.class);
+				System.out.println("ID: " + selectionRule.getId());
 				System.out.println(selectionRule.getSelectionRule());
 				System.out.println(String.format("(Mode: %s, configured processors: %s)\n", selectionRule.getMode(), selectionRule.getConfiguredProcessors().toString()));
 			}
@@ -834,6 +836,7 @@ public class ProductclassCommandRunner {
 		/* Read selection rule file, if any */
 		SelectionRuleString updatedSelectionRule = null;
 		if (null == selectionRuleFile) {
+			selectionRuleFileFormat = FORMAT_PLAIN; // No file given, so we assume interactive rule language input
 			updatedSelectionRule = new SelectionRuleString();
 		} else if (FORMAT_PLAIN.equals(selectionRuleFileFormat)) {
 			try {

@@ -952,7 +952,7 @@ commands:
             - name: create
               description: Create a new selection rule for the given target product class; 
                            the user will be prompted for mandatory attributes not given on the command line.
-                           If PLAIN format is specified and no file name is given,
+                           If no file name is given,
                            the user will be prompted to enter the selection rule in Rule Language.
               options:
                 - name: file
@@ -961,7 +961,8 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
               parameters:
                 - name: targetProductClass
                   type: string
@@ -975,7 +976,7 @@ commands:
             - name: update
               description: Update a selection rule for the given target class and configured processor; 
                            the user will be prompted for mandatory attributes not given on the command line.
-                           If PLAIN format is specified and no file name is given,
+                           If no file name is given,
                            the user will be prompted to enter the selection rule in Rule Language.
                            If multiple rules exist for the target product class,
                            the user will be prompted to select the rule to apply the update to.
@@ -986,7 +987,8 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
                 - name: delete-attributes
                   type: boolean
                   description: Delete non-mandatory attributes not given in the selection rule definition file and/or the command parameters

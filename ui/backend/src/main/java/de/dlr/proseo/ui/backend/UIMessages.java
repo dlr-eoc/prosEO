@@ -431,7 +431,7 @@ public class UIMessages {
 		MSG_PROCESSOR_DATA_INVALID ("(E%d) Processor data invalid (cause: %s)", MSG_ID_PROCESSOR_DATA_INVALID),
 		MSG_PROCESSOR_DELETE_FAILED ("(E%d) Deletion of processor %s with version %s failed (cause: %s)", MSG_ID_PROCESSOR_DELETE_FAILED),
 		MSG_CONFIGURATION_DATA_INVALID ("(E%d) Configuration data invalid (cause: %s)", MSG_ID_CONFIGURATION_DATA_INVALID),
-		MSG_NO_CONFIGURATIONS_FOUND ("(E%d) No processors found for given search criteria", MSG_ID_NO_CONFIGURATIONS_FOUND),
+		MSG_NO_CONFIGURATIONS_FOUND ("(E%d) No configurations found for given search criteria", MSG_ID_NO_CONFIGURATIONS_FOUND),
 		MSG_NO_CONFIGURATION_IDENTIFIER_GIVEN ("(E%d) No processor name and/or configuration version given", MSG_ID_NO_CONFIGURATION_IDENTIFIER_GIVEN),
 		MSG_CONFIGURATION_NOT_FOUND ("(E%d) Configuration for processor %s with configuration version %s not found", MSG_ID_CONFIGURATION_NOT_FOUND),
 		MSG_CONFIGURATION_NOT_FOUND_BY_ID ("(E%d) Configuration with database ID %d not found", MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID),
