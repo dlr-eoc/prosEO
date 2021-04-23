@@ -274,7 +274,7 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCTCLASS_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PRODUCTCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -492,7 +492,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCTCLASS_NOT_FOUND_BY_ID, restProductClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -692,7 +692,7 @@ public class ProductclassCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -992,7 +992,7 @@ public class ProductclassCommandRunner {
 				message = uiMsg(MSG_ID_SELECTION_RULE_NOT_FOUND_BY_ID, restSelectionRule.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_SELECTION_RULE_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

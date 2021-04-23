@@ -391,7 +391,7 @@ public class OrderCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -699,7 +699,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -806,7 +806,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -878,7 +878,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND, processingFacility);
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -917,7 +917,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_JOBS_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1001,7 +1001,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1068,7 +1068,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1133,7 +1133,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1187,7 +1187,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1242,7 +1242,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1297,7 +1297,7 @@ public class OrderCommandRunner {
 				message = uiMsg(MSG_ID_ORDER_NOT_FOUND, restOrder.getIdentifier());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_ORDER_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

@@ -266,7 +266,7 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -509,7 +509,7 @@ public class FacilityCommandRunner {
 				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:

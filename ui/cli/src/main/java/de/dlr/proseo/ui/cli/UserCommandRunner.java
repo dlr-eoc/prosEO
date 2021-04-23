@@ -170,7 +170,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_USER_NOT_FOUND_BY_NAME, restUser.getUsername(), loginManager.getMission());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -261,7 +261,7 @@ public class UserCommandRunner {
 				message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -418,7 +418,7 @@ public class UserCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_USER_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1047,7 +1047,7 @@ public class UserCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1350,7 +1350,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1434,7 +1434,7 @@ public class UserCommandRunner {
 					message = uiMsg(MSG_ID_GROUP_NOT_FOUND_BY_ID, restGroup.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getMessage());
+					message = uiMsg(MSG_ID_GROUP_DATA_INVALID, e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:

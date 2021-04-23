@@ -243,7 +243,7 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -436,7 +436,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -644,7 +644,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -724,7 +724,7 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -884,7 +884,7 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -1189,7 +1189,7 @@ public class MissionCommandRunner {
 					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
+					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:

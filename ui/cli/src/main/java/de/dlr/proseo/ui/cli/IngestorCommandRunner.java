@@ -232,7 +232,7 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -518,7 +518,7 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
