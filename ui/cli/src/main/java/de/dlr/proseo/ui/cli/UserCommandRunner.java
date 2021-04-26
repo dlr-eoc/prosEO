@@ -132,7 +132,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -174,7 +176,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -217,7 +221,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -265,7 +271,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -422,7 +430,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -483,7 +493,9 @@ public class UserCommandRunner {
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -674,7 +686,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_USER_DELETE_FAILED, username, e.getMessage());
@@ -1051,7 +1065,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1111,7 +1127,9 @@ public class UserCommandRunner {
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), USERS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1270,7 +1288,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_GROUP_DELETE_FAILED, groupname, e.getMessage());
@@ -1354,7 +1374,9 @@ public class UserCommandRunner {
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1438,7 +1460,9 @@ public class UserCommandRunner {
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1513,7 +1537,9 @@ public class UserCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), GROUPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());

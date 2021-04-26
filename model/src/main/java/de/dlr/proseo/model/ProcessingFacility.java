@@ -53,7 +53,6 @@ public class ProcessingFacility extends PersistentObject {
 	
 	/**
 	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
-	 * This URL shall contain the string "%NODE_IP%", which will be replaced by the actual node IP of the Kubernetes worker node.
 	 */
 	private String localStorageManagerUrl;
 	
