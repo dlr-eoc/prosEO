@@ -535,7 +535,7 @@ public class ProductManager {
 			modelProduct.setProductClass(modelProductClass);
 		}
 		if (!modelProduct.getFileClass().equals(changedProduct.getFileClass())) {
-			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
 				throw new IllegalArgumentException(logError(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
 						product.getFileClass(), product.getMissionCode()));
 			}

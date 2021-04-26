@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -287,7 +288,12 @@ public class IngestorCommandRunner {
 					if ("from".equals(option.getName())) {
 						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 					} else if ("to".equals(option.getName())) {
-						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+						Instant startTimeTo = CLIUtil.parseDateTime(option.getValue());
+						if (0 < startTimeTo.getNano()) {
+							// API only accepts full second, therefore round up to next full second
+							startTimeTo = startTimeTo.plusSeconds(1);
+						}
+						requestURI += "&startTimeTo=" + formatter.format(startTimeTo);
 					}
 				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));

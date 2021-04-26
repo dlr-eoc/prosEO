@@ -1021,10 +1021,10 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of sensing start time
+              description: Lower bound of sensing start time (rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of sensing start time
+              description: Upper bound of sensing start time (rounded up to next full second)
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])

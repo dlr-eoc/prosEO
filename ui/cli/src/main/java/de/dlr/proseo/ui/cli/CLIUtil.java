@@ -233,7 +233,7 @@ public class CLIUtil {
 	}
 	
 	/**
-	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby after the following variants 
+	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby all of the following variants 
 	 * are allowed:
 	 * <ul>
 	 *   <li>yyyy-MM-dd</li>
