@@ -635,7 +635,9 @@ public class JobCommandRunner {
 		}
 		
 		/* Display the job step(s) found */
-		if (isVerbose) {
+		if (filteredJobSteps.isEmpty()) {
+			System.err.println(uiMsg(MSG_ID_NO_JOBSTEPS_FOUND));
+		} else if (isVerbose) {
 			try {
 				CLIUtil.printObject(System.out, filteredJobSteps, jobStepOutputFormat);
 			} catch (IllegalArgumentException e) {
@@ -648,7 +650,7 @@ public class JobCommandRunner {
 		} else {
 			String listFormat = "%11s %12s %s";
 			System.out.println(String.format(listFormat, "Database ID", "Output Class", "Job Step State"));
-			for (RestJobStep restJobStep: restJob.getJobSteps()) {
+			for (RestJobStep restJobStep: filteredJobSteps) {
 				System.out.println(String.format(listFormat, restJobStep.getId(), restJobStep.getOutputProductClass(),
 						restJobStep.getJobStepState().toString()));
 			}
@@ -685,7 +687,8 @@ public class JobCommandRunner {
 				&& !JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
 					CMD_SUSPEND, restJobStep.getJobStepState(),
-					JobStepState.READY.toString() + " or " + JobStepState.RUNNING.toString()));
+					JobStepState.READY.toString() + ", " + JobStepState.WAITING_INPUT.toString() + " or " + 
+					JobStepState.RUNNING.toString()));
 			return;
 		}
 		
@@ -801,7 +804,8 @@ public class JobCommandRunner {
 		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())
 				&&!JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
-					CMD_CANCEL, restJobStep.getJobStepState(), JobStepState.INITIAL.toString()));
+					CMD_CANCEL, restJobStep.getJobStepState(), 
+					JobStepState.INITIAL.toString() + " or " + JobStepState.RUNNING.toString()));
 			return;
 		}
 		

@@ -96,6 +96,7 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ILLEGAL_CREATION_STATE = 1133;
 	private static final int MSG_ID_SLICE_DURATION_MISSING = 1134;
 	private static final int MSG_ID_INVALID_SLICE_OVERLAP = 1135;
+	private static final int MSG_ID_NEGATIVE_DURATION = 1136;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -127,6 +128,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ILLEGAL_CREATION_STATE = "(E%d) Orders must be created in INITIAL state (found state %s)";
 	private static final String MSG_SLICE_DURATION_MISSING = "(E%d) Time slice duration missing for order %s of slicing type TIME_SLICE";
 	private static final String MSG_INVALID_SLICE_OVERLAP = "(E%d) Order %s with slicing type NONE has invalid slice overlap %s (no overlap allowed)";
+	private static final String MSG_NEGATIVE_DURATION = "(E%d) Order %s has start time %s after stop time %s";
 
 	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
 	private static final String MSG_ORDER_RETRIEVED = "(I%d) Order with ID %s retrieved";
@@ -246,6 +248,11 @@ public class ProcessingOrderMgr {
 		if (order.getOrbits().isEmpty()) {
 			if (null == modelOrder.getStartTime() || null == modelOrder.getStopTime()) {
 				throw new IllegalArgumentException(logError(MSG_ORDER_TIME_INTERVAL_MISSING, MSG_ID_ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
+			}
+			// Ensure stop time is not before start time
+			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
+				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
 			}
 			// Ensure slice duration is given for slicing type TIME_SLICE
 			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == modelOrder.getSliceDuration()) {
@@ -567,6 +574,11 @@ public class ProcessingOrderMgr {
 					stateChangeOnly = false;
 					modelOrder.setStopTime(changedOrder.getStopTime());
 				}
+			}
+			// Ensure stop time is not before start time
+			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
+				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
 			}
 		}
 		if (!modelOrder.getSlicingType().equals(changedOrder.getSlicingType())) {
@@ -995,7 +1007,7 @@ public class ProcessingOrderMgr {
 			throw new NoResultException(logError(MSG_ORDER_LIST_EMPTY, MSG_ID_ORDER_LIST_EMPTY));
 			
 		}
-		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), result.size(), mission, identifier, startTimeFrom, startTimeTo);
+		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return result;
 
 	}

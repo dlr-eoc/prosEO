@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -449,7 +450,12 @@ public class OrderCommandRunner {
 					if ("from".equals(option.getName())) {
 						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 					} else if ("to".equals(option.getName())) {
-						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+						Instant startTimeTo = CLIUtil.parseDateTime(option.getValue());
+						if (0 < startTimeTo.getNano()) {
+							// API only accepts full second, therefore round up to next full second
+							startTimeTo = startTimeTo.plusSeconds(1);
+						}
+						requestURI += "&startTimeTo=" + formatter.format(startTimeTo);
 					}
 				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
@@ -630,6 +636,10 @@ public class OrderCommandRunner {
 		
 		/* Compare attributes of database order with updated order */
 		// No modification of ID, version, mission code or identifier allowed
+		if (null != updatedOrder.getOrderState()) { // mandatory
+			// We rely on the state transition check of the backend service here (in contrast to the other state changing methods)
+			restOrder.setOrderState(updatedOrder.getOrderState());
+		}
 		if (isDeleteAttributes || null != updatedOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(updatedOrder.getExecutionTime());
 		}

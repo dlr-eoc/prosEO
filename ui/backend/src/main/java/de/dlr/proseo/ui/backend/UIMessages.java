@@ -194,6 +194,7 @@ public class UIMessages {
 	public static final int MSG_ID_JOBSTEP_RESUMED = 2776;
 	public static final int MSG_ID_JOBSTEP_CANCELLED = 2777;
 	public static final int MSG_ID_RETRYING_JOBSTEP = 2778;
+	public static final int MSG_ID_NO_JOBSTEPS_FOUND = 2779;
 	
 	// Ingestor/product CLI
 	public static final int MSG_ID_NO_PRODUCTS_FOUND = 2950;
@@ -378,11 +379,12 @@ public class UIMessages {
 		MSG_NO_JOB_DBID_GIVEN ("(E%d) No job database ID given", MSG_ID_NO_JOB_DBID_GIVEN),
 		MSG_JOB_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOB_NOT_FOUND),
 		MSG_JOB_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOB_DATA_INVALID),
-		MSG_INVALID_JOBSTEP_STATE ("(E%d) Operation %s not allowed for job state %s (must be %s)", MSG_ID_INVALID_JOBSTEP_STATE),
+		MSG_INVALID_JOBSTEP_STATE ("(E%d) Operation %s not allowed for job step state %s (must be %s)", MSG_ID_INVALID_JOBSTEP_STATE),
 		MSG_INVALID_JOBSTEP_STATE_VALUE ("(E%d) Invalid job step state %s", MSG_ID_INVALID_JOBSTEP_STATE_VALUE),
-		MSG_NO_JOBSTEP_DBID_GIVEN ("(E%d) No job database ID given", MSG_ID_NO_JOBSTEP_DBID_GIVEN),
-		MSG_JOBSTEP_NOT_FOUND ("(E%d) Job with database ID %s not found", MSG_ID_JOBSTEP_NOT_FOUND),
-		MSG_JOBSTEP_DATA_INVALID ("(E%d) Job data invalid (cause: %s)", MSG_ID_JOBSTEP_DATA_INVALID),
+		MSG_NO_JOBSTEP_DBID_GIVEN ("(E%d) No job step database ID given", MSG_ID_NO_JOBSTEP_DBID_GIVEN),
+		MSG_JOBSTEP_NOT_FOUND ("(E%d) Job step with database ID %s not found", MSG_ID_JOBSTEP_NOT_FOUND),
+		MSG_JOBSTEP_DATA_INVALID ("(E%d) Job step data invalid (cause: %s)", MSG_ID_JOBSTEP_DATA_INVALID),
+		MSG_NO_JOBSTEPS_FOUND ("(E%d) No job steps found for given search criteria", MSG_ID_NO_JOBSTEPS_FOUND),
 		
 		// Product class CLI
 		MSG_PRODUCTCLASS_DATA_INVALID ("(E%d) Product class data invalid (cause: %s)", MSG_ID_PRODUCTCLASS_DATA_INVALID),
