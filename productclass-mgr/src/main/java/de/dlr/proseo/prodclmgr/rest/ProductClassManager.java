@@ -1245,6 +1245,7 @@ public class ProductClassManager {
 					modelRule.getSimplePolicies().clear();
 					modelRule.getSimplePolicies().addAll(changedSimpleRule.getSimplePolicies());
 					modelRule.setSourceProductClass(changedSimpleRule.getSourceProductClass());
+					modelRule.setMinimumCoverage(changedSimpleRule.getMinimumCoverage());
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 				}
 				// Check mode change (including from/to null)
