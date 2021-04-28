@@ -63,7 +63,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_MODIFIED = 2009;
 	private static final int MSG_ID_PRODUCT_NOT_MODIFIED = 2010;
 	private static final int MSG_ID_PRODUCT_LIST_EMPTY = 2011;
-	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_PRODUCT_ID_MISSING = 2013;
 	private static final int MSG_ID_FILE_CLASS_INVALID = 2014;
 	private static final int MSG_ID_MODE_INVALID = 2015;
@@ -88,7 +88,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_ID_MISSING = "(E%d) Product ID not set";
 	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found for ID %d";
 	private static final String MSG_PRODUCT_LIST_EMPTY = "(E%d) No products found for search criteria";
-	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "(E%d) Enclosing product with ID %d not found";
 	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "(E%d) Component product with ID %d not found";
 	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) Orbit %d for spacecraft %s not found";
@@ -369,8 +369,8 @@ public class ProductManager {
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 				product.getMissionCode(), product.getProductClass());
 		if (null == modelProductClass) {
-			throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-					product.getMissionCode(), product.getProductClass()));
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+					product.getProductClass()));
 		}
 		modelProduct.setProductClass(modelProductClass);
 		
@@ -549,8 +549,8 @@ public class ProductManager {
 			ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 					product.getMissionCode(), product.getProductClass());
 			if (null == modelProductClass) {
-				throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-						product.getMissionCode(), product.getProductClass()));
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+						product.getProductClass()));
 			}
 			productChanged = true;
 			modelProduct.setProductClass(modelProductClass);
