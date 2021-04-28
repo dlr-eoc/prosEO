@@ -334,7 +334,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param pf Processing facility 
 	 * @return RestEntity if not available, null otherwise
 	 */
-	public ResponseEntity<?> checkFacility(ProcessingFacility procf) {
+	public ResponseEntity<?> checkFacility(ProcessingFacility procf, FacilityState secondState) {
 		if (procf == null) {
 			String message = Messages.FACILITY_NOT_EXIST.format("unknown");
 			HttpHeaders responseHeaders = new HttpHeaders();
@@ -342,7 +342,10 @@ public class ProductionPlanner implements CommandLineRunner {
 			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);		
 		} else {
 			ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(procf.getName());
-			if ((pf != null) && (pf.getFacilityState() != FacilityState.RUNNING)) {				
+			if ((pf != null) 
+					&& !((pf.getFacilityState() == FacilityState.RUNNING)
+					     || (secondState != null && (pf.getFacilityState() == secondState)))) {	
+				
 				String message = Messages.FACILITY_NOT_AVAILABLE.format(pf.getName(), pf.getFacilityState().toString());
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);

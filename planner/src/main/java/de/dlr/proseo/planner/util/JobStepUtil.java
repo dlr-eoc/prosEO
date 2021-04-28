@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -256,6 +257,7 @@ public class JobStepUtil {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// Discard this problem and set job step to completed
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
+						UtilService.getJobStepUtil().checkCreatedProducts(js);
 						js.incrementVersion();
 						RepositoryService.getJobStepRepository().save(js);
 						em.merge(js);
@@ -684,6 +686,113 @@ public class JobStepUtil {
 		}
 	}
 
+	/**
+	 * Check whether the product of job step exists
+	 * @param js job step
+	 * @return true if all products are generated
+	 */
+	@Transactional
+	public void checkCreatedProducts(JobStep js) {
+		if (js != null && js.getJobStepState() == JobStepState.COMPLETED) {
+			ProcessingFacility pf = js.getJob().getProcessingFacility();
+			if (pf != null) {
+
+				Optional<Product> op = RepositoryService.getProductRepository().findById(js.getOutputProduct().getId());
+				Product p = null;
+				p = op.isPresent() ? op.get() : null;
+				if (p != null) {
+					List<Product> ptr = new ArrayList<Product>();
+					ptr = checkCreatedProduct(p, pf);
+					for (Product cp : ptr) {
+						if (p.getComponentProducts().contains(cp)) {
+							p.getComponentProducts().remove(cp);
+							RepositoryService.getProductRepository().delete(cp);
+							RepositoryService.getProductRepository().save(p);
+							em.merge(p);
+						}
+					}
+					if (p.getComponentProducts().isEmpty() && p.getProductFile().isEmpty()) {
+						RepositoryService.getProductRepository().delete(p);
+						js.setOutputProduct(null);
+						RepositoryService.getJobStepRepository().save(js);
+						em.merge(js);
+					}
+				}
+			}
+		}
+	}
+
+	@Transactional
+	private List<Product> checkCreatedProduct(Product p, ProcessingFacility pf) {
+		List<Product> productsToRemove = new ArrayList<Product>();
+		
+		if (p != null && pf != null) {
+			Set<Product> pList = p.getComponentProducts();
+			if (pList.isEmpty()) {
+				// check product file
+				Boolean removeProduct = true;
+				List<ProductFile> fToRemove = new ArrayList<ProductFile>();
+				// search a product file on facility
+				for (ProductFile f : p.getProductFile()) {
+					if (f.getProcessingFacility().equals(pf)) {
+						if (f.getProductFileName() != null && !f.getProductFileName().isEmpty()) {
+							// product file found, all is okay
+							removeProduct = false;
+						} else {
+							// object product file found, but no file name.
+							// remove it later
+							fToRemove.add(f);
+						}
+					}
+				}
+				if (!fToRemove.isEmpty()) {
+					// remove product files without file name
+					for (ProductFile f : fToRemove) {
+						p.getProductFile().remove(f);
+						RepositoryService.getProductFileRepository().delete(f);
+						RepositoryService.getProductRepository().save(p);
+						em.merge(p);
+					}
+				}
+				if (removeProduct) {
+					// the product doesn't a file on facility
+					// search all satisfied queries which contain this product on facility
+					for (ProductQuery pq : p.getSatisfiedProductQueries()) {
+						if (pq.getJobStep().getJob().getProcessingFacility().equals(pf)) {
+							// remove the product from the query and set satisified to false
+							pq.getSatisfyingProducts().remove(p);
+							pq.setIsSatisfied(false);
+							RepositoryService.getProductQueryRepository().save(pq);
+							em.merge(pq);
+						}
+					}
+					if (p.getProductFile().isEmpty()) {
+						// there are no product files for the product, remove it
+						productsToRemove.add(p);
+					}
+				}
+			} else {
+				// check components
+				List<Product> ptr = new ArrayList<Product>();
+				for (Product cp : pList) {
+					ptr.addAll(checkCreatedProduct(cp, pf));
+				}
+				// remove the component products without file and components
+				for (Product cp : ptr) {
+					p.getComponentProducts().remove(cp);
+					RepositoryService.getProductRepository().delete(cp);
+					RepositoryService.getProductRepository().save(p);
+					em.merge(p);
+				}
+				if (p.getComponentProducts().isEmpty() && p.getProductFile().isEmpty()) {
+					// there are no product files or component for the product, remove it
+					productsToRemove.add(p);
+				}
+			}
+		}
+		return productsToRemove;
+	}
+	
 	/**
 	 * Collect products of a ptoduct tree into list
 	 * 

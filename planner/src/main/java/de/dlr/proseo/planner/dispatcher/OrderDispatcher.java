@@ -512,6 +512,10 @@ public class OrderDispatcher {
 					for (ProductClass productClass : requestedProductClasses) {
 						createProductsAndJobStep(productClass, job, order, allJobSteps, allProducts);
 					}
+					if (job.getJobSteps().isEmpty()) {
+						order.getJobs().remove(job);
+						RepositoryService.getJobRepository().delete(job);
+					}
 				}
 			}
 		} catch (IllegalArgumentException | NoSuchElementException ex) {

@@ -516,6 +516,7 @@ public class KubeJob {
 								for (V1JobCondition jc : jobCondList) {
 									if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
 										js.get().setJobStepState(JobStepState.COMPLETED);
+										UtilService.getJobStepUtil().checkCreatedProducts(js.get());
 										js.get().incrementVersion();	
 									} else if (jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) {
 										js.get().setJobStepState(JobStepState.FAILED);	
@@ -626,7 +627,9 @@ public class KubeJob {
 												// Sometimes we don't get the state transition to RUNNING
 												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
 											}
-											js.get().setJobStepState(JobStepState.COMPLETED);	
+											js.get().setJobStepState(JobStepState.COMPLETED);
+											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
+											
 											js.get().incrementVersion();
 											if (cd == null) {
 												cd = jc.getLastProbeTime();

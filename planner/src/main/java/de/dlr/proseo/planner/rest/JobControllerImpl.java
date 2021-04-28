@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.rest.JobController;
 import de.dlr.proseo.model.rest.model.RestJob;
@@ -221,7 +222,7 @@ public class JobControllerImpl implements JobController {
 		Job job = this.findJobById(jobId);
 		if (job != null) {
 			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(job.getProcessingFacility()); 
+			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(job.getProcessingFacility(), null); 
 			if (re != null) {
 				return re;
 			}
@@ -294,7 +295,8 @@ public class JobControllerImpl implements JobController {
 		Job j = this.findJobById(jobId);
 		if (j != null) {
 			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(j.getProcessingFacility()); 
+			ResponseEntity<RestJob> re = (ResponseEntity<RestJob>) productionPlanner.checkFacility(j.getProcessingFacility(), 
+					((force != null && force) ? FacilityState.STOPPING : null)); 
 			if (re != null) {
 				return re;
 			}
