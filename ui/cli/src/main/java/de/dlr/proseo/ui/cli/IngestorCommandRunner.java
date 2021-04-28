@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +61,8 @@ public class IngestorCommandRunner {
 	private static final String OPTION_VERBOSE = "verbose";
 	private static final String OPTION_FORMAT = "format";
 	private static final String OPTION_FILE = "file";
+	private static final String OPTION_NOCOPY = "noCopy";
+	private static final String OPTION_NOERASE = "noErase";
 	
 	private static final String MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES = "Checking for missing mandatory attributes ...";
 	private static final String PROMPT_PRODUCT_CLASS = "Product class (empty field cancels): ";
@@ -230,11 +233,13 @@ public class IngestorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -285,7 +290,12 @@ public class IngestorCommandRunner {
 					if ("from".equals(option.getName())) {
 						requestURI += "&startTimeFrom=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
 					} else if ("to".equals(option.getName())) {
-						requestURI += "&startTimeTo=" + formatter.format(CLIUtil.parseDateTime(option.getValue()));
+						Instant startTimeTo = CLIUtil.parseDateTime(option.getValue());
+						if (0 < startTimeTo.getNano()) {
+							// API only accepts full second, therefore round up to next full second
+							startTimeTo = startTimeTo.plusSeconds(1);
+						}
+						requestURI += "&startTimeTo=" + formatter.format(startTimeTo);
 					}
 				} catch (DateTimeException e) {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, option.getValue()));
@@ -329,7 +339,9 @@ public class IngestorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -451,7 +463,9 @@ public class IngestorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -516,11 +530,13 @@ public class IngestorCommandRunner {
 				message = uiMsg(MSG_ID_PRODUCT_NOT_FOUND, restProduct.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_PRODUCT_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -573,7 +589,9 @@ public class IngestorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -602,6 +620,7 @@ public class IngestorCommandRunner {
 		/* Check command options */
 		File productFile = null;
 		String productFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		boolean copyFiles = true;
 		for (ParsedOption option: ingestCommand.getOptions()) {
 			switch(option.getName()) {
 			case OPTION_FILE:
@@ -609,6 +628,9 @@ public class IngestorCommandRunner {
 				break;
 			case OPTION_FORMAT:
 				productFileFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_NOCOPY:
+				copyFiles = false;
 				break;
 			}
 		}
@@ -637,14 +659,16 @@ public class IngestorCommandRunner {
 		List<?> ingestedProducts = null;
 		try {
 			ingestedProducts = serviceConnection.postToService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + processingFacility,
+					URI_PATH_INGESTOR + "/" + processingFacility + "?copyFiles=" + copyFiles,
 					productsToIngest, List.class, loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -720,7 +744,9 @@ public class IngestorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -781,6 +807,16 @@ public class IngestorCommandRunner {
 	private void deleteProductFile(ParsedCommand deleteCommand) {
 		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({})", (null == deleteCommand ? "null" : deleteCommand.getName()));
 
+		/* Check command options */
+		boolean eraseFiles = true;
+		for (ParsedOption option: deleteCommand.getOptions()) {
+			switch(option.getName()) {
+			case OPTION_NOERASE:
+				eraseFiles = false;
+				break;
+			}
+		}
+		
 		/* Get product database ID and processing facility from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			// No identifying value given
@@ -800,7 +836,8 @@ public class IngestorCommandRunner {
 		/* Delete product using Ingestor service */
 		try {
 			serviceConnection.deleteFromService(serviceConfig.getIngestorUrl(),
-					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) + "/" + productIdString, 
+					URI_PATH_INGESTOR + "/" + UriUtils.encodePathSegment(facilityName, Charset.defaultCharset()) 
+					+ "/" + productIdString + "?eraseFiles=" + eraseFiles, 
 					loginManager.getUser(), loginManager.getPassword());
 		} catch (RestClientResponseException e) {
 			String message = null;
@@ -810,7 +847,9 @@ public class IngestorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PRODUCTFILES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());

@@ -13,6 +13,7 @@ import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -46,6 +47,10 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	private static Logger logger = LoggerFactory.getLogger(OrderControllerImpl.class);
 	
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
+
 	
     @Autowired
     private ProductionPlanner productionPlanner;
@@ -471,20 +476,33 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Transactional
 	private ProcessingOrder findOrder(String orderId) {
-		Optional<ProcessingOrder> orderOpt = null;
+		
+		String missionCode = securityService.getMission();
+
 		ProcessingOrder order = null;
 		try {
 			Long id = Long.valueOf(orderId);
-			orderOpt = RepositoryService.getOrderRepository().findById(id);
+			Optional<ProcessingOrder> orderOpt = RepositoryService.getOrderRepository().findById(id);
 			if (orderOpt.isPresent()) {
 				order = orderOpt.get();
 			}
 		} catch (NumberFormatException nfe) {
-			// use name as identifier
+			// use orderId as identifier
 		}
 		if (order == null) {
-			order = RepositoryService.getOrderRepository().findByIdentifier(orderId);
+			order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, orderId);
 		}
+		
+		if (null == order) {
+			return null;
+		}
+		
+		// Ensure user is authorized for the mission of the order
+		if (!missionCode.equals(order.getMission().getCode())) {
+			Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, order.getMission().getCode(), missionCode);
+			return null;			
+		}
+		
 		return order;
 	}
 

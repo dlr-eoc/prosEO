@@ -45,7 +45,7 @@ import de.dlr.proseo.model.enums.ProductionType;
  */
 @Entity
 @Table(indexes = {
-	@Index(unique = true, columnList = "identifier"),
+	@Index(unique = true, columnList = "mission_id, identifier"),
 	@Index(unique = true, columnList = "uuid"),
 	@Index(unique = false, columnList = "execution_time") 
 })
@@ -61,7 +61,7 @@ public class ProcessingOrder extends PersistentObject {
 	@ManyToOne
 	private Mission mission;
 	
-	/** User-defined order identifier */
+	/** User-defined order identifier (unique within the mission) */
 	@Column(nullable = false)
 	private String identifier;
 	

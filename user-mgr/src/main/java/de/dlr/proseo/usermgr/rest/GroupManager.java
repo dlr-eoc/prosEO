@@ -32,6 +32,7 @@ import de.dlr.proseo.usermgr.model.Group;
 import de.dlr.proseo.usermgr.model.GroupAuthority;
 import de.dlr.proseo.usermgr.model.GroupMember;
 import de.dlr.proseo.usermgr.model.User;
+import de.dlr.proseo.usermgr.rest.UserManager.NotModifiedException;
 import de.dlr.proseo.usermgr.rest.model.RestGroup;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
@@ -121,6 +122,18 @@ public class GroupManager {
 	private static Logger logger = LoggerFactory.getLogger(GroupManager.class);
 
 	/**
+	 * Exception to indicate unmodified data to caller
+	 */
+	public static class NotModifiedException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public NotModifiedException(String message) {
+			super(message);
+		}
+	}
+
+	/**
 	 * Create and log a formatted informational message
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style
@@ -128,7 +141,7 @@ public class GroupManager {
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted info mesage
 	 */
-	private String logInfo(String messageFormat, int messageId, Object... messageParameters) {
+	private static String logInfo(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -148,7 +161,7 @@ public class GroupManager {
 	 * @param messageParameters the message parameters (optional, depending on the message format)
 	 * @return a formatted error message
 	 */
-	private String logError(String messageFormat, int messageId, Object... messageParameters) {
+	private static String logError(String messageFormat, int messageId, Object... messageParameters) {
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -165,8 +178,9 @@ public class GroupManager {
 	 * 
 	 * @param restGroup the REST user group to convert
 	 * @return the converted model user group
+	 * @throws IllegalArgumentException if an invalid authority value was given
 	 */
-	/* package */ static Group toModelGroup(RestGroup restGroup) {
+	/* package */ static Group toModelGroup(RestGroup restGroup) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> toModelGroup({})", (null == restGroup ? "MISSING" : restGroup.getGroupname()));
 		
 		Group modelGroup = new Group();
@@ -175,6 +189,13 @@ public class GroupManager {
 		}
 		modelGroup.setGroupName(restGroup.getGroupname());
 		for (String restAuthority: restGroup.getAuthorities()) {
+			// Test whether authority is legal
+			try {
+				UserRole.asRole(restAuthority);
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
+			}
+			
 			GroupAuthority modelAuthority = new GroupAuthority();
 			modelAuthority.setAuthority(restAuthority);
 			modelAuthority.setGroup(modelGroup);
@@ -345,9 +366,10 @@ public class GroupManager {
 	 * @return a response containing a Json object corresponding to the user group after modification
 	 * @throws EntityNotFoundException if no user group with the given user group ID exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws NotModifiedException if the group data was not modified (input data same as database data)
 	 */
 	public RestGroup modifyGroup(Long id, RestGroup restGroup) throws
-			EntityNotFoundException, IllegalArgumentException {
+			EntityNotFoundException, IllegalArgumentException, de.dlr.proseo.usermgr.rest.GroupManager.NotModifiedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> modifyUser({}, {})", id, (null == restGroup ? "MISSING" : restGroup.getGroupname()));
 		
 		// Check arguments
@@ -368,9 +390,9 @@ public class GroupManager {
 		
 		// Apply changed attributes (no change of the group name allowed)
 		// -- No modifiable attributes --
-		//Group changedUser = toModelGroup(restGroup);
+		toModelGroup(restGroup); // Just check for valid input data
 		
-		boolean userChanged = false;
+		boolean groupChanged = false;
 		
 		// Apply changed authorities
 		Set<GroupAuthority> newAuthorities = new HashSet<>();
@@ -386,7 +408,7 @@ public class GroupManager {
 			}
 			if (authorityChanged) {
 				// This authority was revoked
-				userChanged = true;
+				groupChanged = true;
 			}
 		}
 		for (String restAuthority: restGroup.getAuthorities()) {
@@ -400,12 +422,7 @@ public class GroupManager {
 			}
 			if (authorityChanged) {
 				// This authority was added
-				try {
-					UserRole.asRole(restAuthority);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(logError(MSG_ILLEGAL_AUTHORITY, MSG_ID_ILLEGAL_AUTHORITY, restAuthority));
-				}
-				userChanged = true;
+				groupChanged = true;
 				GroupAuthority newAuthority = new GroupAuthority();
 				newAuthority.setAuthority(restAuthority);
 				newAuthority.setGroup(modelGroup);
@@ -415,11 +432,11 @@ public class GroupManager {
 		modelGroup.setGroupAuthorities(newAuthorities);
 		
 		// Save user group only if anything was actually changed
-		if (userChanged) {
+		if (groupChanged) {
 			modelGroup = groupRepository.save(modelGroup);
 			logInfo(MSG_GROUP_MODIFIED, MSG_ID_GROUP_MODIFIED, id);
 		} else {
-			logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id);
+			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
 		}
 		
 		// Return the changed user group
@@ -472,8 +489,9 @@ public class GroupManager {
 	 * @return a Json object corresponding to the list of users after addition
 	 * @throws EntityNotFoundException if no user group with the given ID or no user with the given name exists
 	 * @throws IllegalArgumentException if any of the input data was invalid
+	 * @throws NotModifiedException if the user is already a member of the group
 	 */
-	public List<RestUser> addGroupMember(Long id, String username) throws EntityNotFoundException, IllegalArgumentException {
+	public List<RestUser> addGroupMember(Long id, String username) throws EntityNotFoundException, IllegalArgumentException, de.dlr.proseo.usermgr.rest.GroupManager.NotModifiedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> addGroupMember({}, {})", id, username);
 		
 		// Check parameter
@@ -503,6 +521,11 @@ public class GroupManager {
 		GroupMember newMember = new GroupMember();
 		newMember.setGroup(modelGroup);
 		newMember.setUser(modelUser);
+		
+		if (modelGroup.getGroupMembers().contains(newMember)) {
+			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
+		}
+		
 		newMember = groupMemberRepository.save(newMember);
 		
 		modelGroup.getGroupMembers().add(newMember);
@@ -526,8 +549,9 @@ public class GroupManager {
 	 * @param username the name of the user to remove
 	 * @throws EntityNotFoundException if the group did not exist
 	 * @throws RuntimeException if the deletion was unsuccessful
+	 * @throws NotModifiedException if the user is not a member of the group
 	 */
-	public void removeGroupMember(Long id, String username) throws EntityNotFoundException, RuntimeException {
+	public void removeGroupMember(Long id, String username) throws EntityNotFoundException, RuntimeException, de.dlr.proseo.usermgr.rest.GroupManager.NotModifiedException {
 		if (logger.isTraceEnabled()) logger.trace(">>> removeGroupMember({}, {})", id, username);
 		
 		// Check parameter
@@ -548,6 +572,7 @@ public class GroupManager {
 		
 		// Remove the user from the user group
 		Iterator<GroupMember> memberIterator = modelGroup.getGroupMembers().iterator();
+		boolean memberFound = false;
 		while (memberIterator.hasNext()) {
 			GroupMember member = memberIterator.next();
 			if (username.equals(member.getUser().getUsername())) {
@@ -555,8 +580,13 @@ public class GroupManager {
 				userToRemove.getGroupMemberships().remove(member);
 				userRepository.save(userToRemove);
 				memberIterator.remove();
+				memberFound = true;
 				break;
 			}
+		}
+		
+		if (!memberFound) {
+			throw new NotModifiedException(logInfo(MSG_GROUP_NOT_MODIFIED, MSG_ID_GROUP_NOT_MODIFIED, id));
 		}
 		
 		logInfo(MSG_GROUP_MEMBER_REMOVED, MSG_ID_GROUP_MEMBER_REMOVED, username, id);

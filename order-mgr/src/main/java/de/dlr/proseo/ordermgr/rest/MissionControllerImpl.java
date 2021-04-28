@@ -84,7 +84,7 @@ public class MissionControllerImpl implements MissionController {
 	private static final String MSG_PRODUCTCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing product classes";
 	private static final String MSG_PROCESSORCLASSES_EXIST = "(E%d) Cannot delete mission %s due to existing processor classes";
 	private static final String MSG_MISSION_EXISTS = "(E%d) Mission with mission code %s already exists";
-	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists";
+	private static final String MSG_SPACECRAFT_EXISTS = "(E%d) Spacecraft with spacecraft code %s already exists for mission %s";
 	private static final String MSG_MISSION_CODE_MISSING = "(E%d) No mission code given";
 
 	private static final String MSG_MISSION_DELETED = "(I%d) Mission with database ID %d deleted";
@@ -226,9 +226,9 @@ public class MissionControllerImpl implements MissionController {
 				modelMission.getSpacecrafts().clear();
 				for (RestSpacecraft restSpacecraft : mission.getSpacecrafts()) {
 					Spacecraft modelSpacecraft = new Spacecraft();
-					if (null != RepositoryService.getSpacecraftRepository().findByCode(restSpacecraft.getCode())) {
-						// If such a spacecraft would be found, it would already belong to a different mission!
-						throw new IllegalArgumentException(String.format(MSG_SPACECRAFT_EXISTS, MSG_ID_SPACECRAFT_EXISTS, restSpacecraft.getCode()));
+					if (null != RepositoryService.getSpacecraftRepository().findByMissionAndCode(mission.getCode(), restSpacecraft.getCode())) {
+						throw new IllegalArgumentException(String.format(MSG_SPACECRAFT_EXISTS, MSG_ID_SPACECRAFT_EXISTS, 
+								restSpacecraft.getCode(), mission.getCode()));
 					}
 					else {
 						modelSpacecraft.setCode(restSpacecraft.getCode());

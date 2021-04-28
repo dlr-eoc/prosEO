@@ -141,6 +141,7 @@ public class GroupControllerImpl implements GroupController {
 	 * @param id the ID of the group to update
 	 * @param restGroup a Json object containing the modified (and unmodified) attributes
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the user after modification or 
+	 *         HTTP status "NOT_MODIFIED" and a warning message, if the input date was the same as the database data, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no user group with the given ID exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid, or
 	 *         HTTP status "CONFLICT" and an error message, if the user has been modified since retrieval by the client
@@ -151,6 +152,8 @@ public class GroupControllerImpl implements GroupController {
 		
 		try {
 			return new ResponseEntity<>(groupManager.modifyGroup(id, restGroup), HttpStatus.OK);
+		} catch (GroupManager.NotModifiedException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
@@ -184,6 +187,7 @@ public class GroupControllerImpl implements GroupController {
 	 * @param id the ID of the group to update
 	 * @param username the name of the user to add
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the list of users after addition or 
+	 *         HTTP status "NOT_MODIFIED" and a warning message, if the user is already a member of the group, or
 	 * 		   HTTP status "NOT_FOUND" and an error message, if no user group with the given ID or no user with the given name exists, or
 	 *         HTTP status "BAD_REQUEST" and an error message, if any of the input data was invalid
 	 */
@@ -193,6 +197,8 @@ public class GroupControllerImpl implements GroupController {
 		
 		try {
 			return new ResponseEntity<>(groupManager.addGroupMember(id, username), HttpStatus.CREATED);
+		} catch (GroupManager.NotModifiedException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (IllegalArgumentException e) {
@@ -206,6 +212,7 @@ public class GroupControllerImpl implements GroupController {
 	 * @param id the group ID
 	 * @param username the name of the user to remove
 	 * @return HTTP status "OK" and a response containing a Json object corresponding to the list of users after removal or 
+	 *         HTTP status "NOT_MODIFIED" and a warning message, if the user is not a member of the group, or
 	 *         HTTP status "NOT_FOUND", if the group did not exist, or
 	 *         HTTP status "NOT_MODIFIED", if the deletion was unsuccessful
 	 */
@@ -216,6 +223,8 @@ public class GroupControllerImpl implements GroupController {
 		try {
 			groupManager.removeGroupMember(id, username);
 			return new ResponseEntity<>(new HttpHeaders(), HttpStatus.NO_CONTENT);
+		} catch (GroupManager.NotModifiedException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
 		} catch (EntityNotFoundException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (RuntimeException e) {

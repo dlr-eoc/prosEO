@@ -396,8 +396,8 @@ public class ProductManager {
 
 		// Add orbit, if given
 		if (null != product.getOrbit()) {
-			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-					product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+			Orbit orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+					product.getMissionCode(), product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
 				throw new IllegalArgumentException(logError(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
 						product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()));
@@ -417,7 +417,7 @@ public class ProductManager {
 		// Add configured processor, if given
 		if (null != product.getConfiguredProcessor()) {
 			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
-					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+					.findByMissionCodeAndIdentifier(product.getMissionCode(), product.getConfiguredProcessor().getIdentifier());
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
 						product.getConfiguredProcessor().getIdentifier()));
@@ -535,7 +535,7 @@ public class ProductManager {
 			modelProduct.setProductClass(modelProductClass);
 		}
 		if (!modelProduct.getFileClass().equals(changedProduct.getFileClass())) {
-			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(modelProduct.getFileClass())) {
+			if (!modelProduct.getProductClass().getMission().getFileClasses().contains(changedProduct.getFileClass())) {
 				throw new IllegalArgumentException(logError(MSG_FILE_CLASS_INVALID, MSG_ID_FILE_CLASS_INVALID, 
 						product.getFileClass(), product.getMissionCode()));
 			}
@@ -584,8 +584,8 @@ public class ProductManager {
 			modelProduct.setOrbit(null);
 		} else if (null == modelProduct.getOrbit() 
 				|| !modelProduct.getOrbit().getOrbitNumber().equals(product.getOrbit().getOrbitNumber().intValue())) {
-			Orbit orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-					product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
+			Orbit orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+					product.getMissionCode(), product.getOrbit().getSpacecraftCode(), product.getOrbit().getOrbitNumber().intValue());
 			if (null == orbit) {
 				throw new IllegalArgumentException(logError(MSG_ORBIT_NOT_FOUND, MSG_ID_ORBIT_NOT_FOUND,
 						product.getOrbit().getOrbitNumber(), product.getOrbit().getSpacecraftCode()));
@@ -689,7 +689,7 @@ public class ProductManager {
 		} else if (null == modelProduct.getConfiguredProcessor() 
 				|| !modelProduct.getConfiguredProcessor().getIdentifier().equals(product.getConfiguredProcessor().getIdentifier())) {
 			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
-					.findByIdentifier(product.getConfiguredProcessor().getIdentifier());
+					.findByMissionCodeAndIdentifier(product.getMissionCode(), product.getConfiguredProcessor().getIdentifier());
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_NOT_FOUND, MSG_ID_CONFIGURED_PROCESSOR_NOT_FOUND,
 						product.getConfiguredProcessor().getIdentifier()));

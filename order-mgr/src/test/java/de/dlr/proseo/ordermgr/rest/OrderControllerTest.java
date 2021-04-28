@@ -162,16 +162,17 @@ public class OrderControllerTest {
 	/**
 	 * Create an order from a data array
 	 * 
+	 * @param missionCode the code of the test mission
 	 * @param testData an array of Strings representing the order to create
 	 * @return a order with its attributes set to the input data
 	 */
-	private ProcessingOrder createOrder(String[] testData) {		
+	private ProcessingOrder createOrder(String missionCode, String[] testData) {		
 		logger.info("... creating order ");
 		
 		ProcessingOrder testOrder = new ProcessingOrder();
-		if (null != RepositoryService.getOrderRepository().findByIdentifier(testData[3])) {
+		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3])) {
 			logger.info("Found test order {}", testOrder.getId());
-			return testOrder = RepositoryService.getOrderRepository().findByIdentifier(testData[3]);	
+			return testOrder = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(missionCode, testData[3]);	
 		}
 		else{
 			//Adding processing order parameters
@@ -207,7 +208,8 @@ public class OrderControllerTest {
 			}
 
 			for (int i = 0 ; i < testConfProc.length; ++i) {
-				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(testConfProc[i][0]);
+				ConfiguredProcessor reqProc = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(testMission[0][2], testConfProc[i][0]);
 				if (null != reqProc) {
 					testOrder.getRequestedConfiguredProcessors().add(reqProc);
 				}				
@@ -291,7 +293,7 @@ public class OrderControllerTest {
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMission[0][2], testSpacecraft[0][1]);
 				if (null == spacecraft ) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(testSpacecraft[0][1]);
@@ -308,7 +310,7 @@ public class OrderControllerTest {
 		List<ProcessingOrder> testOrders = new ArrayList<ProcessingOrder>() ;
 		
 		// Create an order in the database
-		ProcessingOrder orderToCreate = createOrder(testOrderData[0]);
+		ProcessingOrder orderToCreate = createOrder(testMission[0][2], testOrderData[0]);
 		testOrders.add(orderToCreate);
 		RestOrder restOrder = null;
 		try {
@@ -375,7 +377,7 @@ public class OrderControllerTest {
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMission[0][2], testSpacecraft[0][1]);
 				if (null == spacecraft ) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(testSpacecraft[0][1]);
@@ -387,9 +389,9 @@ public class OrderControllerTest {
 				
 				
 				for (int i = 0; i < testOrderData.length; ++i) {
-					ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[i][3]);
+					ProcessingOrder order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(testMission[0][2], testOrderData[i][3]);
 					if (order == null)
-						createOrders.add(createOrder(testOrderData[i]));
+						createOrders.add(createOrder(testMission[0][2], testOrderData[i]));
 					else
 						createOrders.add(order);
 				}
@@ -448,7 +450,7 @@ public class OrderControllerTest {
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMission[0][2], testSpacecraft[0][1]);
 				if (null == spacecraft ) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(testSpacecraft[0][1]);
@@ -460,9 +462,9 @@ public class OrderControllerTest {
 				
 				// Make sure test orders exist
 				for (int i = 0; i < testOrderData.length; ++i) {
-					ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[i][3]);
+					ProcessingOrder order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(testMission[0][2], testOrderData[i][3]);
 					if (order == null)
-						createOrders.add(createOrder(testOrderData[i]));
+						createOrders.add(createOrder(testMission[0][2], testOrderData[i]));
 					else
 						createOrders.add(order);
 				}
@@ -527,7 +529,7 @@ public class OrderControllerTest {
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMission[0][2], testSpacecraft[0][1]);
 				if (null == spacecraft ) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(testSpacecraft[0][1]);
@@ -538,9 +540,9 @@ public class OrderControllerTest {
 				}
 				
 				for (int i = 0; i < testOrderData.length; ++i) {
-					ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[i][3]);
+					ProcessingOrder order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(testMission[0][2], testOrderData[i][3]);
 					if (order == null)
-						createOrders.add(createOrder(testOrderData[i]));
+						createOrders.add(createOrder(testMission[0][2], testOrderData[i]));
 					else
 						createOrders.add(order);
 				}
@@ -566,8 +568,8 @@ public class OrderControllerTest {
 		ResponseEntity<RestOrder> getEntity = new TestRestTemplate(config.getUserName(), config.getUserPassword())
 				.getForEntity(testUrl, RestOrder.class);
 		assertEquals("Wrong HTTP status: ", HttpStatus.OK, getEntity.getStatusCode());
-		assertEquals("Wrong Start time: ", orderToModify.getStartTime(), getEntity.getBody().getStartTime().toInstant());
-		assertEquals("Wrong Stop time: ", orderToModify.getStopTime(), getEntity.getBody().getStopTime().toInstant());
+		assertEquals("Wrong Start time: ", orderToModify.getStartTime(), Instant.from(OrbitTimeFormatter.parse(getEntity.getBody().getStartTime())));
+		assertEquals("Wrong Stop time: ", orderToModify.getStopTime(), Instant.from(OrbitTimeFormatter.parse(getEntity.getBody().getStopTime())));
 		assertEquals("Wrong Execution time: ", orderToModify.getExecutionTime(), getEntity.getBody().getExecutionTime().toInstant());
 		
 		assertEquals("Wrong Processing mode: ",  orderToModify.getProcessingMode(), getEntity.getBody().getProcessingMode());
@@ -622,7 +624,7 @@ public class OrderControllerTest {
 				}
 				logger.info("Using mission " + mission.getCode() + " with id " + mission.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(testSpacecraft[0][1]);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testMission[0][2], testSpacecraft[0][1]);
 				if (null == spacecraft ) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(testSpacecraft[0][1]);
@@ -633,9 +635,9 @@ public class OrderControllerTest {
 				}
 				// Make sure test orders exist
 				for (int i = 0; i < testOrderData.length; ++i) {
-					ProcessingOrder order = RepositoryService.getOrderRepository().findByIdentifier(testOrderData[i][3]);
+					ProcessingOrder order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(testMission[0][2], testOrderData[i][3]);
 					if (order == null)
-						createOrders.add(createOrder(testOrderData[i]));
+						createOrders.add(createOrder(testMission[0][2], testOrderData[i]));
 					else
 						createOrders.add(order);
 				}

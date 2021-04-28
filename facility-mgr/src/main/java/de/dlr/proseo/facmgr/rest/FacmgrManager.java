@@ -248,7 +248,7 @@ public class FacmgrManager {
 			modelFacility.setDescription(changedFacility.getDescription());
 		}	
 		if (null == modelFacility.getFacilityState()) {
-			if (null == changedFacility.getDescription()) {
+			if (null == changedFacility.getFacilityState()) {
 				// No change
 			} else {
 				facilityChanged = true;

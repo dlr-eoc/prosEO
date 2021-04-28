@@ -23,14 +23,14 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(indexes = @Index(unique = true, columnList = "code"))
+@Table(indexes = @Index(unique = true, columnList = "mission_id, code"))
 public class Spacecraft extends PersistentObject {
 
 	/** The mission this spacecraft belongs to */
 	@ManyToOne
 	private Mission mission;
 	
-	/** The spacecraft code (e. g. S5P) */
+	/** The spacecraft code (e. g. S5P), unique within a mission */
 	private String code;
 	
 	/** The spacecraft name (e. g. Sentinel-5 Precursor) */

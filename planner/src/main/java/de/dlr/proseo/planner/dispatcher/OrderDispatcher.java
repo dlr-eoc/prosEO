@@ -546,8 +546,10 @@ public class OrderDispatcher {
 		
 		Set<Spacecraft> spacecrafts = order.getMission().getSpacecrafts();
 		if (1 == spacecrafts.size()) {
+			Spacecraft spacecraft = spacecrafts.iterator().next();
 			List<Orbit> orbits = RepositoryService.getOrbitRepository()
-					.findBySpacecraftCodeAndTimeIntersect(spacecrafts.iterator().next().getCode(), startT, stopT);
+					.findByMissionCodeAndSpacecraftCodeAndTimeIntersect(
+							spacecraft.getMission().getCode(), spacecraft.getCode(), startT, stopT);
 			// If we find one or two orbits, then we assign the first one (even if the product extends into the next orbit)
 			if (1 == orbits.size() || 2 == orbits.size()) {
 				return orbits.get(0);

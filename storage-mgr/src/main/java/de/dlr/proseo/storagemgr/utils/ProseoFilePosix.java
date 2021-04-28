@@ -137,7 +137,7 @@ public class ProseoFilePosix extends ProseoFile {
 		try {
 			return new FileInputStream(pathInfo);
 		} catch (FileNotFoundException e) {
-			logger.error("Job order file {} not found", pathInfo);
+			logger.error("Requested POSIX file {} not found", pathInfo);
 			return null;
 		} 
 	}

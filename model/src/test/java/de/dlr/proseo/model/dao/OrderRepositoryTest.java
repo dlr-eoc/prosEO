@@ -26,6 +26,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -43,6 +44,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 @AutoConfigureTestEntityManager
 public class OrderRepositoryTest {
 
+	private static final String TEST_MISSIONCODE = "xyz567";
 	private static final String TEST_IDENTIFIER = "$Order 4711$";
 	private static final Instant TEST_EXECUTION_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.000000")); // Timestamp without fraction of seconds!
 
@@ -82,14 +84,20 @@ public class OrderRepositoryTest {
 	 */
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_MISSIONCODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		ProcessingOrder order = new ProcessingOrder();
+		order.setMission(mission);
 		order.setIdentifier(TEST_IDENTIFIER);
 		order.setUuid(UUID.randomUUID());
 		order.setExecutionTime(TEST_EXECUTION_TIME);
-		RepositoryService.getOrderRepository().save(order);
+		order = RepositoryService.getOrderRepository().save(order);
+		mission.getProcessingOrders().add(order);
 		
 		// Test findByIdentifier
-		order = RepositoryService.getOrderRepository().findByIdentifier(TEST_IDENTIFIER);
+		order = RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(TEST_MISSIONCODE, TEST_IDENTIFIER);
 		assertNotNull("Find by identifier failed for ProcessingOrder", order);
 		
 		logger.info("OK: Test for findByIdentifier completed");

@@ -233,7 +233,7 @@ public class CLIUtil {
 	}
 	
 	/**
-	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby after the following variants 
+	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby all of the following variants 
 	 * are allowed:
 	 * <ul>
 	 *   <li>yyyy-MM-dd</li>
@@ -282,7 +282,7 @@ public class CLIUtil {
 		try {
 			// Check file permissions
 			Path filePath = Path.of(filePathString);
-			if (Files.exists(filePath)) {
+			if (Files.isReadable(filePath)) {
 				Set<PosixFilePermission> permissions;
 				try {
 					permissions = Files.getPosixFilePermissions(filePath);

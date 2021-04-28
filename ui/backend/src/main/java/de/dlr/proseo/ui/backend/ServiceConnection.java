@@ -9,9 +9,12 @@ import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -29,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -53,6 +57,10 @@ public class ServiceConnection {
 	/* Message ID constants */
 	
 	/* Message string constants */
+	
+	/* Other constants */
+	// prosEO message format, e. g. "199 proseo-processor-mgr (E2205) Product type L2________ invalid for mission NM4T"
+	private static final Pattern PROSEO_MESSAGE_TEMPLATE = Pattern.compile("199 +\\S+ +(?<message>\\([IWEF]\\d+\\) .*)");
 
 	/** REST template builder */
 	@Autowired
@@ -64,6 +72,45 @@ public class ServiceConnection {
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ServiceConnection.class);
+	
+	/**
+	 * Checks whether the error message from the "Warning" header is prosEO-compliant;
+	 * if so, returns the error message from the header, otherwise generates a generic error message
+	 * 
+	 * @param httpStatus the HTTP status returned by the REST call
+	 * @param httpHeaders the HTTP headers returned by the REST call
+	 * @return a formatted error message
+	 */
+	private String createMessageFromHeaders(HttpStatus httpStatus, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createMessageFromHeaders({}, httpHeaders)", httpStatus);
+
+		String warningHeader = httpHeaders.getFirst(HttpHeaders.WARNING);
+		String warningMessage = extractProseoMessage(warningHeader);
+		
+		return (null == warningMessage ? 
+				uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, httpStatus.value(), httpStatus.toString(), warningHeader) :
+				warningMessage );
+	}
+
+	/**
+	 * Extracts the prosEO-compliant message from the "Warning" header, if any
+	 * 
+	 * @param warningHeader the warning header to check (may be null)
+	 * @return the prosEO-compliant message, if there is one, or null otherwise
+	 */
+	private String extractProseoMessage(String warningHeader) {
+		if (logger.isTraceEnabled()) logger.trace(">>> extractProseoMessage({})", warningHeader);
+		
+		if (null == warningHeader)
+			return null;
+
+		Matcher m = PROSEO_MESSAGE_TEMPLATE.matcher(warningHeader);
+		if (m.matches()) {
+			return m.group("message");
+		}
+		if (logger.isTraceEnabled()) logger.trace("... no prosEO message found: [" + warningHeader + "]");
+		return null;
+	}
 	
 	/**
 	 * Calls a prosEO service at the given location with HTTP GET
@@ -91,12 +138,13 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
+			String message = createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			logger.error(message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-			throw e;
+			String warningMessage = extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			logger.error(null == warningMessage ? uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username) : warningMessage);
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
@@ -108,8 +156,7 @@ public class ServiceConnection {
 		
 		// All GET requests should return HTTP status OK
 		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+			String message = createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.error(message);
 			throw new RuntimeException(message);
 		}
@@ -118,7 +165,7 @@ public class ServiceConnection {
 		if (logger.isTraceEnabled()) logger.trace("<<< getFromService()");
 		return entity.getBody();
 	}
-	
+
 	/**
 	 * Calls a prosEO service at the given location with HTTP PUT
 	 * 
@@ -145,12 +192,13 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestEntity.getUrl());
 			entity = restTemplate.exchange(requestEntity, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"));
+			String message = createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			logger.error(message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-			throw e;
+			String warningMessage = extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			logger.error(null == warningMessage ? uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username) : warningMessage);
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
@@ -162,8 +210,7 @@ public class ServiceConnection {
 		
 		// All PUT requests should return HTTP status OK (for updates) or CREATED (for newly created items)
 		if (!HttpStatus.OK.equals(entity.getStatusCode()) && !HttpStatus.CREATED.equals(entity.getStatusCode())) {
-			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+			String message = createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.error(message);
 			throw new RuntimeException(message);
 		}
@@ -201,12 +248,13 @@ public class ServiceConnection {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with POST", requestUrl);
 			entity = restTemplate.postForEntity(requestUrl, restObject, clazz);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst("Warning")));
-			throw HttpClientErrorException.create(e.getStatusCode(), e.getResponseHeaders().getFirst("Warning"), e.getResponseHeaders(), e.getResponseBodyAsByteArray(), null);
+			String message = createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			logger.error(message);
+			throw new HttpClientErrorException(e.getStatusCode(), message);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-			throw e;
+			String warningMessage = extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			logger.error(null == warningMessage ? uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username) : warningMessage);
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
@@ -216,10 +264,15 @@ public class ServiceConnection {
 			throw new RuntimeException(e);
 		}
 		
-		// All POST requests should return HTTP status CREATED
+		// Check for NOT_MODIFIED (POST used for creating sub-objects)
+		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
+			throw new RestClientResponseException(entity.getHeaders().getFirst(HttpHeaders.WARNING), HttpStatus.NOT_MODIFIED.value(),
+					HttpStatus.NOT_MODIFIED.toString(), entity.getHeaders(), "".getBytes(), Charset.defaultCharset());
+		}
+		
+		// All successful POST requests should return HTTP status CREATED
 		if (!HttpStatus.CREATED.equals(entity.getStatusCode())) {
-			String message = uiMsg(MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst("Warning"));
+			String message = createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
 			logger.error(message);
 			throw new RuntimeException(message);
 		}
@@ -279,25 +332,39 @@ public class ServiceConnection {
 			
 			String responseContent =  httpclient.execute(req, httpResponse -> {
 				int httpStatusCode = httpResponse.getStatusLine().getStatusCode();
-				Header warningHeader = httpResponse.getFirstHeader("Warning");
-				String warningMessage = (null == warningHeader ? "no message" : warningHeader.getValue());
+				Header warningHeader = httpResponse.getFirstHeader(HttpHeaders.WARNING);
+				
+				String message = null;
+				String proseoMessage = null;
+				if (null == warningHeader) {
+					message = "no message";
+				} else {
+					proseoMessage = extractProseoMessage(warningHeader.getValue());
+					if (null == proseoMessage) {
+						HttpHeaders messageHeaders = new HttpHeaders();
+						messageHeaders.add(HttpHeaders.WARNING, warningHeader.getValue());
+						message = createMessageFromHeaders(HttpStatus.valueOf(httpStatusCode), messageHeaders);
+					} else {
+						message = proseoMessage;
+					}
+				}
+				
 				if (HttpStatus.UNAUTHORIZED.value() == httpStatusCode || HttpStatus.FORBIDDEN.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-					throw HttpClientErrorException.create(HttpStatus.UNAUTHORIZED, warningMessage, null, null, null);
+					message = (null == proseoMessage ? uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username) : proseoMessage);
+					logger.error(message);
+					throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED, proseoMessage);
 				} else if (HttpStatus.NOT_FOUND.value() == httpStatusCode || HttpStatus.BAD_REQUEST.value() == httpStatusCode) {
-					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
-					logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-							httpStatusCode, reasonPhrase, warningMessage));
-					throw HttpClientErrorException.create(HttpStatus.valueOf(httpStatusCode), warningMessage, null, null, null);
+					logger.error(message);
+					throw new HttpClientErrorException(HttpStatus.valueOf(httpStatusCode), message);
 				} else if (HttpStatus.NOT_MODIFIED.value() == httpStatusCode) {
 					if (null != httpResponse.getEntity())
 						httpResponse.getEntity().getContent().close();
 					logger.info(uiMsg(MSG_ID_NOT_MODIFIED));
-					throw new RestClientResponseException(warningMessage, httpStatusCode, 
+					throw new RestClientResponseException(message, httpStatusCode, 
 							HttpStatus.NOT_MODIFIED.getReasonPhrase(), null, null, null);
 				} else if (300 <= httpStatusCode){
 					String reasonPhrase = httpResponse.getStatusLine().getReasonPhrase();
@@ -348,14 +415,14 @@ public class ServiceConnection {
 			//restTemplate.delete(requestUrl);
 			entity = restTemplate.exchange(requestUrl, HttpMethod.DELETE, null, Object.class);
 		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			String message = e.getResponseHeaders().getFirst("Warning");
-			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), message));
+			String message = createMessageFromHeaders(e.getStatusCode(), e.getResponseHeaders());
+			logger.error(message);
 			throw new RestClientResponseException(message, e.getRawStatusCode(), e.getStatusCode().getReasonPhrase(),
 					e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
 		} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-			logger.error(uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username));
-			throw e;
+			String warningMessage = extractProseoMessage(e.getResponseHeaders().getFirst(HttpHeaders.WARNING));
+			logger.error(null == warningMessage ? uiMsg(MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, username) : warningMessage);
+			throw new HttpClientErrorException(e.getStatusCode(), warningMessage);
 		} catch (RestClientException e) {
 			String message = uiMsg(MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
 			logger.error(message, e);
@@ -371,9 +438,8 @@ public class ServiceConnection {
 		
 		// Check for deletion failure indicated by 304 NOT_MODIFIED
 		if (HttpStatus.NOT_MODIFIED.equals(entity.getStatusCode())) {
-			String message = entity.getHeaders().getFirst("Warning");
-			logger.error(uiMsg(MSG_ID_SERVICE_REQUEST_FAILED,
-					entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(), message));
+			String message = createMessageFromHeaders(entity.getStatusCode(), entity.getHeaders());
+			logger.error(message);
 			throw new RestClientResponseException(message, entity.getStatusCodeValue(), entity.getStatusCode().getReasonPhrase(),
 					entity.getHeaders(), null, StandardCharsets.UTF_8);
 		} else if (!HttpStatus.NO_CONTENT.equals(entity.getStatusCode())) {

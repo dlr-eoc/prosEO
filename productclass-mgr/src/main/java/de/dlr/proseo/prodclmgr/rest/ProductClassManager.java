@@ -560,7 +560,8 @@ public class ProductClassManager {
 			}
 			
 			for (String configuredProcessor: rule.getApplicableConfiguredProcessors()) {
-				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor modelProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(productClass.getMissionCode(), configuredProcessor);
 				if (null == modelProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}
@@ -711,24 +712,32 @@ public class ProductClassManager {
 			productClassChanged = true;
 			modelProductClass.setDefaultSliceDuration(changedProductClass.getDefaultSliceDuration());
 		}
+
+		if (logger.isTraceEnabled()) logger.trace("... scalar attributes for product class have changed: " + productClassChanged);
 		
 		// Update product file template, if different from mission template (uses REST product class for comparison!)
-		if (null == modelProductClass.getProductFileTemplate()) {
+		if (modelProductClass.getMission().getProductFileTemplate().equals(modelProductClass.getProductFileTemplate())) {
 			// Currently no template set --> set template, if a new template different from the mission's template was given
 			if (!modelProductClass.getMission().getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
+				if (logger.isTraceEnabled()) logger.trace("... new product file template for product class set");
 				productClassChanged = true;
 				modelProductClass.setProductFileTemplate(productClass.getProductFileTemplate());
 			}
 		} else if (null == productClass.getProductFileTemplate() 
 				|| modelProductClass.getMission().getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
 			// Currently template is set, but new value is null or same as mission template --> unset template
+			if (logger.isTraceEnabled()) logger.trace("... product file template for product class removed");
 			productClassChanged = true;
 			modelProductClass.setProductFileTemplate(null);
 		} else if (!modelProductClass.getProductFileTemplate().equals(productClass.getProductFileTemplate())) {
 			// Currently template is set, but a different value was given, which does not correspond to the mission template
+			if (logger.isTraceEnabled()) logger.trace(String.format("... product file template for product changed from [%s] to [%s]",
+					modelProductClass.getProductFileTemplate(), productClass.getProductFileTemplate()));
 			productClassChanged = true;
 			modelProductClass.setProductFileTemplate(productClass.getProductFileTemplate());
 		}
+		
+		if (logger.isTraceEnabled()) logger.trace("... product file template for product class has changed: " + productClassChanged);
 		
 		// Check the processor class
 		if (null == productClass.getProcessorClass() || 0 == productClass.getProcessorClass().length()) {
@@ -748,6 +757,8 @@ public class ProductClassManager {
 			// Add new associated processor class
 			setProcessorClass(modelProductClass, productClass.getMissionCode(), productClass.getProcessorClass());
 		}
+		
+		if (logger.isTraceEnabled()) logger.trace("... processor class for product class has changed: " + productClassChanged);
 		
 		// Check for new component product classes
 		Set<ProductClass> newComponentClasses = new HashSet<>();
@@ -783,6 +794,8 @@ public class ProductClassManager {
 			}
 		}
 		
+		if (logger.isTraceEnabled()) logger.trace("... component classes for product class have changed: " + productClassChanged);
+		
 		// Check the enclosing class
 		if (null == productClass.getEnclosingClass() || 0 == productClass.getEnclosingClass().length()) {
 			if (null != modelProductClass.getEnclosingClass()) {
@@ -802,6 +815,8 @@ public class ProductClassManager {
 			// Add the product class to the new enclosing class
 			setEnclosingClass(modelProductClass, productClass.getMissionCode(), productClass.getEnclosingClass());
 		}
+		
+		if (logger.isTraceEnabled()) logger.trace("... enclosing class for product class has changed: " + productClassChanged);
 		
 		// Save product class only if anything was actually changed
 		if (productClassChanged) {
@@ -978,7 +993,8 @@ public class ProductClassManager {
 			
 			Set<ConfiguredProcessor> configuredProcessors = new HashSet<>();
 			for (String configuredProcessorIdentifier: restRuleString.getConfiguredProcessors()) {
-				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessorIdentifier);
+				ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(optProductClass.get().getMission().getCode(), configuredProcessorIdentifier);
 				if (null == configuredProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessorIdentifier));
 				}
@@ -1172,7 +1188,8 @@ public class ProductClassManager {
 				// Check for new configured processors
 				Set<ConfiguredProcessor> newConfiguredProcessors = new HashSet<>();
 				for (String changedProcessorName: selectionRuleString.getConfiguredProcessors()) {
-					ConfiguredProcessor changedProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedProcessorName);
+					ConfiguredProcessor changedProcessor = RepositoryService.getConfiguredProcessorRepository()
+							.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), changedProcessorName);
 					if (null == changedProcessor) {
 						throw new IllegalArgumentException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, changedProcessorName));
 					}
@@ -1320,7 +1337,8 @@ public class ProductClassManager {
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
 			if (modelRule.getId() == id.longValue()) {
 				// Retrieve the processor
-				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), configuredProcessor);
 				if (null == newProcessor) {
 					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}
@@ -1392,7 +1410,8 @@ public class ProductClassManager {
 		for (SimpleSelectionRule modelRule: modelProductClass.get().getRequiredSelectionRules()) {
 			if (modelRule.getId() == id.longValue()) {
 				// Retrieve the processor
-				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(configuredProcessor);
+				ConfiguredProcessor newProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(modelProductClass.get().getMission().getCode(), configuredProcessor);
 				if (null == newProcessor) {
 					throw new EntityNotFoundException(logError(MSG_INVALID_PROCESSOR, MSG_ID_INVALID_PROCESSOR, configuredProcessor));
 				}

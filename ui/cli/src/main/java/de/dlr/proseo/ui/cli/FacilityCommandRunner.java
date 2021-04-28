@@ -117,7 +117,9 @@ public class FacilityCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
@@ -266,11 +268,13 @@ public class FacilityCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -347,7 +351,9 @@ public class FacilityCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -472,16 +478,19 @@ public class FacilityCommandRunner {
 		if (null != updatedFacility.getFacilityState() && !updatedFacility.getFacilityState().isBlank()) {
 			restFacility.setFacilityState(updatedFacility.getFacilityState());
 		}
-		if (null != updatedFacility.getProcessingEngineUrl() && !updatedFacility.getProcessingEngineUrl().isBlank()) {
+		if (isDeleteAttributes ||
+				null != updatedFacility.getProcessingEngineUrl() && !updatedFacility.getProcessingEngineUrl().isBlank()) {
 			restFacility.setProcessingEngineUrl(updatedFacility.getProcessingEngineUrl());
 		}
-		if (null != updatedFacility.getProcessingEngineToken() && !updatedFacility.getProcessingEngineToken().isBlank()) {
+		if (isDeleteAttributes ||
+				null != updatedFacility.getProcessingEngineToken() && !updatedFacility.getProcessingEngineToken().isBlank()) {
 			restFacility.setProcessingEngineToken(updatedFacility.getProcessingEngineToken());
 		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());
 		}
-		if (null != updatedFacility.getLocalStorageManagerUrl() && !updatedFacility.getLocalStorageManagerUrl().isBlank()) {
+		if (isDeleteAttributes ||
+				null != updatedFacility.getLocalStorageManagerUrl() && !updatedFacility.getLocalStorageManagerUrl().isBlank()) {
 			restFacility.setLocalStorageManagerUrl(updatedFacility.getLocalStorageManagerUrl());
 		}
 		if (null != updatedFacility.getStorageManagerUser() && !updatedFacility.getStorageManagerUser().isBlank()) {
@@ -509,11 +518,13 @@ public class FacilityCommandRunner {
 				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_FACILITY_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -565,7 +576,9 @@ public class FacilityCommandRunner {
 				message = uiMsg(MSG_ID_FACILITY_NOT_FOUND_BY_ID, restFacility.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), FACILITIES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_FACILITY_DELETE_FAILED, facilityName, e.getMessage());

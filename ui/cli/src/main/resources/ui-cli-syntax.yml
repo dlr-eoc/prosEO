@@ -28,6 +28,10 @@ description: |
   All date-time values must conform to the ISO date-time format ("YYYY-MM-DD[THH:MM:SS.ssssssZ]"), with or without a second,
   a fraction of second and/or a time zone, e. g. the following are valid:
   "2020-04-08", "2020-04-08T11:30+0200", "2020-04-08T11:30:45.123456Z".
+  Value parts not specified will be set to zero, i. e. "2020-04-08" will be interpreted as "2020-04-08T00:00:00.000000" in UTC.
+  Therefore when specifying a time interval using "from"/"to" parameters, be sure to specify the end of the interval correctly,
+  e. g. to cover the whole day 2020-04-08 (in UTC), "2020-04-08" may be specified for the "from" parameter, but the "to" parameter
+  must read "2020-04-08T23:59:59.999999" or "2020-04-09".
   
   For all commands except "mission show" a user login is required, all commands except "mission show", "mission create",
   "user create" and all facility-related commands require login to a specific mission.
@@ -196,14 +200,14 @@ commands:
       description: Commands for managing orbits for a given spacecraft
       subcommands:
         - name: show
-          description: Lists orbits, optionally restricted to a given orbit range
+          description: Lists orbits, optionally restricted to a given orbit number range
           options:
             - name: from
               type: integer
-              description: Lower bound of orbit range
+              description: Lower bound of orbit number range
             - name: to
               type: integer
-              description: Upper bound of orbit range
+              description: Upper bound of orbit number range
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -216,7 +220,7 @@ commands:
               type: string
               description: The code of the spacecraft the orbits belong to
         - name: create
-          description: Add a set of orbits for the given spacecraft
+          description: Add or update a set of orbits for the given spacecraft (existing orbits will be updated)
           options:
             - name: file
               type: string
@@ -285,10 +289,10 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of order start time
+              description: Lower bound of order start time (rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of order start time
+              description: Upper bound of order start time (rounded up to next full second)
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -952,7 +956,7 @@ commands:
             - name: create
               description: Create a new selection rule for the given target product class; 
                            the user will be prompted for mandatory attributes not given on the command line.
-                           If PLAIN format is specified and no file name is given,
+                           If no file name is given,
                            the user will be prompted to enter the selection rule in Rule Language.
               options:
                 - name: file
@@ -961,7 +965,8 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
               parameters:
                 - name: targetProductClass
                   type: string
@@ -975,7 +980,7 @@ commands:
             - name: update
               description: Update a selection rule for the given target class and configured processor; 
                            the user will be prompted for mandatory attributes not given on the command line.
-                           If PLAIN format is specified and no file name is given,
+                           If no file name is given,
                            the user will be prompted to enter the selection rule in Rule Language.
                            If multiple rules exist for the target product class,
                            the user will be prompted to select the rule to apply the update to.
@@ -986,7 +991,8 @@ commands:
                   shortForm: f
                 - name: format
                   type: string
-                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON)
+                  description: The file format (one of { PLAIN, JSON, XML, YAML }; default value JSON,
+                               or PLAIN if no input file is given)
                 - name: delete-attributes
                   type: boolean
                   description: Delete non-mandatory attributes not given in the selection rule definition file and/or the command parameters
@@ -1019,10 +1025,10 @@ commands:
           options:
             - name: from
               type: datetime
-              description: Lower bound of sensing start time
+              description: Lower bound of sensing start time (rounded down to next full second)
             - name: to
               type: datetime
-              description: Upper bound of sensing start time
+              description: Upper bound of sensing start time (rounded up to next full second)
             - name: format
               type: string
               description: The output format (one of { JSON, XML, YAML }; default value YAML [human readable])
@@ -1135,6 +1141,11 @@ commands:
 #                  description: The processing facility, at which the product file is stored
             - name: delete
               description: Delete a product file for a given product and processing facility
+              options:
+                - name: noErase
+                  type: boolean
+                  description: Do not erase the data file(s) from the storage area, e. g. if they are read-only (default "false")
+                  shortForm: n
               parameters:
                 - name: productId
                   type: integer
@@ -1152,6 +1163,10 @@ commands:
         - name: format
           type: string
           description: The file format (one of { JSON, XML, YAML }; default value JSON)
+        - name: noCopy
+          type: boolean
+          description: If set, files will not be copied to a new location, if source and target storage types are equal
+          shortForm: n
       parameters:
         - name: processingFacility
           type: string

@@ -96,6 +96,7 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_ILLEGAL_CREATION_STATE = 1133;
 	private static final int MSG_ID_SLICE_DURATION_MISSING = 1134;
 	private static final int MSG_ID_INVALID_SLICE_OVERLAP = 1135;
+	private static final int MSG_ID_NEGATIVE_DURATION = 1136;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -114,7 +115,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_INVALID_CONFIGURED_PROCESSOR = "(E%d) Configured processor %s not found";
 	private static final String MSG_INVALID_ORBIT_RANGE = "(E%d) No orbits defined between orbit number %d and %d for spacecraft %s";
 	private static final String MSG_ORDER_IDENTIFIER_MISSING = "(E%d) Order identifier not set";
-	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists";
+	private static final String MSG_DUPLICATE_ORDER_IDENTIFIER = "(E%d) Order identifier %s already exists within mission %s";
 	private static final String MSG_ORDER_TIME_INTERVAL_MISSING = "(E%d) Time interval (orbit or time range) missing for order %s";
 	private static final String MSG_REQUESTED_PRODUCTCLASSES_MISSING = "(E%d) Requested product classes missing for order %s";
 	private static final String MSG_ORDER_LIST_EMPTY = "(E%d) No processing order found for search criteria";
@@ -127,6 +128,7 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ILLEGAL_CREATION_STATE = "(E%d) Orders must be created in INITIAL state (found state %s)";
 	private static final String MSG_SLICE_DURATION_MISSING = "(E%d) Time slice duration missing for order %s of slicing type TIME_SLICE";
 	private static final String MSG_INVALID_SLICE_OVERLAP = "(E%d) Order %s with slicing type NONE has invalid slice overlap %s (no overlap allowed)";
+	private static final String MSG_NEGATIVE_DURATION = "(E%d) Order %s has start time %s after stop time %s";
 
 	private static final String MSG_ORDER_LIST_RETRIEVED = "(I%d) Order list of size %d retrieved for mission '%s', order '%s', start time '%s', stop time '%s'";
 	private static final String MSG_ORDER_RETRIEVED = "(I%d) Order with ID %s retrieved";
@@ -224,8 +226,9 @@ public class ProcessingOrderMgr {
 		if (null == modelOrder.getIdentifier() || modelOrder.getIdentifier().isBlank()) {
 			throw new IllegalArgumentException(logError(MSG_ORDER_IDENTIFIER_MISSING, MSG_ID_ORDER_IDENTIFIER_MISSING));
 		}
-		if (null != RepositoryService.getOrderRepository().findByIdentifier(modelOrder.getIdentifier())) {
-			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, modelOrder.getIdentifier()));
+		if (null != RepositoryService.getOrderRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), modelOrder.getIdentifier())) {
+			throw new IllegalArgumentException(logError(MSG_DUPLICATE_ORDER_IDENTIFIER, MSG_ID_DUPLICATE_ORDER_IDENTIFIER, 
+					modelOrder.getIdentifier(), order.getMissionCode()));
 		}
 		
 		// Orders must always created in state INITIAL
@@ -246,6 +249,11 @@ public class ProcessingOrderMgr {
 			if (null == modelOrder.getStartTime() || null == modelOrder.getStopTime()) {
 				throw new IllegalArgumentException(logError(MSG_ORDER_TIME_INTERVAL_MISSING, MSG_ID_ORDER_TIME_INTERVAL_MISSING, modelOrder.getIdentifier()));
 			}
+			// Ensure stop time is not before start time
+			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
+				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
+			}
 			// Ensure slice duration is given for slicing type TIME_SLICE
 			if (OrderSlicingType.TIME_SLICE.equals(modelOrder.getSlicingType()) && null == modelOrder.getSliceDuration()) {
 				throw new IllegalArgumentException(logError(MSG_SLICE_DURATION_MISSING, MSG_ID_SLICE_DURATION_MISSING, modelOrder.getIdentifier()));
@@ -258,7 +266,8 @@ public class ProcessingOrderMgr {
 			// Find all requested orbit ranges
 			modelOrder.getRequestedOrbits().clear();
 			for (RestOrbitQuery orbitQuery : order.getOrbits()) {
-				List<Orbit> orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+				List<Orbit> orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(
+						mission.getCode(),
 						orbitQuery.getSpacecraftCode(),
 						orbitQuery.getOrbitNumberFrom().intValue(),
 						orbitQuery.getOrbitNumberTo().intValue());
@@ -341,7 +350,8 @@ public class ProcessingOrderMgr {
 		}		
 		modelOrder.getRequestedConfiguredProcessors().clear();
 		for (String identifier : order.getConfiguredProcessors()) {
-			ConfiguredProcessor configuredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(identifier);
+			ConfiguredProcessor configuredProcessor = 
+					RepositoryService.getConfiguredProcessorRepository().findByMissionCodeAndIdentifier(order.getMissionCode(), identifier);
 			if (null == configuredProcessor) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
 						identifier));
@@ -565,6 +575,11 @@ public class ProcessingOrderMgr {
 					modelOrder.setStopTime(changedOrder.getStopTime());
 				}
 			}
+			// Ensure stop time is not before start time
+			if (modelOrder.getStopTime().isBefore(modelOrder.getStartTime())) {
+				throw new IllegalArgumentException(logError(MSG_NEGATIVE_DURATION, MSG_ID_NEGATIVE_DURATION, modelOrder.getIdentifier(),
+						OrbitTimeFormatter.format(modelOrder.getStartTime()), OrbitTimeFormatter.format(modelOrder.getStopTime())));
+			}
 		}
 		if (!modelOrder.getSlicingType().equals(changedOrder.getSlicingType())) {
 			orderChanged = true;
@@ -785,7 +800,8 @@ public class ProcessingOrderMgr {
 				// New component class
 				orderChanged = true;
 				stateChangeOnly = false;
-				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository().findByIdentifier(changedConfiguredProcessor);
+				ConfiguredProcessor newConfiguredProcessor = RepositoryService.getConfiguredProcessorRepository()
+						.findByMissionCodeAndIdentifier(order.getMissionCode(), changedConfiguredProcessor);
 				if (null == newConfiguredProcessor) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_CONFIGURED_PROCESSOR, MSG_ID_INVALID_CONFIGURED_PROCESSOR,
 							changedConfiguredProcessor));
@@ -806,7 +822,8 @@ public class ProcessingOrderMgr {
 		List<Orbit> newRequestedOrbits = new ArrayList<>();
 		if (null != order.getOrbits()) {
 			for (RestOrbitQuery changedOrbitQuery: order.getOrbits()) {
-				List<Orbit> changedRequestedOrbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
+				List<Orbit> changedRequestedOrbits = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(
+						mission.getCode(),
 						changedOrbitQuery.getSpacecraftCode(),
 						changedOrbitQuery.getOrbitNumberFrom().intValue(),
 						changedOrbitQuery.getOrbitNumberTo().intValue());
@@ -990,7 +1007,7 @@ public class ProcessingOrderMgr {
 			throw new NoResultException(logError(MSG_ORDER_LIST_EMPTY, MSG_ID_ORDER_LIST_EMPTY));
 			
 		}
-		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), result.size(), mission, identifier, startTimeFrom, startTimeTo);
+		logInfo(MSG_ORDER_LIST_RETRIEVED, MSG_ID_ORDER_LIST_RETRIEVED, result.size(), mission, identifier, startTimeFrom, startTimeTo);
 		return result;
 
 	}

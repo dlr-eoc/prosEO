@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +25,14 @@ import de.dlr.proseo.model.ProcessingOrder;
 public interface OrderRepository extends JpaRepository<ProcessingOrder, Long> {
 
 	/**
-	 * Get the processing order with the given identifier
+	 * Get the processing order with the given mission code and identifier
 	 * 
+	 * @param missionCode the mission code of the processing order
 	 * @param identifier the identifier of the processing order
 	 * @return the unique processing order identified by the given identifier
 	 */
-	public ProcessingOrder findByIdentifier(String identifier);
+	@Query("select po from ProcessingOrder po where po.mission.code = ?1 and po.identifier = ?2")
+	public ProcessingOrder findByMissionCodeAndIdentifier(String missionCode, String identifier);
 	
 	/**
 	 * Get the processing order with the given UUID

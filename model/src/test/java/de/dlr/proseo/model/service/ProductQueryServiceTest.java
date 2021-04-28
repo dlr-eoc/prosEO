@@ -133,8 +133,14 @@ public class ProductQueryServiceTest {
 		testProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(testData[7])));
 		testProduct.getParameters().put(
 				"revision", new Parameter().init(ParameterType.INTEGER, Integer.parseInt(testData[8])));
+		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		ProductFile testProductFile = new ProductFile();
 		testProductFile.setProcessingFacility(facility);
+		testProductFile.setProduct(testProduct);
+		testProductFile = RepositoryService.getProductFileRepository().save(testProductFile);
+		
+		logger.info("Created test product file {} with processing facility = {} and product = {}", testProductFile.getId(), testProductFile.getProcessingFacility().getName(), testProductFile.getProduct().getId());
+
 		testProduct.getProductFile().add(testProductFile);
 		testProduct = RepositoryService.getProductRepository().save(testProduct);
 		
@@ -233,8 +239,7 @@ public class ProductQueryServiceTest {
 		SimpleSelectionRule simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		ProductQuery query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
 		logger.trace("Starting test for product query 1 based on " + simpleSelectionRule);
-		assertTrue("Product query 1 fails unexpectedly for JPQL", queryService.executeQuery(query, true));
-		assertTrue("Product query 1 fails unexpectedly for SQL", queryService.executeSqlQuery(query, true));
+		assertTrue("Product query 1 fails unexpectedly", queryService.executeQuery(query, true));
 		
 		// Test first product query with additional filter condition "revision:2" --> fails
 		inputFilter.getFilterConditions().clear();
@@ -257,13 +262,11 @@ public class ProductQueryServiceTest {
 		simpleSelectionRule = selectionRule.getSimpleRules().iterator().next();
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepEarly);
 		logger.trace("Starting test for product query 2 and early interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 fails unexpectedly for early interval and JPQL", queryService.executeQuery(query, true));
-		assertTrue("Product query 2 fails unexpectedly for early interval and SQL", queryService.executeSqlQuery(query, true));
+		assertTrue("Product query 2 fails unexpectedly for early interval", queryService.executeQuery(query, true));
 
 		query = ProductQuery.fromSimpleSelectionRule(simpleSelectionRule, jobStepLate);
 		logger.trace("Starting test for product query 2 and late interval based on " + simpleSelectionRule);
-		assertTrue("Product query 2 succeeds unexpectedly for late interval and JPQL", !queryService.executeQuery(query, true));
-		assertTrue("Product query 2 succeeds unexpectedly for late interval and SQL", !queryService.executeSqlQuery(query, true));
+		assertTrue("Product query 2 succeeds unexpectedly for late interval", !queryService.executeQuery(query, true));
 		
 		logger.info("OK: Test for executeQuery completed");
 	}

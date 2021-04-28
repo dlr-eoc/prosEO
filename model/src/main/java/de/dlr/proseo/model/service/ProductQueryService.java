@@ -5,7 +5,6 @@
  */
 package de.dlr.proseo.model.service;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -14,15 +13,12 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
-import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.util.SelectionItem;
 
@@ -34,6 +30,8 @@ import de.dlr.proseo.model.util.SelectionItem;
 @Service
 public class ProductQueryService {
 	
+	private static final String FACILITY_QUERY_SQL = ":facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
+
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
@@ -62,14 +60,13 @@ public class ProductQueryService {
 	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
 	 * @param productQuery the product query to execute
-	 * @param useNativeSQL set to true, if native SQL is to be used, and to false for JPQL
 	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
 	 *            for future reference
 	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
-	private boolean executeQuery(ProductQuery productQuery, boolean useNativeSQL, boolean checkOnly) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> executeQuery(useNativeSQL = " + useNativeSQL + ")");
+	public boolean executeQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> executeQuery({}, {})", (null == productQuery ? null : productQuery.getId()), checkOnly);
 
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
@@ -79,22 +76,20 @@ public class ProductQueryService {
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
+
+		// Determine the requested processing facility
+		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
 		
-		// Execute the query
-		List<Product> products = null;
-		if (useNativeSQL) {
-			String sqlQuery = productQuery.getSqlQueryCondition();
-			if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
-			Query query = em.createNativeQuery(sqlQuery, Product.class);
-			@SuppressWarnings("unchecked")
-			List<Product> uncheckedProducts = (List<Product>) query.getResultList(); // Only to restrict scope of @SuppressWarnings("unchecked")
-			products = uncheckedProducts;
-		} else {
-			String jpqlQuery = productQuery.getJpqlQueryCondition();
-			if (logger.isDebugEnabled()) logger.debug("Executing JPQL query: " + jpqlQuery);
-			TypedQuery<Product> query = em.createQuery(jpqlQuery, Product.class);
-			products = query.getResultList();
-		}
+		// Execute the query (native SQL due to use of recursive SQL view product_processing_facilities)
+		String sqlQuery = productQuery.getSqlQueryCondition() + " AND " + FACILITY_QUERY_SQL;
+		if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
+		
+		Query query = em.createNativeQuery(sqlQuery, Product.class);
+		query.setParameter("facility_id", facility.getId());
+		
+		@SuppressWarnings("unchecked")
+		List<Product> products = (List<Product>) query.getResultList();
+
 		if (logger.isTraceEnabled()) {
 			logger.trace("Number of products found: " + products.size());
 			for (Product product: products) {
@@ -107,15 +102,6 @@ public class ProductQueryService {
 		}
 		
 		// Check if there is any result at all
-		if (products.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery, checkOnly);
-		}
-		
-		// Filter products available at the requested processing facility
-		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
-		products = getProductsAtFacility(products, facility);
-		if (logger.isTraceEnabled()) logger.trace("Number of products after check of processing facility: " + products.size());
 		if (products.isEmpty()) {
 			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
 			return testOptionalSatisfied(productQuery, checkOnly);
@@ -179,53 +165,6 @@ public class ProductQueryService {
 	}
 	
 	/**
-	 * Check, which of the products given (or all of their component products) are present at the given processing facility
-	 * 
-	 * @param products the list of products to check
-	 * @param facility the processing facility
-	 * 
-	 * @return list of products available at the facility
-	 */
-	private List<Product> getProductsAtFacility(final List<Product> products, final ProcessingFacility facility) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductsAtFacility([...], {})", facility);
-
-		List<Product> productsAtFacility = new ArrayList<>();
-		for (Product product: products) {
-			if (product.getComponentProducts().isEmpty()) {
-				// Add product without component products to result list, if any of its product files is present at the facility
-				for (ProductFile productFile: product.getProductFile()) {
-					if (facility.equals(productFile.getProcessingFacility())) {
-						productsAtFacility.add(product);
-						break;
-					}
-				}
-			} else {
-				List<Product> componentProducts = new ArrayList<Product>();
-				componentProducts.addAll(product.getComponentProducts());
-				// Add product to result list, if all (!) component products are present at the facility
-				if (getProductsAtFacility(componentProducts, facility).size() == componentProducts.size()) {
-					productsAtFacility.add(product);
-				}
-			}
-		}
-		return productsAtFacility;
-	}
-	
-	/**
-	 * Execute the JPQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
-	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
-	 * 
-	 * @param productQuery the product query to execute
-	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
-	 *            for future reference
-	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
-	 * @throws IllegalArgumentException if the product query is incomplete
-	 */
-	public boolean executeQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
-		return executeQuery(productQuery, false, checkOnly);
-	}
-
-	/**
 	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
 	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
 	 * 
@@ -236,7 +175,7 @@ public class ProductQueryService {
 	 * @throws IllegalArgumentException if the product query is incomplete
 	 */
 	public boolean executeSqlQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
-		return executeQuery(productQuery, true, checkOnly);
+		return executeQuery(productQuery, checkOnly);
 	}
 
 }

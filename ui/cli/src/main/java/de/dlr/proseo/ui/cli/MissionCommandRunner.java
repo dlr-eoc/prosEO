@@ -129,7 +129,9 @@ public class MissionCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
@@ -243,11 +245,13 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -320,7 +324,9 @@ public class MissionCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -436,11 +442,13 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -519,7 +527,9 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND, missionCode);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, missionCode);
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_MISSION_DELETE_FAILED, missionCode, e.getMessage());
@@ -644,11 +654,13 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, "(" + e.getRawStatusCode() + ") " + e.getMessage());
@@ -724,11 +736,13 @@ public class MissionCommandRunner {
 				message = uiMsg(MSG_ID_MISSION_NOT_FOUND_BY_ID, restMission.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_MISSION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), MISSIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -783,6 +797,17 @@ public class MissionCommandRunner {
 			}
 		}
 		
+		/* Retrieve the mission to get valid spacecraft codes */
+		RestMission mission = retrieveMissionByCode(loginManager.getMission());
+		if (null == mission) {
+			// Already handled
+			return;
+		}
+		List<String> validSpacecraftCodes = new ArrayList<>();
+		for (RestSpacecraft spacecraft: mission.getSpacecrafts()) {
+			validSpacecraftCodes.add(spacecraft.getCode());
+		}
+		
 		/* If the orbit list is empty, we create a single orbit from user input */
 		if (orbitList.isEmpty()) {
 			RestOrbit restOrbit = new RestOrbit();
@@ -792,7 +817,12 @@ public class MissionCommandRunner {
 				ParsedParameter param = createCommand.getParameters().get(i);
 				if (0 == i) {
 					// First parameter is spacecraft code
-					restOrbit.setSpacecraftCode(param.getValue());
+					String spacecraftCode = param.getValue();
+					if (!validSpacecraftCodes.contains(spacecraftCode)) {
+						System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+						return;
+					}
+					restOrbit.setSpacecraftCode(spacecraftCode);
 				} else {
 					// Remaining parameters are "attribute=value" parameters
 					try {
@@ -805,12 +835,16 @@ public class MissionCommandRunner {
 			}
 			/* Prompt user for missing mandatory attributes */
 			System.out.println(MSG_CHECKING_FOR_MISSING_MANDATORY_ATTRIBUTES);
-			if (null == restOrbit.getSpacecraftCode() || 0 == restOrbit.getSpacecraftCode().length()) {
+			while (null == restOrbit.getSpacecraftCode() || restOrbit.getSpacecraftCode().isBlank()) {
 				System.out.print(PROMPT_SPACECRAFT_CODE);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
 					System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
 					return;
+				}
+				if (!validSpacecraftCodes.contains(response)) {
+					System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, response, loginManager.getMission()));
+					continue;
 				}
 				restOrbit.setSpacecraftCode(response);
 			}
@@ -827,7 +861,7 @@ public class MissionCommandRunner {
 					System.err.println(uiMsg(MSG_ID_ORBIT_NUMBER_INVALID, response));
 				}
 			}
-			while (null == restOrbit.getStartTime() || 0 == restOrbit.getStartTime().length()) {
+			while (null == restOrbit.getStartTime() || restOrbit.getStartTime().isBlank()) {
 				System.out.print(PROMPT_START_TIME);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -840,7 +874,7 @@ public class MissionCommandRunner {
 					System.err.println(uiMsg(MSG_ID_INVALID_TIME, response));
 				}
 			}
-			while (null == restOrbit.getStopTime() || 0 == restOrbit.getStopTime().length()) {
+			while (null == restOrbit.getStopTime() || restOrbit.getStopTime().isBlank()) {
 				System.out.print(PROMPT_STOP_TIME);
 				String response = System.console().readLine();
 				if (response.isBlank()) {
@@ -864,11 +898,13 @@ public class MissionCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -916,12 +952,30 @@ public class MissionCommandRunner {
 			}
 		}
 		
+		/* Retrieve the mission to get valid spacecraft codes */
+		RestMission mission = retrieveMissionByCode(loginManager.getMission());
+		if (null == mission) {
+			// Already handled
+			return;
+		}
+		List<String> validSpacecraftCodes = new ArrayList<>();
+		for (RestSpacecraft spacecraft: mission.getSpacecrafts()) {
+			validSpacecraftCodes.add(spacecraft.getCode());
+		}
+		
+		// First parameter is spacecraft code
+		String spacecraftCode = showCommand.getParameters().get(0).getValue();
+		if (!validSpacecraftCodes.contains(spacecraftCode)) {
+			System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+			return;
+		}
+
 		/* Prepare request URI */
 		if (1 > showCommand.getParameters().size()) {
 			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
-		String requestURI = URI_PATH_ORBITS + "?spacecraftCode=" + showCommand.getParameters().get(0).getValue();
+		String requestURI = URI_PATH_ORBITS + "?spacecraftCode=" + spacecraftCode;
 		if (null != fromOrbit) {
 			requestURI += "&orbitNumberFrom=" + fromOrbit;
 		}
@@ -942,7 +996,9 @@ public class MissionCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1015,6 +1071,17 @@ public class MissionCommandRunner {
 			}
 		}
 		
+		/* Retrieve the mission to get valid spacecraft codes */
+		RestMission mission = retrieveMissionByCode(loginManager.getMission());
+		if (null == mission) {
+			// Already handled
+			return;
+		}
+		List<String> validSpacecraftCodes = new ArrayList<>();
+		for (RestSpacecraft spacecraft: mission.getSpacecrafts()) {
+			validSpacecraftCodes.add(spacecraft.getCode());
+		}
+		
 		/* Update a single orbit from user input, if no file is given (or the file is empty) */
 		if (orbitList.isEmpty()) {
 			RestOrbit restOrbit = new RestOrbit();
@@ -1024,7 +1091,12 @@ public class MissionCommandRunner {
 				ParsedParameter param = updateCommand.getParameters().get(i);
 				if (0 == i) {
 					// First parameter is spacecraft code
-					restOrbit.setSpacecraftCode(param.getValue());
+					String spacecraftCode = param.getValue();
+					if (!validSpacecraftCodes.contains(spacecraftCode)) {
+						System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+						return;
+					}
+					restOrbit.setSpacecraftCode(spacecraftCode);
 				} else if (1 == i) {
 					// Second parameter is orbit number
 					try {
@@ -1096,7 +1168,9 @@ public class MissionCommandRunner {
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1135,11 +1209,13 @@ public class MissionCommandRunner {
 					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getMessage());
+					message = uiMsg(MSG_ID_ORBIT_DATA_INVALID, e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 				case org.apache.http.HttpStatus.SC_FORBIDDEN:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				default:
 					message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1171,7 +1247,25 @@ public class MissionCommandRunner {
 			System.err.println(uiMsg(MSG_ID_NO_SPACECRAFT_CODE_GIVEN));
 			return;
 		}
+
+		/* Retrieve the mission to get valid spacecraft codes */
+		RestMission mission = retrieveMissionByCode(loginManager.getMission());
+		if (null == mission) {
+			// Already handled
+			return;
+		}
+		List<String> validSpacecraftCodes = new ArrayList<>();
+		for (RestSpacecraft spacecraft: mission.getSpacecrafts()) {
+			validSpacecraftCodes.add(spacecraft.getCode());
+		}
+		
+		// First parameter is spacecraft code
 		String spacecraftCode = deleteCommand.getParameters().get(0).getValue();
+		if (!validSpacecraftCodes.contains(spacecraftCode)) {
+			System.err.println(uiMsg(MSG_ID_SPACECRAFT_NOT_FOUND, spacecraftCode, loginManager.getMission()));
+			return;
+		}
+
 		/* Get "from" orbit from command parameters */
 		if (2 > deleteCommand.getParameters().size()) {
 			System.err.println(uiMsg(MSG_ID_NO_ORBIT_NUMBER_GIVEN));
@@ -1200,7 +1294,9 @@ public class MissionCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1233,7 +1329,9 @@ public class MissionCommandRunner {
 					message = uiMsg(MSG_ID_ORBIT_NOT_FOUND_BY_ID, restOrbit.getId());
 					break;
 				case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-					message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission());
+					message = (null == e.getStatusText() ?
+							uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), ORBITS, loginManager.getMission()) :
+							e.getStatusText());
 					break;
 				case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 					message = uiMsg(MSG_ID_ORBIT_DELETE_FAILED, restOrbit.getOrbitNumber(), spacecraftCode, e.getMessage());

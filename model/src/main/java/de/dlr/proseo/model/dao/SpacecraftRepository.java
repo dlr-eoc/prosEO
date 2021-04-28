@@ -6,6 +6,7 @@
 package de.dlr.proseo.model.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.Spacecraft;
@@ -20,10 +21,12 @@ import de.dlr.proseo.model.Spacecraft;
 public interface SpacecraftRepository extends JpaRepository<Spacecraft, Long> {
 
 	/**
-	 * Get the spacecraft with the given code
+	 * Get the spacecraft with the given mission and code
 	 * 
+	 * @param missionCode the mission code
 	 * @param spacecraftCode the spacecraft code
 	 * @return the unique spacecraft identified by the code
 	 */
-	public Spacecraft findByCode(String spacecraftCode);
+	@Query("select sc from Spacecraft sc where sc.mission.code = ?1 and sc.code = ?2")
+	public Spacecraft findByMissionAndCode(String missionCode, String spacecraftCode);
 }

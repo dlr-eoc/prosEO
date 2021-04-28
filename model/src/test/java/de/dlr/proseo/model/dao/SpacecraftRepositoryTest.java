@@ -22,6 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -37,6 +38,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 @Transactional
 @AutoConfigureTestEntityManager
 public class SpacecraftRepositoryTest {
+
+	private static final String TEST_MISSIONCODE = "qwertz";
 
 	private static final String TEST_SC_CODE = "$XYZ$";
 	
@@ -76,15 +79,21 @@ public class SpacecraftRepositoryTest {
 	 */
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_MISSIONCODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		Spacecraft spacecraft = new Spacecraft();
+		spacecraft.setMission(mission);
 		spacecraft.setCode(TEST_SC_CODE);
-		RepositoryService.getSpacecraftRepository().save(spacecraft);
+		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		mission.getSpacecrafts().add(spacecraft);
 		
 		// Test findByCode
-		spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+		spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(TEST_MISSIONCODE, TEST_SC_CODE);
 		assertNotNull("Find by spacecraft code failed for Spacecraft", spacecraft);
 		
-		logger.info("OK: Test for findByCode completed");
+		logger.info("OK: Test for findByMissionAndCode completed");
 		
 	}
 

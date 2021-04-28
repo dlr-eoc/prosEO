@@ -240,7 +240,7 @@ public class IngestorControllerTest {
 				}
 				logger.info("Using product class " + prodClass.getProductType() + " with id " + prodClass.getId());
 				
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(TEST_SC_CODE);
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(TEST_CODE, TEST_SC_CODE);
 				if (null == spacecraft) {
 					spacecraft = new Spacecraft();
 					spacecraft.setCode(TEST_SC_CODE);

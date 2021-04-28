@@ -170,11 +170,13 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -236,7 +238,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -342,7 +346,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -383,11 +389,13 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PROCESSORCLASS_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -436,7 +444,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -468,7 +478,9 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSORCLASS_NOT_FOUND_BY_ID, restProcessorClass.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORCLASSES, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSORCLASS_DELETE_FAILED, processorName, e.getMessage());
@@ -630,11 +642,13 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -702,7 +716,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -820,7 +836,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -887,11 +905,13 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_PROCESSOR_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -942,7 +962,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -974,7 +996,9 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_PROCESSOR_NOT_FOUND_BY_ID, restProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_PROCESSOR_DELETE_FAILED, processorName, processorVersion, e.getMessage());
@@ -1085,11 +1109,13 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1157,7 +1183,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1275,7 +1303,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1335,11 +1365,13 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_CONFIGURATION_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1390,7 +1422,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1422,7 +1456,9 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_CONFIGURATION_NOT_FOUND_BY_ID, restConfiguration.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_CONFIGURATION_DELETE_FAILED, processorName, configurationVersion, e.getMessage());
@@ -1562,11 +1598,13 @@ public class ProcessorCommandRunner {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID, e.getMessage());
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID, e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1635,7 +1673,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), PROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1750,7 +1790,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGURATIONS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1801,11 +1843,13 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1854,7 +1898,9 @@ public class ProcessorCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -1886,7 +1932,9 @@ public class ProcessorCommandRunner {
 				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_NOT_FOUND_BY_ID, restConfiguredProcessor.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), CONFIGUREDPROCESSORS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_NOT_MODIFIED:
 				message = uiMsg(MSG_ID_CONFIGUREDPROCESSOR_DELETE_FAILED, identifier, e.getMessage());

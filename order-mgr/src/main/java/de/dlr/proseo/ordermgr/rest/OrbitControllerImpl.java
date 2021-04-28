@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
-import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -72,7 +71,7 @@ public class OrbitControllerImpl implements OrbitController {
 	private static final String MSG_ORBIT_MISSING = "(E%d) Orbit not set";
 	private static final String MSG_ORBIT_INCOMPLETE = "(E%d) Spacecraft code not set in the search";
 	private static final String MSG_NO_ORBITS_FOUND = "(E%d) No orbits found for given search criteria";
-	private static final String MSG_SPACECRAFT_NOT_FOUND = "(E%d) Spacecraft %s not found";
+	private static final String MSG_SPACECRAFT_NOT_FOUND = "(E%d) Spacecraft %s not found in mission %s";
 
 	private static final String MSG_ORBITS_RETRIEVED = "(I%d) %d orbits retrieved";
 	private static final String MSG_ORBITS_CREATED = "(I%d) %d orbits created or updated";
@@ -297,14 +296,16 @@ public class OrbitControllerImpl implements OrbitController {
 					Orbit modelOrbit = OrbitUtil.toModelOrbit(tomodelOrbit);
 					
 					// Check for existing orbits and update them!
-					Orbit updateOrbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(
-							tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getOrbitNumber().intValue());
+					Orbit updateOrbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+							tomodelOrbit.getMissionCode(), tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getOrbitNumber().intValue());
 					if (null == updateOrbit) {
 						//Adding spacecraft object to modelOrbit
-						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(tomodelOrbit.getSpacecraftCode());
+						Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
+								.findByMissionAndCode(tomodelOrbit.getMissionCode(), tomodelOrbit.getSpacecraftCode());
 						if (null == spacecraft) {
 							throw new IllegalArgumentException(String.format(
-									MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, tomodelOrbit.getSpacecraftCode()));
+									MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND,
+									tomodelOrbit.getSpacecraftCode(), tomodelOrbit.getMissionCode()));
 						}
 						modelOrbit.setSpacecraft(spacecraft);
 					} else {
@@ -419,7 +420,8 @@ public class OrbitControllerImpl implements OrbitController {
 				Orbit changedOrbit = OrbitUtil.toModelOrbit(orbit);
 
 				//Adding spacecraft object to modelOrbit
-				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository().findByCode(orbit.getSpacecraftCode());
+				Spacecraft spacecraft = RepositoryService.getSpacecraftRepository()
+						.findByMissionAndCode(orbit.getMissionCode(), orbit.getSpacecraftCode());
 				if (null == spacecraft) {
 					throw new IllegalArgumentException(String.format(
 							MSG_SPACECRAFT_NOT_FOUND, MSG_ID_SPACECRAFT_NOT_FOUND, orbit.getSpacecraftCode()));

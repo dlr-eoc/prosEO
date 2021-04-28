@@ -106,8 +106,8 @@ public class OrbitControllerTest {
 			testMission = RepositoryService.getMissionRepository().save(testMission);			
 		}
 		
-		if (null != RepositoryService.getSpacecraftRepository().findByCode(testData[5]))
-		testSpacecraft = RepositoryService.getSpacecraftRepository().findByCode(testData[5]);
+		if (null != RepositoryService.getSpacecraftRepository().findByMissionAndCode(testData[2], testData[5]))
+		testSpacecraft = RepositoryService.getSpacecraftRepository().findByMissionAndCode(testData[2], testData[5]);
 		else {
 			//adding Spacecraft parameters
 			testSpacecraft.setMission(testMission);

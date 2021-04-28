@@ -25,6 +25,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryApplication;
@@ -43,6 +44,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 @AutoConfigureTestEntityManager
 public class OrbitRepositoryTest {
 
+	private static final String TEST_MISSION_CODE = "$ABC$";
 	private static final String TEST_SC_CODE = "$XYZ$";
 	private static final int TEST_ORBIT_NUMBER = 47122174;
 	private static final Instant TEST_START_TIME = Instant.from(OrbitTimeFormatter.parse("2018-06-13T09:23:45.396521"));
@@ -83,9 +85,16 @@ public class OrbitRepositoryTest {
 	 */
 	@Test
 	public final void test() {
+		Mission mission = new Mission();
+		mission.setCode(TEST_MISSION_CODE);
+		mission = RepositoryService.getMissionRepository().save(mission);
+		
 		Spacecraft spacecraft = new Spacecraft();
+		spacecraft.setMission(mission);
 		spacecraft.setCode(TEST_SC_CODE);
 		spacecraft = RepositoryService.getSpacecraftRepository().save(spacecraft);
+		mission.getSpacecrafts().add(spacecraft);
+		RepositoryService.getMissionRepository().save(mission);
 		
 		Orbit orbit = new Orbit();
 		orbit.setSpacecraft(spacecraft);
@@ -97,21 +106,22 @@ public class OrbitRepositoryTest {
 		RepositoryService.getSpacecraftRepository().save(spacecraft);
 		
 		// Test findBySpacecraftCodeAndOrbitNumber
-		orbit = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumber(TEST_SC_CODE, TEST_ORBIT_NUMBER);
+		orbit = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumber(
+				TEST_MISSION_CODE, TEST_SC_CODE, TEST_ORBIT_NUMBER);
 		assertNotNull("Find by spacecraft code and orbit number failed for Orbit", orbit);
 		
 		logger.info("OK: Test for findBySpacecraftCodeAndOrbitNumber completed");
 		
 		// Test findBySpacecraftCodeAndOrbitNumberBetween
-		List<Orbit> orbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(
-				TEST_SC_CODE, TEST_ORBIT_NUMBER, TEST_ORBIT_NUMBER + 1);
+		List<Orbit> orbits = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(
+				TEST_MISSION_CODE, TEST_SC_CODE, TEST_ORBIT_NUMBER, TEST_ORBIT_NUMBER + 1);
 		assertFalse("Find by spacecraft code and orbit number between failed for Orbit", orbits.isEmpty());
 		
 		logger.info("OK: Test for findBySpacecraftCodeAndOrbitNumberBetween completed");
 		
 		// Test findBySpacecraftCodeAndStartTimeBetween
-		orbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndStartTimeBetween(
-				TEST_SC_CODE, TEST_START_TIME, TEST_START_TIME.plusSeconds(600));
+		orbits = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndStartTimeBetween(
+				TEST_MISSION_CODE, TEST_SC_CODE, TEST_START_TIME, TEST_START_TIME.plusSeconds(600));
 		assertFalse("Find by spacecraft code and start time between failed for Orbit", orbits.isEmpty());
 		
 		logger.info("OK: Test for findBySpacecraftCodeAndStartTimeBetween completed");

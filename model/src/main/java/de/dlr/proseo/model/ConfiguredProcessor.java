@@ -22,14 +22,14 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(indexes = {
-	@Index(unique = true, columnList = "identifier"),
+	@Index(unique = false, columnList = "identifier"),
 	@Index(unique = true, columnList = "uuid")
 })
 public class ConfiguredProcessor extends PersistentObject {
 
 	/** 
 	 * User-defined identifier for this processor configuration (recommended to be derived from ProcessorClass::processorName and
-	 * the version information of the associated Processor and Configuration objects)
+	 * the version information of the associated Processor and Configuration objects), unique within the mission
 	 */
 	private String identifier;
 	

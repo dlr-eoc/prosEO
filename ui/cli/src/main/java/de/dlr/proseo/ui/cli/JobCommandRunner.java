@@ -8,6 +8,8 @@ package de.dlr.proseo.ui.cli;
 import static de.dlr.proseo.ui.backend.UIMessages.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +112,7 @@ public class JobCommandRunner {
 		try {
 			List<?> resultList = null;
 			resultList = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
-					URI_PATH_ORDERS + "?identifier=" + orderIdentifier,
+					URI_PATH_ORDERS + "?identifier=" + URLEncoder.encode(orderIdentifier, Charset.defaultCharset()),
 					List.class, loginManager.getUser(), loginManager.getPassword());
 			if (resultList.isEmpty()) {
 				throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -127,7 +129,9 @@ public class JobCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -176,7 +180,9 @@ public class JobCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -225,7 +231,9 @@ public class JobCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -295,7 +303,9 @@ public class JobCommandRunner {
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -382,11 +392,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOB_NOT_FOUND, restJob.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -437,11 +449,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOB_NOT_FOUND, restJob.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -492,11 +506,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOB_NOT_FOUND, restJob.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -547,11 +563,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOB_NOT_FOUND, restJob.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOB_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -617,7 +635,9 @@ public class JobCommandRunner {
 		}
 		
 		/* Display the job step(s) found */
-		if (isVerbose) {
+		if (filteredJobSteps.isEmpty()) {
+			System.err.println(uiMsg(MSG_ID_NO_JOBSTEPS_FOUND));
+		} else if (isVerbose) {
 			try {
 				CLIUtil.printObject(System.out, filteredJobSteps, jobStepOutputFormat);
 			} catch (IllegalArgumentException e) {
@@ -630,7 +650,7 @@ public class JobCommandRunner {
 		} else {
 			String listFormat = "%11s %12s %s";
 			System.out.println(String.format(listFormat, "Database ID", "Output Class", "Job Step State"));
-			for (RestJobStep restJobStep: restJob.getJobSteps()) {
+			for (RestJobStep restJobStep: filteredJobSteps) {
 				System.out.println(String.format(listFormat, restJobStep.getId(), restJobStep.getOutputProductClass(),
 						restJobStep.getJobStepState().toString()));
 			}
@@ -667,7 +687,8 @@ public class JobCommandRunner {
 				&& !JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
 					CMD_SUSPEND, restJobStep.getJobStepState(),
-					JobStepState.READY.toString() + " or " + JobStepState.RUNNING.toString()));
+					JobStepState.READY.toString() + ", " + JobStepState.WAITING_INPUT.toString() + " or " + 
+					JobStepState.RUNNING.toString()));
 			return;
 		}
 		
@@ -684,11 +705,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -739,11 +762,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -779,7 +804,8 @@ public class JobCommandRunner {
 		if (!JobStepState.INITIAL.equals(restJobStep.getJobStepState())
 				&&!JobStepState.RUNNING.equals(restJobStep.getJobStepState())) {
 			System.err.println(uiMsg(MSG_ID_INVALID_JOBSTEP_STATE,
-					CMD_CANCEL, restJobStep.getJobStepState(), JobStepState.INITIAL.toString()));
+					CMD_CANCEL, restJobStep.getJobStepState(), 
+					JobStepState.INITIAL.toString() + " or " + JobStepState.RUNNING.toString()));
 			return;
 		}
 		
@@ -795,11 +821,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
@@ -850,11 +878,13 @@ public class JobCommandRunner {
 				message = uiMsg(MSG_ID_JOBSTEP_NOT_FOUND, restJobStep.getId());
 				break;
 			case org.apache.http.HttpStatus.SC_BAD_REQUEST:
-				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getMessage());
+				message = uiMsg(MSG_ID_JOBSTEP_DATA_INVALID,  e.getStatusText());
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
-				message = uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission());
+				message = (null == e.getStatusText() ?
+						uiMsg(MSG_ID_NOT_AUTHORIZED, loginManager.getUser(), JOBSTEPS, loginManager.getMission()) :
+						e.getStatusText());
 				break;
 			default:
 				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
