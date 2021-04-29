@@ -213,11 +213,15 @@ public class OrderControllerImpl implements OrderController {
 				pf = RepositoryService.getFacilityRepository().findByName(facility);
 			}
 			@SuppressWarnings("unchecked")
-			ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+			ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, FacilityState.STARTING); 
 			if (re != null) {
 				return re;
 			}
-				
+			if (kc != null) {
+				pf = kc.getProcessingFacility();
+			} else {
+				pf = null;
+			}
 			if (order != null && pf != null) {
 				Messages msg = orderUtil.plan(order, pf);
 				if (msg.isTrue()) {
@@ -226,6 +230,12 @@ public class OrderControllerImpl implements OrderController {
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
+				} else if (msg.getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
+					RestOrder ro = RestUtil.createRestOrder(order);
+					String message = msg.formatWithPrefix(order.getIdentifier());
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.BAD_REQUEST);
 				} else {
 					RestOrder ro = RestUtil.createRestOrder(order);
 					String message = msg.formatWithPrefix(order.getIdentifier());
@@ -287,7 +297,7 @@ public class OrderControllerImpl implements OrderController {
 			boolean found = false;
 			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
 				@SuppressWarnings("unchecked")
-				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, null); 
 				if (re != null) {
 					return re;
 				}
@@ -398,7 +408,8 @@ public class OrderControllerImpl implements OrderController {
 		if (order != null) {
 			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
 				@SuppressWarnings("unchecked")
-				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf); 
+				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, 
+						((force != null && force) ? FacilityState.STOPPING : null)); 
 				if (re != null) {
 					return re;
 				}

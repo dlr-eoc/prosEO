@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
+import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobstepController;
 import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobStep;
@@ -137,7 +138,7 @@ public class JobstepControllerImpl implements JobstepController {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
 			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility()); 
+			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility(), null); 
 			if (re != null) {
 				return re;
 			}
@@ -212,7 +213,8 @@ public class JobstepControllerImpl implements JobstepController {
 		JobStep js = this.findJobStepByNameOrId(jobstepId);
 		if (js != null) {
 			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility()); 
+			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility(), 
+					((force != null && force) ? FacilityState.STOPPING : null)); 
 			if (re != null) {
 				return re;
 			}

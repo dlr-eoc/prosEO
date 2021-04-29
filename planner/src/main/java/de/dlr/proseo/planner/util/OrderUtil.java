@@ -296,7 +296,7 @@ public class OrderUtil {
 				if (orderDispatcher.publishOrder(order, procFacility)) {
 					if (order.getJobs().isEmpty()) {
 						order.setOrderState(OrderState.COMPLETED);
-						answer = Messages.ORDER_COMPLETED;
+						answer = Messages.ORDER_PRODUCT_EXIST;
 					} else {
 						order.setOrderState(OrderState.PLANNED);
 						answer = Messages.ORDER_PLANNED;

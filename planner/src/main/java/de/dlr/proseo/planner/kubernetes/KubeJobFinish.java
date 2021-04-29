@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.planner.kubernetes;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 
@@ -15,6 +17,7 @@ import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
  *
  */
 
+@Transactional
 public class KubeJobFinish extends Thread {
 
 	/**
@@ -44,6 +47,7 @@ public class KubeJobFinish extends Thread {
 	 * This check sleeps a defined time between the cycles and stops also after a maximum number of cycles (parameters are defined in the configuration).
      * @see java.lang.Thread#run()
      */
+	@Transactional
     public void run() {
     	if (kubeJob != null && jobName != null && !jobName.isEmpty()) {
     		boolean found = false;
