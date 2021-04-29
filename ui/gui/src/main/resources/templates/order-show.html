@@ -335,7 +335,7 @@ function setState(oId, state) {
 				    method : method,
             success : function(res, textStatus, jqXHR) {
                 hideLoader();
-                if (jqXHR.getResponseHeader("warnstatus") != null) {
+                if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
                     alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
                 } else {
                     retrieveData();
