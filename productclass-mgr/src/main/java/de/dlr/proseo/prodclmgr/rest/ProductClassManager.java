@@ -116,6 +116,8 @@ public class ProductClassManager {
 	private static final int MSG_ID_PRODUCT_QUERIES_EXIST = 2148;
 	private static final int MSG_ID_NO_RULES_FOUND = 2149;
 	private static final int MSG_ID_NO_RULES_FOUND_FOR_SOURCE = 2150;
+	private static final int MSG_ID_ENCLOSING_CLASS_CYCLE = 2151;
+	private static final int MSG_ID_COMPONENT_CLASS_CYCLE = 2151;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -158,6 +160,8 @@ public class ProductClassManager {
 	private static final String MSG_PRODUCT_QUERIES_EXIST = "(E%d) Rule '%s' for product class %s cannot be deleted, because it is used in product queries";
 	private static final String MSG_NO_RULES_FOUND = "(E%d) No selection rules found for product class %s";
 	private static final String MSG_NO_RULES_FOUND_FOR_SOURCE = "(E%d) No selection rules found for target product class %s and source product class %s";
+	private static final String MSG_ENCLOSING_CLASS_CYCLE = "(E%d) Enclosing product class %s for product class %s would create a product class cycle for mission %s";
+	private static final String MSG_COMPONENT_CLASS_CYCLE = "(E%d) Component product class %s for product class %s would create a product class cycle for mission %s";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -241,12 +245,14 @@ public class ProductClassManager {
 	}
 
 	/**
-	 * Set the enclosing class of the given product class to the class with the given mission code and product type
+	 * Set the enclosing class of the given product class to the class with the given mission code and product type;
+	 * check for possible cycles
 	 * 
 	 * @param productClass the product class to update (must not be transient)
 	 * @param missionCode the mission code of the enclosing product class
 	 * @param productType the product type of the enclosing product class
-	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist
+	 * @throws IllegalArgumentException if a product class with the given mission code and product type does not exist,
+	 *     or if the addition of the enclosing class would create a class cycle
 	 */
 	private void setEnclosingClass(ProductClass productClass, String missionCode, String productType) throws IllegalArgumentException {
 		ProductClass enclosingClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
@@ -255,9 +261,56 @@ public class ProductClassManager {
 			throw new IllegalArgumentException(logError(MSG_INVALID_ENCLOSING_CLASS, MSG_ID_INVALID_ENCLOSING_CLASS,
 					productType, missionCode));
 		}
+		// Check for class cycles
+		if (hasEnclosingClassCycle(enclosingClass, productClass)) {
+			throw new IllegalArgumentException(logError(MSG_ENCLOSING_CLASS_CYCLE, MSG_ID_ENCLOSING_CLASS_CYCLE,
+					productType, productClass.getProductType(), missionCode));
+		}
 		enclosingClass.getComponentClasses().add(productClass);
 		enclosingClass = RepositoryService.getProductClassRepository().save(enclosingClass);
 		productClass.setEnclosingClass(enclosingClass);
+	}
+
+	/**
+	 * Check for cycles in the product class tree (upward direction)
+	 * 
+	 * @param enclosingClass the enclosing class to check
+	 * @param productClass the product class to check against
+	 * @return true, if adding the enclosing class would create a product class cycle, false otherwise
+	 */
+	private boolean hasEnclosingClassCycle(ProductClass enclosingClass, ProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> hasEnclosingClassCycle({}, {})", enclosingClass.getProductType(),
+				productClass.getProductType());
+
+		if (enclosingClass.getProductType().equals(productClass.getProductType())) {
+			return true;
+		}
+		if (null == enclosingClass.getEnclosingClass()) {
+			return false;
+		}
+		return hasEnclosingClassCycle(enclosingClass.getEnclosingClass(), productClass);
+	}
+
+	/**
+	 * Check for cycles in the product class tree (downward direction)
+	 * 
+	 * @param componentClass the component class to check
+	 * @param productClass the product class to check against
+	 * @return true, if adding the component class would create a product class cycle, false otherwise
+	 */
+	private boolean hasComponentClassCycle(ProductClass componentClass, ProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> hasEnclosingClassCycle({}, {})", componentClass.getProductType(),
+				productClass.getProductType());
+
+		if (componentClass.getProductType().equals(productClass.getProductType())) {
+			return true;
+		}
+		for (ProductClass componentComponentClass: componentClass.getComponentClasses()) {
+			if (hasComponentClassCycle(componentComponentClass, productClass)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -266,6 +319,8 @@ public class ProductClassManager {
 	 * @param productClass
 	 */
 	private void removeProcessorClass(ProductClass productClass) {
+		if (logger.isTraceEnabled()) logger.trace(">>> removeProcessorClass({})", productClass.getProductType());
+
 		ProcessorClass processorClass = productClass.getProcessorClass();
 		processorClass.getProductClasses().remove(productClass);
 		RepositoryService.getProcessorClassRepository().save(processorClass);
@@ -282,6 +337,9 @@ public class ProductClassManager {
 	 */
 	private void setProcessorClass(ProductClass modelProductClass, String missionCode, String processorName)
 			throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> setProcessorClass({}, {}, {})",
+				modelProductClass.getProductType(), missionCode, processorName);
+
 		ProcessorClass processorClass = RepositoryService.getProcessorClassRepository()
 				.findByMissionCodeAndProcessorName(missionCode, processorName);
 		if (null == processorClass) {
@@ -304,7 +362,8 @@ public class ProductClassManager {
      */
 	public List<RestProductClass> getRestProductClass(String mission, String productType, 
 			Long recordFrom, Long recordTo, String[] orderBy) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {}, {}, {})", mission, productType,
+				recordFrom, recordTo, orderBy);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -521,6 +580,10 @@ public class ProductClassManager {
 			if (null == modelProductClass.getEnclosingClass()) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
 						componentClass, mission.getCode()));
+			}
+			if (hasComponentClassCycle(modelComponentClass, modelProductClass)) {
+				throw new IllegalArgumentException(logError(MSG_COMPONENT_CLASS_CYCLE, MSG_ID_COMPONENT_CLASS_CYCLE,
+						componentClass, productClass.getProductType(), mission.getCode()));
 			}
 			modelComponentClass.setEnclosingClass(modelProductClass);
 			modelComponentClass = RepositoryService.getProductClassRepository().save(modelComponentClass);
@@ -778,6 +841,10 @@ public class ProductClassManager {
 				if (null == newComponentClass) {
 					throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
 							changedComponentClass, productClass.getMissionCode()));
+				}
+				if (hasComponentClassCycle(newComponentClass, modelProductClass)) {
+					throw new IllegalArgumentException(logError(MSG_COMPONENT_CLASS_CYCLE, MSG_ID_COMPONENT_CLASS_CYCLE,
+							changedComponentClass, productClass.getProductType(),productClass.getMissionCode()));
 				}
 				newComponentClass.setEnclosingClass(modelProductClass);
 				newComponentClass = RepositoryService.getProductClassRepository().save(newComponentClass);
@@ -1178,6 +1245,7 @@ public class ProductClassManager {
 					modelRule.getSimplePolicies().clear();
 					modelRule.getSimplePolicies().addAll(changedSimpleRule.getSimplePolicies());
 					modelRule.setSourceProductClass(changedSimpleRule.getSourceProductClass());
+					modelRule.setMinimumCoverage(changedSimpleRule.getMinimumCoverage());
 					RepositoryService.getProductClassRepository().save(modelProductClass.get());
 				}
 				// Check mode change (including from/to null)

@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-ui</artifactId>
-		<version>0.7.1</version>
+		<version>0.7.2</version>
 	</parent>
 
 	<artifactId>proseo-ui-backend</artifactId>
@@ -18,7 +18,7 @@
 	</organization>
 
     <properties>
-        <module.version>0.7.1</module.version>
+        <module.version>0.7.2</module.version>
     </properties>
 
 	<dependencies>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.6</version>
+            <version>2.7</version>
         </dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
 		<dependency>

@@ -63,7 +63,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_MODIFIED = 2009;
 	private static final int MSG_ID_PRODUCT_NOT_MODIFIED = 2010;
 	private static final int MSG_ID_PRODUCT_LIST_EMPTY = 2011;
-	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_PRODUCT_ID_MISSING = 2013;
 	private static final int MSG_ID_FILE_CLASS_INVALID = 2014;
 	private static final int MSG_ID_MODE_INVALID = 2015;
@@ -88,7 +88,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_ID_MISSING = "(E%d) Product ID not set";
 	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found for ID %d";
 	private static final String MSG_PRODUCT_LIST_EMPTY = "(E%d) No products found for search criteria";
-	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ENCLOSING_PRODUCT_NOT_FOUND = "(E%d) Enclosing product with ID %d not found";
 	private static final String MSG_COMPONENT_PRODUCT_NOT_FOUND = "(E%d) Component product with ID %d not found";
 	private static final String MSG_ORBIT_NOT_FOUND = "(E%d) Orbit %d for spacecraft %s not found";
@@ -103,7 +103,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_NOT_FOUND_BY_UUID = "(E%d) No product found for UUID %s";
 	private static final String MSG_DUPLICATE_PRODUCT_UUID = "(E%d) Duplicate product UUID %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_NOT_FOUND = "(E%d) Configured processor %s not found";
-	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d has existing files and cannot be deleted";
+	private static final String MSG_PRODUCT_HAS_FILES = "(E%d) Product with ID %d (or some component product) has existing files and cannot be deleted";
 	private static final String MSG_PRODUCT_EXISTS = "(E%d) Product with equal characteristics already exists with ID %d";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	private static final String MSG_VISIBILITY_VIOLATION = "(E%d) User not authorized for read access to product class %s";
@@ -115,6 +115,9 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
 	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with UUID %s retrieved";
+	
+	/* Other string constants */
+	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
 	
 	/** JPA entity manager */
 	@PersistenceContext
@@ -191,8 +194,8 @@ public class ProductManager {
 					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
 		
-		// Make sure product does not exist on any Processing Facility
-		if (!modelProduct.get().getProductFile().isEmpty()) {
+		// Make sure product (including all component products) does not exist on any Processing Facility
+		if (hasProductFiles(modelProduct.get())) {
 			throw new IllegalStateException(logError(MSG_PRODUCT_HAS_FILES, MSG_ID_PRODUCT_HAS_FILES, modelProduct.get().getId()));
 		}
 		
@@ -206,6 +209,24 @@ public class ProductManager {
 		}
 		
 		logInfo(MSG_PRODUCT_DELETED, MSG_ID_PRODUCT_DELETED, id);
+	}
+
+	/**
+	 * Checks (recursively) whether the product or any of its component products has files at a processing facility
+	 * 
+	 * @param product the product to check
+	 * @return true, if some processing facility with files for this product was found, false otherwise
+	 */
+	private boolean hasProductFiles(Product product) {
+		if (logger.isTraceEnabled()) logger.trace(">>> hasProductFiles({})", product.getId());
+		
+		Query query = em.createNativeQuery(FACILITY_QUERY_SQL);
+		query.setParameter("product_id", product.getId());
+		
+		int resultCount = ((Number) query.getSingleResult()).intValue();
+		if (logger.isDebugEnabled()) logger.debug("Number of processing facility entries found: " + resultCount);
+		
+		return 0 < resultCount;
 	}
 
 	/**
@@ -348,8 +369,8 @@ public class ProductManager {
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 				product.getMissionCode(), product.getProductClass());
 		if (null == modelProductClass) {
-			throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-					product.getMissionCode(), product.getProductClass()));
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+					product.getProductClass()));
 		}
 		modelProduct.setProductClass(modelProductClass);
 		
@@ -528,8 +549,8 @@ public class ProductManager {
 			ProductClass modelProductClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 					product.getMissionCode(), product.getProductClass());
 			if (null == modelProductClass) {
-				throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-						product.getMissionCode(), product.getProductClass()));
+				throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+						product.getProductClass()));
 			}
 			productChanged = true;
 			modelProduct.setProductClass(modelProductClass);

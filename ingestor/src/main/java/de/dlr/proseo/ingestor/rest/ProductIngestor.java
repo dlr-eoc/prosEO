@@ -82,7 +82,7 @@ public class ProductIngestor {
 	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
 
 	// Same as in ProductManager
-	private static final int MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID = 2012;
+	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
 	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
@@ -103,7 +103,7 @@ public class ProductIngestor {
 	private static final String MSG_PRODUCT_QUERY_EXISTS = "(E%d) Product with ID %d is required for at least one job step on processing facility %s";
 
 	// Same as in ProductManager
-	private static final String MSG_MISSION_OR_PRODUCT_CLASS_INVALID = "(E%d) Mission code %s and/or product type %s invalid";
+	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
@@ -687,8 +687,8 @@ public class ProductIngestor {
 		ProductClass modelProductClass = RepositoryService.getProductClassRepository()
 				.findByMissionCodeAndProductType(ingestorProduct.getMissionCode(), ingestorProduct.getProductClass());
 		if (null == modelProductClass) {
-			throw new IllegalArgumentException(logError(MSG_MISSION_OR_PRODUCT_CLASS_INVALID, MSG_ID_MISSION_OR_PRODUCT_CLASS_INVALID, 
-					ingestorProduct.getMissionCode(), ingestorProduct.getProductClass()));
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_INVALID, MSG_ID_PRODUCT_CLASS_INVALID, 
+					ingestorProduct.getProductClass()));
 		}
 		
 		// Check whether there are open product queries for this product type

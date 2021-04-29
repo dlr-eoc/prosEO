@@ -5,10 +5,6 @@
  */
 package de.dlr.proseo.ui.backend;
 
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_MANDATORY_ATTRIBUTE_MISSING;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_PASSWORD_CHANGE_NOT_ALLOWED;
-import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_SKIPPING_INVALID_AUTHORITY;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
