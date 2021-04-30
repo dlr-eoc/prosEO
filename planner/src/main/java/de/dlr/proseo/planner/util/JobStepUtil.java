@@ -212,7 +212,23 @@ public class JobStepUtil {
 				answer = Messages.JOBSTEP_CANCELED;
 				break;
 			case RUNNING:
-				answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				Boolean deleted = false;
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+						if (kj != null) {
+							deleted = kc.deleteJob(kj.getJobName());
+						}
+				}
+				if (deleted) {
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+					js.incrementVersion();
+					RepositoryService.getJobStepRepository().save(js);
+					em.merge(js);
+					answer = Messages.JOBSTEP_CANCELED;
+				} else {
+					answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				}
 				break;
 			case COMPLETED:
 				answer = Messages.JOBSTEP_ALREADY_COMPLETED;

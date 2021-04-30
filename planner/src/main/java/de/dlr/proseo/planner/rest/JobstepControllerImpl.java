@@ -182,6 +182,13 @@ public class JobstepControllerImpl implements JobstepController {
 		if (js != null) {
 			Messages msg = jobStepUtil.cancel(js);
 			if (msg.isTrue()) {
+				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
+				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
+					}
+				}
 				// canceled
 				RestJobStep pjs = RestUtil.createRestJobStep(js);
 				HttpHeaders responseHeaders = new HttpHeaders();
@@ -221,6 +228,7 @@ public class JobstepControllerImpl implements JobstepController {
 			Messages msg = jobStepUtil.suspend(js, force); 
 			if (msg.isTrue()) {
 				// suspended
+				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
 				RestJobStep pjs = RestUtil.createRestJobStep(js);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));

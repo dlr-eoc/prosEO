@@ -13,6 +13,7 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
@@ -464,13 +465,66 @@ public class JobUtil {
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
 					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				} else if (jsState == JobStepState.FAILED) {
+					Boolean allState = true;
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.FAILED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.FAILED);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+						UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+					}
 				}
 				break;
 			case RELEASED:
+				if (jsState == JobStepState.RUNNING) {
+					job.setJobState(JobState.STARTED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				}
 				break;
 			case STARTED:
-				break;
+				// fall through intended
 			case ON_HOLD:
+				if (jsState == JobStepState.INITIAL) {
+					Boolean allState = true;
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.INITIAL) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.INITIAL);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+						UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+					}
+				} else if (jsState == JobStepState.FAILED) {
+					Boolean allState = true;
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.FAILED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.FAILED);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+						UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+					}
+				}
 				break;
 			case COMPLETED:
 				break;

@@ -19,10 +19,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
+import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
@@ -730,13 +732,42 @@ public class OrderUtil {
 					order.incrementVersion();
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);
+				} else if (jState == JobState.FAILED) {
+					Boolean allState = true;
+					for (Job j : order.getJobs()) {
+						if (j.getJobState() != JobState.FAILED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						order.setOrderState(OrderState.FAILED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
+					}
 				}	
 				break;
 			case RELEASED:
-				break;
+				// fall through intended
 			case RUNNING:
-				break;
+				// fall through intended
 			case SUSPENDING:
+				if (jState == JobState.FAILED) {
+					Boolean allState = true;
+					for (Job j : order.getJobs()) {
+						if (j.getJobState() != JobState.FAILED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						order.setOrderState(OrderState.FAILED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
+					}
+				}	
 				break;
 			case COMPLETED:
 				break;

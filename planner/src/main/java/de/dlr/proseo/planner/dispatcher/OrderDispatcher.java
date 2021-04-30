@@ -621,6 +621,9 @@ public class OrderDispatcher {
 				if (logger.isDebugEnabled()) logger.debug("Product query generated for rule '{}'", selectionRule);
 			}
 		}
+		if (jobStep.getInputProductQueries().isEmpty()) {
+			logger.warn("Job Step '{}' has no input product queries", jobStep.getId());
+		}
 	}
 	
 	/**
@@ -652,7 +655,7 @@ public class OrderDispatcher {
 		
 		// Only one job step for one product
 		for (JobStep i : allJobSteps) {
-			if (i.getOutputProduct().getProductClass().equals(topProductClass)) {
+			if (i.getOutputProduct() == null || i.getOutputProduct().getProductClass().equals(topProductClass)) {
 				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because a job step for it has already been generated",
 						productClass.getProductType());
 				return;
@@ -705,7 +708,7 @@ public class OrderDispatcher {
 		
 		// now we have to create the product queries for job step.
 
-		if (products.isEmpty()) {
+		if (products.isEmpty() || jobStep.getOutputProduct() == null) {
 			if (logger.isDebugEnabled()) logger.debug("No products could be generated, skipping job step generation");
 			job.getJobSteps().remove(jobStep);
 			RepositoryService.getJobStepRepository().delete(jobStep);
@@ -813,7 +816,7 @@ public class OrderDispatcher {
 		}
 		for (ProductClass pc : productClass.getComponentClasses()) {
 			Product p = createProducts(pc, product, cp, orbit, job, null, fileClass, startTime, stopTime, products);
-			if (p != null) {
+			if (p != null && product != null) {
 				product.getComponentProducts().add(p);
 			}
 		}
