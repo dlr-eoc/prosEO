@@ -468,7 +468,7 @@ public class JobUtil {
 				} else if (jsState == JobStepState.FAILED) {
 					Boolean allState = true;
 					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED) {
+						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
 							allState = false;
 							break;
 						}
@@ -512,7 +512,7 @@ public class JobUtil {
 				} else if (jsState == JobStepState.FAILED) {
 					Boolean allState = true;
 					for (JobStep js : job.getJobSteps()) {
-						if (js.getJobStepState() != JobStepState.FAILED) {
+						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
 							allState = false;
 							break;
 						}

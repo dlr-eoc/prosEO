@@ -735,7 +735,7 @@ public class OrderUtil {
 				} else if (jState == JobState.FAILED) {
 					Boolean allState = true;
 					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED) {
+						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
 							allState = false;
 							break;
 						}
@@ -756,7 +756,7 @@ public class OrderUtil {
 				if (jState == JobState.FAILED) {
 					Boolean allState = true;
 					for (Job j : order.getJobs()) {
-						if (j.getJobState() != JobState.FAILED) {
+						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
 							allState = false;
 							break;
 						}
