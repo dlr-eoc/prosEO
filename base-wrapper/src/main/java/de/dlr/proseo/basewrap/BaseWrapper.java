@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -118,6 +119,7 @@ public class BaseWrapper {
 	private static final String MSG_STARTING_BASE_WRAPPER = "\n\n{\"prosEO\" : \"A Processing System for Earth Observation Data\"}\nStarting base-wrapper with JobOrder file {}";
 	private static final String MSG_STARTING_PROCESSOR = "Starting Processing using command {} and local JobOrderFile: {}";
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
+	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to directory directory path {}";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
@@ -180,6 +182,8 @@ public class BaseWrapper {
 	private String ENV_STORAGE_PASSWORD = System.getenv(ENV_VARS.STORAGE_PASSWORD.toString());
 	/** Mount point of shared local file system (available for wrapper subclasses) */
 	protected String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
+	
+	protected List<String> inOutDirs = new ArrayList<String>();
 	
 	/** User name for prosEO Control Instance (available for wrapper subclasses) */
 	protected String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
@@ -422,6 +426,17 @@ public class BaseWrapper {
 							ti.setFileName(inputFileName);
 						}
 					}
+					String dir = ENV_LOCAL_FS_MOUNT;
+					if (dir.charAt(dir.length()-1) != '/') {
+						dir += "/";
+					}
+					int index = inputFileName.indexOf('/', dir.length());
+					if (index >= 0) {
+						dir = inputFileName.substring(0, index);
+						if (!inOutDirs.contains(dir)) {
+							inOutDirs.add(dir);
+						}
+					}
 					++numberOfInputs;
 				}
 			}
@@ -438,7 +453,10 @@ public class BaseWrapper {
 					// Set output file_name to local work-dir path
 					fn.setFileName(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX
 							+ File.separator + normalizeFileName(fn.getFileName()));
-
+					if (!inOutDirs.contains(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX)) {
+						inOutDirs.add(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX);
+					}
+					
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
 					if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
@@ -453,8 +471,7 @@ public class BaseWrapper {
 							}
 						}
 						try {
-							Files.createDirectories(filePath);
-						} catch (IOException | SecurityException e) {
+							Files.createDirectories(filePath);} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath);
 							throw new WrapperException();
 						}
@@ -729,7 +746,28 @@ public class BaseWrapper {
 		logger.info(MSG_PRODUCTS_REGISTERED, pushedProducts.size());
 	}
 
-
+	/**
+	 * Cleanup (delete) created directories
+	 */
+	private void cleanup() {
+		for (String aDir : inOutDirs) {
+			File f = new File(aDir);
+			if (f != null && f.exists()) {
+				if (!deleteDirectory(f)) {
+					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, aDir);
+				}
+			}
+		}
+	}
+	private boolean deleteDirectory(File directoryToBeDeleted) {
+	    File[] allContents = directoryToBeDeleted.listFiles();
+	    if (allContents != null) {
+	        for (File file : allContents) {
+	            deleteDirectory(file);
+	        }
+	    }
+	    return directoryToBeDeleted.delete();
+	}
 	/**
 	 * Triggers a callback to ENV_STATE_CALLBACK_ENDPOINT (prosEO Production Planner)
 	 * 
@@ -818,10 +856,12 @@ public class BaseWrapper {
 				logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 				return EXIT_CODE_FAILURE;
 			}
-
-			/* STEP [11] Register pushed products using with prosEO Ingestor */
-
+			
+			/* STEP [11] Register pushed products using with prosEO Ingestor */			
 			ingestPushedOutputs(pushedProducts);
+
+			/* Step [12] Cleanup temporary files/directories */
+			cleanup();
 
 		} catch (WrapperException e) {
 			/* STEP [12A] Report failure to Production Planner */
