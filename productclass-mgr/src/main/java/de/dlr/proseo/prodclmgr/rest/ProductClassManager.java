@@ -946,6 +946,8 @@ public class ProductClassManager {
 					modelProductClass.get().getProductType()));
 		}
 		
+		// TODO Test whether there are selection rules having this class as source product class
+		
 		// Delete the processor class
 		RepositoryService.getProductClassRepository().deleteById(id);
 

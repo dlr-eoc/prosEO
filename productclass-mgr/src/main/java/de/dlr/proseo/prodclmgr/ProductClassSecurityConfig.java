@@ -25,7 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import de.dlr.proseo.model.enums.UserRole;
 
 /**
- * Security configuration for prosEO Ingestor module
+ * Security configuration for prosEO ProductClassManager module
  * 
  * @author Dr. Thomas Bassler
  */
@@ -41,7 +41,7 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 	private static Logger logger = LoggerFactory.getLogger(ProductClassSecurityConfig.class);
 	
 	/**
-	 * Set the Ingestor security options
+	 * Set the ProductClassManager security options
 	 * 
 	 * @param http the HTTP security object
 	 */

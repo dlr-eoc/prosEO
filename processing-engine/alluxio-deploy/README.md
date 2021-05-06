@@ -1,12 +1,17 @@
 Alluxio k8s-deploy
 ==================
 
-### prerequisites (->../k8s-deploy)
+## Disclaimer
+A Storage Manager implementation based on Alluxio is envisioned, but has not been
+fully developed yet, and it has never been tested so far.
+
+
+## prerequisites (->../k8s-deploy)
 - running k8s cluster 
 - valid & reachable k8s-gateway
 - kubectl configured at your localhost
 
-### generate config file templates
+## generate config file templates
 run the following commands at your localhost (some place where kubectl is configured)
 
 ```sh
@@ -17,14 +22,14 @@ tar -xvf kubernetes.tar
 cd kubernetes
 ```
 
-### provision master persistent volume
+## provision master persistent volume
 
 ```sh
 cp alluxio-journal-volume.yaml.template alluxio-journal-volume.yaml
 kubectl create -f alluxio-journal-volume.yaml
 ```
 
-### Configure Alluxio properties
+## Configure Alluxio properties
 
 ```sh
 cp alluxio-configMap.yaml.template alluxio-configMap.yaml
@@ -48,7 +53,7 @@ data:
 kubectl create -f alluxio-configMap.yaml
 ```
 
-### Deploy Alluxio Master & Worker
+## Deploy Alluxio Master & Worker
 
 ```sh
 cp alluxio-master.yaml.template alluxio-master.yaml
@@ -58,7 +63,7 @@ kubectl create -f alluxio-master.yaml
 kubectl create -f alluxio-worker.yaml
 ```
 
-### Verify Alluxio
+## Verify Alluxio
 
 ```sh
 kubectl get pods
@@ -67,7 +72,7 @@ cd /opt/alluxio
 ./bin/alluxio runTests
 ```
 
-### Rollback & Delete
+## Rollback & Delete
 
 ```sh
 kubectl delete -f alluxio-worker.yaml

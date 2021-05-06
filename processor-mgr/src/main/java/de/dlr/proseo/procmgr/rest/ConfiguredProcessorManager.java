@@ -480,6 +480,8 @@ public class ConfiguredProcessorManager {
 					modelConfiguredProcessor.get().getIdentifier(), result));
 		}
 		
+		// TODO Check whether there are selection rules referencing this configured processor
+		
 		// Delete the configured processor
 		RepositoryService.getConfiguredProcessorRepository().deleteById(id);
 
