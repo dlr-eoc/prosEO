@@ -626,8 +626,11 @@ public class KubeJob {
 											if (JobStepState.READY.equals(js.get().getJobStepState())) {
 												// Sometimes we don't get the state transition to RUNNING
 												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
+											} else if (JobStepState.INITIAL.equals(js.get().getJobStepState())) {
+												js.get().setJobStepState(JobStepState.READY);
+												js.get().setJobStepState(JobStepState.RUNNING);
 											}
-											js.get().setJobStepState(JobStepState.COMPLETED);
+										    js.get().setJobStepState(JobStepState.COMPLETED);
 											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
 											
 											js.get().incrementVersion();
@@ -637,6 +640,13 @@ public class KubeJob {
 											}
 											success = true;
 										} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
+											if (JobStepState.READY.equals(js.get().getJobStepState())) {
+												// Sometimes we don't get the state transition to RUNNING
+												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
+											} else if (JobStepState.INITIAL.equals(js.get().getJobStepState())) {
+												js.get().setJobStepState(JobStepState.READY);
+												js.get().setJobStepState(JobStepState.RUNNING);
+											}
 											js.get().setJobStepState(JobStepState.FAILED);	
 											js.get().incrementVersion();	
 											if (cd == null) {

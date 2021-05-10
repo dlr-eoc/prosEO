@@ -723,8 +723,9 @@ public class OrderUtil {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
-				break;
+				// fall through intended
 			case APPROVED:
+				// no job and job step exists
 				break;
 			case PLANNED:
 				if (jState == JobState.RELEASED) {
@@ -734,6 +735,7 @@ public class OrderUtil {
 					em.merge(order);
 				} else if (jState == JobState.FAILED) {
 					Boolean allState = true;
+					this.setHasFailedJobSteps(order,  true);
 					for (Job j : order.getJobs()) {
 						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
 							allState = false;
@@ -749,12 +751,64 @@ public class OrderUtil {
 				}	
 				break;
 			case RELEASED:
-				// fall through intended
+				if (jState == JobState.FAILED) {
+					Boolean allState = true;
+					this.setHasFailedJobSteps(order,  true);
+					for (Job j : order.getJobs()) {
+						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						order.setOrderState(OrderState.FAILED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
+					}
+				} else if (jState == JobState.STARTED) {
+					order.setOrderState(OrderState.RUNNING);
+					order.incrementVersion();
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+				}	
+				break;
 			case RUNNING:
-				// fall through intended
+				if (jState == JobState.FAILED) {
+					Boolean allState = true;
+					this.setHasFailedJobSteps(order,  true);
+					for (Job j : order.getJobs()) {
+						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						order.setOrderState(OrderState.FAILED);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
+					}
+				} else if (jState == JobState.ON_HOLD) {
+					Boolean allState = true;
+					for (Job j : order.getJobs()) {
+						if (j.getJobState() != JobState.ON_HOLD) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						order.setOrderState(OrderState.SUSPENDING);
+						order.incrementVersion();
+						RepositoryService.getOrderRepository().save(order);
+						em.merge(order);
+					}
+				}	
+				break;
 			case SUSPENDING:
 				if (jState == JobState.FAILED) {
 					Boolean allState = true;
+					this.setHasFailedJobSteps(order,  true);
 					for (Job j : order.getJobs()) {
 						if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
 							allState = false;
@@ -783,6 +837,31 @@ public class OrderUtil {
 				break;
 			default:
 				break;
+			}
+			Boolean hasFailed = false;
+			for (Job j : order.getJobs()) {
+				if (j.getJobState() == JobState.FAILED) {
+					hasFailed = true;
+					break;
+				}
+			}
+			order.setHasFailedJobSteps(hasFailed);
+			Boolean allHasFinished = true;
+			for (Job j : order.getJobs()) {
+				if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
+					allHasFinished = false;
+					break;
+				}
+			}
+			if (allHasFinished) {
+				if (hasFailed) {
+					order.setOrderState(OrderState.FAILED);
+				} else {
+					order.setOrderState(OrderState.COMPLETED);
+				}
+				order.incrementVersion();
+				RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
 			}
 		}
 	}

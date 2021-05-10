@@ -654,7 +654,9 @@ public class JobStepUtil {
 			if (kc != null && job != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
-					for (JobStep js : job.getJobSteps()) {
+					List<JobStep> jobSteps = new ArrayList<JobStep>();
+					jobSteps.addAll(job.getJobSteps());
+					for (JobStep js : jobSteps) {
 						checkJobStepQueries(js, false);
 						if (js.getJobStepState() == JobStepState.READY) {	
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
