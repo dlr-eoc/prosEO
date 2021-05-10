@@ -864,7 +864,9 @@ public class BaseWrapper {
 			cleanup();
 
 		} catch (WrapperException e) {
-			/* STEP [12A] Report failure to Production Planner */
+			/* Step [12A] Cleanup temporary files/directories */
+			cleanup();
+			/* STEP [12B] Report failure to Production Planner */
 			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
