@@ -235,7 +235,7 @@ public class OrderControllerImpl implements OrderController {
 					String message = msg.formatWithPrefix(order.getIdentifier());
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.BAD_REQUEST);
+					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
 				} else {
 					RestOrder ro = RestUtil.createRestOrder(order);
 					String message = msg.formatWithPrefix(order.getIdentifier());

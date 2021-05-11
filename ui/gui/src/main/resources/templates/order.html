@@ -473,7 +473,10 @@ function doPlan(oId, facility) {
             method : "POST",
             success : function(res, textStatus, jqXHR) {
                 hideLoader();
-                if (jqXHR.getResponseHeader("warnstatus") != null) {
+                if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'productfound') {
+                    alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+                    retrieveData(oId);
+                } else if (jqXHR.getResponseHeader("warnstatus") != null) {
                     alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
                 } else {
                     retrieveData(oId);

@@ -107,6 +107,9 @@ public class OrderDispatcher {
 
 				}
 				if (order.getJobs().isEmpty()) {
+					order.setOrderState(OrderState.PLANNED);
+					order.setOrderState(OrderState.RELEASED);
+					order.setOrderState(OrderState.RUNNING);
 					order.setOrderState(OrderState.COMPLETED);
 				}
 				break;
@@ -390,9 +393,13 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-
+					Duration delta = order.getSliceOverlap();
+					if (delta == null) {
+						delta = Duration.ofMillis(0);
+					}
+					delta = delta.dividedBy(2);
 					if (startT.equals(stopT)) {
-						answer = createJobForOrbitOrTime(order, null, startT, stopT, pf);
+						answer = createJobForOrbitOrTime(order, null, startT.minus(delta), stopT.plus(delta), pf);
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
 							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
@@ -401,9 +408,9 @@ public class OrderDispatcher {
 						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
 							// check orbit
-							Orbit orbit = findOrbit(order, startT, sliceStopT);
+							Orbit orbit = findOrbit(order, startT.minus(delta), sliceStopT.plus(delta));
 							// create job
-							answer = createJobForOrbitOrTime(order, orbit, startT, sliceStopT, pf);
+							answer = createJobForOrbitOrTime(order, orbit, startT.minus(delta), sliceStopT.plus(delta), pf);
 							startT = sliceStopT;
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
