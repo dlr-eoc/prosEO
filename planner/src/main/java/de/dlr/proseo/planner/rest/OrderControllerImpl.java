@@ -285,12 +285,59 @@ public class OrderControllerImpl implements OrderController {
 	}
 
 	/**
-	 * Release processing order of id
+	 * Release processing order of id (at the moment the same functionality as resumeOrder)
 	 * 
 	 */
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
+		ProcessingOrder order = this.findOrder(orderId);
+		if (order != null) {
+			Messages msg = orderUtil.resume(order);
+			boolean found = false;
+			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+				@SuppressWarnings("unchecked")
+				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, null); 
+				if (re != null) {
+					return re;
+				}
+				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
+				if (kc != null) {
+					found = true;
+					UtilService.getJobStepUtil().checkOrderToRun(kc, order);
+				}
+			}
+			if (!found) {
+				UtilService.getJobStepUtil().checkForJobStepsToRun();
+			}
+			if (msg.isTrue()) {				
+				// canceled
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+			} else {
+				// already running or at end, could not suspend
+				RestOrder ro = RestUtil.createRestOrder(order);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
+				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+			}
+		}
+		Messages.ORDER_NOT_EXIST.log(logger, orderId);
+		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
+    	HttpHeaders responseHeaders = new HttpHeaders();
+    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+	}
+	
+	/**
+	 * Resume processing order of id (at the moment the same functionality as releaseOrder)
+	 * 
+	 */
+	@Override
+	@Transactional
+	public ResponseEntity<RestOrder> resumeOrder(String orderId) {
 		ProcessingOrder order = this.findOrder(orderId);
 		if (order != null) {
 			Messages msg = orderUtil.resume(order);
