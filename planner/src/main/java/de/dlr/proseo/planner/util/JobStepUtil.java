@@ -167,6 +167,11 @@ public class JobStepUtil {
 					}
 				}
 				if (deleted) {
+					js.setProcessingStartTime(null);
+					js.setProcessingCompletionTime(null);
+					js.setProcessingStdOut(null);
+					js.setProcessingStdErr(null);
+					js.setJobOrderFilename(null);
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
@@ -272,6 +277,11 @@ public class JobStepUtil {
 					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// Discard this problem and set job step to completed
+						if (js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
+							js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+						}
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
 						UtilService.getJobStepUtil().checkCreatedProducts(js);
 						js.incrementVersion();
@@ -282,6 +292,11 @@ public class JobStepUtil {
 					}		
 				}
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.setProcessingStartTime(null);
+				js.setProcessingCompletionTime(null);
+				js.setProcessingStdOut(null);
+				js.setProcessingStdErr(null);
+				js.setJobOrderFilename(null);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);

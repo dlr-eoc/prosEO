@@ -141,6 +141,9 @@ public class JobUtil {
 				}
 				if (all) {
 					if (allCompleted) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
