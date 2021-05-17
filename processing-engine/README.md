@@ -301,6 +301,8 @@ Deploy and run a Kubernetes dashboard without requiring a login:
    ```
 5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>.
 
+
+# TODO Step 2 is redundant with step 4 and shall be integrated with the latter
 ## Step 2: Deploy the prosEO Storage Manager
 For the single-node installation we will use POSIX as the default file system, thereby
 avoiding the overhead of running an S3 object storage provider. We will not make Alluxio

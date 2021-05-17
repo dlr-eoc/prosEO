@@ -4,7 +4,7 @@ spring:
         hibernate.ddl-auto: update
         open-in-view: false
         properties.hibernate.jdbc.time_zone: UTC
-   datasource:
+    datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: ********

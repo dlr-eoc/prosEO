@@ -6,3 +6,4 @@ proseo
 stop_brain.sh
 *.cred
 /test*.json
+/docker-compose.yml

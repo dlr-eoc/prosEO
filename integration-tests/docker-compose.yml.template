@@ -4,7 +4,7 @@ services:
     image: ${REGISTRY_URL}/postgres:11-integration-rc1-${PROSEO_REVISION}
     environment:
       - POSTGRES_DB=proseo
-      - POSTGRES_PASSWORD=sequel09Master
+      - POSTGRES_PASSWORD=********
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
