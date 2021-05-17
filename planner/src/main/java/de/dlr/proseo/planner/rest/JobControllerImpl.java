@@ -265,6 +265,7 @@ public class JobControllerImpl implements JobController {
 		if (job != null) {
 			Messages msg = jobUtil.cancel(job);
 			if (msg.isTrue()) {
+				UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 				RestJob rj = RestUtil.createRestJob(job);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));
@@ -302,6 +303,7 @@ public class JobControllerImpl implements JobController {
 			}
 			Messages msg = jobUtil.suspend(j, force);
 			if (msg.isTrue()) {
+				UtilService.getOrderUtil().updateState(j.getProcessingOrder(), j.getJobState());
 				RestJob pj = RestUtil.createRestJob(j);
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobId));

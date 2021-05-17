@@ -46,7 +46,7 @@ public enum Messages {
 	ORDER_ALREADY_RUNNING			(false, MessageType.W, "Processing order '%s' already running"), 
 	ORDER_ALREADY_SUSPENDING		(false, MessageType.W, "Processing order '%s' already suspending"), 
 	ORDER_ALREADY_COMPLETED			(false, MessageType.W, "Processing order '%s' already completed"), 
-	ORDER_PRODUCT_EXIST 			(false, MessageType.W, "Processing order '%s' requested product already exist"), 
+	ORDER_PRODUCT_EXIST 			(true, MessageType.I, "Processing order '%s' requested product already exist"), 
 	ORDER_ALREADY_FAILED			(false, MessageType.W, "Processing order '%s' already failed"), 
 	ORDER_ALREADY_CLOSED			(false, MessageType.W, "Processing order '%s' already closed"), 
 	ORDER_COULD_NOT_RETRY			(false, MessageType.E, "Processing order '%s' has to be in state FAILED to retry"), 

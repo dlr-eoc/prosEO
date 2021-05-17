@@ -109,6 +109,17 @@ resourceTypes:
               application/json:
                 type: RestOrder
                 example: !include ../../../../../model/src/main/resources/raml/examples/order.json
+  /resume:
+    /{id}:
+      patch:
+        description: Resume processing order of id 
+        displayName: resumeOrder
+        responses:
+          200:
+            body:
+              application/json:
+                type: RestOrder
+                example: !include ../../../../../model/src/main/resources/raml/examples/order.json
   /reset:
     /{id}:
       patch:

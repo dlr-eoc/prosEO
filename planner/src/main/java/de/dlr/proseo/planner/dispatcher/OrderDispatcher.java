@@ -107,6 +107,9 @@ public class OrderDispatcher {
 
 				}
 				if (order.getJobs().isEmpty()) {
+					order.setOrderState(OrderState.PLANNED);
+					order.setOrderState(OrderState.RELEASED);
+					order.setOrderState(OrderState.RUNNING);
 					order.setOrderState(OrderState.COMPLETED);
 				}
 				break;
@@ -390,9 +393,13 @@ public class OrderDispatcher {
 					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
 					answer = false;
 				} else {
-
+					Duration delta = order.getSliceOverlap();
+					if (delta == null) {
+						delta = Duration.ofMillis(0);
+					}
+					delta = delta.dividedBy(2);
 					if (startT.equals(stopT)) {
-						answer = createJobForOrbitOrTime(order, null, startT, stopT, pf);
+						answer = createJobForOrbitOrTime(order, null, startT.minus(delta), stopT.plus(delta), pf);
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
 							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
@@ -401,9 +408,9 @@ public class OrderDispatcher {
 						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
 							// check orbit
-							Orbit orbit = findOrbit(order, startT, sliceStopT);
+							Orbit orbit = findOrbit(order, startT.minus(delta), sliceStopT.plus(delta));
 							// create job
-							answer = createJobForOrbitOrTime(order, orbit, startT, sliceStopT, pf);
+							answer = createJobForOrbitOrTime(order, orbit, startT.minus(delta), sliceStopT.plus(delta), pf);
 							startT = sliceStopT;
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
@@ -621,6 +628,9 @@ public class OrderDispatcher {
 				if (logger.isDebugEnabled()) logger.debug("Product query generated for rule '{}'", selectionRule);
 			}
 		}
+		if (jobStep.getInputProductQueries().isEmpty()) {
+			logger.warn("Job Step '{}' has no input product queries", jobStep.getId());
+		}
 	}
 	
 	/**
@@ -652,7 +662,7 @@ public class OrderDispatcher {
 		
 		// Only one job step for one product
 		for (JobStep i : allJobSteps) {
-			if (i.getOutputProduct().getProductClass().equals(topProductClass)) {
+			if (i.getOutputProduct() == null || i.getOutputProduct().getProductClass().equals(topProductClass)) {
 				if (logger.isDebugEnabled()) logger.debug("Skipping product class {} because a job step for it has already been generated",
 						productClass.getProductType());
 				return;
@@ -705,7 +715,7 @@ public class OrderDispatcher {
 		
 		// now we have to create the product queries for job step.
 
-		if (products.isEmpty()) {
+		if (products.isEmpty() || jobStep.getOutputProduct() == null) {
 			if (logger.isDebugEnabled()) logger.debug("No products could be generated, skipping job step generation");
 			job.getJobSteps().remove(jobStep);
 			RepositoryService.getJobStepRepository().delete(jobStep);
@@ -813,7 +823,7 @@ public class OrderDispatcher {
 		}
 		for (ProductClass pc : productClass.getComponentClasses()) {
 			Product p = createProducts(pc, product, cp, orbit, job, null, fileClass, startTime, stopTime, products);
-			if (p != null) {
+			if (p != null && product != null) {
 				product.getComponentProducts().add(p);
 			}
 		}

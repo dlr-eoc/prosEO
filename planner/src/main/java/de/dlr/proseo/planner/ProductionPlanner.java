@@ -225,27 +225,28 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public void updateKubeConfig(String facilityName) {
 		KubeConfig kubeConfig = null;
-			
-		ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName); 
-		if (pf != null) {
-			kubeConfig = getKubeConfig(pf.getName());
-			if (kubeConfig != null) {
-				kubeConfig.setFacility(pf);
-				if (!kubeConfig.connect()) {
-					// error
-					kubeConfigs.remove(pf.getName().toLowerCase());
-					kubeConfig = null;
-					Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
+		if (facilityName != null) {
+			ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName); 
+			if (pf != null) {
+				kubeConfig = getKubeConfig(pf.getName());
+				if (kubeConfig != null) {
+					kubeConfig.setFacility(pf);
+					if (!kubeConfig.connect()) {
+						// error
+						kubeConfigs.remove(pf.getName().toLowerCase());
+						kubeConfig = null;
+						Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
+					}
 				}
-			}
-			if (kubeConfig == null) {
-				kubeConfig = new KubeConfig(pf);
-				if (kubeConfig != null && kubeConfig.connect()) {
-					kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-					Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
-					Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
-				} else {
-					Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+				if (kubeConfig == null) {
+					kubeConfig = new KubeConfig(pf);
+					if (kubeConfig != null && kubeConfig.connect()) {
+						kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+						Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+						Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
+					} else {
+						Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+					}
 				}
 			}
 		}

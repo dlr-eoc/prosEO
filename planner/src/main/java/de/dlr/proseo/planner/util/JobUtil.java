@@ -13,6 +13,7 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
@@ -140,6 +141,9 @@ public class JobUtil {
 				}
 				if (all) {
 					if (allCompleted) {
+						job.setJobState(de.dlr.proseo.model.Job.JobState.INITIAL);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
+						job.setJobState(de.dlr.proseo.model.Job.JobState.STARTED);
 						job.setJobState(de.dlr.proseo.model.Job.JobState.COMPLETED);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
@@ -223,12 +227,12 @@ public class JobUtil {
 		if (job != null) {
 			switch (job.getJobState()) {
 			case INITIAL:
-				for (JobStep js : job.getJobSteps()) {
-					UtilService.getJobStepUtil().resume(js, false);
-				}
 				job.setJobState(de.dlr.proseo.model.Job.JobState.RELEASED);
 				job.incrementVersion();
 				RepositoryService.getJobRepository().save(job);
+				for (JobStep js : job.getJobSteps()) {
+					UtilService.getJobStepUtil().resume(js, false);
+				}
 				answer = Messages.JOB_RELEASED;
 				break;
 			case RELEASED:
@@ -463,14 +467,65 @@ public class JobUtil {
 					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
+				} else if (jsState == JobStepState.FAILED) {
+					Boolean allState = true;
+					this.setHasFailedJobSteps(job,  true);
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.FAILED);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+					}
 				}
 				break;
 			case RELEASED:
+				if (jsState == JobStepState.RUNNING) {
+					job.setJobState(JobState.STARTED);
+					job.incrementVersion();
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+				}
 				break;
 			case STARTED:
-				break;
+				// fall through intended
 			case ON_HOLD:
+				if (jsState == JobStepState.INITIAL) {
+					Boolean allState = true;
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.INITIAL) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.INITIAL);
+						this.setHasFailedJobSteps(job,  false);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+					}
+				} else if (jsState == JobStepState.FAILED) {
+					Boolean allState = true;
+					this.setHasFailedJobSteps(job,  true);
+					for (JobStep js : job.getJobSteps()) {
+						if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
+							allState = false;
+							break;
+						}
+					}
+					if (allState) {
+						job.setJobState(JobState.FAILED);
+						job.incrementVersion();
+						RepositoryService.getJobRepository().save(job);
+						em.merge(job);
+					}
+				}
 				break;
 			case COMPLETED:
 				break;
@@ -480,12 +535,38 @@ public class JobUtil {
 					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
-					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 				}
 				break;
 			default:
 				break;
 			}	
+			Boolean hasFailed = false;
+			for (JobStep js : job.getJobSteps()) {
+				if (js.getJobStepState() == JobStepState.FAILED) {
+					hasFailed = true;
+					break;
+				}
+			}
+			job.setHasFailedJobSteps(hasFailed);
+			// check the states of job steps and update job state
+			Boolean allHasFinished = true;
+			for (JobStep js : job.getJobSteps()) {
+				if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
+					allHasFinished = false;
+					break;
+				}
+			}
+			if (allHasFinished) {
+				if (hasFailed) {
+					job.setJobState(JobState.FAILED);
+				} else {
+					job.setJobState(JobState.COMPLETED);
+				}
+				job.incrementVersion();
+				RepositoryService.getJobRepository().save(job);
+				em.merge(job);
+			}
+			UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
 		}
 	}
 	

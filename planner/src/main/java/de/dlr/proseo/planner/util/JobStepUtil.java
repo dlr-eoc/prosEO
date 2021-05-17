@@ -167,6 +167,11 @@ public class JobStepUtil {
 					}
 				}
 				if (deleted) {
+					js.setProcessingStartTime(null);
+					js.setProcessingCompletionTime(null);
+					js.setProcessingStdOut(null);
+					js.setProcessingStdErr(null);
+					js.setJobOrderFilename(null);
 					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
 					js.incrementVersion();
 					answer = Messages.JOBSTEP_SUSPENDED;
@@ -212,7 +217,23 @@ public class JobStepUtil {
 				answer = Messages.JOBSTEP_CANCELED;
 				break;
 			case RUNNING:
-				answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				Boolean deleted = false;
+					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
+					if (kc != null) {
+						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+						if (kj != null) {
+							deleted = kc.deleteJob(kj.getJobName());
+						}
+				}
+				if (deleted) {
+					js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.FAILED);
+					js.incrementVersion();
+					RepositoryService.getJobStepRepository().save(js);
+					em.merge(js);
+					answer = Messages.JOBSTEP_CANCELED;
+				} else {
+					answer = Messages.JOBSTEP_ALREADY_RUNNING;
+				}
 				break;
 			case COMPLETED:
 				answer = Messages.JOBSTEP_ALREADY_COMPLETED;
@@ -256,6 +277,11 @@ public class JobStepUtil {
 					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// Discard this problem and set job step to completed
+						if (js.getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
+							js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+						}
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.READY);
+						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.RUNNING);
 						js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.COMPLETED);
 						UtilService.getJobStepUtil().checkCreatedProducts(js);
 						js.incrementVersion();
@@ -266,6 +292,11 @@ public class JobStepUtil {
 					}		
 				}
 				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+				js.setProcessingStartTime(null);
+				js.setProcessingCompletionTime(null);
+				js.setProcessingStdOut(null);
+				js.setProcessingStdErr(null);
+				js.setJobOrderFilename(null);
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
@@ -638,7 +669,9 @@ public class JobStepUtil {
 			if (kc != null && job != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
-					for (JobStep js : job.getJobSteps()) {
+					List<JobStep> jobSteps = new ArrayList<JobStep>();
+					jobSteps.addAll(job.getJobSteps());
+					for (JobStep js : jobSteps) {
 						checkJobStepQueries(js, false);
 						if (js.getJobStepState() == JobStepState.READY) {	
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {

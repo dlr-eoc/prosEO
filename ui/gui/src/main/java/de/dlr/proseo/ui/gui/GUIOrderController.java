@@ -219,7 +219,8 @@ public class GUIOrderController extends GUIBaseController {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				if (clientResponse.statusCode().compareTo(HttpStatus.NO_CONTENT) == 0) {
-					deferredResult.setResult("no content");
+					deferredResult.setResult("order-show :: #warnmsg");
+					httpResponse.setHeader("warnstatus", "nocontent");
 				} else {
 					clientResponse.bodyToMono(HashMap.class).timeout(Duration.ofMillis(config.getTimeout())).subscribe(orderList -> {
 						model.addAttribute("ord", orderList);
