@@ -1,9 +1,9 @@
 package de.dlr.proseo.storagemgr.fs.s3;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Paths;
@@ -37,6 +37,7 @@ import alluxio.exception.FileAlreadyExistsException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -46,6 +47,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketConfiguration;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -252,8 +254,26 @@ public class S3Ops {
 			subdirs.mkdirs();
 
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
-			s3.getObject(GetObjectRequest.builder().bucket(s3uri.getBucket()).key(s3uri.getKey()).build(),
-					ResponseTransformer.toFile(Paths.get(ContainerPath)));
+			
+			ResponseInputStream<GetObjectResponse> is = s3.getObject(GetObjectRequest.builder().bucket(s3uri.getBucket()).key(s3uri.getKey()).build());
+			if (is != null) {
+				Boolean hasError = false;
+				try {
+					Files.copy(is, Paths.get(ContainerPath));
+				} catch (IOException e) {
+					hasError = true;
+					logger.error("Failed to copy " + s3Object + " to " + "file://" + ContainerPath + " | " + e.getMessage());                
+				}
+				try {
+					is.close();
+				} catch (IOException e) {
+					hasError = true;
+					logger.error("Failed to close input stream of " + s3Object + " | " + e.getMessage());
+				}
+				if (hasError) {
+					return hasError;
+				}
+			}
 			logger.info("Copied " + s3Object + " to " + "file://" + ContainerPath);
 			return true;
 		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
