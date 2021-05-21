@@ -103,8 +103,7 @@ public class ProcessingOrder extends PersistentObject {
 	private Duration sliceDuration = null;
 	
 	/**
-	 * Overlap between adjacent time slices, half of the overlap is added at each end of the slice time interval except at the 
-	 * beginning of the first and the end of the last time interval.
+	 * Overlap between adjacent time slices, half of the overlap is added at each end of the slice time interval
 	 */
 	private Duration sliceOverlap = Duration.ZERO;
 	
