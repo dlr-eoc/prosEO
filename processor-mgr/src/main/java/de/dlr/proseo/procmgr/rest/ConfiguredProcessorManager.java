@@ -65,6 +65,7 @@ public class ConfiguredProcessorManager {
 	private static final int MSG_ID_DUPLICATE_CONFPROC_ID = 2365;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_DATA_MISSING = 2366;
 	private static final int MSG_ID_CONFIGURED_PROCESSOR_HAS_PRODUCTS = 2367;
+	private static final int MSG_ID_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES = 2368;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -83,6 +84,7 @@ public class ConfiguredProcessorManager {
 	private static final String MSG_DUPLICATE_CONFPROC_ID = "(E%d) Duplicate configured processor identifier %s";
 	private static final String MSG_CONFIGURED_PROCESSOR_DATA_MISSING = "(E%d) Data for configured processor not set";
 	private static final String MSG_CONFIGURED_PROCESSOR_HAS_PRODUCTS = "(E%d) Cannot delete configured processor %s, because it is referenced by %d products";
+	private static final String MSG_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES = "(E%d) Cannot delete configured processor %s, because it is referenced by %d selection rules";
 
 	private static final String MSG_CONFIGURED_PROCESSOR_LIST_RETRIEVED = "(I%d) Configuration(s) for mission %s, identifier %s, processor name %s, processor version %s and configuration version %s retrieved";
 	private static final String MSG_CONFIGURED_PROCESSOR_RETRIEVED = "(I%d) Configuration with ID %d retrieved";
@@ -480,7 +482,15 @@ public class ConfiguredProcessorManager {
 					modelConfiguredProcessor.get().getIdentifier(), result));
 		}
 		
-		// TODO Check whether there are selection rules referencing this configured processor
+		// Check whether there are selection rules referencing this configured processor
+		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE applicable_configured_processors_id = :id";
+		query = em.createNativeQuery(sqlQuery);
+		query.setParameter("id", modelConfiguredProcessor.get().getId());
+		result = query.getSingleResult();
+		if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
+			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES, MSG_ID_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES,
+					modelConfiguredProcessor.get().getIdentifier(), result));
+		}
 		
 		// Delete the configured processor
 		RepositoryService.getConfiguredProcessorRepository().deleteById(id);
