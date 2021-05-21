@@ -35,7 +35,6 @@ import org.apache.olingo.server.api.uri.UriResource;
 import org.apache.olingo.server.api.uri.UriResourceComplexProperty;
 import org.apache.olingo.server.api.uri.UriResourceKind;
 import org.apache.olingo.server.api.uri.UriResourceLambdaAny;
-import org.apache.olingo.server.api.uri.UriResourceLambdaVariable;
 import org.apache.olingo.server.api.uri.UriResourceNavigation;
 import org.apache.olingo.server.api.uri.UriResourcePrimitiveProperty;
 import org.apache.olingo.server.api.uri.queryoption.expression.BinaryOperatorKind;
@@ -49,6 +48,7 @@ import org.apache.olingo.server.api.uri.queryoption.expression.UnaryOperatorKind
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.dlr.proseo.api.prip.odata.AttributeLambdaExpressionVisitor.AttributeCondition;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
@@ -59,27 +59,51 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  */
 public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	
+	/** Counter for product parameters in WHERE clause */
+	private int paramCount = 0;
+	
+	/** SQL command parts */
+	private static final String SELECT_CLAUSE = "SELECT * ";
+	private static final String FROM_CLAUSE = "FROM product p\n" +
+			"JOIN product_class pc ON p.product_class_id = pc.id\n" +
+			"JOIN mission m ON pc.mission_id = m.id\n" +
+			"LEFT OUTER JOIN orbit o ON p.orbit_id = o.id\n" +
+			"LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n" +
+			"LEFT OUTER JOIN processor pr ON cp.processor_id = pr.id\n" +
+			"LEFT OUTER JOIN processor_class prc ON pr.processor_class_id = prc.id\n" +
+			"LEFT OUTER JOIN product_file pf ON p.id = pf.product_id\n";
+	private static final String PARAMETER_JOIN_TEMPLATE = "LEFT OUTER JOIN product_parameters pp%d ON p.id = pp%d.product_id\n";
+	private static final String WHERE_CLAUSE = "WHERE ";
+	private static final String PARAMETER_WHERE_TEMPLATE = "(pp%d.parameters_key = '%s' AND pp%d.parameter_value %s %s)";
+	
 	/** Mapping from OData member names to SQL schema names */
 	private static Map<String, String> oDataToSqlMap = new HashMap<>();
-	private static String[][] ODATA_TO_SQL_MAPPING = {
+	private static final String[][] ODATA_TO_SQL_MAPPING = {
 			{ ProductEdmProvider.GENERIC_PROP_ID, "p.uuid" },
-			{ ProductEdmProvider.GENERIC_PROP_NAME, "ppf.product_file_name" },
+			{ ProductEdmProvider.GENERIC_PROP_NAME, "pf.product_file_name" }, // TODO Find way to also check for ZIP files
 			{ ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
-			{ ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "ppf.file_size" },
+			{ ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, "p.generation_time" }, // TODO to be updated to publication date attribute, when available
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS, "ppf.checksum" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS, "pf.checksum" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, "p.production_type" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_START, "p.sensing_start_time" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_END, "p.sensing_stop_time" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, null },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, "ppf.checksum" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, "ppf.checksum_time" }
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, "pf.checksum" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, "pf.checksum_time" },
+			{ CscAttributeName.BEGINNING_DATE_TIME.getValue(), "p.sensing_start_time" },
+			{ CscAttributeName.ENDING_DATE_TIME.getValue(), "p.sensing_stop_time" },
+			{ CscAttributeName.PLATFORM_SHORT_NAME.getValue(), "m.name" },
+			{ CscAttributeName.INSTRUMENT_SHORT_NAME.getValue(), "TRUE" }, // Actually we cannot select by instrument short name, it's not in the data model yet
+			{ CscAttributeName.ORBIT_NUMBER.getValue(), "o.orbit_number" },
+			{ CscAttributeName.PROCESSOR_NAME.getValue(), "prc.processor_name" },
+			{ CscAttributeName.PROCESSOR_VERSION.getValue(), "pr.processor_version" },
+			{ CscAttributeName.PROCESSING_LEVEL.getValue(), "pc.processing_level" },
+			{ CscAttributeName.PROCESSING_MODE.getValue(), "p.mode" },
+			{ CscAttributeName.PRODUCT_CLASS.getValue(), "p.file_class" },
+			{ CscAttributeName.PRODUCT_TYPE.getValue(), "pc.product_type" }
 	};
 	
-	private static Map<String, String> oDataToPropertyMap = new HashMap<>();
-	private static String[][] ODATA_TO_PROPERTY_MAPPING = {
-	};
-
 	private static final DateTimeFormatter sqlTimestampFormatter =
 			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS Z").withZone(ZoneId.of("UTC"));
 
@@ -91,9 +115,27 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		for (int i = 0; i < ODATA_TO_SQL_MAPPING.length; ++i) {
 			oDataToSqlMap.put(ODATA_TO_SQL_MAPPING[i][0], ODATA_TO_SQL_MAPPING[i][1]);
 		}
-		for (int i = 0; i < ODATA_TO_PROPERTY_MAPPING.length; ++i) {
-			oDataToPropertyMap.put(ODATA_TO_PROPERTY_MAPPING[i][0], ODATA_TO_PROPERTY_MAPPING[i][1]);
+	}
+	
+	/**
+	 * Get the applicable SQL command up to and including the 'WHERE' keyword (the remainder has been created by the
+	 * visit* methods)
+	 * 
+	 * @return a partial SQL command string
+	 */
+	public String getSqlCommand() {
+		if (logger.isTraceEnabled()) logger.trace(">>> getSqlCommand()");
+		
+		StringBuilder result = new StringBuilder(SELECT_CLAUSE);
+		result.append(FROM_CLAUSE);
+		
+		for (int i = 1; i <= paramCount; ++i) {
+			result.append(String.format(PARAMETER_JOIN_TEMPLATE, i, i));
 		}
+		
+		result.append(WHERE_CLAUSE);
+		
+		return result.toString();
 	}
 	
 	@Override
@@ -131,11 +173,6 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			if (logger.isTraceEnabled()) logger.trace("... found navigation property: " + edmNavProperty.getName());
 			propertyName.append(edmNavProperty.getName());
 			break;
-		case lambdaVariable:
-			UriResourceLambdaVariable lambdaVariable = (UriResourceLambdaVariable) uriResource;
-			if (logger.isTraceEnabled()) logger.trace("... found lambda variable: " + lambdaVariable.getVariableName());
-			propertyName.append(lambdaVariable.getVariableName());
-			break;
 		default:
 			if (logger.isTraceEnabled()) logger.trace("... found unknown property of kind: " + uriResource.getKind());
 			throw new ODataApplicationException("Only primitive, complex, navigation and lambda variable URI resources are implemented in filter expressions", 
@@ -162,8 +199,9 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			case lambdaAny:
 				UriResourceLambdaAny lambdaResource = (UriResourceLambdaAny) uriResource;
 				String result = visitLambdaExpression(lambdaResource.getSegmentValue(), lambdaResource.getLambdaVariable(), lambdaResource.getExpression());
-				propertyName = new StringBuilder(result);
-				break;
+				if (logger.isTraceEnabled()) logger.trace("... translation of lambda function 'any': " + result);
+				if (logger.isTraceEnabled()) logger.trace("<<< visitMember()");
+				return result;
 			default:
 				throw new ODataApplicationException("Only primitive, complex, navigation and lambda 'any' URI resources and arrays thereof are allowed as sub-paths in filter expressions", 
 						HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
@@ -198,7 +236,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		}
 		if (logger.isTraceEnabled()) logger.trace("... derived property: " + propertyName);
 		String mappedProperty = oDataToSqlMap.get(propertyName.toString());
-		if (logger.isTraceEnabled()) logger.trace("... mapped property: " + propertyName);
+		if (logger.isTraceEnabled()) logger.trace("... mapped property: " + mappedProperty);
 
 		if (logger.isTraceEnabled()) logger.trace("<<< visitMember()");
 		return (null == mappedProperty ? "NOT FOUND" : mappedProperty);
@@ -282,18 +320,18 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		
 		String result = null;
 		switch (operator) {
-		// Arithmetic operators
+		// Arithmetic operators (with parentheses for complex expressions)
 		case ADD:
-			result = "" + left + " + " + right;
+			result = "(" + left + " + " + right + ")";
 			break;
 		case MUL:
-			result = "" + left + " * " + right;
+			result = "(" + left + " * " + right + ")";
 			break;
 		case DIV:
-			result = "" + left + " / " + right;
+			result = "(" + left + " / " + right + ")";
 			break;
 		case SUB:
-			result = "" + left + " - " + right;
+			result = "(" + left + " - " + right + ")";
 			break;
 		// Comparison operators
 		case EQ:
@@ -314,7 +352,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		case LT:
 			result = "" + left + " < " + right;
 			break;
-		// Boolean operators
+		// Boolean operators (with parentheses for complex expressions)
 		case AND:
 			result = "(" + left + " AND " + right + ")";
 			break;
@@ -452,8 +490,29 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		if (logger.isTraceEnabled()) logger.trace(">>> visitLambdaExpression({}, {}, {})",
 				lambdaFunction, lambdaVariable, expression);
 		
-		// TODO
-		String result = expression.accept(this);
+		// Evaluate the lambda expression
+		AttributeLambdaExpressionVisitor attVisitor = new AttributeLambdaExpressionVisitor(lambdaVariable);
+		AttributeCondition attCondition = expression.accept(attVisitor);
+		
+		// Replace name by Product attribute or parameter
+		if (logger.isTraceEnabled()) logger.trace("... got attribute condition: " + attCondition);
+		String mappedProperty = oDataToSqlMap.get(attCondition.getName());
+		if (logger.isTraceEnabled()) logger.trace("... mapped property: " + mappedProperty);
+		
+		String result = null;
+		if (null == mappedProperty) {
+			// Not an SQL column, check product parameter
+			if (null == CscAttributeName.get(attCondition.getName())) {
+				throw new ODataApplicationException("Invalid attribute name '" + attCondition.getName() + "' found in Attribute lambda expression", 
+						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+			}
+			++paramCount;
+			result = String.format(PARAMETER_WHERE_TEMPLATE,
+					paramCount, attCondition.getName(), paramCount, attCondition.getOp(), attCondition.getValue());
+		} else {
+			attCondition.setName(mappedProperty);
+			result = attCondition.toString();
+		}
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< visitLambdaExpression()");
 		return result;
