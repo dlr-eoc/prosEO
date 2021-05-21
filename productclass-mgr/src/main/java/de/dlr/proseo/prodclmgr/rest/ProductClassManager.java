@@ -9,7 +9,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.ConfiguredProcessor;
@@ -37,8 +35,6 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.ParameterType;
-import de.dlr.proseo.model.enums.ProductVisibility;
-import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
@@ -117,7 +113,8 @@ public class ProductClassManager {
 	private static final int MSG_ID_NO_RULES_FOUND = 2149;
 	private static final int MSG_ID_NO_RULES_FOUND_FOR_SOURCE = 2150;
 	private static final int MSG_ID_ENCLOSING_CLASS_CYCLE = 2151;
-	private static final int MSG_ID_COMPONENT_CLASS_CYCLE = 2151;
+	private static final int MSG_ID_COMPONENT_CLASS_CYCLE = 2152;
+	private static final int MSG_ID_PRODUCT_CLASS_HAS_SELECTION_RULES = 2153;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -162,6 +159,7 @@ public class ProductClassManager {
 	private static final String MSG_NO_RULES_FOUND_FOR_SOURCE = "(E%d) No selection rules found for target product class %s and source product class %s";
 	private static final String MSG_ENCLOSING_CLASS_CYCLE = "(E%d) Enclosing product class %s for product class %s would create a product class cycle for mission %s";
 	private static final String MSG_COMPONENT_CLASS_CYCLE = "(E%d) Component product class %s for product class %s would create a product class cycle for mission %s";
+	private static final String MSG_PRODUCT_CLASS_HAS_SELECTION_RULES = "(E%d) Cannot delete product class %s, because it is referenced by %d selection rules";
 
 	private static final String MSG_PRODUCT_CLASS_LIST_RETRIEVED = "(I%d) Product class(es) for mission %s and product type %s retrieved";
 	private static final String MSG_PRODUCT_CLASS_CREATED = "(I%d) Product class of type %s created for mission %s";
@@ -946,7 +944,15 @@ public class ProductClassManager {
 					modelProductClass.get().getProductType()));
 		}
 		
-		// TODO Test whether there are selection rules having this class as source product class
+		// Test whether there are selection rules having this class as source product class
+		jpqlQuery = "select count(s) from SimpleSelectionRule where sourceProductClass = :sourceProductClass";
+		query = em.createQuery(jpqlQuery);
+		query.setParameter("sourceProductClass", modelProductClass.get());
+		Object result = query.getSingleResult();
+		if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_HAS_SELECTION_RULES, MSG_ID_PRODUCT_CLASS_HAS_SELECTION_RULES,
+					modelProductClass.get().getProductType(), result));
+		}
 		
 		// Delete the processor class
 		RepositoryService.getProductClassRepository().deleteById(id);

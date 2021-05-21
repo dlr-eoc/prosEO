@@ -58,6 +58,8 @@ public class OrbitTimeFormatter {
 	/**
 	 * Parse a timestamp string in orbit time format
 	 * 
+	 * @see de.dlr.proseo.model.util.OrbitTimeFormatter#parseDateTime(String)
+	 * 
 	 * @param timestamp the timestamp string to parse
 	 * @return a timestamp object representing the time
 	 * @throws DateTimeParseException if unable to parse the requested result
@@ -71,7 +73,7 @@ public class OrbitTimeFormatter {
 	}
 
 	/**
-	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby after the following variants 
+	 * Parse a date and time string in the format "yyyy-MM-dd'T'HH:mm:ss.SSSSSS[zZX]", whereby all of the following variants 
 	 * are allowed:
 	 * <ul>
 	 *   <li>yyyy-MM-dd</li>
