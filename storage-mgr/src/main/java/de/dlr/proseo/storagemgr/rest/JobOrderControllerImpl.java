@@ -169,6 +169,11 @@ public class JobOrderControllerImpl implements JoborderController {
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 				response = new String(bytes);
+				try {
+					jofStream.close();
+				} catch (IOException e) {
+					logger.warn("Failed to close input stream of " + pathInfo + " | " + e.getMessage());
+				}
 				return new ResponseEntity<>(response, HttpStatus.OK);
 			}				
 		} 
