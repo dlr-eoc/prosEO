@@ -109,6 +109,12 @@ public class Message {
 		}
 		return result;
 	}
+	/**
+	 * @return The concatenated message strings (divided by " | ")
+	 */
+	public String getMsgStringWithPrefix() {
+		return Messages.MSG_PREFIX.getDescription() + getMsgString();
+	}
 	
 	/**
 	 * Log the Message

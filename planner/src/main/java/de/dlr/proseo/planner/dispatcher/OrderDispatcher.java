@@ -530,15 +530,13 @@ public class OrderDispatcher {
 					}
 				}
 			}
-		} catch (IllegalArgumentException | NoSuchElementException ex) {
-			answer.setMessage(Messages.ILLEGAL_ARG_EXCEPTION)
+		} catch (IllegalArgumentException ex) {
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
 			.log(logger, ex.getMessage());
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (NoSuchElementException ex) {
 			answer.setMessage(Messages.RUNTIME_EXCEPTION)
 			.log(logger, ex.getMessage());
 		}
-
 		return answer;
 	}
 

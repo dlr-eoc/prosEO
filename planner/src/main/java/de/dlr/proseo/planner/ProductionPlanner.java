@@ -337,7 +337,7 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	public ResponseEntity<?> checkFacility(ProcessingFacility procf, FacilityState secondState) {
 		if (procf == null) {
-			String message = Messages.FACILITY_NOT_EXIST.format("unknown");
+			String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix("unknown");
 			HttpHeaders responseHeaders = new HttpHeaders();
 			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);		
@@ -347,7 +347,7 @@ public class ProductionPlanner implements CommandLineRunner {
 					&& !((pf.getFacilityState() == FacilityState.RUNNING)
 					     || (secondState != null && (pf.getFacilityState() == secondState)))) {	
 				
-				String message = Messages.FACILITY_NOT_AVAILABLE.format(pf.getName(), pf.getFacilityState().toString());
+				String message = Messages.FACILITY_NOT_AVAILABLE.formatWithPrefix(pf.getName(), pf.getFacilityState().toString());
 				HttpHeaders responseHeaders = new HttpHeaders();
 				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 				if (pf.getFacilityState() == FacilityState.DISABLED) {

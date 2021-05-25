@@ -239,16 +239,16 @@ public class OrderControllerImpl implements OrderController {
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
 				} else if (msg.getMessage().getType() == Messages.MessageType.W) {
 					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMsgString();					
+					String message = msg.getMsgStringWithPrefix();					
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
 				} else {
 					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMsgString();					
+					String message = msg.getMsgStringWithPrefix();					
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_FOUND);
+					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.BAD_REQUEST);
 				}
 			} else {
 				String message = "";
