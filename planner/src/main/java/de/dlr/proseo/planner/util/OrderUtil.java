@@ -26,6 +26,7 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
@@ -286,47 +287,48 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
-		Messages answer = Messages.FALSE;
+	public Message plan(ProcessingOrder order,  ProcessingFacility procFacility) {
+		Message answer = new Message(Messages.FALSE);
 		if (order != null && procFacility != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer = Messages.ORDER_HASTOBE_APPROVED;
+				answer.setMessage(Messages.ORDER_HASTOBE_APPROVED);
 				break;
 			case APPROVED:
-				if (orderDispatcher.publishOrder(order, procFacility)) {
+				answer = orderDispatcher.publishOrder(order, procFacility);
+				if (answer.isTrue()) {
 					if (order.getJobs().isEmpty()) {
 						order.setOrderState(OrderState.COMPLETED);
-						answer = Messages.ORDER_PRODUCT_EXIST;
+						answer.setMessage(Messages.ORDER_PRODUCT_EXIST);
 					} else {
 						order.setOrderState(OrderState.PLANNED);
-						answer = Messages.ORDER_PLANNED;
+						answer.setMessage(Messages.ORDER_PLANNED);
 					}
 					order.incrementVersion();
 					order = RepositoryService.getOrderRepository().save(order);
 				}
 				break;	
 			case PLANNED:	
-				answer = Messages.ORDER_ALREADY_PLANNED;
+				answer.setMessage(Messages.ORDER_ALREADY_PLANNED);
 				break;
 			case RELEASED:
-				answer = Messages.ORDER_ALREADY_RELEASED;
+				answer.setMessage(Messages.ORDER_ALREADY_RELEASED);
 				break;
 			case RUNNING:
-				answer = Messages.ORDER_ALREADY_RUNNING;
+				answer.setMessage(Messages.ORDER_ALREADY_RUNNING);
 				break;
 			case SUSPENDING:
-				answer = Messages.ORDER_ALREADY_SUSPENDING;
+				answer.setMessage(Messages.ORDER_ALREADY_SUSPENDING);
 				break;
 			case COMPLETED:
-				answer = Messages.ORDER_ALREADY_COMPLETED;
+				answer.setMessage(Messages.ORDER_ALREADY_COMPLETED);
 				break;
 			case FAILED:
-				answer = Messages.ORDER_ALREADY_FAILED;
+				answer.setMessage(Messages.ORDER_ALREADY_FAILED);
 				break;
 			case CLOSED:
-				answer = Messages.ORDER_ALREADY_CLOSED;
+				answer.setMessage(Messages.ORDER_ALREADY_CLOSED);
 				break;
 			default:
 				break;
