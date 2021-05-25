@@ -14,6 +14,7 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -223,25 +224,31 @@ public class OrderControllerImpl implements OrderController {
 				pf = null;
 			}
 			if (order != null && pf != null) {
-				Messages msg = orderUtil.plan(order, pf);
+				Message msg = orderUtil.plan(order, pf);
 				if (msg.isTrue()) {
 					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.formatWithPrefix(order.getIdentifier());
+					String message = msg.getMessage().formatWithPrefix(order.getIdentifier());
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
-				} else if (msg.getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
+				} else if (msg.getMessage().getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
 					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.formatWithPrefix(order.getIdentifier());
+					String message = msg.getMessage().formatWithPrefix(order.getIdentifier());
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
-				} else {
+				} else if (msg.getMessage().getType() == Messages.MessageType.W) {
 					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.formatWithPrefix(order.getIdentifier());
+					String message = msg.getMsgStringWithPrefix();					
 					HttpHeaders responseHeaders = new HttpHeaders();
 					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
 					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				} else {
+					RestOrder ro = RestUtil.createRestOrder(order);
+					String message = msg.getMsgStringWithPrefix();					
+					HttpHeaders responseHeaders = new HttpHeaders();
+					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
+					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.BAD_REQUEST);
 				}
 			} else {
 				String message = "";

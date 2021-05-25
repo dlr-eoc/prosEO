@@ -128,6 +128,7 @@ public enum Messages {
 	ILLEGAL_CROSS_MISSION_ACCESS 	(false, MessageType.E, "Illegal cross-mission access to mission %s (logged in to %s)"),
 	
 	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s is not available cause it is: %s"),
+	RUNTIME_EXCEPTION				(false, MessageType.E, "%s"),
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;
@@ -176,6 +177,15 @@ public enum Messages {
 		}
 		return ++nextCode; 
 	}
+	
+
+	/**
+	 * @return the type
+	 */
+	public MessageType getType() {
+		return type;
+	}
+
 
 	/**
 	 * Get the message with corresponding code.
