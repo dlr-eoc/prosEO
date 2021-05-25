@@ -12,12 +12,10 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -32,7 +30,6 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.Orbit;
-import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
@@ -45,6 +42,7 @@ import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.service.ProductQueryService;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 
 /**
@@ -71,38 +69,40 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	@Transactional
-	public boolean publishOrder(ProcessingOrder order, ProcessingFacility pf) {
+	public Message publishOrder(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> publishOrder({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = false;
+		Message answer = new Message(Messages.FALSE);
 		if (order != null) {
 			switch (order.getOrderState()) {
 			case APPROVED: {
 				// order is released, publish it
-				if (!checkForValidOrder(order)) {
+				answer.setMessage(checkForValidOrder(order));
+				if (!answer.isTrue()) {
 					break;
 				}
 				switch (order.getSlicingType()) {
 				case CALENDAR_DAY:
-					answer = createJobsForDay(order, pf);
+					answer.setMessage(createJobsForDay(order, pf));
 					break;
 				case CALENDAR_MONTH:
-					answer = createJobsForMonth(order, pf);
+					answer.setMessage(createJobsForMonth(order, pf));
 					break;
 				case CALENDAR_YEAR:
-					answer = createJobsForYear(order, pf);
+					answer.setMessage(createJobsForYear(order, pf));
 					break;
 				case ORBIT:
-					answer = createJobsForOrbit(order, pf);
+					answer.setMessage(createJobsForOrbit(order, pf));
 					break;
 				case TIME_SLICE:
-					answer = createJobsForTimeSlices(order, pf);
+					answer.setMessage(createJobsForTimeSlices(order, pf));
 					break;
 				case NONE:
-					answer = createSingleJob(order, pf);
+					answer.setMessage(createSingleJob(order, pf));
 					break;
 				default:
-					Messages.ORDER_SLICING_TYPE_NOT_SET.log(logger, order.getIdentifier());
+					answer.setMessage(Messages.ORDER_SLICING_TYPE_NOT_SET)
+						.log(logger, order.getIdentifier());
 					break;
 
 				}
@@ -115,20 +115,19 @@ public class OrderDispatcher {
 				break;
 			}
 			case RELEASED: {
-				Messages.ORDER_WAIT_FOR_RELEASE.log(logger, order.getIdentifier(), order.getOrderState().toString());
+				answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
+					.log(logger, order.getIdentifier(), order.getOrderState().toString());
 				break;
 			}
 			default: {
-				Messages.ORDER_WAIT_FOR_RELEASE.log(logger, order.getIdentifier(), order.getOrderState().toString());
+				answer.setMessage(Messages.ORDER_WAIT_FOR_RELEASE)
+					.log(logger, order.getIdentifier(), order.getOrderState().toString());
 				break;
 			}
 				
 			}
 		}		
-		if (!answer) {
-			// TODO Improve handling by returning a proper error message to the caller
-			throw new RuntimeException("publishOrder rollback");
-		}
+		
 		return answer;
 	}
 
@@ -138,18 +137,18 @@ public class OrderDispatcher {
 	 * @param order
 	 * @return
 	 */
-	public boolean checkForValidOrder(ProcessingOrder order) {
+	public Message checkForValidOrder(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkForValidOrder({}, {})", (null == order ? "null": order.getIdentifier()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.TRUE);
 		// check for needed data
 		if (order.getMission() == null) {
-			answer = false;
-			Messages.ORDER_MISSION_NOT_SET.log(logger, order.getIdentifier());
+			answer.setMessage(Messages.ORDER_MISSION_NOT_SET);
+			answer.log(logger, order.getIdentifier());
 		}
 		if (order.getRequestedProductClasses().isEmpty()) {
-			answer = false;
-			Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
+			answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET);
+			answer.log(logger, order.getIdentifier());
 		}
 		return answer;
 	}
@@ -161,16 +160,16 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForOrbit(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForOrbit({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 		// there has to be a list of orbits
 		List<Orbit> orbits = order.getRequestedOrbits();
 		try {
 			if (orbits.isEmpty()) {
-				Messages.ORDER_REQ_ORBIT_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_ORBIT_NOT_SET)
+					.log(logger, order.getIdentifier());
 			} else {
 				// create a job for each orbit
 				// set order start time and stop time
@@ -178,21 +177,22 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET)
+						.log(logger, order.getIdentifier());
 				} else {
 					// create jobs
 					// for each orbit
 					for (Orbit orbit : orbits) {
 						// create job
-						answer = createJobForOrbitOrTime(order, orbit, null, null, pf);
-						if (!answer) break;
+						answer.setMessage(createJobForOrbitOrTime(order, orbit, null, null, pf));
+						if (!answer.isTrue()) break;
 					}
 				}
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+				.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -205,10 +205,10 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForDay(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForDay({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -217,22 +217,22 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_DAY_NOT_SET)
+					.log(logger, order.getIdentifier());
 			} else {
 				startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET)
+						.log(logger, order.getIdentifier());
 				} else {
 					// create jobs for each day
 					while (startT.isBefore(stopT)) {
 						// create job (without orbit association)
-						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
-						if (!answer) break;
+						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
+						if (!answer.isTrue()) break;
 						startT = sliceStopT;
 						sliceStopT = startT.plus(1, ChronoUnit.DAYS);
 					} 
@@ -240,7 +240,8 @@ public class OrderDispatcher {
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -253,10 +254,10 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createJobsForMonth(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForMonth(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForMonth({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -265,8 +266,8 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_DAY_NOT_SET)
+					.log(logger, order.getIdentifier());
 			} else {
 				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
 				Calendar calStart = GregorianCalendar.from(zdt);
@@ -280,16 +281,16 @@ public class OrderDispatcher {
 				stopT = order.getStopTime();
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET)
+						.log(logger, order.getIdentifier());
 				} else {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
 						// create job (without orbit association)
 						sliceStopT = calStop.toInstant();
-						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
-						if (!answer) break;
+						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
+						if (!answer.isTrue()) break;
 						calStart = (Calendar) calStop.clone();
 						calStop.add(Calendar.MONTH, 1);
 						startT = calStart.toInstant();
@@ -298,7 +299,8 @@ public class OrderDispatcher {
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -311,10 +313,10 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createJobsForYear(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForYear(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForYear({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -323,8 +325,8 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_DAY_NOT_SET)
+					.log(logger, order.getIdentifier());
 			} else {
 				ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
 				Calendar calStart = GregorianCalendar.from(zdt);
@@ -339,16 +341,16 @@ public class OrderDispatcher {
 				stopT = order.getStopTime();
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET)
+						.log(logger, order.getIdentifier());
 				} else {
 					// create jobs for each day
 					startT = calStart.toInstant();
 					while (startT.isBefore(stopT)) {
 						// create job (without orbit association)
 						sliceStopT = calStop.toInstant();
-						answer = createJobForOrbitOrTime(order, null, startT, sliceStopT, pf);
-						if (!answer) break;
+						answer.setMessage(createJobForOrbitOrTime(order, null, startT, sliceStopT, pf));
+						if (!answer.isTrue()) break;
 						calStart = (Calendar) calStop.clone();
 						calStop.add(Calendar.YEAR, 1);
 						startT = calStart.toInstant();
@@ -357,7 +359,8 @@ public class OrderDispatcher {
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -370,10 +373,10 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createJobsForTimeSlices(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobsForTimeSlices({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 
 		Instant startT = null;
 		Instant stopT = null;
@@ -382,16 +385,16 @@ public class OrderDispatcher {
 			// get first day
 			
 			if (order.getStartTime() == null || order.getStopTime() == null || order.getSliceDuration() == null) {
-				Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_TIMESLICE_NOT_SET);
+				answer.log(logger, order.getIdentifier());
 			} else {
 				startT = order.getStartTime();
 				stopT = order.getStopTime();
 				sliceStopT = startT.plus(order.getSliceDuration());
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.log(logger, order.getIdentifier());
 				} else {
 					Duration delta = order.getSliceOverlap();
 					if (delta == null) {
@@ -399,18 +402,18 @@ public class OrderDispatcher {
 					}
 					delta = delta.dividedBy(2);
 					if (startT.equals(stopT)) {
-						answer = createJobForOrbitOrTime(order, null, startT.minus(delta), stopT.plus(delta), pf);
+						answer.setMessage(createJobForOrbitOrTime(order, null, startT.minus(delta), stopT.plus(delta), pf));
 					} else {
 						if (Duration.ZERO.equals(order.getSliceDuration())) {
-							Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier()); // TODO more specific message
-							answer = false;
+							answer.setMessage(Messages.ORDER_REQ_TIMESLICE_NOT_SET);
+							answer.log(logger, order.getIdentifier());
 						}
 						// create jobs for each time slice
 						while (startT.isBefore(stopT)) {
 							// check orbit
 							Orbit orbit = findOrbit(order, startT.minus(delta), sliceStopT.plus(delta));
 							// create job
-							answer = createJobForOrbitOrTime(order, orbit, startT.minus(delta), sliceStopT.plus(delta), pf);
+							answer.setMessage(createJobForOrbitOrTime(order, orbit, startT.minus(delta), sliceStopT.plus(delta), pf));
 							startT = sliceStopT;
 							sliceStopT = startT.plus(order.getSliceDuration());
 						} 
@@ -419,7 +422,8 @@ public class OrderDispatcher {
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -432,27 +436,28 @@ public class OrderDispatcher {
 	 * @param pf The processing facility 
 	 * @return true after success, else false
 	 */
-	public boolean createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
+	public Message createSingleJob(ProcessingOrder order, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createSingleJob({}, {})", (null == order ? "null": order.getIdentifier()), (null == pf ? "null" : pf.getName()));
 		
-		boolean answer = true;
+		Message answer = new Message(Messages.FALSE);
 
 		try {
 			if (order.getStartTime() == null || order.getStopTime() == null) {
-				Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_TIMESLICE_NOT_SET);
+				answer.log(logger, order.getIdentifier());
 			} else {
 				Set<ProductClass> productClasses = order.getRequestedProductClasses();
 				if (productClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.log(logger, order.getIdentifier());
 				} else {
-					answer = createJobForOrbitOrTime(order, null, order.getStartTime(), order.getStopTime(), pf);
+					answer.setMessage(createJobForOrbitOrTime(order, null, order.getStartTime(), order.getStopTime(), pf));
 				} 
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
@@ -469,18 +474,18 @@ public class OrderDispatcher {
 	 * @return true after success, else false
 	 */
 	@Transactional
-	public boolean createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
+	public Message createJobForOrbitOrTime(ProcessingOrder order, Orbit orbit, Instant startT, Instant stopT, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createJobForOrbitOrTime({}, {}, {}, {}, {})",
 				(null == order ? "null": order.getIdentifier()), (null == orbit ? "null" : orbit.getOrbitNumber()), startT, stopT,
 				(null == pf ? "null" : pf.getName()));
 
-		boolean answer = true;
+		Message answer = new Message(Messages.TRUE);
 		// there has to be a list of orbits
 
 		try {
 			if (orbit == null && (startT == null || stopT == null)) {
-				Messages.ORDER_REQ_ORBIT_OR_TIME_NOT_SET.log(logger, order.getIdentifier());
-				answer = false;
+				answer.setMessage(Messages.ORDER_REQ_ORBIT_OR_TIME_NOT_SET);
+				answer.log(logger, order.getIdentifier());
 			} else {
 				// create a job for each orbit
 				// set order start time and stop time
@@ -488,8 +493,8 @@ public class OrderDispatcher {
 				// product class
 				Set<ProductClass> requestedProductClasses = order.getRequestedProductClasses();
 				if (requestedProductClasses.isEmpty()) {
-					Messages.ORDER_REQ_PROD_CLASS_NOT_SET.log(logger, order.getIdentifier());
-					answer = false;
+					answer.setMessage(Messages.ORDER_REQ_PROD_CLASS_NOT_SET);
+					answer.log(logger, order.getIdentifier());
 				} else {
 					// create job (only keep it if at least one job step is created
 					Job job = new Job();
@@ -526,10 +531,12 @@ public class OrderDispatcher {
 				}
 			}
 		} catch (IllegalArgumentException | NoSuchElementException ex) {
-			answer = false;
+			answer.setMessage(Messages.ILLEGAL_ARG_EXCEPTION)
+			.log(logger, ex.getMessage());
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			answer = false;
+			answer.setMessage(Messages.RUNTIME_EXCEPTION)
+			.log(logger, ex.getMessage());
 		}
 
 		return answer;
