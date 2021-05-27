@@ -10,49 +10,49 @@ services:
     ports:
       - "5432:5432"
   proseo-ingestor:
-    image: ${REGISTRY_URL}/proseo-ingestor:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-ingestor:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8081:8080"
     depends_on:
       - proseo-db
   proseo-order-mgr:
-    image: ${REGISTRY_URL}/proseo-order-mgr:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-order-mgr:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8082:8080"
     depends_on:
       - proseo-db
   proseo-prodplanner:
-    image: ${REGISTRY_URL}/proseo-planner:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-planner:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8083:8080"
     depends_on:
       - proseo-db
   proseo-processor-mgr:
-    image: ${REGISTRY_URL}/proseo-processor-mgr:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-processor-mgr:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8084:8080"
     depends_on:
       - proseo-db
   proseo-productclass-mgr:
-    image: ${REGISTRY_URL}/proseo-productclass-mgr:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-productclass-mgr:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8085:8080"
     depends_on:
       - proseo-db
   proseo-user-mgr:
-    image: ${REGISTRY_URL}/proseo-user-mgr:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-user-mgr:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8086:8080"
     depends_on:
       - proseo-db
   proseo-facility-mgr:
-    image: ${REGISTRY_URL}/proseo-facility-mgr:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-facility-mgr:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8087:8080"
     depends_on:
       - proseo-db
   proseo-gui:
-    image: ${REGISTRY_URL}/proseo-ui-gui:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-ui-gui:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8088:8080"
     depends_on:
@@ -64,7 +64,7 @@ services:
       - proseo-productclass-mgr
       - proseo-facility-mgr
   proseo-api-prip:
-    image: ${REGISTRY_URL}/proseo-api-prip:0.7.2-integration-rc1-${PROSEO_REVISION}
+    image: ${REGISTRY_URL}/proseo-api-prip:0.7.3-integration-rc1-${PROSEO_REVISION}
     ports:
       - "8089:8080"
     depends_on:
