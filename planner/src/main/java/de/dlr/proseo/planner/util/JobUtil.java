@@ -7,6 +7,7 @@ package de.dlr.proseo.planner.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -397,8 +398,15 @@ public class JobUtil {
 	 * @return true after success
 	 */
 	@Transactional
-	public Boolean checkFinish(Job job) {
+	public Boolean checkFinish(Long jobId) {
 		Boolean answer = false;	
+		Boolean checkFurther = false;
+		Boolean hasChanged = false;
+		Job job = null;
+		Optional<Job> oJob = RepositoryService.getJobRepository().findById(jobId);
+		if (oJob.isPresent()) {
+			job = oJob.get();
+		}
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
@@ -412,10 +420,10 @@ public class JobUtil {
 					Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 					if (!all) {
 						job.setJobState(JobState.INITIAL);
-						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);
-						UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());
+						hasChanged = true;
+						checkFurther = true;
 						break;	
 					}					
 				} else {
@@ -430,10 +438,10 @@ public class JobUtil {
 					} else {
 						job.setJobState(JobState.FAILED);
 					}
-					job.incrementVersion();
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
-					UtilService.getOrderUtil().checkFinish(job.getProcessingOrder());					
+					hasChanged = true;
+					checkFurther = true;
 				}
 				answer = true;
 				break;
@@ -444,6 +452,47 @@ public class JobUtil {
 			default:
 				break;
 			}	
+			if (checkFurther) {
+				Boolean hasFailed = false;
+				for (JobStep js : job.getJobSteps()) {
+					if (js.getJobStepState() == JobStepState.FAILED) {
+						hasFailed = true;
+						break;
+					}
+				}
+				if (job.getHasFailedJobSteps() != hasFailed) {
+					job.setHasFailedJobSteps(hasFailed);
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					hasChanged = true;
+				}
+				// check the states of job steps and update job state
+				Boolean allHasFinished = true;
+				for (JobStep js : job.getJobSteps()) {
+					if (js.getJobStepState() != JobStepState.FAILED && js.getJobStepState() != JobStepState.COMPLETED) {
+						allHasFinished = false;
+						break;
+					}
+				}
+				if (allHasFinished) {
+					if (hasFailed) {
+						job.setJobState(JobState.FAILED);
+					} else {
+						job.setJobState(JobState.COMPLETED);
+					}
+					RepositoryService.getJobRepository().save(job);
+					em.merge(job);
+					hasChanged = true;
+				}
+			}
+			if (hasChanged) {
+				job.incrementVersion();
+				RepositoryService.getJobRepository().save(job);
+				em.merge(job);
+			}
+			if (checkFurther) {
+				UtilService.getOrderUtil().checkFinish(job.getProcessingOrder().getId());	
+			}
 		}
  		return answer;
 	}
@@ -456,7 +505,12 @@ public class JobUtil {
 	 * @param jsState The job step state
 	 */
 	@Transactional
-	public void updateState(Job job, JobStepState jsState) {
+	public void updateState(Job jobOrig, JobStepState jsState) {
+		Job job = null;
+		Optional<Job> oJob = RepositoryService.getJobRepository().findById(jobOrig.getId());
+		if (oJob.isPresent()) {
+			job = oJob.get();
+		}
 		// first implementation for retry
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (job != null) {
@@ -505,7 +559,7 @@ public class JobUtil {
 					}
 					if (allState) {
 						job.setJobState(JobState.INITIAL);
-						this.setHasFailedJobSteps(job,  false);
+						job.setHasFailedJobSteps(false);
 						job.incrementVersion();
 						RepositoryService.getJobRepository().save(job);
 						em.merge(job);

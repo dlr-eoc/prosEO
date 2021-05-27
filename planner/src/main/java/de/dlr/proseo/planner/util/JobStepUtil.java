@@ -329,13 +329,13 @@ public class JobStepUtil {
 			case RUNNING:
 			case COMPLETED:
 				em.merge(js);
-				UtilService.getJobUtil().checkFinish(js.getJob());
+				UtilService.getJobUtil().checkFinish(js.getJob().getId());
 				answer = true;
 				break;
 			case FAILED:
 				em.merge(js);
 				UtilService.getJobUtil().setHasFailedJobSteps(js.getJob(), true);
-				UtilService.getJobUtil().checkFinish(js.getJob());
+				UtilService.getJobUtil().checkFinish(js.getJob().getId());
 				answer = true;
 				break;
 			default:
