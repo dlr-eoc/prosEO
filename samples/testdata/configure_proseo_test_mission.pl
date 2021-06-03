@@ -114,12 +114,6 @@ my @users = (
         pwd => 'ingest&Plan',
         authorities => [],
         groups => [ 'internalprocessor' ]
-    },
-    {
-        name => 'pripapi',
-        pwd => 'pripApi.345',
-        authorities => [ 'FACILITY_READER' ],
-        groups => []
     }
 );
 

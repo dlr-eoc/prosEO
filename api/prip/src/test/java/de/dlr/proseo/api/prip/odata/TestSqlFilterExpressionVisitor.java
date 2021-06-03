@@ -330,8 +330,18 @@ public class TestSqlFilterExpressionVisitor {
 	@Test
 	public final void testOrderBy() {
 		String uriQuery = "$filter=ContentDate/Start ge 2020-03-18T03:49:30.000Z and ContentDate/End le 2020-03-18T04:00:35.000Z&$orderby=ContentDate/Start asc,ContentDate/End desc,2 mul (ContentLength add 1)";
-		//String uriQuery = "$filter=ContentDate/Start ge 2020-03-18T03:49:30.000Z and ContentDate/End le 2020-03-18T04:00:35.000Z&$orderby=ContentDate/Start asc,ContentDate/End desc,ContentLength add 1";
 		String sqlQuery = "(p.sensing_start_time >= '2020-03-18 03:49:30.000000 +0000' AND p.sensing_stop_time <= '2020-03-18 04:00:35.000000 +0000')"; 
+		
+		runTest(uriQuery, sqlQuery);
+	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.api.prip.odata.SqlFilterExpressionVisitor#visitMember(org.apache.olingo.server.api.uri.queryoption.expression.Member)}.
+	 */
+	@Test
+	public final void testNoFilter() {
+		String uriQuery = "$top=10";
+		String sqlQuery = ""; 
 		
 		runTest(uriQuery, sqlQuery);
 	}

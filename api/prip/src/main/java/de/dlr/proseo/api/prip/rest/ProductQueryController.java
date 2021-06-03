@@ -5,11 +5,8 @@
  */
 package de.dlr.proseo.api.prip.rest;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import javax.servlet.ServletException;
-//import javax.persistence.EntityNotFoundException;
-//import javax.persistence.NoResultException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;

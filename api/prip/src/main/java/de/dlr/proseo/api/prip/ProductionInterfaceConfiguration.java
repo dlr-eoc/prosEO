@@ -25,26 +25,6 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.userManager.url}")
 	private String userMgrUrl;
 	
-	/** The URL of the prosEO Ingestor */
-	@Value("${proseo.ingestor.url}")
-	private String ingestorUrl;
-	
-	/** The URL of the prosEO Processor Manager */
-	@Value("${proseo.processorManager.url}")
-	private String processorManagerUrl;
-	
-	/** The URL of the prosEO Facility Manager */
-	@Value("${proseo.facilityManager.url}")
-	private String facilityManagerUrl;
-	
-	/** The user name for the prosEO Facility Manager */
-	@Value("${proseo.facilityManager.user}")
-	private String facilityManagerUser;
-	
-	/** The password for the prosEO Facility Manager */
-	@Value("${proseo.facilityManager.password}")
-	private String facilityManagerPassword;
-	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -52,51 +32,6 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public String getUserMgrUrl() {
 		return userMgrUrl;
-	}
-
-	/**
-	 * Gets the URL of the prosEO Ingestor component
-	 * 
-	 * @return the Ingestor URL
-	 */
-	public String getIngestorUrl() {
-		return ingestorUrl;
-	}
-
-	/**
-	 * Gets the URL of the prosEO Processor Manager component
-	 * 
-	 * @return the Processor Manager URL
-	 */
-	public String getProcessorManagerUrl() {
-		return processorManagerUrl;
-	}
-
-	/**
-	 * Gets the URL of the prosEO Facility Manager component
-	 * 
-	 * @return the facilityManagerUrl
-	 */
-	public String getFacilityManagerUrl() {
-		return facilityManagerUrl;
-	}
-
-	/**
-	 * Gets the user name for the prosEO Facility Manager component
-	 * 
-	 * @return the facilityManagerUser
-	 */
-	public String getFacilityManagerUser() {
-		return facilityManagerUser;
-	}
-
-	/**
-	 * Gets the password for the prosEO Facility Manager component
-	 * 
-	 * @return the facilityManagerPassword
-	 */
-	public String getFacilityManagerPassword() {
-		return facilityManagerPassword;
 	}
 
 }
