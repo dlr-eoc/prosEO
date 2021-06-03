@@ -95,26 +95,28 @@ public class TestSqlFilterExpressionVisitor {
 			logger.trace("URI info: Fragment = {}", uriInfo.getFragment());
 			logger.trace("URI info: Aliases = {}", uriInfo.getAliases());
 
+			String result = "TRUE"; // default value for no filter
+			SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
+			String sqlCommand = expressionVisitor.getSqlCommand();
+
 			// Test filter option
 			FilterOption filterOption = uriInfo.getFilterOption();
 			logger.trace("filterOption = " + (null == filterOption ? "null" : filterOption.getText()));
-			Expression filterExpression = filterOption.getExpression();
-			logger.trace("filterExpression = " + filterExpression);
-
-			String result = null;
-			String sqlCommand = null;
-			try {
-				SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
-				result = filterExpression.accept(expressionVisitor);
-				logger.trace("accept() returns [" + result + "]");
-				assertNotNull("Unexpected null result from expressionVisitor", result);
-				sqlCommand = expressionVisitor.getSqlCommand() + result;
-			} catch (ODataApplicationException | ExpressionVisitException e) {
-				logger.error("Exception thrown in filter expression: ", e);
-				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
-				return;
+			if (null != filterOption) {
+				try {
+					Expression filterExpression = filterOption.getExpression();
+					logger.trace("filterExpression = " + filterExpression);
+					result = filterExpression.accept(expressionVisitor);
+					logger.trace("accept() returns [" + result + "]");
+					assertNotNull("Unexpected null result from expressionVisitor", result);
+					sqlCommand += result;
+				} catch (ODataApplicationException | ExpressionVisitException e) {
+					logger.error("Exception thrown in filter expression: ", e);
+					response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+					return;
+				} 
 			}
-
+			
 			// Test order option
 			OrderByOption orderByOption = uriInfo.getOrderByOption();
 			if (null != orderByOption) {
@@ -341,7 +343,7 @@ public class TestSqlFilterExpressionVisitor {
 	@Test
 	public final void testNoFilter() {
 		String uriQuery = "$top=10";
-		String sqlQuery = ""; 
+		String sqlQuery = "TRUE"; 
 		
 		runTest(uriQuery, sqlQuery);
 	}

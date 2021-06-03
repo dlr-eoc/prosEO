@@ -9,7 +9,8 @@ import static de.dlr.proseo.api.prip.odata.CscAttributeName.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Date;
+import java.time.Instant;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import de.dlr.proseo.model.enums.ProductionType;
 public class ProductUtil {
 
 	private static final String ERR_NO_PRODUCT_FILES_FOUND = "No product files found in product ";
+	private static final Date END_OF_MISSION = Date.from(Instant.parse("9999-12-31T23:59:59.999Z"));
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
@@ -63,17 +65,11 @@ public class ProductUtil {
 		
 		// Determine production type
 		ProductionType modelProductionType = modelProduct.getProductionType();
-		int productionType = 0;
-		switch (modelProductionType) {
-		case SYSTEMATIC:
-			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL;
-			break;
-		case ON_DEMAND_DEFAULT:
+		int productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_SYSTEMATIC_VAL; // Default, also in case of no production type
+		if (ProductionType.ON_DEMAND_DEFAULT.equals(modelProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMDEF_VAL;
-			break;
-		case ON_DEMAND_NON_DEFAULT:
+		} else if (ProductionType.ON_DEMAND_NON_DEFAULT.equals(modelProductionType)) {
 			productionType = ProductEdmProvider.EN_PRODUCTIONTYPE_ONDEMNODEF_VAL;
-			break;
 		}
 		
 		// Create product entity
@@ -88,8 +84,8 @@ public class ProductUtil {
 				(null == modelProductFile.getZipFileName() ? modelProductFile.getFileSize() : modelProductFile.getZipFileSize())))
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, ValueType.PRIMITIVE,
 				Date.from(modelProduct.getGenerationTime())))
-//			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
-//				Date.from(Instant.now().plusSeconds(50 * 365 * 24 * 60 * 60))))  // TODO Define eviction policy (currently 50 years)
+			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_EVICTION_DATE, ValueType.PRIMITIVE,
+					END_OF_MISSION))  // TODO Define eviction policy (default end of mission)
 			.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, ValueType.ENUM, productionType));
 
 		ComplexValue contentDate = new ComplexValue();
@@ -119,7 +115,7 @@ public class ProductUtil {
 		Entity beginningDateTime = new Entity();
 		beginningDateTime.setType(ProductEdmProvider.ET_DATEATTRIBUTE_FQN.toString());
 		beginningDateTime
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, BEGINNING_DATE_TIME))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, BEGINNING_DATE_TIME.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_DATEATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -129,7 +125,7 @@ public class ProductUtil {
 		Entity endingDateTime = new Entity();
 		endingDateTime.setType(ProductEdmProvider.ET_DATEATTRIBUTE_FQN.toString());
 		endingDateTime
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, ENDING_DATE_TIME))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, ENDING_DATE_TIME.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_DATEATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -139,7 +135,7 @@ public class ProductUtil {
 		Entity platformShortName = new Entity();
 		platformShortName.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		platformShortName
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PLATFORM_SHORT_NAME))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PLATFORM_SHORT_NAME.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -150,7 +146,7 @@ public class ProductUtil {
 		Entity instrumentShortName = new Entity();
 		instrumentShortName.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		instrumentShortName
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, INSTRUMENT_SHORT_NAME))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, INSTRUMENT_SHORT_NAME.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE, ""));
@@ -159,7 +155,7 @@ public class ProductUtil {
 		Entity orbitNumber = new Entity();
 		orbitNumber.setType(ProductEdmProvider.ET_INTEGERATTRIBUTE_FQN.toString());
 		orbitNumber
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, ORBIT_NUMBER))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, ORBIT_NUMBER.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_INTEGERATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -169,7 +165,7 @@ public class ProductUtil {
 		Entity processorName = new Entity();
 		processorName.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		processorName
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSOR_NAME))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSOR_NAME.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -180,7 +176,7 @@ public class ProductUtil {
 		Entity processorVersion = new Entity();
 		processorVersion.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		processorVersion
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSOR_VERSION))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSOR_VERSION.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -191,7 +187,7 @@ public class ProductUtil {
 		Entity processingLevel = new Entity();
 		processingLevel.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		processingLevel
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSING_LEVEL))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSING_LEVEL.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE, 
@@ -202,7 +198,7 @@ public class ProductUtil {
 		Entity processingMode = new Entity();
 		processingMode.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		processingMode
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSING_MODE))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PROCESSING_MODE.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -212,7 +208,7 @@ public class ProductUtil {
 		Entity productClass = new Entity();
 		productClass.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		productClass
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_CLASS))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_CLASS.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
@@ -222,11 +218,11 @@ public class ProductUtil {
 		Entity productType = new Entity();
 		productType.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		productType
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_TYPE))
+				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_TYPE.getValue()))
 				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTES_PROP_VALUETYPE, ValueType.PRIMITIVE,
 						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
 				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-						modelProduct.getProductClass()));
+						modelProduct.getProductClass().getProductType()));
 		attributes.getEntities().add(productType);
 		
 		// Evaluate product parameters

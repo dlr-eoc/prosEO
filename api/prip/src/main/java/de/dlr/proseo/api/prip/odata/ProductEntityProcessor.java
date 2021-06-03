@@ -9,8 +9,10 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -46,6 +48,7 @@ import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
@@ -62,6 +65,7 @@ import de.dlr.proseo.model.enums.UserRole;
  *
  */
 @Component
+@Transactional
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Message ID constants */
@@ -142,20 +146,25 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @param productUuid the UUID of the product to retrieve
 	 * 
 	 * @return a product object
-	 * @throws NoSuchElementException if a product with the requested UUID could not be found in the database
+	 * @throws NoResultException if a product with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
-	private Product getProduct(String productUuid) throws NoSuchElementException, SecurityException {
+	private Product getProduct(String productUuid) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({})", productUuid);
 
 		// Request product metadata from database
 		Query query = em.createQuery("select p from Product p where p.uuid = :uuid", Product.class);
-		query.setParameter("uuid", productUuid);
-		Object resultObject = query.getSingleResult();
-		if (null == resultObject || ! (resultObject instanceof Product)) {
+		query.setParameter("uuid", UUID.fromString(productUuid));
+		Object resultObject;
+		try {
+			resultObject = query.getSingleResult();
+			if (null == resultObject || ! (resultObject instanceof Product)) {
+				throw new NoResultException();
+			}
+		} catch (NoResultException e) {
 			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productUuid);
 			logger.error(message);
-			throw new NoSuchElementException(message);
+			throw new NoResultException(message);
 		}
 		Product modelProduct = (Product) resultObject;
 		
@@ -189,11 +198,11 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @return a binary stream containing the product data
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
 	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
-	 * @throws RuntimeException if any other exception occurs
+	 * @throws NoResultException if a product with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
 	private Entity getProductAsEntity(String productUuid) throws URISyntaxException, IllegalArgumentException,
-			HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+			NoSuchElementException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({})", productUuid);
 		
 		// Get the product information from the Database
@@ -248,6 +257,18 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
+				return;
+			} catch (IllegalArgumentException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+				return;
+			} catch (NoResultException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
+				response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
 				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
@@ -333,12 +354,12 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
 		Product modelProduct;
 
-		ODataSerializer serializer = odata.createSerializer(responseFormat);
+		ODataSerializer serializer = odata.createSerializer(ContentType.JSON); // Serializer for error messages only
 		try {
 			modelProduct = getProduct(keyPredicates.get(0).getText());
-		} catch (NoSuchElementException e) {
+		} catch (NoResultException e) {
 			response.setContent(serializer.error(
-					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
 			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;

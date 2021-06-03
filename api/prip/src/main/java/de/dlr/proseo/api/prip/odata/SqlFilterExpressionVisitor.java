@@ -65,13 +65,13 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	/** SQL command parts */
 	private static final String SELECT_CLAUSE = "SELECT p.* ";
 	private static final String FROM_CLAUSE = "FROM product p\n" +
+			"JOIN product_file pf ON p.id = pf.product_id\n" +
 			"JOIN product_class pc ON p.product_class_id = pc.id\n" +
 			"JOIN mission m ON pc.mission_id = m.id\n" +
 			"LEFT OUTER JOIN orbit o ON p.orbit_id = o.id\n" +
 			"LEFT OUTER JOIN configured_processor cp ON p.configured_processor_id = cp.id\n" +
 			"LEFT OUTER JOIN processor pr ON cp.processor_id = pr.id\n" +
-			"LEFT OUTER JOIN processor_class prc ON pr.processor_class_id = prc.id\n" +
-			"LEFT OUTER JOIN product_file pf ON p.id = pf.product_id\n";
+			"LEFT OUTER JOIN processor_class prc ON pr.processor_class_id = prc.id\n";
 	private static final String PARAMETER_JOIN_TEMPLATE = "LEFT OUTER JOIN product_parameters pp%d ON p.id = pp%d.product_id\n";
 	private static final String WHERE_CLAUSE = "WHERE ";
 	private static final String PARAMETER_WHERE_TEMPLATE = "(pp%d.parameters_key = '%s' AND pp%d.parameter_value %s %s)";

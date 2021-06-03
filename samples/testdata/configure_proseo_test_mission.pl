@@ -251,6 +251,7 @@ my @configured_processors = (
 # -- Selection rules (OFFL mode only!)
 #
 my @product_types;
+my %visibilities;
 my %enclosing_product_types;
 my %processing_levels;
 my %product_processor_class;
@@ -261,7 +262,9 @@ my %applicable_processors;
 
 # Product types without processor
 push @product_types, 'L0________';
+$visibilities{'L0________'} = 'RESTRICTED';
 push @product_types, 'AUX_IERS_B';
+$visibilities{'AUX_IERS_B'} = 'INTERNAL';
     
 # Selection rule for PTM L1B
 # Expected time coverage of the L1B products is on orbit
@@ -582,7 +585,11 @@ foreach my $product_class ( @product_types ) {
     if ( $processing_levels{$product_class} ) {
         print $fh ', "processingLevel": "' . $processing_levels{$product_class} . '"';
     }
-    print $fh ', "visibility": "' . $defaults->{product_class_visibility} . '"';
+    if ( $visibilities{$product_class} ) {
+        print $fh ', "visibility": "' . $visibilities{$product_class} . '"';
+    } else {
+        print $fh ', "visibility": "' . $defaults->{product_class_visibility} . '"';
+    }
 	if ( $product_processor_class{$product_class} ) {
         print $fh ', "processorClass": "' . $product_processor_class{$product_class} . '"';
 	}

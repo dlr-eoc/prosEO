@@ -25,7 +25,7 @@ import org.slf4j.event.Level;
 public class LogUtil {
 
 	// prosEO message format, e. g. "(E2205) Product type L2________ invalid for mission NM4T"
-	private static final Pattern PROSEO_MESSAGE_TEMPLATE = Pattern.compile("\\((?<messageCode>[IWEF]\\d+)\\) .*");
+	private static final Pattern PROSEO_MESSAGE_TEMPLATE = Pattern.compile("\\((?<messageCode>[IWEF]\\d+)\\) (?<message>.*)");
 
 	/**
 	 * Create and log a formatted message at the given level
@@ -81,11 +81,12 @@ public class LogUtil {
 		Matcher m = PROSEO_MESSAGE_TEMPLATE.matcher(message);
 		if (m.matches()) {
 			serverError.setCode(m.group("messageCode"));
+			serverError.setMessage(m.group("message"));
 		} else {
 			serverError.setCode(HttpStatusCode.fromStatusCode(statusCode).toString());
+			serverError.setMessage(message);
 		}
 		
-		serverError.setMessage(message);
 		serverError.setLocale(Locale.ROOT);
 		
 		return serverError;

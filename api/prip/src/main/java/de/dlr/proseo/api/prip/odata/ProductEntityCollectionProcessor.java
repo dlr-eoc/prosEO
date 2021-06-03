@@ -50,6 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.ProductVisibility;
@@ -64,6 +66,7 @@ import de.dlr.proseo.model.enums.UserRole;
  *
  */
 @Component
+@Transactional
 public class ProductEntityCollectionProcessor implements EntityCollectionProcessor {
 
 	/* Message ID constants */
@@ -137,20 +140,22 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private String createProductSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
 		if (logger.isTraceEnabled()) logger.trace(">>> createProductSqlQuery({})", uriInfo.getUriResourceParts());
 
-		// Test filter option
-		FilterOption filterOption = uriInfo.getFilterOption();
-		Expression filterExpression = filterOption.getExpression();
-
 		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
 		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand());
-		if (null != filterExpression) {
+
+		// Test filter option
+		FilterOption filterOption = uriInfo.getFilterOption();
+		if (null == filterOption) {
+			sqlCommand.append("TRUE");
+		} else {
 			try {
-					String result = filterExpression.accept(expressionVisitor);
-					logger.trace("accept() returns [" + result + "]");
-			        if (null == result) {
-						throw new NullPointerException("Unexpected null result from expressionVisitor");
-					}
-					sqlCommand.append(result);
+				Expression filterExpression = filterOption.getExpression();
+				String result = filterExpression.accept(expressionVisitor);
+				logger.trace("accept() returns [" + result + "]");
+		        if (null == result) {
+					throw new NullPointerException("Unexpected null result from expressionVisitor");
+				}
+				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
 		        throw new ODataApplicationException("Exception thrown in filter expression: " + e.getMessage(),
 		        		HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ROOT);
