@@ -158,8 +158,6 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			return (null == mappedProperty ? "NOT FOUND" : mappedProperty);
 		}
 		
-		// TODO From here: Analyse, what is actually happening, then rewrite for SQL "WHERE" clause
-		
 		// Get start entry
 		StringBuilder propertyName = new StringBuilder();
 		switch (uriResource.getKind()) {
@@ -206,32 +204,6 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 				throw new ODataApplicationException("Only primitive, complex, navigation and lambda 'any' URI resources and arrays thereof are allowed as sub-paths in filter expressions", 
 						HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
 			}
-			
-			// Find sub-property according to type of current property
-//			switch (currentProperty.getValueType())	{
-//			case COLLECTION_COMPLEX:
-//			case COLLECTION_ENTITY:
-//				// TODO Dubious - how to address the index of a collection? And the result probably is a ComplexType or an Entity, not a Property
-//				List<?> propertyCollection = currentProperty.asCollection();
-//				currentProperty = (Property) propertyCollection.get(Integer.parseInt(newPropertyName));
-//				break;
-//			case COMPLEX:
-//				// Just to avoid NPEs
-//				if (null == currentProperty.asComplex().getValue()) break;
-//				for (Property property: currentProperty.asComplex().getValue()) {
-//					if (property.getName().equals(newPropertyName)) {
-//						currentProperty = property;
-//						break;
-//					}
-//				}
-//				break;
-//			case ENTITY:
-//				currentProperty = ((Entity) currentProperty.getValue()).getProperty(newPropertyName);
-//				break;
-//			default:
-//				throw new ODataApplicationException("Only primitive, complex and navigation properties and arrays thereof are implemented in filter expressions", 
-//						HttpStatusCode.NOT_IMPLEMENTED.getStatusCode(), Locale.ENGLISH);
-//			}
 			
 		}
 		if (logger.isTraceEnabled()) logger.trace("... derived property: " + propertyName);
