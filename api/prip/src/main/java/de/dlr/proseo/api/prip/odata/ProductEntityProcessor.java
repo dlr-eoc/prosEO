@@ -168,6 +168,13 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		}
 		Product modelProduct = (Product) resultObject;
 		
+		// Check mission
+		if (!securityConfig.getMission().equals(modelProduct.getProductClass().getMission().getCode())) {
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
+			logger.error(message);
+			throw new SecurityException(message);
+		}
+		
 		// Check access permission to product
 		switch (modelProduct.getProductClass().getVisibility()) {
 		case PUBLIC:
