@@ -163,7 +163,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		}
 		
 		// Add filter for mission
-		sqlCommand.append("\nAND m.code = ").append(securityConfig.getMission());
+		sqlCommand.append("\nAND m.code = '").append(securityConfig.getMission()).append("'");
 		
 		// Add filter for user's access permissions
 		StringBuilder permissionFilter = new StringBuilder("AND pc.visibility IN ('");
