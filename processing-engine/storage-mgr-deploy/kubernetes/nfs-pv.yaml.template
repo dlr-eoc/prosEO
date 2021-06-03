@@ -12,8 +12,6 @@ spec:
   capacity:
     storage: 100Gi
   persistentVolumeReclaimPolicy: Retain
-  mountOptions:
-    - sync
   nfs:
     server: proseo-nfs-server.default.svc.cluster.local
     path: /exports/transfer
@@ -32,8 +30,6 @@ spec:
   capacity:
     storage: 200Gi
   persistentVolumeReclaimPolicy: Retain
-  mountOptions:
-    - sync
   nfs:
     server: proseo-nfs-server.default.svc.cluster.local
     path: /exports/proseodata

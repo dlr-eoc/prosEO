@@ -498,7 +498,7 @@ public class SimpleSelectionRule extends PersistentObject {
 	
 	
 	/**
-	 * Format this rule as a JPQL (Jave Persistence Query Language) query. The condition in the "where" clause
+	 * Format this rule as a JPQL (Java Persistence Query Language) query. The condition in the "where" clause
 	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
 	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
@@ -506,15 +506,31 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * 
 	 * @param startTime the start time to use in the database query
 	 * @param stopTime the stop time to use in the database query
-	 * @return an OQL string representing this rule
+	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
+	 * @return a JPQL string representing this rule
 	 */
-	public String asJpqlQuery(final Instant startTime, final Instant stopTime) {
+	public String asJpqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions) {
+		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
+		if (null != additionalFilterConditions) {
+			allFilterConditions.putAll(additionalFilterConditions);
+		}
+
 		// Generate query projection
 		StringBuilder simpleRuleQuery = new StringBuilder("select p from Product p ");
 
 		// Join with as many instances of the product_parameters table as there are filter conditions
-		for (int i = 0; i < filterConditions.size(); ++i) {
-			simpleRuleQuery.append(String.format("join p.parameters pp%d ", i, i));
+		int i = 0;
+		for (String filterKey: allFilterConditions.keySet()) {
+			// Restrict to actual parameters
+			try {
+				Product.class.getDeclaredField(filterKey);
+				// Nothing to do – not a parameter, but a Product attribute
+			} catch (NoSuchFieldException e) {
+				simpleRuleQuery.append(String.format("join p.parameters pp%d ", i));
+				++i;
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
 		}
 		
 		simpleRuleQuery.append("where (p.productClass.id = ").append(sourceProductClass.getId()).append(" and ");
@@ -547,20 +563,20 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Format filter conditions
-		int i = 0;
-		for (String filterKey: filterConditions.keySet()) {
+		i = 0;
+		for (String filterKey: allFilterConditions.keySet()) {
 			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
 			try {
 				Product.class.getDeclaredField(filterKey);
 				simpleRuleQuery.append(
-						String.format(" and p.%s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
+						String.format(" and p.%s = '%s'", filterKey, allFilterConditions.get(filterKey).getStringValue()));
 			} catch (NoSuchFieldException e) {
 				simpleRuleQuery.append(String.format(" and key(pp%d) = '%s' and pp%d.parameterValue = '%s'", 
-						i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+						i, filterKey, i, allFilterConditions.get(filterKey).getStringValue()));
+				++i;
 			} catch (SecurityException e) {
 				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
 			}
-			++i;
 		}
 		return simpleRuleQuery.append(')').toString();
 	}
@@ -574,15 +590,31 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * 
 	 * @param startTime the start time to use in the database query
 	 * @param stopTime the stop time to use in the database query
-	 * @return an OQL string representing this rule
+	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
+	 * @return an SQL string representing this rule
 	 */
-	public String asSqlQuery(final Instant startTime, final Instant stopTime) {
+	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions) {
+		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
+		if (null != additionalFilterConditions) {
+			allFilterConditions.putAll(additionalFilterConditions);
+		}
+
 		// Generate query projection
 		StringBuilder simpleRuleQuery = new StringBuilder("SELECT * FROM product p ");
 		
 		// Join with as many instances of the product_parameters table as there are filter conditions
-		for (int i = 0; i < filterConditions.size(); ++i) {
-			simpleRuleQuery.append(String.format("JOIN product_parameters pp%d ON p.id = pp%d.product_id ", i, i));
+		int i = 0;
+		for (String filterKey: allFilterConditions.keySet()) {
+			// Restrict to actual parameters
+			try {
+				Product.class.getDeclaredField(filterKey);
+				// Nothing to do – not a parameter, but a Product attribute
+			} catch (NoSuchFieldException e) {
+				simpleRuleQuery.append(String.format("JOIN product_parameters pp%d ON p.id = pp%d.product_id ", i, i));
+				++i;
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
 		}
 		
 		// Select correct product class		
@@ -616,21 +648,21 @@ public class SimpleSelectionRule extends PersistentObject {
 		}
 		
 		// Format filter conditions
-		int i = 0;
-		for (String filterKey: filterConditions.keySet()) {
+		i = 0;
+		for (String filterKey: allFilterConditions.keySet()) {
 			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
 			try {
 				Product.class.getDeclaredField(filterKey);
 				simpleRuleQuery.append(
-						String.format(" AND p.%s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
+						String.format(" AND p.%s = '%s'", filterKey, allFilterConditions.get(filterKey).getStringValue()));
 			} catch (NoSuchFieldException e) {
 				simpleRuleQuery.append(
 						String.format(" AND pp%d.parameters_key = '%s' AND pp%d.parameter_value = '%s'", 
-								i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+								i, filterKey, i, allFilterConditions.get(filterKey).getStringValue()));
+				++i;
 			} catch (SecurityException e) {
 				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
 			}
-			++i;
 		}
 
 		return simpleRuleQuery.append(')').toString();
