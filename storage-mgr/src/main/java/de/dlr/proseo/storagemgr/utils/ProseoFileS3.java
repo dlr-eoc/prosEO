@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3URI;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.fs.s3.AmazonS3URI;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -38,6 +38,10 @@ public class ProseoFileS3 extends ProseoFile {
 	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFileS3(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", 
+				pathInfo + " ", fullPath + " ", cfg.toString());
+		
 		this.cfg = cfg;
 		String aPath = pathInfo.trim();
 		this.pathInfo = aPath;
@@ -77,6 +81,10 @@ public class ProseoFileS3 extends ProseoFile {
 	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFileS3(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", 
+				bucket + " ", pathInfo + " ", cfg.toString());
+		
 		String aPath = pathInfo.trim();
 		relPath = aPath;
 		basePath = bucket.trim();
@@ -102,6 +110,9 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public String getFullPath() {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getFullPath()");
+		
 		return "s3://" + getBasePath() + "/" + getRelPathAndFile();
 	}
 
@@ -110,6 +121,9 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public InputStream getDataAsInputStream() {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getDataAsInputStream()");
+		
 		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 		InputStream inputStream = null;
 		try {
@@ -127,6 +141,9 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public Boolean writeBytes(byte[] bytes) throws Exception {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> writeBytes({})", bytes.length);
+		
 		if (bytes != null) {
 			InputStream fis = new ByteArrayInputStream(bytes);
 			// create internal buckets, if not existing
@@ -156,6 +173,10 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyTo({}, {})", 
+				(null == proFile ? "MISSING" : proFile.fileName + " "), recursive);
+		
 		if (proFile != null) {
 			ArrayList<String> result = null;
 			AmazonS3URI s3uri = new AmazonS3URI(this.getFullPath());
@@ -223,6 +244,9 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public ArrayList<String> delete() {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> delete()");
+		
 		ArrayList<String> result = new ArrayList<String>();
 		AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 		try {
@@ -239,6 +263,9 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	@Override
 	public ArrayList<ProseoFile> list() {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> list()");
+			
 		ArrayList<ProseoFile> list = new ArrayList<ProseoFile>();				
 		try {
 			StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
