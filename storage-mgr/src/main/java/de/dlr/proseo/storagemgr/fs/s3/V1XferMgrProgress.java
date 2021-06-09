@@ -16,6 +16,10 @@ public class V1XferMgrProgress {
 	private static Logger logger = LoggerFactory.getLogger(V1XferMgrProgress.class);
 	// waits for the transfer to complete, catching any exceptions that occur.
 	public static void waitForCompletion(Transfer xfer) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> waitForCompletion({})", 
+				(null == xfer ? "MISSING" : xfer.getDescription() + " "));
+		
 		// snippet-start:[s3.java1.s3_xfer_mgr_progress.wait_for_transfer]
 		try {
 			xfer.waitForCompletion();
@@ -33,6 +37,10 @@ public class V1XferMgrProgress {
 
 	// Prints progress while waiting for the transfer to finish.
 	public static void showTransferProgress(Transfer xfer) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> showTransferProgress({})", 
+				(null == xfer ? "MISSING" : xfer.getDescription()));
+		
 		// snippet-start:[s3.java1.s3_xfer_mgr_progress.poll]
 		// print the transfer's human-readable description
 		logger.info(xfer.getDescription());
@@ -64,6 +72,10 @@ public class V1XferMgrProgress {
 
 	// Prints progress of a multiple file upload while waiting for it to finish.
 	public static void showMultiUploadProgress(MultipleFileUpload multi_upload) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> showMultiUploadProgress({})", 
+				(null == multi_upload ? "MISSING" : multi_upload.getDescription()));
+		
 		// print the upload's human-readable description
 		logger.info(multi_upload.getDescription());
 
@@ -100,6 +112,9 @@ public class V1XferMgrProgress {
 
 	// prints a simple text progressbar: [##### ]
 	public static void printProgressBar(double pct) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> printProgressBar({})", pct);
+		
 		// if bar_size changes, then change erase_bar (in eraseProgressBar) to
 		// match.
 		final int bar_size = 40;
@@ -111,6 +126,9 @@ public class V1XferMgrProgress {
 
 	// erases the progress bar.
 	public static void eraseProgressBar() {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> eraseProgressBar()");
+		
 		// erase_bar is bar_size (from printProgressBar) + 4 chars.
 		final String erase_bar = "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
 		logger.info(erase_bar);

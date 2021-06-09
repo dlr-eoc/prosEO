@@ -63,6 +63,9 @@ public class JobOrderControllerImpl implements JoborderController {
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		
+		
+		
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -85,6 +88,10 @@ public class JobOrderControllerImpl implements JoborderController {
 	 */
 	@Override
 	public ResponseEntity<RestJoborder> createRestJoborder(@Valid RestJoborder joborder) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> createRestJoborder({})", 
+				(null == joborder ? "MISSING" : joborder.getMessage() ));	
+		
 		RestJoborder response = new RestJoborder();
 		String separator = "/";
 		try {			
@@ -149,6 +156,9 @@ public class JobOrderControllerImpl implements JoborderController {
 	 */
 	@Override
 	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByPathInfo({})", pathInfo);
+		
 		String response = "";
 		if (pathInfo != null) {
 			ProseoFile proFile = ProseoFile.fromPathInfo(pathInfo, cfg);

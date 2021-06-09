@@ -74,6 +74,10 @@ public class ProductControllerImpl implements ProductController {
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> errorHeaders({}, {}, {})", 
+				messageFormat + " ", messageId + " ", "messageParameters");  
+		
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -99,6 +103,10 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<RestProductFS> createRestProductFS(@Valid RestProductFS restProductFS) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> createRestProductFs({})", 
+				(null == restProductFS ? "MISSING" : restProductFS.getProductId()));
+		
 		// get node name info...
 		String hostName = "";
 		try {
@@ -152,6 +160,10 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<List<String>> getProductFiles(String storageType, String prefix) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductFiles({}, {})", 
+				storageType + " ", prefix);
+		
 		List<StorageType> stl = new ArrayList<StorageType>();
 		List<String> response = new ArrayList<String>();
 		try {
@@ -187,6 +199,13 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private RestProductFS setRestProductFS(RestProductFS response, RestProductFS restProductFS, String storageId,
 			Boolean registered, String registeredFilePath, List<String> registeredFiles, Boolean deleted, String msg) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> setRestProductFS({}, {}, {}, {}, {}, {}, {}, {})", 
+				(null == response ? "MISSING" : response.getProductId() + " "),
+				(null == restProductFS ? "MISSING" : restProductFS.getProductId() + " "),
+				storageId + " ", registered + " ", registeredFilePath + " ", 
+				registeredFiles.size() + " ", deleted + " ", msg + " " );
+		
 		if (response != null && restProductFS != null) {
 			response.setProductId(restProductFS.getProductId());
 			response.setTargetStorageId(storageId);
@@ -217,6 +236,10 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<?> getObject(String pathInfo, Long fromByte, Long toByte) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getObject({}, {}, {})", 
+				pathInfo + " ", fromByte + " ", toByte + " ");
+		
 		if (pathInfo != null) {
 			try {
 				ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
@@ -280,6 +303,9 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	@Override
 	public ResponseEntity<RestProductFS> deleteProductByPathInfo(String pathInfo) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductByPathInfo({})", pathInfo);
+		
 		RestProductFS response = new RestProductFS();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
@@ -310,6 +336,11 @@ public class ProductControllerImpl implements ProductController {
 	 * @param response the ingest information response to fill
 	 */
 	private void listProductFiles(StorageType st, String prefix, List<String> response) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> listProductFiles({}, {})", 
+				(null == st ? "MISSING" : st.toString() + " "),
+				prefix + " ", response.size());
+		
 		ProseoFile path = null;
 		if (prefix == null) {
 			path = ProseoFile.fromType(st, "", cfg);

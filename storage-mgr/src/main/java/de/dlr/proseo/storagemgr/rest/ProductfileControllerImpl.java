@@ -46,6 +46,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return an HttpHeaders object with a formatted error message
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> errorHeaders({}, {}, {})", 
+				messageFormat + " ", messageId + " ", "messageParameters");
+				
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -68,6 +72,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	@Override
 	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByPathInfo({})", pathInfo);
+		
 		String response = "";
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
@@ -99,6 +106,9 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 */
 	@Override
 	public ResponseEntity<String> updateProductfiles(String pathInfo, Long productId) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> updateProductfiles({})", pathInfo + " ", productId);
+		
 		String response = "";
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
