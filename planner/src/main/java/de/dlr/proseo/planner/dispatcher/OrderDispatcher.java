@@ -604,12 +604,19 @@ public class OrderDispatcher {
 			if (!selectionRule.getApplicableConfiguredProcessors().isEmpty()) {
 				Set<ConfiguredProcessor> requestedProcessors = jobStep.getJob().getProcessingOrder().getRequestedConfiguredProcessors();
 				// Check whether any of the requested processors in the order is applicable for the given product class
+				Boolean processorFound = false;
 				for (ConfiguredProcessor requestedProcessor: requestedProcessors) {
 					if (requestedProcessor.getProcessor().getProcessorClass().getProductClasses().contains(productClass)
-							&& !selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
-						// requestedProcessor is to be used, but selectionRule is not applicable for it, so skip it
-						continue RULE_LOOP;
+							&& selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
+						// At least one requested processor exists, which is applicable for this selection rule
+						processorFound = true;
+						break;
 					}
+				}
+				if (!processorFound) {
+					// requestedProcessor is to be used, but selectionRule is not applicable for it, so skip it
+					if (logger.isDebugEnabled()) logger.debug("Skipping selection rule '{}', because it is not applicable for the requested processors", selectionRule);
+					continue RULE_LOOP;
 				}
 			}
 			// Check whether job step already has a product query for the given product class

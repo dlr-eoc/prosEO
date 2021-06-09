@@ -6,8 +6,8 @@ spring:
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
-        username: postgres
-        password: sequel09Master
+        username: <db_user>
+        password: <db_pwd>
 logging:
     level:
         root: INFO
@@ -16,7 +16,7 @@ proseo:
     wrapper:
         # User and password for wrapper callbacks
         user: wrapper
-        password: Ingest&Plan
+        password: <wrapper_pwd>
     productionPlanner:
         # Callback URL for wrapper
         url: http://192.168.20.155:8080/proseo/planner/v0.1

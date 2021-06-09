@@ -7,9 +7,15 @@ package de.dlr.proseo.api.prip.odata;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.olingo.commons.api.data.ContextURL;
 import org.apache.olingo.commons.api.data.ContextURL.Suffix;
@@ -40,23 +46,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpClientErrorException.Unauthorized;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
-import de.dlr.proseo.interfaces.rest.model.RestProduct;
-import de.dlr.proseo.interfaces.rest.model.RestProductFile;
-import de.dlr.proseo.model.rest.model.RestProcessingFacility;
+import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductFile;
+import de.dlr.proseo.model.enums.UserRole;
 
 
 /**
@@ -67,32 +65,29 @@ import de.dlr.proseo.model.rest.model.RestProcessingFacility;
  *
  */
 @Component
+@Transactional
 public class ProductEntityProcessor implements EntityProcessor, MediaEntityProcessor {
 
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
 	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
-	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
-	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
+	private static final int MSG_ID_PRODUCT_NOT_FOUND = 5003;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT = 5005;
 	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
 	private static final int MSG_ID_EXCEPTION = 5007;
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
 	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
-	private static final int MSG_ID_CANNOT_DESERIALIZE_RESPONSE = 5103;
 	private static final int MSG_ID_REDIRECT = 5104;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
 	private static final String MSG_URI_GENERATION_FAILED = "(E%d) URI generation from product UUID failed (cause: %s)";
-	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
-	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
-	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
+	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found with UUID %s";
+	private static final String MSG_NOT_AUTHORIZED_FOR_PRODUCT = "(E%d) User %s not authorized to access requested product %s";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_FORBIDDEN = "(E%d) Creation, update and deletion of products not allowed through PRIP";
 	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product %s not available on any Processing Facility";
-	private static final String MSG_CANNOT_DESERIALIZE_RESPONSE = "(E%d) Cannot deserialize HTTP response";
 	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
 
 	private static final String MSG_INVALID_RANGE_HEADER = "(W%d) Ignoring invalid HTTP range header %s";
@@ -107,13 +102,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/** The cached metadata of the OData service */
 	private ServiceMetadata serviceMetadata;
 
-	/** REST template builder */
-	@Autowired
-	private RestTemplateBuilder rtb;
-	
-	/** The configuration for the PRIP API */
-	@Autowired
-	private ProductionInterfaceConfiguration config;
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
 	
 	/** The security utilities for the PRIP API */
 	@Autowired
@@ -121,33 +112,6 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEntityProcessor.class);
-
-	/**
-	 * Create and log a formatted message at the given level
-	 * 
-	 * @param level the logging level to use
-	 * @param messageFormat the message text with parameter placeholders in String.format() style
-	 * @param messageId a (unique) message id
-	 * @param messageParameters the message parameters (optional, depending on the message format)
-	 * @return a formatted info mesage
-	 */
-	private String log(Level level, String messageFormat, int messageId, Object... messageParameters) {
-		// Prepend message ID to parameter list
-		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
-		messageParamList.add(0, messageId);
-
-		// Log the error message
-		String message = String.format(messageFormat, messageParamList.toArray());
-		if (Level.ERROR.equals(level)) {
-			logger.error(message);
-		} else if (Level.WARN.equals(level)) {
-			logger.warn(message);
-		} else {
-			logger.info(message);
-		}
-
-		return message;
-	}
 
 	/**
 	 * Create and log a formatted error message
@@ -158,7 +122,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @return a formatted error message
 	 */
 	private String logError(String messageFormat, int messageId, Object... messageParameters) {
-		return log(Level.ERROR, messageFormat, messageId, messageParameters);
+		return LogUtil.logError(logger, messageFormat, messageId, messageParameters);
 	}
 
 	/**
@@ -182,144 +146,79 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	 * @param productUuid the UUID of the product to retrieve
 	 * 
 	 * @return a product object
-	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws RestClientException if the request to the Ingestor fails for some other reason
-	 * @throws RuntimeException if any other exception occurs
+	 * @throws NoResultException if a product with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
-	private RestProduct getProduct(String productUuid)
-			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+	private Product getProduct(String productUuid) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProduct({})", productUuid);
 
-		// Request product metadata from Ingestor service
-		
-		// Attempt connection to service
-		ResponseEntity<RestProduct> entity = null;
+		// Request product metadata from database
+		Query query = em.createQuery("select p from Product p where p.uuid = :uuid", Product.class);
+		query.setParameter("uuid", UUID.fromString(productUuid));
+		Object resultObject;
 		try {
-			RestTemplate restTemplate = rtb.basicAuthentication(
-					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
-				.build();
-			String requestUrl = config.getIngestorUrl() + "/products/uuid/" + productUuid;
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
-			entity = restTemplate.getForEntity(requestUrl, RestProduct.class);
-		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
+			resultObject = query.getSingleResult();
+			if (null == resultObject || ! (resultObject instanceof Product)) {
+				throw new NoResultException();
+			}
+		} catch (NoResultException e) {
+			String message = String.format(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, productUuid);
+			logger.error(message);
+			throw new NoResultException(message);
+		}
+		Product modelProduct = (Product) resultObject;
+		
+		// Check mission
+		if (!securityConfig.getMission().equals(modelProduct.getProductClass().getMission().getCode())) {
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
 			logger.error(message);
 			throw new SecurityException(message);
-		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
-		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
-			logger.error(message, e);
-			throw new RestClientException(message, e);
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new RuntimeException(e);
 		}
 		
-		// All GET requests should return HTTP status OK
-		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
-			logger.error(message);
-			throw new RuntimeException(message);
-		}
-		
-		RestProduct restProduct = entity.getBody();
-		if (logger.isDebugEnabled()) logger.debug("... product found: " + restProduct.getId());
-		return restProduct;
-	}
-
-	/**
-	 * Get the URL of the storage manager for a given processing facility from the prosEO Facility Manager service
-	 * @param facilityName the name of the processing facility
-	 * 
-	 * @return the URL of the Storage Manager associated with the given processing facility
-	 * @throws IllegalArgumentException if the authorization header cannot be parsed
-	 * @throws HttpClientErrorException if an error is returned from the Facility Manager service
-	 * @throws Unauthorized if the user named in the Basic Auth header is not authorized to access the requested processing facility
-	 * @throws RestClientException if the request to the Facility Manager fails for some other reason
-	 * @throws RuntimeException if any other exception occurs
-	 */
-	private String getStorageManagerUrl(String facilityName)
-			throws IllegalArgumentException, HttpClientErrorException, Unauthorized, RestClientException, RuntimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getStorageManagerUrl({})", facilityName);
-
-		// Request processing facility data from Facility Manager service
-		
-		// Attempt connection to service
-		ResponseEntity<?> entity = null;
-		try {
-			RestTemplate restTemplate = rtb.basicAuthentication(
-					securityConfig.getMission() + "-" + config.getFacilityManagerUser(), config.getFacilityManagerPassword())
-				.build();
-			String requestUrl = config.getFacilityManagerUrl() + "/facilities?name=" + facilityName;
-			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
-			entity = restTemplate.getForEntity(requestUrl, List.class);
-		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
-					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
-			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
-		} catch (HttpClientErrorException.Unauthorized e) {
-			logger.error(String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser()), e);
-			throw e;
-		} catch (RestClientException e) {
-			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
-			logger.error(message, e);
-			throw new RestClientException(message, e);
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw new RuntimeException(e);
-		}
-		
-		// All GET requests should return HTTP status OK
-		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
-			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
-					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
-			logger.error(message);
-			throw new RuntimeException(message);
-		}
-		
-		if (entity.getBody() instanceof List) {
-			List<?> body = (List<?>) entity.getBody();
-			if (1 == body.size()) {
-				RestProcessingFacility restProcessingFacility = (new ObjectMapper()).convertValue(body.get(0), RestProcessingFacility.class);
-				if (logger.isDebugEnabled()) logger.debug("... processing facility found: " + restProcessingFacility.getId());
-				return restProcessingFacility.getStorageManagerUrl();
+		// Check access permission to product
+		switch (modelProduct.getProductClass().getVisibility()) {
+		case PUBLIC:
+			// OK for all users
+			break;
+		case RESTRICTED:
+			if (securityConfig.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+				break;
 			}
+			// Fall through
+		case INTERNAL:
+			if (securityConfig.hasRole(UserRole.PRODUCT_READER_ALL)) {
+				break;
+			}
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
+			logger.error(message);
+			throw new SecurityException(message);
 		}
 		
-		String message = String.format(MSG_CANNOT_DESERIALIZE_RESPONSE, MSG_ID_CANNOT_DESERIALIZE_RESPONSE);
-		logger.error(message);
-		throw new RuntimeException(message);
+		if (logger.isDebugEnabled()) logger.debug("... product found: " + modelProduct.getId());
+		return modelProduct;
 	}
 
 	/**
 	 * Download the requested product from the prosEO Storage Manager
-	 * 
-	 * @param authHeader the Basic Authorization header for logging in to prosEO
 	 * @param productUuid the UUID of the product to retrieve
+	 * 
 	 * @return a binary stream containing the product data
 	 * @throws URISyntaxException if a valid URI cannot be generated from any product UUID
 	 * @throws IllegalArgumentException if mandatory information is missing from the prosEO interface product
-	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
-	 * @throws RestClientException if the request to the Ingestor fails for some other reason
-	 * @throws RuntimeException if any other exception occurs
+	 * @throws NoResultException if a product with the requested UUID could not be found in the database
 	 * @throws SecurityException if the logged in user is not authorized to access the requested product
 	 */
-	private Entity getProductAsEntity(String authHeader, String productUuid) throws URISyntaxException, IllegalArgumentException,
-			HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({}, {})", authHeader, productUuid);
+	private Entity getProductAsEntity(String productUuid) throws URISyntaxException, IllegalArgumentException,
+			NoSuchElementException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProductAsEntity({})", productUuid);
 		
-		// Get the product information from the Ingestor service
-		RestProduct restProduct = getProduct(productUuid);
+		// Get the product information from the Database
+		Product modelProduct = getProduct(productUuid);
 
 		// Create output product
-		Entity product = ProductUtil.toPripProduct(restProduct);
+		Entity product = ProductUtil.toPripProduct(modelProduct);
 
-		if (logger.isTraceEnabled()) logger.trace("<<< downloadProduct()");
+		if (logger.isTraceEnabled()) logger.trace("<<< getProductAsEntity()");
 		return product;
 	}
 
@@ -337,6 +236,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	public void readEntity(ODataRequest request, ODataResponse response, UriInfo uriInfo, ContentType responseFormat)
 			throws ODataApplicationException, ODataLibraryException {
 		if (logger.isTraceEnabled()) logger.trace(">>> readEntity({}, {}, {}, {})", request, response, uriInfo, responseFormat);
+
+		// Prepare the output
+		ODataSerializer serializer = odata.createSerializer(responseFormat);
 		
 		// [1] Retrieve the requested EntitySet from the uriInfo object (representation of the parsed service URI)
 		List<UriResource> resourcePaths = uriInfo.getUriResourceParts();
@@ -349,29 +251,45 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		Entity entity;
 		if (edmEntitySet.getEntityType().getFullQualifiedName().equals(ProductEdmProvider.ET_PRODUCT_FQN)) {
 			try {
-				entity = getProductAsEntity(request.getHeader(HttpHeaders.AUTHORIZATION), keyPredicates.get(0).getText());
-			} catch (HttpClientErrorException e) {
-				response.setStatusCode(e.getRawStatusCode());
-				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
-				return;
+				entity = getProductAsEntity(keyPredicates.get(0).getText());
 			} catch (SecurityException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
 				response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (URISyntaxException e) {
 				String message = logError(MSG_URI_GENERATION_FAILED, MSG_ID_URI_GENERATION_FAILED, e.getMessage());
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
+				return;
+			} catch (IllegalArgumentException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+				response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+				return;
+			} catch (NoResultException e) {
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
+				response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
+				response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 				return;
 			} catch (Exception e) {
 				String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 				e.printStackTrace();
+				response.setContent(serializer.error(
+						LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
 				response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 				response.setHeader(HTTP_HEADER_WARNING, message);
 				return;
 			}
 		} else {
 			String message = logError(MSG_INVALID_ENTITY_TYPE, MSG_ID_INVALID_ENTITY_TYPE, edmEntitySet.getEntityType().getFullQualifiedName());
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
@@ -387,11 +305,12 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		if (!ContentType.APPLICATION_JSON.isCompatible(responseFormat)) {
 			// Any other format currently throws an exception (see Github issue #122)
 			String message = logError(MSG_UNSUPPORTED_FORMAT, MSG_ID_UNSUPPORTED_FORMAT, responseFormat.toContentTypeString());
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
-		ODataSerializer serializer = odata.createSerializer(responseFormat);
 
 		// [5] Now serialize the content: transform from the Entity object to InputStream
 		EdmEntityType edmEntityType = edmEntitySet.getEntityType();
@@ -440,37 +359,46 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// Find the requested product
 		UriResourceEntitySet uriResourceEntitySet = (UriResourceEntitySet) uriInfo.getUriResourceParts().get(0); // in our example, the first segment is the EntitySet
 	    List<UriParameter> keyPredicates = uriResourceEntitySet.getKeyPredicates();
-		RestProduct restProduct;
+		Product modelProduct;
 
+		ODataSerializer serializer = odata.createSerializer(ContentType.JSON); // Serializer for error messages only
 		try {
-			restProduct = getProduct(keyPredicates.get(0).getText());
-		} catch (HttpClientErrorException e) {
-			response.setStatusCode(e.getRawStatusCode());
+			modelProduct = getProduct(keyPredicates.get(0).getText());
+		} catch (NoResultException e) {
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), e.getMessage())).getContent());
+			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (SecurityException e) {
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
 			response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
 		} catch (Exception e) {
 			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
 		}
 		
 		// Check whether the product is actually available on some processing facility
-		if (restProduct.getProductFile().isEmpty()) {
-			response.setStatusCode(HttpStatusCode.NO_CONTENT.getStatusCode());
-			response.setHeader(HTTP_HEADER_WARNING, logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText()));
+		if (modelProduct.getProductFile().isEmpty()) {
+			String message = logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, keyPredicates.get(0).getText());
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.NOT_FOUND.getStatusCode(), message)).getContent());
+			response.setStatusCode(HttpStatusCode.NOT_FOUND.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
 		}
-		// Select a random product file to transfer
-		int randomProductIndex = (int) (Math.random() * restProduct.getProductFile().size() - 0.5);
-		RestProductFile productFile = restProduct.getProductFile().get(randomProductIndex);
+		// Select the first product file to transfer (they should be identical anyway)
+		ProductFile productFile = modelProduct.getProductFile().iterator().next();
 		
 		// Get the service URI of the Storage Manager service
-		String storageManagerUrl = getStorageManagerUrl(productFile.getProcessingFacilityName());
+		String storageManagerUrl = productFile.getProcessingFacility().getStorageManagerUrl();
 		
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
 		URIBuilder uriBuilder = null;
@@ -481,6 +409,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		} catch (URISyntaxException e) {
 			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
 			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, message);
 			return;
@@ -498,7 +428,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 					try {
 						if (rangeParts[0].isBlank()) {
 							if (rangeParts[1].isBlank()) {
-								log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+								LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 							} else {
 								// Range header format "bytes=-nnnn", i. e. last nnnn bytes to transfer
 								fromByte = toByte - Integer.parseInt(rangeParts[1]);
@@ -514,17 +444,17 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 						uriBuilder.addParameter("fromByte", String.valueOf(fromByte));
 						uriBuilder.addParameter("toByte", String.valueOf(toByte));
 					} catch (NumberFormatException e) {
-						log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+						LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 					}
 				} else {
-					log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+					LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 				}
 			} else {
-				log(Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
+				LogUtil.log(logger, Level.WARN, MSG_INVALID_RANGE_HEADER, MSG_ID_INVALID_RANGE_HEADER, rangeHeader);
 			} 
 		}
 		// Redirect the request to the download URI
-		log(Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
+		LogUtil.log(logger, Level.INFO, MSG_REDIRECT, MSG_ID_REDIRECT, uriBuilder.toString());
 		response.setStatusCode(HttpStatusCode.TEMPORARY_REDIRECT.getStatusCode());
 		response.setHeader(HttpHeader.LOCATION, uriBuilder.toString());
 		response.setHeader(HttpHeader.CONTENT_TYPE, responseFormat.toContentTypeString());

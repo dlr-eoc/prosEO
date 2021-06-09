@@ -11,7 +11,7 @@ spec:
     - ReadWriteMany
   capacity:
     storage: 100Gi
-  persistentVolumeReclaimPolicy: Retain 
+  persistentVolumeReclaimPolicy: Retain
   nfs:
     server: proseo-nfs-server.default.svc.cluster.local
     path: /exports/transfer
@@ -29,7 +29,7 @@ spec:
     - ReadWriteMany
   capacity:
     storage: 200Gi
-  persistentVolumeReclaimPolicy: Retain 
+  persistentVolumeReclaimPolicy: Retain
   nfs:
     server: proseo-nfs-server.default.svc.cluster.local
     path: /exports/proseodata

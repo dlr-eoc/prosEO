@@ -310,7 +310,7 @@ public class SimpleSelectionRuleTest {
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
 					assertEquals("Unexpected JPQL query for selection rule string " + i, expectedJpqlQueries[i], 
-							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME));
+							simpleSelectionRule.asJpqlQuery(TEST_START_TIME, TEST_STOP_TIME, null));
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();
@@ -333,7 +333,7 @@ public class SimpleSelectionRuleTest {
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
 					assertEquals("Unexpected SQL query for selection rule string " + i, expectedSqlQueries[i], 
-							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME));
+							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null));
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();

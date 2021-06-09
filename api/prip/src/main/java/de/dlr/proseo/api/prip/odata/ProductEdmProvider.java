@@ -29,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import de.dlr.proseo.model.enums.ProductionType;
+
 /**
  * A provider for the Product entity data model (as defined in Production Interface Delivery Point Specification,
  * ESA-EOPG-EOPGC-IF-3, issue 1.2, sec. 3.1)
@@ -85,11 +87,11 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	// Enumeration Types
 	public static final String EN_PRODUCTIONTYPE_NAME = ET_PRODUCT_PROP_PRODUCTION_TYPE;
 	public static final FullQualifiedName EN_PRODUCTIONTYPE_FQN = new FullQualifiedName(NAMESPACE, EN_PRODUCTIONTYPE_NAME);
-	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = "systematic_production";
+	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = ProductionType.SYSTEMATIC.toString();
 	public static final int EN_PRODUCTIONTYPE_SYSTEMATIC_VAL = 10;
-	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = "on-demand default";
+	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = ProductionType.ON_DEMAND_DEFAULT.toString();
 	public static final int EN_PRODUCTIONTYPE_ONDEMDEF_VAL = 20;
-	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = "on-demand non-default";
+	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = ProductionType.ON_DEMAND_NON_DEFAULT.toString();
 	public static final int EN_PRODUCTIONTYPE_ONDEMNODEF_VAL = 30;
 
 	// Complex Types
@@ -103,7 +105,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final FullQualifiedName CT_TIMERANGE_FQN = new FullQualifiedName(NAMESPACE, CT_TIMERANGE_NAME);
 	public static final String CT_TIMERANGE_PROP_START = "Start";
 	public static final String CT_TIMERANGE_PROP_END = "End";
-
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductEdmProvider.class);
 

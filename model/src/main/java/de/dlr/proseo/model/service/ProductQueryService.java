@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
@@ -71,14 +73,15 @@ public class ProductQueryService {
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		// Check arguments
-		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getJpqlQueryCondition()) {
+		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getSqlQueryCondition()) {
 			String message = String.format("Incomplete product query %s", null == productQuery ? "null" : productQuery.toString());
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
 
 		// Determine the requested processing facility
-		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
+		Job job = productQuery.getJobStep().getJob();
+		ProcessingFacility facility = job.getProcessingFacility();
 		
 		// Execute the query (native SQL due to use of recursive SQL view product_processing_facilities)
 		String sqlQuery = productQuery.getSqlQueryCondition() + " AND " + FACILITY_QUERY_SQL;
@@ -87,9 +90,14 @@ public class ProductQueryService {
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
 		query.setParameter("facility_id", facility.getId());
 		
-		@SuppressWarnings("unchecked")
-		List<Product> products = (List<Product>) query.getResultList();
-
+		List<?> queryResult = (List<?>) query.getResultList();
+		List<Product> products = new ArrayList<>();
+		for (Object resultObject: queryResult) {
+			if (resultObject instanceof Product) {
+				products.add((Product) resultObject);
+			}
+		}
+		
 		if (logger.isTraceEnabled()) {
 			logger.trace("Number of products found: " + products.size());
 			for (Product product: products) {
@@ -107,13 +115,13 @@ public class ProductQueryService {
 			return testOptionalSatisfied(productQuery, checkOnly);
 		}
 		
-		// Check if all conditions of the selection rule are met
+		// Check if all conditions of the selection rule are met (this may reduce the output in some cases, where the 
+		// SQL command deliberately returns a greater number of products than expected, and it may turn out that the
+		// expected coverage of the time interval is not met)
 		List<Object> selectedItems = null;
 		try {
 			selectedItems = productQuery.getGeneratingRule().selectItems(
-					SelectionItem.asSelectionItems(products), 
-					productQuery.getJobStep().getJob().getStartTime(),
-					productQuery.getJobStep().getJob().getStopTime());
+					SelectionItem.asSelectionItems(products), job.getStartTime(), job.getStopTime());
 			if (null == selectedItems) {
 				// No items selected, but rule is optional
 				if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
@@ -127,35 +135,15 @@ public class ProductQueryService {
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		
-		// Check if the additional filter conditions of the job step are met
-		Set<Product> selectedProducts = new HashSet<>();
-		for (Object selectedItem: selectedItems) {
-			if (selectedItem instanceof Product) {
-				Product product = (Product) selectedItem;
-				if ((product.getProductFile() != null && !product.getProductFile().isEmpty())
-						|| !product.getComponentProducts().isEmpty()) {
-					if (productQuery.testFilterConditions(product)) {
-						selectedProducts.add(product);
-					} else {
-						if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
-					}
-				} else {
-					logger.info(product.toString() + ": product files are empty");
-				}
-			}
-		}
-		if (selectedProducts.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery, checkOnly);
-		}
-		if (logger.isTraceEnabled()) logger.trace("Number of products after testing filter conditions: " + selectedProducts.size());
-
+		// Set the query's list of satisfying products to the list of selected items (products), unless this was only a dry run
 		if (!checkOnly) {
-			// Set the query's list of satisfying products to the list of selected items (products)
 			productQuery.getSatisfyingProducts().clear();
-			for (Product product: selectedProducts) {
-				product.getSatisfiedProductQueries().add(productQuery);
-				productQuery.getSatisfyingProducts().add(product);
+			for (Object selectedItem: selectedItems) {
+				if (selectedItem instanceof Product) {
+					Product product = (Product) selectedItem;
+					product.getSatisfiedProductQueries().add(productQuery);
+					productQuery.getSatisfyingProducts().add(product);
+				}
 			}
 			productQuery.setIsSatisfied(true);
 			if (logger.isTraceEnabled()) logger.trace("Number of products satisfying product query: " + productQuery.getSatisfyingProducts().size());
@@ -164,18 +152,4 @@ public class ProductQueryService {
 		return true;
 	}
 	
-	/**
-	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
-	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
-	 * 
-	 * @param productQuery the product query to execute
-	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
-	 *            for future reference
-	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
-	 * @throws IllegalArgumentException if the product query is incomplete
-	 */
-	public boolean executeSqlQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
-		return executeQuery(productQuery, checkOnly);
-	}
-
 }
