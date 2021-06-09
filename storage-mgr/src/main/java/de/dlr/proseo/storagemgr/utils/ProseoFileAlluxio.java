@@ -23,9 +23,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 	
 	public ProseoFileAlluxio(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileAlluxio({}, {}, {})", 
-				(null == pathInfo ? "MISSING" : pathInfo + " "),
-				fullPath + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileAlluxio({}, {}, {})", pathInfo, fullPath, cfg);
 
 		this.cfg = cfg;
 		String aPath = pathInfo.trim();
@@ -59,8 +57,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 
 	public ProseoFileAlluxio(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileAlluxio({}, {}, {})", 
-				bucket + " ", pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileAlluxio({}, {}, {})", bucket, pathInfo, cfg);
 	
 		String aPath = pathInfo.trim();
 		relPath = aPath;

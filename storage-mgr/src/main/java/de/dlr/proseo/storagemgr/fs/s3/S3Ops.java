@@ -67,9 +67,7 @@ public class S3Ops {
 
 	public static String createEmptyKey(S3Client s3, String bucketName, String key, String manifestMsg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> createEmptyKey({}, {}, {}, {})", 
-				(null == s3 ? "MISSING" : s3.serviceName() + " "),
-				bucketName + " ", key + " ", manifestMsg);
+		if (logger.isTraceEnabled()) logger.trace(">>> createEmptyKey({}, {}, {}, {})", s3, bucketName, key, manifestMsg);
 		
 		try {
 			s3.putObject(PutObjectRequest.builder().bucket(bucketName).key(key).build(),
@@ -92,9 +90,7 @@ public class S3Ops {
 	 */
 	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", 
-				(null == s3 ? "MISSING" : s3.toString()),
-				bucketName + " ", prefix + " ");
+		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
 		
 		Boolean isTopLevel = false;
 		String delimiter = "/";
@@ -153,8 +149,7 @@ public class S3Ops {
 	 */
 	public static ArrayList<String> listBuckets(S3Client s3) {
 		
-			if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", 
-				(null == s3 ? "MISSING" : s3.toString()));
+			if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
 				
 			ArrayList<String> buckets = new ArrayList<String>();
 			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
@@ -179,9 +174,7 @@ public class S3Ops {
 	 */
 	public static String createBucket(S3Client s3, String bucketName, String region) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> createBucket({}, {}, {})", 
-				(null == s3 ? "MISSING" : s3.serviceName()),
-				bucketName + " ", region + " ");
+		if (logger.isTraceEnabled()) logger.trace(">>> createBucket({}, {}, {})", s3, bucketName, region);
 
 		try {
 			CreateBucketRequest createBucketRequest = CreateBucketRequest.builder().bucket(bucketName)
@@ -206,9 +199,8 @@ public class S3Ops {
 	 */
 	public static S3Client v2S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> v2S3Client({}, {}, {}, {}))", 
-				s3AccessKey + " ", secretAccessKey + " ", s3Endpoint + " ", region);
-
+		if (logger.isTraceEnabled()) logger.trace(">>> v2S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
+		
 		try {
 
 			AwsBasicCredentials creds = AwsBasicCredentials.create(s3AccessKey, secretAccessKey);
@@ -235,8 +227,7 @@ public class S3Ops {
 	 */
 	public static AmazonS3 v1S3Client(String s3AccessKey, String secretAccessKey, String s3Endpoint, String region) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> v1S3Client({}, {}, {}, {}))", 
-				s3AccessKey + " ", secretAccessKey + " ", s3Endpoint + " ", region);
+		if (logger.isTraceEnabled()) logger.trace(">>> v1S3Client({}, {}, {}, {}))", "***", "***", s3Endpoint, region);
 		
 		try {
 
@@ -272,9 +263,8 @@ public class S3Ops {
 	 */
 	public static Boolean v2FetchFile(S3Client s3, String s3Object, String ContainerPath) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchFile({}, {}, {})", 
-				(null == s3 ? "MISSING" : s3.serviceName() + " "),
-				s3Object + " ", ContainerPath);
+		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchFile({}, {}, {})",
+				(null == s3 ? "MISSING" : s3.serviceName()), s3Object, ContainerPath);
 
 		try {
 			File f = new File(ContainerPath);
@@ -341,8 +331,7 @@ public class S3Ops {
 	public static InputStream v2FetchStream(S3Client s3, String s3Object) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchStream({}, {})", 
-				(null == s3 ? "MISSING" : s3.serviceName()),
-				s3Object);
+				(null == s3 ? "MISSING" : s3.serviceName()), s3Object);
 		
 		InputStream stream = null;
 		try {
@@ -378,8 +367,7 @@ public class S3Ops {
 			boolean recursive, boolean pause) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadDir({}, {}, {}, {}, {})", 
-				(null == v1S3Client ? "MISSING" : v1S3Client.toString() + " "),
-				sourceDirPath + " ", targetBucketName + " ", targetKeyPrefix + " ", recursive + " " , pause);
+				v1S3Client, sourceDirPath, targetBucketName, targetKeyPrefix, recursive, pause);
 		
 		ArrayList<String> response = new ArrayList<String>();
 		TransferManager xfer_mgr = TransferManagerBuilder.standard()
@@ -426,8 +414,7 @@ public class S3Ops {
 			boolean pause) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadFile({}, {}, {}, {}, {})", 
-				(null == v1S3Client ? "MISSING" : v1S3Client.toString() + " "),
-				sourceFilePath + " ", targetBucketName + " ", targetKeyPrefix + " ", pause);
+				v1S3Client, sourceFilePath, targetBucketName, targetKeyPrefix, pause);
 		
 		ArrayList<String> response = new ArrayList<String>();
 		String targetKeyName = null;
@@ -478,8 +465,7 @@ public class S3Ops {
 			boolean pause) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Upload({}, {}, {}, {}, {})", 
-				(null == v1S3Client ? "MISSING" : v1S3Client.toString() + " "),
-				sourcePath + " ", targetBucketName + " ", targetPathPrefix + " ", pause);
+				v1S3Client, sourcePath, targetBucketName, targetPathPrefix, pause);
 
 		String s3Prefix = "s3://";
 		if (!targetBucketName.startsWith(s3Prefix)) {
@@ -517,8 +503,7 @@ public class S3Ops {
 			String destBucketName, String destObjectPrefix) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Copy({}, {}, {}, {}, {})", 
-				(null == s3Client ? "MISSING" : s3Client.toString() + " "),
-				sourceBucketName + " ", sourceObjectKeyPrefix + " ", destBucketName + " ", destObjectPrefix);
+				s3Client, sourceBucketName, sourceObjectKeyPrefix, destBucketName, destObjectPrefix);
 
 		String separator = "/";
 		
@@ -569,8 +554,7 @@ public class S3Ops {
 			throws SdkException, SdkClientException, S3Exception, AwsServiceException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> createFolder({}, {}, {})", 
-				(null == client ? "MISSING" : client.serviceName() + " "),
-				bucketName + " ", folderName);
+				(null == client ? "MISSING" : client.serviceName()), bucketName, folderName);
 		
 	    // create meta-data for your folder and set content-length to 0
 		String key = folderName;
@@ -605,9 +589,7 @@ public class S3Ops {
 	 */
 	public static void deleteDirectory(AmazonS3 client, String bucketName, String prefix) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> deleteDirectory({}, {}, {})", 
-				(null == client ? "MISSING" : client.toString() + " "),
-				bucketName + " ", prefix);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteDirectory({}, {}, {})", client, bucketName, prefix);
 		
 	    try {
 			ObjectListing objectList = client.listObjects(bucketName, prefix );
@@ -643,9 +625,7 @@ public class S3Ops {
 	 */
 	public static long getLength(AmazonS3 client, String bucketName, String key) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> getLength({}, {}, {})", 
-				(null == client ? "MISSING" : client.toString() + " "),
-				bucketName + " ", key);
+		if (logger.isTraceEnabled()) logger.trace(">>> getLength({}, {}, {})", client, bucketName, key);
 		
 		ObjectMetadata md;
 		try {

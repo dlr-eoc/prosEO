@@ -39,8 +39,7 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	public ProseoFileS3(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", 
-				pathInfo + " ", fullPath + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", pathInfo, fullPath, cfg);
 		
 		this.cfg = cfg;
 		String aPath = pathInfo.trim();
@@ -82,8 +81,7 @@ public class ProseoFileS3 extends ProseoFile {
 	 */
 	public ProseoFileS3(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", 
-				bucket + " ", pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFileS3({}, {}, {})", bucket, pathInfo, cfg);
 		
 		String aPath = pathInfo.trim();
 		relPath = aPath;
@@ -175,7 +173,7 @@ public class ProseoFileS3 extends ProseoFile {
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> copyTo({}, {})", 
-				(null == proFile ? "MISSING" : proFile.fileName + " "), recursive);
+				(null == proFile ? "MISSING" : proFile.fileName), recursive);
 		
 		if (proFile != null) {
 			ArrayList<String> result = null;

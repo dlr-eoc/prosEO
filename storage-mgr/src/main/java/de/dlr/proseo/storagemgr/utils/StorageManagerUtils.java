@@ -50,7 +50,7 @@ public class StorageManagerUtils {
 	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint,
 			String bucketName, String region) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> createStorageManagerInternalS3Buckets(********, ********, {}, {}, {}", 
+		if (logger.isTraceEnabled()) logger.trace(">>> createStorageManagerInternalS3Buckets(***, ***, {}, {}, {}", 
 				s3Endpoint, bucketName, region);
 		
 		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint, region);

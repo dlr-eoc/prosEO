@@ -191,7 +191,7 @@ public abstract class ProseoFile {
 	 */
 	public static ProseoFile fromPathInfo(String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> fromPathInfo({}, {})", pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> fromPathInfo({}, {})", pathInfo, cfg);
 
 		if (pathInfo == null) {
 			logger.warn("pathInfo not set");
@@ -220,9 +220,7 @@ public abstract class ProseoFile {
 	 */
 	public static ProseoFile fromType(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> fromType({}, {}, {})", 
-				(null == aType ? "MISSING" : aType.toString() + " "), 
-				pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> fromType({}, {}, {})", aType, pathInfo, cfg);
 		
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -254,9 +252,7 @@ public abstract class ProseoFile {
 	 */
 	public static ProseoFile fromTypeFullPath(StorageType aType, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> fromTypeFullPath({}, {}, {})", 
-				(null == aType ? "MISSING" : aType.toString() + " "), 
-				pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> fromTypeFullPath({}, {}, {})", aType, pathInfo, cfg);
 		
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();
@@ -289,9 +285,7 @@ public abstract class ProseoFile {
 	 */
 	public static ProseoFile fromTypeAndBucket(StorageType aType, String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> fromTypeAndBucket({}, {}, {})", 
-				(null == aType ? "MISSING" : aType.toString() + " "), 
-				bucket + " ", pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> fromTypeAndBucket({}, {}, {})", aType, bucket, pathInfo, cfg);
 		
 		if (pathInfo != null) {
 			String aPath = pathInfo.trim();

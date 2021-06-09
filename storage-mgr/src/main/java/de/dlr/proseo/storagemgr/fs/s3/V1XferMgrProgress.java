@@ -18,7 +18,7 @@ public class V1XferMgrProgress {
 	public static void waitForCompletion(Transfer xfer) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> waitForCompletion({})", 
-				(null == xfer ? "MISSING" : xfer.getDescription() + " "));
+				(null == xfer ? "MISSING" : xfer.getDescription()));
 		
 		// snippet-start:[s3.java1.s3_xfer_mgr_progress.wait_for_transfer]
 		try {

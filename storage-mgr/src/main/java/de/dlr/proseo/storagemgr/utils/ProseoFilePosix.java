@@ -42,8 +42,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 */
 	public ProseoFilePosix(String pathInfo, Boolean fullPath, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFilePosix({}, {}, {})", 
-				pathInfo + " ", fullPath + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFilePosix({}, {}, {})", pathInfo, fullPath, cfg);
 
 		this.cfg = cfg;
 		String aPath = pathInfo.trim();
@@ -106,8 +105,7 @@ public class ProseoFilePosix extends ProseoFile {
 	 */
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFilePosix({}, {}, {})", 
-				bucket + " ", pathInfo + " ", cfg.toString());
+		if (logger.isTraceEnabled()) logger.trace(">>> ProseoFilePosix({}, {}, {})", bucket, pathInfo, cfg);
 		
 		String aPath = pathInfo.trim();
 		relPath = aPath;
@@ -188,7 +186,7 @@ public class ProseoFilePosix extends ProseoFile {
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> copyTo({}, {})", 
-				(null == proFile ? "MISSING" : proFile.fileName + " "), recursive + " ");
+				(null == proFile ? "MISSING" : proFile.fileName), recursive);
 		
 		if (proFile == null) {
 			logger.error("Illegal call of ProseoFilePosix::copyTo(ProseoFile, Boolean) with null argument");

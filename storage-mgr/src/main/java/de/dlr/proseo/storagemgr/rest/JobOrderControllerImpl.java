@@ -64,8 +64,6 @@ public class JobOrderControllerImpl implements JoborderController {
 	 */
 	private HttpHeaders errorHeaders(String messageFormat, int messageId, Object... messageParameters) {
 		
-		
-		
 		// Prepend message ID to parameter list
 		List<Object> messageParamList = new ArrayList<>(Arrays.asList(messageParameters));
 		messageParamList.add(0, messageId);
@@ -90,7 +88,7 @@ public class JobOrderControllerImpl implements JoborderController {
 	public ResponseEntity<RestJoborder> createRestJoborder(@Valid RestJoborder joborder) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> createRestJoborder({})", 
-				(null == joborder ? "MISSING" : joborder.getMessage() ));	
+				(null == joborder ? "MISSING" : joborder.getMessage()));	
 		
 		RestJoborder response = new RestJoborder();
 		String separator = "/";

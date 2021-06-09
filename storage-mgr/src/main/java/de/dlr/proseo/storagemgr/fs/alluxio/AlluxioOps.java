@@ -299,8 +299,7 @@ public final class AlluxioOps {
 		 */
 		public <T> void submit(Callable<T> task) {
 			
-			if (logger.isTraceEnabled()) logger.trace(">>> submit({})", 
-					(null == task ? "MISSING" : task.toString()));
+			if (logger.isTraceEnabled()) logger.trace(">>> submit({})", task);
 			
 			mPool.submit(task);
 		}
@@ -315,9 +314,7 @@ public final class AlluxioOps {
 		 */
 		public void succeed(AlluxioURI src, AlluxioURI dst) throws InterruptedException {
 			
-			if (logger.isTraceEnabled()) logger.trace(">>> succeed({}, {})", 
-					(null == src ? "MISSING" : src.getName() + " "),
-					(null == dst ? "MISSING" : dst.getName()));
+			if (logger.isTraceEnabled()) logger.trace(">>> succeed({}, {})", src, dst); 
 			
 			mMessages.put(String.format(COPY_SUCCEED_MESSAGE, "file://"+src, "alluxio:/"+dst));
 		}
@@ -333,11 +330,8 @@ public final class AlluxioOps {
 		 */
 		public void fail(AlluxioURI src, AlluxioURI dst, Exception cause) throws InterruptedException {
 			
-			if (logger.isTraceEnabled()) logger.trace(">>> fail({}, {}, {})", 
-					(null == src ? "MISSING" : src.toString() + " "),
-					(null == dst ? "MISSING" : dst.getName() + " "),
-					(null == cause ? "MISSING" : cause.getMessage()));
-					
+			if (logger.isTraceEnabled()) logger.trace(">>> fail({}, {}, {})", src, dst, cause); 
+								
 			CopyException exception = new CopyException(src, dst, cause);
 			mExceptions.add(exception);
 			mMessages.put(exception);
@@ -399,16 +393,10 @@ public final class AlluxioOps {
 		 */
 		private String messageAndCause(Exception e) {
 			
-			if (logger.isTraceEnabled()) logger.trace(">>> messageAndCause({})", 
-					(null == e ? "MISSING" : e.getMessage()));
-						
 			return e.getMessage() + ": " + e.getCause().getMessage();
 		}
 
 		private String stacktrace(Exception e) {
-			
-			if (logger.isTraceEnabled()) logger.trace(">>> stacktrace({})", 
-					(null == e ? "MISSING" : e.getMessage()));
 			
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(os, true);
@@ -430,11 +418,8 @@ public final class AlluxioOps {
 	private static Boolean copyFromLocalFile(AlluxioURI srcPath, AlluxioURI dstPath, WritePType writeType)
 			throws AlluxioException, IOException {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocalFile({}, {}, {})", 
-				(null == srcPath ? "MISSING" : srcPath.getName() + " "),
-				(null == dstPath ? "MISSING" : dstPath.getName() + " "),
-				writeType);
-		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocalFile({}, {}, {})", srcPath, dstPath, writeType);
+
 		File src = new File(srcPath.getPath());
 		if (src.isDirectory()) {
 			throw new IOException("Source " + src.getAbsolutePath() + " is not a file.");
@@ -492,11 +477,7 @@ public final class AlluxioOps {
 	private static void asyncCopyLocalPath(CopyThreadPoolExecutor pool, AlluxioURI srcPath,
 			AlluxioURI dstPath, WritePType writeType) throws InterruptedException {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> asyncCopyLocalPath({}, {}, {})", 
-				(null == pool ? "MISSING" : pool.toString() + " "),
-				(null == srcPath ? "MISSING" : srcPath.getName() + " "),
-				(null == dstPath ? "MISSING" : dstPath.getName() + " "),
-				writeType);
+		if (logger.isTraceEnabled()) logger.trace(">>> asyncCopyLocalPath({}, {}, {})", pool, srcPath, dstPath, writeType);
 		
 		File src = new File(srcPath.getPath());
 		if (!src.isDirectory()) {
@@ -549,10 +530,7 @@ public final class AlluxioOps {
 	public static Boolean copyFromLocal(AlluxioURI srcPath, AlluxioURI dstPath, WritePType writeType)
 			throws AlluxioException, IOException, RuntimeException {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocal({}, {}, {})", 
-				(null == srcPath ? "MISSING" : srcPath.getName() + " "),
-				(null == dstPath ? "MISSING" : dstPath.getName() + " "),
-				writeType);
+		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocal({}, {}, {})", srcPath, dstPath);
 
 		Boolean success = false;
 		List<AlluxioURI> srcPaths = new ArrayList<>();
