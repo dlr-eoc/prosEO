@@ -14,7 +14,12 @@ import org.slf4j.LoggerFactory;
 public class V1XferMgrProgress {
 	
 	private static Logger logger = LoggerFactory.getLogger(V1XferMgrProgress.class);
-	// waits for the transfer to complete, catching any exceptions that occur.
+	
+	/**
+	 * waits for the transfer to complete, catching any exceptions that occur
+	 * 
+	 * @param xfer an asynchronous upload to or download from Amazon S3
+	 */
 	public static void waitForCompletion(Transfer xfer) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> waitForCompletion({})", 
@@ -34,8 +39,12 @@ public class V1XferMgrProgress {
 		}
 		// snippet-end:[s3.java1.s3_xfer_mgr_progress.wait_for_transfer]
 	}
-
-	// Prints progress while waiting for the transfer to finish.
+	
+	/**
+	 * Prints progress while waiting for the transfer to finish.
+	 * 
+	 * @param xfer an asynchronous upload to or download from Amazon S3
+	 */
 	public static void showTransferProgress(Transfer xfer) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> showTransferProgress({})", 
@@ -70,7 +79,12 @@ public class V1XferMgrProgress {
 		// snippet-end:[s3.java1.s3_xfer_mgr_progress.poll]
 	}
 
-	// Prints progress of a multiple file upload while waiting for it to finish.
+	
+	/**
+	 * Prints progress of a multiple file upload while waiting for it to finish.
+	 * 
+	 * @param multi_upload Multiple file upload of an entire virtual directory
+	 */
 	public static void showMultiUploadProgress(MultipleFileUpload multi_upload) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> showMultiUploadProgress({})", 
@@ -110,7 +124,11 @@ public class V1XferMgrProgress {
 		// snippet-end:[s3.java1.s3_xfer_mgr_progress.substranferes]
 	}
 
-	// prints a simple text progressbar: [##### ]
+	/**
+	 * prints a simple text progressbar: [##### ]
+	 * 
+	 * @param pct Percentage to print
+	 */
 	public static void printProgressBar(double pct) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> printProgressBar({})", pct);
@@ -123,8 +141,11 @@ public class V1XferMgrProgress {
 		int amt_full = (int) (bar_size * (pct / 100.0));
 		logger.info("  [%s%s]", filled_bar.substring(0, amt_full), empty_bar.substring(0, bar_size - amt_full));
 	}
-
-	// erases the progress bar.
+	
+	/**
+	 * erases the progress bar
+	 * 
+	 */
 	public static void eraseProgressBar() {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> eraseProgressBar()");

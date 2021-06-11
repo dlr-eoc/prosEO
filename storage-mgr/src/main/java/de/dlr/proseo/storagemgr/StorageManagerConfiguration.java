@@ -140,10 +140,17 @@ public class StorageManagerConfiguration {
 //		return alluxioK8sMountPointFuse;
 //	}
 
+	/**
+	 * @return the joborderPrefix
+	 */
 	public String getJoborderPrefix() {
 		return joborderPrefix;
 	}
-
+	
+	
+	/**
+	 * @return the joborderBucket
+	 */
 	public String getJoborderBucket() {
 		return joborderBucket;
 	}

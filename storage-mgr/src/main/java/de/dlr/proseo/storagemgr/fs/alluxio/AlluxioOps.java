@@ -122,7 +122,6 @@ public final class AlluxioOps {
 	/**
 	 * fetch file from ALLUXIO DistributedFileSystem to local file
 	 * 
-	 * @param dfs a given instantiated AlluxioFS
 	 * @param srcPath URI of Alluxio-Object (e.g. alluxio://bucket/path/to/some/file)
 	 * @param dstPath local target filePath
 	 * @param readType the Alluxio read type
@@ -180,6 +179,7 @@ public final class AlluxioOps {
 	 * destination directory already exists.
 	 *
 	 * @param dstPath the {@link AlluxioURI} of the destination directory which will be created
+	 * @param opt Create directory POptions
 	 * @throws AlluxioException if an error occurs in the Alluxio library
 	 * @throws IOException if an I/O error occurred when accessing the destination path
 	 * @throws InvalidPathException if the destination path exists, but is a file
@@ -209,14 +209,6 @@ public final class AlluxioOps {
 	 *
 	 * Copy tasks can send messages to an output stream in a thread safe way.
 	 */
-	/**
-	 * @author dchaykovskiy
-	 *
-	 */
-	/**
-	 * @author dchaykovskiy
-	 *
-	 */
 	@ThreadSafe
 	private static final class CopyThreadPoolExecutor {
 		private static final class CopyException extends Exception {
@@ -225,6 +217,14 @@ public final class AlluxioOps {
 			 */
 			private static final long serialVersionUID = -9149481290182820739L;
 
+			
+			/**
+			 * Copies the exception from source to destination 
+			 * 
+			 * @param src Source of Alluxio URI
+			 * @param dst Destination of Alluxio URI
+			 * @param cause Exception
+			 */
 			public CopyException(AlluxioURI src, AlluxioURI dst, Exception cause) {
 				super(String.format(COPY_FAIL_MESSAGE, src, dst), cause);
 			}
@@ -411,6 +411,7 @@ public final class AlluxioOps {
 	 *
 	 * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
 	 * @param dstPath the {@link AlluxioURI} of the destination
+	 * @param writeType Write Type
 	 * @throws InterruptedException when failed to send messages to the pool
 	 * @return true/false
 	 */
@@ -470,8 +471,10 @@ public final class AlluxioOps {
 	 * Asynchronously copies a file or directory specified by srcPath from the local filesystem to
 	 * dstPath in the Alluxio filesystem space, assuming dstPath does not exist.
 	 *
+	 * @param pool thread pool executor for asynchronous copy
 	 * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
 	 * @param dstPath the {@link AlluxioURI} of the destination
+	 * @param writeType Write Type
 	 * @throws InterruptedException when failed to send messages to the pool
 	 */
 	private static void asyncCopyLocalPath(CopyThreadPoolExecutor pool, AlluxioURI srcPath,

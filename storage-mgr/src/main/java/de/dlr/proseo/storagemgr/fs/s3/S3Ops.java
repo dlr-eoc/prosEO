@@ -64,7 +64,17 @@ public class S3Ops {
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
 
 	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (5 * 1024 * 1024);
-
+	
+	
+	/**
+	 * Creates the empty key
+	 * 
+	 * @param s3 a given instantiated S3Client
+	 * @param bucketName Bucket name to which the PUT operation was initiated
+	 * @param key Object key for which the PUT operation was initiated
+	 * @param manifestMsg String to send to the service 
+	 * @return returns the created empty key 
+	 */
 	public static String createEmptyKey(S3Client s3, String bucketName, String key, String manifestMsg) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> createEmptyKey({}, {}, {}, {})", s3, bucketName, key, manifestMsg);

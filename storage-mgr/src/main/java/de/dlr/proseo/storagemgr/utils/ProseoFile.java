@@ -34,7 +34,9 @@ public abstract class ProseoFile {
 	 */
 	protected String pathInfo;
 	
-	/** File name */
+	/**
+	 * File name 
+	 */
 	protected String fileName;
 	
 	/**
