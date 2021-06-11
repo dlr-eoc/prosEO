@@ -219,7 +219,7 @@ public final class AlluxioOps {
 
 			
 			/**
-			 * Copies the exception from source to destination 
+			 * Creates the copy exception with error message including source and destination 
 			 * 
 			 * @param src Source of Alluxio URI
 			 * @param dst Destination of Alluxio URI

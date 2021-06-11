@@ -34,9 +34,9 @@ public class ProseoFilePosix extends ProseoFile {
 	private static Logger logger = LoggerFactory.getLogger(ProseoFilePosix.class);
 	
 	/**
-	 * Create a new posix file.
+	 * Creates a new posix file.
 	 * 
-	 * @param pathInfo The file path
+	 * @param pathInfo The file path and information about file
 	 * @param fullPath Use it as full path if true, otherwise use default bucket + path info
 	 * @param cfg the Storage Manager configuration to use
 	 */
@@ -97,10 +97,10 @@ public class ProseoFilePosix extends ProseoFile {
 	}
 
 	/**
-	 * Create a new posix file.
+	 * Creates a new posix file.
 	 * 
-	 * @param bucket The bucket
-	 * @param pathInfo The relative path
+	 * @param bucket bucket of posix file 
+	 * @param pathInfo relative path to file
 	 * @param cfg the Storage Manager configuration to use
 	 */
 	public ProseoFilePosix(String bucket, String pathInfo, StorageManagerConfiguration cfg) {
@@ -175,7 +175,7 @@ public class ProseoFilePosix extends ProseoFile {
 			logger.info("Bytes, written to {}", getFullPath());
 			return true;
 		}
-		logger.warn("writeBytes, arument bytes not set");
+		logger.warn("writeBytes, argument bytes not set");
 		return false;
 	}
 
@@ -311,7 +311,7 @@ public class ProseoFilePosix extends ProseoFile {
 		}
 		return result;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#list()
 	 */

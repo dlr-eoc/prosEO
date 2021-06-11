@@ -72,6 +72,7 @@ public class ProseoFileS3 extends ProseoFile {
 		logger.trace("ProseoFileS3 created: {}", this);
 	}
 
+	
 	/**
 	 * Create a new S3 file.
 	 * 
@@ -288,7 +289,7 @@ public class ProseoFileS3 extends ProseoFile {
 		return new FileSystemResource(getFullPath());
 	}
 	
-
+	
 	/* (non-Javadoc)
 	 * @see de.dlr.proseo.storagemgr.utils.ProseoFile#getLength()
 	 */
