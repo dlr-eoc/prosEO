@@ -241,4 +241,59 @@ public class ProductControllerImpl implements ProductController {
 		}
 	}
 
+	/**
+	 * Get the primary data file (or ZIP file, if available) for the product as data stream (optionally range-restricted),
+	 * returns a redirection link to the Storage Manager of a random Processing Facility
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fromByte the first byte of the data stream to download (optional, default is file start, i.e. byte 0)
+	 * @param toByte the last byte of the data stream to download (optional, default is file end, i.e. file size - 1)
+	 * @return HTTP status "TEMPORARY_REDIRECT" and a redirect URL in the HTTP Location header, or 
+	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists or if it does not have a data file
+	 */
+	@Override
+	public ResponseEntity<?> downloadProductById(Long id, Long fromByte, Long toByte, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadProductById({})", id);
+		
+		try {
+			String uri = productManager.downloadProductById(id, fromByte, toByte);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.add(HttpHeaders.LOCATION, uri);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.TEMPORARY_REDIRECT);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
+	/**
+	 * Get a JSON Web Token for creating a download link to a Storage Manager
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fileName the name of the file to download (default primary data file or ZIP file, if available)
+	 * @return HTTP status "OK" and the signed JSON Web Token (JWS) as per RFC 7515 and RFC 7519, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID or no file with the given name exists
+	 */
+	@Override
+	public ResponseEntity<?> getDownloadTokenById(Long id, String fileName, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({})", id);
+		
+		try {
+			return new ResponseEntity<>(productManager.getDownloadTokenById(id, fileName), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
 }

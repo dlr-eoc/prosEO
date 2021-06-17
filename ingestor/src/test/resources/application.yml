@@ -19,6 +19,8 @@ proseo:
 # Test configuration
     storageManager:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/VYrwNF/storage-mgr
+        secret: MyVeryLongSecretMustBeAtLeast32Bytes
+        validity: 60000
     testuser:
         name: testuser
         password: testpassword
