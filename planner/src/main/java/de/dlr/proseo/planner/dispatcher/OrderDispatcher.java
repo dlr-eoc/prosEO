@@ -634,7 +634,8 @@ public class OrderDispatcher {
 				}
 			}
 			if (!exist) {
-				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep,
+						productQueryService.getProductColumnMapping());
 				pq = RepositoryService.getProductQueryRepository().save(pq);
 				jobStep.getInputProductQueries().add(pq);
 				if (logger.isDebugEnabled()) logger.debug("Product query generated for rule '{}'", selectionRule);

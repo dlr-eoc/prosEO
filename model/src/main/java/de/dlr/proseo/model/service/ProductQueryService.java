@@ -6,14 +6,21 @@
 package de.dlr.proseo.model.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.metamodel.Metamodel;
+
+import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.persister.entity.AbstractEntityPersister;
+import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.type.BasicType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,12 +41,60 @@ public class ProductQueryService {
 	
 	private static final String FACILITY_QUERY_SQL = ":facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
 
+	/** Mapping from Product attributes to SQL column names */
+	private Map<String, String> productColumnMapping = new HashMap<>();
+	
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryService.class);
+	
+	/**
+	 * When creating the ProductQueryService, fill the mapping of Product attributes to SQL column names
+	 */
+	@PostConstruct
+	private void init() {
+		if (logger.isTraceEnabled()) logger.trace(">>> init()");
+		
+		Metamodel metamodel = em.getMetamodel();
+		
+		if (metamodel instanceof MetamodelImplementor) {
+			EntityPersister persister = ((MetamodelImplementor) metamodel).entityPersister(Product.class.getName());
+			if (persister instanceof AbstractEntityPersister) {
+				AbstractEntityPersister aep = (AbstractEntityPersister) persister;
+				String[] propertyNames = aep.getPropertyNames();
+				if (logger.isTraceEnabled()) logger.trace("Found {} properties for class {}", propertyNames.length, Product.class.getName());
+				for (int i = 0; i < propertyNames.length; ++i) {
+					if (aep.getPropertyType(propertyNames[i]) instanceof BasicType) {
+						String[] columnNames = aep.getPropertyColumnNames(propertyNames[i]);
+						if (1 != columnNames.length) {
+							logger.warn("Found {} columns for property {}", columnNames.length, propertyNames[i]);
+						}
+						if (logger.isTraceEnabled()) logger.trace("... mapping Product attribute {} to SQL column {}",
+								propertyNames[i], columnNames[0]);
+						productColumnMapping.put(propertyNames[i], columnNames[0]);
+					} else {
+						if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
+					}
+				}
+			} else {
+				logger.error("Cannot generate attribute/column map: 'persister' is not an AbstractEntityPersister");
+			}
+		} else {
+			logger.error("Cannot generate attribute/column map: 'metamodel' is not a MetamodelImplementor");
+		}
+	}
+	
+	/**
+	 * Provides a mapping of Product attributes to SQL column names
+	 * 
+	 * @return the attribute mapping
+	 */
+	public Map<String, String> getProductColumnMapping() {
+		return productColumnMapping;
+	}
 	
 	/**
 	 * Check whether the product query is optional, and set it to satisfied, if so
