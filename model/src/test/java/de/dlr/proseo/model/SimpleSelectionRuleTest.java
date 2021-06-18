@@ -13,7 +13,9 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -39,7 +41,7 @@ public class SimpleSelectionRuleTest {
 	private static final String TEST_MISSION_CODE = "S5P";
 	private static final String TEST_PRODUCT_TYPE = "AUX_CH4";
 	private static final Long TEST_PRODUCT_CLASS_ID = 4711L;
-	private static final String TEST_PRODUCT_TYPE_IR = "L1B_IR/category:UVN,revision:2.0";
+	private static final String TEST_PRODUCT_TYPE_IR = "L1B_IR/fileClass:UVN,revision:2.0";
 	private static final Long TEST_PRODUCT_CLASS_IR_ID = 815L;
 	private static final String[] selectionRuleStrings = {
 			"FOR " + TEST_PRODUCT_TYPE + " SELECT ValIntersect(1 H, 1 H) MANDATORY",
@@ -76,19 +78,19 @@ public class SimpleSelectionRuleTest {
 				+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "'))",
 			"select p from Product p "
-				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where "
 				+ "p2.productClass.id = 815) and "
-				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
-				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0')",
+				+ "p.fileClass = 'UVN' and "
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p where (p.productClass.id = 4711 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where "
 				+ "p2.productClass.id = 4711)))",
 			"select p from Product p "
-				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "' or "
@@ -98,8 +100,8 @@ public class SimpleSelectionRuleTest {
 				+ "p2.productClass.id = 815 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p2.sensingStopTime >= '" + EXPECTED_START_TIME + "')) and "
-				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
-				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0')",
+				+ "p.fileClass = 'UVN' and "
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p where (p.productClass.id = 4711 and "
 				+ "(p.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "' and "
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
@@ -129,29 +131,29 @@ public class SimpleSelectionRuleTest {
 				+ "p.sensingStopTime < (select min(p2.sensingStopTime) from Product p2 where p2.productClass.id = 4711 and "
 				+ "p2.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "')))",
 			"select p from Product p "
-				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where "
 				+ "p2.productClass.id = 815) and "
-				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
-				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0')",
+				+ "p.fileClass = 'UVN' and "
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p "
-				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
 				+ "p.sensingStopTime >= (select max(p2.sensingStopTime) from Product p2 where "
 				+ "p2.productClass.id = 815) and "
-				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
-				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0')",
+				+ "p.fileClass = 'UVN' and "
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')",
 			"select p from Product p where (p.productClass.id = 4711 and "
 				+ "p.sensingStartTime <= '" + EXPECTED_STOP_TIME + "' and "
 				+ "p.sensingStopTime >= '" + EXPECTED_START_TIME + "')",
 			"select p from Product p "
-				+ "join p.parameters pp0 join p.parameters pp1 "
+				+ "join p.parameters pp0 "
 				+ "where (p.productClass.id = 815 and "
 				+ "p.generationTime >= (select max(p2.generationTime) from Product p2 where "
 				+ "p2.productClass.id = 815) and "
-				+ "key(pp0) = 'category' and pp0.parameterValue = 'UVN' and "
-				+ "key(pp1) = 'revision' and pp1.parameterValue = '2.0')"
+				+ "p.fileClass = 'UVN' and "
+				+ "key(pp0) = 'revision' and pp0.parameterValue = '2.0')"
 	};
 
 	private static final String[] expectedSqlQueries = {
@@ -167,12 +169,11 @@ public class SimpleSelectionRuleTest {
 				+ "p2.sensing_stop_time >= '" + EXPECTED_START_TIME + "'))",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
-				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
 				+ "p.sensing_start_time >= (SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE "
 				+ "p2.product_class_id = 815) AND "
-				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
-				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0')",
+				+ "p.file_class = 'UVN' AND "
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
 				+ "(p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
 				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' OR "
@@ -180,7 +181,6 @@ public class SimpleSelectionRuleTest {
 				+ "p2.product_class_id = 4711)))",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
-				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
 				+ "(p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
 				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "' OR "
@@ -190,8 +190,8 @@ public class SimpleSelectionRuleTest {
 				+ "p2.product_class_id = 815 AND "
 				+ "p2.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
 				+ "p2.sensing_stop_time >= '" + EXPECTED_START_TIME + "')) AND "
-				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
-				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0')",
+				+ "p.file_class = 'UVN' AND "
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
 				+ "(p.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "' AND "
 				+ "p.sensing_start_time >= (SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
@@ -222,32 +222,32 @@ public class SimpleSelectionRuleTest {
 				+ "p2.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
-				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
 				+ "p.sensing_start_time >= (SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE "
 				+ "p2.product_class_id = 815) AND "
-				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
-				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0')",
+				+ "p.file_class = 'UVN' AND "
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
-				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
 				+ "p.sensing_stop_time >= (SELECT MAX(p2.sensing_stop_time) FROM product p2 WHERE "
 				+ "p2.product_class_id = 815) AND "
-				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
-				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0')",
+				+ "p.file_class = 'UVN' AND "
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
 				+ "p.sensing_start_time <= '" + EXPECTED_STOP_TIME + "' AND "
 				+ "p.sensing_stop_time >= '" + EXPECTED_START_TIME + "')",
 			"SELECT * FROM product p "
 				+ "JOIN product_parameters pp0 ON p.id = pp0.product_id "
-				+ "JOIN product_parameters pp1 ON p.id = pp1.product_id "
 				+ "WHERE (p.product_class_id = 815 AND "
 				+ "p.generation_time >= (SELECT MAX(p2.generation_time) FROM product p2 WHERE "
 				+ "p2.product_class_id = 815) AND "
-				+ "pp0.parameters_key = 'category' AND pp0.parameter_value = 'UVN' AND "
-				+ "pp1.parameters_key = 'revision' AND pp1.parameter_value = '2.0')"
+				+ "p.file_class = 'UVN' AND "
+				+ "pp0.parameters_key = 'revision' AND pp0.parameter_value = '2.0')"
 	};
+	
+	/* Mapping from Product attributes to SQL column names */
+	private static Map<String, String> productColumnMapping = new HashMap<>();
 
 	/* Test objects */
 	private Mission mission = new Mission();
@@ -262,6 +262,7 @@ public class SimpleSelectionRuleTest {
 	 */
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		productColumnMapping.put("fileClass", "file_class");
 	}
 
 	/**
@@ -333,7 +334,7 @@ public class SimpleSelectionRuleTest {
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
 					assertEquals("Unexpected SQL query for selection rule string " + i, expectedSqlQueries[i], 
-							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null));
+							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null, productColumnMapping));
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();

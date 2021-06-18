@@ -598,27 +598,46 @@ public class OrderDispatcher {
 				}
 			}
 		}
-		RULE_LOOP:
+		
+		// Evaluate selection rules
 		for (SimpleSelectionRule selectionRule : selectedSelectionRules) {
+			
 			// Skip selection rules not applicable for the selected configured processor
 			if (!selectionRule.getApplicableConfiguredProcessors().isEmpty()) {
 				Set<ConfiguredProcessor> requestedProcessors = jobStep.getJob().getProcessingOrder().getRequestedConfiguredProcessors();
-				// Check whether any of the requested processors in the order is applicable for the given product class
-				Boolean processorFound = false;
-				for (ConfiguredProcessor requestedProcessor: requestedProcessors) {
-					if (requestedProcessor.getProcessor().getProcessorClass().getProductClasses().contains(productClass)
-							&& selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
-						// At least one requested processor exists, which is applicable for this selection rule
-						processorFound = true;
-						break;
+				if (!requestedProcessors.isEmpty()) {
+					// Check whether any of the requested processors in the order is applicable for the given product class
+					List<ConfiguredProcessor> applicableRequestedProcessors = new ArrayList<>();
+					for (ConfiguredProcessor requestedProcessor : requestedProcessors) {
+						if (requestedProcessor.getProcessor().getProcessorClass().getProductClasses().contains(productClass)) {
+							applicableRequestedProcessors.add(requestedProcessor);
+						}
 					}
-				}
-				if (!processorFound) {
-					// requestedProcessor is to be used, but selectionRule is not applicable for it, so skip it
-					if (logger.isDebugEnabled()) logger.debug("Skipping selection rule '{}', because it is not applicable for the requested processors", selectionRule);
-					continue RULE_LOOP;
+					
+					if (!applicableRequestedProcessors.isEmpty()) {
+						// If there are requested processors, which are applicable for the product class,
+						// the selection rule must be applicable for them
+						Boolean processorFound = false;
+						for (ConfiguredProcessor requestedProcessor : applicableRequestedProcessors) {
+							if (selectionRule.getApplicableConfiguredProcessors().contains(requestedProcessor)) {
+								// At least one requested processor exists, which is applicable for this selection rule
+								processorFound = true;
+								break;
+							}
+						}
+						if (!processorFound) {
+							// requestedProcessor is to be used, but selectionRule is not applicable for it, so skip it
+							if (logger.isDebugEnabled())
+								logger.debug(
+										"Skipping selection rule '{}', because it is not applicable for the requested processors",
+										selectionRule);
+							continue; // with next selection rule
+						} 
+					} 
 				}
 			}
+			// OK - the current selection rule is valid for the processing order!
+			
 			// Check whether job step already has a product query for the given product class
 			Boolean exist = false;
 			for (ProductQuery productQuery: jobStep.getInputProductQueries()) {
@@ -634,7 +653,8 @@ public class OrderDispatcher {
 				}
 			}
 			if (!exist) {
-				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep);
+				ProductQuery pq = ProductQuery.fromSimpleSelectionRule(selectionRule, jobStep,
+						productQueryService.getProductColumnMapping());
 				pq = RepositoryService.getProductQueryRepository().save(pq);
 				jobStep.getInputProductQueries().add(pq);
 				if (logger.isDebugEnabled()) logger.debug("Product query generated for rule '{}'", selectionRule);

@@ -8,6 +8,7 @@ package de.dlr.proseo.planner.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -639,8 +640,15 @@ public class OrderUtil {
 	 * @return true after success
 	 */
 	@Transactional
-	public Boolean checkFinish(ProcessingOrder order) {
+	public Boolean checkFinish(Long orderId) {
 		Boolean answer = false;	
+		Boolean checkFurther = false;
+		Boolean hasChanged = false;
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(orderId);
+		if (oOrder.isPresent()) {
+			order = oOrder.get();
+		}
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
 		if (order != null) {
@@ -655,9 +663,10 @@ public class OrderUtil {
 					Boolean all = RepositoryService.getJobRepository().countJobNotFinishedByProcessingOrderId(order.getId()) == 0;
 					if (!all) {
 						order.setOrderState(OrderState.PLANNED);
-						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
 						em.merge(order);
+						hasChanged = true;
+						checkFurther = true;
 						answer = true;
 						break;
 					}
@@ -670,23 +679,61 @@ public class OrderUtil {
 					Boolean completed = RepositoryService.getJobRepository().countJobFailedByProcessingOrderId(order.getId()) == 0;
 					if (completed) {
 						order.setOrderState(OrderState.COMPLETED);
-						order.incrementVersion();
 					} else {
 						order.setOrderState(OrderState.FAILED);
-						order.incrementVersion();
 					}
+					checkFurther = true;
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);
+					hasChanged = true;
 				}
 				answer = true;
 				break;
 			case COMPLETED:
 			case FAILED:
+				checkFurther = true;
 				answer = true;
 				break;
 			default:
 				break;
 			}	
+			if (checkFurther) {
+				Boolean hasFailed = false;
+				for (Job j : order.getJobs()) {
+					if (j.getJobState() == JobState.FAILED) {
+						hasFailed = true;
+						break;
+					}
+				}
+				if (order.getHasFailedJobSteps() != hasFailed) {
+					order.setHasFailedJobSteps(hasFailed);
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+					hasChanged = true;
+				}
+				Boolean allHasFinished = true;
+				for (Job j : order.getJobs()) {
+					if (j.getJobState() != JobState.FAILED && j.getJobState() != JobState.COMPLETED) {
+						allHasFinished = false;
+						break;
+					}
+				}
+				if (allHasFinished) {
+					if (hasFailed) {
+						order.setOrderState(OrderState.FAILED);
+					} else {
+						order.setOrderState(OrderState.COMPLETED);
+					}
+					RepositoryService.getOrderRepository().save(order);
+					em.merge(order);
+					hasChanged = true;
+				}
+			}
+			if (hasChanged) {
+				order.incrementVersion();
+				RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
+			}
 		}
  		return answer;
 	}
@@ -720,7 +767,12 @@ public class OrderUtil {
 	 */
 
 	@Transactional
-	public void updateState(ProcessingOrder order, JobState jState) {
+	public void updateState(ProcessingOrder orderOrig, JobState jState) {
+		ProcessingOrder order = null;
+		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(orderOrig.getId());
+		if (oOrder.isPresent()) {
+			order = oOrder.get();
+		}
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
