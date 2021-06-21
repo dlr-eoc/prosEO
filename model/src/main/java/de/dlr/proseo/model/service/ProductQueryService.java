@@ -5,18 +5,27 @@
  */
 package de.dlr.proseo.model.service;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.metamodel.Metamodel;
+
+import org.hibernate.metamodel.spi.MetamodelImplementor;
+import org.hibernate.persister.entity.AbstractEntityPersister;
+import org.hibernate.persister.entity.EntityPersister;
+import org.hibernate.type.BasicType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductQuery;
@@ -32,12 +41,60 @@ public class ProductQueryService {
 	
 	private static final String FACILITY_QUERY_SQL = ":facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
 
+	/** Mapping from Product attributes to SQL column names */
+	private Map<String, String> productColumnMapping = new HashMap<>();
+	
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductQueryService.class);
+	
+	/**
+	 * When creating the ProductQueryService, fill the mapping of Product attributes to SQL column names
+	 */
+	@PostConstruct
+	private void init() {
+		if (logger.isTraceEnabled()) logger.trace(">>> init()");
+		
+		Metamodel metamodel = em.getMetamodel();
+		
+		if (metamodel instanceof MetamodelImplementor) {
+			EntityPersister persister = ((MetamodelImplementor) metamodel).entityPersister(Product.class.getName());
+			if (persister instanceof AbstractEntityPersister) {
+				AbstractEntityPersister aep = (AbstractEntityPersister) persister;
+				String[] propertyNames = aep.getPropertyNames();
+				if (logger.isTraceEnabled()) logger.trace("Found {} properties for class {}", propertyNames.length, Product.class.getName());
+				for (int i = 0; i < propertyNames.length; ++i) {
+					if (aep.getPropertyType(propertyNames[i]) instanceof BasicType) {
+						String[] columnNames = aep.getPropertyColumnNames(propertyNames[i]);
+						if (1 != columnNames.length) {
+							logger.warn("Found {} columns for property {}", columnNames.length, propertyNames[i]);
+						}
+						if (logger.isTraceEnabled()) logger.trace("... mapping Product attribute {} to SQL column {}",
+								propertyNames[i], columnNames[0]);
+						productColumnMapping.put(propertyNames[i], columnNames[0]);
+					} else {
+						if (logger.isTraceEnabled()) logger.trace("Skipping non-basic property {}", propertyNames[i]);
+					}
+				}
+			} else {
+				logger.error("Cannot generate attribute/column map: 'persister' is not an AbstractEntityPersister");
+			}
+		} else {
+			logger.error("Cannot generate attribute/column map: 'metamodel' is not a MetamodelImplementor");
+		}
+	}
+	
+	/**
+	 * Provides a mapping of Product attributes to SQL column names
+	 * 
+	 * @return the attribute mapping
+	 */
+	public Map<String, String> getProductColumnMapping() {
+		return productColumnMapping;
+	}
 	
 	/**
 	 * Check whether the product query is optional, and set it to satisfied, if so
@@ -71,14 +128,15 @@ public class ProductQueryService {
 		if (logger.isTraceEnabled()) logger.trace("Number of products in database: " + RepositoryService.getProductRepository().count());
 		
 		// Check arguments
-		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getJpqlQueryCondition()) {
+		if (null == productQuery || null == productQuery.getGeneratingRule() || null == productQuery.getSqlQueryCondition()) {
 			String message = String.format("Incomplete product query %s", null == productQuery ? "null" : productQuery.toString());
 			logger.error(message);
 			throw new IllegalArgumentException(message);
 		}
 
 		// Determine the requested processing facility
-		ProcessingFacility facility = productQuery.getJobStep().getJob().getProcessingFacility();
+		Job job = productQuery.getJobStep().getJob();
+		ProcessingFacility facility = job.getProcessingFacility();
 		
 		// Execute the query (native SQL due to use of recursive SQL view product_processing_facilities)
 		String sqlQuery = productQuery.getSqlQueryCondition() + " AND " + FACILITY_QUERY_SQL;
@@ -87,9 +145,14 @@ public class ProductQueryService {
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
 		query.setParameter("facility_id", facility.getId());
 		
-		@SuppressWarnings("unchecked")
-		List<Product> products = (List<Product>) query.getResultList();
-
+		List<?> queryResult = (List<?>) query.getResultList();
+		List<Product> products = new ArrayList<>();
+		for (Object resultObject: queryResult) {
+			if (resultObject instanceof Product) {
+				products.add((Product) resultObject);
+			}
+		}
+		
 		if (logger.isTraceEnabled()) {
 			logger.trace("Number of products found: " + products.size());
 			for (Product product: products) {
@@ -107,13 +170,13 @@ public class ProductQueryService {
 			return testOptionalSatisfied(productQuery, checkOnly);
 		}
 		
-		// Check if all conditions of the selection rule are met
+		// Check if all conditions of the selection rule are met (this may reduce the output in some cases, where the 
+		// SQL command deliberately returns a greater number of products than expected, and it may turn out that the
+		// expected coverage of the time interval is not met)
 		List<Object> selectedItems = null;
 		try {
 			selectedItems = productQuery.getGeneratingRule().selectItems(
-					SelectionItem.asSelectionItems(products), 
-					productQuery.getJobStep().getJob().getStartTime(),
-					productQuery.getJobStep().getJob().getStopTime());
+					SelectionItem.asSelectionItems(products), job.getStartTime(), job.getStopTime());
 			if (null == selectedItems) {
 				// No items selected, but rule is optional
 				if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
@@ -127,35 +190,15 @@ public class ProductQueryService {
 		}
 		if (logger.isTraceEnabled()) logger.trace("Number of products after selection: " + selectedItems.size());
 		
-		// Check if the additional filter conditions of the job step are met
-		Set<Product> selectedProducts = new HashSet<>();
-		for (Object selectedItem: selectedItems) {
-			if (selectedItem instanceof Product) {
-				Product product = (Product) selectedItem;
-				if ((product.getProductFile() != null && !product.getProductFile().isEmpty())
-						|| !product.getComponentProducts().isEmpty()) {
-					if (productQuery.testFilterConditions(product)) {
-						selectedProducts.add(product);
-					} else {
-						if (logger.isTraceEnabled()) logger.trace(product.toString() + " does not meet filter conditions");
-					}
-				} else {
-					logger.info(product.toString() + ": product files are empty");
-				}
-			}
-		}
-		if (selectedProducts.isEmpty()) {
-			if (logger.isTraceEnabled()) logger.trace("<<< executeQuery()");
-			return testOptionalSatisfied(productQuery, checkOnly);
-		}
-		if (logger.isTraceEnabled()) logger.trace("Number of products after testing filter conditions: " + selectedProducts.size());
-
+		// Set the query's list of satisfying products to the list of selected items (products), unless this was only a dry run
 		if (!checkOnly) {
-			// Set the query's list of satisfying products to the list of selected items (products)
 			productQuery.getSatisfyingProducts().clear();
-			for (Product product: selectedProducts) {
-				product.getSatisfiedProductQueries().add(productQuery);
-				productQuery.getSatisfyingProducts().add(product);
+			for (Object selectedItem: selectedItems) {
+				if (selectedItem instanceof Product) {
+					Product product = (Product) selectedItem;
+					product.getSatisfiedProductQueries().add(productQuery);
+					productQuery.getSatisfyingProducts().add(product);
+				}
 			}
 			productQuery.setIsSatisfied(true);
 			if (logger.isTraceEnabled()) logger.trace("Number of products satisfying product query: " + productQuery.getSatisfyingProducts().size());
@@ -164,18 +207,4 @@ public class ProductQueryService {
 		return true;
 	}
 	
-	/**
-	 * Execute the native SQL query of the given product query and check additional conditions (e. g. selection time interval coverage)
-	 * If successful, the query and its satisfying products are updated (these updates must be persisted by the calling method).
-	 * 
-	 * @param productQuery the product query to execute
-	 * @param checkOnly if true, checks satisfaction, but does not store satisfying products, if false, will store satisfying products
-	 *            for future reference
-	 * @return true, if the query is satisfied (its list of satisfying products will then be set), false otherwise
-	 * @throws IllegalArgumentException if the product query is incomplete
-	 */
-	public boolean executeSqlQuery(ProductQuery productQuery, boolean checkOnly) throws IllegalArgumentException {
-		return executeQuery(productQuery, checkOnly);
-	}
-
 }

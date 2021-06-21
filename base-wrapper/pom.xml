@@ -5,7 +5,7 @@
     <parent>
         <groupId>de.dlr.proseo</groupId>
         <artifactId>proseo</artifactId>
-        <version>0.7.2</version>
+        <version>0.7.3</version>
     </parent>
 
 	<artifactId>proseo-base-wrapper</artifactId>
@@ -19,7 +19,7 @@
 	</organization>
 
 	<properties>
-		<module.version>0.7.2</module.version>
+		<module.version>0.7.3</module.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
@@ -45,11 +45,12 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-client</artifactId>
-			<version>3.0.2.Final</version>
-		</dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>4.5.7.Final</version>
+            <scope>test</scope>
+        </dependency>
 		<dependency>
 			<groupId>javax.ws.rs</groupId>
 			<artifactId>javax.ws.rs-api</artifactId>

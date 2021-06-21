@@ -12,11 +12,5 @@ spring:
 logging:
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
-proseo:
-    user:
-        name: user
-        password: password
+        de.dlr.proseo: TRACE
 

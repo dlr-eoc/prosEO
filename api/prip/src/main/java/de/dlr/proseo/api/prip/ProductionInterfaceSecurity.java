@@ -37,12 +37,12 @@ public class ProductionInterfaceSecurity {
 	// Message IDs
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
 	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_MISSION = 5008;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRIP = 5008;
 	
 	// Message strings
 	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
 	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
-	private static final String MSG_NOT_AUTHORIZED_FOR_MISSION = "(E%d) User %s not authorized for PRIP API in mission %s";
+	private static final String MSG_NOT_AUTHORIZED_FOR_PRIP = "(E%d) User %s\\%s not authorized for PRIP API";
 	
 	/** The logged in user (as used for authentication, i. e. including mission prefix) */
 	private ThreadLocal<String> username = new ThreadLocal<>();
@@ -62,7 +62,7 @@ public class ProductionInterfaceSecurity {
 	private ProductionInterfaceConfiguration config;
 	
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductEntityProcessor.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductionInterfaceSecurity.class);
 
 	/**
 	 * Create and log a formatted message at the given level
@@ -164,7 +164,7 @@ public class ProductionInterfaceSecurity {
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_MISSION, MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username.get(), mission.get());
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, mission.get(), username.get());
 			logger.error(message);
 			throw new SecurityException(message);
 		} catch (Exception e) {
@@ -172,6 +172,7 @@ public class ProductionInterfaceSecurity {
 			logger.error(message, e);
 			throw new SecurityException(message);
 		}
+		if (logger.isTraceEnabled()) logger.trace("... Authentication succeeded for user " + mission.get() + "\\" + username.get());
 
 		for (Object authority: entity.getBody()) {
 			if (authority instanceof String) {
@@ -181,7 +182,7 @@ public class ProductionInterfaceSecurity {
 		
 		// Check whether user is authorized to use the PRIP API
 		if (!hasRole(UserRole.PRIP_USER)) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_MISSION, MSG_ID_NOT_AUTHORIZED_FOR_MISSION, username.get(), mission.get());
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, mission.get(), username.get());
 			logger.error(message);
 			throw new SecurityException(message);
 		}
