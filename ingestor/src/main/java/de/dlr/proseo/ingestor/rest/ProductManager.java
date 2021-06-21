@@ -1029,7 +1029,7 @@ public class ProductManager {
 	private String createDownloadToken(String fileName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> createDownloadToken({})", fileName);
 		
-		JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.HS512)
+		JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.HS256)
 				.type(JOSEObjectType.JWT)
 				.build();
 		
@@ -1040,7 +1040,7 @@ public class ProductManager {
 		
 		JWSSigner signer = null;
 		try {
-			// We need exactly 512 bits (32 bytes) of key length, so a shorter key will be filled with blanks, a longer key will be truncated
+			// We need exactly 256 bits (32 bytes) of key length, so a shorter key will be filled with blanks, a longer key will be truncated
 			signer = new MACSigner(ingestorConfig.getStorageManagerSecret());
 		} catch (KeyLengthException e) {
 			throw new RuntimeException(logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));

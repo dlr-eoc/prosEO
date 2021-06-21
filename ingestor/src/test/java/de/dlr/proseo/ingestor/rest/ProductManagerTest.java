@@ -6,10 +6,12 @@
 package de.dlr.proseo.ingestor.rest;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +22,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +32,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -35,12 +42,17 @@ import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.ingestor.IngestorApplication;
 import de.dlr.proseo.ingestor.IngestorConfiguration;
+import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductVisibility;
+import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 
 /**
@@ -53,8 +65,10 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = IngestorApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext
+@Transactional
 public class ProductManagerTest {
 
+	private static final String STORAGE_MGER_LINK_TOKEN = "&token=";
 	/* Test products */
 	private static final String TEST_CODE = "S5P";
 	private static final String TEST_PRODUCT_TYPE = "L1B_______";
@@ -70,18 +84,35 @@ public class ProductManagerTest {
 		{ "0", "1", TEST_ALT_CODE, TEST_ALT_PRODUCT_TYPE, TEST_FILE_CLASS, null, "2019-08-30T00:19:33.946628", "2019-08-30T01:49:46.482753", "2019-10-05T10:13:22.000000", "02" }
 	};
 	private static String[][] testProductFileData = {
-		// Product file name, ZIP file name, AUX file name
-		{ "product_file_name.nc", "zip_file_name.zip", "aux_file_name.txt" }
+		// Product file name, ZIP file name, AUX file name, file path
+		{ "product_file_name.nc", "zip_file_name.zip", "aux_file_name.txt", "path-to-file" }
 	};
+	
+	/* Other test objects */
 	private static final String PROCESSING_FACILITY_NAME = "testfacility";
 
+	private static final String STORAGE_MGR_URL = "https://localhost:8080/proseo/storage-mgr/v1";
+	private static final long STORAGE_MGR_TEST_TO = 70L;
+	private static final long STORAGE_MGR_TEST_FROM = 20L;
+	private static final byte[] STORAGE_MGR_SECRET = Arrays.copyOf(
+			("MyVeryLongSecretMustBeAtLeast32Bytes" + "                ").getBytes(),
+			32);
+	
 	/** Ingestor configuration */
 	@Autowired
 	IngestorConfiguration ingestorConfig;
 	
 	/** The ProductManager class under test */
-	@Autowired
+	@InjectMocks
 	private ProductManager productManager;
+	
+	/** A mock SecurityService */
+	@Mock
+	private SecurityService mockSecurityService;
+	
+	/** A mock IngestorConfiguration */
+	@Mock
+	private IngestorConfiguration mockIngestorConfig;
 	 
 //	/** Test Entity Manager */
 //	@Autowired
@@ -96,13 +127,11 @@ public class ProductManagerTest {
 	 * @param testData an array of Strings representing the product to create
 	 * @return a Product with its attributes set to the input data
 	 */
-	private Product createProduct(String[] testData) {
-		Product testProduct = new Product();
-		
-		testProduct.setProductClass(
-				RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(testData[2], testData[3]));
+	private Product createProduct(ProductClass testProductClass, String[] testData) {
+		logger.info("... creating product with product type {}", (null == testProductClass ? null : testProductClass.getProductType()));
 
-		logger.info("... creating product with product type {}", (null == testProduct.getProductClass() ? null : testProduct.getProductClass().getProductType()));
+		Product testProduct = new Product();
+		testProduct.setProductClass(testProductClass);
 		testProduct.setUuid(UUID.randomUUID());
 		testProduct.setFileClass(testData[4]);
 		testProduct.setMode(testData[5]);
@@ -123,11 +152,11 @@ public class ProductManagerTest {
 	 * 
 	 * @return a list of test product generated
 	 */
-	private List<Product> createTestProducts(ProcessingFacility testFacility) {
+	private List<Product> createTestProducts(ProductClass productClass, ProcessingFacility testFacility) {
 		logger.info("Creating test products");
 		List<Product> testProducts = new ArrayList<>();
 		for (int i = 0; i < testProductData.length; ++i) {
-			Product testProduct = createProduct(testProductData[i]);
+			Product testProduct = createProduct(productClass, testProductData[i]);
 			testProducts.add(testProduct);
 			if (i < testProductFileData.length) {
 				ProductFile testProductFile = new ProductFile();
@@ -135,6 +164,7 @@ public class ProductManagerTest {
 				testProductFile.setProductFileName(testProductFileData[i][0]);
 				testProductFile.setZipFileName(testProductFileData[i][1]);
 				testProductFile.getAuxFileNames().add(testProductFileData[i][2]);
+				testProductFile.setFilePath(testProductFileData[i][3]);
 				testProductFile = RepositoryService.getProductFileRepository().save(testProductFile);
 				testProduct.getProductFile().add(testProductFile);
 			}
@@ -152,9 +182,42 @@ public class ProductManagerTest {
 		
 		ProcessingFacility testFacility = new ProcessingFacility();
 		testFacility.setName(PROCESSING_FACILITY_NAME);
+		testFacility.setStorageManagerUrl(STORAGE_MGR_URL);
 		testFacility = RepositoryService.getFacilityRepository().save(testFacility);
 		
 		return testFacility;
+	}
+	
+	/**
+	 * Generates a test mission
+	 * 
+	 * @return the test mission
+	 */
+	private Mission createTestMission() {
+		logger.info("Creating test mission");
+
+		Mission testMission = new Mission();
+		testMission.setCode(TEST_CODE);
+		testMission = RepositoryService.getMissionRepository().save(testMission);
+		
+		return testMission;
+	}
+	
+	/**
+	 * Generates a test product class
+	 * 
+	 * @return the test product class
+	 */
+	private ProductClass createTestProductClass(Mission mission) {
+		logger.info("Creating test product class");
+
+		ProductClass testClass = new ProductClass();
+		testClass.setMission(mission);
+		testClass.setProductType(TEST_PRODUCT_TYPE);
+		testClass.setVisibility(ProductVisibility.PUBLIC);
+		testClass = RepositoryService.getProductClassRepository().save(testClass);
+		
+		return testClass;
 	}
 	
 	/**
@@ -176,6 +239,18 @@ public class ProductManagerTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
+		MockitoAnnotations.initMocks(this);
+
+		when(mockSecurityService.getMission()).thenReturn(TEST_CODE);
+		when(mockSecurityService.isAuthorizedForMission(TEST_CODE)).thenReturn(true);
+		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER)).thenReturn(true);
+		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)).thenReturn(true);
+		when(mockSecurityService.hasRole(UserRole.PRODUCT_READER_ALL)).thenReturn(false);
+		
+		// Apparently when using @IngestMocks all @Autowired objects in the class under test need to be mocked,
+		// although we would be fine with the regular Spring configuration object here ...
+		when(mockIngestorConfig.getStorageManagerTokenValidity()).thenReturn(ingestorConfig.getStorageManagerTokenValidity());
+		when(mockIngestorConfig.getStorageManagerSecret()).thenReturn(ingestorConfig.getStorageManagerSecret());
 	}
 
 	/**
@@ -240,14 +315,50 @@ public class ProductManagerTest {
 //	public final void testGetProductByUuid() {
 //		fail("Not yet implemented"); // TODO
 //	}
-//
-//	/**
-//	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductManager#downloadProductById(java.lang.Long, java.lang.Long, java.lang.Long)}.
-//	 */
-//	@Test
-//	public final void testDownloadProductById() {
-//		fail("Not yet implemented"); // TODO
-//	}
+
+	/**
+	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductManager#downloadProductById(java.lang.Long, java.lang.Long, java.lang.Long)}.
+	 */
+	@Test
+	public final void testDownloadProductById() {
+		logger.info("Starting test for downloadProductById");
+		
+		List<Product> testProducts = createTestProducts(createTestProductClass(createTestMission()), createTestFacility());
+		Product testProduct = testProducts.get(0);
+		ProductFile testProductFile = testProduct.getProductFile().iterator().next();
+		
+		String redirectLink = null;
+		try {
+			redirectLink = productManager.downloadProductById(testProduct.getId(), STORAGE_MGR_TEST_FROM, STORAGE_MGR_TEST_TO);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception testing 'downloadProductById'");
+		}
+		
+		assertTrue("'token' query parameter not found", redirectLink.contains(STORAGE_MGER_LINK_TOKEN));
+		String[] redirectLinkParts = redirectLink.split(STORAGE_MGER_LINK_TOKEN);
+		redirectLink = redirectLinkParts[0];
+
+		String STORAGE_MGR_EXPECTED_LINK = null;
+		try {
+			STORAGE_MGR_EXPECTED_LINK = String.format(
+					"%s/products/download?pathInfo=%s%%2F%s&fromByte=%d&toByte=%d",
+					STORAGE_MGR_URL,
+					testProductFile.getFilePath(),
+					testProductFile.getZipFileName(),
+					STORAGE_MGR_TEST_FROM,
+					STORAGE_MGR_TEST_TO);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception in 'String.format'");
+		}
+		assertEquals("Incorrect download link", STORAGE_MGR_EXPECTED_LINK, redirectLink);
+		
+		JWTClaimsSet claimsSet = extractJwtClaimsSet(redirectLinkParts[1]);
+		
+		assertEquals(testProduct.getProductFile().iterator().next().getZipFileName(), claimsSet.getSubject());
+		assertTrue(new Date().before(claimsSet.getExpirationTime()));
+	}
 
 	/**
 	 * Test method for {@link de.dlr.proseo.ingestor.rest.ProductManager#getDownloadTokenById(java.lang.Long, java.lang.String)}.
@@ -256,47 +367,74 @@ public class ProductManagerTest {
 	public final void testGetDownloadTokenById() {
 		logger.info("Starting test for getDownloadTokenById");
 		
-		ProcessingFacility testFacility = createTestFacility();
-		List<Product> testProducts = createTestProducts(testFacility);
+		List<Product> testProducts = createTestProducts(createTestProductClass(createTestMission()), createTestFacility());
 		Product testProduct = testProducts.get(0);
 		
 		// Basic case: ID only
-		String token = productManager.getDownloadTokenById(testProduct.getId(), null);
-		
-		SignedJWT signedJWT = null;
+		String token = null;
 		try {
-			signedJWT = SignedJWT.parse(token);
-		} catch (ParseException e) {
-			fail("Token not parseable");
+			token = productManager.getDownloadTokenById(testProduct.getId(), null);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			fail("Exception in basic case");
 		}
 		
-		JWSVerifier verifier = null;
-		try {
-			verifier = new MACVerifier(ingestorConfig.getStorageManagerSecret());
-		} catch (JOSEException e) {
-			fail("Secret length is shorter than the minimum 256-bit requirement");
-		}
+		JWTClaimsSet claimsSet = extractJwtClaimsSet(token);
 
+		assertEquals(testProduct.getProductFile().iterator().next().getZipFileName(), claimsSet.getSubject());
+		assertTrue(new Date().before(claimsSet.getExpirationTime()));
+		
+		// Full case: ID and file name
 		try {
-			assertTrue(signedJWT.verify(verifier));
-		} catch (IllegalStateException e) {
-			fail("The JWS object is not in a signed or verified state, actual state: " + signedJWT.getState());
-		} catch (JOSEException e) {
-			fail("The JWS object couldn't be verified");
+			token = productManager.getDownloadTokenById(testProduct.getId(), testProduct.getProductFile().iterator().next().getProductFileName());
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			fail("Exception in full case");
 		}
 		
-		// Retrieve / verify the JWT claims according to the app requirements
-		JWTClaimsSet claimsSet = null;
-		try {
-			claimsSet = signedJWT.getJWTClaimsSet();
-		} catch (ParseException e) {
-			fail("The payload of the JWT doesn't represent a valid JSON object and a JWT claims set");
-		}
+		claimsSet = extractJwtClaimsSet(token);
 
 		assertEquals(testProduct.getProductFile().iterator().next().getProductFileName(), claimsSet.getSubject());
 		assertTrue(new Date().before(claimsSet.getExpirationTime()));
-		
-		// TODO More tests with varying parameters
 	}
+
+/**
+ * Check the given token for formal correctness and extract its JWT claims set
+ * 
+ * @param token the signed JSON Web Token to check
+ * @return the JWT claims set contained in the token
+ */
+private JWTClaimsSet extractJwtClaimsSet(String token) {
+	SignedJWT signedJWT = null;
+	try {
+		signedJWT = SignedJWT.parse(token);
+	} catch (ParseException e) {
+		fail("Token not parseable");
+	}
+	
+	JWSVerifier verifier = null;
+	try {
+		verifier = new MACVerifier(ingestorConfig.getStorageManagerSecret());
+	} catch (JOSEException e) {
+		fail("Secret length is shorter than the minimum 256-bit requirement");
+	}
+
+	try {
+		assertTrue(signedJWT.verify(verifier));
+	} catch (IllegalStateException e) {
+		fail("The JWS object is not in a signed or verified state, actual state: " + signedJWT.getState());
+	} catch (JOSEException e) {
+		fail("The JWS object couldn't be verified");
+	}
+	
+	// Retrieve / verify the JWT claims according to the app requirements
+	JWTClaimsSet claimsSet = null;
+	try {
+		claimsSet = signedJWT.getJWTClaimsSet();
+	} catch (ParseException e) {
+		fail("The payload of the JWT doesn't represent a valid JSON object and a JWT claims set");
+	}
+	return claimsSet;
+}
 
 }

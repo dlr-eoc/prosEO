@@ -113,13 +113,13 @@ public class IngestorConfiguration {
 	}
 
 	/**
-	 * Gets the shared secret for generating Storage Manager download tokens as 512-bit byte array
+	 * Gets the shared secret for generating Storage Manager download tokens as 256-bit byte array
 	 * 
 	 * @return the Storage Manager secret
 	 */
 	public byte[] getStorageManagerSecret() {
 		byte[] sharedSecret = Arrays.copyOf(
-				(storageManagerSecret + "                                ").getBytes(),
+				(storageManagerSecret + "                ").getBytes(),
 				32);
 		return sharedSecret;
 	}

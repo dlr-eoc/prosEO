@@ -111,14 +111,26 @@ public class ProductUtilTest {
 	public final void test() {
 		// Create an empty product
 		Product modelProduct = new Product();
-		RestProduct restProduct = ProductUtil.toRestProduct(modelProduct);
+		modelProduct.setProductClass(new ProductClass());
+		RestProduct restProduct = null;
+		try {
+			restProduct = ProductUtil.toRestProduct(modelProduct);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception testing 'toRestProduct()' for empty product");
+		}
 		assertEquals("Unexpected version number for new product: ", 1L, restProduct.getVersion().longValue());
 		assertNull("Unexpected mode for new product: ", restProduct.getMode());
 		logger.info("Test copy empty product OK");
 		
 		// Copy a product from model to REST
 		modelProduct = createProduct(testProductData[0]);
-		restProduct = ProductUtil.toRestProduct(modelProduct);
+		try {
+			restProduct = ProductUtil.toRestProduct(modelProduct);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Exception testing 'toRestProduct()' from model product");
+		}
 		assertEquals("Unexpected ID: ", modelProduct.getId(), restProduct.getId().longValue());
 		assertEquals("Unexpected version: ", modelProduct.getVersion(), restProduct.getVersion().longValue());
 		assertEquals("Unexpected UUID: ", modelProduct.getUuid().toString(), restProduct.getUuid());
@@ -148,7 +160,13 @@ public class ProductUtilTest {
 		logger.info("Test copy model to REST OK");
 		
 		// Copy a product from REST to model
-		Product copiedModelProduct = ProductUtil.toModelProduct(restProduct);
+		Product copiedModelProduct = null;
+		try {
+			copiedModelProduct = ProductUtil.toModelProduct(restProduct);
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			fail("Exception testing 'toModelProduct()' from REST product");
+		}
 		assertEquals("ID not preserved: ", modelProduct.getId(), copiedModelProduct.getId());
 		assertEquals("Version not preserved: ", modelProduct.getVersion(), copiedModelProduct.getVersion());
 		assertEquals("UUID not preserved: ", modelProduct.getUuid(), copiedModelProduct.getUuid());
