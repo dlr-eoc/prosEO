@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
+import de.dlr.proseo.interfaces.rest.model.RestFileInfo;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.InputOutput;
@@ -418,7 +420,29 @@ public class BaseWrapper {
 					}
 
 					// Update file name to new file name on POSIX file system
-					String inputFileName = responseInfo.gethttpResponse();
+					String fileInfo = responseInfo.gethttpResponse();
+					ObjectMapper objectMapper = new ObjectMapper();
+					RestFileInfo rfi = null;
+					try {
+						 rfi = objectMapper.readValue(fileInfo, RestFileInfo.class);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						continue;
+					}
+					String inputFileName = rfi.getFilePath();
+					
+					// wait for copy completion due to NFS caching of clients
+					int i = 0;
+					while (FileUtils.sizeOf(new File(inputFileName)) < rfi.getFileSize() && i < 1000) {
+						i++;
+						try {
+							this.wait(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
 					fn.setFileName(inputFileName);
 					// Check for time intervals for this file and update their file names, too
 					for (TimeInterval ti: io.getTimeIntervals()) {
@@ -630,22 +654,29 @@ public class BaseWrapper {
 						throw new WrapperException();
 					}
 
-					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]", 2);  // pipe sign is a symbol of regex, escaped with brackets
-					if (2 != fileTypeAndName.length) {
+					String fileInfo = responseInfo.gethttpResponse();
+					ObjectMapper objectMapper = new ObjectMapper();
+					RestFileInfo rfi = null;
+					try {
+						 rfi = objectMapper.readValue(fileInfo, RestFileInfo.class);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					if (rfi == null) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						throw new WrapperException();
 					}
 					
 					// Make sure all product files have the same storage tpye
 					if (null == productFile.getStorageType()) {
-						productFile.setStorageType(fileTypeAndName[0]);
-					} else if (!productFile.getStorageType().equals(fileTypeAndName[0])) {
+						productFile.setStorageType(rfi.getStorageType());
+					} else if (!productFile.getStorageType().equals(rfi.getStorageType())) {
 						logger.error(MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED, productFile.getProductId());
 						throw new WrapperException();
 					}
 					
 					// Separate the file path into a directory path and a file name
-					String filePath = fileTypeAndName[1]; // This is not a file path in the local (POSIX) file system; its separator is always "/"
+					String filePath = rfi.getFilePath(); // This is not a file path in the local (POSIX) file system; its separator is always "/"
 					int lastSeparatorIndex = filePath.lastIndexOf('/');
 					String parentPath = filePath.substring(0, lastSeparatorIndex);
 					String fileName = filePath.substring(lastSeparatorIndex + 1);

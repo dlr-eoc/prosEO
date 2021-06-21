@@ -1,0 +1,19 @@
+#%RAML 1.0 DataType
+# RestFileInfo:
+type: object
+description: File informations to transfer also the requested file size
+properties:
+  storageType:
+    type: string
+    description: The type of the storage to ingest the data from
+    pattern: ^(S3|ALLUXIO|POSIX|OTHER)$
+  filePath:
+    type: string
+    description: The S3/POSIX/ALLUXIO path to the file
+  fileName:
+    type: string
+    description: The file name
+  fileSize:
+    type: integer
+    format: long
+    description: The size of the primary product file in bytes

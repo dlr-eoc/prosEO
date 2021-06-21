@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
@@ -67,8 +68,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Local file name
 	 */
 	@Override
-	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
-		String response = "";
+	public ResponseEntity<RestFileInfo> getObjectByPathInfo(String pathInfo) {
+		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixWorkerMountPoint() + "/" + sourceFile.getRelPathAndFile(), cfg);
@@ -77,7 +78,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			try {
 					ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 					if (transfered != null && !transfered.isEmpty()) {
-						response = transfered.get(0);
+						response.setStorageType(targetFile.getFsType().toString());
+						response.setFilePath(targetFile.getFullPath());
+						response.setFileName(targetFile.getFileName());
+						response.setFileSize(targetFile.getLength());
 						return new ResponseEntity<>(response, HttpStatus.OK);
 					}
 			} catch (Exception e) {
@@ -86,7 +90,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<String>(response, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 
 	/** 
@@ -98,8 +102,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Target file name
 	 */
 	@Override
-	public ResponseEntity<String> updateProductfiles(String pathInfo, Long productId) {
-		String response = "";
+	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId) {
+		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			String targetRelPath = String.valueOf(productId);
@@ -119,7 +123,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			try {
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 				if (transfered != null && !transfered.isEmpty()) {
-					response = targetFile.getFsType() + "|" + transfered.get(0);
+					response.setStorageType(targetFile.getFsType().toString());
+					response.setFilePath(targetFile.getFullPath());
+					response.setFileName(targetFile.getFileName());
+					response.setFileSize(targetFile.getLength());
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
 			} catch (Exception e) {
@@ -128,6 +135,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<String>(response, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 }
