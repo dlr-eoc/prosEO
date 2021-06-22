@@ -49,7 +49,9 @@ public class StorageManagerUtils {
 	 */
 	public static Boolean createStorageManagerInternalS3Buckets(String s3AccessKey, String s3SecretAccesKey, String s3Endpoint,
 			String bucketName, String region) {
-		if (logger.isTraceEnabled()) logger.trace(">>>createStorageManagerInternal(********, ********, {}, {}, {}", s3Endpoint, bucketName, region);
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> createStorageManagerInternalS3Buckets(***, ***, {}, {}, {}", 
+				s3Endpoint, bucketName, region);
 		
 		S3Client s3 = S3Ops.v2S3Client(s3AccessKey,  s3SecretAccesKey, s3Endpoint, region);
 		ArrayList<String> buckets = S3Ops.listBuckets(s3);
@@ -67,7 +69,8 @@ public class StorageManagerUtils {
 	 * @return true, if the string is valid, false otherwise
 	 */
 	public static Boolean checkXml(String xml) {
-		if (logger.isTraceEnabled()) logger.trace(">>>checkXml(String)");
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> checkXml(String)");
 		
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 
@@ -102,7 +105,8 @@ public class StorageManagerUtils {
 	 * @throws IOException if an I/O error occurs
 	 */
 	public static String inputStreamToString(InputStream inputStream, Charset charset) throws IOException {
-		if (logger.isTraceEnabled()) logger.trace(">>>inputStreamToString(InputStream, Charset)");
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> inputStreamToString(InputStream, Charset)");
 		
 		StringBuilder stringBuilder = new StringBuilder();
 		String line = null;
@@ -123,7 +127,8 @@ public class StorageManagerUtils {
 	 * @return the storage type indicated by this path
 	 */
 	public static StorageType getFsType(String pathInfo) {
-		if (logger.isTraceEnabled()) logger.trace(">>>getFsType({})", pathInfo);
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getFsType({})", pathInfo);
 		
 		StorageType storageType = null;
 		if (pathInfo != null) {
@@ -145,7 +150,8 @@ public class StorageManagerUtils {
 	 * @return the path string without the protocol part
 	 */
 	public static String getRelativePath(String pathInfo) {
-		if (logger.isTraceEnabled()) logger.trace(">>>getRelativePath({})", pathInfo);
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> getRelativePath({})", pathInfo);
 		
 		String relPath = null;
 		if (pathInfo != null) {

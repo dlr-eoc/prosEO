@@ -70,6 +70,9 @@ public final class AlluxioOps {
 	 * @return true, if the operation succeeded, false otherwise
 	 */
 	public static Boolean copyToLocal(AlluxioURI srcPath, AlluxioURI dstPath, ReadPType readType) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyToLocal({}, {}, {})", srcPath, dstPath, readType);
+		
 		try {
 			URIStatus srcStatus = fs.getStatus(srcPath);
 			//logger.info(srcStatus.toString());
@@ -119,13 +122,15 @@ public final class AlluxioOps {
 	/**
 	 * fetch file from ALLUXIO DistributedFileSystem to local file
 	 * 
-	 * @param dfs a given instantiated AlluxioFS
 	 * @param srcPath URI of Alluxio-Object (e.g. alluxio://bucket/path/to/some/file)
 	 * @param dstPath local target filePath
 	 * @param readType the Alluxio read type
 	 * @return true, if the operation succeeded, false otherwise
 	 */
 	private static Boolean copyFileToLocal(AlluxioURI srcPath, AlluxioURI dstPath, ReadPType readType) {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyFileToLocal({}, {}, {})", srcPath, dstPath, readType);
+		
 		File dstFile = new File(dstPath.getPath());
 		String randomSuffix =
 				String.format(".%s_copyToLocal_", RandomStringUtils.randomAlphanumeric(8));
@@ -174,12 +179,16 @@ public final class AlluxioOps {
 	 * destination directory already exists.
 	 *
 	 * @param dstPath the {@link AlluxioURI} of the destination directory which will be created
+	 * @param opt Create directory POptions
 	 * @throws AlluxioException if an error occurs in the Alluxio library
 	 * @throws IOException if an I/O error occurred when accessing the destination path
 	 * @throws InvalidPathException if the destination path exists, but is a file
 	 */
 	private static void createDstDir(AlluxioURI dstPath, CreateDirectoryPOptions opt)
-			throws AlluxioException, IOException, InvalidPathException {
+			throws AlluxioException, IOException, InvalidPathException 
+	{
+		if (logger.isTraceEnabled()) logger.trace(">>> createDstDir({}, {})", dstPath, opt);
+	
 		try {
 			fs.createDirectory(dstPath, opt);
 		} catch (FileAlreadyExistsException e) {
@@ -188,6 +197,9 @@ public final class AlluxioOps {
 
 		URIStatus dstStatus = fs.getStatus(dstPath);
 		if (!dstStatus.isFolder()) {
+			
+			if (logger.isTraceEnabled()) logger.trace("... createDstDir - dstPath is not a Folder. Exception will be called");
+			
 			throw new InvalidPathException(ExceptionMessage.DESTINATION_CANNOT_BE_FILE.getMessage());
 		}
 	}
@@ -205,6 +217,14 @@ public final class AlluxioOps {
 			 */
 			private static final long serialVersionUID = -9149481290182820739L;
 
+			
+			/**
+			 * Creates the copy exception with error message including source and destination 
+			 * 
+			 * @param src Source of Alluxio URI
+			 * @param dst Destination of Alluxio URI
+			 * @param cause Exception
+			 */
 			public CopyException(AlluxioURI src, AlluxioURI dst, Exception cause) {
 				super(String.format(COPY_FAIL_MESSAGE, src, dst), cause);
 			}
@@ -234,13 +254,13 @@ public final class AlluxioOps {
 		 * NOTE: needs to call {@link #shutdown()} to release resources.
 		 *
 		 * @param threads number of threads
-		 * @param stdout the stdout stream for tasks to send messages to
-		 * @param stderr the stderr stream for tasks to send error messages to
 		 * @param fileSystem the Alluxio filesystem used to delete path
 		 * @param path the path to delete on shutdown when it's empty, otherwise can be {@code null}
 		 */
-		public CopyThreadPoolExecutor(int threads,
-				FileSystem fileSystem, AlluxioURI path) {
+		public CopyThreadPoolExecutor(int threads, FileSystem fileSystem, AlluxioURI path) {
+			
+			if (logger.isTraceEnabled()) logger.trace(">>> CopyThreadPoolExecutor({}, {}, {})", threads, fileSystem, path);
+							
 			mPool = new ThreadPoolExecutor(threads, threads,
 					1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(threads * 2),
 					new ThreadPoolExecutor.CallerRunsPolicy());
@@ -278,6 +298,9 @@ public final class AlluxioOps {
 		 * @param task the copy task
 		 */
 		public <T> void submit(Callable<T> task) {
+			
+			if (logger.isTraceEnabled()) logger.trace(">>> submit({})", task);
+			
 			mPool.submit(task);
 		}
 
@@ -290,6 +313,9 @@ public final class AlluxioOps {
 		 * @throws InterruptedException if interrupted while waiting to send the message
 		 */
 		public void succeed(AlluxioURI src, AlluxioURI dst) throws InterruptedException {
+			
+			if (logger.isTraceEnabled()) logger.trace(">>> succeed({}, {})", src, dst); 
+			
 			mMessages.put(String.format(COPY_SUCCEED_MESSAGE, "file://"+src, "alluxio:/"+dst));
 		}
 
@@ -303,6 +329,9 @@ public final class AlluxioOps {
 		 * @throws InterruptedException if interrupted while waiting to send the exception
 		 */
 		public void fail(AlluxioURI src, AlluxioURI dst, Exception cause) throws InterruptedException {
+			
+			if (logger.isTraceEnabled()) logger.trace(">>> fail({}, {}, {})", src, dst, cause); 
+								
 			CopyException exception = new CopyException(src, dst, cause);
 			mExceptions.add(exception);
 			mMessages.put(exception);
@@ -315,6 +344,9 @@ public final class AlluxioOps {
 		 * @throws IOException summarizing all exceptions thrown in the submitted tasks and in shutdown
 		 */
 		public void shutdown() throws IOException {
+			
+			if (logger.isTraceEnabled()) logger.trace(">>> shutdown()");
+			
 			mPool.shutdown();
 			try {
 				mPool.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
@@ -354,11 +386,18 @@ public final class AlluxioOps {
 			}
 		}
 
+		/** 
+		 * Returns the extended information about the exception
+		 * @param e Exception
+		 * @return the information of the error
+		 */
 		private String messageAndCause(Exception e) {
+			
 			return e.getMessage() + ": " + e.getCause().getMessage();
 		}
 
 		private String stacktrace(Exception e) {
+			
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(os, true);
 			e.printStackTrace(ps);
@@ -372,12 +411,16 @@ public final class AlluxioOps {
 	 *
 	 * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
 	 * @param dstPath the {@link AlluxioURI} of the destination
+	 * @param writeType Write Type
 	 * @throws InterruptedException when failed to send messages to the pool
 	 * @return true/false
 	 */
 
 	private static Boolean copyFromLocalFile(AlluxioURI srcPath, AlluxioURI dstPath, WritePType writeType)
 			throws AlluxioException, IOException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocalFile({}, {}, {})", srcPath, dstPath, writeType);
+
 		File src = new File(srcPath.getPath());
 		if (src.isDirectory()) {
 			throw new IOException("Source " + src.getAbsolutePath() + " is not a file.");
@@ -428,12 +471,17 @@ public final class AlluxioOps {
 	 * Asynchronously copies a file or directory specified by srcPath from the local filesystem to
 	 * dstPath in the Alluxio filesystem space, assuming dstPath does not exist.
 	 *
+	 * @param pool thread pool executor for asynchronous copy
 	 * @param srcPath the {@link AlluxioURI} of the source file in the local filesystem
 	 * @param dstPath the {@link AlluxioURI} of the destination
+	 * @param writeType Write Type
 	 * @throws InterruptedException when failed to send messages to the pool
 	 */
 	private static void asyncCopyLocalPath(CopyThreadPoolExecutor pool, AlluxioURI srcPath,
 			AlluxioURI dstPath, WritePType writeType) throws InterruptedException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> asyncCopyLocalPath({}, {}, {})", pool, srcPath, dstPath, writeType);
+		
 		File src = new File(srcPath.getPath());
 		if (!src.isDirectory()) {
 			pool.submit(() -> {
@@ -484,6 +532,8 @@ public final class AlluxioOps {
 	 */
 	public static Boolean copyFromLocal(AlluxioURI srcPath, AlluxioURI dstPath, WritePType writeType)
 			throws AlluxioException, IOException, RuntimeException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> copyFromLocal({}, {}, {})", srcPath, dstPath);
 
 		Boolean success = false;
 		List<AlluxioURI> srcPaths = new ArrayList<>();
