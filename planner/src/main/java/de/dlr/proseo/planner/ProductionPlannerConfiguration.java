@@ -54,9 +54,31 @@ public class ProductionPlannerConfiguration {
 	@Value("${proseo.productionPlanner.dispatcherwaittime}")
 	private String productionPlannerDispatcherWaitTime;
 
+	/** Maximum cycles for file size check */
+	@Value("${proseo.productionPlanner.filecheckmaxcycles}")
+	private String productionPlannerFileCheckMaxCycles;
+	
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.productionPlanner.filecheckwaittime}")
+	private String productionPlannerFileCheckWaitTime;
+
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+
+	/**
+	 * @return the productionPlannerFileCheckMaxCycles
+	 */
+	public String getProductionPlannerFileCheckMaxCycles() {
+		return productionPlannerFileCheckMaxCycles;
+	}
+
+	/**
+	 * @return the productionPlannerFileCheckWaitTime
+	 */
+	public String getProductionPlannerFileCheckWaitTime() {
+		return productionPlannerFileCheckWaitTime;
+	}
 
 	/**
 	 * @return the productionPlannerKubeConfig

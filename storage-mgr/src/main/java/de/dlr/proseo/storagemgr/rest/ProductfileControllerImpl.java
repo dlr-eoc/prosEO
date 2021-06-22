@@ -1,5 +1,8 @@
 package de.dlr.proseo.storagemgr.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +35,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
-	
+	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
+		
 	private static Logger logger = LoggerFactory.getLogger(ProductfileControllerImpl.class);
 	
 	@Autowired
@@ -68,7 +72,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Local file name
 	 */
 	@Override
-	public ResponseEntity<RestFileInfo> getObjectByPathInfo(String pathInfo) {
+	public ResponseEntity<RestFileInfo> getRestFileInfoByPathInfo(String pathInfo) {
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
@@ -102,7 +106,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Target file name
 	 */
 	@Override
-	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId) {
+	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId, Long fileSize) {
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
@@ -121,7 +125,38 @@ public class ProductfileControllerImpl implements ProductfileController {
 			// replace top relPath directory
 			ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
 			try {
+				// wait until source file is really copied
+				if (sourceFile.getFsType() == StorageType.POSIX) {
+					int i = 0;
+					Path fp = Path.of(sourceFile.getFullPath());
+					if (fp.toFile().isFile()) {
+						Integer wait = Integer.valueOf(cfg.getFileCheckWaitTime());
+						Integer max = Integer.valueOf(cfg.getFileCheckMaxCycles());
+						try {
+							while (Files.size(fp) < fileSize && i < max) {
+								if (logger.isDebugEnabled()) {
+									logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
+								}
+								i++;
+								try {
+									this.wait(wait);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+							}
+						} catch (IOException e) {
+							logger.error("Unable to access file {}", sourceFile.getFullPath());
+							return new ResponseEntity<>(
+									errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+									HttpStatus.INTERNAL_SERVER_ERROR);
+						}
+						if (i >= max) {
+							logger.error(MSG_FILE_NOT_FETCHED, aPath);
+						}
+					}
+				}
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+				
 				if (transfered != null && !transfered.isEmpty()) {
 					response.setStorageType(targetFile.getFsType().toString());
 					response.setFilePath(targetFile.getFullPath());

@@ -5,6 +5,9 @@ proseo:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
     orderManager:
         url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     processorManager:

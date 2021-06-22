@@ -119,8 +119,9 @@ resourceTypes:
     responses:
       200:
         body:
-          text/plain:
-            description: The resulting file path in the local POSIX file system
+          application/json:
+            type: RestFileInfo
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/fileinfo.json
   put:
     description: Push file from local POSIX file system to Storage Manager
     queryParameters:
@@ -131,6 +132,10 @@ resourceTypes:
         type: integer
         format: long
         description: The product id used to generate target file path
+      fileSize:
+        type: integer
+        format: long
+        description: The product file size
     responses:
       201:
         body:

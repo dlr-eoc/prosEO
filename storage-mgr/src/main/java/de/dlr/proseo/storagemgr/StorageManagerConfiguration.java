@@ -63,7 +63,15 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
+
+	/** Maximum cycles for file size check */
+	@Value("${proseo.storageManager.filecheckmaxcycles}")
+	private String fileCheckMaxCycles;
 	
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.storageManager.filecheckwaittime}")
+	private String fileCheckWaitTime;
+
 	
 	// Alluxio configuration values currently not in use
 	
@@ -88,6 +96,20 @@ public class StorageManagerConfiguration {
 	 */
 	public String getDefaultStorageType() {
 		return defaultStorageType;
+	}
+
+	/**
+	 * @return the fileCheckMaxCycles
+	 */
+	public String getFileCheckMaxCycles() {
+		return fileCheckMaxCycles;
+	}
+
+	/**
+	 * @return the fileCheckWaitTime
+	 */
+	public String getFileCheckWaitTime() {
+		return fileCheckWaitTime;
 	}
 
 	/**
