@@ -30,7 +30,9 @@ proseo:
       bucket: otc-proseo01-internal
       prefix: joborders
     storageManager:
-        defaultStorageType: S3
+      defaultStorageType: S3
+      # Shared secred for download token
+      secret: MyVeryLongSecretMustBeAtLeast32Bytes
           
             # Alluxio configuration values currently not in use       
 #    mountpoints:

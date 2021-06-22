@@ -23,6 +23,7 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path>src/main/resources/raml/storage-mgr-api.raml</raml-path>
 		<raml-base-package>de.dlr.proseo.storagemgr.rest</raml-base-package>
+        <nimbus.jwt.version>9.10</nimbus.jwt.version>
         <awssdk1.version>1.11.799</awssdk1.version>
         <awssdk2.version>2.13.30</awssdk2.version>
         <alluxio.version>2.2.1</alluxio.version>
@@ -45,6 +46,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus.jwt.version}</version>
         </dependency>
         <!-- AWS S3 SDK 2 -->
         <dependency>

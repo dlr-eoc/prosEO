@@ -1,0 +1,467 @@
+{
+	"info": {
+		"_postman_id": "a0bee7e3-5184-480b-b080-12b162c9263d",
+		"name": "prosEO ESA PRIP Internal",
+		"description": "prosEO team internal test suite for ESA PRIP",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Request product list",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response time is less than 2s\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"bulletinb-380.xml\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"application/octet-stream\");",
+							"});",
+							"pm.test(\"Body does not match string\", function () {",
+							"    pm.expect(pm.response.text()).to.not.include(\"Attributes\");",
+							"});",
+							"pm.test(\"Result size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.have.lengthOf.above(2);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					]
+				},
+				"description": "Request a list of all products stored in the local Storage Manager"
+			},
+			"response": []
+		},
+		{
+			"name": "Request product list expanding attributes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response time is less than 2s\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"bulletinb-380.xml\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"application/octet-stream\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"DateValue\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"StringValue\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"IntegerValue\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$expand=Attributes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$expand",
+							"value": "Attributes"
+						}
+					]
+				},
+				"description": "Request all products of the local Storage Manager with expanded attributes"
+			},
+			"response": []
+		},
+		{
+			"name": "Request product list with $filter",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$filter=startswith(Name, 'PTM_TEST') and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' and att/OData.CSC.StringAttribute/Value eq 'PTM_L2A')&$expand=Attributes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$filter",
+							"value": "startswith(Name, 'PTM_TEST') and Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' and att/OData.CSC.StringAttribute/Value eq 'PTM_L2A')"
+						},
+						{
+							"key": "$expand",
+							"value": "Attributes"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Request product list with $top option",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response time is less than 2s\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"bulletinb-380.xml\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"application/octet-stream\");",
+							"});",
+							"pm.test(\"Result size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.have.lengthOf(2);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$top=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$top",
+							"value": "2"
+						}
+					]
+				},
+				"description": "Request the first n (2) entries from the full product list"
+			},
+			"response": []
+		},
+		{
+			"name": "Request product list with $skip option",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response time is less than 2s\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.not.include(\"bulletinb-380.xml\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"application/octet-stream\");",
+							"});",
+							"pm.test(\"Result size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.have.lengthOf.above(2);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$skip=2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$skip",
+							"value": "2"
+						}
+					]
+				},
+				"description": "Retrieve all products from local Storage Manager, but skip first n (2) entries"
+			},
+			"response": []
+		},
+		{
+			"name": "Request product list selecting properties",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response time is less than 2s\", function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"bulletinb-380.xml\");",
+							"});",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(pm.response.text()).to.not.include(\"application/octet-stream\");",
+							"});",
+							"pm.test(\"Body does not match string\", function () {",
+							"    pm.expect(pm.response.text()).to.not.include(\"Attributes\");",
+							"});",
+							"pm.test(\"Result size\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.value).to.have.lengthOf.above(2);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$select=Id,Name",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$select",
+							"value": "Id,Name"
+						}
+					]
+				},
+				"description": "Retrieve all products from the local Storage Manager, but restricted to Id and Name properties"
+			},
+			"response": []
+		},
+		{
+			"name": "Request number of products",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products?$count=true",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products"
+					],
+					"query": [
+						{
+							"key": "$count",
+							"value": "true"
+						}
+					]
+				},
+				"description": "Retrieve the total number of products in the local Storage Manager"
+			},
+			"response": []
+		},
+		{
+			"name": "Product Details",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Test odata product entity details\", function () {",
+							"    var jsonData = pm.response.json();",
+							"",
+							"// test that the correct odata context is returned",
+							"    pm.expect(jsonData['@odata.context']).to.eql(\"$metadata#Products/$entity\");",
+							"    ",
+							"// check the product status",
+							"    console.log(\"Product :\"+jsonData.Name+\" Online=\"+jsonData.Online);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products({{ProductId}})?$expand=Attributes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products({{ProductId}})"
+					],
+					"query": [
+						{
+							"key": "$expand",
+							"value": "Attributes"
+						}
+					]
+				},
+				"description": "Details of the product returned from the query"
+			},
+			"response": []
+		},
+		{
+			"name": "Download a product",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products(f672d526-884e-4c4b-a91b-01163a6c18fa)/$value",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products(f672d526-884e-4c4b-a91b-01163a6c18fa)",
+						"$value"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "knmiPrip.678",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "PTM\\knmiprip",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

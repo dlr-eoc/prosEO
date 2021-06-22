@@ -63,13 +63,19 @@
           # Long timeout to allow for upload and download of very large files
           proxy_read_timeout     1800s;
         }
+        # Storage Manager download requests must be authenticated by a token in the download URI (checked by Storage Manager)
+        location ~* .*/products/download {
+          proxy_pass http://127.0.0.1:{{ kubectl_proxy_port }}/;
+          # Long timeout to allow for download of very large files
+          proxy_read_timeout     1800s;
+        }
         # API requests must be authenticated by token (Kubernetes)
         location /k8sapi/ {
           auth_request /k8sauth;
-          proxy_pass http://127.0.0.1:8001/;
+          proxy_pass http://127.0.0.1:{{ kubectl_proxy_port }}/;
         }
         location = /k8sauth {
-          proxy_pass http://127.0.0.1:8001/;
+          proxy_pass http://127.0.0.1:{{ kubectl_proxy_port }}/;
           proxy_pass_request_body off;
           proxy_set_header ContentLength "";
           proxy_set_header X-Original-URI $request_uri;

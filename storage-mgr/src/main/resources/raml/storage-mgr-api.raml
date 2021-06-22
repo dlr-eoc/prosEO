@@ -100,8 +100,15 @@ resourceTypes:
         pathInfo: 
           type: string
           description: The file path as S3/ALLUXIO/POSIX string for download
-        fromByte?: integer
-        toByte?: integer
+        token:
+          type: string
+          description: A JSON Web Token authenticating the download (obtained from Ingestor)
+        fromByte?:
+          type: integer
+          description: The first byte of the data stream to download (default is file start, i.e. byte 0)
+        toByte?:
+          type: integer
+          description: The last byte of the data stream to download (default is file end, i.e. file size - 1)
       responses:
         200:
           body:

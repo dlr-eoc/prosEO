@@ -1,5 +1,7 @@
 package de.dlr.proseo.storagemgr;
 
+import java.util.Arrays;
+
 /**
  * StorageManagerConfiguration.java
  * 
@@ -64,6 +66,10 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
 	
+	/** Shared secret for Storage Manager download tokens */
+	@Value("${proseo.storageManager.secret}")
+	private String storageManagerSecret;
+	
 	
 	// Alluxio configuration values currently not in use
 	
@@ -88,6 +94,18 @@ public class StorageManagerConfiguration {
 	 */
 	public String getDefaultStorageType() {
 		return defaultStorageType;
+	}
+
+	/**
+	 * Gets the shared secret for generating Storage Manager download tokens as 256-bit byte array
+	 * 
+	 * @return the Storage Manager secret
+	 */
+	public byte[] getStorageManagerSecret() {
+		byte[] sharedSecret = Arrays.copyOf(
+				(storageManagerSecret + "                ").getBytes(),
+				32);
+		return sharedSecret;
 	}
 
 	/**

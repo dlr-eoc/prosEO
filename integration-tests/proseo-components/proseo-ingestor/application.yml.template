@@ -20,3 +20,7 @@ proseo:
     storageManager:
         # Connection timeout in ms
         timeout: 30000
+        # Shared secred for download token
+        secret: MyVeryLongSecretMustBeAtLeast32Bytes
+        # Validity period for download token
+        validity: 60000
