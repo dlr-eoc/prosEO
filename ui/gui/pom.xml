@@ -120,7 +120,7 @@
 			</plugin>
 
 			<!-- Build Docker image -->
-			<plugin>
+<!-- 			<plugin>
 				<groupId>io.fabric8</groupId>
 				<artifactId>docker-maven-plugin</artifactId>
 				<version>${docker-maven-version}</version>
@@ -142,6 +142,6 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
+ -->		</plugins>
 	</build>
 </project>

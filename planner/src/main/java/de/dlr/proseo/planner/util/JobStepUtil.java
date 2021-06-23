@@ -647,9 +647,11 @@ public class JobStepUtil {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
 					checkJobStepQueries(js, false);
-					if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-						if (kc.couldJobRun()) {
-							kc.createJob(String.valueOf(js.getId()), null, null);
+					if (js.getJobStepState() == JobStepState.READY) {
+						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+							if (kc.couldJobRun()) {
+								kc.createJob(String.valueOf(js.getId()), null, null);
+							}
 						}
 					}
 				}

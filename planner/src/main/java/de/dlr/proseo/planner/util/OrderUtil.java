@@ -894,7 +894,7 @@ public class OrderUtil {
 			}
 			Boolean hasFailed = false;
 			for (Job j : order.getJobs()) {
-				if (j.getJobState() == JobState.FAILED) {
+				if (j.getJobState() == JobState.FAILED || j.hasFailedJobSteps()) {
 					hasFailed = true;
 					break;
 				}
