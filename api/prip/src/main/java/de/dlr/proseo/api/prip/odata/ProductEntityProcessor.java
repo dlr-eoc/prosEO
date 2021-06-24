@@ -46,11 +46,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import de.dlr.proseo.api.prip.ProductionInterfaceConfiguration;
 import de.dlr.proseo.api.prip.ProductionInterfaceSecurity;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
@@ -71,10 +77,13 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
 	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
-	private static final int MSG_ID_PRODUCT_NOT_FOUND = 5003;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT = 5005;
-	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
-	private static final int MSG_ID_EXCEPTION = 5007;
+	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
+	private static final int MSG_ID_SERVICE_REQUEST_FAILED = 5004;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_SERVICE = 5005;
+	private static final int MSG_ID_PRODUCT_NOT_FOUND = 5006;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT = 5007;
+	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5008;
+	private static final int MSG_ID_EXCEPTION = 5009;
 	private static final int MSG_ID_FORBIDDEN = 5100;
 	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 5101;
 	private static final int MSG_ID_INVALID_RANGE_HEADER = 5102;
@@ -83,6 +92,9 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
 	private static final String MSG_URI_GENERATION_FAILED = "(E%d) URI generation from product UUID failed (cause: %s)";
+	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
+	private static final String MSG_SERVICE_REQUEST_FAILED = "(E%d) Service request failed with status %d (%s), cause: %s";
+	private static final String MSG_NOT_AUTHORIZED_FOR_SERVICE = "(E%d) User %s not authorized for requested service";
 	private static final String MSG_PRODUCT_NOT_FOUND = "(E%d) No product found with UUID %s";
 	private static final String MSG_NOT_AUTHORIZED_FOR_PRODUCT = "(E%d) User %s not authorized to access requested product %s";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
@@ -105,6 +117,14 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/** REST template builder */
+	@Autowired
+	private RestTemplateBuilder rtb;
+	
+	/** The configuration for the PRIP API */
+	@Autowired
+	private ProductionInterfaceConfiguration config;
 	
 	/** The security utilities for the PRIP API */
 	@Autowired
@@ -220,6 +240,62 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 
 		if (logger.isTraceEnabled()) logger.trace("<<< getProductAsEntity()");
 		return product;
+	}
+
+	/**
+	 * Retrieve a download token for the requested product ID and file name from the Ingestor service
+	 * 
+	 * @param id the product ID
+	 * @param productFileName the product file name
+	 * @return a JSON Web Token for authentication with the Storage Manager
+	 * @throws HttpClientErrorException if an error is returned from the Ingestor service
+	 * @throws RestClientException if the request to the Ingestor fails for some other reason
+	 * @throws RuntimeException if any other exception occurs
+	 * @throws SecurityException if the logged in user is not authorized to access the requested product
+	 */
+	private String retrieveDownloadToken(long id, String productFileName)
+			throws HttpClientErrorException, RestClientException, RuntimeException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> retrieveDownloadToken({}, {})", id, productFileName);
+
+		// Request product metadata from Ingestor service
+		
+		// Attempt connection to service
+		ResponseEntity<String> entity = null;
+		try {
+			RestTemplate restTemplate = rtb.basicAuthentication(
+					securityConfig.getMission() + "-" + securityConfig.getUser(), securityConfig.getPassword())
+				.build();
+			String requestUrl = config.getIngestorUrl() + "/products/" + id + "/download/token?fileName=" + productFileName;
+			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
+			entity = restTemplate.getForEntity(requestUrl, String.class);
+		} catch (HttpClientErrorException.Unauthorized e) {
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_SERVICE, MSG_ID_NOT_AUTHORIZED_FOR_SERVICE, securityConfig.getUser());
+			logger.error(message);
+			throw new SecurityException(message);
+		} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+			logger.error(String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED,
+					e.getStatusCode().value(), e.getStatusCode().toString(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING)));
+			throw new HttpClientErrorException(e.getStatusCode(), e.getResponseHeaders().getFirst(HTTP_HEADER_WARNING));
+		} catch (RestClientException e) {
+			String message = String.format(MSG_HTTP_REQUEST_FAILED, MSG_ID_HTTP_REQUEST_FAILED, e.getMessage());
+			logger.error(message, e);
+			throw new RestClientException(message, e);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new RuntimeException(e);
+		}
+		
+		// All GET requests should return HTTP status OK
+		if (!HttpStatus.OK.equals(entity.getStatusCode())) {
+			String message = String.format(MSG_SERVICE_REQUEST_FAILED, MSG_ID_SERVICE_REQUEST_FAILED, 
+					entity.getStatusCodeValue(), entity.getStatusCode().toString(), entity.getHeaders().getFirst(HTTP_HEADER_WARNING));
+			logger.error(message);
+			throw new RuntimeException(message);
+		}
+		
+		String downloadToken = entity.getBody();
+		if (logger.isDebugEnabled()) logger.debug("... token generated: " + downloadToken);
+		return downloadToken;
 	}
 
 	/**
@@ -397,6 +473,40 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		// Select the first product file to transfer (they should be identical anyway)
 		ProductFile productFile = modelProduct.getProductFile().iterator().next();
 		
+		// Retrieve a download token from the Ingestor
+		String productFileName =
+				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
+		String downloadToken;
+		try {
+			downloadToken = retrieveDownloadToken(modelProduct.getId(), productFileName);
+		} catch (HttpClientErrorException e) {
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(e.getRawStatusCode(), e.getMessage())).getContent());
+			response.setStatusCode(e.getRawStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+			return;
+		} catch (RestClientException e) {
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.BAD_REQUEST.getStatusCode(), e.getMessage())).getContent());
+			response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+			return;
+		} catch (SecurityException e) {
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.UNAUTHORIZED.getStatusCode(), e.getMessage())).getContent());
+			response.setStatusCode(HttpStatusCode.UNAUTHORIZED.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
+			return;
+		} catch (Exception e) {
+			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
+			e.printStackTrace();
+			response.setContent(serializer.error(
+					LogUtil.oDataServerError(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode(), message)).getContent());
+			response.setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatusCode());
+			response.setHeader(HTTP_HEADER_WARNING, message);
+			return;
+		}
+		
 		// Get the service URI of the Storage Manager service
 		String storageManagerUrl = productFile.getProcessingFacility().getStorageManagerUrl();
 		
@@ -404,8 +514,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		URIBuilder uriBuilder = null;
 		try {
 			uriBuilder = new URIBuilder(storageManagerUrl + "/products/download");
-			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" +
-				(null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName()));
+			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" + productFileName);
+			uriBuilder.addParameter("token", downloadToken);
 		} catch (URISyntaxException e) {
 			String message = logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage());
 			e.printStackTrace();

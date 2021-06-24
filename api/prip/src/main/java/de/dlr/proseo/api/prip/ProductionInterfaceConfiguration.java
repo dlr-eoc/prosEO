@@ -25,6 +25,10 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.userManager.url}")
 	private String userMgrUrl;
 	
+	/** The URL of the prosEO Ingestor */
+	@Value("${proseo.ingestor.url}")
+	private String ingestorUrl;
+	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -32,6 +36,15 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public String getUserMgrUrl() {
 		return userMgrUrl;
+	}
+
+	/**
+	 * Gets the URL of the prosEO Ingestor component
+	 * 
+	 * @return the Ingestor URL
+	 */
+	public String getIngestorUrl() {
+		return ingestorUrl;
 	}
 
 }
