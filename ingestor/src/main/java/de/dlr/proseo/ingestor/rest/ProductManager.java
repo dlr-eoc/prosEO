@@ -138,7 +138,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_RETRIEVED_BY_UUID = "(I%d) Product with UUID %s retrieved";
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
-	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with UUID %s retrieved";
+	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with ID %s retrieved";
 	
 	/* Other string constants */
 	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
