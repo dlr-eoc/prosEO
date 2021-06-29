@@ -193,10 +193,11 @@ public class FileCache {
 
 		String accessedPath = getAccessedPath(path);
 		String timeStamp = Instant.now().toString();
+		FileUtils fileUtils = new FileUtils(accessedPath);
 
 		System.out.println("Created/Updated Access File: " + accessedPath);
 
-		FileUtils.createFile(accessedPath, timeStamp);
+		fileUtils.createFile(timeStamp);
 
 		put(path);
 	}
@@ -216,13 +217,9 @@ public class FileCache {
 			throw new IOException("File not deleted: " + path);
 		}
 
-		System.out.println("File deleted successfully:" + path);
-
 		if (!accessedFile.delete()) {
 			throw new IOException("Accessed File not deleted: " + path);
 		}
-
-		System.out.println("Accessed File deleted successfully" + path);
 
 		deleteEmptyDirectoriesToTop(directory);
 	}
@@ -258,8 +255,8 @@ public class FileCache {
 	 * @return
 	 */
 	public Long getFileSize(String path) {
-
-		return FileUtils.getFileSize(path);
+		
+		return new FileUtils(path).getFileSize();
 	}
 
 	/**
@@ -270,12 +267,13 @@ public class FileCache {
 	public Instant getLastAccessed(String path) {
 
 		String lastAccessed;
+		FileUtils fileUtils = new FileUtils(getAccessedPath(path));
 
 		if (!hasAccessed(path)) {
 			rewriteFileAccessed(path);
 		}
 
-		lastAccessed = FileUtils.getFileContent(getAccessedPath(path));
+		lastAccessed = fileUtils.getFileContent();
 
 		return Instant.parse(lastAccessed);
 	}

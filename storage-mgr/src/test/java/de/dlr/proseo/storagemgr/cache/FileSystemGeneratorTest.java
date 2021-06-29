@@ -17,7 +17,7 @@ public class FileSystemGeneratorTest {
 
 		String testPath = TestUtils.getTestPath();
 
-		System.out.println("Current Path: " + testPath);
+		System.out.println("TestData Path: " + testPath);
 
 		var fileTreeGenerator = new FileSystemGeneratorTest(testPath);
 
@@ -101,14 +101,16 @@ public class FileSystemGeneratorTest {
 		String relativePath;
 		String fileName;
 		String content;
+		FileUtils fileUtils; 
 
 		for (int i = 1; i <= filesToGenerate; i++) {
 
 			relativePath = pathGenerator.generateRandomDirectoryPath();
 			fileName = pathGenerator.generateRandomFileName();
 			content = pathGenerator.generateString(fileContentLength);
-
-			FileUtils.createFile(path + relativePath + "/" + fileName, content);
+			
+			fileUtils = new FileUtils(path + relativePath + "/" + fileName);
+			fileUtils.createFile(content);
 		}
 	}
 }

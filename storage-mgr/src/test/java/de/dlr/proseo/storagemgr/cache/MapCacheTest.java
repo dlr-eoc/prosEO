@@ -148,7 +148,7 @@ public class MapCacheTest {
 
 		TestUtils.printMethodName(this, testName);
 
-		String testPath = "/HelloWorld/src/com/my/prosEO/PathCache.java";
+		String testPath = TestUtils.getTestPath();
 		File file = new File(testPath);
 
 		System.out.println("Path: " + file.getPath());

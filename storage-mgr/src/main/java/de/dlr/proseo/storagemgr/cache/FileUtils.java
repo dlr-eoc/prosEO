@@ -11,13 +11,37 @@ import java.nio.file.Paths;
  *
  */
 public class FileUtils {
+	
+	private String path; 
+
+	/**
+	 * @return
+	 */
+	public String getPath() {
+		return path;
+	}
+
+	/**
+	 * @param path
+	 */
+	public void setPath(String path) {
+		this.path = path;
+	}
+	
+	/**
+	 * @param path
+	 */
+	public FileUtils(String path) {
+		
+		this.path = path; 
+	}
 
 	/**
 	 * @param path
 	 * @param fileName
 	 * @param content
 	 */
-	public static void createFile(String path, String content) {
+	public void createFile(String content) {
 
 		File file = new File(path);
 		file.getParentFile().mkdirs();
@@ -38,9 +62,9 @@ public class FileUtils {
 	 * @param path
 	 * @return
 	 */
-	public static long getFileSize(String path) {
+	public long getFileSize() {
 
-		checkIfFile(path, "Wrong path or not a file");
+		checkIfFile("Wrong path or not a file");
 
 		return new File(path).length();
 	}
@@ -50,11 +74,11 @@ public class FileUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static String getFileContent(String path) {
+	public String getFileContent() {
 
 		String content = "";
 
-		checkIfFile(path, "Wrong path or not a file");
+		checkIfFile("Wrong path or not a file");
 
 		try {
 			content = new String(Files.readAllBytes(Paths.get(path)));
@@ -69,7 +93,7 @@ public class FileUtils {
 	 * @param path
 	 * @param exceptionMessage
 	 */
-	private static void checkIfFile(String path, String exceptionMessage) {
+	private void checkIfFile(String exceptionMessage) {
 
 		File file = new File(path);
 

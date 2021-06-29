@@ -3,7 +3,6 @@ package de.dlr.proseo.storagemgr.cache;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.time.Instant;
 
 import org.junit.Rule;
@@ -16,7 +15,7 @@ import org.junit.rules.TestName;
  */
 public class FileCacheTest {
 
-	String testPath = Paths.get(".").toAbsolutePath().normalize().toString() + "/TESTDATA";
+	String testPath = TestUtils.getTestPath();
 
 	@Rule
 	public TestName testName = new TestName();
@@ -56,8 +55,9 @@ public class FileCacheTest {
 
 		String testFile = "testLastAccessed.txt";
 		String path = testPath + "/" + testFile;
+		FileUtils fileUtils = new FileUtils(path);
 
-		FileUtils.createFile(path, "");
+		fileUtils.createFile("");
 
 		FileCache pathCache = new FileCache(testPath);
 
@@ -108,13 +108,13 @@ public class FileCacheTest {
 		String path2 = testPath + "/test1/test2/test1.txt";
 		String path3 = testPath + "/test1/test2/test2.txt";
 		String pathNotExists = testPath + "/xxx/xxx/zzz.txt";
-
-		FileUtils.createFile(path1, "");
-		FileUtils.createFile(path2, "");
-		FileUtils.createFile(path3, "");
-
-		FileUtils.createFile(testPath + "/xx.x", "");
-		FileUtils.createFile(testPath + "/123.x", "");
+		
+		new FileUtils(path1).createFile("");
+		new FileUtils(path2).createFile("");
+		new FileUtils(path2).createFile("");
+		
+		new FileUtils(testPath + "/xx.x").createFile("");
+		new FileUtils(testPath + "/123.x").createFile("");
 
 		FileCache pathCache = new FileCache(testPath);
 
