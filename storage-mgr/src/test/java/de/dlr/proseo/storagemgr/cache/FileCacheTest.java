@@ -63,7 +63,7 @@ public class FileCacheTest {
 
 		Instant testInstant;
 
-		testInstant = pathCache.getLastAccessed(path);
+		testInstant = pathCache.getFileAccessed(path);
 
 		System.out.println("Generated accessed: " + testInstant.toString());
 
@@ -111,7 +111,7 @@ public class FileCacheTest {
 		
 		new FileUtils(path1).createFile("");
 		new FileUtils(path2).createFile("");
-		new FileUtils(path2).createFile("");
+		new FileUtils(path3).createFile("");
 		
 		new FileUtils(testPath + "/xx.x").createFile("");
 		new FileUtils(testPath + "/123.x").createFile("");

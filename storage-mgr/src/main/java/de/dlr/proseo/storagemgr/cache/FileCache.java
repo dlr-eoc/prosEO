@@ -39,7 +39,7 @@ public class FileCache {
 	 */
 	public void put(String pathKey) {
 
-		FileInfo fileInfo = new FileInfo(getLastAccessed(pathKey), getFileSize(pathKey));
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
@@ -80,8 +80,6 @@ public class FileCache {
 
 			remove(pathKey);
 		}
-
-		mapCache.clear();
 	}
 
 	/**
@@ -89,7 +87,7 @@ public class FileCache {
 	 * @return
 	 */
 	public boolean containsKey(String pathKey) {
-
+		
 		return mapCache.containsKey(pathKey);
 	}
 
@@ -97,12 +95,22 @@ public class FileCache {
 	 * @param path
 	 */
 	public FileCache(String path) {
+		
+		File directory = new File(path);
 
 		this.path = path;
 
 		mapCache = new MapCache();
-
-		createAccessedForNotAccessed(path);
+		
+		if (!directory.exists()) {
+			
+			if (!directory.mkdirs()) {
+				
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+			}
+		}
+		
+		putFilesToCache(path);
 	}
 
 	/**
@@ -124,7 +132,7 @@ public class FileCache {
 	/**
 	 * @param path
 	 */
-	public void createAccessedForNotAccessed(String path) {
+	public void putFilesToCache(String path) {
 
 		File directory = new File(path);
 
@@ -137,22 +145,22 @@ public class FileCache {
 
 		for (File file : files) {
 
-			if (isPrefixFile(file.getName()) || isHiddenFile(file.getName())) {
+			if (!isCacheFile(file.getName())) {
+				
 				continue;
 			}
+			
+			if (file.isDirectory()) {
 
-			if (file.isFile()) {
-
-				if (!hasAccessed(file.getAbsolutePath())) {
-
-					rewriteFileAccessed(file.getAbsolutePath());
+				putFilesToCache(file.getPath());
+			}
+			else if (file.isFile()) {
+				
+				if (!containsKey(file.getPath())) {
+					
+					put(file.getPath());
 				}
-			}
-
-			else if (file.isDirectory()) {
-
-				createAccessedForNotAccessed(file.getPath());
-			}
+			} 
 		}
 	}
 
@@ -161,12 +169,32 @@ public class FileCache {
 	 * @param fileName
 	 * @return
 	 */
-	public boolean hasAccessed(String path) {
+	public boolean wasAccessed(String path) {
+		
 		File f = new File(getAccessedPath(path));
 
 		return f.isFile();
 	}
+	
+	/**
+	 * @param fileName
+	 * @return
+	 */
+	public boolean isCacheFile(String fileName) {
+		
+		if (isPrefixFile(fileName)) {
+			
+			return false;
+		}
+		
+		if (isHiddenFile(fileName)) {
+			
+			return false;
+		}
 
+		return true;
+	}
+	
 	/**
 	 * @param fileName
 	 * @return
@@ -195,11 +223,7 @@ public class FileCache {
 		String timeStamp = Instant.now().toString();
 		FileUtils fileUtils = new FileUtils(accessedPath);
 
-		System.out.println("Created/Updated Access File: " + accessedPath);
-
 		fileUtils.createFile(timeStamp);
-
-		put(path);
 	}
 
 	/**
@@ -264,12 +288,12 @@ public class FileCache {
 	 * @param fileName
 	 * @return
 	 */
-	public Instant getLastAccessed(String path) {
+	public Instant getFileAccessed(String path) {
 
 		String lastAccessed;
 		FileUtils fileUtils = new FileUtils(getAccessedPath(path));
 
-		if (!hasAccessed(path)) {
+		if (!wasAccessed(path)) {
 			rewriteFileAccessed(path);
 		}
 
