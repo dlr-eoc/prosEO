@@ -22,7 +22,7 @@ public class TestUtils {
 	 */
 	public static String getTestPath() {
 
-		return Paths.get(".").toAbsolutePath().normalize().toString() + "/TESTDATA";
+		return Paths.get(".").toAbsolutePath().normalize().toString() + "/target/TESTDATA";
 	}
 
 	/**
