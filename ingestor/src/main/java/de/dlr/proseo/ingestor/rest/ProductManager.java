@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -32,10 +33,12 @@ import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -230,12 +233,17 @@ public class ProductManager {
 	}
 
 	/**
-	 * List of all products filtered by mission, product class, start time range
+	 * List of all products filtered by mission, product class, , production mode, file class, quality and time ranges
 	 * 
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
+	 * @param mode the processing mode
+	 * @param the file class
+	 * @param the quality
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param genTimeFrom earliest generation time
+	 * @param genTimeTo latest generation time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
 	 * @param jobStepId get input products of job step
@@ -244,10 +252,11 @@ public class ProductManager {
 	 * @throws NoResultException if no products matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProduct> getProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
 			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -261,8 +270,8 @@ public class ProductManager {
 		List<RestProduct> result = new ArrayList<>();
 		
 		// Find using search parameters
-		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				recordFrom, recordTo, jobStepId, orderBy, false);
+		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
+				genTimeFrom, genTimeTo, recordFrom, recordTo, jobStepId, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
@@ -281,18 +290,25 @@ public class ProductManager {
 	}
 
 	/**
-	 * Get the number of products available, possibly filtered by mission, product class and time range
+	 * Get the number of products available, possibly filtered by mission, product class, production mode, file class, quality and time ranges
 	 * 
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
+	 * @param mode the processing mode
+	 * @param the file class
+	 * @param the quality
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param genTimeFrom earliest generation time
+	 * @param genTimeTo latest generation time
 	 * @param jobStepId get input products of job step
 	 * @return the number of products found as string
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId) throws SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
+	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId) throws SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, 
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -303,8 +319,8 @@ public class ProductManager {
 						mission, securityService.getMission()));
 			} 
 		}
-		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				null, null, jobStepId, null, true);
+		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
+				genTimeFrom, genTimeTo,	null, null, jobStepId, null, true);
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return ((Long)resultObject).toString();
@@ -822,7 +838,8 @@ public class ProductManager {
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return JPQL Query
 	 */
-	private Query createProductsQuery(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+	private Query createProductsQuery(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
 			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, Boolean count) {
 
 		// Find using search parameters
@@ -849,11 +866,26 @@ public class ProductManager {
 			}
 			jpqlQuery += ")";
 		}
+		if (null != mode) {
+			jpqlQuery += " and p.mode = :mode";
+		}
+		if (null != fileClass) {
+			jpqlQuery += " and p.fileClass = :fileClass";
+		}
+		if (null != quality) {
+			jpqlQuery += " and p.productQuality = :quality";
+		}
 		if (null != startTimeFrom) {
 			jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
 		}
 		if (null != startTimeTo) {
 			jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
+		}
+		if (null != genTimeFrom) {
+			jpqlQuery += " and p.generationTime >= :genTimeFrom";
+		}
+		if (null != genTimeTo) {
+			jpqlQuery += " and p.generationTime <= :genTimeTo";
 		}
 		// visibility
 		List<ProductVisibility> visibilities = new ArrayList<ProductVisibility>();
@@ -890,11 +922,26 @@ public class ProductManager {
 				query.setParameter("productClass" + i, productClass[i]);
 			}
 		}
+		if (null != mode) {
+			query.setParameter("mode", mode);
+		}
+		if (null != fileClass) {
+			query.setParameter("fileClass", fileClass);
+		}
+		if (null != quality) {
+			query.setParameter("quality", ProductQuality.valueOf(quality));
+		}
 		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom", startTimeFrom.toInstant());
+			query.setParameter("startTimeFrom", OrbitTimeFormatter.parseDateTime(startTimeFrom));
 		}
 		if (null != startTimeTo) {
-			query.setParameter("startTimeTo", startTimeTo.toInstant());
+			query.setParameter("startTimeTo", OrbitTimeFormatter.parseDateTime(startTimeTo));
+		}
+		if (null != genTimeFrom) {
+			query.setParameter("genTimeFrom", OrbitTimeFormatter.parseDateTime(genTimeFrom));
+		}
+		if (null != genTimeTo) {
+			query.setParameter("genTimeTo", OrbitTimeFormatter.parseDateTime(genTimeTo));
 		}
 		if (0 < visibilities.size()) {
 			for (int i = 0; i < visibilities.size(); ++i) {
