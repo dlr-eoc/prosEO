@@ -18,19 +18,25 @@ public class FileCache {
 	private MapCache mapCache;
 
 	/**
-	 * @return
+	 * @param path
 	 */
-	public Map<String, FileInfo> getMapCache() {
+	public FileCache(String path) {
 
-		return mapCache.getCache();
-	}
+		File directory = new File(path);
 
-	/**
-	 * @return
-	 */
-	public static String getPrefix() {
+		this.path = path;
 
-		return PREFIX;
+		mapCache = new MapCache();
+
+		if (!directory.exists()) {
+
+			if (!directory.mkdirs()) {
+
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+			}
+		}
+
+		putFilesToCache(path);
 	}
 
 	/**
@@ -48,17 +54,26 @@ public class FileCache {
 	 * @param pathKey
 	 * @return
 	 */
-	public FileInfo get(String pathKey) {
+	public boolean containsKey(String pathKey) {
+
+		return mapCache.containsKey(pathKey);
+	}
+	
+	/**
+	 * @param pathKey
+	 * @return
+	 */
+	/* package */ FileInfo get(String pathKey) {
 
 		return mapCache.get(pathKey);
 	}
-
+	
 	/**
 	 * Removes cache element, file and accessed file
 	 * 
 	 * @param pathKey
 	 */
-	public void remove(String pathKey) {
+	/* package */ void remove(String pathKey) {
 
 		try {
 			deleteFileAndAccessed(pathKey);
@@ -72,7 +87,7 @@ public class FileCache {
 	/**
 	 * 
 	 */
-	public void clear() {
+	/* package */ void clear() {
 
 		Set<String> entries = mapCache.getCache().keySet();
 
@@ -83,56 +98,27 @@ public class FileCache {
 	}
 
 	/**
-	 * @param pathKey
 	 * @return
 	 */
-	public boolean containsKey(String pathKey) {
-		
-		return mapCache.containsKey(pathKey);
+	/* package */ Map<String, FileInfo> getMapCache() {
+
+		return mapCache.getCache();
 	}
+
+	/**
+	 * @return
+	 */
+	/* package */ static String getPrefix() {
+
+		return PREFIX;
+	}
+
+
 
 	/**
 	 * @param path
 	 */
-	public FileCache(String path) {
-		
-		File directory = new File(path);
-
-		this.path = path;
-
-		mapCache = new MapCache();
-		
-		if (!directory.exists()) {
-			
-			if (!directory.mkdirs()) {
-				
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
-			}
-		}
-		
-		putFilesToCache(path);
-	}
-
-	/**
-	 * @return the path
-	 */
-	public String getPath() {
-
-		return path;
-	}
-
-	/**
-	 * @param path the path to set
-	 */
-	public void setPath(String path) {
-
-		this.path = path;
-	}
-
-	/**
-	 * @param path
-	 */
-	public void putFilesToCache(String path) {
+	/* package */ void putFilesToCache(String path) {
 
 		File directory = new File(path);
 
@@ -146,84 +132,21 @@ public class FileCache {
 		for (File file : files) {
 
 			if (!isCacheFile(file.getName())) {
-				
+
 				continue;
 			}
-			
+
 			if (file.isDirectory()) {
 
 				putFilesToCache(file.getPath());
-			}
-			else if (file.isFile()) {
-				
+			} else if (file.isFile()) {
+
 				if (!containsKey(file.getPath())) {
-					
+
 					put(file.getPath());
 				}
-			} 
+			}
 		}
-	}
-
-	/**
-	 * @param path
-	 * @param fileName
-	 * @return
-	 */
-	public boolean wasAccessed(String path) {
-		
-		File f = new File(getAccessedPath(path));
-
-		return f.isFile();
-	}
-	
-	/**
-	 * @param fileName
-	 * @return
-	 */
-	public boolean isCacheFile(String fileName) {
-		
-		if (isPrefixFile(fileName)) {
-			
-			return false;
-		}
-		
-		if (isHiddenFile(fileName)) {
-			
-			return false;
-		}
-
-		return true;
-	}
-	
-	/**
-	 * @param fileName
-	 * @return
-	 */
-	public boolean isPrefixFile(String fileName) {
-
-		return fileName.startsWith(PREFIX) ? true : false;
-	}
-
-	/**
-	 * @param fileName
-	 * @return
-	 */
-	public boolean isHiddenFile(String fileName) {
-
-		return fileName.startsWith(".") ? true : false;
-	}
-
-	/**
-	 * @param path
-	 * @param fileName
-	 */
-	public void rewriteFileAccessed(String path) {
-
-		String accessedPath = getAccessedPath(path);
-		String timeStamp = Instant.now().toString();
-		FileUtils fileUtils = new FileUtils(accessedPath);
-
-		fileUtils.createFile(timeStamp);
 	}
 
 	/**
@@ -231,7 +154,7 @@ public class FileCache {
 	 * @param fileName
 	 * @throws IOException
 	 */
-	public void deleteFileAndAccessed(String path) throws IOException {
+	/* package */ void deleteFileAndAccessed(String path) throws IOException {
 
 		File file = new File(path);
 		File accessedFile = new File(getAccessedPath(path));
@@ -251,7 +174,7 @@ public class FileCache {
 	/**
 	 * @param directoryToDelete
 	 */
-	public void deleteEmptyDirectoriesToTop(String directoryToDelete) {
+	/* package */ void deleteEmptyDirectoriesToTop(String directoryToDelete) {
 
 		if (null == directoryToDelete || directoryToDelete.equals(path)) {
 			return;
@@ -278,8 +201,8 @@ public class FileCache {
 	 * @param path
 	 * @return
 	 */
-	public Long getFileSize(String path) {
-		
+	/* package */ Long getFileSize(String path) {
+
 		return new FileUtils(path).getFileSize();
 	}
 
@@ -288,7 +211,7 @@ public class FileCache {
 	 * @param fileName
 	 * @return
 	 */
-	public Instant getFileAccessed(String path) {
+	/* package */ Instant getFileAccessed(String path) {
 
 		String lastAccessed;
 		FileUtils fileUtils = new FileUtils(getAccessedPath(path));
@@ -306,7 +229,7 @@ public class FileCache {
 	 * @param path
 	 * @return
 	 */
-	public String getAccessedPath(String path) {
+	/* package */ String getAccessedPath(String path) {
 
 		File file = new File(path);
 		String accessedPath = file.getParent() + "/" + PREFIX + file.getName();
@@ -314,4 +237,67 @@ public class FileCache {
 		return accessedPath;
 
 	}
+
+	/**
+	 * @param path
+	 * @param fileName
+	 * @return
+	 */
+	private boolean wasAccessed(String path) {
+
+		File f = new File(getAccessedPath(path));
+
+		return f.isFile();
+	}
+
+	/**
+	 * @param fileName
+	 * @return
+	 */
+	private boolean isCacheFile(String fileName) {
+
+		if (isPrefixFile(fileName)) {
+
+			return false;
+		}
+
+		if (isHiddenFile(fileName)) {
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param fileName
+	 * @return
+	 */
+	private boolean isPrefixFile(String fileName) {
+
+		return fileName.startsWith(PREFIX) ? true : false;
+	}
+
+	/**
+	 * @param fileName
+	 * @return
+	 */
+	private boolean isHiddenFile(String fileName) {
+
+		return fileName.startsWith(".") ? true : false;
+	}
+
+	/**
+	 * @param path
+	 * @param fileName
+	 */
+	private void rewriteFileAccessed(String path) {
+
+		String accessedPath = getAccessedPath(path);
+		String timeStamp = Instant.now().toString();
+		FileUtils fileUtils = new FileUtils(accessedPath);
+
+		fileUtils.createFile(timeStamp);
+	}
+
 }

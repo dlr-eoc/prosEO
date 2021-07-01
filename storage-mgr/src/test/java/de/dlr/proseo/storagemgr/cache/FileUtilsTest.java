@@ -25,6 +25,7 @@ public class FileUtilsTest {
 	public void testCreateSizeContent() {
 
 		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyTestDirectory();
 
 		String testFile = testPath + "/test.txt";
 		String testContent = "Content";
@@ -41,6 +42,8 @@ public class FileUtilsTest {
 
 		assertTrue("Content is wrong: " + fileUtils.getFileContent(),
 				fileUtils.getFileContent().equals(testContent));
+		
+		TestUtils.deleteTestDirectory();
 	}
 
 }
