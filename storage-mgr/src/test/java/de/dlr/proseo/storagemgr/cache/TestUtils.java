@@ -14,9 +14,9 @@ public class TestUtils {
 
 	private static final String OUTPUT_TAB = "     ";
 	private static final String OUTPUT_FILE_SIGN = "- ";
-	private static final String TEST_SEPARATOR = "=========================";
-	private static final String PRINT_DIRECTORY_HEADER = "----- DIRECTORY";
-	private static final String TEST_DIRECTORY = "/target/TESTDATA";
+	private static final String TEST_SEPARATOR = "===============================================";
+	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
+	private static final String TEST_DIRECTORY = "/target/testdata";
 
 	/**
 	 * @return
@@ -32,7 +32,7 @@ public class TestUtils {
 	public static void printMethodName(Object object, TestName testName) {
 
 		System.out.println();
-		System.out.println(TEST_SEPARATOR);
+		System.out.println(TEST_SEPARATOR + TEST_SEPARATOR);
 		System.out.println("TEST " + object.getClass().getSimpleName() + "." + testName.getMethodName());
 		System.out.println();
 	}
@@ -160,7 +160,7 @@ public class TestUtils {
 	public static void printDirectoryTree(String directoryPath) {
 
 		System.out.println();
-		System.out.println(PRINT_DIRECTORY_HEADER + " TREE: " + directoryPath);
+		System.out.println(PRINT_DIRECTORY_HEADER + " tree: " + directoryPath);
 		printDirectoryTree(directoryPath, "");
 		System.out.println();
 	}

@@ -40,23 +40,37 @@ public class FileCache {
 	}
 
 	/**
+	 * Puts the new element to map. If element exists, it will be overwritten
+	 * 
 	 * @param pathKey
 	 * @param fileInfo
 	 */
 	public void put(String pathKey) {
 
-		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+		FileInfo fileInfo;
+		
+		rewriteFileAccessed(pathKey);
+		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
 
 	/**
+	 * Checks if key available in map and updates last access if available
+	 * 
 	 * @param pathKey
 	 * @return
 	 */
 	public boolean containsKey(String pathKey) {
 
-		return mapCache.containsKey(pathKey);
+		boolean contains = mapCache.containsKey(pathKey);
+		
+		if (contains) {
+			
+			put(pathKey);	
+		}
+		
+		return contains; 
 	}
 	
 	/**
@@ -96,7 +110,15 @@ public class FileCache {
 			remove(pathKey);
 		}
 	}
-
+	
+	/**
+	 * @return
+	 */
+	/* package */ int size() {
+		
+		return mapCache.size();
+	}
+	
 	/**
 	 * @return
 	 */

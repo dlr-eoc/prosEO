@@ -113,26 +113,25 @@ public class FileCacheTest {
 		TestUtils.createEmptyTestDirectory();
 
 		String path1 = testPath + "/test/test1.txt";
-		String path2 = testPath + "/test1/test2/test1.txt";
-		String path3 = testPath + "/test1/test2/test2.txt";
+		String path2 = testPath + "/test1/test2/test2.txt";
+		String path3 = testPath + "/test1/test2/test3.txt";
 		String pathNotExists = testPath + "/xxx/xxx/zzz.txt";
 		
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		TestUtils.createFile(path3, "");
 		
-		TestUtils.createFile(testPath + "/xx.x", "");
-		TestUtils.createFile(testPath + "/123.x", "");
+		TestUtils.createFile(testPath + "/test4.x", "");
+		TestUtils.createFile(testPath + "/test5.x", "");
 
 		FileCache pathCache = new FileCache(testPath);
+		
+		assertTrue("Cache does not contain 5 elements after dir init: " + pathCache.size(), 
+				pathCache.size() == 5);
 
 		System.out.println("Before adding the element: " + path1);
 
-		pathCache.put(path1);
-		pathCache.put(path2);
-		pathCache.put(path3);
-
-		MapCacheTest.printCache("Cache after adding 3 elements:", pathCache.getMapCache());
+		MapCacheTest.printCache("Cache after init, 5 elements:", pathCache.getMapCache());
 		TestUtils.printDirectoryTree(testPath);
 
 		assertTrue("Cache Exists failed: " + path2, pathCache.containsKey(path2));
@@ -152,6 +151,131 @@ public class FileCacheTest {
 
 		MapCacheTest.printCache("Cache after deleting 1 element: " + path3, pathCache.getMapCache());
 		TestUtils.printDirectoryTree(testPath);
+		
+		TestUtils.deleteTestDirectory();
+	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testInterface() {
+		
+		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyTestDirectory();
+
+		String path1 = testPath + "/test1.txt";
+		String path2 = testPath + "/test2.txt";
+		String path3 = testPath + "/test3.txt";
+		String pathNotExists = testPath + "/xxx/xxx/zzz.txt";
+		Instant timeNotChanged;
+		Instant timeNotChanged2; 
+		Instant timeChanged; 
+		
+		TestUtils.createFile(path1, "");
+		TestUtils.createFile(path2, "");
+		
+		FileCache pathCache = new FileCache(testPath);
+		
+		assertTrue("Cache does not contain 2 elements after dir init: " + pathCache.size(), 
+				pathCache.size() == 2);
+		
+		// check containsKey - contains and update accessed 
+		
+		System.out.println("Subtest: check containsKey - contains and update accessed ");
+		
+		timeChanged = pathCache.getFileAccessed(path1);
+		timeNotChanged = pathCache.getFileAccessed(path2); 
+		
+		assertTrue("Cache does not contain an elements after dir init: " + path1, 
+				pathCache.containsKey(path1));
+		
+		System.out.println("Path1 Time:                         " + timeChanged);
+		System.out.println("Path1 time after contains(changed): " + pathCache.getFileAccessed(path1));
+		
+		System.out.println();
+		
+		System.out.println("Path2 Time:          " + timeNotChanged); 
+		System.out.println("Path2 time (stable): " + pathCache.getFileAccessed(path2)); 
+		
+		assertTrue("Last accessed was not updated: ", 
+				pathCache.getFileAccessed(path1).compareTo(timeChanged) > 0);
+		
+		assertTrue("Last accessed must not be updated: ", 
+				pathCache.getFileAccessed(path2).compareTo(timeNotChanged) == 0);
+		
+		assertTrue("Cache does not contain 2 elements after contains: " + pathCache.size(), 
+				pathCache.size() == 2);
+		
+		// check containsKey - not contains 
+		
+		System.out.println("Subtest: check containsKey - not contains");
+		
+		timeNotChanged = pathCache.getFileAccessed(path1);
+		timeNotChanged2 = pathCache.getFileAccessed(path2); 
+		
+		assertTrue("Cache contains an element, but must not: " + pathNotExists, 
+				!pathCache.containsKey(pathNotExists));
+		
+		System.out.println("Path1 Time:                        " + timeNotChanged);
+		System.out.println("Path1 time after contains(stable): " + pathCache.getFileAccessed(path1));
+		
+		System.out.println();
+		
+		System.out.println("Path2 Time:                        " + timeNotChanged2); 
+		System.out.println("Path2 time after contains(stable): " + pathCache.getFileAccessed(path2)); 
+		
+		assertTrue("path1 Last accessed must not be updated: ", 
+				pathCache.getFileAccessed(path1).compareTo(timeNotChanged) == 0);
+		
+		assertTrue("path2 Last accessed must not be updated: ", 
+				pathCache.getFileAccessed(path2).compareTo(timeNotChanged2) == 0);
+		
+		// check put - not contains 
+		
+		System.out.println("Subtest: check containsKey - not contains");
+		
+		assertTrue("Cache does not contain 2 elements after contains: " + pathCache.size(), 
+				pathCache.size() == 2);
+		
+		assertTrue("Cache contains an element before put: " + path3, 
+				!pathCache.containsKey(path3));
+		
+		TestUtils.createFile(path3, "");
+		pathCache.put(path3);
+		
+		assertTrue("Cache does not contain 3 elements after contains: " + pathCache.size(), 
+				pathCache.size() == 3);
+		
+		assertTrue("Cache does not contains an element after put: " + path3, 
+				pathCache.containsKey(path3));
+		
+		// check put - contains, update
+		
+		System.out.println("Subtest: check put - contains, update ");
+		
+		timeChanged = pathCache.getFileAccessed(path1);
+		timeNotChanged = pathCache.getFileAccessed(path2); 
+		
+		pathCache.put(path1);
+		
+		System.out.println("Path1 Time:                         " + timeChanged);
+		System.out.println("Path1 time after contains(changed): " + pathCache.getFileAccessed(path1));
+		
+		System.out.println();
+		
+		System.out.println("Path2 Time:          " + timeNotChanged); 
+		System.out.println("Path2 time (stable): " + pathCache.getFileAccessed(path2)); 
+		
+		assertTrue("Last accessed was not updated: ", 
+				pathCache.getFileAccessed(path1).compareTo(timeChanged) > 0);
+		
+		assertTrue("Last accessed must not be updated: ", 
+				pathCache.getFileAccessed(path2).compareTo(timeNotChanged) == 0);
+		
+		assertTrue("Cache does not contain 3 elements after contains: " + pathCache.size(), 
+				pathCache.size() == 3);
+	
 		
 		TestUtils.deleteTestDirectory();
 	}

@@ -80,6 +80,16 @@ public class MapCache {
 
 		return pathCache.containsKey(pathKey);
 	}
+	
+	
+	/**
+	 * @return
+	 */
+	public int size() {
+		
+		return pathCache.size();
+		
+	}
 
 	/**
 	 * 
