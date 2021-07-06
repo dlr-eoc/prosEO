@@ -33,6 +33,10 @@ proseo:
       prefix: joborders
     storageManager:
         defaultStorageType: S3
+        
+    storageManagerCache: 
+      expectedUsage: 95
+      maximumUsage: 99
           
     # Alluxio configuration values currently not in use       
 #    mountpoints:

@@ -64,6 +64,13 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
 	
+	@Value("${proseo.storageManagerCache.expectedUsage}")
+	private String expectedCacheUsage;
+	
+	
+
+	@Value("${proseo.storageManagerCache.maximumUsage}")
+	private String maximumCacheUsage;
 	
 	// Alluxio configuration values currently not in use
 	
@@ -209,6 +216,20 @@ public class StorageManagerConfiguration {
 	 */
 	public String getS3EndPoint() {
 		return s3EndPoint;
+	}
+	
+	/**
+	 * @return the expected cache usage
+	 */
+	public String getExpectedCacheUsage() {
+		return expectedCacheUsage;
+	}
+
+	/**
+	 * @return the maximum cache usage
+	 */
+	public String getMaximumCacheUsage() {
+		return maximumCacheUsage;
 	}
 
 }

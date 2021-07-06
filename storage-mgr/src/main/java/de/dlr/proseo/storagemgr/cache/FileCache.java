@@ -3,23 +3,41 @@ package de.dlr.proseo.storagemgr.cache;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
+@Component
 public class FileCache {
-
+	
 	private String path;
 	private static final String PREFIX = "accessed-";
 
 	private MapCache mapCache;
-
+	
+	@Autowired
+	private StorageManagerConfiguration cfg;
 	/**
 	 * @param path
 	 */
+	
+	public FileCache() {
+		
+		// TO-DO: Initialize with the right directory, for example, from application.yml 
+		this(FileUtils.getTestPath());	
+	}
+	
 	public FileCache(String path) {
 
 		File directory = new File(path);
@@ -49,12 +67,17 @@ public class FileCache {
 
 		FileInfo fileInfo;
 		
+		if (!mapCache.containsKey(pathKey)) {
+			
+			deleteLRU(pathKey);
+		}
+		
 		rewriteFileAccessed(pathKey);
 		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
-
+	
 	/**
 	 * Checks if key available in map and updates last access if available
 	 * 
@@ -73,6 +96,44 @@ public class FileCache {
 		return contains; 
 	}
 	
+	/**
+	 * @param newPath
+	 */
+	private void deleteLRU(String newPath) {
+		
+		// TO-DO: solve the null problem with cfg (maybe it is only in unit-tests) 
+		int expectedUsage = 95; //Integer.valueOf(cfg.getExpectedCacheUsage());
+		
+		// TO-DO: change "/" to application.yaml data-path or similar 
+		File file = new File("/"); 
+    	long totalBytes = file.getTotalSpace(); //total disk space in bytes
+    	long freeBytes = file.getUsableSpace();
+    	long usedBytes= totalBytes - freeBytes; 
+    	
+    	double realUsage = 100.0 * usedBytes / totalBytes; 
+    	
+    	mapCache.sortByAccessedAsc();
+    	
+    	if (realUsage <= expectedUsage) {
+    		return;
+    	}
+    	
+    	List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
+    	Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
+    	Entry<String, FileInfo> pathToDelete;
+    	
+    	while (realUsage > expectedUsage && cacheIterator.hasNext()) {
+    		
+    		pathToDelete = cacheIterator.next();
+    		
+    		remove(pathToDelete.getKey()); 
+    		
+    		freeBytes = file.getUsableSpace();
+    		usedBytes = totalBytes - freeBytes; 
+        	realUsage = 100.0 * usedBytes / totalBytes; 
+    	}
+	}
+
 	/**
 	 * @param pathKey
 	 * @return

@@ -13,6 +13,14 @@ import java.nio.file.Paths;
 public class FileUtils {
 	
 	private String path; 
+	
+	private static final String TEST_DIRECTORY = "/target/testdata";
+	
+	
+	public static String getTestPath() {
+		
+		return Paths.get(".").toAbsolutePath().normalize().toString() + TEST_DIRECTORY;
+	}
 
 	/**
 	 * @return
