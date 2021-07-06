@@ -410,7 +410,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products(f672d526-884e-4c4b-a91b-01163a6c18fa)/$value",
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products({{ProductId}})/$value",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -421,10 +421,190 @@
 						"prip",
 						"odata",
 						"v1",
-						"Products(f672d526-884e-4c4b-a91b-01163a6c18fa)",
+						"Products({{ProductId}})",
 						"$value"
 					]
 				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Token (password)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Token data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.token_type).to.eql(\"bearer\");",
+							"    pm.expect(jsonData.expires_in).to.eql(3600);",
+							"});",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Cache-control is present\", function () {",
+							"    pm.response.to.have.header(\"Cache-Control\");",
+							"});",
+							"pm.test(\"Pragma is present\", function () {",
+							"    pm.response.to.have.header(\"Pragma\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/v1/token?grant_type=password&username={{uri-username}}&password={{password}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"v1",
+						"token"
+					],
+					"query": [
+						{
+							"key": "grant_type",
+							"value": "password"
+						},
+						{
+							"key": "username",
+							"value": "{{uri-username}}"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Token (client_credentials)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Token data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.token_type).to.eql(\"bearer\");",
+							"    pm.expect(jsonData.expires_in).to.eql(3600);",
+							"});",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Cache-control is present\", function () {",
+							"    pm.response.to.have.header(\"Cache-Control\");",
+							"});",
+							"pm.test(\"Pragma is present\", function () {",
+							"    pm.response.to.have.header(\"Pragma\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/v1/token?grant_type=password&username={{uri-username}}&password={{password}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"v1",
+						"token"
+					],
+					"query": [
+						{
+							"key": "grant_type",
+							"value": "password"
+						},
+						{
+							"key": "username",
+							"value": "{{uri-username}}"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Details by Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Test odata product entity details\", function () {",
+							"    var jsonData = pm.response.json();",
+							"",
+							"// test that the correct odata context is returned",
+							"    pm.expect(jsonData['@odata.context']).to.eql(\"$metadata#Products/$entity\");",
+							"    ",
+							"// check the product status",
+							"    console.log(\"Product :\"+jsonData.Name+\" Online=\"+jsonData.Online);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8089/proseo/prip/odata/v1/Products({{ProductId}})?$expand=Attributes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8089",
+					"path": [
+						"proseo",
+						"prip",
+						"odata",
+						"v1",
+						"Products({{ProductId}})"
+					],
+					"query": [
+						{
+							"key": "$expand",
+							"value": "Attributes"
+						}
+					]
+				},
+				"description": "Details of the product returned from the query"
 			},
 			"response": []
 		}
@@ -434,12 +614,12 @@
 		"basic": [
 			{
 				"key": "password",
-				"value": "knmiPrip.678",
+				"value": "esaPrip.012",
 				"type": "string"
 			},
 			{
 				"key": "username",
-				"value": "PTM\\knmiprip",
+				"value": "PTM\\esaprip",
 				"type": "string"
 			}
 		]

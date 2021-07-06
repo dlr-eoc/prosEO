@@ -46,9 +46,10 @@ import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
 public class ProductQueryController {
 
 	/* Message ID constants */
-	// private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
-
+	private static final int MSG_ID_USER_LOGGED_IN = 5099;
+	
 	/* Message string constants */
+	private static final String MSG_USER_LOGGED_IN = "(I%d) User %s\\%s logged in to PRIP API";
 	private static final String HTTP_HEADER_WARNING = "Warning";
 //	private static final String HTTP_MSG_PREFIX = "199 proseo-api-prip ";
 
@@ -111,7 +112,11 @@ public class ProductQueryController {
 			response.setStatus(HttpStatusCode.UNAUTHORIZED.getStatusCode());
 			response.setHeader(HTTP_HEADER_WARNING, e.getMessage()); // Message already logged and formatted
 			return;
+		} catch (RuntimeException e) {
+			logger.error("Server Error occurred in ProductionInterfaceSecurity", e);
+			throw new ServletException(e);
 		}
+		LogUtil.logInfo(logger, MSG_USER_LOGGED_IN, MSG_ID_USER_LOGGED_IN, securityConfig.getMission(), securityConfig.getUser());
 		
 		// Execute the request
 		try {

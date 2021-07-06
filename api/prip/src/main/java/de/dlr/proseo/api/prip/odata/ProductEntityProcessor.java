@@ -209,7 +209,8 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 			if (securityConfig.hasRole(UserRole.PRODUCT_READER_ALL)) {
 				break;
 			}
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT, productUuid);
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRODUCT, MSG_ID_NOT_AUTHORIZED_FOR_PRODUCT,
+					securityConfig.getMission() + "\\" + securityConfig.getUser(), productUuid);
 			logger.error(message);
 			throw new SecurityException(message);
 		}

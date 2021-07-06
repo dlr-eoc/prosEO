@@ -54,7 +54,7 @@ public class ProductClassControllerImpl implements ProductclassController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HttpHeaders.WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
+		responseHeaders.set(HttpHeaders.WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
 		return responseHeaders;
 	}
 	

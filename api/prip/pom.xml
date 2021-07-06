@@ -23,7 +23,9 @@
 		<main.basedir>${basedir}/../..</main.basedir>
 		<raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
 		<raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
+        <raml-path-oauth2>src/main/resources/raml/prip-oauth2.raml</raml-path-oauth2>
 		<raml-base-package>de.dlr.proseo.api.prip.rest</raml-base-package>
+        <nimbus.jwt.version>9.10</nimbus.jwt.version>
 	</properties>
 
 	<dependencies>
@@ -86,6 +88,11 @@
 			<artifactId>odata-commons-core</artifactId>
 			<version>${olingo.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus.jwt.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>de.dlr.proseo</groupId>
 			<artifactId>proseo-interfaces</artifactId>
@@ -152,6 +159,7 @@
 				<artifactId>springmvc-raml-plugin</artifactId>
 				<configuration>
 					<basePackage>${raml-base-package}</basePackage>
+                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
 					<rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerInterfaceRule</rule>
 				</configuration>
 				<executions>
@@ -175,6 +183,16 @@
 							<goal>generate-springmvc-endpoints</goal>
 						</goals>
 					</execution>
+                    <execution>
+                        <id>generate-springmvc-oauth2</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <ramlPath>${raml-path-oauth2}</ramlPath>
+                        </configuration>
+                        <goals>
+                            <goal>generate-springmvc-endpoints</goal>
+                        </goals>
+                    </execution>
 				</executions>
 			</plugin>
 
@@ -205,6 +223,17 @@
 							<commandlineArgs>-i ${raml-path-download} -o src/site/resources/${project.artifactId}-download.html</commandlineArgs>
 						</configuration>
 					</execution>
+                    <execution>
+                        <id>generate-html-oauth2</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>raml2html</executable>
+                            <commandlineArgs>-i ${raml-path-oauth2} -o src/site/resources/${project.artifactId}-oauth2.html</commandlineArgs>
+                        </configuration>
+                    </execution>
 				</executions>
 			</plugin>
 

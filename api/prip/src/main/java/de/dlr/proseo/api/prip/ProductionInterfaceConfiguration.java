@@ -29,6 +29,10 @@ public class ProductionInterfaceConfiguration {
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
 	
+	/** Validity period for OAuth2 tokens */
+	@Value("${proseo.token.expiration}")
+	private Long tokenExpirationPeriod;
+	
 	/**
 	 * Gets the URL of the prosEO User Manager component
 	 * 
@@ -45,6 +49,15 @@ public class ProductionInterfaceConfiguration {
 	 */
 	public String getIngestorUrl() {
 		return ingestorUrl;
+	}
+
+	/**
+	 * Gets the token validity period
+	 * 
+	 * @return the token expiration period
+	 */
+	public Long getTokenExpirationPeriod() {
+		return tokenExpirationPeriod;
 	}
 
 }
