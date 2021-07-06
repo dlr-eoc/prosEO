@@ -65,12 +65,19 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
+
+	/** Maximum cycles for file size check */
+	@Value("${proseo.storageManager.filecheckmaxcycles}")
+	private String fileCheckMaxCycles;
 	
 	/** Shared secret for Storage Manager download tokens */
 	@Value("${proseo.storageManager.secret}")
 	private String storageManagerSecret;
 	
-	
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.storageManager.filecheckwaittime}")
+	private String fileCheckWaitTime;
+
 	// Alluxio configuration values currently not in use
 	
 //	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
@@ -106,6 +113,20 @@ public class StorageManagerConfiguration {
 				(storageManagerSecret + "                ").getBytes(),
 				32);
 		return sharedSecret;
+	}
+
+    /**
+	 * @return the fileCheckMaxCycles
+	 */
+	public String getFileCheckMaxCycles() {
+		return fileCheckMaxCycles;
+	}
+
+	/**
+	 * @return the fileCheckWaitTime
+	 */
+	public String getFileCheckWaitTime() {
+		return fileCheckWaitTime;
 	}
 
 	/**

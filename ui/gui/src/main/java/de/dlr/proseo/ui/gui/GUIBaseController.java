@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
@@ -55,11 +56,15 @@ public class GUIBaseController {
 	/** The configuration object for the prosEO backend services */
 	@Autowired
 	private ServiceConfiguration serviceConfig;
-		
+
 	/**
 	 * List with cached data
 	 */
 	private List<String> productiontypes = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> productqualities = null;
 	/**
 	 * List with cached data
 	 */
@@ -407,6 +412,24 @@ public class GUIBaseController {
         return productiontypes;
     }
 
+    /**
+     * Retrieve the production type enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("productqualities")
+    public List<String> productqualities() {
+    	if (productqualities != null && !productqualities.isEmpty()) return productqualities;
+    	
+    	productqualities = new ArrayList<String>(); 
+    	for (ProductQuality value: ProductQuality.values()) {
+    		productqualities.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		productqualities.sort(c);
+        return productqualities;
+    }
+    
     /**
      * Retrieve the slicing type enum
      * 

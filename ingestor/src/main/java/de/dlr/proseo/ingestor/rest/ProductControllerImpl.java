@@ -98,14 +98,16 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo, Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
+	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, 
+			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
+					productManager.getProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, 
+							recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -124,13 +126,15 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
      */
 	@Override
-    public ResponseEntity<?> countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId, HttpHeaders httpHeaders) {
-		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo);
+    public ResponseEntity<?> countProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+    		String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.countProducts(mission, productClass, startTimeFrom, startTimeTo, jobStepId), HttpStatus.OK);
+					productManager.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, 
+							jobStepId), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}

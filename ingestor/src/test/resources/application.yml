@@ -15,6 +15,9 @@ logging:
 proseo:
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
         
 # Test configuration
     storageManager:

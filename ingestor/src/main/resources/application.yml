@@ -17,6 +17,9 @@ proseo:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         # Connection timeout in ms
         timeout: 10000
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
     storageManager:
         # Connection timeout in ms
         timeout: 30000

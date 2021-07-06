@@ -74,15 +74,21 @@ public class GUIProductController extends GUIBaseController {
 	public DeferredResult<String> getProducts(
 			@RequestParam(required = false, value = "id") Long id,
 			@RequestParam(required = false, value = "productClass") String productClass,
+			@RequestParam(required = false, value = "mode") String mode,
+			@RequestParam(required = false, value = "fileClass") String fileClass,
+			@RequestParam(required = false, value = "quality") String quality,
 			@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
 			@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
+			@RequestParam(required = false, value = "genTimeFrom") String genTimeFrom,
+			@RequestParam(required = false, value = "genTimeTo") String genTimeTo,
 			@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 			@RequestParam(required = false, value = "recordTo") Long toIndex,
 			@RequestParam(required = false, value = "jobStepId") Long jobStepId,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
-		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", productClass, startTimeFrom, startTimeTo, fromIndex, toIndex);
+		logger.trace(">>> getProducs({}, {}, {}, {}, {}, model)", productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, 
+				genTimeFrom, genTimeTo, fromIndex, toIndex);
 		Long from = null;
 		Long to = null;
 		if (fromIndex != null && fromIndex >= 0) {
@@ -90,13 +96,15 @@ public class GUIProductController extends GUIBaseController {
 		} else {
 			from = (long) 0;
 		}
-		Long count = countProducts(productClass, startTimeFrom, startTimeTo, jobStepId);
+		Long count = countProducts(productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, 
+				genTimeFrom, genTimeTo, jobStepId);
 		if (toIndex != null && from != null && toIndex > from) {
 			to = toIndex;
 		} else if (from != null) {
 			to = count;
 		}
-		Mono<ClientResponse> mono = get(id, productClass, startTimeFrom, startTimeTo, from, to, jobStepId);
+		Mono<ClientResponse> mono = get(id, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, 
+				genTimeFrom, genTimeTo, from, to, jobStepId);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> products = new ArrayList<>();
 
@@ -191,7 +199,7 @@ public class GUIProductController extends GUIBaseController {
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		
 		logger.trace(">>> getProductFiles({}, {}, {}, {}, model)", id);
-		Mono<ClientResponse> mono = get(id, null, null, null, null, null, null);
+		Mono<ClientResponse> mono = get(id, null, null, null, null, null, null, null, null, null, null, null);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> productfiles = new ArrayList<>();
 		mono.doOnError(e -> {
@@ -228,7 +236,8 @@ public class GUIProductController extends GUIBaseController {
 		logger.trace("DEREFFERED STRING: {}", deferredResult);
 		return deferredResult;
 	}
-    private Long countProducts(String productClass, String startTimeFrom, String startTimeTo, Long jobStepId) {
+    private Long countProducts(String productClass, String mode, String fileClass, String quality, String startTimeFrom, String startTimeTo, 
+    		String genTimeFrom, String genTimeTo, Long jobStepId) {
     	
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
@@ -239,7 +248,22 @@ public class GUIProductController extends GUIBaseController {
 			divider ="&";
 		}
 		if (productClass != null && !productClass.isEmpty()) {
-			uri += divider + "productClass=" + productClass;
+			String [] pcs = productClass.split(",");
+			for (String pc : pcs) {
+				uri += divider + "productClass=" + pc;
+				divider ="&";
+			}
+		}
+		if (mode != null && !mode.isEmpty()) {
+			uri += divider + "mode=" + mode;
+			divider ="&";
+		}
+		if (fileClass != null && !fileClass.isEmpty()) {
+			uri += divider + "fileClass=" + fileClass;
+			divider ="&";
+		}
+		if (quality != null && !quality.isEmpty()) {
+			uri += divider + "quality=" + quality;
 			divider ="&";
 		}
 		if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
@@ -248,6 +272,14 @@ public class GUIProductController extends GUIBaseController {
 		}
 		if (startTimeTo != null && !startTimeTo.isEmpty()) {
 			uri += divider + "startTimeTo=" + startTimeTo;
+			divider ="&";
+		}
+		if (genTimeFrom != null && !genTimeFrom.isEmpty()) {
+			uri += divider + "genTimeFrom=" + genTimeFrom;
+			divider ="&";
+		}
+		if (genTimeTo != null && !genTimeTo.isEmpty()) {
+			uri += divider + "genTimeTo=" + genTimeTo;
 			divider ="&";
 		}
 		if (jobStepId != null) {
@@ -284,7 +316,8 @@ public class GUIProductController extends GUIBaseController {
 		
         return result;
     }
-	private Mono<ClientResponse> get(Long id, String productClass, String startTimeFrom, String startTimeTo, Long from, Long to, Long jobStepId) {
+	private Mono<ClientResponse> get(Long id, String productClass, String mode, String fileClass, String quality, String startTimeFrom, String startTimeTo, 
+    		String genTimeFrom, String genTimeTo, Long from, Long to, Long jobStepId) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
 		String uri = serviceConfig.getIngestorUrl() + "/products";
@@ -297,7 +330,22 @@ public class GUIProductController extends GUIBaseController {
 				divider ="&";
 			}
 			if (productClass != null && !productClass.isEmpty()) {
-				uri += divider + "productClass=" + productClass;
+				String [] pcs = productClass.split(",");
+				for (String pc : pcs) {
+					uri += divider + "productClass=" + pc;
+					divider ="&";
+				}
+			}
+			if (mode != null && !mode.isEmpty()) {
+				uri += divider + "mode=" + mode;
+				divider ="&";
+			}
+			if (fileClass != null && !fileClass.isEmpty()) {
+				uri += divider + "fileClass=" + fileClass;
+				divider ="&";
+			}
+			if (quality != null && !quality.isEmpty()) {
+				uri += divider + "quality=" + quality;
 				divider ="&";
 			}
 			if (startTimeFrom != null && !startTimeFrom.isEmpty()) {
@@ -306,6 +354,14 @@ public class GUIProductController extends GUIBaseController {
 			}
 			if (startTimeTo != null && !startTimeTo.isEmpty()) {
 				uri += divider + "startTimeTo=" + startTimeTo;
+				divider ="&";
+			}
+			if (genTimeFrom != null && !genTimeFrom.isEmpty()) {
+				uri += divider + "genTimeFrom=" + genTimeFrom;
+				divider ="&";
+			}
+			if (genTimeTo != null && !genTimeTo.isEmpty()) {
+				uri += divider + "genTimeTo=" + genTimeTo;
 				divider ="&";
 			}
 			if (from != null) {

@@ -46,30 +46,45 @@
     };
 
     function addURLParam(param) {
-    	var loc = location.search.slice(0);
-    	var paramstring = location.search.slice(1);
-    	var pairs = paramstring.split("&");
-    	var divider = '?';
-    	var first = true;
-    	var found = false;
-    	var search = '';
-    	for (var i = 0; i < pairs.length; i++) {
-    		search += divider;
-    		search += pairs[i];
-    		if (pairs[i] == param) {
-    			found = true;
-    		}
-    		if (first) {
-    			divider = '&';
-    			first = false;
-    		}
-    	}
-    	if (!found) {
-	    	search += divider;
-	    	search += param;
-	    	history.pushState({}, null, search);
+      if (param != null && param.length > 0) {
+      	var loc = location.search.slice(0);
+      	var paramstring = location.search.slice(1);
+      	var pairs = paramstring.split("&");
+      	var divider = '?';
+      	var first = true;
+      	var found = false;
+      	var search = '';
+      	for (var i = 0; i < pairs.length; i++) {
+      		search += divider;
+      		search += pairs[i];
+      		if (pairs[i] == param) {
+      			found = true;
+      		}
+      		if (first) {
+      			divider = '&';
+      			first = false;
+      		}
+      	}
+      	if (!found) {
+  	    	search += divider;
+  	    	search += param;
+  	    	history.pushState({}, null, search);
+  	    }
 	    }
     	return null;
+    };
+    
+    function addURLParamValue(name, value) {
+      if (value != null && value.length > 0 && name != null && name.length > null) {
+        addURLParam(name + '=' + value);
+      }
+    };
+    function addURLParamValues(name, value) {
+      if (value != null && value.length > 0 && name != null && name.length > null) {
+        for (var i = 0; i < value.length; i++) {
+          addURLParam(name + '=' + value[i]);
+        }
+      }
     };
     
     function removeURLParam(param) {
@@ -94,6 +109,7 @@
     	history.pushState({}, null, search);
     	return null;
     };
+    
     function removeURLKey(key) {
     	var loc = location.search.slice(0);
     	var paramstring = location.search.slice(1);
@@ -218,3 +234,18 @@
     		$(x).removeClass('enabled');
     	}    	
     };
+    
+    function setSelectedOption(id, value) {
+      var val = "";
+      if (value != null) {
+        val = value;
+      }
+      var opts = $("#" + id).find("option");
+      for (var i = 0; i < opts.length; i++) {
+        if ($(opts[i]).val() == val) {
+          $(opts[i]).prop( "selected", true );
+        } else {
+          $(opts[i]).prop( "selected", false );
+        }
+      }
+    }

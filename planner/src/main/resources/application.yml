@@ -29,6 +29,9 @@ proseo:
         dispatcherwaittime: 60000
         # kubernetes configuration file, used to connect master
         kubeconfig: empty
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
     ingestor:
         # Callback URL for wrapper
         url: http://192.168.20.155:8081/proseo/ingestor/v0.1

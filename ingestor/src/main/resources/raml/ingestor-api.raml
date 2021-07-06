@@ -88,14 +88,20 @@ resourceTypes:
   type: standard
   description: Methods to manage product metadata in the database
   get:
-    description: List of all products by mission, product class, start time range; the output will be ordered by the columns
+    description: List of all products by mission, product class, processing mode, file class, quality 
+      and time ranges of start time and generation time; the output will be ordered by the columns
         given in orderBy, and the resulting product list will only contain the records in the given range
     displayName: getProducts
     queryParameters:
       mission?: string
       productClass?: string[]
-      startTimeFrom?: datetime-only
-      startTimeTo?: datetime-only
+      mode?: string
+      fileClass?: string
+      quality?: string
+      startTimeFrom?: string
+      startTimeTo?: string
+      genTimeFrom?: string
+      genTimeTo?: string
       recordFrom?: integer
       recordTo?: integer
       jobStep?: integer
@@ -123,13 +129,19 @@ resourceTypes:
             example: !include ../../../../../model/src/main/resources/raml/examples/product.json
   /count:
     get:
-      description: Number of products available, possibly filtered by mission, product class and time range
+      description: Number of products available, possibly filtered by mission, product class, processing mode, file class, quality 
+          and time ranges of start time and generation time
       displayName: countProducts
       queryParameters:
         mission?: string
         productClass?: string[]
-        startTimeFrom?: datetime-only
-        startTimeTo?: datetime-only
+        mode?: string
+        fileClass?: string
+        quality?: string
+        startTimeFrom?: string
+        startTimeTo?: string
+        genTimeFrom?: string
+        genTimeTo?: string
         jobStep?: integer
       responses:
         200:

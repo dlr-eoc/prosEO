@@ -225,4 +225,84 @@ public class OrderService {
 		}
 		return answer;
 	}
+	
+	public Mono<ClientResponse> setJobState(String jobId, String state) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = config.getProductionPlanner() + "/jobs";
+		String method = "patch";
+		if (state.equalsIgnoreCase("release")) {
+			uri += "/resume/" + jobId;
+		} else if (state.equalsIgnoreCase("suspend")) {
+			uri += "/suspend/" + jobId;
+		} else if (state.equalsIgnoreCase("suspendforce")) {
+			uri += "/suspend/" + jobId + "?force=true";
+		} else if (state.equalsIgnoreCase("resume")) {
+			uri += "/resume/" + jobId;
+		} else if (state.equalsIgnoreCase("cancel")) {
+			uri += "/cancel/" + jobId;
+		} else if (state.equalsIgnoreCase("retry")) {
+			uri += "/retry/" + jobId;
+		}
+			
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		Mono<ClientResponse> answer = null;
+		if (method.equals("patch")) {
+			answer = webclient.build().patch().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("put")) {
+			answer = webclient.build().put().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("delete")) {
+			answer = webclient.build().delete().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		}
+		return answer;
+	}
+	
+	public Mono<ClientResponse> setJobStepState(String jobStepId, String state) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = config.getProductionPlanner() + "/jobsteps";
+		String method = "patch";
+		if (state.equalsIgnoreCase("release")) {
+			uri += "/resume/" + jobStepId;
+		} else if (state.equalsIgnoreCase("suspend")) {
+			uri += "/suspend/" + jobStepId;
+		} else if (state.equalsIgnoreCase("suspendforce")) {
+			uri += "/suspend/" + jobStepId + "?force=true";
+		} else if (state.equalsIgnoreCase("resume")) {
+			uri += "/resume/" + jobStepId;
+		} else if (state.equalsIgnoreCase("cancel")) {
+			uri += "/cancel/" + jobStepId;
+		} else if (state.equalsIgnoreCase("retry")) {
+			uri += "/retry/" + jobStepId;
+		}
+			
+		logger.trace("URI " + uri);
+		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
+				HttpClient.create().followRedirect((req, res) -> {
+					logger.trace("response:{}", res.status());
+					return HttpResponseStatus.FOUND.equals(res.status());
+				})
+			));
+		logger.trace("Found authentication: " + auth);
+		logger.trace("... with username " + auth.getName());
+		logger.trace("... with password " + (((UserDetails) auth.getPrincipal()).getPassword() == null ? "null" : "[protected]" ) );
+		Mono<ClientResponse> answer = null;
+		if (method.equals("patch")) {
+			answer = webclient.build().patch().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("put")) {
+			answer = webclient.build().put().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		} else if (method.equals("delete")) {
+			answer = webclient.build().delete().uri(uri).headers(headers -> headers.setBasicAuth(auth.getProseoName(), auth.getPassword())).accept(MediaType.APPLICATION_JSON).exchange();
+		}
+		return answer;
+	}
 }

@@ -33,6 +33,9 @@ proseo:
       prefix: joborders
     storageManager:
         defaultStorageType: S3
+        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
+        filecheckwaittime: 1000
+        filecheckmaxcycles: 50
           
     # Alluxio configuration values currently not in use       
 #    mountpoints:
