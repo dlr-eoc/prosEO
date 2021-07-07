@@ -119,7 +119,7 @@
                 th:text="#{starttimebetween}"></p>
             </div>
             <div class="col-3 pl-lg-0">
-                    <input type="text" class="form-control" 
+                    <input type="text" class="form-control" autocomplete="on"
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeFrom" id="startTimeFrom" data-type="TIME">
@@ -130,7 +130,7 @@
                 th:text="#{and}"></p>
             </div>
             <div class="col-3 pl-lg-0">
-                    <input type="text" class="form-control" 
+                    <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="startTimeTo" id="startTimeTo" data-type="TIME">
@@ -151,7 +151,7 @@
                 th:text="#{gentimebetween}"></p>
             </div>
             <div class="col-3 pl-lg-0">
-                    <input type="text" class="form-control" 
+                    <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeFrom" id="genTimeFrom" data-type="TIME">
@@ -162,7 +162,7 @@
                 th:text="#{and}"></p>
             </div>
             <div class="col-3 pl-lg-0">
-                    <input type="text" class="form-control" 
+                    <input type="text" class="form-control" autocomplete="on" 
                       pattern="((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]))|((\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9]).(\d{6}))"
                       title="yyyy-mm-dd[Thh:mm:ss[.ssssss]]" placeholder="yyyy-mm-dd[Thh:mm:ss[.ssssss]]"
                       name="genTimeTo" id="genTimeTo" data-type="TIME">
@@ -205,7 +205,7 @@
                   th:onclick="'toggleProd(' + ${elem?.id} + ')'"></td>
 								<td class="first-row"><a 
 								  th:if="${hasroleproductclassreader}"
-									th:href="'/productclass-show?pc=' + ${elem?.productClass}"
+									th:href="'/productclass-show?productClass=' + ${elem?.productClass}"
 									th:text="${elem?.productClass}"></a><span 
                   th:unless="${hasroleproductclassreader}"
                   th:text="${elem?.productClass}"></span></td>

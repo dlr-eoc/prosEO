@@ -57,6 +57,9 @@ public class GUIProductClassController extends GUIBaseController {
 		@RequestMapping(value = "/productclass/get")
 		public DeferredResult<String> getProductClasses(
 				@RequestParam(required = false, value = "productClass") String productClass,
+				@RequestParam(required = false, value = "processorClass") String processorClass,
+				@RequestParam(required = false, value = "level") String level,
+				@RequestParam(required = false, value = "visibility") String visibility,
 				@RequestParam(required = false, value = "sortby") String sortby,
 				@RequestParam(required = false, value = "up") Boolean up, 
 				@RequestParam(required = false, value = "recordFrom") Long fromIndex,
@@ -80,7 +83,7 @@ public class GUIProductClassController extends GUIBaseController {
 			Long deltaPage = (long) ((count % pageSize)==0?0:1);
 			Long pages = (count / pageSize) + deltaPage;
 			Long page = (from / pageSize) + 1;
-			Mono<ClientResponse> mono = get(productClass, from, to);
+			Mono<ClientResponse> mono = get(productClass, processorClass, level, visibility, from, to);
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> productclasses = new ArrayList<>();
 			mono.doOnError(e -> {
@@ -179,7 +182,7 @@ public class GUIProductClassController extends GUIBaseController {
 			
 	        return result;
 	    }
-		private Mono<ClientResponse> get(String productType, Long from, Long to) {
+		private Mono<ClientResponse> get(String productType, String processorClass, String level, String visibility, Long from, Long to) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
 			String uri = serviceConfig.getProductClassManagerUrl() + "/productclasses";
@@ -188,8 +191,26 @@ public class GUIProductClassController extends GUIBaseController {
 				uri += divider + "mission=" + mission;
 				divider ="&";
 			}
-			if (productType != null) {
-				uri += divider + "productType=" + productType;
+			if (productType != null && !productType.isEmpty()) {
+				String [] pcs = productType.split(",");
+				for (String pc : pcs) {
+					uri += divider + "productType=" + pc;
+					divider ="&";
+				}
+			}
+			if (processorClass != null && !processorClass.isEmpty()) {
+				String [] pcs = processorClass.split(",");
+				for (String pc : pcs) {
+					uri += divider + "processorClass=" + pc;
+					divider ="&";
+				}
+			}
+			if (level != null) {
+				uri += divider + "level=" + level;
+				divider ="&";
+			}
+			if (visibility != null) {
+				uri += divider + "visibility=" + visibility;
 				divider ="&";
 			}
 			if (from != null) {

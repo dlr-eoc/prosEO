@@ -79,6 +79,7 @@
         addURLParam(name + '=' + value);
       }
     };
+    
     function addURLParamValues(name, value) {
       if (value != null && value.length > 0 && name != null && name.length > null) {
         for (var i = 0; i < value.length; i++) {

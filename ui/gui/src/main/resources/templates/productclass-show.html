@@ -13,6 +13,7 @@
 
           <!-- Custom styles for prosEO -->
           <link href="../static/fragments/proseo.css" th:href="@{/fragments/proseo.css}" rel="stylesheet" type="text/css" />
+          <link rel="stylesheet" href="../static/fragments/bootstrap-multiselect.css" th:href="@{/fragments/bootstrap-multiselect.css}" type="text/css"/>
   </head>
 
   <body>
@@ -57,7 +58,67 @@
           <h5>
             <br> <span th:text="${errormsg}"></span></h5>
         </div>
+        <form class="needs-validation" name="prod-shw" id="prod-shw" action="javascript:submit();" >
+        <div class="row py-lg-1">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{product-class}"></p>
+            </div>
+            <div class="col-3 pl-lg-0">
+              <select name="productClasses" id="productClasses" multiple="multiple">
+                <option th:each="obj : ${productclassnames}" th:text="${obj}"
+                  th:label="${obj}"></option>
+              </select>
+            </div>
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{processor-class}"></p>
+            </div>
+            <div class="col-3 pl-lg-0">
+              <select name="processorClasses" id="processorClasses" multiple="multiple">
+                <option th:each="obj : ${processorclassnames}" th:text="${obj}"
+                  th:label="${obj}"></option>
+              </select>
+            </div>
+          </div>
+          <div class="row py-lg-1">
+            <div class="col-2">
+              <button id="productclassselect" type="submit"
+                    onclick="submit();"
+                    class="btn btn-sm btn-outline-secondary">
+                    <span th:text="#{product-class-show}"></span>
+              </button>
+            </div>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{processinglevel}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><select name="processingLevel" id="processingLevel"
+                  class="custom-select">
+                <option text=""
+                  label=""></option>
+                <option th:each="obj : ${processinglevels}" th:text="${obj}"
+                  th:label="${obj}"></option>
+                </select>
+            </div>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{visibility}"></p>
+            </div>
+            <div class="col-2 pl-lg-0">
+              <select name="visibility" id="visibility"
+                  class="custom-select">
+                <option text=""
+                  label=""></option>
+                <option th:each="obj : ${visibilities}" th:text="${obj}"
+                  th:label="${obj}"></option>
+                </select>
+            </div>
+            
+          </div>
           
+        </form>
+      
           <div id="productclasscontent" name="productclasscontent">
               <table class="table table-hover rounded" id="productclassTable">
                 <thead class="thead-proseo" id="proseo-thead">
@@ -96,11 +157,11 @@
 									<td th:text="${class?.processingLevel}" class="first-row"></td>
 									<td th:text="${class?.typeDescription}" class="first-row"></td>
 									<td class="first-row"><a
-										th:href="'/productclass-show?pc=' + ${class?.enclosingClass}"><span
+										th:href="'/productclass-show?productClass=' + ${class?.enclosingClass}"><span
 											th:text="${class?.enclosingClass}"></span></a></td>
 									<td class="first-row"><a
 									  th:if="${hasroleprocessorreader}"
-										th:href="'/processor-class-show?pc=' + ${class?.processorClass}"><span
+										th:href="'/processor-class-show?productClass=' + ${class?.processorClass}"><span
 											th:text="${class?.processorClass}"></span></a><span
                       th:unless="${hasroleprocessorreader}"
                       th:text="${class?.processorClass}"></span></td>
@@ -130,7 +191,7 @@
 									<td th:text="${class?.defaultSliceDuration}"></td>
 									<td colspan="2"><a
 										th:each="comp : ${class?.componentClasses}"
-										class="proseo-list-item" th:href="'/productclass-show?pc=' + ${comp}"><span
+										class="proseo-list-item" th:href="'/productclass-show?productClass=' + ${comp}"><span
 											th:text="${comp}"></span></a></td>
 									<td colspan="2">
 										<table class="table table-hover  rounded"
@@ -152,7 +213,7 @@
 															th:each="word,i : ${#strings.arraySplit(rule?.ruleString,' ')}"><span
 																th:if="${i.first} == false">&nbsp;</span><span
 																th:if="${i.count} != 2" class="code" th:text="${word}"></span><a
-																th:if="${i.count} == 2" th:href="'/productclass-show?pc=' + ${word}"><span
+																th:if="${i.count} == 2" th:href="'/productclass-show?productClass=' + ${word}"><span
 																	class="code" th:text="${word}"></span></a></span></td>
 														<td><a
 														  th:if="${hasroleprocessorreader}"
@@ -197,7 +258,8 @@
     crossorigin="anonymous"></script>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
-  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>
+  <script src="../static/fragments/proseo.js" th:src="@{/fragments/proseo.js}" type="text/javascript"></script>   
+  <script src="../static/fragments/bootstrap-multiselect.js" th:src="@{/fragments/bootstrap-multiselect.js}" type="text/javascript"></script>
 
   <script type="text/javascript" th:inline="javascript">   
     function toggleProd(id) {
@@ -236,17 +298,86 @@ function initPlusMinus() {
     }
 }
 
+function setSelected() {
+	  var cls = getURLParams('productClass');
+	  if (cls != null && cls.length > 0) {
+	    $('#productClasses').multiselect('select', getURLParams('productClass'));
+	  }
+	  cls = getURLParams('processorClass');
+	  if (cls != null && cls.length > 0) {
+	    $('#processorClasses').multiselect('select', getURLParams('processorClass'));
+	  }
+  setSelectedOption('processingLevel', getURLParam('level'));
+  setSelectedOption('visibility', getURLParam('visibility'));
+}
+
+
+function submit() {
+    retrieveDataPage(0, 15);
+}
+
+function setParams() {
+    removeURLKey('productClass');
+    removeURLKey('processorClass');
+    removeURLKey('level');
+    removeURLKey('visibility');
+    addURLParamValues('productClass', $('#productClasses').val());
+    addURLParamValues('processorClass', $('#processorClasses').val());
+    addURLParamValue('level', $('#processingLevel').val());
+    addURLParamValue('visibility', $('#visibility').val());
+}
+
 function retrieveDataPage(from, to) {
 		var productClass = getURLParam('pc');
 		if (productClass != null) {
 			  from = null;
 			  to = null;
-		}
-	  retrieveData(productClass, from, to);
+		} else {
+      setParams();
+      productClasses = getURLParams('productClass');
+      var productClass = null;
+      if (productClasses != null && productClasses.length > 0) {
+        productClass = "";
+        var divider = "";
+        for (var i = 0; i < productClasses.length; i++) {
+          productClass = productClass + divider + productClasses[i];
+          divider = ",";
+        }     
+      }
+      var processorClasses = getURLParams('processorClass');
+      var processorClass = null;
+      if (processorClasses != null && processorClasses.length > 0) {
+    	  processorClass = "";
+        var divider = "";
+        for (var i = 0; i < processorClasses.length; i++) {
+        	processorClass = processorClass + divider + processorClasses[i];
+          divider = ",";
+        }     
+      }
+    }
+    var level = getURLParam('level');
+    var visibility = getURLParam('visibility');
+	  retrieveData(productClass, processorClass, level, visibility, from, to);
 }
-function retrieveData(productClass, from, to) {
+function retrieveData(productClass, processorClass, level, visibility, from, to) {
     if ([[${hasroleproductclassreader}]]) {
         showLoader();
+        $('#productClasses').multiselect({
+            buttonWidth : '99%',
+            enableFiltering : true,
+            numberDisplayed : 0,
+            maxHeight : 400,
+            enableCaseInsensitiveFiltering : true,
+            nonSelectedText : ''
+        });
+        $('#processorClasses').multiselect({
+            buttonWidth : '99%',
+            enableFiltering : true,
+            numberDisplayed : 0,
+            maxHeight : 400,
+            enableCaseInsensitiveFiltering : true,
+            nonSelectedText : ''
+        });
         var tableRows = $("productclassTable").rows;
         if (tableRows > 1 && tableRows != null) {
             $("productclassTable > tbody").empty();
@@ -256,6 +387,18 @@ function retrieveData(productClass, from, to) {
 
         if (productClass != null) {
             url = url + divider + "productClass=" + productClass.toString().trim();
+            divider = "&";
+        }
+        if (processorClass != null) {
+            url = url + divider + "processorClass=" + processorClass.toString().trim();
+            divider = "&";
+        }
+        if (level != null) {
+            url = url + divider + "level=" + level;
+            divider = "&";
+        }
+        if (visibility != null) {
+            url = url + divider + "visibility=" + visibility;
             divider = "&";
         }
 			  if (from != null) {
@@ -274,6 +417,23 @@ function retrieveData(productClass, from, to) {
 						    $("#productclasscontent").html(res);
 						    initPlusMinus();
 						    feather.replace();
+					        $('#productClasses').multiselect({
+					            buttonWidth : '99%',
+					            enableFiltering : true,
+					            numberDisplayed : 0,
+					            maxHeight : 400,
+					            enableCaseInsensitiveFiltering : true,
+					            nonSelectedText : ''
+					        });
+					        $('#processorClasses').multiselect({
+					            buttonWidth : '99%',
+					            enableFiltering : true,
+					            numberDisplayed : 0,
+					            maxHeight : 400,
+					            enableCaseInsensitiveFiltering : true,
+					            nonSelectedText : ''
+					        });
+			          setSelected();
 			          hideLoader();
                 if (productClass != null) {
                     scrollToElem(productClass);
@@ -302,6 +462,7 @@ function retrieveData(productClass, from, to) {
      var elem = document.getElementById('sb-product-class');
      $(elem).addClass('active');
      feather.replace();
+     setSelected();
      retrieveDataPage(0, 15);
      
      // correct scroll due to "sticky" elements
