@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.model;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,6 +66,18 @@ public class Mission extends PersistentObject {
 	 */
 	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String productFileTemplate;
+	
+	/**
+	 * An identifying string for the processing centre (organisation) operating this prosEO instance according to
+	 * mission-specific conventions
+	 */
+	private String processingCentre;
+	
+	/**
+	 * The default period of time for keeping products after their generation.
+	 * If not set for the mission or a processing order, automatic product deletion will not take place.
+	 */
+	private Duration productRetentionPeriod;
 	
 	/** The spacecrafts this mission owns */
 	@OneToMany(mappedBy = "mission")
@@ -170,6 +183,42 @@ public class Mission extends PersistentObject {
 	 */
 	public void setProductFileTemplate(String productFileTemplate) {
 		this.productFileTemplate = productFileTemplate;
+	}
+
+	/**
+	 * Gets the processing centre
+	 * 
+	 * @return the processing centre
+	 */
+	public String getProcessingCentre() {
+		return processingCentre;
+	}
+
+	/**
+	 * Sets the processing centre
+	 * 
+	 * @param processingCentre the processing centre to set
+	 */
+	public void setProcessingCentre(String processingCentre) {
+		this.processingCentre = processingCentre;
+	}
+
+	/**
+	 * Gets the default product retention period
+	 * 
+	 * @return the product retention period
+	 */
+	public Duration getProductRetentionPeriod() {
+		return productRetentionPeriod;
+	}
+
+	/**
+	 * Sets the default product retention period
+	 * 
+	 * @param productRetentionPeriod the product retention period to set
+	 */
+	public void setProductRetentionPeriod(Duration productRetentionPeriod) {
+		this.productRetentionPeriod = productRetentionPeriod;
 	}
 
 	/**

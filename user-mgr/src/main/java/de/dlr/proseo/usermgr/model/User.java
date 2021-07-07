@@ -59,6 +59,9 @@ public class User implements Persistable<String> {
 	@Column(nullable = false)
 	private Date passwordExpirationDate = Date.from(Instant.now().plus(36500, ChronoUnit.DAYS));
 	
+	/** Data download quota for this user (if not set, no quota applies) */
+	private Quota quota;
+	
 	/** The authorities (privileges) granted to this user */
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "authorities", joinColumns = {
@@ -167,6 +170,24 @@ public class User implements Persistable<String> {
 	 */
 	public void setPasswordExpirationDate(Date passwordExpirationDate) {
 		this.passwordExpirationDate = passwordExpirationDate;
+	}
+
+	/**
+	 * Gets the data download quota
+	 * 
+	 * @return a Quota object
+	 */
+	public Quota getQuota() {
+		return quota;
+	}
+
+	/**
+	 * Gets the data download quota
+	 * 
+	 * @param quota the Quota object to set
+	 */
+	public void setQuota(Quota quota) {
+		this.quota = quota;
 	}
 
 	/**

@@ -119,6 +119,7 @@ public class ProductRepositoryTest {
 		product.setOrbit(orbit);
 		product.setSensingStartTime(TEST_START_TIME);
 		product.setSensingStopTime(TEST_START_TIME.plusSeconds(900));
+		product.setEvictionTime(Instant.now().minusSeconds(1800));
 		product = RepositoryService.getProductRepository().save(product);
 		
 		RepositoryService.getProductClassRepository().save(prodClass);
@@ -152,6 +153,12 @@ public class ProductRepositoryTest {
 		assertFalse("Find by UUID failed for Product", null == product);
 		
 		logger.info("OK: Test for findByUuid completed");
+		
+		// Test findByEvictionTimeBeforeNow
+		products = RepositoryService.getProductRepository().findByEvictionTimeBeforeNow();
+		assertFalse("Find by eviction time before now failed for Product", products.isEmpty());
+		
+		logger.info("OK: Test for findByEvictionTimeBeforeNow completed");
 	}
 
 }

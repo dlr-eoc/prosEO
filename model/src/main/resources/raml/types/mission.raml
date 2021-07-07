@@ -24,6 +24,13 @@
       productFileTemplate:
         type: string
         description: The product filename template implementing the mission's file naming convention
+      processingCentre?:
+        type: string
+        description: An identifying string for the processing centre (organisation) operating this prosEO instance
+      productRetentionPeriod?:
+        type: integer
+        format: long
+        description: The default period of time for keeping products after their generation in seconds
       spacecrafts:
         type: RestSpacecraft[]
         description: A spacecraft used for a specific Mission. A Mission may operate more than one spacecraft.

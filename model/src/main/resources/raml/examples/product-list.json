@@ -43,7 +43,10 @@
         "mode": "OFFL",
         "sensingStartTime": "2018-06-13T09:23:45.396521",
         "sensingStopTime": "2018-06-13T10:53:45.396521",
+        "rawDataAvailabilityTime": "2018-06-13T12:25:37.000000",
         "generationTime": "2019-10-05T10:13:22.000000",
+        "publicationTime": "2019-10-05T10:13:25.926000",
+        "evictionTime": "2019-11-05T10:13:25.926000",
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711

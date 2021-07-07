@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
@@ -40,6 +41,10 @@ public class Spacecraft extends PersistentObject {
 	@OneToMany(mappedBy = "spacecraft", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("orbitNumber")
 	private List<Orbit> orbits = new ArrayList<>();
+	
+	/** The payloads flying on this spacecraft */
+	@ElementCollection
+	private List<Payload> payloads = new ArrayList<>();
 	
 	/**
 	 * Gets the mission of this spacecraft
@@ -106,6 +111,24 @@ public class Spacecraft extends PersistentObject {
 	 */
 	public void setOrbits(List<Orbit> orbits) {
 		this.orbits = orbits;
+	}
+
+	/**
+	 * Gets the list of payloads
+	 * 
+	 * @return the payloads
+	 */
+	public List<Payload> getPayloads() {
+		return payloads;
+	}
+
+	/**
+	 * Sets the list of payloads
+	 * 
+	 * @param payloads the payloads to set
+	 */
+	public void setPayloads(List<Payload> payloads) {
+		this.payloads = payloads;
 	}
 
 	@Override

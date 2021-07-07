@@ -20,3 +20,6 @@
       passwordExpirationDate?:
         type: date-only
         description: The expiration date for the password (default never)
+      quota?:
+        type: RestQuota
+        description: Data download quota for this user (if not set, no quota applies)

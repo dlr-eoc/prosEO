@@ -54,7 +54,7 @@ public class MissionUtil {
 
 			for (Spacecraft modelSpacecraft : modelMission.getSpacecrafts()) {
 				RestSpacecraft restFinal = new RestSpacecraft(modelSpacecraft.getId(), Long.valueOf(modelSpacecraft.getVersion()),
-						modelSpacecraft.getCode(), modelSpacecraft.getName());
+						modelSpacecraft.getCode(), modelSpacecraft.getName(), null);
 				restSpacecrafts.add(restFinal);
 			}
 			restMission.setSpacecrafts(restSpacecrafts);

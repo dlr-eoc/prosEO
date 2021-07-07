@@ -24,6 +24,9 @@
       processingEngineToken?:
         type: string
         description: Authentication token for connecting to this facility's processing engine (Kubernetes instance)
+      maxJobsPerNode?:
+        type: integer
+        description: Maximum number of jobs schedulable per worker node (default 1)
       storageManagerUrl:
         type: string
         description: The URL to access this facility's storage manager

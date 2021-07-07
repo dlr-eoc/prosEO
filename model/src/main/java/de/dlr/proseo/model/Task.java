@@ -55,6 +55,12 @@ public class Task extends PersistentObject {
 	private Integer numberOfCpus;
 	
 	/**
+	 * Minimum memory (RAM) requirement for this task in GiB (used by the Production Planner to request memory resources
+	 * on a Kubernetes worker node when scheduling a task; if not set, no specific request will be made)
+	 */
+	private Integer minMemory;
+	
+	/**
 	 * Intermediate output files for testing/evaluation purposes 
 	 * (level 5 "List_of_Breakpoints" from Generic IPF Interface Specifications, sec. 4.1.3)
 	 */
@@ -176,6 +182,24 @@ public class Task extends PersistentObject {
 	 */
 	public void setNumberOfCpus(Integer numberOfCpus) {
 		this.numberOfCpus = numberOfCpus;
+	}
+
+	/**
+	 * Gets the minimum required memory in GiB
+	 * 
+	 * @return the minimum memory
+	 */
+	public Integer getMinMemory() {
+		return minMemory;
+	}
+
+	/**
+	 * Sets the minimum required memory in GiB
+	 * 
+	 * @param minMemory the minimum memory to set
+	 */
+	public void setMinMemory(Integer minMemory) {
+		this.minMemory = minMemory;
 	}
 
 	/**
