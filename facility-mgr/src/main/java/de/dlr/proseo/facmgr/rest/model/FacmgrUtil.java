@@ -53,6 +53,10 @@ public class FacmgrUtil {
 			restFacility.setStorageManagerUrl(modelFacility.getStorageManagerUrl());
 
 		}	
+		if (null != modelFacility.getMaxJobsPerNode()) {
+			restFacility.setMaxJobsPerNode(modelFacility.getMaxJobsPerNode().longValue());
+
+		}	
 		if (null != modelFacility.getLocalStorageManagerUrl()) {
 			restFacility.setLocalStorageManagerUrl(modelFacility.getLocalStorageManagerUrl());
 
@@ -114,6 +118,10 @@ public class FacmgrUtil {
 		}	
 		if (null != restFacility.getProcessingEngineToken()) {
 			modelFacility.setProcessingEngineToken(restFacility.getProcessingEngineToken());
+
+		}	
+		if (null != restFacility.getMaxJobsPerNode()) {
+			modelFacility.setMaxJobsPerNode(restFacility.getMaxJobsPerNode().intValue());
 
 		}	
 		if (null != restFacility.getStorageManagerUrl()) {

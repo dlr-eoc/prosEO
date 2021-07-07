@@ -21,6 +21,7 @@
                 "isCritical": true,
                 "criticalityLevel": 100,
                 "numberOfCpus": 10,
+                "minMemory": 64,
                 "breakpointFileNames": []
             }
         ],

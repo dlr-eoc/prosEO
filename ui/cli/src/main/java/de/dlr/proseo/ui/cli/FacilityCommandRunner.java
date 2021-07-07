@@ -486,6 +486,9 @@ public class FacilityCommandRunner {
 				null != updatedFacility.getProcessingEngineToken() && !updatedFacility.getProcessingEngineToken().isBlank()) {
 			restFacility.setProcessingEngineToken(updatedFacility.getProcessingEngineToken());
 		}
+		if (isDeleteAttributes || null != updatedFacility.getMaxJobsPerNode()) {
+			restFacility.setMaxJobsPerNode(updatedFacility.getMaxJobsPerNode());
+		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());
 		}

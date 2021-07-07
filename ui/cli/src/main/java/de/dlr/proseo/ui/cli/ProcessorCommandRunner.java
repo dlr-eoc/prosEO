@@ -879,7 +879,7 @@ public class ProcessorCommandRunner {
 		if (null != updatedProcessor.getSensingTimeFlag()) { // not null
 			restProcessor.setSensingTimeFlag(updatedProcessor.getSensingTimeFlag());
 		}
-		if (null != updatedProcessor.getTasks() && (isDeleteAttributes || !updatedProcessor.getTasks().isEmpty())) {
+		if (isDeleteAttributes || (null != updatedProcessor.getTasks() && !updatedProcessor.getTasks().isEmpty())) {
 			restProcessor.getTasks().clear();
 			restProcessor.getTasks().addAll(updatedProcessor.getTasks());
 		}

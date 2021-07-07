@@ -33,7 +33,9 @@ import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.UsermgrConfiguration;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
+import de.dlr.proseo.usermgr.model.Quota;
 import de.dlr.proseo.usermgr.model.User;
+import de.dlr.proseo.usermgr.rest.model.RestQuota;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
 /**
@@ -181,6 +183,14 @@ public class UserManager {
 		if (null != restUser.getPasswordExpirationDate()) {
 			modelUser.setPasswordExpirationDate(restUser.getPasswordExpirationDate());
 		}
+		if (null != restUser.getQuota()) {
+			RestQuota restQuota = restUser.getQuota();
+			Quota modelQuota = new Quota();
+			modelQuota.setAssigned(restQuota.getAssigned().intValue());
+			modelQuota.setUsed(restQuota.getUsed().intValue());
+			modelQuota.setLastAccessDate(restQuota.getLastAccessDate());
+			modelUser.setQuota(modelQuota);
+		}
 		for (String restAuthority: restUser.getAuthorities()) {
 			// Test whether authority is legal
 			try {
@@ -217,6 +227,10 @@ public class UserManager {
 		}
 		if (null != modelUser.getPasswordExpirationDate()) {
 			restUser.setPasswordExpirationDate(modelUser.getPasswordExpirationDate());
+		}
+		if (null != modelUser.getQuota()) {
+			Quota modelQuota = modelUser.getQuota();
+			restUser.setQuota(new RestQuota(modelQuota.getAssigned().longValue(), modelQuota.getUsed().longValue(), modelQuota.getLastAccessDate()));
 		}
 		for (Authority modelAuthority: modelUser.getAuthorities()) {
 			restUser.getAuthorities().add(modelAuthority.getAuthority());

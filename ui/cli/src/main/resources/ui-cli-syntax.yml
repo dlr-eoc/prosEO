@@ -144,6 +144,9 @@ commands:
             - name: format
               type: string
               description: The file format (one of { JSON, XML, YAML }; default value JSON)
+            - name: delete-attributes
+              type: boolean
+              description: Delete non-mandatory attributes not given in the mission definition file and/or the command parameters
           parameters:
             - name: attribute
               type: string

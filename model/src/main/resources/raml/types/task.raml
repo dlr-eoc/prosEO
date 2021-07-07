@@ -38,6 +38,9 @@
       numberOfCpus?:
         type: integer
         description: The number of CPUs used by the task
+      minMemory?:
+        type: integer
+        description: Minimum memory (RAM) requirement for this task in GiB
       breakpointFileNames:
         type: string[]
         description: Intermediate output files for testing/evaluation purposes

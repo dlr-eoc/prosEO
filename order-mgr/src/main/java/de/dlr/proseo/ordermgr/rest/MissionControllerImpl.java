@@ -30,12 +30,14 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 import de.dlr.proseo.model.rest.MissionController;
 import de.dlr.proseo.model.rest.model.RestMission;
+import de.dlr.proseo.model.rest.model.RestPayload;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.ordermgr.rest.model.MissionUtil;
 import de.dlr.proseo.model.Configuration;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.Payload;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.Processor;
 import de.dlr.proseo.model.ProcessorClass;
@@ -230,13 +232,20 @@ public class MissionControllerImpl implements MissionController {
 						throw new IllegalArgumentException(String.format(MSG_SPACECRAFT_EXISTS, MSG_ID_SPACECRAFT_EXISTS, 
 								restSpacecraft.getCode(), mission.getCode()));
 					}
-					else {
-						modelSpacecraft.setCode(restSpacecraft.getCode());
-						modelSpacecraft.setName(restSpacecraft.getName());
-						modelSpacecraft.setMission(modelMission);
-						modelSpacecraft = RepositoryService.getSpacecraftRepository().save(modelSpacecraft);
-					}
 
+					modelSpacecraft.setCode(restSpacecraft.getCode());
+					modelSpacecraft.setName(restSpacecraft.getName());
+					modelSpacecraft.setMission(modelMission);
+					if (null != restSpacecraft.getPayloads()) {
+						for (RestPayload restPayload : restSpacecraft.getPayloads()) {
+							Payload modelPayload = new Payload();
+							modelPayload.setName(restPayload.getName());
+							modelPayload.setDescription(restPayload.getDescription());
+							modelSpacecraft.getPayloads().add(modelPayload);
+						}
+					}
+					
+					modelSpacecraft = RepositoryService.getSpacecraftRepository().save(modelSpacecraft);
 					modelMission.getSpacecrafts().add(modelSpacecraft);					
 				}		
 				modelMission = RepositoryService.getMissionRepository().save(modelMission);
@@ -374,6 +383,7 @@ public class MissionControllerImpl implements MissionController {
 									spacecraftChanged = true;
 									modelSpacecraft.setName(restSpacecraft.getName());
 								}
+								spacecraftChanged = updatePayloads(modelSpacecraft.getPayloads(), restSpacecraft.getPayloads());
 								if (spacecraftChanged) {
 									modelSpacecraft.incrementVersion();
 									modelSpacecraft = RepositoryService.getSpacecraftRepository().save(modelSpacecraft);
@@ -387,6 +397,16 @@ public class MissionControllerImpl implements MissionController {
 						modelSpacecraft.setCode(restSpacecraft.getCode());
 						modelSpacecraft.setName(restSpacecraft.getName());
 						modelSpacecraft.setMission(modelMission);
+						
+						if (null != restSpacecraft.getPayloads()) {
+							for (RestPayload restPayload : restSpacecraft.getPayloads()) {
+								Payload modelPayload = new Payload();
+								modelPayload.setName(restPayload.getName());
+								modelPayload.setDescription(restPayload.getDescription());
+								modelSpacecraft.getPayloads().add(modelPayload);
+							}
+						}
+						
 						modelSpacecraft = RepositoryService.getSpacecraftRepository().save(modelSpacecraft);
 						newSpacecrafts.add(modelSpacecraft);
 						missionChanged = true;
@@ -430,6 +450,37 @@ public class MissionControllerImpl implements MissionController {
 
 	}
 
+
+	/**
+	 * Update a spacecraft's list of payloads from the REST spacecraft's list of payloads
+	 * 
+	 * @param modelPayloads the spacecraft's list of payloads
+	 * @param restPayloads the REST spacecraft's list of payloads
+	 * @return true, if any of the payloads was changed, false otherwise
+	 */
+	private boolean updatePayloads(List<Payload> modelPayloads, @Valid List<RestPayload> restPayloads) {
+		boolean spacecraftChanged = false;
+		if (null == restPayloads) {
+			if (!modelPayloads.isEmpty()) {
+				spacecraftChanged = true;
+				modelPayloads.clear();
+			}
+		} else {
+			List<Payload> newPayloads = new ArrayList<>();
+			for (RestPayload restPayload : restPayloads) {
+				Payload modelPayload = new Payload();
+				modelPayload.setName(restPayload.getName());
+				modelPayload.setDescription(restPayload.getDescription());
+				newPayloads.add(modelPayload);
+			}
+			if (!modelPayloads.equals(newPayloads)) {
+				spacecraftChanged = true;
+				modelPayloads.clear();
+				modelPayloads.addAll(newPayloads);
+			}
+		}
+		return spacecraftChanged;
+	}
 
 	/**
 	 * Delete a mission by ID
