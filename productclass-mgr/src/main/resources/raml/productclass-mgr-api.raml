@@ -63,10 +63,14 @@ resourceTypes:
 /productclasses:
   type: standard
   get:
-    description: Get product classes, optionally filtered by mission and/or product type
+    description: Get product classes, optionally filtered by mission, product type, processor class, processing level or visibility
+    displayName: getRestProductClass
     queryParameters:
       mission?: string
-      productType?: string
+      productType?: string[]
+      processorClass?: string[]
+      level?: string
+      visibility?: string
       recordFrom?: integer
       recordTo?: integer
       orderBy?:
@@ -96,7 +100,10 @@ resourceTypes:
       displayName: countProductClasses
       queryParameters:
         mission?: string
-        productType?: string
+        productType?: string[]
+        processorClass?: string[]
+        level?: string
+        visibility: string
       responses:
         200:
           body:

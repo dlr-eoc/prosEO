@@ -4,6 +4,11 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_EXCEPTION;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NOT_AUTHORIZED;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_MISSIONS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PRODUCTCLASSES_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PROCESSORCLASSES_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_FILECLASSES_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_PROCESSINGMODES_FOUND;
+import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_NO_SPACECRAFTS_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
 import java.util.ArrayList;
@@ -29,12 +34,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.rest.model.RestConfiguredProcessor;
 import de.dlr.proseo.model.rest.model.RestMission;
 import de.dlr.proseo.model.rest.model.RestProcessingFacility;
+import de.dlr.proseo.model.rest.model.RestProcessorClass;
 import de.dlr.proseo.model.rest.model.RestProductClass;
 import de.dlr.proseo.model.rest.model.RestSpacecraft;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -73,6 +81,14 @@ public class GUIBaseController {
 	 * List with cached data
 	 */
 	private List<String> parametertypes = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> processinglevels = null;
+	/**
+	 * List with cached data
+	 */
+	private List<String> visibilities = null;
 			
 	public GUIBaseController() {
 		// TODO Auto-generated constructor stub
@@ -184,6 +200,59 @@ public class GUIBaseController {
     }
 
     /**
+     * Retrieve the product classes of mission
+     * 
+     * @return String list
+     */
+    @ModelAttribute("processorclassnames")
+    public List<String> processorclassnames() {
+    	if (!hasroleprocessorreader()) {
+    		return new ArrayList<String>();
+    	}
+    	checkClearCache();
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+    	if (auth.getDataCache().getProcessorclasses() != null && !auth.getDataCache().getProcessorclasses().isEmpty()) return auth.getDataCache().getProcessorclasses();
+
+    	logger.trace("Get processorclasses");
+    	auth.getDataCache().setProcessorclasses(new ArrayList<String>());   
+		List<?> resultList = null;
+		
+		try {
+			resultList = serviceConnection.getFromService(serviceConfig.getProcessorManagerUrl(),
+					"/processorclasses?mission=" + auth.getMission(), List.class, auth.getProseoName(), auth.getPassword());
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_PROCESSORCLASSES_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return auth.getDataCache().getProcessorclasses();
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return auth.getDataCache().getProcessorclasses();
+		}
+		
+		if (resultList != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			for (Object object: resultList) {
+				RestProcessorClass restProcessorClass = mapper.convertValue(object, RestProcessorClass.class);
+				auth.getDataCache().getProcessorclasses().add(restProcessorClass.getProcessorName());
+			}
+		}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		auth.getDataCache().getProcessorclasses().sort(c);
+        return auth.getDataCache().getProcessorclasses();
+    }
+
+    /**
      * Retrieve the configured processors of mission
      * 
      * @return String list
@@ -208,7 +277,7 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = uiMsg(MSG_ID_NO_CONFIGUREDPROCESSORS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -258,7 +327,7 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = uiMsg(MSG_ID_NO_FILECLASSES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -311,7 +380,7 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = uiMsg(MSG_ID_NO_PROCESSINGMODES_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -364,7 +433,7 @@ public class GUIBaseController {
 			String message = null;
 			switch (e.getRawStatusCode()) {
 			case org.apache.http.HttpStatus.SC_NOT_FOUND:
-				message = uiMsg(MSG_ID_NO_PRODUCTCLASSES_FOUND);
+				message = uiMsg(MSG_ID_NO_SPACECRAFTS_FOUND);
 				break;
 			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
 			case org.apache.http.HttpStatus.SC_FORBIDDEN:
@@ -410,6 +479,42 @@ public class GUIBaseController {
 		Comparator<String> c = Comparator.comparing((String x) -> x);
 		productiontypes.sort(c);
         return productiontypes;
+    }
+
+    /**
+     * Retrieve the processing level enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("processinglevels")
+    public List<String> processinglevels() {
+    	if (processinglevels != null && !processinglevels.isEmpty()) return processinglevels;
+    	
+    	processinglevels = new ArrayList<String>(); 
+    	for (ProcessingLevel value: ProcessingLevel.values()) {
+    		processinglevels.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		processinglevels.sort(c);
+        return processinglevels;
+    }
+    
+    /**
+     * Retrieve the product visibility enum
+     * 
+     * @return String list
+     */
+    @ModelAttribute("visibilities")
+    public List<String> visibilities() {
+    	if (visibilities != null && !visibilities.isEmpty()) return visibilities;
+    	
+    	visibilities = new ArrayList<String>(); 
+    	for (ProductVisibility value: ProductVisibility.values()) {
+    		visibilities.add(value.toString());
+    	}
+		Comparator<String> c = Comparator.comparing((String x) -> x);
+		visibilities.sort(c);
+        return visibilities;
     }
 
     /**
