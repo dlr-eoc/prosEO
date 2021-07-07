@@ -35,6 +35,9 @@ import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.ProductClass;
 import de.dlr.proseo.model.SimpleSelectionRule;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductQuality;
+import de.dlr.proseo.model.enums.ProductVisibility;
+import de.dlr.proseo.model.enums.ProcessingLevel;
 import de.dlr.proseo.model.SimplePolicy;
 import de.dlr.proseo.model.SimplePolicy.DeltaTime;
 import de.dlr.proseo.model.SimplePolicy.PolicyType;
@@ -353,12 +356,16 @@ public class ProductClassManager {
      * Get product classes, optionally filtered by mission and/or product type
      * 
      * @param mission the mission code
-     * @param productType the prosEO product type
+     * @param productType list of product types
+     * @param processorClass list of processor class names
+     * @param the processing level
+     * @param the visibility
      * @return a list of product classes conforming to the search criteria
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
      */
-	public List<RestProductClass> getRestProductClass(String mission, String productType, 
+	public List<RestProductClass> getRestProductClass(String mission, String[] productType, String[] processorClass, 
+			String level, String visibility, 
 			Long recordFrom, Long recordTo, String[] orderBy) throws NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {}, {}, {})", mission, productType,
 				recordFrom, recordTo, orderBy);
@@ -375,7 +382,7 @@ public class ProductClassManager {
 		
 		List<RestProductClass> result = new ArrayList<>();
 		
-		Query query = createProductClassesQuery(mission, productType, recordFrom, recordTo, orderBy, false);
+		Query query = createProductClassesQuery(mission, productType, processorClass, level, visibility, recordFrom, recordTo, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof de.dlr.proseo.model.ProductClass) {
 				result.add(ProductClassUtil.toRestProductClass((de.dlr.proseo.model.ProductClass) resultObject));
@@ -396,11 +403,15 @@ public class ProductClassManager {
      * 
      * @param mission the mission code
      * @param productType the prosEO product type
+     * @param productType list of product types
+     * @param processorClass list of processor class names
+     * @param the processing level
+     * @param the visibility
      * @return a list of product classes conforming to the search criteria
 	 * @throws NoResultException if no product classes matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
      */
-	public String countProductClasses(String mission, String productType) throws NoResultException, SecurityException {
+	public String countProductClasses(String mission, String[] productType, String[] processorClass, String level, String visibility) throws NoResultException, SecurityException {
 
 		if (logger.isTraceEnabled()) logger.trace(">>> countProductClasses({})", mission);
 		
@@ -413,7 +424,7 @@ public class ProductClassManager {
 						mission, securityService.getMission()));
 			} 
 		}
-		Query query = createProductClassesQuery(mission, productType, null, null, null, true);
+		Query query = createProductClassesQuery(mission, productType, processorClass, level, visibility, null, null, null, true);
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return ((Long)resultObject).toString();
@@ -478,11 +489,14 @@ public class ProductClassManager {
 
 	/*
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
-	 * @param productType product type string
+     * @param productType list of product types
+     * @param processorClass list of processor class names
+     * @param the processing level
+     * @param the visibility
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return JPQL Query
 	 */
-	private Query createProductClassesQuery(String mission, String productType,
+	private Query createProductClassesQuery(String mission, String[] productType, String[] processorClass, String level, String visibility,
 			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
 
 		if (logger.isTraceEnabled()) logger.trace(">>> createProductClassesQuery({}, {}, {}, {}, {}, {})", mission, productType, recordFrom, recordTo, orderBy, count);
@@ -496,10 +510,28 @@ public class ProductClassManager {
 			jpqlQuery = "select p from ProductClass p " + join + " where p.mission.code = :missionCode";
 		}
 
-		if (null != productType && !productType.isBlank()) {
-			jpqlQuery += " and productType = :productType";
+		if (null != productType && 0 < productType.length) {
+			jpqlQuery += " and productType in (";
+			for (int i = 0; i < productType.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":productType" + i;
+			}
+			jpqlQuery += ")";
 		}
-				
+		if (null != processorClass && 0 < processorClass.length) {
+			jpqlQuery += " and processorClass.processorName in (";
+			for (int i = 0; i < processorClass.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":processorClass" + i;
+			}
+			jpqlQuery += ")";
+		}
+		if (null != level) {
+			jpqlQuery += " and p.processingLevel = :level";
+		}
+		if (null != visibility) {
+			jpqlQuery += " and p.visibility = :visibility";
+		}
 		// order by
 		if (null != orderBy && 0 < orderBy.length) {
 			jpqlQuery += " order by ";
@@ -513,8 +545,21 @@ public class ProductClassManager {
 		Query query = em.createQuery(jpqlQuery);
 		query.setParameter("missionCode", mission);
 
-		if (productType != null && !productType.isBlank()) {
-			query.setParameter("productType", productType);
+		if (null != productType && 0 < productType.length) {
+			for (int i = 0; i < productType.length; ++i) {
+				query.setParameter("productType" + i, productType[i]);
+			}
+		}
+		if (null != processorClass && 0 < processorClass.length) {
+			for (int i = 0; i < processorClass.length; ++i) {
+				query.setParameter("processorClass" + i, processorClass[i]);
+			}
+		}
+		if (null != level) {
+			query.setParameter("level", ProcessingLevel.valueOf(level));
+		}
+		if (null != visibility) {
+			query.setParameter("visibility", ProductVisibility.valueOf(visibility));
 		}
 
 		// length of record list

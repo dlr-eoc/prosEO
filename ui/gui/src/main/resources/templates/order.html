@@ -118,7 +118,7 @@
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                        th:unless="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
@@ -142,7 +142,7 @@
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                        th:unless="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  

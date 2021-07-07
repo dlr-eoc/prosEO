@@ -157,7 +157,7 @@
                       <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                       <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:text="' ' + ${comp}"></span></td>
                       <td>

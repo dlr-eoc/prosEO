@@ -23,6 +23,10 @@ public class DataCache {
 	/**
 	 * List with cached data
 	 */
+	private List<String> processorclasses = null;
+	/**
+	 * List with cached data
+	 */
 	private List<String> configuredProcessors = null;
 	/**
 	 * List with cached data
@@ -41,6 +45,20 @@ public class DataCache {
 	 * List with cached data
 	 */
 	private List<String> spaceCrafts = null;
+
+	/**
+	 * @return the processorclasses
+	 */
+	public List<String> getProcessorclasses() {
+		return processorclasses;
+	}
+
+	/**
+	 * @param processorclasses the processorclasses to set
+	 */
+	public void setProcessorclasses(List<String> processorclasses) {
+		this.processorclasses = processorclasses;
+	}
 
 	/**
 	 * @return the configuredProcessors

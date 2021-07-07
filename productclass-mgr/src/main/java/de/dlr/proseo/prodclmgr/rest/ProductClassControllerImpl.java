@@ -80,20 +80,24 @@ public class ProductClassControllerImpl implements ProductclassController {
 		}
 	}
     /**
-     * Get product classes, optionally filtered by mission and/or product type
+     * Get product classes, optionally filtered by mission, product type, processor class, processing level or visibility
      * 
      * @param mission the mission code
-     * @param productType the prosEO product type (if set, missionType should not be set)
+     * @param productType list of product types
+     * @param processorClass list of processor class names
+     * @param the processing level
+     * @param the visibility
      * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no product classes matching the search criteria were found
      */
 	@Override
-	public ResponseEntity<String> countProductClasses(String mission, String productType) {
+	public ResponseEntity<String> countProductClasses(String mission, String[] productType, String[] processorClass, 
+			String level, String visibility) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		try {
-			return new ResponseEntity<>(productClassManager.countProductClasses(mission, productType), HttpStatus.OK);
+			return new ResponseEntity<>(productClassManager.countProductClasses(mission, productType, processorClass, level, visibility), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -101,20 +105,26 @@ public class ProductClassControllerImpl implements ProductclassController {
 		}
 	}
     /**
-     * Get product classes, optionally filtered by mission and/or product type
+     * Get product classes, optionally filtered by mission, product type, processor class, processing level or visibility
      * 
      * @param mission the mission code
+     * @param productType list of product types
+     * @param processorClass list of processor class names
+     * @param the processing level
+     * @param the visibility
+     * @param productType the prosEO product type (if set, missionType should not be set)
      * @param productType the prosEO product type (if set, missionType should not be set)
      * @return HTTP status "OK" and a list of Json objects representing product classes satisfying the search criteria or
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
 	 *         HTTP status "NOT_FOUND" and an error message, if no product classes matching the search criteria were found
      */
 	@Override
-	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String productType, Long recordFrom, Long recordTo, String[] orderBy) {
+	public ResponseEntity<List<RestProductClass>> getRestProductClass(String mission, String[] productType, String[] processorClass, 
+			String level, String visibility, Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getRestProductClass({}, {}, {})", mission, productType);
 		
 		try {
-			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, recordFrom, recordTo, orderBy), HttpStatus.OK);
+			return new ResponseEntity<>(productClassManager.getRestProductClass(mission, productType, processorClass, level, visibility, recordFrom, recordTo, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
