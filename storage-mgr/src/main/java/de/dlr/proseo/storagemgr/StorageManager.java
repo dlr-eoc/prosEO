@@ -9,16 +9,11 @@ package de.dlr.proseo.storagemgr;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import de.dlr.proseo.storagemgr.cache.FileCache;
-import de.dlr.proseo.storagemgr.cache.FileUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * prosEO Storage Manager application
@@ -41,16 +36,4 @@ public class StorageManager {
 		SpringApplication.run(StorageManager.class, args);
 	}
 	
-	/**
-	 * FileCache Bean
-	 * 
-	 * @return FileCache
-	 */
-	@Bean
-    public FileCache getFileCache() {
-	
-       return new FileCache();
-	} 
-	
-
 }

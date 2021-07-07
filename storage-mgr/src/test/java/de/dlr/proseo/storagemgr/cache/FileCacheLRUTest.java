@@ -6,6 +6,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -13,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -26,6 +28,12 @@ public class FileCacheLRUTest {
 	@Rule
 	public TestName testName = new TestName();
 
+	@Autowired
+	private StorageManagerConfiguration cfg;
+	
+	@Autowired
+	private FileCache pathCache;
+	
 
 	/**
 	 * 
@@ -35,6 +43,10 @@ public class FileCacheLRUTest {
 		
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyTestDirectory();
+		
+		if (cfg == null) {
+			fail("Config is null");
+		}
 
 		String path1 = testPath + "/test1.txt";
 		String path2 = testPath + "/test2.txt";
@@ -43,8 +55,6 @@ public class FileCacheLRUTest {
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		TestUtils.createFile(path3, "");
-		
-		FileCache pathCache = new FileCache(testPath);
 		
 		assertTrue("Cache has not 3 elements: " + pathCache.size(), pathCache.size() == 3);
 

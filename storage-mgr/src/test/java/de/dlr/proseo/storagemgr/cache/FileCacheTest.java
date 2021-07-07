@@ -8,6 +8,7 @@ import java.time.Instant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Denys Chaykovskiy
@@ -20,6 +21,9 @@ public class FileCacheTest {
 	@Rule
 	public TestName testName = new TestName();
 
+	@Autowired
+	private FileCache pathCache;
+	
 	/**
 	 * 
 	 */
@@ -30,7 +34,6 @@ public class FileCacheTest {
 		TestUtils.createEmptyTestDirectory();
 		
 		String emptyDirectories = testPath + "/d1/d2/d3";
-		FileCache pathCache = new FileCache(testPath);
 		
 		TestUtils.createDirectory(emptyDirectories);
 		
@@ -64,8 +67,7 @@ public class FileCacheTest {
 
 		fileUtils.createFile("");
 
-		FileCache pathCache = new FileCache(testPath);
-
+	
 		Instant testInstant;
 
 		testInstant = pathCache.getFileAccessed(path);
@@ -91,7 +93,7 @@ public class FileCacheTest {
 		String fileName = "file.txt";
 		String path = dir + "/" + fileName;
 
-		FileCache pathCache = new FileCache(testPath);
+		
 
 		String accessedPath = pathCache.getAccessedPath(path);
 		String expectedAccessedPath = dir + "/" + FileCache.getPrefix() + fileName;
@@ -124,7 +126,6 @@ public class FileCacheTest {
 		TestUtils.createFile(testPath + "/test4.x", "");
 		TestUtils.createFile(testPath + "/test5.x", "");
 
-		FileCache pathCache = new FileCache(testPath);
 		
 		assertTrue("Cache does not contain 5 elements after dir init: " + pathCache.size(), 
 				pathCache.size() == 5);
@@ -175,8 +176,7 @@ public class FileCacheTest {
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		
-		FileCache pathCache = new FileCache(testPath);
-		
+	
 		assertTrue("Cache does not contain 2 elements after dir init: " + pathCache.size(), 
 				pathCache.size() == 2);
 		

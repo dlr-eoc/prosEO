@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.PostConstruct;
+
 import java.util.Map.Entry;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +26,7 @@ public class FileCache {
 	
 	private String path;
 	private static final String PREFIX = "accessed-";
-
+	
 	private MapCache mapCache;
 	
 	@Autowired
@@ -32,17 +35,19 @@ public class FileCache {
 	 * @param path
 	 */
 	
-	public FileCache() {
+	private static FileCache theFileCache; 
+	
+	public static FileCache getInstance() {
 		
-		// TO-DO: Initialize with the right directory, for example, from application.yml 
-		this(FileUtils.getTestPath());	
+		return theFileCache;
 	}
 	
-	public FileCache(String path) {
-
+	@PostConstruct
+	public void init() {
+		
+		path = cfg.getPosixWorkerMountPoint();
+		
 		File directory = new File(path);
-
-		this.path = path;
 
 		mapCache = new MapCache();
 
@@ -55,7 +60,10 @@ public class FileCache {
 		}
 
 		putFilesToCache(path);
+		
+		theFileCache = this; 
 	}
+	
 
 	/**
 	 * Puts the new element to map. If element exists, it will be overwritten
@@ -101,22 +109,20 @@ public class FileCache {
 	 */
 	private void deleteLRU(String newPath) {
 		
-		// TO-DO: solve the null problem with cfg (maybe it is only in unit-tests) 
-		int expectedUsage = 95; //Integer.valueOf(cfg.getExpectedCacheUsage());
+		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
 		
-		// TO-DO: change "/" to application.yaml data-path or similar 
-		File file = new File("/"); 
+		File file = new File(path); 
     	long totalBytes = file.getTotalSpace(); //total disk space in bytes
     	long freeBytes = file.getUsableSpace();
     	long usedBytes= totalBytes - freeBytes; 
     	
     	double realUsage = 100.0 * usedBytes / totalBytes; 
     	
-    	mapCache.sortByAccessedAsc();
-    	
     	if (realUsage <= expectedUsage) {
     		return;
     	}
+    	
+    	mapCache.sortByAccessedAsc();
     	
     	List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
     	Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();

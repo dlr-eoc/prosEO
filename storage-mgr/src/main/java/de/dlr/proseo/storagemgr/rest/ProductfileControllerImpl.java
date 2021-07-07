@@ -62,7 +62,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	}
 
 	/**
-	 * Copy source file named pathInfo to local storage used by workers.
+	 * Copy source file named pathInfo to file cache used by processors.
 	 * The local file name is: posixWorkerMountPoint + relative source file path
 	 * @param pathInfo Source file name
 	 * @return Local file name
