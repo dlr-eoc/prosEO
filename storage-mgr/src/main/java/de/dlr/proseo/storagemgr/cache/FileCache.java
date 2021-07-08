@@ -41,7 +41,7 @@ public class FileCache {
 	}
 	
 	@PostConstruct
-	public void init() {
+	private void init() {
 		
 		path = cfg.getPosixWorkerMountPoint();
 		
@@ -108,13 +108,7 @@ public class FileCache {
 	private void deleteLRU(String newPath) {
 		
 		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
-		
-		File file = new File(path); 
-    	long totalBytes = file.getTotalSpace(); //total disk space in bytes
-    	long freeBytes = file.getUsableSpace();
-    	long usedBytes= totalBytes - freeBytes; 
-    	
-    	double realUsage = 100.0 * usedBytes / totalBytes; 
+    	double realUsage = getRealUsage();
     	
     	if (realUsage <= expectedUsage) {
     		return;
@@ -132,10 +126,21 @@ public class FileCache {
     		
     		remove(pathToDelete.getKey()); 
     		
-    		freeBytes = file.getUsableSpace();
-    		usedBytes = totalBytes - freeBytes; 
-        	realUsage = 100.0 * usedBytes / totalBytes; 
+        	realUsage = getRealUsage();
     	}
+	}
+	
+	/**
+	 * @return
+	 */
+	private double getRealUsage() {
+		
+		File file = new File(path); 
+    	long totalBytes = file.getTotalSpace(); //total disk space in bytes
+    	long freeBytes = file.getUsableSpace();
+    	long usedBytes= totalBytes - freeBytes; 
+    	
+    	return 100.0 * usedBytes / totalBytes; 
 	}
 
 	/**
