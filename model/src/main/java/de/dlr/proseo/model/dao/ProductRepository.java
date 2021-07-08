@@ -103,6 +103,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 * 
 	 * @return a list of products satisfying the search criteria
 	 */
-	@Query("select p from Product p where p.evictionTime < current_timestamp")
+	@Query("select p from Product p where p.evictionTime is not null and p.evictionTime < current_timestamp")
 	public List<Product> findByEvictionTimeBeforeNow();
 }

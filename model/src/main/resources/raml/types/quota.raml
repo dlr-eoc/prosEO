@@ -4,10 +4,12 @@
     properties:
       assigned:
         type: integer
-        description: Monthly data volume allowance in GiB
+        format: long
+        description: Monthly data volume allowance in Bytes
       used:
         type: integer
-        description: Data volume in GiB used in the last recorded calendar month
+        format: long
+        description: Data volume in Bytes used in the last recorded calendar month
       lastAccessDate:
         type: date-only
         description: Date of last recorded access (defines the calendar month for "used")

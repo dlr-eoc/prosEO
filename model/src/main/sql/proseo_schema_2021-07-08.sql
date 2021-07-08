@@ -854,9 +854,9 @@ CREATE TABLE public.users (
     expiration_date timestamp without time zone NOT NULL,
     password character varying(255) NOT NULL,
     password_expiration_date timestamp without time zone NOT NULL,
-    assigned integer,
+    assigned bigint,
     last_access_date timestamp without time zone,
-    used integer
+    used bigint
 );
 
 

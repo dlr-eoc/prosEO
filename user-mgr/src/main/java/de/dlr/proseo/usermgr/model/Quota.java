@@ -18,14 +18,14 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class Quota {
 	
-	/** Monthly data volume allowance in GiB */
-	private Integer assigned = 0;
+	/** Monthly data volume allowance in Bytes */
+	private Long assigned = 0L;
 	
 	/**
-	 * Data volume in GiB used in the last recorded calendar month
+	 * Data volume in Bytes used in the last recorded calendar month
 	 * (will be reset, when an access in another calendar month than recorded in "lastAccessDate" happens)
 	 */
-	private Integer used = 0;
+	private Long used = 0L;
 	
 	/** Date of last recorded access (determines calendar month, for which the "used" volume count is valid) */
 	private Date lastAccessDate = new Date();
@@ -35,7 +35,7 @@ public class Quota {
 	 * 
 	 * @return the assigned data volume
 	 */
-	public Integer getAssigned() {
+	public Long getAssigned() {
 		return assigned;
 	}
 
@@ -44,7 +44,7 @@ public class Quota {
 	 * 
 	 * @param assigned the assigned data volume to set
 	 */
-	public void setAssigned(Integer assigned) {
+	public void setAssigned(Long assigned) {
 		this.assigned = assigned;
 	}
 
@@ -53,7 +53,7 @@ public class Quota {
 	 * 
 	 * @return the used data volume
 	 */
-	public Integer getUsed() {
+	public Long getUsed() {
 		return used;
 	}
 
@@ -62,7 +62,7 @@ public class Quota {
 	 * 
 	 * @param used the used data volume to set
 	 */
-	public void setUsed(Integer used) {
+	public void setUsed(Long used) {
 		this.used = used;
 	}
 

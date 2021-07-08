@@ -67,9 +67,9 @@ ALTER TABLE public.task
 --
 
 ALTER TABLE public.users
-    ADD COLUMN assigned integer,
+    ADD COLUMN assigned bigint,
     ADD COLUMN last_access_date timestamp without time zone,
-    ADD COLUMN used integer;
+    ADD COLUMN used bigint;
 
 
 --

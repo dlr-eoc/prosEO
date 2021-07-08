@@ -186,8 +186,8 @@ public class UserManager {
 		if (null != restUser.getQuota()) {
 			RestQuota restQuota = restUser.getQuota();
 			Quota modelQuota = new Quota();
-			modelQuota.setAssigned(restQuota.getAssigned().intValue());
-			modelQuota.setUsed(restQuota.getUsed().intValue());
+			modelQuota.setAssigned(restQuota.getAssigned());
+			modelQuota.setUsed(restQuota.getUsed());
 			modelQuota.setLastAccessDate(restQuota.getLastAccessDate());
 			modelUser.setQuota(modelQuota);
 		}
@@ -230,7 +230,7 @@ public class UserManager {
 		}
 		if (null != modelUser.getQuota()) {
 			Quota modelQuota = modelUser.getQuota();
-			restUser.setQuota(new RestQuota(modelQuota.getAssigned().longValue(), modelQuota.getUsed().longValue(), modelQuota.getLastAccessDate()));
+			restUser.setQuota(new RestQuota(modelQuota.getAssigned(), modelQuota.getUsed(), modelQuota.getLastAccessDate()));
 		}
 		for (Authority modelAuthority: modelUser.getAuthorities()) {
 			restUser.getAuthorities().add(modelAuthority.getAuthority());
