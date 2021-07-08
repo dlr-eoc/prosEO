@@ -1,11 +1,12 @@
 package de.dlr.proseo.storagemgr.cache;
 
+
 /**
  * @author Denys Chaykovskiy
  *
  */
 public class FileSystemGeneratorTest {
-
+	
 	private int maxDirectoryDepth = 3;
 	private int filesToGenerate = 3;
 	private int fileContentLength = 8;
@@ -13,9 +14,9 @@ public class FileSystemGeneratorTest {
 	private String path;
 	private PathGeneratorTest pathGenerator = new PathGeneratorTest();
 
+	/*
 	public static void main(String[] args) {
 
-		String testPath = TestUtils.getTestPath();
 
 		System.out.println("TestData Path: " + testPath);
 
@@ -23,6 +24,7 @@ public class FileSystemGeneratorTest {
 
 		fileTreeGenerator.generate();
 	}
+	*/
 
 	/**
 	 * @return the maxDepth

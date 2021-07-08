@@ -10,18 +10,41 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.annotation.PostConstruct;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import de.dlr.proseo.storagemgr.StorageManager;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestEntityManager
 public class MapCacheTest {
 
 	@Rule
 	public TestName testName = new TestName();
+	
+	@Autowired
+	private TestUtils testUtils;
+
+	String testPath; 
+	
+	@PostConstruct
+	private void init() {
+		testPath = testUtils.getTestPath();
+	}
 
 	/**
 	 * 
@@ -147,13 +170,15 @@ public class MapCacheTest {
 	public void testPathes() throws IOException {
 
 		TestUtils.printMethodName(this, testName);
+		TestUtils.createEmptyTestDirectory();
 
-		String testPath = TestUtils.getTestPath();
 		File file = new File(testPath);
 
 		System.out.println("Path: " + file.getPath());
 		System.out.println("Absolute Path: " + file.getAbsolutePath());
 		System.out.println("Canonical Path: " + file.getCanonicalPath());
+		
+		TestUtils.deleteTestDirectory();
 	}
 
 	/**

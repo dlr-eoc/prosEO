@@ -31,9 +31,7 @@ public class FileCache {
 	
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	/**
-	 * @param path
-	 */
+
 	
 	private static FileCache theFileCache; 
 	

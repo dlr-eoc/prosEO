@@ -3,20 +3,42 @@ package de.dlr.proseo.storagemgr.cache;
 import static org.junit.Assert.*;
 
 import java.io.File;
+
+import javax.annotation.PostConstruct;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import de.dlr.proseo.storagemgr.StorageManager;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestEntityManager
 public class FileUtilsTest {
 
 	@Rule
 	public TestName testName = new TestName();
 	
-	private String testPath = TestUtils.getTestPath();
+	@Autowired
+	private TestUtils testUtils;
+
+	String testPath; 
+	
+	@PostConstruct
+	private void init() {
+		testPath = testUtils.getTestPath();
+	}
 
 	/**
 	 * 

@@ -1,15 +1,18 @@
 package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.Arrays;
-
+import javax.annotation.PostConstruct;
 import org.junit.rules.TestName;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 
 /**
  * @author Denys Chaykovskiy
  *
  */
+@Component
 public class TestUtils {
 
 	private static final String OUTPUT_TAB = "     ";
@@ -17,13 +20,31 @@ public class TestUtils {
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
 	private static final String TEST_DIRECTORY = "/target/testdata";
+	
+	@Autowired
+	private StorageManagerConfiguration cfg;
+	
+	
+	private static TestUtils theTestUtils; 
+	
+	public static TestUtils getInstance() {
+		
+		return theTestUtils;
+	}
+	
+	@PostConstruct
+	public void init() {
+		
+		theTestUtils = this;
+	}
 
+	
 	/**
 	 * @return
 	 */
-	public static String getTestPath() {
+	public String getTestPath() {
 
-		return Paths.get(".").toAbsolutePath().normalize().toString() + TEST_DIRECTORY;
+		return cfg.getPosixWorkerMountPoint();
 	}
 
 	/**
@@ -78,17 +99,17 @@ public class TestUtils {
 	 */
 	public static void createEmptyTestDirectory() {
 
-		deleteDirectory(getTestPath());
+		deleteDirectory(TestUtils.getInstance().getTestPath());
 
-		createDirectory(getTestPath());
+		createDirectory(TestUtils.getInstance().getTestPath());
 	}
 
 	/**
 	 * 
 	 */
 	public static void deleteTestDirectory() {
-
-		deleteDirectory(getTestPath());
+		
+		deleteDirectory(TestUtils.getInstance().getTestPath());
 	}
 
 	/**
