@@ -426,6 +426,11 @@ public class ProcessorManager {
 					processorChanged = true;
 					modelTask.setNumberOfCpus(changedTask.getNumberOfCpus());
 				}
+				if (!Objects.equals(modelTask.getMinMemory(), changedTask.getMinMemory())) {
+					if (logger.isTraceEnabled()) logger.trace(String.format("... task minimum memory changed from %s to %s", String.valueOf(modelTask.getMinMemory()), String.valueOf(changedTask.getMinMemory())));
+					processorChanged = true;
+					modelTask.setMinMemory(changedTask.getMinMemory());
+				}
 				if (!modelTask.getBreakpointFileNames().equals(changedTask.getBreakpointFileNames())) {
 					if (modelTask.getBreakpointFileNames().isEmpty() && changedTask.getBreakpointFileNames().isEmpty()) {
 						if (logger.isTraceEnabled()) logger.trace("... task breakpoint files 'not equal', although both are empty");

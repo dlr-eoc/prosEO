@@ -8,6 +8,7 @@ package de.dlr.proseo.ordermgr.rest;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -354,6 +355,14 @@ public class MissionControllerImpl implements MissionController {
 					missionChanged = true;
 					modelMission.setProductFileTemplate(changedMission.getProductFileTemplate());
 				}
+				if (!Objects.equals(modelMission.getProcessingCentre(), changedMission.getProcessingCentre())) {
+					missionChanged = true;
+					modelMission.setProcessingCentre(changedMission.getProcessingCentre());
+				}
+				if (!Objects.equals(modelMission.getProductRetentionPeriod(), changedMission.getProductRetentionPeriod())) {
+					missionChanged = true;
+					modelMission.setProductRetentionPeriod(changedMission.getProductRetentionPeriod());
+				}
 				if (!modelMission.getFileClasses().equals(changedMission.getFileClasses()))	{
 					missionChanged = true;
 					modelMission.getFileClasses().clear();
@@ -459,6 +468,8 @@ public class MissionControllerImpl implements MissionController {
 	 * @return true, if any of the payloads was changed, false otherwise
 	 */
 	private boolean updatePayloads(List<Payload> modelPayloads, @Valid List<RestPayload> restPayloads) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updatePayloads({}, {})", modelPayloads, restPayloads);
+
 		boolean spacecraftChanged = false;
 		if (null == restPayloads) {
 			if (!modelPayloads.isEmpty()) {

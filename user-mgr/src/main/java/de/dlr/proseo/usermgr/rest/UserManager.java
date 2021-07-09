@@ -504,6 +504,12 @@ public class UserManager {
 				modelUser.setPasswordExpirationDate(newPasswordExpirationDate);
 			}
 		}
+		if (null == modelUser.getQuota() && null != changedUser.getQuota()
+				|| null != modelUser.getQuota() && !modelUser.getQuota().getAssigned().equals(changedUser.getQuota().getAssigned())) {
+			userChanged = true;
+			modelUser.getQuota().setAssigned(changedUser.getQuota().getAssigned());
+			// "used" and "lastAccessDate" cannot be changed, because they are managed automatically
+		}
 		
 		// Apply changed authorities
 		Set<Authority> newAuthorities = new HashSet<>();

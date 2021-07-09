@@ -16,7 +16,7 @@
                 "payloads": [
                     {
                         "name": "TROPOMI",
-                        "description": "The TROPOMI multispectral sensor"
+                        "description": "The TROPOspheric Monitoring Instrument"
                     }
                 ]
             }

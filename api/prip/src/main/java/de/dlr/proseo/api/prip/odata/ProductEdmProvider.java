@@ -58,6 +58,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	// Entity Types
 	public static final String ET_PRODUCT_NAME = "Product";
 	public static final FullQualifiedName ET_PRODUCT_FQN = new FullQualifiedName(NAMESPACE, ET_PRODUCT_NAME);
+	public static final String ET_PRODUCT_PROP_ORIGIN_DATE = "OriginDate";
 	public static final String ET_PRODUCT_PROP_PUBLICATION_DATE = "PublicationDate";
 	public static final String ET_PRODUCT_PROP_EVICTION_DATE = "EvictionDate";
 	public static final String ET_PRODUCT_PROP_CHECKSUMS = "Checksums";
@@ -223,7 +224,8 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
-			CsdlProperty creationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_PUBLICATION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty originDate = new CsdlProperty().setName(ET_PRODUCT_PROP_ORIGIN_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty publicationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_PUBLICATION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 			CsdlProperty evictionDate = new CsdlProperty().setName(ET_PRODUCT_PROP_EVICTION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 
 			// Add structured properties
@@ -242,7 +244,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			// Configure Product entity type
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_PRODUCT_NAME);
-			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, creationDate, evictionDate, checksums,
+			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, originDate, publicationDate, evictionDate, checksums,
 					contentDate, productionType));
 			productType.setNavigationProperties(Arrays.asList(attributes));
 			productType.setKey(Collections.singletonList(idRef));

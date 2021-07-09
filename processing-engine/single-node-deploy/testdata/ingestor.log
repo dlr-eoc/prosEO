@@ -1,0 +1,277 @@
+
+                            /-------\ /-------\
+                            |       | |       |
+                            |   /---/ |  /-\  |
+                            |   \---\ |  | |  |   prosEO - The Processing System for Earth Observation Data
+/----\ /----\ /----\ /----\ |       | |  | |  |
+|    | |    | |    | | ---+ |   /---/ |  | |  |   Product Ingestor        (v0.7.3)
+| {} | |  /-/ | {} | \    \ |   \---\ |  \-/  |
+|    | |  |   |    | +--- | |       | |       |   :: Spring Boot ::       (v2.1.6.RELEASE)
+|  /-/ \--/   \----/ \----/ \-------/ \-------/
+|  |
+\--/
+
+2021-07-08 15:22:05.154  INFO 1 --- [           main] d.d.proseo.ingestor.IngestorApplication  : Starting IngestorApplication v0.7.3 on d3f1aadb2691 with PID 1 (/usr/share/ingestor/proseo-ingestor.jar started by root in /usr/share/ingestor)
+2021-07-08 15:22:05.207 DEBUG 1 --- [           main] d.d.proseo.ingestor.IngestorApplication  : Running with Spring Boot v2.1.6.RELEASE, Spring v5.1.8.RELEASE
+2021-07-08 15:22:05.228  INFO 1 --- [           main] d.d.proseo.ingestor.IngestorApplication  : No active profile set, falling back to default profiles: default
+2021-07-08 15:22:14.330  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+2021-07-08 15:22:15.654  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1273ms. Found 18 repository interfaces.
+2021-07-08 15:22:28.154  INFO 1 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$5eb2afa2] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2021-07-08 15:22:33.127  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2021-07-08 15:22:33.738  INFO 1 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-07-08 15:22:33.739  INFO 1 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.21]
+2021-07-08 15:22:35.308  INFO 1 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-07-08 15:22:35.309  INFO 1 --- [           main] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 29581 ms
+2021-07-08 15:22:45.522  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2021-07-08 15:22:47.413  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2021-07-08 15:22:48.953  INFO 1 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2021-07-08 15:22:50.053  INFO 1 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate Core {5.3.10.Final}
+2021-07-08 15:22:50.066  INFO 1 --- [           main] org.hibernate.cfg.Environment            : HHH000206: hibernate.properties not found
+2021-07-08 15:22:52.776  INFO 1 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.0.4.Final}
+2021-07-08 15:22:56.599  INFO 1 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+2021-07-08 15:22:57.939  INFO 1 --- [           main] o.h.e.j.e.i.LobCreatorBuilderImpl        : HHH000424: Disabling contextual LOB creation as createClob() method threw error : java.lang.reflect.InvocationTargetException
+
+java.lang.reflect.InvocationTargetException: null
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566) ~[na:na]
+	at org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl.useContextualLobCreation(LobCreatorBuilderImpl.java:113) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl.makeLobCreatorBuilder(LobCreatorBuilderImpl.java:54) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentImpl.<init>(JdbcEnvironmentImpl.java:271) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:114) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator.initiateService(JdbcEnvironmentInitiator.java:35) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.boot.registry.internal.StandardServiceRegistryImpl.initiateService(StandardServiceRegistryImpl.java:94) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.createService(AbstractServiceRegistryImpl.java:263) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:237) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:214) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.id.factory.internal.DefaultIdentifierGeneratorFactory.injectServices(DefaultIdentifierGeneratorFactory.java:152) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.injectDependencies(AbstractServiceRegistryImpl.java:286) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.initializeService(AbstractServiceRegistryImpl.java:243) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.service.internal.AbstractServiceRegistryImpl.getService(AbstractServiceRegistryImpl.java:214) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.boot.internal.InFlightMetadataCollectorImpl.<init>(InFlightMetadataCollectorImpl.java:179) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.boot.model.process.spi.MetadataBuildingProcess.complete(MetadataBuildingProcess.java:119) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.metadata(EntityManagerFactoryBuilderImpl.java:904) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:935) ~[hibernate-core-5.3.10.Final.jar!/:5.3.10.Final]
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:57) ~[spring-orm-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:365) ~[spring-orm-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:390) ~[spring-orm-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:377) ~[spring-orm-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:341) ~[spring-orm-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1837) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1774) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:593) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:515) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:320) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:318) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199) ~[spring-beans-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1105) ~[spring-context-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:867) ~[spring-context-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:549) ~[spring-context-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:140) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:742) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:389) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:311) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1213) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1202) ~[spring-boot-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at de.dlr.proseo.ingestor.IngestorApplication.main(IngestorApplication.java:28) ~[classes!/:0.7.3]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566) ~[na:na]
+	at org.springframework.boot.loader.MainMethodRunner.run(MainMethodRunner.java:47) ~[proseo-ingestor.jar:0.7.3]
+	at org.springframework.boot.loader.Launcher.launch(Launcher.java:86) ~[proseo-ingestor.jar:0.7.3]
+	at org.springframework.boot.loader.Launcher.launch(Launcher.java:50) ~[proseo-ingestor.jar:0.7.3]
+	at org.springframework.boot.loader.JarLauncher.main(JarLauncher.java:51) ~[proseo-ingestor.jar:0.7.3]
+Caused by: java.sql.SQLFeatureNotSupportedException: Method org.postgresql.jdbc.PgConnection.createClob() is not yet implemented.
+	at org.postgresql.Driver.notImplemented(Driver.java:688) ~[postgresql-42.2.5.jar!/:42.2.5]
+	at org.postgresql.jdbc.PgConnection.createClob(PgConnection.java:1269) ~[postgresql-42.2.5.jar!/:42.2.5]
+	... 52 common frames omitted
+
+2021-07-08 15:22:58.089  INFO 1 --- [           main] org.hibernate.type.BasicTypeRegistry     : HHH000270: Type registration [java.util.UUID] overrides previous : org.hibernate.type.UUIDBinaryType@45bf6f39
+2021-07-08 15:23:15.646  INFO 1 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2021-07-08 15:23:17.175  INFO 1 --- [           main] d.d.p.ingestor.IngestorSecurityConfig    : Initializing authentication from user details service 
+2021-07-08 15:23:17.208  INFO 1 --- [           main] d.d.p.ingestor.IngestorSecurityConfig    : Initializing user details service from datasource HikariDataSource (HikariPool-1)
+2021-07-08 15:23:23.321  INFO 1 --- [           main] o.h.h.i.QueryTranslatorFactoryInitiator  : HHH000397: Using ASTQueryTranslatorFactory
+2021-07-08 15:23:26.639 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : >>> init()
+2021-07-08 15:23:26.640 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Found 21 properties for class de.dlr.proseo.model.Product
+2021-07-08 15:23:26.645 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute version to SQL column version
+2021-07-08 15:23:26.645 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property componentProducts
+2021-07-08 15:23:26.646 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property configuredProcessor
+2021-07-08 15:23:26.646 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property enclosingProduct
+2021-07-08 15:23:26.646 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute evictionTime to SQL column eviction_time
+2021-07-08 15:23:26.647 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute fileClass to SQL column file_class
+2021-07-08 15:23:26.647 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute generationTime to SQL column generation_time
+2021-07-08 15:23:26.648 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property jobStep
+2021-07-08 15:23:26.649 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute mode to SQL column mode
+2021-07-08 15:23:26.649 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property orbit
+2021-07-08 15:23:26.649 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property parameters
+2021-07-08 15:23:26.651 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property productClass
+2021-07-08 15:23:26.651 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property productFile
+2021-07-08 15:23:26.651 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute productQuality to SQL column product_quality
+2021-07-08 15:23:26.652 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute productionType to SQL column production_type
+2021-07-08 15:23:26.655 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute publicationTime to SQL column publication_time
+2021-07-08 15:23:26.657 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute rawDataAvailabilityTime to SQL column raw_data_availability_time
+2021-07-08 15:23:26.657 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : Skipping non-basic property satisfiedProductQueries
+2021-07-08 15:23:26.658 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute sensingStartTime to SQL column sensing_start_time
+2021-07-08 15:23:26.658 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute sensingStopTime to SQL column sensing_stop_time
+2021-07-08 15:23:26.659 TRACE 1 --- [           main] d.d.p.model.service.ProductQueryService  : ... mapping Product attribute uuid to SQL column uuid
+2021-07-08 15:23:27.683  INFO 1 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@d120d7c, org.springframework.security.web.context.SecurityContextPersistenceFilter@30c01c37, org.springframework.security.web.header.HeaderWriterFilter@30afb481, org.springframework.security.web.authentication.logout.LogoutFilter@41143873, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@270f28cf, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@45bd4753, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@c11332b, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@5ee77baf, org.springframework.security.web.session.SessionManagementFilter@48368a08, org.springframework.security.web.access.ExceptionTranslationFilter@577f9dfd, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@2d2fc130]
+2021-07-08 15:23:28.272  INFO 1 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2021-07-08 15:23:32.446  INFO 1 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-07-08 15:23:33.453  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2021-07-08 15:23:33.495  INFO 1 --- [           main] d.d.proseo.ingestor.IngestorApplication  : Started IngestorApplication in 93.553 seconds (JVM running for 95.79)
+2021-07-09 08:39:42.307  INFO 1 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-07-09 08:39:42.308  INFO 1 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-07-09 08:39:42.330  INFO 1 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 22 ms
+2021-07-09 08:39:42.722 TRACE 1 --- [nio-8080-exec-1] d.d.p.i.rest.ProductControllerImpl       : >>> getProducts(PTM, [L1B_PART1], null, null, null, null, null, null, null, null, null, null)
+2021-07-09 08:39:42.739 TRACE 1 --- [nio-8080-exec-1] d.d.proseo.ingestor.rest.ProductManager  : >>> getProducts(PTM, [L1B_PART1], null, null, null, null, null, null, null, null, null, null)
+2021-07-09 08:39:42.739 TRACE 1 --- [nio-8080-exec-1] d.d.proseo.ingestor.rest.ProductManager  : >>> createProductsQuery(PTM, [L1B_PART1], null, null, null, null, null, null, false)
+2021-07-09 08:39:42.929 TRACE 1 --- [nio-8080-exec-1] d.d.p.ingestor.rest.model.ProductUtil    : >>> toRestProduct(138)
+2021-07-09 08:39:42.948 TRACE 1 --- [nio-8080-exec-1] d.d.p.i.rest.model.ProductFileUtil       : >>> toRestProductFile(146)
+2021-07-09 08:39:42.951 TRACE 1 --- [nio-8080-exec-1] d.d.p.ingestor.rest.model.ProductUtil    : >>> toRestProduct(125)
+2021-07-09 08:39:42.959 TRACE 1 --- [nio-8080-exec-1] d.d.p.i.rest.model.ProductFileUtil       : >>> toRestProductFile(149)
+2021-07-09 08:39:42.959 TRACE 1 --- [nio-8080-exec-1] d.d.p.ingestor.rest.model.ProductUtil    : >>> toRestProduct(112)
+2021-07-09 08:39:42.967 TRACE 1 --- [nio-8080-exec-1] d.d.p.i.rest.model.ProductFileUtil       : >>> toRestProductFile(153)
+2021-07-09 08:39:42.968  INFO 1 --- [nio-8080-exec-1] d.d.proseo.ingestor.rest.ProductManager  : (I2006) Product list of size 3 retrieved for mission 'PTM', product classes '[Ljava.lang.String;@114e44b0', start time 'null', stop time 'null'
+2021-07-09 08:39:57.432 TRACE 1 --- [nio-8080-exec-2] d.d.p.i.rest.ProductControllerImpl       : >>> getProductById(138)
+2021-07-09 08:39:57.433 TRACE 1 --- [nio-8080-exec-2] d.d.proseo.ingestor.rest.ProductManager  : >>> getProductById(138)
+2021-07-09 08:39:57.475  INFO 1 --- [nio-8080-exec-2] d.d.proseo.ingestor.rest.ProductManager  : (I2008) Product with ID 138 retrieved
+2021-07-09 08:39:57.475 TRACE 1 --- [nio-8080-exec-2] d.d.p.ingestor.rest.model.ProductUtil    : >>> toRestProduct(138)
+2021-07-09 08:39:57.487 TRACE 1 --- [nio-8080-exec-2] d.d.p.i.rest.model.ProductFileUtil       : >>> toRestProductFile(146)
+2021-07-09 08:52:39.634 TRACE 1 --- [nio-8080-exec-5] d.d.p.i.rest.ProductControllerImpl       : >>> getProductById(146)
+2021-07-09 08:52:39.634 TRACE 1 --- [nio-8080-exec-5] d.d.proseo.ingestor.rest.ProductManager  : >>> getProductById(146)
+2021-07-09 08:52:39.645 ERROR 1 --- [nio-8080-exec-5] d.d.proseo.ingestor.rest.ProductManager  : (E2001) No product found for ID 146
+2021-07-09 08:52:57.095 TRACE 1 --- [nio-8080-exec-7] d.d.p.i.rest.ProductControllerImpl       : >>> getProductById(138)
+2021-07-09 08:52:57.096 TRACE 1 --- [nio-8080-exec-7] d.d.proseo.ingestor.rest.ProductManager  : >>> getProductById(138)
+2021-07-09 08:52:57.119  INFO 1 --- [nio-8080-exec-7] d.d.proseo.ingestor.rest.ProductManager  : (I2008) Product with ID 138 retrieved
+2021-07-09 08:52:57.119 TRACE 1 --- [nio-8080-exec-7] d.d.p.ingestor.rest.model.ProductUtil    : >>> toRestProduct(138)
+2021-07-09 08:52:57.127 TRACE 1 --- [nio-8080-exec-7] d.d.p.i.rest.model.ProductFileUtil       : >>> toRestProductFile(146)
+2021-07-09 08:52:57.257 TRACE 1 --- [nio-8080-exec-6] d.d.p.i.rest.ProductControllerImpl       : >>> modifyProduct(138)
+2021-07-09 08:52:57.258 TRACE 1 --- [nio-8080-exec-6] d.d.proseo.ingestor.rest.ProductManager  : >>> modifyProduct(138)
+2021-07-09 08:52:57.282 TRACE 1 --- [nio-8080-exec-6] d.d.p.ingestor.rest.model.ProductUtil    : >>> toModelProduct(L1B_PART1)
+2021-07-09 08:52:57.291 ERROR 1 --- [nio-8080-exec-6] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed; nested exception is java.lang.NullPointerException: text] with root cause
+
+java.lang.NullPointerException: text
+	at java.base/java.util.Objects.requireNonNull(Objects.java:246) ~[na:na]
+	at java.base/java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1872) ~[na:na]
+	at de.dlr.proseo.model.util.OrbitTimeFormatter.parse(OrbitTimeFormatter.java:69) ~[proseo-common-0.7.3.jar!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.model.ProductUtil.toModelProduct(ProductUtil.java:220) ~[classes!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.ProductManager.modifyProduct(ProductManager.java:603) ~[classes!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.ProductManager$$FastClassBySpringCGLIB$$8171773e.invoke(<generated>) ~[classes!/:0.7.3]
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218) ~[spring-core-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.invokeJoinpoint(CglibAopProxy.java:749) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:295) ~[spring-tx-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:98) ~[spring-tx-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:186) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:688) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at de.dlr.proseo.ingestor.rest.ProductManager$$EnhancerBySpringCGLIB$$86182cdd.modifyProduct(<generated>) ~[classes!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.ProductControllerImpl.modifyProduct(ProductControllerImpl.java:208) ~[classes!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.ProductControllerDecorator.modifyProduct(ProductControllerDecorator.java:156) ~[classes!/:0.7.3]
+	at de.dlr.proseo.ingestor.rest.ProductControllerDecorator$$FastClassBySpringCGLIB$$75a9da10.invoke(<generated>) ~[classes!/:0.7.3]
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218) ~[spring-core-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.invokeJoinpoint(CglibAopProxy.java:749) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.validation.beanvalidation.MethodValidationInterceptor.invoke(MethodValidationInterceptor.java:119) ~[spring-context-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:186) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:688) ~[spring-aop-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at de.dlr.proseo.ingestor.rest.ProductControllerDecorator$$EnhancerBySpringCGLIB$$3fadb5ad.modifyProduct(<generated>) ~[classes!/:0.7.3]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:104) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:892) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:797) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1039) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:942) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1005) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:879) ~[spring-webmvc-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:741) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter.doFilterInternal(HttpTraceFilter.java:88) ~[spring-boot-actuator-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:320) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.invoke(FilterSecurityInterceptor.java:127) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.doFilter(FilterSecurityInterceptor.java:91) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:137) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:111) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:170) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.authentication.www.BasicAuthenticationFilter.doFilterInternal(BasicAuthenticationFilter.java:215) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:116) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:74) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:105) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:56) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:215) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:178) ~[spring-security-web-5.1.5.RELEASE.jar!/:5.1.5.RELEASE]
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:357) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:270) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:99) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:92) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.web.filter.HiddenHttpMethodFilter.doFilterInternal(HiddenHttpMethodFilter.java:93) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.filterAndRecordMetrics(WebMvcMetricsFilter.java:114) ~[spring-boot-actuator-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:104) ~[spring-boot-actuator-2.1.6.RELEASE.jar!/:2.1.6.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:200) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109) ~[spring-web-5.1.8.RELEASE.jar!/:5.1.8.RELEASE]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:490) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:408) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:853) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1587) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) ~[na:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.21.jar!/:9.0.21]
+	at java.base/java.lang.Thread.run(Thread.java:829) ~[na:na]
+

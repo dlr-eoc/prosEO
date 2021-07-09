@@ -216,11 +216,16 @@ public class ProductUtil {
 			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_STOP_TIME, MSG_ID_INVALID_SENSING_STOP_TIME,
 					restProduct.getSensingStartTime()));
 		}
-		try {
-			modelProduct.setRawDataAvailabilityTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_RAW_DATA_AVAILABILITY_TIME, MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME,
-					restProduct.getRawDataAvailabilityTime()));
+		if (null == restProduct.getRawDataAvailabilityTime()) {
+			modelProduct.setRawDataAvailabilityTime(null);
+		} else {
+			try {
+				modelProduct.setRawDataAvailabilityTime(
+						Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_RAW_DATA_AVAILABILITY_TIME,
+						MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME, restProduct.getRawDataAvailabilityTime()));
+			} 
 		}
 		try {
 			modelProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())));
@@ -228,19 +233,29 @@ public class ProductUtil {
 			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
 					restProduct.getGenerationTime()));
 		}
-		try {
-			modelProduct.setPublicationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getPublicationTime())));
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_PUBLICATION_TIME, MSG_ID_INVALID_PUBLICATION_TIME,
-					restProduct.getPublicationTime()));
+		if (null == restProduct.getPublicationTime()) {
+			modelProduct.setPublicationTime(null);
+		} else {
+			try {
+				modelProduct.setPublicationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getPublicationTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						logError(MSG_INVALID_PUBLICATION_TIME, MSG_ID_INVALID_PUBLICATION_TIME, restProduct.getPublicationTime()));
+			} 
 		}
-		try {
-			modelProduct.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getEvictionTime())));
-		} catch (DateTimeException e) {
-			throw new IllegalArgumentException(logError(MSG_INVALID_EVICTION_TIME, MSG_ID_INVALID_EVICTION_TIME,
-					restProduct.getEvictionTime()));
+		if (null == restProduct.getEvictionTime()) {
+			modelProduct.setEvictionTime(null);
+		} else {
+			try {
+				modelProduct.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getEvictionTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						logError(MSG_INVALID_EVICTION_TIME, MSG_ID_INVALID_EVICTION_TIME, restProduct.getEvictionTime()));
+			} 
 		}
-		if (null != restProduct.getProductionType()) {
+		if (null == restProduct.getProductionType()) {
+			modelProduct.setProductionType(null);
+		} else {
 			try {
 				modelProduct.setProductionType(ProductionType.valueOf(restProduct.getProductionType()));
 			} catch (IllegalArgumentException e) {

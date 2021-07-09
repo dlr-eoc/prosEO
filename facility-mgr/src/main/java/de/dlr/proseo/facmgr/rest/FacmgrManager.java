@@ -285,6 +285,17 @@ public class FacmgrManager {
 			facilityChanged = true;
 			modelFacility.setProcessingEngineToken(changedFacility.getProcessingEngineToken());
 		}	
+		if (null == modelFacility.getMaxJobsPerNode()) {
+			if (null == changedFacility.getMaxJobsPerNode()) {
+				// No change
+			} else {
+				facilityChanged = true;
+				modelFacility.setMaxJobsPerNode(changedFacility.getMaxJobsPerNode());
+			}
+		} else if (!modelFacility.getMaxJobsPerNode().equals(changedFacility.getMaxJobsPerNode())) {
+			facilityChanged = true;
+			modelFacility.setMaxJobsPerNode(changedFacility.getMaxJobsPerNode());
+		}	
 		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
 			facilityChanged = true;
 			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());

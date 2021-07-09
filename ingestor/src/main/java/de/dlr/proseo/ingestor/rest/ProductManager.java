@@ -644,9 +644,25 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
 		}
+		if (null == modelProduct.getRawDataAvailabilityTime() && null != changedProduct.getRawDataAvailabilityTime()
+				|| null != modelProduct.getRawDataAvailabilityTime()
+					&& !modelProduct.getRawDataAvailabilityTime().equals(changedProduct.getRawDataAvailabilityTime())) {
+			productChanged = true;
+			modelProduct.setRawDataAvailabilityTime(changedProduct.getRawDataAvailabilityTime());
+		}
 		if (!modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
+		}
+		if (null == modelProduct.getPublicationTime() && null != changedProduct.getPublicationTime()
+				|| null != modelProduct.getPublicationTime() && !modelProduct.getPublicationTime().equals(changedProduct.getPublicationTime())) {
+			productChanged = true;
+			modelProduct.setPublicationTime(changedProduct.getPublicationTime());
+		}
+		if (null == modelProduct.getEvictionTime() && null != changedProduct.getEvictionTime()
+				|| null != modelProduct.getEvictionTime() && !modelProduct.getEvictionTime().equals(changedProduct.getEvictionTime())) {
+			productChanged = true;
+			modelProduct.setEvictionTime(changedProduct.getEvictionTime());
 		}
 		if (null == modelProduct.getProductionType() && null != changedProduct.getProductionType()
 				|| null != modelProduct.getProductionType() && !modelProduct.getProductionType().equals(changedProduct.getProductionType())) {

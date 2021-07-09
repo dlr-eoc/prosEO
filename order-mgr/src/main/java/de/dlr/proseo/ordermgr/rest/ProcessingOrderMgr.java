@@ -610,6 +610,11 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setProductionType(changedOrder.getProductionType());
 		}
+		if (!modelOrder.getProductRetentionPeriod().equals(changedOrder.getProductRetentionPeriod())) {
+			orderChanged = true;
+			stateChangeOnly = false;
+			modelOrder.setProductRetentionPeriod(changedOrder.getProductRetentionPeriod());
+		}
 		if (!modelOrder.getHasFailedJobSteps().equals(changedOrder.getHasFailedJobSteps())) {
 			orderChanged = true;
 			stateChangeOnly = false;
