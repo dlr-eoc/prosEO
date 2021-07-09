@@ -32,36 +32,12 @@ public class FileCache {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	
 	private static FileCache theFileCache; 
 	
 	public static FileCache getInstance() {
 		
 		return theFileCache;
 	}
-	
-	@PostConstruct
-	private void init() {
-		
-		path = cfg.getPosixWorkerMountPoint();
-		
-		File directory = new File(path);
-
-		mapCache = new MapCache();
-
-		if (!directory.exists()) {
-
-			if (!directory.mkdirs()) {
-
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
-			}
-		}
-
-		putFilesToCache(path);
-		
-		theFileCache = this; 
-	}
-	
 
 	/**
 	 * Puts the new element to map. If element exists, it will be overwritten
@@ -100,6 +76,28 @@ public class FileCache {
 		}
 		
 		return contains; 
+	}
+	
+	@PostConstruct
+	private void init() {
+		
+		path = cfg.getPosixWorkerMountPoint();
+		
+		File directory = new File(path);
+
+		mapCache = new MapCache();
+
+		if (!directory.exists()) {
+
+			if (!directory.mkdirs()) {
+
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+			}
+		}
+
+		putFilesToCache(path);
+		
+		theFileCache = this; 
 	}
 	
 	/**

@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import javax.annotation.PostConstruct;
 import org.junit.rules.TestName;
@@ -19,7 +20,7 @@ public class TestUtils {
 	private static final String OUTPUT_FILE_SIGN = "- ";
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
-	private static final String TEST_DIRECTORY = "/target/testdata";
+	private static final String TEST_DIRECTORY = "testdata";
 	
 	@Autowired
 	private StorageManagerConfiguration cfg;
@@ -37,14 +38,30 @@ public class TestUtils {
 		
 		theTestUtils = this;
 	}
+	
+	/**
+	 * @return
+	 */
+	public StorageManagerConfiguration getCfg() {
+		
+		return cfg; 
+	}
 
 	
 	/**
 	 * @return
 	 */
 	public String getTestPath() {
-
+		
 		return cfg.getPosixWorkerMountPoint();
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getSourceTestPath() {
+
+		return cfg.getPosixMountPoint();
 	}
 
 	/**
@@ -173,6 +190,21 @@ public class TestUtils {
 			System.out.println(file.getName());
 		}
 		System.out.println();
+	}
+	
+	/**
+	 * @param message
+	 * @param arrayList
+	 */
+	public static void printArrayList(String message, ArrayList<String> arrayList) {
+		
+		System.out.println();
+		System.out.println(message);
+		for (String element : arrayList) {
+			
+			System.out.println(element);
+		}
+		System.out.println(); 
 	}
 
 	/**

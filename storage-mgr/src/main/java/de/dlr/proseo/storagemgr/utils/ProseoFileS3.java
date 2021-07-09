@@ -15,6 +15,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3URI;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -211,7 +212,7 @@ public class ProseoFileS3 extends ProseoFile {
 					}
 					result.add(proFile.getFullPath());					
 				} else {
-					if (targetFile.exists()) {
+					if (FileCache.getInstance().containsKey(proFile.getFullPath())) { // if (targetFile.exists())
 						result.add(proFile.getFullPath());
 					} else {
 						if (S3Ops.v2FetchFile(
@@ -223,6 +224,7 @@ public class ProseoFileS3 extends ProseoFile {
 								proFile.getFullPath()
 								)) {
 							targetFile.setWritable(true, false);
+							FileCache.getInstance().put(proFile.getFullPath());
 							result.add(proFile.getFullPath());
 						}
 					}
