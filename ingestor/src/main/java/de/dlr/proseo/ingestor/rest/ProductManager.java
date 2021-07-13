@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -22,20 +23,35 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.slf4j.LoggerFactory;
+import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+
+import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.SimpleSelectionRule;
+import de.dlr.proseo.model.enums.ProductQuality;
 import de.dlr.proseo.model.enums.ProductVisibility;
 import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -81,6 +97,11 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_EXISTS = 2027;
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
 	private static final int MSG_ID_VISIBILITY_VIOLATION = 2029;
+	private static final int MSG_ID_PRODUCT_NOT_AVAILABLE = 2030;
+	private static final int MSG_ID_PRODUCT_DOWNLOAD_REQUESTED = 2031;
+	private static final int MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = 2032;
+	private static final int MSG_ID_EXCEPTION = 2033;
+	private static final int MSG_ID_PRODUCTFILE_NOT_AVAILABLE = 2034;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -107,6 +128,11 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_EXISTS = "(E%d) Product with equal characteristics already exists with ID %d";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
 	private static final String MSG_VISIBILITY_VIOLATION = "(E%d) User not authorized for read access to product class %s";
+	private static final String MSG_PRODUCT_NOT_AVAILABLE = "(E%d) Product with ID %d not available on any Processing Facility";
+	private static final String MSG_PRODUCT_DOWNLOAD_REQUESTED = "(E%d) Download link for product with ID %d provided";
+	private static final String MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = "(E%d) Download token for product with ID %d and file name %s provided";
+	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
+	private static final String MSG_PRODUCTFILE_NOT_AVAILABLE = "(E%d) Product with ID %d has no file named %s";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -114,10 +140,14 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_RETRIEVED_BY_UUID = "(I%d) Product with UUID %s retrieved";
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
-	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with UUID %s retrieved";
+	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with ID %s retrieved";
 	
 	/* Other string constants */
 	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
+	
+	/** Ingestor configuration */
+	@Autowired
+	IngestorConfiguration ingestorConfig;
 	
 	/** JPA entity manager */
 	@PersistenceContext
@@ -170,6 +200,54 @@ public class ProductManager {
 		return message;
 	}
 	
+	/**
+	 * Read the product with the given ID from the database
+	 * 
+	 * @param id the ID to look for
+	 * @return the requested database model product
+	 * @throws IllegalArgumentException if no product ID was given
+	 * @throws NoResultException if no product with the given ID exists
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	private Product readProduct(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
+		if (null == id) {
+			throw new IllegalArgumentException(logError(MSG_PRODUCT_ID_MISSING, MSG_ID_PRODUCT_ID_MISSING, id));
+		}
+		
+		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
+		
+		if (modelProduct.isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
+		}
+		
+		// Ensure user is authorized for the product's mission
+		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
+			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
+					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
+		}
+		
+		// Ensure product class is visible for user
+		ProductVisibility visibility = modelProduct.get().getProductClass().getVisibility();
+		switch (visibility) {
+		case PUBLIC:
+			break;
+		case RESTRICTED:
+			if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
+				break;
+			}
+			// Fall through to test READER_ALL
+		default: // Internal
+			if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
+				break;
+			}
+			// Product not visible for user
+			throw new SecurityException(logError(MSG_VISIBILITY_VIOLATION, MSG_ID_VISIBILITY_VIOLATION,
+					modelProduct.get().getProductClass().getProductType()));
+		}
+		Product product = modelProduct.get();
+		return product;
+	}
+
 	/**
 	 * Delete a product by ID
 	 * 
@@ -230,12 +308,17 @@ public class ProductManager {
 	}
 
 	/**
-	 * List of all products filtered by mission, product class, start time range
+	 * List of all products filtered by mission, product class, , production mode, file class, quality and time ranges
 	 * 
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
+	 * @param mode the processing mode
+	 * @param the file class
+	 * @param the quality
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param genTimeFrom earliest generation time
+	 * @param genTimeTo latest generation time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
 	 * @param jobStepId get input products of job step
@@ -244,10 +327,11 @@ public class ProductManager {
 	 * @throws NoResultException if no products matching the given search criteria could be found
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public List<RestProduct> getProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+	public List<RestProduct> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
 			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy) throws NoResultException, SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -261,8 +345,8 @@ public class ProductManager {
 		List<RestProduct> result = new ArrayList<>();
 		
 		// Find using search parameters
-		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				recordFrom, recordTo, jobStepId, orderBy, false);
+		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
+				genTimeFrom, genTimeTo, recordFrom, recordTo, jobStepId, orderBy, false);
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof Product) {
 				// Filter depending on product visibility and user authorization
@@ -281,18 +365,25 @@ public class ProductManager {
 	}
 
 	/**
-	 * Get the number of products available, possibly filtered by mission, product class and time range
+	 * Get the number of products available, possibly filtered by mission, product class, production mode, file class, quality and time ranges
 	 * 
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
+	 * @param mode the processing mode
+	 * @param the file class
+	 * @param the quality
 	 * @param startTimeFrom earliest sensing start time
 	 * @param startTimeTo latest sensing start time
+	 * @param genTimeFrom earliest generation time
+	 * @param genTimeTo latest generation time
 	 * @param jobStepId get input products of job step
 	 * @return the number of products found as string
      * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId) throws SecurityException {
-		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass, startTimeFrom, startTimeTo);
+	public String countProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId) throws SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass, 
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
 		
 		if (null == mission) {
 			mission = securityService.getMission();
@@ -303,8 +394,8 @@ public class ProductManager {
 						mission, securityService.getMission()));
 			} 
 		}
-		Query query = createProductsQuery(mission, productClass, startTimeFrom, startTimeTo,
-				null, null, jobStepId, null, true);
+		Query query = createProductsQuery(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo,
+				genTimeFrom, genTimeTo,	null, null, jobStepId, null, true);
 		Object resultObject = query.getSingleResult();
 		if (resultObject instanceof Long) {
 			return ((Long)resultObject).toString();
@@ -466,44 +557,11 @@ public class ProductManager {
 	public RestProduct getProductById(Long id) throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getProductById({})", id);
 		
-		if (null == id) {
-			throw new IllegalArgumentException(logError(MSG_PRODUCT_ID_MISSING, MSG_ID_PRODUCT_ID_MISSING, id));
-		}
-		
-		Optional<Product> modelProduct = RepositoryService.getProductRepository().findById(id);
-		
-		if (modelProduct.isEmpty()) {
-			throw new NoResultException(logError(MSG_PRODUCT_NOT_FOUND, MSG_ID_PRODUCT_NOT_FOUND, id));
-		}
-		
-		// Ensure user is authorized for the product's mission
-		if (!securityService.isAuthorizedForMission(modelProduct.get().getProductClass().getMission().getCode())) {
-			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
-					modelProduct.get().getProductClass().getMission().getCode(), securityService.getMission()));			
-		}
-		
-		// Ensure product class is visible for user
-		ProductVisibility visibility = modelProduct.get().getProductClass().getVisibility();
-		switch (visibility) {
-		case PUBLIC:
-			break;
-		case RESTRICTED:
-			if (securityService.hasRole(UserRole.PRODUCT_READER_RESTRICTED)) {
-				break;
-			}
-			// Fall through to test READER_ALL
-		default: // Internal
-			if (securityService.hasRole(UserRole.PRODUCT_READER_ALL)) {
-				break;
-			}
-			// Product not visible for user
-			throw new SecurityException(logError(MSG_VISIBILITY_VIOLATION, MSG_ID_VISIBILITY_VIOLATION,
-					modelProduct.get().getProductClass().getProductType()));
-		}
+		Product product = readProduct(id);
 	
 		logInfo(MSG_PRODUCT_RETRIEVED, MSG_ID_PRODUCT_RETRIEVED, id);
 		
-		return ProductUtil.toRestProduct(modelProduct.get());
+		return ProductUtil.toRestProduct(product);
 	}
 
 	/**
@@ -586,9 +644,25 @@ public class ProductManager {
 			productChanged = true;
 			modelProduct.setSensingStopTime(changedProduct.getSensingStopTime());
 		}
+		if (null == modelProduct.getRawDataAvailabilityTime() && null != changedProduct.getRawDataAvailabilityTime()
+				|| null != modelProduct.getRawDataAvailabilityTime()
+					&& !modelProduct.getRawDataAvailabilityTime().equals(changedProduct.getRawDataAvailabilityTime())) {
+			productChanged = true;
+			modelProduct.setRawDataAvailabilityTime(changedProduct.getRawDataAvailabilityTime());
+		}
 		if (!modelProduct.getGenerationTime().equals(changedProduct.getGenerationTime())) {
 			productChanged = true;
 			modelProduct.setGenerationTime(changedProduct.getGenerationTime());
+		}
+		if (null == modelProduct.getPublicationTime() && null != changedProduct.getPublicationTime()
+				|| null != modelProduct.getPublicationTime() && !modelProduct.getPublicationTime().equals(changedProduct.getPublicationTime())) {
+			productChanged = true;
+			modelProduct.setPublicationTime(changedProduct.getPublicationTime());
+		}
+		if (null == modelProduct.getEvictionTime() && null != changedProduct.getEvictionTime()
+				|| null != modelProduct.getEvictionTime() && !modelProduct.getEvictionTime().equals(changedProduct.getEvictionTime())) {
+			productChanged = true;
+			modelProduct.setEvictionTime(changedProduct.getEvictionTime());
 		}
 		if (null == modelProduct.getProductionType() && null != changedProduct.getProductionType()
 				|| null != modelProduct.getProductionType() && !modelProduct.getProductionType().equals(changedProduct.getProductionType())) {
@@ -811,7 +885,10 @@ public class ProductManager {
 		
 		return ProductUtil.toRestProduct(product);
 	}
-	/*
+	
+	/**
+	 * Create a JPQL query to retrieve the requested set of products
+	 * 
 	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
 	 * @param productClass an array of product types
 	 * @param startTimeFrom earliest sensing start time
@@ -822,9 +899,12 @@ public class ProductManager {
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
 	 * @return JPQL Query
 	 */
-	private Query createProductsQuery(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo,
+	private Query createProductsQuery(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo,
 			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, Boolean count) {
-
+		if (logger.isTraceEnabled()) logger.trace(">>> createProductsQuery({}, {}, {}, {}, {}, {}, {}, {}, {})",
+				mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy, count);
+		
 		// Find using search parameters
 		String jpqlQuery = null;
 		String join = "";
@@ -849,11 +929,26 @@ public class ProductManager {
 			}
 			jpqlQuery += ")";
 		}
+		if (null != mode) {
+			jpqlQuery += " and p.mode = :mode";
+		}
+		if (null != fileClass) {
+			jpqlQuery += " and p.fileClass = :fileClass";
+		}
+		if (null != quality) {
+			jpqlQuery += " and p.productQuality = :quality";
+		}
 		if (null != startTimeFrom) {
 			jpqlQuery += " and p.sensingStartTime >= :startTimeFrom";
 		}
 		if (null != startTimeTo) {
 			jpqlQuery += " and p.sensingStartTime <= :startTimeTo";
+		}
+		if (null != genTimeFrom) {
+			jpqlQuery += " and p.generationTime >= :genTimeFrom";
+		}
+		if (null != genTimeTo) {
+			jpqlQuery += " and p.generationTime <= :genTimeTo";
 		}
 		// visibility
 		List<ProductVisibility> visibilities = new ArrayList<ProductVisibility>();
@@ -890,11 +985,26 @@ public class ProductManager {
 				query.setParameter("productClass" + i, productClass[i]);
 			}
 		}
+		if (null != mode) {
+			query.setParameter("mode", mode);
+		}
+		if (null != fileClass) {
+			query.setParameter("fileClass", fileClass);
+		}
+		if (null != quality) {
+			query.setParameter("quality", ProductQuality.valueOf(quality));
+		}
 		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom", startTimeFrom.toInstant());
+			query.setParameter("startTimeFrom", OrbitTimeFormatter.parseDateTime(startTimeFrom));
 		}
 		if (null != startTimeTo) {
-			query.setParameter("startTimeTo", startTimeTo.toInstant());
+			query.setParameter("startTimeTo", OrbitTimeFormatter.parseDateTime(startTimeTo));
+		}
+		if (null != genTimeFrom) {
+			query.setParameter("genTimeFrom", OrbitTimeFormatter.parseDateTime(genTimeFrom));
+		}
+		if (null != genTimeTo) {
+			query.setParameter("genTimeTo", OrbitTimeFormatter.parseDateTime(genTimeTo));
 		}
 		if (0 < visibilities.size()) {
 			for (int i = 0; i < visibilities.size(); ++i) {
@@ -914,6 +1024,147 @@ public class ProductManager {
 			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
 		}
 		return query;
+	}
+
+	/**
+	 * Get the primary data file (or ZIP file, if available) for the product as data stream (optionally range-restricted),
+	 * returns a redirection link to the Storage Manager of a random Processing Facility
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fromByte the first byte of the data stream to download (optional, default is file start, i.e. byte 0)
+	 * @param toByte the last byte of the data stream to download (optional, default is file end, i.e. file size - 1)
+	 * @return a redirect URL in the HTTP Location header
+	 * @throws IllegalArgumentException if no product ID was given
+	 * @throws NoResultException if no product with the given ID exists or if it does not have a data file
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String downloadProductById(Long id, Long fromByte, Long toByte)
+			throws IllegalArgumentException, NoResultException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadProductById({}, {}, {})", id, fromByte, toByte);
+		
+		Product product = readProduct(id);
+	
+		// Check whether the product is actually available on some processing facility
+		if (product.getProductFile().isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, id));
+		}
+		
+		// Select the first product file to transfer (they should be identical anyway)
+		ProductFile productFile = product.getProductFile().iterator().next();
+		String fileName = (null == productFile.getZipFileName() ? productFile.getProductFileName() : productFile.getZipFileName());
+		
+		// Get the service URI of the Storage Manager service
+		String storageManagerUrl = productFile.getProcessingFacility().getStorageManagerUrl();
+		
+		// Get a new download token
+		String downloadToken = createDownloadToken(fileName);
+		
+		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
+		URIBuilder uriBuilder = null;
+		try {
+			uriBuilder = new URIBuilder(storageManagerUrl + "/products/download");
+			uriBuilder.addParameter("pathInfo", productFile.getFilePath() + "/" + fileName);
+			if (null != fromByte) {
+				uriBuilder.addParameter("fromByte", fromByte.toString());
+			}
+			if (null != toByte) {
+				uriBuilder.addParameter("toByte", toByte.toString());
+			}
+			uriBuilder.addParameter("token", downloadToken);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			throw new RuntimeException(logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+		}
+
+		logInfo(MSG_PRODUCT_DOWNLOAD_REQUESTED, MSG_ID_PRODUCT_DOWNLOAD_REQUESTED, id);
+		
+		return uriBuilder.toString();
+	}
+
+	/**
+	 * Create a signed JSON Web Token for the given file name using the secret shared with the Storage Manager
+	 * (See https://connect2id.com/products/nimbus-jose-jwt/examples/jwt-with-hmac)
+	 * 
+	 * @param fileName the file name to create the token for
+	 * @return the signed JSON Web Token (JWS) as per RFC 7515 and RFC 7519
+	 */
+	private String createDownloadToken(String fileName) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createDownloadToken({})", fileName);
+		
+		JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.HS256)
+				.type(JOSEObjectType.JWT)
+				.build();
+		
+		JWTClaimsSet claims = new JWTClaimsSet.Builder()
+				.subject(fileName)
+				.expirationTime(new Date(new Date().getTime() + ingestorConfig.getStorageManagerTokenValidity()))
+				.build();
+		
+		JWSSigner signer = null;
+		try {
+			// We need exactly 256 bits (32 bytes) of key length, so a shorter key will be filled with blanks, a longer key will be truncated
+			signer = new MACSigner(ingestorConfig.getStorageManagerSecret());
+		} catch (KeyLengthException e) {
+			throw new RuntimeException(logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+		}
+		
+		SignedJWT signedJWT = new SignedJWT(header, claims);
+		try {
+			signedJWT.sign(signer);
+		} catch (JOSEException e) {
+			throw new RuntimeException(logError(MSG_EXCEPTION, MSG_ID_EXCEPTION, e.getClass().getCanonicalName(), e.getMessage()));
+		}
+		
+		return signedJWT.serialize();
+	}
+
+	/**
+	 * Get a JSON Web Token for creating a download link to a Storage Manager
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fileName the name of the file to download (default primary data file or ZIP file, if available)
+	 * @return the signed JSON Web Token (JWS) as per RFC 7515 and RFC 7519
+	 * @throws IllegalArgumentException if no product ID was given
+	 * @throws NoResultException if no product with the given ID or no file with the given name exists
+	 * @throws SecurityException if a cross-mission data access was attempted
+	 */
+	public String getDownloadTokenById(Long id, String fileName)
+			throws IllegalArgumentException, NoResultException, SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);
+		
+		Product product = readProduct(id);
+	
+		// Check whether the product is actually available on some processing facility
+		if (product.getProductFile().isEmpty()) {
+			throw new NoResultException(logError(MSG_PRODUCT_NOT_AVAILABLE, MSG_ID_PRODUCT_NOT_AVAILABLE, id));
+		}
+		
+		// Check the file name
+		if (null == fileName) {
+			// Select the first product file to transfer (they should be identical anyway)
+			ProductFile productFile = product.getProductFile().iterator().next();
+			fileName = (null == productFile.getZipFileName() ? productFile.getProductFileName()
+					: productFile.getZipFileName());
+		} else {
+			// Check whether any of the product files has a data, ZIP or auxiliary file of that name
+			boolean found = false;
+			for (ProductFile productFile: product.getProductFile()) {
+				if (fileName.equals(productFile.getProductFileName()) || fileName.equals(productFile.getZipFileName())
+						|| productFile.getAuxFileNames().contains(fileName)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				throw new NoResultException(logError(MSG_PRODUCTFILE_NOT_AVAILABLE, MSG_ID_PRODUCTFILE_NOT_AVAILABLE, id, fileName));
+			}
+		}
+		// Get a new download token
+		String downloadToken = createDownloadToken(fileName);
+		
+		logInfo(MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, id, fileName);
+		
+		return downloadToken;
 	}
 	
 }

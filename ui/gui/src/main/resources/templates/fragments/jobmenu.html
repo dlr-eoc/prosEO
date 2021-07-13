@@ -1,0 +1,35 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+  <div th:fragment="jobMenu">
+    <div class="dropdown">
+      <a class="nav-link order-menu-link" data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false" role="button"><img alt="Menu"
+        src="more-vertical.svg" class="order-menu-img"></span></a>
+      <div class="dropdown-menu dropdown-menu-right menu">
+        <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setJobState(' + ${job?.id} + ', \'RELEASE\')'" href="#"><span
+          th:text="#{release}">release</span></a> <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'STARTED' or ${job?.jobState} == 'RELEASED') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPEND\')'" href="#"><span
+          th:text="#{suspend}">suspend</span></a> <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'STARTED' or ${job?.jobState} == 'RELEASED') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setJobState(' + ${job?.id} + ', \'SUSPENDFORCE\')'"
+          href="#"><span th:text="#{suspendforce}">suspendforce</span></a> <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'INITIAL') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setJobState(' + ${job?.id} + ', \'CANCEL\')'" href="#"><span
+          th:text="#{cancel}">cancel</span></a> <a
+          th:if="${hasroleorderplanner}"
+          th:class="('dropdown-item ' + ((${job?.jobState} == 'FAILED') ? 'enabled' : 'disabled font-italic'))"
+          th:onclick="'setJobState(' + ${job?.id} + ', \'RETRY\')'" href="#"><span
+          th:text="#{retry}">retry</span></a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

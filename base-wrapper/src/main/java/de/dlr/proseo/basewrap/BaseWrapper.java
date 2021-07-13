@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.basewrap.rest.HttpResponseInfo;
 import de.dlr.proseo.basewrap.rest.RestOps;
+import de.dlr.proseo.interfaces.rest.model.RestFileInfo;
 import de.dlr.proseo.interfaces.rest.model.RestProductFile;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.InputOutput;
@@ -119,6 +120,8 @@ public class BaseWrapper {
 	private static final String MSG_STARTING_BASE_WRAPPER = "\n\n{\"prosEO\" : \"A Processing System for Earth Observation Data\"}\nStarting base-wrapper with JobOrder file {}";
 	private static final String MSG_STARTING_PROCESSOR = "Starting Processing using command {} and local JobOrderFile: {}";
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
+	private static final String MSG_UNABLE_TO_ACCESS_FILE = "Unable to access file {}";
+	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
 	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to directory directory path {}";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
@@ -163,6 +166,8 @@ public class BaseWrapper {
 		, PROSEO_USER
 		, PROSEO_PW
 		, LOCAL_FS_MOUNT
+		, FILECHECK_MAX_CYCLES
+		, FILECHECK_WAIT_TIME
 	}
 
 	// Environment Variables from Container (set via run-invocation or directly from docker-image)
@@ -189,6 +194,10 @@ public class BaseWrapper {
 	protected String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
 	/** Password for prosEO Control Instance (available for wrapper subclasses) */
 	protected String ENV_PROSEO_PW = System.getenv(ENV_VARS.PROSEO_PW.toString());
+	
+	/** Variables to control max cycles and wait time to check file size of fetched input files */
+	protected String ENV_FILECHECK_MAX_CYCLES = System.getenv(ENV_VARS.FILECHECK_MAX_CYCLES.toString());
+	protected String ENV_FILECHECK_WAIT_TIME = System.getenv(ENV_VARS.FILECHECK_WAIT_TIME.toString());
 
 	/**
 	 * Callback address for prosEO Production Planner, format is:
@@ -297,6 +306,32 @@ public class BaseWrapper {
 		}
 		if(ENV_LOCAL_FS_MOUNT==null || ENV_LOCAL_FS_MOUNT.isEmpty()) {
 			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.LOCAL_FS_MOUNT);
+			envOK = false;
+		}
+		if(ENV_FILECHECK_WAIT_TIME==null || ENV_FILECHECK_WAIT_TIME.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FILECHECK_WAIT_TIME);
+			envOK = false;
+		}
+		try {
+			Integer i = Integer.valueOf(ENV_FILECHECK_WAIT_TIME);
+			if (i <= 0) {
+				throw new NumberFormatException();
+			}
+		} catch (NumberFormatException ex) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FILECHECK_WAIT_TIME);
+			envOK = false;
+		}
+		if(ENV_FILECHECK_MAX_CYCLES==null || ENV_FILECHECK_MAX_CYCLES.isEmpty()) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FILECHECK_MAX_CYCLES);
+			envOK = false;
+		}
+		try {
+			Integer i = Integer.valueOf(ENV_FILECHECK_MAX_CYCLES);
+			if (i <= 0) {
+				throw new NumberFormatException();
+			}
+		} catch (NumberFormatException ex) {
+			logger.error(MSG_INVALID_VALUE_OF_ENVVAR, ENV_VARS.FILECHECK_MAX_CYCLES);
 			envOK = false;
 		}
 
@@ -418,7 +453,44 @@ public class BaseWrapper {
 					}
 
 					// Update file name to new file name on POSIX file system
-					String inputFileName = responseInfo.gethttpResponse();
+					String fileInfo = responseInfo.gethttpResponse();
+					ObjectMapper objectMapper = new ObjectMapper();
+					RestFileInfo rfi = null;
+					try {
+						 rfi = objectMapper.readValue(fileInfo, RestFileInfo.class);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						continue;
+					}
+					String inputFileName = rfi.getFilePath();
+					
+					// wait for copy completion due to NFS caching of clients
+					int i = 0;
+					Path fp = Path.of(inputFileName);
+					if (fp.toFile().isFile()) {
+						Integer wait = Integer.valueOf(ENV_FILECHECK_WAIT_TIME);
+						Integer max = Integer.valueOf(ENV_FILECHECK_MAX_CYCLES);
+						try {
+							while ((Files.size(fp) < rfi.getFileSize()) && (i < max)) {
+								if (logger.isDebugEnabled()) {
+									logger.debug("Wait for fully copied file {}", inputFileName);
+								}
+								i++;
+								try {
+									this.wait(wait);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						} catch (IOException e) {
+							logger.error(MSG_UNABLE_TO_ACCESS_FILE, inputFileName);
+							throw new WrapperException();
+						}
+						if (i >= max) {
+							logger.error(MSG_FILE_NOT_FETCHED, inputFileName);
+						}
+					}
 					fn.setFileName(inputFileName);
 					// Check for time intervals for this file and update their file names, too
 					for (TimeInterval ti: io.getTimeIntervals()) {
@@ -622,6 +694,14 @@ public class BaseWrapper {
 					Map<String,String> params = new HashMap<>();
 					params.put("pathInfo", fn.getFileName() + (io.getFileNameType().equalsIgnoreCase("Directory")==true?"/":""));
 					params.put("productId", io.getProductID());
+					Path fp = Path.of(fn.getFileName());
+					try {
+						params.put("fileSize", String.valueOf(Files.size(fp)));
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+						params.put("fileSize", "0");
+					}
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
 							"/productfiles", null, params, RestOps.HttpMethod.PUT);
 
@@ -630,22 +710,29 @@ public class BaseWrapper {
 						throw new WrapperException();
 					}
 
-					String[] fileTypeAndName = responseInfo.gethttpResponse().split("[|]", 2);  // pipe sign is a symbol of regex, escaped with brackets
-					if (2 != fileTypeAndName.length) {
+					String fileInfo = responseInfo.gethttpResponse();
+					ObjectMapper objectMapper = new ObjectMapper();
+					RestFileInfo rfi = null;
+					try {
+						 rfi = objectMapper.readValue(fileInfo, RestFileInfo.class);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					if (rfi == null) {
 						logger.error(MSG_MALFORMED_RESPONSE_FROM_STORAGE_MANAGER, responseInfo.gethttpResponse(), fn.getFileName());
 						throw new WrapperException();
 					}
 					
 					// Make sure all product files have the same storage tpye
 					if (null == productFile.getStorageType()) {
-						productFile.setStorageType(fileTypeAndName[0]);
-					} else if (!productFile.getStorageType().equals(fileTypeAndName[0])) {
+						productFile.setStorageType(rfi.getStorageType());
+					} else if (!productFile.getStorageType().equals(rfi.getStorageType())) {
 						logger.error(MSG_DIFFERENT_STORAGE_TYPES_ASSIGNED, productFile.getProductId());
 						throw new WrapperException();
 					}
 					
 					// Separate the file path into a directory path and a file name
-					String filePath = fileTypeAndName[1]; // This is not a file path in the local (POSIX) file system; its separator is always "/"
+					String filePath = rfi.getFilePath(); // This is not a file path in the local (POSIX) file system; its separator is always "/"
 					int lastSeparatorIndex = filePath.lastIndexOf('/');
 					String parentPath = filePath.substring(0, lastSeparatorIndex);
 					String fileName = filePath.substring(lastSeparatorIndex + 1);

@@ -8,6 +8,7 @@ mediaType: application/json
 
 types:
   RestInfo: !include ../../../../../interfaces/src/main/resources/raml/types/info.raml
+  RestFileInfo: !include ../../../../../interfaces/src/main/resources/raml/types/fileinfo.raml
   RestStorage: !include ../../../../../interfaces/src/main/resources/raml/types/storage.raml
   RestProductFS: !include ../../../../../interfaces/src/main/resources/raml/types/productFS.raml
   RestJoborder: !include ../../../../../interfaces/src/main/resources/raml/types/joborderBase64.raml
@@ -100,8 +101,15 @@ resourceTypes:
         pathInfo: 
           type: string
           description: The file path as S3/ALLUXIO/POSIX string for download
-        fromByte?: integer
-        toByte?: integer
+        token:
+          type: string
+          description: A JSON Web Token authenticating the download (obtained from Ingestor)
+        fromByte?:
+          type: integer
+          description: The first byte of the data stream to download (default is file start, i.e. byte 0)
+        toByte?:
+          type: integer
+          description: The last byte of the data stream to download (default is file end, i.e. file size - 1)
       responses:
         200:
           body:
@@ -118,8 +126,9 @@ resourceTypes:
     responses:
       200:
         body:
-          text/plain:
-            description: The resulting file path in the local POSIX file system
+          application/json:
+            type: RestFileInfo
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/fileinfo.json
   put:
     description: Push file from local POSIX file system to Storage Manager
     queryParameters:
@@ -130,13 +139,16 @@ resourceTypes:
         type: integer
         format: long
         description: The product id used to generate target file path
+      fileSize:
+        type: integer
+        format: long
+        description: The product file size
     responses:
       201:
         body:
-          text/plain:
-            description: |
-              The file system type (S3/ALLUXIO/POSIX), followed by a vertical bar ('|'),
-              followed by the resulting S3/ALLUXIO/POSIX file path
+          application/json:
+            type: RestFileInfo
+            example: !include ../../../../../interfaces/src/main/resources/raml/examples/fileinfo.json
               
 /joborders:
   post:

@@ -274,6 +274,9 @@ public class ProductIngestor {
 		newProductFile.setProduct(newModelProduct);
 		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
 		newModelProduct.getProductFile().add(newProductFile);
+		if (null == newModelProduct.getPublicationTime()) {
+			newModelProduct.setPublicationTime(Instant.now());
+		}
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
 		
 		
@@ -440,6 +443,9 @@ public class ProductIngestor {
 		modelProductFile.setProduct(product.get());
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
 		
+		if (null == modelProduct.getPublicationTime()) {
+			modelProduct.setPublicationTime(Instant.now());
+		}
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 		
 		// Return the updated REST product file

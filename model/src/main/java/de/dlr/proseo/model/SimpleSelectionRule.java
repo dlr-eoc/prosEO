@@ -591,9 +591,11 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @param startTime the start time to use in the database query
 	 * @param stopTime the stop time to use in the database query
 	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
+	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
 	 * @return an SQL string representing this rule
 	 */
-	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions) {
+	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions,
+			Map<String, String> productColumnMapping) {
 		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
 		if (null != additionalFilterConditions) {
 			allFilterConditions.putAll(additionalFilterConditions);
@@ -651,17 +653,15 @@ public class SimpleSelectionRule extends PersistentObject {
 		i = 0;
 		for (String filterKey: allFilterConditions.keySet()) {
 			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
-			try {
-				Product.class.getDeclaredField(filterKey);
-				simpleRuleQuery.append(
-						String.format(" AND p.%s = '%s'", filterKey, allFilterConditions.get(filterKey).getStringValue()));
-			} catch (NoSuchFieldException e) {
+			String columnName = productColumnMapping.get(filterKey);
+			if (null == columnName) {
 				simpleRuleQuery.append(
 						String.format(" AND pp%d.parameters_key = '%s' AND pp%d.parameter_value = '%s'", 
 								i, filterKey, i, allFilterConditions.get(filterKey).getStringValue()));
 				++i;
-			} catch (SecurityException e) {
-				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			} else {
+				simpleRuleQuery.append(
+						String.format(" AND p.%s = '%s'", columnName, allFilterConditions.get(filterKey).getStringValue()));
 			}
 		}
 

@@ -84,9 +84,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 */
 	public Product findByUuid(UUID uuid);
 
+	/**
+	 * Get a list of products of a given product class, configured process and sensing times
+	 * 
+	 * @param productClassId the ID of the product class
+	 * @param configuredProcessorId the ID of the configured processor
+	 * @param sensingStartTime the sensing start time
+	 * @param sensingStopTime the sensing stop time
+	 * @return a list of products satisfying the search criteria
+	 */
 	@Query("select p from Product p where p.productClass.id = ?1 and p.configuredProcessor.id = ?2" 
 			+ " and p.sensingStartTime = ?3 and p.sensingStopTime = ?4")
 	public List<Product> findByProductClassAndConfiguredProcessorAndSensingStartTimeAndSensingStopTime(
 			long productClassId, long configuredProcessorId, Instant sensingStartTime, Instant sensingStopTime);
 
+	/**
+	 * Get a list of products with eviction times in the past
+	 * 
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from Product p where p.evictionTime is not null and p.evictionTime < current_timestamp")
+	public List<Product> findByEvictionTimeBeforeNow();
 }

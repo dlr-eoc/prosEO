@@ -1,5 +1,8 @@
 package de.dlr.proseo.storagemgr.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.rest.model.RestFileInfo;
 import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
 
@@ -31,7 +35,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
-	
+	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
+		
 	private static Logger logger = LoggerFactory.getLogger(ProductfileControllerImpl.class);
 	
 	@Autowired
@@ -68,11 +73,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Local file name
 	 */
 	@Override
-	public ResponseEntity<String> getObjectByPathInfo(String pathInfo) {
-		
-		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByPathInfo({})", pathInfo);
-		
-		String response = "";
+	public ResponseEntity<RestFileInfo> getRestFileInfoByPathInfo(String pathInfo) {
+	
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestFileInfoByPathInfo({})", pathInfo);
+	
+		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixWorkerMountPoint() + "/" + sourceFile.getRelPathAndFile(), cfg);
@@ -81,7 +86,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 			try {
 					ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 					if (transfered != null && !transfered.isEmpty()) {
-						response = transfered.get(0);
+						response.setStorageType(targetFile.getFsType().toString());
+						response.setFilePath(targetFile.getFullPath());
+						response.setFileName(targetFile.getFileName());
+						response.setFileSize(targetFile.getLength());
 						return new ResponseEntity<>(response, HttpStatus.OK);
 					}
 			} catch (Exception e) {
@@ -90,7 +98,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<String>(response, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 
 	/** 
@@ -102,11 +110,11 @@ public class ProductfileControllerImpl implements ProductfileController {
 	 * @return Target file name
 	 */
 	@Override
-	public ResponseEntity<String> updateProductfiles(String pathInfo, Long productId) {
-		
+	public ResponseEntity<RestFileInfo> updateProductfiles(String pathInfo, Long productId, Long fileSize) {
+	
 		if (logger.isTraceEnabled()) logger.trace(">>> updateProductfiles({}, {})", pathInfo, productId);
-		
-		String response = "";
+	
+		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 			String targetRelPath = String.valueOf(productId);
@@ -124,9 +132,43 @@ public class ProductfileControllerImpl implements ProductfileController {
 			// replace top relPath directory
 			ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
 			try {
+				// wait until source file is really copied
+				if (sourceFile.getFsType() == StorageType.POSIX) {
+					int i = 0;
+					Path fp = Path.of(sourceFile.getFullPath());
+					if (fp.toFile().isFile()) {
+						Integer wait = Integer.valueOf(cfg.getFileCheckWaitTime());
+						Integer max = Integer.valueOf(cfg.getFileCheckMaxCycles());
+						try {
+							while (Files.size(fp) < fileSize && i < max) {
+								if (logger.isDebugEnabled()) {
+									logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
+								}
+								i++;
+								try {
+									this.wait(wait);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+							}
+						} catch (IOException e) {
+							logger.error("Unable to access file {}", sourceFile.getFullPath());
+							return new ResponseEntity<>(
+									errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN, e.getClass().toString() + ": " + e.getMessage()), 
+									HttpStatus.INTERNAL_SERVER_ERROR);
+						}
+						if (i >= max) {
+							logger.error(MSG_FILE_NOT_FETCHED, aPath);
+						}
+					}
+				}
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+				
 				if (transfered != null && !transfered.isEmpty()) {
-					response = targetFile.getFsType() + "|" + transfered.get(0);
+					response.setStorageType(targetFile.getFsType().toString());
+					response.setFilePath(targetFile.getFullPath());
+					response.setFileName(targetFile.getFileName());
+					response.setFileSize(targetFile.getLength());
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
 			} catch (Exception e) {
@@ -135,6 +177,6 @@ public class ProductfileControllerImpl implements ProductfileController {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
-		return new ResponseEntity<String>(response, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<RestFileInfo>(response, HttpStatus.NOT_FOUND);
 	}
 }

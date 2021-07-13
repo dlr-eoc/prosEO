@@ -55,6 +55,18 @@ public class LogUtil {
 	}
 
 	/**
+	 * Create and log a formatted informational message
+	 * 
+	 * @param messageFormat the message text with parameter placeholders in String.format() style
+	 * @param messageId a (unique) message id
+	 * @param messageParameters the message parameters (optional, depending on the message format)
+	 * @return a formatted informational message
+	 */
+	public static String logInfo(Logger logger, String messageFormat, int messageId, Object... messageParameters) {
+		return log(logger, Level.INFO, messageFormat, messageId, messageParameters);
+	}
+
+	/**
 	 * Create and log a formatted error message
 	 * 
 	 * @param messageFormat the message text with parameter placeholders in String.format() style

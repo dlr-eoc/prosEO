@@ -9,8 +9,10 @@ package de.dlr.proseo.storagemgr.rest;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -25,6 +27,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
 import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -47,11 +55,27 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
 	private static final int MSG_ID_FILE_NOT_FOUND = 4002;
 	private static final int MSG_ID_INVALID_PATH = 4003;
+	private static final int MSG_ID_TOKEN_MISSING = 4004;
+	private static final int MSG_ID_TOKEN_INVALID = 4005;
+	private static final int MSG_ID_TOKEN_EXPIRED = 4006;
+	private static final int MSG_ID_TOKEN_MISMATCH = 4007;
 
 	/* Message strings */
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
 	private static final String MSG_FILE_NOT_FOUND = "(E%d) File %s not found";
 	private static final String MSG_INVALID_PATH = "(E%d) Invalid path %s";
+	private static final String MSG_TOKEN_MISSING = "(E%d) Authentication token missing";
+	private static final String MSG_TOKEN_INVALID = "(E%d) Authentication token %s invalid (cause: %s)";
+	private static final String MSG_TOKEN_EXPIRED = "(E%d) Authentication token expired at %s";
+	private static final String MSG_TOKEN_MISMATCH = "(E%d) Authentication token not valid for file %s";
+	
+	/* Submessages for token evaluation */
+	private static final String MSG_TOKEN_PAYLOAD_INVALID = "The payload of the JWT doesn't represent a valid JSON object and a JWT claims set";
+	private static final String MSG_TOKEN_NOT_VERIFIABLE = "The JWS object couldn't be verified";
+	private static final String MSG_TOKEN_STATE_INVALID = "The JWS object is not in a signed or verified state, actual state: ";
+	private static final String MSG_TOKEN_VERIFICATION_FAILED = "Verification of the JWT failed";
+	private static final String MSG_SECRET_TOO_SHORT = "Secret length is shorter than the minimum 256-bit requirement";
+	private static final String MSG_TOKEN_NOT_PARSEABLE = "Token not parseable";
 
 	private static final String HTTP_HEADER_WARNING = "Warning";
 	private static final String HTTP_MSG_PREFIX = "199 proseo-storage-mgr ";
@@ -221,68 +245,141 @@ public class ProductControllerImpl implements ProductController {
 	}
 
 	/**
+	 * Check the given token for formal correctness and extract its JWT claims set
+	 * 
+	 * @param token the signed JSON Web Token to check
+	 * @return the JWT claims set contained in the token
+	 * @throws IllegalArgumentException if the token cannot be analyzed
+	 */
+	private JWTClaimsSet extractJwtClaimsSet(String token) throws IllegalArgumentException {
+		
+		if (logger.isTraceEnabled()) logger.trace(">>> extractJwtClaimsSet({})", token);
+
+		SignedJWT signedJWT = null;
+		try {
+			signedJWT = SignedJWT.parse(token);
+		} catch (ParseException e) {
+			throw new IllegalArgumentException(MSG_TOKEN_NOT_PARSEABLE);
+		}
+		
+		JWSVerifier verifier = null;
+		try {
+			verifier = new MACVerifier(cfg.getStorageManagerSecret());
+		} catch (JOSEException e) {
+			throw new IllegalArgumentException(MSG_SECRET_TOO_SHORT);
+		}
+
+		try {
+			if (!signedJWT.verify(verifier)) {
+				throw new IllegalArgumentException(MSG_TOKEN_VERIFICATION_FAILED);
+			};
+		} catch (IllegalStateException e) {
+			throw new IllegalArgumentException(MSG_TOKEN_STATE_INVALID + signedJWT.getState());
+		} catch (JOSEException e) {
+			throw new IllegalArgumentException(MSG_TOKEN_NOT_VERIFIABLE);
+		}
+		
+		// Retrieve / verify the JWT claims according to the app requirements
+		JWTClaimsSet claimsSet = null;
+		try {
+			claimsSet = signedJWT.getJWTClaimsSet();
+		} catch (ParseException e) {
+			throw new IllegalArgumentException(MSG_TOKEN_PAYLOAD_INVALID);
+		}
+		return claimsSet;
+	}
+
+	/**
 	 * Retrieve the byte stream for download of a file object in repository.
 	 * 
-	 * @param pathInfo Path to object
-	 * @param fromByte Start byte, 0 if not set
-	 * @param toByte End byte, end of object data if not set
+	 * @param pathInfo the file path as S3/ALLUXIO/POSIX string for download
+	 * @param token a JSON Web Token authenticating the download (obtained from Ingestor)
+	 * @param fromByte The first byte of the data stream to download (default is file start, i.e. byte 0)
+	 * @param toByte The last byte of the data stream to download (default is file end, i.e. file size - 1)
 	 * @return a response entity containing
 	 *     HTTP status OK or PARTIAL_CONTENT and the byte stream on success, or
 	 *     HTTP status NOT_FOUND and an error message, or
 	 *     HTTP status INTERNAL_SERVER_ERROR and an error message
 	 */
 	@Override
-	public ResponseEntity<?> getObject(String pathInfo, Long fromByte, Long toByte) {
+	public ResponseEntity<?> getObject(String pathInfo, String token, Long fromByte, Long toByte) {
 		
-		if (logger.isTraceEnabled()) logger.trace(">>> getObject({}, {}, {})", pathInfo, fromByte, toByte);
+		if (logger.isTraceEnabled()) logger.trace(">>> getObject({}, {}, {}, {})", pathInfo, token, fromByte, toByte);
 		
-		if (pathInfo != null) {
-			try {
-				ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-				if (sourceFile == null) {
-					return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH,
-							pathInfo), HttpStatus.BAD_REQUEST);
-				}
-				InputStream stream = sourceFile.getDataAsInputStream();
-				if (stream == null) {
-					return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
-							pathInfo), HttpStatus.NOT_FOUND);
-				}
-				Long len = sourceFile.getLength();
-				HttpHeaders headers = new HttpHeaders();
-				headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
-				long from = 0;
-				long to = len - 1;
-				HttpStatus status = HttpStatus.OK;
-				if (fromByte != null || toByte != null) {
-					List<HttpRange> ranges = new ArrayList<HttpRange>();
-					if (fromByte != null) {
-						from = fromByte;
-						stream.skip(from);
-					}
-					if (toByte != null) {
-						to = Math.min(toByte, len - 1);
-					}
-					len = to - from + 1;
-					HttpRange range = HttpRange.createByteRange(from, to);
-					ranges.add(range);
-					headers.setRange(ranges);
-					headers.setContentType(new MediaType("multipart", "byteranges"));
-					status = HttpStatus.PARTIAL_CONTENT;
-				} else {
-					headers.setContentType(new MediaType("application", sourceFile.getExtension()));
-				}
-				headers.setContentLength(len);
-				InputStreamResource fsr = new InputStreamResource(stream);
-				if (fsr != null) {
-					return new ResponseEntity<>(fsr, headers, status);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
-						e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
+		// Check parameters
+		if (null == pathInfo) {
+			return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH,
+					pathInfo), HttpStatus.BAD_REQUEST);
 		}
+		if (null == token) {
+			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_MISSING, MSG_ID_TOKEN_MISSING), HttpStatus.UNAUTHORIZED);
+		}
+		
+		// Check authentication token
+		JWTClaimsSet claimsSet = null;
+		try {
+			claimsSet = extractJwtClaimsSet(token);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_INVALID, MSG_ID_TOKEN_INVALID,
+					token, e.getMessage()), HttpStatus.UNAUTHORIZED);
+		}
+		if ((new Date()).after(claimsSet.getExpirationTime())) {
+			return new ResponseEntity<>(errorHeaders(MSG_TOKEN_EXPIRED, MSG_ID_TOKEN_EXPIRED,
+					claimsSet.getExpirationTime().toString()), HttpStatus.UNAUTHORIZED);
+		}
+		
+		// Download file
+		
+		try {
+			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
+			if (sourceFile == null) {
+				return new ResponseEntity<>(errorHeaders(MSG_INVALID_PATH, MSG_ID_INVALID_PATH,
+						pathInfo), HttpStatus.BAD_REQUEST);
+			}
+			if (!sourceFile.getFileName().equals(claimsSet.getSubject())) {
+				return new ResponseEntity<>(errorHeaders(MSG_TOKEN_MISMATCH, MSG_ID_TOKEN_MISMATCH,
+						sourceFile.getFileName()), HttpStatus.UNAUTHORIZED);
+			}
+			InputStream stream = sourceFile.getDataAsInputStream();
+			if (stream == null) {
+				return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
+						pathInfo), HttpStatus.NOT_FOUND);
+			}
+			Long len = sourceFile.getLength();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentDispositionFormData("attachment", sourceFile.getFileName());
+			long from = 0;
+			long to = len - 1;
+			HttpStatus status = HttpStatus.OK;
+			if (fromByte != null || toByte != null) {
+				List<HttpRange> ranges = new ArrayList<HttpRange>();
+				if (fromByte != null) {
+					from = fromByte;
+					stream.skip(from);
+				}
+				if (toByte != null) {
+					to = Math.min(toByte, len - 1);
+				}
+				len = to - from + 1;
+				HttpRange range = HttpRange.createByteRange(from, to);
+				ranges.add(range);
+				headers.setRange(ranges);
+				headers.setContentType(new MediaType("multipart", "byteranges"));
+				status = HttpStatus.PARTIAL_CONTENT;
+			} else {
+				headers.setContentType(new MediaType("application", sourceFile.getExtension()));
+			}
+			headers.setContentLength(len);
+			InputStreamResource fsr = new InputStreamResource(stream);
+			if (fsr != null) {
+				return new ResponseEntity<>(fsr, headers, status);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
 		return new ResponseEntity<>(errorHeaders(MSG_FILE_NOT_FOUND, MSG_ID_FILE_NOT_FOUND,
 				pathInfo), HttpStatus.NOT_FOUND);
 	}

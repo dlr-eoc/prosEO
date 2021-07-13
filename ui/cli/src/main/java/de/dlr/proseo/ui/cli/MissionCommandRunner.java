@@ -53,6 +53,7 @@ public class MissionCommandRunner {
 	private static final String CMD_ADD = "add";
 	private static final String CMD_REMOVE = "remove";
 
+	private static final String OPTION_DELETE_ATTRIBUTES = "delete-attributes";
 	private static final String OPTION_DELETE_PRODUCTS = "delete-products";
 	private static final String OPTION_FORCE = "force";
 	private static final String OPTION_ORBIT_TO = "to";
@@ -373,6 +374,7 @@ public class MissionCommandRunner {
 		/* Check command options */
 		File missionFile = null;
 		String missionFileFormat = CLIUtil.FILE_FORMAT_JSON;
+		boolean isDeleteAttributes = false;
 		for (ParsedOption option: updateCommand.getOptions()) {
 			switch(option.getName()) {
 			case OPTION_FILE:
@@ -380,6 +382,9 @@ public class MissionCommandRunner {
 				break;
 			case OPTION_FORMAT:
 				missionFileFormat = option.getValue().toUpperCase();
+				break;
+			case OPTION_DELETE_ATTRIBUTES:
+				isDeleteAttributes = true;
 				break;
 			}
 		}
@@ -425,6 +430,12 @@ public class MissionCommandRunner {
 		}
 		if (null != updatedMission.getProductFileTemplate()) {
 			restMission.setProductFileTemplate(updatedMission.getProductFileTemplate());
+		}
+		if (isDeleteAttributes || null != updatedMission.getProcessingCentre()) {
+			restMission.setProcessingCentre(updatedMission.getProcessingCentre());
+		}
+		if (isDeleteAttributes || null != updatedMission.getProductRetentionPeriod()) {
+			restMission.setProductRetentionPeriod(updatedMission.getProductRetentionPeriod());
 		}
 		
 		/* Update mission using Order Manager service */

@@ -302,6 +302,11 @@ public class UIMessages {
 	public static final int MSG_ID_NO_FACILITY_NAME_GIVEN = 2748;
 	public static final int MSG_ID_FACILITY_DELETE_FAILED = 2749;
 	
+	// GUI specific
+	public static final int MSG_ID_NO_FILECLASSES_FOUND = 2770;
+	public static final int MSG_ID_NO_PROCESSINGMODES_FOUND = 2771;
+	public static final int MSG_ID_NO_SPACECRAFTS_FOUND = 2771;
+	
 	private static Map<Integer, String> uiMessages = new HashMap<>();
 	
 	
@@ -612,8 +617,13 @@ public class UIMessages {
 		MSG_CONFIGURATION_DELETED ("(I%d) Configuration with database ID %d deleted", MSG_ID_CONFIGURATION_DELETED),
 		MSG_CONFIGUREDPROCESSOR_CREATED ("(I%d) Configured processor %s for processor %s, version %s and configuration version %s created (database ID %d)", MSG_ID_CONFIGUREDPROCESSOR_CREATED),
 		MSG_CONFIGUREDPROCESSOR_UPDATED ("(I%d) Configured processor with database ID %d updated (new version %d)", MSG_ID_CONFIGUREDPROCESSOR_UPDATED),
-		MSG_CONFIGUREDPROCESSOR_DELETED ("(I%d) Configured processor with database ID %d deleted", MSG_ID_CONFIGUREDPROCESSOR_DELETED);
+		MSG_CONFIGUREDPROCESSOR_DELETED ("(I%d) Configured processor with database ID %d deleted", MSG_ID_CONFIGUREDPROCESSOR_DELETED),
 		
+		// GUI specific
+		MSG_NO_FILECLASSES_FOUND ("(E%d) No file classes found for given search criteria", MSG_ID_NO_FILECLASSES_FOUND),
+		MSG_NO_PROCESSINGMODES_FOUND ("(E%d) No processing modes found for given search criteria", MSG_ID_NO_PROCESSINGMODES_FOUND),
+		MSG_NO_SPACECRAFTS_FOUND ("(E%d) No spacecrafts found for given search criteria", MSG_ID_NO_SPACECRAFTS_FOUND);
+
 		private final String msgText;
 		private final int msgId;
 		

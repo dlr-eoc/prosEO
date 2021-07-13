@@ -90,7 +90,7 @@
                 <td style="width:4em" rowspan="2">&nbsp;</td>
                 <td rowspan="2" class="align-top"><span
                   class="align-top input-group-text" th:text="#{product}"></span></td>
-                <td rowspan="2"><select name="orderstates" id="products"
+                <td rowspan="2"><select name="products" id="products"
                   class="custom-select" multiple>
                   <option th:each="prod : ${productclassnames}" th:text="${prod}"
                     th:label="${prod}"></option>
@@ -157,7 +157,7 @@
                       <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                       <td><a th:if="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span th:unless="${hasroleproductclassreader}" th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
                        th:text="' ' + ${comp}"></span></td>
                       <td>

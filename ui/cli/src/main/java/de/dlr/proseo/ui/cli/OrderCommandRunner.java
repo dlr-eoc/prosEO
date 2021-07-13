@@ -698,6 +698,9 @@ public class OrderCommandRunner {
 		if (null != updatedOrder.getProductionType()) { // mandatory
 			restOrder.setProductionType(updatedOrder.getProductionType());
 		}
+		if (isDeleteAttributes || null != updatedOrder.getProductRetentionPeriod()) {
+			restOrder.setProductRetentionPeriod(updatedOrder.getProductRetentionPeriod());
+		}
 		if (null != updatedOrder.getHasFailedJobSteps()) { // mandatory
 			restOrder.setHasFailedJobSteps(updatedOrder.getHasFailedJobSteps());
 		}

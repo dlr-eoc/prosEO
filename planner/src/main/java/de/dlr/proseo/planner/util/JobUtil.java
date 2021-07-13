@@ -433,6 +433,11 @@ public class JobUtil {
 				Boolean all = RepositoryService.getJobStepRepository().countJobStepNotFinishedByJobId(job.getId()) == 0;
 				if (all) {
 					Boolean completed = RepositoryService.getJobStepRepository().countJobStepFailedByJobId(job.getId()) == 0;
+					if (job.getJobState() == JobState.ON_HOLD) {
+						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.RELEASED);
+						job.setJobState(JobState.STARTED);
+					}
 					if (completed) {
 						job.setJobState(JobState.COMPLETED);
 					} else {
@@ -475,6 +480,11 @@ public class JobUtil {
 					}
 				}
 				if (allHasFinished) {
+					if (job.getJobState() == JobState.ON_HOLD) {
+						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.RELEASED);
+						job.setJobState(JobState.STARTED);
+					}
 					if (hasFailed) {
 						job.setJobState(JobState.FAILED);
 					} else {

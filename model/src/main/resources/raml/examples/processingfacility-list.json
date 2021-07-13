@@ -5,6 +5,7 @@
         "facilityState": "RUNNING",
         "processingEngineUrl": "https://procfac1.proseo-domain.de/kubernetes",
         "processingEngineToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IlBpM…jjzckxFyH9d8ggu-EYFJWLFY5g",
+        "maxJobsPerNode": 4,
         "storageManagerUrl": "http://procfac1.proseo-domain.de/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v0.1",
         "localStorageManagerUrl": "https://%NODE_IP%:30001/proseo/storage-mgr/v0.1",
         "storageManagerUser": "smuser1",

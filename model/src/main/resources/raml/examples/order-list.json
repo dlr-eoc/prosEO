@@ -70,6 +70,7 @@
         "inputProductClasses": [ "L1B" ],
         "outputFileClass": "RPRO",
         "processingMode": "OFFL",
+        "productRetentionPeriod": 2592000,
         "hasFailedJobSteps": false,
         "jobStepStates": [ "INITIAL", "READY" ],
         "percentCompleted": 80,

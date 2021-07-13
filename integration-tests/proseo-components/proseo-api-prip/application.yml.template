@@ -14,3 +14,4 @@ logging:
         de.dlr.proseo: TRACE
 proseo:
     userManager.url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
+    ingestor.url: http://proseo-ingestor:8080/proseo/ingestor/v0.1

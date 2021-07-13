@@ -14,3 +14,6 @@ logging:
         de.dlr.proseo: TRACE
 proseo:
     userManager.url: http://localhost:8086/proseo/user-mgr/v0.1
+    ingestor.url: http://localhost:8081/proseo/ingestor/v0.1
+    # Expiration time for OAuth2 tokens in seconds
+    token.expiration: 3600

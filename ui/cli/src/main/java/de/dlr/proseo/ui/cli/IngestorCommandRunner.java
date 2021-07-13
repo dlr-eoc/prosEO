@@ -494,8 +494,17 @@ public class IngestorCommandRunner {
 		if (isDeleteAttributes || null != updatedProduct.getSensingStopTime()) {
 			restProduct.setSensingStopTime(updatedProduct.getSensingStopTime());
 		}
+		if (isDeleteAttributes || null != updatedProduct.getRawDataAvailabilityTime()) {
+			restProduct.setRawDataAvailabilityTime(updatedProduct.getRawDataAvailabilityTime());
+		}
 		if (isDeleteAttributes || null != updatedProduct.getGenerationTime()) {
 			restProduct.setGenerationTime(updatedProduct.getGenerationTime());
+		}
+		if (isDeleteAttributes || null != updatedProduct.getPublicationTime()) {
+			restProduct.setPublicationTime(updatedProduct.getPublicationTime());
+		}
+		if (isDeleteAttributes || null != updatedProduct.getEvictionTime()) {
+			restProduct.setEvictionTime(updatedProduct.getEvictionTime());
 		}
 		if (isDeleteAttributes || null != updatedProduct.getProductionType()) {
 			restProduct.setProductionType(updatedProduct.getProductionType());

@@ -225,7 +225,7 @@ public class OrderControllerTest {
 				testOrder.setRequestedProductClasses(set);			
 			}
 			for (int i = 0; i < testReqOrbits.length; ++i) {
-				List<Orbit> orbits = RepositoryService.getOrbitRepository().findBySpacecraftCodeAndOrbitNumberBetween(testReqOrbits[i][0], 
+				List<Orbit> orbits = RepositoryService.getOrbitRepository().findByMissionCodeAndSpacecraftCodeAndOrbitNumberBetween(missionCode, testReqOrbits[i][0], 
 						Integer.valueOf(testReqOrbits[i][1]), Integer.valueOf(testReqOrbits[i][2]));
 				testOrder.setRequestedOrbits(orbits);
 			}

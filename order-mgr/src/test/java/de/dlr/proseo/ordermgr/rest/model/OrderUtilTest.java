@@ -132,8 +132,8 @@ public class OrderUtilTest {
 		logger.info("rest execution time: "+restOrder.getExecutionTime().toInstant());
 
 		assertEquals("Unexpected execution time: ", modelOrder.getExecutionTime(), restOrder.getExecutionTime().toInstant());
-		assertEquals("Unexpected start time: ", modelOrder.getStartTime(), restOrder.getStartTime().toInstant());
-		assertEquals("Unexpected stop time: ", modelOrder.getStopTime(), restOrder.getStopTime().toInstant());
+		assertEquals("Unexpected start time: ", modelOrder.getStartTime(), OrbitTimeFormatter.parse(restOrder.getStartTime()));
+		assertEquals("Unexpected stop time: ", modelOrder.getStopTime(), OrbitTimeFormatter.parse(restOrder.getStopTime()));
 
 		assertEquals("Unexpected processing Mode: ", modelOrder.getProcessingMode(), restOrder.getProcessingMode());
 

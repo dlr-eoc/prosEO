@@ -146,6 +146,9 @@ public class OrderUtil {
 		if (null != processingOrder.getProductionType()) {
 			restOrder.setProductionType(processingOrder.getProductionType().toString());
 		}
+		if (null != processingOrder.getProductRetentionPeriod()) {
+			restOrder.setProductRetentionPeriod(processingOrder.getProductRetentionPeriod().getSeconds());
+		}
 		if (null != processingOrder.hasFailedJobSteps()) {
 			restOrder.setHasFailedJobSteps(processingOrder.hasFailedJobSteps());
 		}
@@ -294,6 +297,9 @@ public class OrderUtil {
 		}
 		if (null != restOrder.getProductionType()) {
 			processingOrder.setProductionType(ProductionType.valueOf(restOrder.getProductionType()));
+		}
+		if (null != restOrder.getProductRetentionPeriod()) {
+			processingOrder.setProductRetentionPeriod(Duration.ofSeconds(restOrder.getProductRetentionPeriod()));
 		}
 		if (null != restOrder.getHasFailedJobSteps()) {
 			processingOrder.setHasFailedJobSteps(restOrder.getHasFailedJobSteps());

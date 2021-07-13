@@ -132,10 +132,11 @@ my $mission = {
             '${(new java.text.DecimalFormat(\\"00000\\")).format(null == orbit ? 0 : orbit.orbitNumber)}_' .
             '${parameters.get(\\"revision\\").getParameterValue()}_' .
             '${configuredProcessor.processor.processorVersion.replaceAll(\\"\\\\\\\\.\\", \\"\\")}_' .
-            '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(generationTime)}.nc'
-
+            '${T(java.time.format.DateTimeFormatter).ofPattern(\\"uuuuMMdd\'T\'HHmmss\\").withZone(T(java.time.ZoneId).of(\\"UTC\\")).format(generationTime)}.nc',
+    processingCentre => 'PTM-PDGS',
+    productRetentionPeriod => 30 * 24 * 3600
 };
-my $spacecraft = { code => 'PTS', name => 'prosEO Test Satellite' };
+my $spacecraft = { code => 'PTS', name => 'prosEO Test Satellite', payloadName => 'PTS-SENSOR', payloadDescription => 'Super sensor for PTM' };
 my @orbits = (
     { orbitNumber => 3000, startTime => '2019-11-04T09:00:00.200000', stopTime => '2019-11-04T10:41:10.300000' },
     { orbitNumber => 3001, startTime => '2019-11-04T10:41:10.300000', stopTime => '2019-11-04T12:22:20.400000' },
@@ -157,7 +158,7 @@ my @processors = (
     	tasks => [ 
     	   { taskName => 'ptm_l01b', taskVersion => '0.1.0' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.7.3'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
     },
     {
         processorName => 'PTML2', 
@@ -166,7 +167,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l2', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.7.3'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
     },
     {
         processorName => 'PTML3', 
@@ -175,7 +176,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l3', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.7.3'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
     }
 );
 my @configurations = (
@@ -365,9 +366,15 @@ foreach my $processing_mode ( @{ $mission->{processingModes} } ) {
 }
 print $fh ' ],' . "\n";
 print $fh '    "productFileTemplate": "' . $mission->{productFileTemplate} . '",' . "\n";
+print $fh '    "processingCentre": "' . $mission->{processingCentre} . '",' . "\n";
+print $fh '    "productRetentionPeriod": ' . $mission->{productRetentionPeriod} . ',' . "\n";
 print $fh '    "spacecrafts": [ {' . "\n";
 print $fh '        "code": "' . $spacecraft->{code} . '",' . "\n";
-print $fh '        "name": "' . $spacecraft->{name} . '"' . "\n";
+print $fh '        "name": "' . $spacecraft->{name} . '",' . "\n";
+print $fh '        "payloads": [ {' . "\n";
+print $fh '            "name": "' . $spacecraft->{payloadName} . '",' . "\n";
+print $fh '            "description": "' . $spacecraft->{payloadDescription} . '"' . "\n";
+print $fh '        } ]' . "\n";
 print $fh '    } ]' . "\n";
 print $fh '}' . "\n";
 $fh->close();

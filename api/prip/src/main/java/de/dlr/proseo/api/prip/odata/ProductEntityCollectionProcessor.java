@@ -72,8 +72,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	/* Message ID constants */
 	private static final int MSG_ID_INVALID_ENTITY_TYPE = 5001;
 	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
-	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5006;
-	private static final int MSG_ID_EXCEPTION = 5007;
+	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5008;
+	private static final int MSG_ID_EXCEPTION = 5009;
 	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5009;
 
 	/* Message string constants */

@@ -48,6 +48,9 @@ public class TaskUtil {
 		if (null != modelTask.getNumberOfCpus()) {
 			restTask.setNumberOfCpus(Long.valueOf(modelTask.getNumberOfCpus()));
 		}
+		if (null != modelTask.getMinMemory()) {
+			restTask.setMinMemory(modelTask.getMinMemory().longValue());
+		}
 		for (String breakpointFileName: modelTask.getBreakpointFileNames()) {
 			restTask.getBreakpointFileNames().add(breakpointFileName);
 		}
@@ -84,6 +87,9 @@ public class TaskUtil {
 		}
 		if (null != restTask.getNumberOfCpus()) {
 			modelTask.setNumberOfCpus(restTask.getNumberOfCpus().intValue());
+		}
+		if (null != restTask.getMinMemory()) {
+			modelTask.setMinMemory(restTask.getMinMemory().intValue());
 		}
 		for (String breakpointFileName: restTask.getBreakpointFileNames()) {
 			modelTask.getBreakpointFileNames().add(breakpointFileName);

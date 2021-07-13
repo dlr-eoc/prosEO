@@ -118,7 +118,7 @@
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                        th:unless="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
                        class="proseo-list-item"  
@@ -142,7 +142,7 @@
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
-                       th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+                       th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                        th:unless="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
                        class="proseo-list-item"  
@@ -248,6 +248,7 @@
                   <th><span th:text="#{starttime}">starttime</span> &ndash; <span th:text="#{stoptime}">stoptime</span></th>
                   <th><span th:text="#{orbit}">orbit</span> <span th:text="#{number}">number</span></th>
                   <th></th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody th:each="job : ${jobs}">
@@ -266,6 +267,7 @@
                     <td class="first-row"><span th:text="${job?.priority}"></span></td>
                     <td class="first-row"><span th:text="${job?.startTime}"></span> &ndash; <span th:text="${job?.stopTime}"></span></td>
                     <td class="first-row"><span th:text="${job?.orbit?.orbitNumber}"></span></td>
+                    <td class="first-row"><div th:insert="fragments/jobmenu.html :: jobMenu"></div></td>
                     <td th:rowspan="${#lists.size(job?.jobSteps)}"><span class="filtercontent" th:id="'togglejobg' + ${job?.id}"></span></td>
                   </tr>
                   <tr class="filtercontent" th:id="'togglejobb' + ${job?.id}">
@@ -284,6 +286,7 @@
                             <th><span th:text="#{completiontime}">completiontime</span></th>
                             <th><span th:text="#{outloglevel}">outloglevel</span></th>
                             <th><span th:text="#{errloglevel}">errloglevel</span></th>
+                            <th></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -316,6 +319,7 @@
                               <td class="first-row"><span th:text="${jobstep?.processingCompletionTime}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stdoutLogLevel}"></span></td>
                               <td class="first-row"><span th:text="${jobstep?.stderrLogLevel}"></span></td>
+                              <td class="first-row"><div th:insert="fragments/jobstepmenu.html :: jobStepMenu"></div></td>
                             </tr>
                           <tr class="filtercontent th-row" th:id="'togglejsh2' + ${jobstep?.id}">
                             <th class="tr-rowspan"><span>&nbsp;</span></th>
@@ -327,7 +331,8 @@
                           </tr>
                             <tr class="filtercontent" th:id="'togglejsb2' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
-                              <td colspan="9"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
+                              <td colspan="9"><a th:href="'http://192.168.20.191:30001/proseo/storage-mgr/v0.1/products/download?pathInfo=' + ${jobstep?.jobOrderFilename}" 
+                                th:download="${jobstep?.jobOrderFilename}"><span th:text="${jobstep?.jobOrderFilename}"></span></a></td>
                             </tr>
                             <tr class="filtercontent" th:id="'togglejsb3' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
@@ -531,6 +536,54 @@ function setState(oId, state) {
     });
 };
 
+function setJobState(jId, state) {
+    showLoader();
+    var url = "/job-state/post?id=" + jId + "&state=" + state;
+    var method = 'POST';
+    var oId = getURLParam('id');
+    $.ajax({
+        url : url,
+        method : method,
+        success : function(res, textStatus, jqXHR) {
+            hideLoader();
+            if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
+                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+            } else {
+                retrieveData(oId);
+            }
+        },
+        error : function(jqXHR, textStatus, errorThrown) {
+            hideLoader();
+            console.log(errorThrown);
+            alert("Error: " + errorThrown);
+        }
+    });
+};
+
+function setJobStepState(jsId, state) {
+    showLoader();
+    var url = "/jobstep-state/post?id=" + jsId + "&state=" + state;
+    var method = 'POST';
+    var oId = getURLParam('id');
+    $.ajax({
+        url : url,
+        method : method,
+        success : function(res, textStatus, jqXHR) {
+            hideLoader();
+            if (jqXHR.getResponseHeader("warnstatus") != null && jqXHR.getResponseHeader("warnstatus") != 'nocontent') {
+                alert(jqXHR.getResponseHeader("warnstatus") + ': ' + jqXHR.getResponseHeader("warndesc"));
+            } else {
+                retrieveData(oId);
+            }
+        },
+        error : function(jqXHR, textStatus, errorThrown) {
+            hideLoader();
+            console.log(errorThrown);
+            alert("Error: " + errorThrown);
+        }
+    });
+};
+
 function retrieveData(id) {
     if ([[${hasroleorderreader}]]) {
     	  showLoader();
@@ -541,7 +594,9 @@ function retrieveData(id) {
         var url = "/order/get"
         var divider = "?";
         
-        if (id != null) {
+        if (id == null) {
+            hideLoader();
+        } else {
             url = url + divider + "id=" + id.toString().trim();
             divider = "&";
 

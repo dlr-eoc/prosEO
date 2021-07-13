@@ -38,6 +38,9 @@ public class ProductUtil {
 	private static final int MSG_ID_INVALID_SENSING_STOP_TIME = 2046;
 	private static final int MSG_ID_INVALID_SENSING_START_TIME = 2045;
 	private static final int MSG_ID_INVALID_PRODUCTION_TYPE = 2050;
+	private static final int MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME = 2072;
+	private static final int MSG_ID_INVALID_PUBLICATION_TIME = 2073;
+	private static final int MSG_ID_INVALID_EVICTION_TIME = 2074;
 
 	/* Message string constants */
 	private static final String MSG_PRODUCT_UUID_INVALID = "(E%d) Product UUID %s invalid";
@@ -47,6 +50,9 @@ public class ProductUtil {
 	private static final String MSG_INVALID_SENSING_STOP_TIME = "(E%d) Invalid sensing stop time '%s'";
 	private static final String MSG_INVALID_SENSING_START_TIME = "(E%d) Invalid sensing start time '%s'";
 	private static final String MSG_INVALID_PRODUCTION_TYPE = "(E%d) Invalid production type '%s'";
+	private static final String MSG_INVALID_RAW_DATA_AVAILABILITY_TIME = "(E%d) Invalid raw data availability time '%s'";
+	private static final String MSG_INVALID_PUBLICATION_TIME = "(E%d) Invalid publication time '%s'";
+	private static final String MSG_INVALID_EVICTION_TIME = "(E%d) Invalid eviction time '%s'";
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductUtil.class);
@@ -110,8 +116,17 @@ public class ProductUtil {
 		if (null != modelProduct.getSensingStopTime()) {
 			restProduct.setSensingStopTime(OrbitTimeFormatter.format(modelProduct.getSensingStopTime()));
 		}
+		if (null != modelProduct.getRawDataAvailabilityTime()) {
+			restProduct.setRawDataAvailabilityTime(OrbitTimeFormatter.format(modelProduct.getRawDataAvailabilityTime()));
+		}
 		if (null != modelProduct.getGenerationTime()) {
 			restProduct.setGenerationTime(OrbitTimeFormatter.format(modelProduct.getGenerationTime()));
+		}
+		if (null != modelProduct.getPublicationTime()) {
+			restProduct.setPublicationTime(OrbitTimeFormatter.format(modelProduct.getPublicationTime()));
+		}
+		if (null != modelProduct.getEvictionTime()) {
+			restProduct.setEvictionTime(OrbitTimeFormatter.format(modelProduct.getEvictionTime()));
 		}
 		if (null != modelProduct.getProductionType()) {
 			restProduct.setProductionType(modelProduct.getProductionType().toString());
@@ -201,13 +216,46 @@ public class ProductUtil {
 			throw new IllegalArgumentException(logError(MSG_INVALID_SENSING_STOP_TIME, MSG_ID_INVALID_SENSING_STOP_TIME,
 					restProduct.getSensingStartTime()));
 		}
+		if (null == restProduct.getRawDataAvailabilityTime()) {
+			modelProduct.setRawDataAvailabilityTime(null);
+		} else {
+			try {
+				modelProduct.setRawDataAvailabilityTime(
+						Instant.from(OrbitTimeFormatter.parse(restProduct.getRawDataAvailabilityTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(logError(MSG_INVALID_RAW_DATA_AVAILABILITY_TIME,
+						MSG_ID_INVALID_RAW_DATA_AVAILABILITY_TIME, restProduct.getRawDataAvailabilityTime()));
+			} 
+		}
 		try {
 			modelProduct.setGenerationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getGenerationTime())));
 		} catch (DateTimeException e) {
 			throw new IllegalArgumentException(logError(MSG_INVALID_PRODUCT_GENERATION_TIME, MSG_ID_INVALID_PRODUCT_GENERATION_TIME,
 					restProduct.getGenerationTime()));
 		}
-		if (null != restProduct.getProductionType()) {
+		if (null == restProduct.getPublicationTime()) {
+			modelProduct.setPublicationTime(null);
+		} else {
+			try {
+				modelProduct.setPublicationTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getPublicationTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						logError(MSG_INVALID_PUBLICATION_TIME, MSG_ID_INVALID_PUBLICATION_TIME, restProduct.getPublicationTime()));
+			} 
+		}
+		if (null == restProduct.getEvictionTime()) {
+			modelProduct.setEvictionTime(null);
+		} else {
+			try {
+				modelProduct.setEvictionTime(Instant.from(OrbitTimeFormatter.parse(restProduct.getEvictionTime())));
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(
+						logError(MSG_INVALID_EVICTION_TIME, MSG_ID_INVALID_EVICTION_TIME, restProduct.getEvictionTime()));
+			} 
+		}
+		if (null == restProduct.getProductionType()) {
+			modelProduct.setProductionType(null);
+		} else {
 			try {
 				modelProduct.setProductionType(ProductionType.valueOf(restProduct.getProductionType()));
 			} catch (IllegalArgumentException e) {

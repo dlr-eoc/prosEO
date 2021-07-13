@@ -48,6 +48,13 @@ public class ProcessingFacility extends PersistentObject {
 	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String processingEngineToken;
 	
+	/**
+	 * Maximum number of jobs, which may on average be scheduled per processing node on this processing facility
+	 * (on a Kubernetes cluster with n worker nodes the Production Planner will never schedule more than
+	 * n * maxJobsPerNode job steps).
+	 */
+	private Integer maxJobsPerNode = 1;
+	
 	/** The URL to access this facility's storage manager */
 	private String storageManagerUrl;
 	
@@ -154,6 +161,24 @@ public class ProcessingFacility extends PersistentObject {
 	 */
 	public void setProcessingEngineToken(String processingEngineToken) {
 		this.processingEngineToken = processingEngineToken;
+	}
+
+	/**
+	 * Gets the maximum number of jobs schedulable per worker node
+	 * 
+	 * @return the maximum number of jobs per node
+	 */
+	public Integer getMaxJobsPerNode() {
+		return maxJobsPerNode;
+	}
+
+	/**
+	 * Sets the maximum number of jobs schedulable per worker node
+	 * 
+	 * @param maxJobsPerNode the maximum number of jobs per node to set
+	 */
+	public void setMaxJobsPerNode(Integer maxJobsPerNode) {
+		this.maxJobsPerNode = maxJobsPerNode;
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package de.dlr.proseo.storagemgr;
 
+import java.util.Arrays;
+
 /**
  * StorageManagerConfiguration.java
  * 
@@ -63,15 +65,25 @@ public class StorageManagerConfiguration {
 	
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
+
+	/** Maximum cycles for file size check */
+	@Value("${proseo.storageManager.filecheckmaxcycles}")
+	private String fileCheckMaxCycles;
 	
 	@Value("${proseo.storageManagerCache.expectedUsage}")
 	private String expectedCacheUsage;
 	
-	
-
 	@Value("${proseo.storageManagerCache.maximumUsage}")
 	private String maximumCacheUsage;
+
+	/** Shared secret for Storage Manager download tokens */
+	@Value("${proseo.storageManager.secret}")
+	private String storageManagerSecret;
 	
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.storageManager.filecheckwaittime}")
+	private String fileCheckWaitTime;
+
 	// Alluxio configuration values currently not in use
 	
 //	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")
@@ -95,6 +107,32 @@ public class StorageManagerConfiguration {
 	 */
 	public String getDefaultStorageType() {
 		return defaultStorageType;
+	}
+
+	/**
+	 * Gets the shared secret for generating Storage Manager download tokens as 256-bit byte array
+	 * 
+	 * @return the Storage Manager secret
+	 */
+	public byte[] getStorageManagerSecret() {
+		byte[] sharedSecret = Arrays.copyOf(
+				(storageManagerSecret + "                ").getBytes(),
+				32);
+		return sharedSecret;
+	}
+
+    /**
+	 * @return the fileCheckMaxCycles
+	 */
+	public String getFileCheckMaxCycles() {
+		return fileCheckMaxCycles;
+	}
+
+	/**
+	 * @return the fileCheckWaitTime
+	 */
+	public String getFileCheckWaitTime() {
+		return fileCheckWaitTime;
 	}
 
 	/**

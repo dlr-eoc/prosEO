@@ -33,7 +33,9 @@ import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.usermgr.UsermgrConfiguration;
 import de.dlr.proseo.usermgr.dao.UserRepository;
 import de.dlr.proseo.usermgr.model.Authority;
+import de.dlr.proseo.usermgr.model.Quota;
 import de.dlr.proseo.usermgr.model.User;
+import de.dlr.proseo.usermgr.rest.model.RestQuota;
 import de.dlr.proseo.usermgr.rest.model.RestUser;
 
 /**
@@ -181,6 +183,14 @@ public class UserManager {
 		if (null != restUser.getPasswordExpirationDate()) {
 			modelUser.setPasswordExpirationDate(restUser.getPasswordExpirationDate());
 		}
+		if (null != restUser.getQuota()) {
+			RestQuota restQuota = restUser.getQuota();
+			Quota modelQuota = new Quota();
+			modelQuota.setAssigned(restQuota.getAssigned());
+			modelQuota.setUsed(restQuota.getUsed());
+			modelQuota.setLastAccessDate(restQuota.getLastAccessDate());
+			modelUser.setQuota(modelQuota);
+		}
 		for (String restAuthority: restUser.getAuthorities()) {
 			// Test whether authority is legal
 			try {
@@ -217,6 +227,10 @@ public class UserManager {
 		}
 		if (null != modelUser.getPasswordExpirationDate()) {
 			restUser.setPasswordExpirationDate(modelUser.getPasswordExpirationDate());
+		}
+		if (null != modelUser.getQuota()) {
+			Quota modelQuota = modelUser.getQuota();
+			restUser.setQuota(new RestQuota(modelQuota.getAssigned(), modelQuota.getUsed(), modelQuota.getLastAccessDate()));
 		}
 		for (Authority modelAuthority: modelUser.getAuthorities()) {
 			restUser.getAuthorities().add(modelAuthority.getAuthority());
@@ -489,6 +503,12 @@ public class UserManager {
 				// Do not reduce longer expiration dates, if they have been granted (esp. those amounting to "never expires")
 				modelUser.setPasswordExpirationDate(newPasswordExpirationDate);
 			}
+		}
+		if (null == modelUser.getQuota() && null != changedUser.getQuota()
+				|| null != modelUser.getQuota() && !modelUser.getQuota().getAssigned().equals(changedUser.getQuota().getAssigned())) {
+			userChanged = true;
+			modelUser.getQuota().setAssigned(changedUser.getQuota().getAssigned());
+			// "used" and "lastAccessDate" cannot be changed, because they are managed automatically
 		}
 		
 		// Apply changed authorities

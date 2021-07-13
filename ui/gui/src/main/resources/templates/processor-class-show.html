@@ -81,10 +81,10 @@
                   th:if="${hasroleproductreader}"
                   th:each="comp : ${processor?.productClasses}" 
 								  class="proseo-list-item"  
-								  th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></a><span 
+								  th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                   th:unless="${hasroleproductreader}"
                   class="proseo-list-item"  
-                  th:href="'/productclass-show?pc=' + ${comp}" th:text="' ' + ${comp}"></span></td>
+                  th:href="'/productclass-show?productClass=' + ${comp}" th:text="' ' + ${comp}"></span></td>
 							</tr>
 						</tbody>
 					</table>

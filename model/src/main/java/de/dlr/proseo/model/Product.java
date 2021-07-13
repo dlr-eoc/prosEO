@@ -52,7 +52,8 @@ import de.dlr.proseo.model.enums.ProductionType;
 		@Index(unique = true, columnList = "uuid"),
 		@Index(unique = false, columnList = "product_class_id, sensing_start_time"), 
 		@Index(unique = false, columnList = "product_class_id, sensing_stop_time"), 
-		@Index(unique = false, columnList = "product_class_id, generation_time") })
+		@Index(unique = false, columnList = "product_class_id, generation_time"), 
+		@Index(unique = false, columnList = "eviction_time") })
 public class Product extends PersistentObject {
 	
 	private static final String MSG_FILENAME_TEMPLATE_NOT_FOUND = "Product filename template for mission not found";
@@ -85,9 +86,33 @@ public class Product extends PersistentObject {
 	@Column(name = "sensing_stop_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant sensingStopTime;
 	
+	/**
+	 * The latest point in time, at which the input satellite raw data (e. g. CADU chunks) for this product or any of its 
+	 * input products became available for processing. This timestamp is primarily used to control timeliness requirements
+	 * in systematic processing.
+	 */
+	@Column(name = "raw_data_availability_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant rawDataAvailabilityTime;
+	
 	/** Product generation time */
 	@Column(name = "generation_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant generationTime;
+	
+	/**
+	 * Earliest time, at which a product file for this product was ingested; this timestamp will be preserved even after
+	 * the deletion of all related product files
+	 */
+	@Column(name = "publication_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant publicationTime;
+	
+	/**
+	 * The time from which on this product including its product files will be deleted from prosEO, unless other consistency
+	 * constraints (e. g. existing processing orders) prevent it. Computed as the product generation time plus the product
+	 * retention period from the generating processing order or from the mission. If the eviction time is not set and cannot
+	 * be computed, then no automatic product deletion takes place.
+	 */
+	@Column(name = "eviction_time", columnDefinition = "TIMESTAMP(6)")
+	private Instant evictionTime;
 	
 	/** Type of production process generating this product */
 	@Enumerated(EnumType.STRING)
@@ -252,6 +277,24 @@ public class Product extends PersistentObject {
 	}
 
 	/**
+	 * Gets the time of the availability of the satellite raw data
+	 * 
+	 * @return the raw data availability time
+	 */
+	public Instant getRawDataAvailabilityTime() {
+		return rawDataAvailabilityTime;
+	}
+	
+	/**
+	 * Sets the time of the availability of the satellite raw data
+	 * 
+	 * @param rawDataAvailabilityTime the raw data availability time to set
+	 */
+	public void setRawDataAvailabilityTime(Instant rawDataAvailabilityTime) {
+		this.rawDataAvailabilityTime = rawDataAvailabilityTime;
+	}
+	
+	/**
 	 * Gets the product generation time
 	 * 
 	 * @return the generationTime
@@ -267,6 +310,42 @@ public class Product extends PersistentObject {
 	 */
 	public void setGenerationTime(Instant generationTime) {
 		this.generationTime = generationTime;
+	}
+	
+	/**
+	 * Gets the product publication (= ingestion) time
+	 * 
+	 * @return the publication time
+	 */
+	public Instant getPublicationTime() {
+		return publicationTime;
+	}
+	
+	/**
+	 * Sets the product publication (= ingestion) time
+	 * 
+	 * @param publicationTime the publication time to set
+	 */
+	public void setPublicationTime(Instant publicationTime) {
+		this.publicationTime = publicationTime;
+	}
+	
+	/**
+	 * Gets the product eviction time
+	 * 
+	 * @return the eviction time
+	 */
+	public Instant getEvictionTime() {
+		return evictionTime;
+	}
+	
+	/**
+	 * Sets the product eviction time
+	 * 
+	 * @param evictionTime the eviction time to set
+	 */
+	public void setEvictionTime(Instant evictionTime) {
+		this.evictionTime = evictionTime;
 	}
 	
 	/**

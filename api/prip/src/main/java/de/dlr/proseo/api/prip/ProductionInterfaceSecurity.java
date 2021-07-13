@@ -23,8 +23,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
+import de.dlr.proseo.api.prip.OAuth2TokenManager.UserInfo;
 import de.dlr.proseo.model.enums.UserRole;
+import de.dlr.proseo.api.prip.odata.LogUtil;
 
 /**
  * Security utility methods for PRIP API
@@ -34,24 +35,20 @@ import de.dlr.proseo.model.enums.UserRole;
 @Component
 public class ProductionInterfaceSecurity {
 
+	private static final String AUTH_TYPE_BASIC = "Basic";
+	private static final String AUTH_TYPE_BEARER = "Bearer";
 	// Message IDs
 	private static final int MSG_ID_HTTP_REQUEST_FAILED = 5003;
-	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5006;
-	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRIP = 5008;
+	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 5050;
+	private static final int MSG_ID_NOT_AUTHORIZED_FOR_PRIP = 5051;
 	
 	// Message strings
 	private static final String MSG_HTTP_REQUEST_FAILED = "(E%d) HTTP request failed (cause: %s)";
 	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 	private static final String MSG_NOT_AUTHORIZED_FOR_PRIP = "(E%d) User %s\\%s not authorized for PRIP API";
 	
-	/** The logged in user (as used for authentication, i. e. including mission prefix) */
-	private ThreadLocal<String> username = new ThreadLocal<>();
-	/** The user's password */
-	private ThreadLocal<String> password = new ThreadLocal<>();
-	/** The mission to which the user has logged in */
-	private ThreadLocal<String> mission = new ThreadLocal<>();
-	/** The authorities granted to the user */
-	private ThreadLocal<List<String>> authorities = new ThreadLocal<>();
+	/** Information about the current user in this thread */
+	private ThreadLocal<UserInfo> userInfo = new ThreadLocal<>();
 
 	/** REST template builder */
 	@Autowired
@@ -60,6 +57,10 @@ public class ProductionInterfaceSecurity {
 	/** The configuration for the PRIP API */
 	@Autowired
 	private ProductionInterfaceConfiguration config;
+	
+	/** The OAuth2 Token Manager */
+	@Autowired
+	private OAuth2TokenManager tokenManager;
 	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProductionInterfaceSecurity.class);
@@ -109,15 +110,15 @@ public class ProductionInterfaceSecurity {
 	 * @param authHeader the authentication header to parse, expected format: "Basic base64(mission&#92;username:password)"
 	 * @throws IllegalArgumentException if the authentication header cannot be parsed into the three parts expected
 	 */
-	public void parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+	/* package */ UserInfo parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
 		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
 
 		if (null == authHeader) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			String message = LogUtil.logError(logger, MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
 		String[] authParts = authHeader.split(" ");
-		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+		if (2 != authParts.length || !AUTH_TYPE_BASIC.equals(authParts[0])) {
 			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
 			throw new IllegalArgumentException(message);
 		}
@@ -128,9 +129,7 @@ public class ProductionInterfaceSecurity {
 		}
 		String[] userPassword = missionUserPassword[1].split(":"); // guaranteed to work as per BasicAuth specification
 		
-		mission.set(missionUserPassword[0]);
-		username.set(userPassword[0]);
-		password.set(userPassword[1]);
+		return new UserInfo(missionUserPassword[0], userPassword[0], userPassword[1], new ArrayList<>());
 	}
 	
 	/**
@@ -143,28 +142,48 @@ public class ProductionInterfaceSecurity {
 		if (logger.isTraceEnabled()) logger.trace(">>> doLogin(HttpServletRequest)");
 		
 		// Reset all authentication attributes for this thread
-		username.remove();
-		password.remove();
-		mission.remove();
-		authorities.set(new ArrayList<String>());
+		userInfo.remove();
+		
+		// Check authentication type
+		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+		
+		// Delegate Bearer token authentication to OAuth2 Token Manager
+		if (authHeader.startsWith(AUTH_TYPE_BEARER + " ")) {
+			userInfo.set(tokenManager.getUserInfoFromToken(authHeader.substring((AUTH_TYPE_BEARER + " ").length())));
+			return;
+		}
 		
 		// Analyse authentication header
+		UserInfo tmpUserInfo = null;
 		try {
-			parseAuthenticationHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
+			tmpUserInfo = parseAuthenticationHeader(authHeader);
 		} catch (IllegalArgumentException e) {
 			throw new SecurityException(e.getMessage());
 		}
 
+		userInfo.set(authenticateUser(tmpUserInfo));
+	}
+
+	/**
+	 * Check user credentials and authorities with User Manager
+	 * 
+	 * @param userInfo a UserInfo object containing the user credentials
+	 * @return the updated UserInfo object including authorities, if the authentication was successful and PRIP access is granted
+	 * @throws SecurityException if the user could not be authenticated or is not authorized to access the PRIP API
+	 */
+	/* package */ UserInfo authenticateUser(UserInfo userInfo) throws SecurityException {
+		if (logger.isTraceEnabled()) logger.trace(">>> doLogin(HttpServletRequest)");
+		
 		// Attempt connection to User Manager
 		@SuppressWarnings("rawtypes")
 		ResponseEntity<List> entity = null;
 		try {
-			RestTemplate restTemplate = rtb.basicAuthentication(mission.get() + "-" + username.get(), password.get()).build();
-			String requestUrl = config.getUserMgrUrl() + "/login?mission=" + mission.get();
+			RestTemplate restTemplate = rtb.basicAuthentication(userInfo.missionCode + "-" + userInfo.username, userInfo.password).build();
+			String requestUrl = config.getUserMgrUrl() + "/login?mission=" + userInfo.missionCode;
 			if (logger.isTraceEnabled()) logger.trace("... calling service URL {} with GET", requestUrl);
 			entity = restTemplate.getForEntity(requestUrl, List.class);
 		} catch (HttpClientErrorException.Unauthorized e) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, mission.get(), username.get());
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
 			logger.error(message);
 			throw new SecurityException(message);
 		} catch (Exception e) {
@@ -172,20 +191,23 @@ public class ProductionInterfaceSecurity {
 			logger.error(message, e);
 			throw new SecurityException(message);
 		}
-		if (logger.isTraceEnabled()) logger.trace("... Authentication succeeded for user " + mission.get() + "\\" + username.get());
+		if (logger.isTraceEnabled()) logger.trace("... Authentication succeeded for user " + userInfo.missionCode + "\\" + userInfo.username);
 
 		for (Object authority: entity.getBody()) {
 			if (authority instanceof String) {
-				authorities.get().add((String) authority);
+				if (logger.isTraceEnabled()) logger.trace("... Adding authority " + authority);
+				userInfo.authorities.add((String) authority);
 			}
 		}
 		
 		// Check whether user is authorized to use the PRIP API
-		if (!hasRole(UserRole.PRIP_USER)) {
-			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, mission.get(), username.get());
+		if (!userInfo.authorities.contains(UserRole.PRIP_USER.asRoleString())) {
+			String message = String.format(MSG_NOT_AUTHORIZED_FOR_PRIP, MSG_ID_NOT_AUTHORIZED_FOR_PRIP, userInfo.missionCode, userInfo.username);
 			logger.error(message);
 			throw new SecurityException(message);
 		}
+		
+		return userInfo;
 	}
 	
 	/**
@@ -194,7 +216,7 @@ public class ProductionInterfaceSecurity {
 	 * @return the user name or null, if no user is logged in
 	 */
 	public String getUser() {
-		return username.get();
+		return userInfo.get().username;
 	}
 	
 	/**
@@ -203,7 +225,7 @@ public class ProductionInterfaceSecurity {
 	 * @return the password or null, if no user is logged in
 	 */
 	public String getPassword() {
-		return password.get();
+		return userInfo.get().password;
 	}
 	
 	/**
@@ -212,7 +234,7 @@ public class ProductionInterfaceSecurity {
 	 * @return the mission code or null, if no user is logged in
 	 */
 	public String getMission() {
-		return mission.get();
+		return userInfo.get().missionCode;
 	}
 
 	/**
@@ -221,7 +243,7 @@ public class ProductionInterfaceSecurity {
 	 * @return the granted authorities
 	 */
 	public List<String> getAuthorities() {
-		return authorities.get();
+		return userInfo.get().authorities;
 	}
 	
 	/**
@@ -231,6 +253,7 @@ public class ProductionInterfaceSecurity {
 	 * @return true, if the respective authority was granted, false otherwise
 	 */
 	public boolean hasRole(UserRole role) {
-		return authorities.get().contains(role.asRoleString());
+		if (logger.isTraceEnabled()) logger.trace("... Checking authorities " + userInfo.get().authorities + " for authority " + role.asRoleString());
+		return userInfo.get().authorities.contains(role.asRoleString());
 	}
 }

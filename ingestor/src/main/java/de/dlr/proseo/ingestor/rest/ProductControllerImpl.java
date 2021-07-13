@@ -50,7 +50,7 @@ public class ProductControllerImpl implements ProductController {
 	 */
 	private HttpHeaders errorHeaders(String message) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + message.replaceAll("\n", " "));
+		responseHeaders.set(HTTP_HEADER_WARNING, HTTP_MSG_PREFIX + (null == message ? "null" : message.replaceAll("\n", " ")));
 		return responseHeaders;
 	}
 	
@@ -98,14 +98,16 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "NOT_FOUND" and an error message, if no products matching the search criteria were found
 	 */
 	@Override
-	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass,
-			Date startTimeFrom, Date startTimeTo, Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
-		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo, recordFrom, recordTo, orderBy);
+	public ResponseEntity<List<RestProduct>> getProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+			String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, 
+			Long recordFrom, Long recordTo, Long jobStepId, String[] orderBy, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProducts({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, recordFrom, recordTo, orderBy);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.getProducts(mission, productClass, startTimeFrom, startTimeTo, recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
+					productManager.getProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, 
+							recordFrom, recordTo, jobStepId, orderBy), HttpStatus.OK);
 		} catch (NoResultException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
 		} catch (SecurityException e) {
@@ -124,13 +126,15 @@ public class ProductControllerImpl implements ProductController {
 	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted
      */
 	@Override
-    public ResponseEntity<?> countProducts(String mission, String[] productClass, Date startTimeFrom, Date startTimeTo, Long jobStepId, HttpHeaders httpHeaders) {
-		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {})", mission, productClass,
-				startTimeFrom, startTimeTo);
+    public ResponseEntity<?> countProducts(String mission, String[] productClass, String mode, String fileClass, String quality, 
+    		String startTimeFrom, String startTimeTo, String genTimeFrom, String genTimeTo, Long jobStepId, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> countProducts({}, {}, {}, {}, {}, {}, {}, {}, {})", mission, productClass,
+				mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo);
 		
 		try {
 			return new ResponseEntity<>(
-					productManager.countProducts(mission, productClass, startTimeFrom, startTimeTo, jobStepId), HttpStatus.OK);
+					productManager.countProducts(mission, productClass, mode, fileClass, quality, startTimeFrom, startTimeTo, genTimeFrom, genTimeTo, 
+							jobStepId), HttpStatus.OK);
 		} catch (SecurityException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
@@ -232,6 +236,61 @@ public class ProductControllerImpl implements ProductController {
 		
 		try {
 			return new ResponseEntity<>(productManager.getProductByUuid(uuid), HttpStatus.OK);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
+	/**
+	 * Get the primary data file (or ZIP file, if available) for the product as data stream (optionally range-restricted),
+	 * returns a redirection link to the Storage Manager of a random Processing Facility
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fromByte the first byte of the data stream to download (optional, default is file start, i.e. byte 0)
+	 * @param toByte the last byte of the data stream to download (optional, default is file end, i.e. file size - 1)
+	 * @return HTTP status "TEMPORARY_REDIRECT" and a redirect URL in the HTTP Location header, or 
+	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID exists or if it does not have a data file
+	 */
+	@Override
+	public ResponseEntity<?> downloadProductById(Long id, Long fromByte, Long toByte, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> downloadProductById({})", id);
+		
+		try {
+			String uri = productManager.downloadProductById(id, fromByte, toByte);
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.add(HttpHeaders.LOCATION, uri);
+			return new ResponseEntity<>(responseHeaders, HttpStatus.TEMPORARY_REDIRECT);
+		} catch (IllegalArgumentException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (NoResultException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		}
+	}
+
+	/**
+	 * Get a JSON Web Token for creating a download link to a Storage Manager
+	 * 
+	 * @param id the ID of the product to download
+	 * @param fileName the name of the file to download (default primary data file or ZIP file, if available)
+	 * @return HTTP status "OK" and the signed JSON Web Token (JWS) as per RFC 7515 and RFC 7519, or
+	 *         HTTP status "BAD_REQUEST" and an error message, if no or an invalid product ID was given, or
+	 *         HTTP status "FORBIDDEN" and an error message, if a cross-mission data access was attempted, or
+	 * 		   HTTP status "NOT_FOUND" and an error message, if no product with the given ID or no file with the given name exists
+	 */
+	@Override
+	public ResponseEntity<?> getDownloadTokenById(Long id, String fileName, HttpHeaders httpHeaders) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({})", id);
+		
+		try {
+			return new ResponseEntity<>(productManager.getDownloadTokenById(id, fileName), HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (NoResultException e) {

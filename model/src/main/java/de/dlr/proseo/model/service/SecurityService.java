@@ -53,6 +53,11 @@ public class SecurityService {
 	public boolean isAuthorizedForMission(String missionCode) {
 		// Since successful authentication is required for accessing any method, we trust that the authentication object is filled
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (null == auth || null == auth.getName()) {
+			return false;
+		}
+		
 		return auth.getName().split("-")[0].equals(missionCode);
 	}
 	
@@ -75,6 +80,11 @@ public class SecurityService {
 	public String getMission() {
 		// Since successful authentication is required for accessing any method, we trust that the authentication object is filled
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		if (null == auth || null == auth.getName()) {
+			return null;
+		}
+		
 		return auth.getName().split("-")[0];
 	}
 }

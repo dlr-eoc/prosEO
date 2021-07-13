@@ -625,6 +625,9 @@ public class UserCommandRunner {
 				restUser.setPasswordExpirationDate(updatedUser.getPasswordExpirationDate());
 			}
 		}
+		if (isDeleteAttributes || null != updatedUser.getQuota()) {
+			restUser.setQuota(updatedUser.getQuota());
+		}
 		
 		/* Update user using User Manager service */
 		restUser = modifyUser(restUser);

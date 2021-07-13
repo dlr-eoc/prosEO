@@ -4,5 +4,10 @@
   "enabled":                true,
   "authorities":            [ "ROLE_USER" ],
   "expirationDate":         "2021-12-31",
-  "passwordExpirationDate": "2020-05-04"
+  "passwordExpirationDate": "2020-05-04",
+  "quota": {
+      "assigned": 1024,
+      "used": 205,
+      "lastAccessDate": "2020-01-17"
+  }
 }
