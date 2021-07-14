@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import java.time.Instant;
 
 /**
@@ -80,15 +81,14 @@ public class MapCache {
 
 		return pathCache.containsKey(pathKey);
 	}
-	
-	
+
 	/**
 	 * @return
 	 */
 	public int size() {
-		
+
 		return pathCache.size();
-		
+
 	}
 
 	/**

@@ -12,10 +12,13 @@ import javax.annotation.PostConstruct;
 
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.rest.ProductControllerImpl;
 
 /**
  * @author Denys Chaykovskiy
@@ -23,19 +26,22 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
  */
 @Component
 public class FileCache {
-	
+
 	private String path;
 	private static final String PREFIX = "accessed-";
-	
+
 	private MapCache mapCache;
-	
+
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
-	private static FileCache theFileCache; 
-	
+	private static FileCache theFileCache;
+
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+
 	public static FileCache getInstance() {
-		
+
 		return theFileCache;
 	}
 
@@ -47,19 +53,22 @@ public class FileCache {
 	 */
 	public void put(String pathKey) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> put({})", pathKey);
+
 		FileInfo fileInfo;
-		
+
 		if (!mapCache.containsKey(pathKey)) {
-			
+
 			deleteLRU(pathKey);
 		}
-		
+
 		rewriteFileAccessed(pathKey);
 		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
-	
+
 	/**
 	 * Checks if key available in map and updates last access if available
 	 * 
@@ -68,21 +77,27 @@ public class FileCache {
 	 */
 	public boolean containsKey(String pathKey) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> containsKey({})", pathKey);
+
 		boolean contains = mapCache.containsKey(pathKey);
-		
+
 		if (contains) {
-			
-			put(pathKey);	
+
+			put(pathKey);
 		}
-		
-		return contains; 
+
+		return contains;
 	}
-	
+
 	@PostConstruct
 	private void init() {
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> init({})");
+
 		path = cfg.getPosixWorkerMountPoint();
-		
+
 		File directory = new File(path);
 
 		mapCache = new MapCache();
@@ -96,49 +111,55 @@ public class FileCache {
 		}
 
 		putFilesToCache(path);
-		
-		theFileCache = this; 
+
+		theFileCache = this;
 	}
-	
+
 	/**
 	 * @param newPath
 	 */
 	private void deleteLRU(String newPath) {
-		
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteLRU({})", newPath);
+
 		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
-    	double realUsage = getRealUsage();
-    	
-    	if (realUsage <= expectedUsage) {
-    		return;
-    	}
-    	
-    	mapCache.sortByAccessedAsc();
-    	
-    	List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
-    	Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
-    	Entry<String, FileInfo> pathToDelete;
-    	
-    	while (realUsage > expectedUsage && cacheIterator.hasNext()) {
-    		
-    		pathToDelete = cacheIterator.next();
-    		
-    		remove(pathToDelete.getKey()); 
-    		
-        	realUsage = getRealUsage();
-    	}
+		double realUsage = getRealUsage();
+
+		if (realUsage <= expectedUsage) {
+			return;
+		}
+
+		mapCache.sortByAccessedAsc();
+
+		List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
+		Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
+		Entry<String, FileInfo> pathToDelete;
+
+		while (realUsage > expectedUsage && cacheIterator.hasNext()) {
+
+			pathToDelete = cacheIterator.next();
+
+			remove(pathToDelete.getKey());
+
+			realUsage = getRealUsage();
+		}
 	}
-	
+
 	/**
 	 * @return
 	 */
 	private double getRealUsage() {
-		
-		File file = new File(path); 
-    	long totalBytes = file.getTotalSpace(); //total disk space in bytes
-    	long freeBytes = file.getUsableSpace();
-    	long usedBytes= totalBytes - freeBytes; 
-    	
-    	return 100.0 * usedBytes / totalBytes; 
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getRealUsage()");
+
+		File file = new File(path);
+		long totalBytes = file.getTotalSpace(); // total disk space in bytes
+		long freeBytes = file.getUsableSpace();
+		long usedBytes = totalBytes - freeBytes;
+
+		return 100.0 * usedBytes / totalBytes;
 	}
 
 	/**
@@ -149,13 +170,16 @@ public class FileCache {
 
 		return mapCache.get(pathKey);
 	}
-	
+
 	/**
 	 * Removes cache element, file and accessed file
 	 * 
 	 * @param pathKey
 	 */
 	/* package */ void remove(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> remove({})", pathKey);
 
 		try {
 			deleteFileAndAccessed(pathKey);
@@ -171,6 +195,9 @@ public class FileCache {
 	 */
 	/* package */ void clear() {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> clear()");
+
 		Set<String> entries = mapCache.getCache().keySet();
 
 		for (String pathKey : entries) {
@@ -178,15 +205,15 @@ public class FileCache {
 			remove(pathKey);
 		}
 	}
-	
+
 	/**
 	 * @return
 	 */
 	/* package */ int size() {
-		
+
 		return mapCache.size();
 	}
-	
+
 	/**
 	 * @return
 	 */
@@ -203,12 +230,13 @@ public class FileCache {
 		return PREFIX;
 	}
 
-
-
 	/**
 	 * @param path
 	 */
 	/* package */ void putFilesToCache(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> putFilesToCache({})", path);
 
 		File directory = new File(path);
 
@@ -246,6 +274,9 @@ public class FileCache {
 	 */
 	/* package */ void deleteFileAndAccessed(String path) throws IOException {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteFileAndAccessed({})", path);
+
 		File file = new File(path);
 		File accessedFile = new File(getAccessedPath(path));
 		String directory = file.getParent();
@@ -265,6 +296,9 @@ public class FileCache {
 	 * @param directoryToDelete
 	 */
 	/* package */ void deleteEmptyDirectoriesToTop(String directoryToDelete) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteEmptyDirectoriesToTop({})", directoryToDelete);
 
 		if (null == directoryToDelete || directoryToDelete.equals(path)) {
 			return;
@@ -303,6 +337,9 @@ public class FileCache {
 	 */
 	/* package */ Instant getFileAccessed(String path) {
 
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getFileAccessed({})", path);
+
 		String lastAccessed;
 		FileUtils fileUtils = new FileUtils(getAccessedPath(path));
 
@@ -320,6 +357,9 @@ public class FileCache {
 	 * @return
 	 */
 	/* package */ String getAccessedPath(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getAccessedPath({})", path);
 
 		File file = new File(path);
 		String accessedPath = file.getParent() + "/" + PREFIX + file.getName();
@@ -354,6 +394,7 @@ public class FileCache {
 		if (isHiddenFile(fileName)) {
 
 			return false;
+
 		}
 
 		return true;
@@ -382,6 +423,9 @@ public class FileCache {
 	 * @param fileName
 	 */
 	private void rewriteFileAccessed(String path) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> rewriteFileAccessed({})", path);
 
 		String accessedPath = getAccessedPath(path);
 		String timeStamp = Instant.now().toString();
