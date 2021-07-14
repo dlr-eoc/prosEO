@@ -81,7 +81,8 @@
                     <th><span th:text="#{critical}">critical</span></th>
                     <th><span th:text="#{criticallevel}">criticallevel</span></th>
                     <th><span th:text="#{numberofcpus}">numberofcpus</span></th>
-                    <th colspan="4"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
+                    <th><span th:text="#{minmemory}">minmemory</span></th>
+                    <th colspan="3"><span th:text="#{brekpointfilenames}">brekpointfilenames</span></th>
               </tr>
             </thead>
             <tbody th:unless="${processors} == null">
@@ -96,7 +97,7 @@
                   th:text="${processor?.processorName}"></span></td>
                 <td th:id="${processor?.processorName} + '-' + ${processor?.processorVersion}" class="first-row" th:text="${processor?.processorVersion}"></td>
                 <td class="first-row" th:text="${processor?.isTest}"></td>
-                <td class="first-row" th:text="${processor?.minDiskSpace}"></td>
+                <td class="first-row" th:text="${processor?.minDiskSpace/1024}"></td>
                 <td class="first-row" th:text="${processor?.maxTime}"></td>
                 <td class="first-row" th:text="${processor?.sensingTimeFlag}"></td>
                 <td class="first-row"><a 
@@ -125,7 +126,8 @@
                     <td th:text="${task?.isCritical}"></td>
                     <td th:text="${task?.criticalityLevel}"></td>
                     <td th:text="${task?.numberOfCpus}"></td>
-                <td colspan="3"><span th:each="comp : ${task?.breakpointFileNames}" 
+                    <td th:text="${task?.minMemory}"></td>
+                <td colspan="2"><span th:each="comp : ${task?.breakpointFileNames}" 
                        class="proseo-list-item" th:text="${comp}"></span></td>                
                 </tr>
               </div>

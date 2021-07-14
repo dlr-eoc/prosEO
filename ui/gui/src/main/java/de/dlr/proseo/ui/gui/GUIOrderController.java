@@ -511,6 +511,9 @@ public class GUIOrderController extends GUIBaseController {
 		if (updateOrder.getUuid() != null && updateOrder.getUuid().isEmpty()) {
 			updateOrder.setUuid(null);
 		}
+		if (updateOrder.getProductRetentionPeriod() != null) {
+			updateOrder.setProductRetentionPeriod(updateOrder.getProductRetentionPeriod() * 86400);
+		}
 		RestOrder origOrder = null;
 		if (updateOrder.getId() != null && updateOrder.getId() > 0) {
 			origOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),

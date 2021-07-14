@@ -47,14 +47,30 @@
 
     function addURLParam(param) {
       if (param != null && param.length > 0) {
-      	var loc = location.search.slice(0);
-      	var paramstring = location.search.slice(1);
-      	var pairs = paramstring.split("&");
-      	var divider = '?';
-      	var first = true;
-      	var found = false;
-      	var search = '';
-      	for (var i = 0; i < pairs.length; i++) {
+        var loc = location.search.slice(0);
+        var paramstring = location.search.slice(1);
+        var search = addURLParamPrim(param, paramstring);
+        if (search != null) {
+          history.pushState({}, null, search);
+        }
+      }
+      return null;
+    };
+    
+    function addURLParamPrim(param, paramstring) {
+      var base = paramstring.split("?");
+      if (base.length > 1) {
+        base = base[1];
+      } else {
+        base = base[0];
+      }
+      var pairs = base.split("&");
+    	var divider = '?';
+    	var first = true;
+    	var found = false;
+    	var search = '';
+    	for (var i = 0; i < pairs.length; i++) {
+      	if (pairs[i].length > 0) {
       		search += divider;
       		search += pairs[i];
       		if (pairs[i] == param) {
@@ -64,28 +80,36 @@
       			divider = '&';
       			first = false;
       		}
-      	}
-      	if (!found) {
-  	    	search += divider;
-  	    	search += param;
-  	    	history.pushState({}, null, search);
-  	    }
+    		}
+    	}
+    	if (!found) {
+	    	search += divider;
+	    	search += param;
+	    	return search;
 	    }
     	return null;
     };
     
-    function addURLParamValue(name, value) {
+    function addURLParamValuePrim(name, value, paramstring) {
+      var searchTmp = null;
       if (value != null && value.length > 0 && name != null && name.length > null) {
-        addURLParam(name + '=' + value);
+        searchTmp = addURLParamPrim(name + '=' + value, paramstring);
+        return searchTmp;
       }
+      return null;
     };
     
-    function addURLParamValues(name, value) {
+    function addURLParamValuesPrim(name, value, paramstring) {
+      var searchTmp = null;
+      var search = paramstring;
       if (value != null && value.length > 0 && name != null && name.length > null) {
         for (var i = 0; i < value.length; i++) {
-          addURLParam(name + '=' + value[i]);
+          searchTmp = addURLParamPrim(name + '=' + value[i], search);
+          if (searchTmp != null) {search = searchTmp};
         }
+        return search;
       }
+      return null;
     };
     
     function removeURLParam(param) {
@@ -112,8 +136,13 @@
     };
     
     function removeURLKey(key) {
-    	var loc = location.search.slice(0);
-    	var paramstring = location.search.slice(1);
+      var loc = location.search.slice(0);
+      var paramstring = location.search.slice(1);
+      var search = removeURLKeyPrim(key, paramstring);
+      history.pushState({}, null, search);
+    };
+    
+    function removeURLKeyPrim(key, paramstring) {
     	var pairs = paramstring.split("&");
     	var name, pair;
     	var divider = '?';
@@ -124,7 +153,7 @@
       	    name = pair[0];
     		if (name == key) {
     			// do nothing
-    		} else {
+    		} else if (name != null && name.length > 0) {
     			search += divider;
     			search += pairs[i];
 	    		if (first) {
@@ -133,8 +162,7 @@
 	    		}
     		}
     	}
-    	history.pushState({}, null, search);
-    	return null;
+    	return search;
     };
     
     function selectLang(lang) {

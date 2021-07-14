@@ -67,13 +67,15 @@
                     <th><span th:text="#{id}">id</span></th>
                     <th><span th:text="#{code}">code</span></th>
                     <th><span th:text="#{name}">name</span></th>
+                    <th><span th:text="#{processingcentre}">processingcentre</span></th>
                     <th><span th:text="#{fileclasses}">fileclasses</span></th>
                     <th><span th:text="#{processingmodes}">processingmodes</span></th>
-                    <th><span th:text="#{spacecrafts}">spacecrafts</span></th>
+                    <th><span th:text="#{productretentionperiod}">productretentionperiod</span></th>
+                    <th colspan="2"><span th:text="#{spacecrafts}">spacecrafts</span>, <span th:text="#{payloads}">payloads</span></th>
               </tr>
               <tr>   
               <th>&nbsp;</th>           
-              <th colspan="5"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
+              <th colspan="7"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
               </tr>
             </thead>
             <tbody th:unless="${missions} == null">
@@ -82,24 +84,35 @@
                 <td th:id="${mission?.code}" th:rowspan="2" class="first-row" th:text="${mission?.id}"></td>
                 <td class="first-row" th:text="${mission?.code}"></td>
                 <td class="first-row" th:text="${mission?.name}"></td>
+                <td class="first-row" th:text="${mission?.processingCentre}"></td>
                 <td class="first-row"><span th:each="comp : ${mission?.fileClasses}" 
                        class="proseo-list-item"  
                        th:text="${comp}"></span></td>
                 <td class="first-row"><span th:each="comp : ${mission?.processingModes}" 
                        class="proseo-list-item"  
                        th:text="${comp}"></span></td>
-                <td class="first-row">                
+                <td class="first-row" th:text="${(mission?.productRetentionPeriod!=null)?(mission?.productRetentionPeriod/86400):''}"></td>
+                <td class="first-row" colspan="2">                
                 <table class="table">
                   <tbody>
                     <tr th:each="elem : ${mission?.spacecrafts}">
                       <td ><a th:href="'/orbit-show?sp=' + ${elem?.code}" th:text="${elem?.code}"></a></td>
-                      <td ><a th:href="'/orbit-show?sp=' + ${elem?.code}" th:text="${elem?.name}"></a></td>
+                      <td ><p><a th:href="'/orbit-show?sp=' + ${elem?.code}" th:text="${elem?.name}"></a></p>               
+                        <table class="table">
+                          <tbody>
+                            <tr th:each="pay : ${elem?.payloads}">
+                              <td th:text="${pay?.name}"></td>
+                              <td th:text="${pay?.description}"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </tr>
               <tr>              
-              <td colspan="5"><textarea class="mission-template" readonly wrap="soft"
+              <td colspan="7"><textarea class="mission-template" readonly wrap="soft"
                                   th:style="${#strings.isEmpty(mission?.productFileTemplate)?'height:1em':'height:10em'}"
                                   th:rows="${#strings.isEmpty(mission?.productFileTemplate)?'0':'6'}"
                                   th:text="${mission?.productFileTemplate}"></textarea>

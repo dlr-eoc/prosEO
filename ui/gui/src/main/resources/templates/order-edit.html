@@ -110,7 +110,16 @@
                   pattern="^(\d{4})-(0[1-9]|1[012])-(31|30|0[1-9]|[12][0-9])T(23|22|21|20|[01][0-9]):([012345][0-9]):([012345][0-9])$"
                   title="yyyy-mm-ddThh:mm:ss" placeholder="yyyy-mm-ddThh:mm:ss" >
             </div>
-            <div class="col-8">
+            <div class="col-2 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{productretentionperiod}"></p>
+            </div>
+            <div class="col-2 pl-lg-0"><input type="text" class="form-control"
+                  id="productRetentionPeriod" name="productRetentionPeriod" th:value="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"
+                  pattern="^([0-9]*)$"
+                  title="days" placeholder="" >
+            </div>
+            <div class="col-4">
             </div>
           </div>
           <div class="row py-lg-1">

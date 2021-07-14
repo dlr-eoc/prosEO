@@ -115,6 +115,11 @@ public class KubeConfig {
 	private FacilityState facilityState;
 	
 	/**
+	 * The maximum of jobs per node
+	 */
+	private Integer maxJobsPerNode;
+	
+	/**
 	 * The url of the facility 
 	 */
 	private String url;
@@ -143,6 +148,20 @@ public class KubeConfig {
 	
 	/** Password for connecting to the Storage Manager (locally and from external services) */
 	private String storageManagerPassword;
+
+	/**
+	 * @return the maxJobsPerNode
+	 */
+	public Integer getMaxJobsPerNode() {
+		return maxJobsPerNode;
+	}
+
+	/**
+	 * @param maxJobsPerNode the maxJobsPerNode to set
+	 */
+	public void setMaxJobsPerNode(Integer maxJobsPerNode) {
+		this.maxJobsPerNode = maxJobsPerNode;
+	}
 
 	/**
 	 * @return the storageManagerPassword
@@ -284,6 +303,7 @@ public class KubeConfig {
 		processingEngineToken = pf.getProcessingEngineToken();
 		storageManagerUser = pf.getStorageManagerUser();
 		storageManagerPassword = pf.getStorageManagerPassword();
+		maxJobsPerNode = pf.getMaxJobsPerNode();
 		processingFacility = pf;
 	}
 	
