@@ -142,7 +142,8 @@ public class FileCache {
 		long duration = (endTime - startTime); 
 		
 		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns)", duration/1000000, duration);
+			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", 
+					duration/1000000, duration, size());
 		
 		while (realUsage > expectedUsage && cacheIterator.hasNext()) {
 
