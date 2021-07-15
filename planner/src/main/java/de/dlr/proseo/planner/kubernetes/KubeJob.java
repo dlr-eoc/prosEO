@@ -6,6 +6,7 @@
 
 package de.dlr.proseo.planner.kubernetes;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,8 @@ import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.JobStep.StdLogLevel;
+import de.dlr.proseo.model.Processor;
+import de.dlr.proseo.model.Task;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.enums.JobOrderVersion;
 import de.dlr.proseo.model.joborder.JobOrder;
@@ -46,6 +49,7 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
+import io.kubernetes.client.openapi.models.V1ResourceRequirementsBuilder;
 
 /**
  * A KubeJob describes the complete information to run a Kubernetes job.
@@ -297,7 +301,11 @@ public class KubeJob {
 			jobStep.setStderrLogLevel(StdLogLevel.INFO);
 		}
 		Instant genTime = Instant.now();
-		setGenerationTime(jobStep.getOutputProduct(), genTime);
+		Duration retentionPeriod = jobStep.getJob().getProcessingOrder().getProductRetentionPeriod();
+		if (retentionPeriod == null) {
+			retentionPeriod = jobStep.getJob().getProcessingOrder().getMission().getProductRetentionPeriod();
+		}
+		setGenerationTime(jobStep.getOutputProduct(), genTime, retentionPeriod);
 		JobDispatcher jd = new JobDispatcher();
 		jobOrder = jd.createJobOrder(jobStep);
 		if (jobOrder == null) {
@@ -326,12 +334,24 @@ public class KubeJob {
 		// Build a ResourceRequirements object
 		V1ResourceRequirements reqs = new V1ResourceRequirements();
 		String cpus = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("cpu", "1");
-		String mem = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("memory", "1500Mi");
+		String mem = jobStep.getOutputProduct().getConfiguredProcessor().getConfiguration().getDockerRunParameters().getOrDefault("memory", "1");
+		String minDiskSpace = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getMinDiskSpace().toString() + "Mi";
+		try {
+			cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(cpus)).toString();
+		} catch (NumberFormatException ex) {
+			cpus = getCPUs(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString();
+		}
+		try {
+			mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), Integer.parseInt(mem)).toString() + "Gi";
+		} catch (NumberFormatException ex) {
+			mem = getMinMemory(jobStep.getOutputProduct().getConfiguredProcessor().getProcessor(), 1).toString() + "Gi";
+		}
 		reqs.putRequestsItem("cpu", new Quantity(cpus))
-			.putRequestsItem("memory", new Quantity(mem));
+			.putRequestsItem("memory", new Quantity(mem))
+			.putRequestsItem("ephemeral-storage", new Quantity(minDiskSpace));
 		V1EnvVarSource es = new V1EnvVarSourceBuilder().withNewFieldRef().withFieldPath("status.hostIP").endFieldRef().build();
 		String localStorageManagerUrl = kubeConfig.getLocalStorageManagerUrl();
-
+				
 		V1JobSpec jobSpec = new V1JobSpecBuilder()
 				.withNewTemplate()
 				.withNewMetadata()
@@ -746,13 +766,54 @@ public class KubeJob {
 	 * @param product The product
 	 * @param genTime The generation time
 	 */
-	void setGenerationTime(Product product, Instant genTime) {
-		if (product != null && genTime != null) {
+	void setGenerationTime(Product product, Instant genTime, Duration retentionPeriod) {
+		if (product != null && genTime != null) {			
 			product.setGenerationTime(genTime);
+			if (retentionPeriod != null) {
+				product.setEvictionTime(genTime.plus(retentionPeriod));
+			}
 			for (Product p : product.getComponentProducts()) {
-				setGenerationTime(p, genTime);
+				setGenerationTime(p, genTime, retentionPeriod);
 			}
 			RepositoryService.getProductRepository().save(product);
 		}
+	}
+	
+	/**
+	 * Get the maximum setting of cpus of processor tasks
+	 * @param proc The Processor
+	 * @param cpus The default cpus value
+	 * @return The requested cpus maximum
+	 */
+	private Integer getCPUs(Processor proc, Integer cpus) {
+		if (proc != null) {
+			for (Task t : proc.getTasks()) {
+				if (t.getNumberOfCpus() != null) {
+					if (t.getNumberOfCpus() > cpus) {
+						cpus = t.getNumberOfCpus();
+					}
+				}
+			}
+		}
+		return cpus;
+	}
+	
+	/**
+	 * Get the maximum setting of cpus of processor tasks
+	 * @param proc The Processor
+	 * @param cpus The default cpus value
+	 * @return The requested cpus maximum
+	 */
+	private Integer getMinMemory(Processor proc, Integer minMem) {
+		if (proc != null) {
+			for (Task t : proc.getTasks()) {
+				if (t.getMinMemory() != null) {
+					if (t.getMinMemory() > minMem) {
+						minMem = t.getMinMemory();
+					}
+				}
+			}
+		}
+		return minMem;
 	}
 }
