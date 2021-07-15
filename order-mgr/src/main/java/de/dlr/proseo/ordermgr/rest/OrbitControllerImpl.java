@@ -34,6 +34,7 @@ import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.rest.OrbitController;
 import de.dlr.proseo.model.rest.model.RestOrbit;
 import de.dlr.proseo.ordermgr.rest.model.OrbitUtil;
@@ -183,7 +184,7 @@ public class OrbitControllerImpl implements OrbitController {
 	@Transactional
 	@Override
 	public ResponseEntity<List<RestOrbit>> getOrbits(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo,
+			Long orbitNumberTo, String startTimeFrom, String startTimeTo,
 			Long recordFrom, Long recordTo, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 		
@@ -242,7 +243,7 @@ public class OrbitControllerImpl implements OrbitController {
 	@Transactional
 	@Override
 	public ResponseEntity<String> countOrbits(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo) {
+			Long orbitNumberTo, String startTimeFrom, String startTimeTo) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getOrbit{}");
 		
 		/* Check arguments */
@@ -545,7 +546,7 @@ public class OrbitControllerImpl implements OrbitController {
 	}
 
 	private Query createOrbitsQuery(String spacecraftCode, Long orbitNumberFrom,
-			Long orbitNumberTo, @DateTimeFormat Date startTimeFrom, @DateTimeFormat Date startTimeTo,
+			Long orbitNumberTo, String startTimeFrom, String startTimeTo,
 			Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
 
 		// Find using search parameters
@@ -587,10 +588,10 @@ public class OrbitControllerImpl implements OrbitController {
 			query.setParameter("orbitNumberTo", Integer.valueOf(orbitNumberTo.toString()));
 		}
 		if (null != startTimeFrom) {
-			query.setParameter("startTimeFrom",startTimeFrom.toInstant());
+			query.setParameter("startTimeFrom", OrbitTimeFormatter.parseDateTime(startTimeFrom));
 		}
 		if (null != startTimeTo) {
-			query.setParameter("startTimeTo", startTimeTo.toInstant());
+			query.setParameter("startTimeTo", OrbitTimeFormatter.parseDateTime(startTimeTo));
 		}
 		
 		// length of record list
