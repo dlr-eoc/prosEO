@@ -125,7 +125,7 @@ public class BaseWrapper {
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
 	private static final String MSG_UNABLE_TO_ACCESS_FILE = "Unable to access file {}";
 	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
-	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to directory directory path {}";
+	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to delete directory path {}";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
@@ -849,7 +849,12 @@ public class BaseWrapper {
 
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Files.delete(file);
+					try {
+						if (logger.isTraceEnabled()) logger.trace("... deleting file " + file);
+						Files.delete(file);
+					} catch (IOException e) {
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString());
+					}
 					return null;
 				}
 
@@ -862,6 +867,7 @@ public class BaseWrapper {
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 					try {
+						if (logger.isTraceEnabled()) logger.trace("... deleting directory " + dir);
 						Files.delete(dir);
 					} catch (IOException e) {
 						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString());
