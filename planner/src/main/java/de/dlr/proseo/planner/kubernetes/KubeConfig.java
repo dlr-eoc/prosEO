@@ -416,11 +416,15 @@ public class KubeConfig {
 	 */
 	public boolean couldJobRun() {
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED 
-				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING)
+				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
 			// not available for jobs
 			return false;
-		
-		return (kubeJobList.size() < (getWorkerCnt() + nodesDelta));
+		}
+		Integer mJPN = 1;
+		if (getMaxJobsPerNode() != null) {
+			mJPN = getMaxJobsPerNode();
+		}
+		return (kubeJobList.size() < ((getWorkerCnt() * mJPN) + nodesDelta));
 	}
 
 	/**
