@@ -9,9 +9,12 @@ package de.dlr.proseo.basewrap;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -188,7 +191,8 @@ public class BaseWrapper {
 	/** Mount point of shared local file system (available for wrapper subclasses) */
 	protected String ENV_LOCAL_FS_MOUNT = System.getenv(ENV_VARS.LOCAL_FS_MOUNT.toString());
 	
-	protected List<String> inOutDirs = new ArrayList<String>();
+	/** Directory for temporary/output files created by this wrapper */
+	protected String wrapperDataDirectory = ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX;
 	
 	/** User name for prosEO Control Instance (available for wrapper subclasses) */
 	protected String ENV_PROSEO_USER = System.getenv(ENV_VARS.PROSEO_USER.toString());
@@ -498,17 +502,7 @@ public class BaseWrapper {
 							ti.setFileName(inputFileName);
 						}
 					}
-					String dir = ENV_LOCAL_FS_MOUNT;
-					if (dir.charAt(dir.length()-1) != '/') {
-						dir += "/";
-					}
-					int index = inputFileName.indexOf('/', dir.length());
-					if (index >= 0) {
-						dir = inputFileName.substring(0, index);
-						if (!inOutDirs.contains(dir)) {
-							inOutDirs.add(dir);
-						}
-					}
+
 					++numberOfInputs;
 				}
 			}
@@ -523,11 +517,8 @@ public class BaseWrapper {
 					fn.setOriginalFileName(fn.getFileName());
 					
 					// Set output file_name to local work-dir path
-					fn.setFileName(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX
+					fn.setFileName(wrapperDataDirectory
 							+ File.separator + normalizeFileName(fn.getFileName()));
-					if (!inOutDirs.contains(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX)) {
-						inOutDirs.add(ENV_LOCAL_FS_MOUNT + File.separator + CONTAINER_OUTPUTS_PATH_PREFIX);
-					}
 					
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
@@ -834,27 +825,47 @@ public class BaseWrapper {
 	}
 
 	/**
-	 * Cleanup (delete) created directories
+	 * Cleanup (delete) directories created by this BaseWrapper. It removes as many subdirectories and directories
+	 * as it can beginning from the wrapper data directory root.
+	 * 
+	 * This method must not throw any exceptions!
 	 */
 	private void cleanup() {
-		for (String aDir : inOutDirs) {
-			File f = new File(aDir);
-			if (f != null && f.exists()) {
-				if (!deleteDirectory(f)) {
-					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, aDir);
+		try {
+			Files.walkFileTree(Path.of(wrapperDataDirectory), new FileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					// Nothing to do
+					return null;
 				}
-			}
+
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					Files.delete(file);
+					return null;
+				}
+
+				@Override
+				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString());
+					return null;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					try {
+						Files.delete(dir);
+					} catch (IOException e) {
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString());
+					}
+					return null;
+				}});
+		} catch (Exception e) {
+			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory);
 		}
 	}
-	private boolean deleteDirectory(File directoryToBeDeleted) {
-	    File[] allContents = directoryToBeDeleted.listFiles();
-	    if (allContents != null) {
-	        for (File file : allContents) {
-	            deleteDirectory(file);
-	        }
-	    }
-	    return directoryToBeDeleted.delete();
-	}
+
 	/**
 	 * Triggers a callback to ENV_STATE_CALLBACK_ENDPOINT (prosEO Production Planner)
 	 * 
@@ -947,16 +958,14 @@ public class BaseWrapper {
 			/* STEP [11] Register pushed products using with prosEO Ingestor */			
 			ingestPushedOutputs(pushedProducts);
 
-			/* Step [12] Cleanup temporary files/directories */
-			cleanup();
-
 		} catch (WrapperException e) {
-			/* Step [12A] Cleanup temporary files/directories */
-			cleanup();
 			/* STEP [12B] Report failure to Production Planner */
 			callBack(CALLBACK_STATUS_FAILURE);
 			logger.info(MSG_LEAVING_BASE_WRAPPER, EXIT_CODE_FAILURE, EXIT_TEXT_FAILURE);
 			return EXIT_CODE_FAILURE;
+		} finally {
+			/* Step [12A] Cleanup temporary files/directories; note that this is executed after catching an exception, too */
+			cleanup();
 		}
 
 		/* STEP [12B] Report success to Production Planner */
