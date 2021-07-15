@@ -110,8 +110,13 @@
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-2">
-              <p class="word-wrap">&nbsp;</p>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{id}"></p>
+            </div>
+            <div class="col-1 pl-lg-0">
+                    <input type="number" min="1" class="form-control" autocomplete="on"
+                      name="pid" id="pid">
             </div>
             
             <div class="col-2 pr-lg-0">
@@ -480,7 +485,8 @@ function setSelected() {
 	setSelectedOption('processingMode', getURLParam('mode'));
 	setSelectedOption('fileClass', getURLParam('fileClass'));
 	setSelectedOption('productQuality', getURLParam('quality'));
-	  $('#startTimeFrom').val(getURLParam('startTimeFrom'));
+    $('#pid').val(getURLParam('id'));
+    $('#startTimeFrom').val(getURLParam('startTimeFrom'));
 	  $('#startTimeTo').val(getURLParam('startTimeTo'));
 	  $('#genTimeFrom').val(getURLParam('genTimeFrom'));
 	  $('#genTimeTo').val(getURLParam('genTimeTo'));
@@ -490,7 +496,8 @@ function setParams() {
     var loc = location.search.slice(0);
     var search = location.search.slice(1);
     var paramString = search;
-	  search = removeURLKeyPrim('productClass', search);
+    search = removeURLKeyPrim('id', search);
+    search = removeURLKeyPrim('productClass', search);
 	  search = removeURLKeyPrim('mode', search);
 	  search = removeURLKeyPrim('fileClass', search);
 	  search = removeURLKeyPrim('quality', search);
@@ -498,6 +505,8 @@ function setParams() {
 	  search = removeURLKeyPrim('startTimeTo', search);
 	  search = removeURLKeyPrim('genTimeFrom', search);
 	  search = removeURLKeyPrim('genTimeTo', search);
+	  searchTmp = addURLParamValuePrim('id', $('#pid').val(), search);
+	  if (searchTmp != null) {search = searchTmp};
     var searchTmp = addURLParamValuesPrim('productClass', $('#productClasses').val(), search);
     if (searchTmp != null) {search = searchTmp};
     searchTmp = addURLParamValuePrim('mode', $('#processingMode').val(), search);
@@ -513,6 +522,9 @@ function setParams() {
     searchTmp = addURLParamValuePrim('genTimeTo', getDateString($('#genTimeTo').val(), true), search);
     if (searchTmp != null) {search = searchTmp};
     if (search != loc) {
+    	  if (search == '') {
+    		  search = '?';
+    	  }
     	  history.pushState({}, null, search);
     }
 }

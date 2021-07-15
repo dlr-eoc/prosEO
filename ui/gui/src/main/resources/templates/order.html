@@ -312,7 +312,7 @@
                                 th:if="${hasroleproductreader}"
                                 th:each="comp : ${jobstep?.inputProductClasses}" 
                                 class="proseo-list-item"  
-                                th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a><span 
+                                th:href="'/product-show?jobStep=' + ${jobstep?.id} + '&productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                                 th:unless="${hasroleproductreader}"
                                 th:each="comp : ${jobstep?.inputProductClasses}" 
                                 class="proseo-list-item"  

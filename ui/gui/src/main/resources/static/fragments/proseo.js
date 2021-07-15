@@ -58,12 +58,7 @@
     };
     
     function addURLParamPrim(param, paramstring) {
-      var base = paramstring.split("?");
-      if (base.length > 1) {
-        base = base[1];
-      } else {
-        base = base[0];
-      }
+      var base = trimLeftChar(paramstring, '?');
       var pairs = base.split("&");
     	var divider = '?';
     	var first = true;
@@ -101,7 +96,7 @@
     
     function addURLParamValuesPrim(name, value, paramstring) {
       var searchTmp = null;
-      var search = paramstring;
+      var search = trimLeftChar(paramstring, '?');;
       if (value != null && value.length > 0 && name != null && name.length > null) {
         for (var i = 0; i < value.length; i++) {
           searchTmp = addURLParamPrim(name + '=' + value[i], search);
@@ -143,7 +138,8 @@
     };
     
     function removeURLKeyPrim(key, paramstring) {
-    	var pairs = paramstring.split("&");
+      var ps = trimLeftChar(paramstring, '?');
+    	var pairs = ps.split("&");
     	var name, pair;
     	var divider = '?';
     	var first = true;
@@ -163,6 +159,14 @@
     		}
     	}
     	return search;
+    };
+    
+    function trimLeftChar(str, char) {
+      var s = str;
+      while (s.length > 0 && s.charAt(0) == char) {
+        s = s.substr(1);
+      }
+      return s;
     };
     
     function selectLang(lang) {
