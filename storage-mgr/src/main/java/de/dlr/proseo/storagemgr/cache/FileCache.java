@@ -129,13 +129,21 @@ public class FileCache {
 		if (realUsage <= expectedUsage) {
 			return;
 		}
+		
+		long startTime = System.nanoTime();
 
 		mapCache.sortByAccessedAsc();
-
+		
 		List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
 		Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
 		Entry<String, FileInfo> pathToDelete;
-
+		
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime); 
+		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns)", duration/1000000, duration);
+		
 		while (realUsage > expectedUsage && cacheIterator.hasNext()) {
 
 			pathToDelete = cacheIterator.next();
