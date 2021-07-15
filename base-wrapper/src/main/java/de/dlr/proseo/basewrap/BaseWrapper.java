@@ -831,8 +831,15 @@ public class BaseWrapper {
 	 * This method must not throw any exceptions!
 	 */
 	private void cleanup() {
+		if (logger.isTraceEnabled()) logger.trace(">>> cleanup()");
+
+		Path wrapperDataPath = Path.of(wrapperDataDirectory);
+		if (!Files.exists(wrapperDataPath)) {
+			// The data directory was never created, so it does not need to be cleaned up
+			return;
+		}
 		try {
-			Files.walkFileTree(Path.of(wrapperDataDirectory), new FileVisitor<Path>() {
+			Files.walkFileTree(wrapperDataPath, new FileVisitor<Path>() {
 
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
