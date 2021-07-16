@@ -83,7 +83,7 @@ public class StorageManagerConfiguration {
 	/** Wait time for file size check cycle in milliseconds */
 	@Value("${proseo.storageManager.filecheckwaittime}")
 	private String fileCheckWaitTime;
-
+	
 	// Alluxio configuration values currently not in use
 	
 //	@Value("${proseo.alluxio.alluxioUnderFsDefaultPrefix}")

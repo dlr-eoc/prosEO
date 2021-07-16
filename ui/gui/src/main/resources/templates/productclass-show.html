@@ -317,14 +317,24 @@ function submit() {
 }
 
 function setParams() {
-    removeURLKey('productClass');
-    removeURLKey('processorClass');
-    removeURLKey('level');
-    removeURLKey('visibility');
-    addURLParamValues('productClass', $('#productClasses').val());
-    addURLParamValues('processorClass', $('#processorClasses').val());
-    addURLParamValue('level', $('#processingLevel').val());
-    addURLParamValue('visibility', $('#visibility').val());
+    var loc = location.search.slice(0);
+    var search = location.search.slice(1);
+    var paramString = search;
+    search = removeURLKeyPrim('productClass', search);
+    search = removeURLKeyPrim('processorClass', search);
+    search = removeURLKeyPrim('level', search);
+    search = removeURLKeyPrim('visibility', search);
+    var searchTmp = addURLParamValuesPrim('productClass', $('#productClasses').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuesPrim('processorClass', $('#processorClasses').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('level', $('#processingLevel').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('visibility', $('#visibility').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    if (search != loc) {
+        history.pushState({info: search}, null, search);
+    }
 }
 
 function retrieveDataPage(from, to) {
@@ -457,6 +467,11 @@ function retrieveData(productClass, processorClass, level, visibility, from, to)
 };
 </script>
 <script>
+window.onpopstate = function(event) {
+	if (location.toString().charAt(location.toString().length-1) != '#') {
+    document.location.reload();
+	}
+};
     window.onload = function () {
      // $('.collapse').collapse();
      var elem = document.getElementById('sb-product-class');

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -610,7 +611,7 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setProductionType(changedOrder.getProductionType());
 		}
-		if (!modelOrder.getProductRetentionPeriod().equals(changedOrder.getProductRetentionPeriod())) {
+		if (!Objects.equals(modelOrder.getProductRetentionPeriod(), changedOrder.getProductRetentionPeriod())) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setProductRetentionPeriod(changedOrder.getProductRetentionPeriod());

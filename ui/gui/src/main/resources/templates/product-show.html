@@ -110,8 +110,13 @@
             </div>
           </div>
           <div class="row py-lg-1">
-            <div class="col-2">
-              <p class="word-wrap">&nbsp;</p>
+            <div class="col-1 pr-lg-0">
+              <p class="input-group-text word-wrap"
+                th:text="#{id}"></p>
+            </div>
+            <div class="col-1 pl-lg-0">
+                    <input type="number" min="1" class="form-control" autocomplete="on"
+                      name="pid" id="pid">
             </div>
             
             <div class="col-2 pr-lg-0">
@@ -218,22 +223,41 @@
 							</tr>
 						</tbody>
 						<tbody class="filtercontent" th:id="'prodcont' + ${elem?.id}">
+              <tr class="th-row">
+                <th class="tr-rowspan"><span>&nbsp;</span></th>
+                <th><span th:text="#{productiontype}">productiontype</span></th>
+                <th><span th:text="#{uuid}">uuid</span></th>
+                <th><span th:text="#{rawdataavailabilitytime}">rawdataavailabilitytime</span></th>
+                <th><span th:text="#{publicationtime}">publicationtime</span></th>
+                <th><span th:text="#{evictiontime}">evictiontime</span></th>
+                <th colspan="3"><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
+              </tr>
 							<tr class="th-row">
 								<th class="tr-rowspan"><span>&nbsp;</span></th>
-								<th><span th:text="#{productiontype}">productiontype</span></th>
-								<th><span th:text="#{uuid}">uuid</span></th>
-								<th><span th:text="#{componentproductids}">componentproductids</span></th>
+								<th colspan="2"><span th:text="#{componentproductids}">componentproductids</span></th>
 								<th><span th:text="#{enclosingproductids}">componentproductids</span></th>
 								<th><span th:text="#{spacecraft}">spacecraft</span> &ndash;
 									<span th:text="#{orbit}">orbit</span></th>
-								<th><span th:text="#{configuredprocessor}">configuredprocessor</span></th>
-								<th colspan="2"><span th:text="#{parameters}">parameters</span></th>
+								<th colspan="4"><span th:text="#{parameters}">parameters</span></th>
 							</tr>
+              <tr>
+                <td class="tr-rowspan">&nbsp;</td>
+                <td th:text="${elem?.productionType}"></td>
+                <td th:text="${elem?.uuid}"></td>
+                <td th:text="${elem?.rawDataAvailabilityTime}"></td>
+                <td th:text="${elem?.publicationTime}"></td>
+                <td th:text="${elem?.evictionTime}"></td>
+                <td colspan="3"><span 
+                  th:if="null != ${elem?.configuredProcessor}"><a
+                    th:if="${hasroleprocessorreader}"
+                    th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
+                    th:text="${elem?.configuredProcessor.identifier}"></a><span
+                    th:unless="${hasroleprocessorreader}"
+                    th:text="${elem?.configuredProcessor.identifier}"></span></span></td>
+              </tr>
 							<tr>
 								<td class="tr-rowspan">&nbsp;</td>
-								<td th:text="${elem?.productionType}"></td>
-								<td th:text="${elem?.uuid}"></td>
-								<td><a th:each="comp : ${elem?.componentProductIds}"
+								<td colspan="2"><a th:each="comp : ${elem?.componentProductIds}"
 									class="proseo-list-item href"
 									th:onclick="'productref(' + ${comp} + ')'"><span
 										th:text="${comp}"></span></a></td>
@@ -242,14 +266,7 @@
 										th:text="${elem?.enclosingProductId}"></span></a></td>
 								<td><span th:text="${elem?.orbit?.spacecraftCode}"></span>
 									&ndash; <span th:text="${elem?.orbit?.orbitNumber}"></span></td>
-								<td><span 
-                  th:if="null != ${elem?.configuredProcessor}"><a
-								    th:if="${hasroleprocessorreader}"
-									  th:href="'/configured-processor-show?cp=' + ${elem?.configuredProcessor.identifier}"
-									  th:text="${elem?.configuredProcessor.identifier}"></a><span
-                    th:unless="${hasroleprocessorreader}"
-                    th:text="${elem?.configuredProcessor.identifier}"></span></span></td>
-								<td colspan="2">
+								<td colspan="4">
 									<table class="table-inline">
 										<tr th:each="comp : ${elem?.parameters}">
 											<td th:text="${comp?.key}"></td>
@@ -407,19 +424,22 @@ function addEventHandler() {
     $("input[name='genTimeTo']").change(checkTime);     
 };
 
-function getDate(val) {
+function getDate(val, up) {
 	var start = new ProseoDate(val, 'TIME');
 	if (start == null || !start.isValid()) {
 	  start = new ProseoDate(val, 'DAYHOURS');
 	}
 	if (start == null || !start.isValid()) {
 	  start = new ProseoDate(val, 'DAY');
+	  if (up && start.isValid()) {
+		  start.norm(-1);
+	  }
 	}
 	return start;
 }
 
-function getDateString(val) {
-	var date = getDate(val);
+function getDateString(val, up) {
+	var date = getDate(val, up);
 	if (date != null && date.isValid()) {
 		return (date.toString())
 	} else {
@@ -465,28 +485,48 @@ function setSelected() {
 	setSelectedOption('processingMode', getURLParam('mode'));
 	setSelectedOption('fileClass', getURLParam('fileClass'));
 	setSelectedOption('productQuality', getURLParam('quality'));
-	  $('#startTimeFrom').val(getURLParam('startTimeFrom'));
+    $('#pid').val(getURLParam('id'));
+    $('#startTimeFrom').val(getURLParam('startTimeFrom'));
 	  $('#startTimeTo').val(getURLParam('startTimeTo'));
 	  $('#genTimeFrom').val(getURLParam('genTimeFrom'));
 	  $('#genTimeTo').val(getURLParam('genTimeTo'));
 }
 
 function setParams() {
-	  removeURLKey('productClass');
-	  removeURLKey('mode');
-	  removeURLKey('fileClass');
-	  removeURLKey('quality');
-    removeURLKey('startTimeFrom');
-    removeURLKey('startTimeTo');
-    removeURLKey('genTimeFrom');
-    removeURLKey('genTimeTo');
-	  addURLParamValues('productClass', $('#productClasses').val());
-	  addURLParamValue('mode', $('#processingMode').val());
-	  addURLParamValue('fileClass', $('#fileClass').val());
-    addURLParamValue('startTimeFrom', getDateString($('#startTimeFrom').val()));
-    addURLParamValue('startTimeTo', getDateString($('#startTimeTo').val()));
-    addURLParamValue('genTimeFrom', getDateString($('#genTimeFrom').val()));
-    addURLParamValue('genTimeTo', getDateString($('#genTimeTo').val()));
+    var loc = location.search.slice(0);
+    var search = location.search.slice(1);
+    var paramString = search;
+    search = removeURLKeyPrim('id', search);
+    search = removeURLKeyPrim('productClass', search);
+	  search = removeURLKeyPrim('mode', search);
+	  search = removeURLKeyPrim('fileClass', search);
+	  search = removeURLKeyPrim('quality', search);
+	  search = removeURLKeyPrim('startTimeFrom', search);
+	  search = removeURLKeyPrim('startTimeTo', search);
+	  search = removeURLKeyPrim('genTimeFrom', search);
+	  search = removeURLKeyPrim('genTimeTo', search);
+	  searchTmp = addURLParamValuePrim('id', $('#pid').val(), search);
+	  if (searchTmp != null) {search = searchTmp};
+    var searchTmp = addURLParamValuesPrim('productClass', $('#productClasses').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('mode', $('#processingMode').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('fileClass', $('#fileClass').val(), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('startTimeFrom', getDateString($('#startTimeFrom').val(), false), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('startTimeTo', getDateString($('#startTimeTo').val(), true), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('genTimeFrom', getDateString($('#genTimeFrom').val(), false), search);
+    if (searchTmp != null) {search = searchTmp};
+    searchTmp = addURLParamValuePrim('genTimeTo', getDateString($('#genTimeTo').val(), true), search);
+    if (searchTmp != null) {search = searchTmp};
+    if (search != loc) {
+    	  if (search == '') {
+    		  search = '?';
+    	  }
+    	  history.pushState({}, null, search);
+    }
 }
 
 function productref(ref) {
@@ -623,6 +663,12 @@ function retrieveData(id, productClass, mode, fileClass, quality, startTimeFrom,
 
 </script>
 <script>
+window.onpopstate = function(event) {
+	if (location.toString().charAt(location.toString().length-1) != '#') {
+    document.location.reload();
+	}
+};
+
     window.onload = function () {
      // $('.collapse').collapse();
      var elem = document.getElementById('sb-product');

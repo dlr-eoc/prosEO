@@ -70,6 +70,7 @@
                     <th><span th:text="#{state}">state</span></th>
                     <th><span th:text="#{outputfileclass}">outputfileclass</span></th>
                     <th><span th:text="#{slicing}">slicing</span></th>
+                    <th><span th:text="#{productretentionperiod}">productretentionperiod</span></th>
                     <th><span th:text="#{outputproductclasses}">outputproductclasses</span></th>
                     <th><span th:text="#{jobstepstates}">jobstepstates</span></th>
                     <th><span>&nbsp;</span></th>
@@ -79,7 +80,7 @@
                     <th><span th:text="#{uuid}">uuid</span></th>
                     <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{processingtype}">productiontype</span></th>
-                    <th><span th:text="#{startstoptime}">startstoptime</span></th>
+                    <th colspan="2"><span th:text="#{startstoptime}">startstoptime</span></th>
                     <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
                     <th><span th:text="#{percentcomplete}">percentcomplete</span></th>
                     <th><span>&nbsp;</span></th>
@@ -114,6 +115,7 @@
                     <td th:if="${ord?.slicingType} == 'CALENDAR_MONTH'"><span th:text="#{calendarmonth}">calendarmonth</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'CALENDAR_YEAR'"><span th:text="#{calendaryear}">calendaryear</span>: <span th:text="#{overlap}">overlap</span>: <span th:text="${ord?.sliceOverlap}">sliceOverlap</span></td>
                     <td th:if="${ord?.slicingType} == 'NONE'"><span th:text="#{none}">none</span></td>
+                    <td th:text="${(ord?.productRetentionPeriod!=null)?(ord?.productRetentionPeriod/86400):''}"></td>
                     <td><a 
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.requestedProductClasses}" 
@@ -137,7 +139,7 @@
                     <td th:text="${ord?.uuid}"></td>
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
-                    <td><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                    <td colspan="2"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
                     <td><a 
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 
@@ -310,7 +312,7 @@
                                 th:if="${hasroleproductreader}"
                                 th:each="comp : ${jobstep?.inputProductClasses}" 
                                 class="proseo-list-item"  
-                                th:href="'/product-show?productClass=' + ${comp} + '&jobStep=' + ${jobstep?.id}" th:text="' ' + ${comp}"></a><span 
+                                th:href="'/product-show?jobStep=' + ${jobstep?.id} + '&productClass=' + ${comp}" th:text="' ' + ${comp}"></a><span 
                                 th:unless="${hasroleproductreader}"
                                 th:each="comp : ${jobstep?.inputProductClasses}" 
                                 class="proseo-list-item"  
@@ -331,8 +333,10 @@
                           </tr>
                             <tr class="filtercontent" th:id="'togglejsb2' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
-                              <td colspan="9"><a th:href="'http://192.168.20.191:30001/proseo/storage-mgr/v0.1/products/download?pathInfo=' + ${jobstep?.jobOrderFilename}" 
+                              <!-- <td colspan="9"><a th:href="'http://192.168.20.191:30001/proseo/storage-mgr/v0.1/products/download?pathInfo=' + ${jobstep?.jobOrderFilename}" 
                                 th:download="${jobstep?.jobOrderFilename}"><span th:text="${jobstep?.jobOrderFilename}"></span></a></td>
+                               --> 
+                              <td colspan="9"><span th:text="${jobstep?.jobOrderFilename}"></span></td>
                             </tr>
                             <tr class="filtercontent" th:id="'togglejsb3' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
