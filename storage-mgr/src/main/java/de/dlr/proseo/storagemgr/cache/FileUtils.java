@@ -20,7 +20,7 @@ public class FileUtils {
 	private String path;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
 	/**
 	 * @return

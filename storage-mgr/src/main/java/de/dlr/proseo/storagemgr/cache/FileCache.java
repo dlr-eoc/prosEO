@@ -38,7 +38,7 @@ public class FileCache {
 	private static FileCache theFileCache;
 
 	/** Logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(FileCache.class);
 
 	public static FileCache getInstance() {
 
