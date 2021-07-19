@@ -16,9 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
-import de.dlr.proseo.storagemgr.rest.ProductControllerImpl;
 
 /**
  * @author Denys Chaykovskiy
@@ -55,6 +55,9 @@ public class FileCache {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> put({})", pathKey);
+		
+		// This line is for safety, it can be removed for productivity
+		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);  
 
 		FileInfo fileInfo;
 
@@ -62,7 +65,7 @@ public class FileCache {
 
 			deleteLRU(pathKey);
 		}
-
+		
 		rewriteFileAccessed(pathKey);
 		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
@@ -79,7 +82,7 @@ public class FileCache {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> containsKey({})", pathKey);
-
+		
 		boolean contains = mapCache.containsKey(pathKey);
 
 		if (contains) {
@@ -139,7 +142,7 @@ public class FileCache {
 		Entry<String, FileInfo> pathToDelete;
 		
 		long endTime = System.nanoTime();
-		long duration = (endTime - startTime); 
+		long duration = endTime - startTime; 
 		
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", 
@@ -190,12 +193,8 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> remove({})", pathKey);
 
-		try {
-			deleteFileAndAccessed(pathKey);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+		deleteFileAndAccessed(pathKey);
+	
 		mapCache.remove(pathKey);
 	}
 
@@ -281,21 +280,26 @@ public class FileCache {
 	 * @param fileName
 	 * @throws IOException
 	 */
-	/* package */ void deleteFileAndAccessed(String path) throws IOException {
+	/* package */ void deleteFileAndAccessed(String path) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteFileAndAccessed({})", path);
 
+		String accessedPath = getAccessedPath(path);
 		File file = new File(path);
-		File accessedFile = new File(getAccessedPath(path));
+		File accessedFile = new File(accessedPath);
 		String directory = file.getParent();
-
-		if (!file.delete()) {
-			throw new IOException("File not deleted: " + path);
+		
+		if (!file.exists()) {
+			if (logger.isTraceEnabled()) logger.warn("> File does not exist, but exists in cache({})", path);
+		} else if (!file.delete()) { // delete file 
+			if (logger.isTraceEnabled()) logger.warn("> File was not deleted({})", path);
 		}
-
-		if (!accessedFile.delete()) {
-			throw new IOException("Accessed File not deleted: " + path);
+		
+		if (!accessedFile.exists()) {
+			if (logger.isTraceEnabled()) logger.warn("> File was not deleted({})", accessedPath);
+		} else if (!accessedFile.delete()) { // delete accessed file 
+			if (logger.isTraceEnabled()) logger.warn("> Accessed File was not deleted({})", accessedPath);
 		}
 
 		deleteEmptyDirectoriesToTop(directory);
