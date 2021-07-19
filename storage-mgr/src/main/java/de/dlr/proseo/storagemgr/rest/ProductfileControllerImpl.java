@@ -140,15 +140,19 @@ public class ProductfileControllerImpl implements ProductfileController {
 						Integer wait = Integer.valueOf(cfg.getFileCheckWaitTime());
 						Integer max = Integer.valueOf(cfg.getFileCheckMaxCycles());
 						try {
-							while (Files.size(fp) < fileSize && i < max) {
-								if (logger.isDebugEnabled()) {
-									logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
-								}
-								i++;
-								try {
-									this.wait(wait);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
+							synchronized (this) {
+								while (Files.size(fp) < fileSize && i < max) {
+									if (logger.isDebugEnabled()) {
+										logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
+									}
+									i++;
+									try {
+										this.wait(wait);
+									} catch (InterruptedException e) {
+										// Do nothing (except for debug logging), we just stay in the while loop
+										if (logger.isDebugEnabled())
+											logger.debug("... wait interrupted, cause: " + e.getMessage());
+									}
 								}
 							}
 						} catch (IOException e) {

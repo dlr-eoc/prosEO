@@ -125,7 +125,7 @@ public class BaseWrapper {
 	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
 	private static final String MSG_UNABLE_TO_ACCESS_FILE = "Unable to access file {}";
 	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
-	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to delete directory path {}";
+	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to delete directory/file path {} (cause: {})";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
 	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
@@ -475,16 +475,19 @@ public class BaseWrapper {
 						Integer wait = Integer.valueOf(ENV_FILECHECK_WAIT_TIME);
 						Integer max = Integer.valueOf(ENV_FILECHECK_MAX_CYCLES);
 						try {
-							while ((Files.size(fp) < rfi.getFileSize()) && (i < max)) {
-								if (logger.isDebugEnabled()) {
-									logger.debug("Wait for fully copied file {}", inputFileName);
-								}
-								i++;
-								try {
-									this.wait(wait);
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+							synchronized (this) {
+								while ((Files.size(fp) < rfi.getFileSize()) && (i < max)) {
+									if (logger.isDebugEnabled()) {
+										logger.debug("Wait for fully copied file {}", inputFileName);
+									}
+									i++;
+									try {
+										this.wait(wait);
+									} catch (InterruptedException e) {
+										// Do nothing (except for debug logging), we just stay in the while loop
+										if (logger.isDebugEnabled())
+											logger.debug("... wait interrupted, cause: " + e.getMessage());
+									}
 								}
 							}
 						} catch (IOException e) {
@@ -853,14 +856,14 @@ public class BaseWrapper {
 						if (logger.isTraceEnabled()) logger.trace("... deleting file " + file);
 						Files.delete(file);
 					} catch (IOException e) {
-						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString());
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), e.getMessage());
 					}
 					return null;
 				}
 
 				@Override
 				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString());
+					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), "Call to visitFileFailed");
 					return null;
 				}
 
@@ -870,12 +873,12 @@ public class BaseWrapper {
 						if (logger.isTraceEnabled()) logger.trace("... deleting directory " + dir);
 						Files.delete(dir);
 					} catch (IOException e) {
-						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString());
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString(), e.getMessage());
 					}
 					return null;
 				}});
 		} catch (Exception e) {
-			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory);
+			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory, e.getMessage());
 		}
 	}
 
