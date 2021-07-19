@@ -22,6 +22,8 @@ public class TestUtils {
 	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
 	private static final String TEST_DIRECTORY = "testdata";
 	
+	private static final String JAR_PATH_KEY = "+++JAR+++";
+	
 	@Autowired
 	private StorageManagerConfiguration cfg;
 	
@@ -46,6 +48,27 @@ public class TestUtils {
 		
 		return cfg; 
 	}
+	
+	/**
+	 * 
+	 * @param cfgPath
+	 * @return
+	 */
+	public String getAbsolutePahfromKeyPath(String cfgPath) {
+
+		String path;
+
+		if (cfgPath.contains(JAR_PATH_KEY)) {
+
+			path = cfgPath.replace(JAR_PATH_KEY, "");
+			path = new File("").getAbsolutePath() + path;
+		} else {
+
+			path = cfgPath;
+		}
+
+		return path;
+	}
 
 	
 	/**
@@ -53,7 +76,7 @@ public class TestUtils {
 	 */
 	public String getTestPath() {
 		
-		return cfg.getPosixWorkerMountPoint();
+		return getAbsolutePahfromKeyPath(cfg.getPosixWorkerMountPoint());
 	}
 	
 	/**
@@ -61,7 +84,7 @@ public class TestUtils {
 	 */
 	public String getSourceTestPath() {
 
-		return cfg.getPosixMountPoint();
+		return getAbsolutePahfromKeyPath(cfg.getPosixMountPoint());
 	}
 
 	/**
