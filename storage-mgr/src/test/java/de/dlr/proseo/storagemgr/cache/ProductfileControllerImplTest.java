@@ -3,6 +3,7 @@ package de.dlr.proseo.storagemgr.cache;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import javax.annotation.PostConstruct;
 
@@ -68,8 +69,8 @@ public class ProductfileControllerImplTest {
 		String sourcePath2 = sourcePath + "/" + file2;
 
 		String destPath = TestUtils.getInstance().getTestPath();
-		String destPath1 = destPath + "/" + file1 + "/" + file1;
-		String destPath2 = destPath + "/" + file2 + "/" + file2;
+		String destPath1 = Paths.get(destPath + "/" + file1 + "/" + file1).toString();
+		String destPath2 = Paths.get(destPath + "/" + file2 + "/" + file2).toString();
 
 		TestUtils.createFile(sourcePath1, "");
 		TestUtils.createFile(sourcePath2, "");

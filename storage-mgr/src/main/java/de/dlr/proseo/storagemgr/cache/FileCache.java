@@ -99,7 +99,9 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> init({})");
 
-		path = cfg.getPosixWorkerMountPoint();
+		// TODO: check if it is allowed to use absolute path here =>   path = cfg.getPosixWorkerMountPoint();
+		
+		path = new File(cfg.getPosixWorkerMountPoint()).getAbsolutePath();
 
 		File directory = new File(path);
 

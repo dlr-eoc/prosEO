@@ -3,6 +3,7 @@ package de.dlr.proseo.storagemgr.cache;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.time.Instant;
 
 import javax.annotation.PostConstruct;
@@ -109,11 +110,9 @@ public class FileCacheTest {
 
 		TestUtils.printMethodName(this, testName);
 
-		String dir = "/path";
+		String dir = "path";
 		String fileName = "file.txt";
 		String path = dir + "/" + fileName;
-
-		
 
 		String accessedPath = fileCache.getAccessedPath(path);
 		String expectedAccessedPath = dir + "/" + FileCache.getPrefix() + fileName;
@@ -136,18 +135,21 @@ public class FileCacheTest {
 		
 		fileCache.clear();
 
-		String path1 = testPath + "/test/test1.txt";
-		String path2 = testPath + "/test1/test2/test2.txt";
-		String path3 = testPath + "/test1/test2/test3.txt";
-		String pathNotExists = testPath + "/xxx/xxx/zzz.txt";
+		String path1 = Paths.get(testPath + "/test/test1.txt").toString();
+		String path2 = Paths.get(testPath + "/test1/test2/test2.txt").toString();
+		String path3 = Paths.get(testPath + "/test1/test2/test3.txt").toString();
+		String path4 = Paths.get(testPath + "/test4.x").toString();
+		String path5 = Paths.get(testPath + "/test5.x").toString();
+		
+		String pathNotExists =  Paths.get(testPath + "/xxx/xxx/zzz.txt").toString();
 		
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		TestUtils.createFile(path3, "");
 		
-		TestUtils.createFile(testPath + "/test4.x", "");
-		TestUtils.createFile(testPath + "/test5.x", "");
-		
+		TestUtils.createFile(path4, "");
+		TestUtils.createFile(path5, "");
+			
 		fileCache.putFilesToCache(testPath);
 
 		assertTrue("Cache does not contain 5 elements after dir init: " + fileCache.size(), 
@@ -189,10 +191,10 @@ public class FileCacheTest {
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyTestDirectory();
 		
-		String path1 = testPath + "/test1.txt";
-		String path2 = testPath + "/test2.txt";
-		String path3 = testPath + "/test3.txt";
-		String pathNotExists = testPath + "/xxx/xxx/zzz.txt";
+		String path1 = Paths.get(testPath + "/" + "test1.txt").toString();
+		String path2 = Paths.get(testPath + "/" + "test2.txt").toString();
+		String path3 = Paths.get(testPath + "/" + "test3.txt").toString();
+		String pathNotExists = Paths.get(testPath + "/xxx/xxx/" + " zzz.txt").toString();
 		Instant timeNotChanged;
 		Instant timeNotChanged2; 
 		Instant timeChanged; 
