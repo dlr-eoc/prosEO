@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  
-  <parent>
-    <groupId>de.dlr.proseo</groupId>
-    <artifactId>proseo</artifactId>
-    <version>0.8.0</version>
-  </parent>
-  
-  <artifactId>proseo-api</artifactId>
-  <packaging>pom</packaging>
-  <name>prosEO ESA API</name>
-  <description>prosEO API conforming to ESA's CSC Ground Segment Operations Framework</description>
+	<modelVersion>4.0.0</modelVersion>
 
-  <modules>
-  	<module>prip</module>
-  </modules>
+	<parent>
+		<groupId>de.dlr.proseo</groupId>
+		<artifactId>proseo</artifactId>
+		<version>0.8.0</version>
+	</parent>
 
-    <url>https://github.com/dlr-eoc/prosEO/api</url>
+	<artifactId>proseo-api</artifactId>
+	<packaging>pom</packaging>
+	<name>prosEO ESA API</name>
+	<description>prosEO API conforming to ESA's CSC Ground Segment Operations Framework</description>
+
+	<modules>
+		<module>prip</module>
+		<module>base-monitor</module>
+	</modules>
+
+	<url>https://github.com/dlr-eoc/prosEO/api</url>
 	<organization>
 		<name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
 		<url>http://www.dlr.de</url>
