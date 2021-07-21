@@ -84,13 +84,23 @@ public class FileCache {
 			logger.trace(">>> containsKey({})", pathKey);
 		
 		boolean contains = mapCache.containsKey(pathKey);
-
-		if (contains) {
-
-			put(pathKey);
+		
+		if (!contains) {
+			
+			return false; 
 		}
-
-		return contains;
+		
+		File file = new File(pathKey);  
+		
+		if (!file.exists() || !file.isFile()) {
+			
+			remove(pathKey); 
+			return false; 			
+		}
+			
+		put(pathKey);
+		
+		return true;
 	}
 
 	@PostConstruct
