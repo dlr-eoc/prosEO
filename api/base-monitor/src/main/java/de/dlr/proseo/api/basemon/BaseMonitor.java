@@ -20,17 +20,21 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Base class for implementing monitors on pickup points ("interface points" in the ESA Ground Segment Framework architecture)
+ * Base class for implementing monitors on pickup points ("interface points" in the ESA Ground Segment Framework architecture).
+ * The monitor is intended to run "forever" (i. e. until it is shut down by an interrupt), so it does not terminate on errors
+ * during transfer or follow-up actions. It does terminate if it cannot correctly write its transfer history.
  * 
  * @author Dr. Thomas Bassler
  */
 public abstract class BaseMonitor {
 	
+	/** Interval in millliseconds to check for completed subtasks */
+	private static final long TASK_WAIT_INTERVAL = 500;
+
 	/** Interval between pickup point checks in milliseconds, default is one second */
 	private long checkInterval = 1000;
 	
@@ -63,6 +67,7 @@ public abstract class BaseMonitor {
 	private static final int MSG_ID_ILLEGAL_HISTORY_ENTRY_DATE = 5207;
 	private static final int MSG_ID_HISTORY_ENTRIES_READ = 5208;
 	private static final int MSG_ID_HISTORY_ENTRIES_TRUNCATED = 5209;
+	private static final int MSG_ID_TASK_WAIT_INTERRUPTED = 5209;
 	
 	/* Message string constants */
 	private static final String MSG_INTERRUPTED = "(I%d) Interrupt received while waiting for next check of pickup point";
@@ -75,6 +80,7 @@ public abstract class BaseMonitor {
 	private static final String MSG_ILLEGAL_HISTORY_ENTRY_DATE = "(E%d) Transfer history entry date '%s' has illegal format";
 	private static final String MSG_HISTORY_ENTRIES_READ = "(I%d) %d history entries read from history file %s, reference time for next pickup point lookup is %s";
 	private static final String MSG_HISTORY_ENTRIES_TRUNCATED = "(I%d) %d entries truncated from transfer history file %s";
+	private static final String MSG_TASK_WAIT_INTERRUPTED = "(I%d) Wait for task completion interrupted, continuing wait";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
@@ -420,33 +426,54 @@ public abstract class BaseMonitor {
 			
 			// Filter objects not yet processed from transfer history
 			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferableObjects);
+			List<Thread> transferTasks = new ArrayList<>();
 			
 			// Transfer all objects not yet processed
 			for (TransferObject objectToTransfer: objectsToTransfer) {
 				
-				// TODO Setup parallel transfers
+				// Setup parallel transfers
+				Thread transferTask = new Thread() {
+
+					@Override
+					public void run() {
+						// Transfer object to local target directory
+						if (transferToTargetDir(objectToTransfer)) {
+							
+							// Record transfer in history
+							try {
+								recordTransfer(objectToTransfer, checkTimeStamp);
+							} catch (IOException e) {
+								logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+								return;
+							}
+							
+							// Trigger follow-on action
+							if (!triggerFollowOnAction(objectToTransfer)) {
+								logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
+							}
+							
+						} else {
+							logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
+						}
+					}
+				};
+				transferTasks.add(transferTask);
+				transferTask.start();
 				
-				// Transfer object to local target directory
-				if (transferToTargetDir(objectToTransfer)) {
-					
-					// Record transfer in history
-					try {
-						recordTransfer(objectToTransfer, checkTimeStamp);
-					} catch (IOException e) {
-						logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
-						return;
-					}
-					
-					// Trigger follow-on action
-					if (!triggerFollowOnAction(objectToTransfer)) {
-						logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
-					}
-					
-				} else {
-					logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
-				}
 			}
 			
+			// Wait for all tasks to complete
+			if (logger.isTraceEnabled()) logger.trace("... waiting for all subtasks to complete");
+			for (Thread transferTask: transferTasks) {
+				while (transferTask.isAlive()) {
+					try {
+						Thread.sleep(TASK_WAIT_INTERVAL);
+					} catch (InterruptedException e) {
+						logger.warn(String.format(MSG_TASK_WAIT_INTERRUPTED, MSG_ID_TASK_WAIT_INTERRUPTED));
+					}
+				}
+			}
+						
 			// Wait for next check interval
 			try {
 				if (logger.isTraceEnabled()) logger.trace("... sleeping for {} seconds", checkInterval / 1000.0);
