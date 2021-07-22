@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
@@ -7,11 +8,11 @@
 		<version>0.8.0</version>
 	</parent>
 	
-	<artifactId>base-monitor</artifactId>
+	<artifactId>proseo-base-monitor</artifactId>
 	<name>prosEO Base Monitor</name>
 	<description>Base classes for implementing monitors on pickup points ("interface points" in the ESA Ground Segment Framework architecture)</description>
 
-    <url>https://github.com/dlr-eoc/prosEO/api/prip</url>
+    <url>https://github.com/dlr-eoc/prosEO/api/base-monitor</url>
     <organization>
         <name>DLR - Deutsches Zentrum für Luft- und Raumfahrt e. V.</name>
         <url>http://www.dlr.de</url>
@@ -20,165 +21,30 @@
     <properties>
         <module.version>0.0.1</module.version>
         <main.basedir>${basedir}/../..</main.basedir>
-        <raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
-        <raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
-        <raml-path-oauth2>src/main/resources/raml/prip-oauth2.raml</raml-path-oauth2>
-        <raml-base-package>de.dlr.proseo.api.prip.rest</raml-base-package>
     </properties>
-
+    
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectreactor</groupId>
-            <artifactId>reactor-spring</artifactId>
-            <version>1.0.1.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>de.dlr.proseo</groupId>
-            <artifactId>proseo-interfaces</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.phoenixnap.oss</groupId>
-            <artifactId>springmvc-raml-plugin</artifactId>
-            <type>maven-plugin</type>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <finalName>proseo-api-prip</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
+        <finalName>proseo-base-monitor</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven-site-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
 
-            <!-- required for adding generated sources -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <!-- where to find the generated sources -->
-                                <source>${raml-output-path}</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Generate Spring MVC from RAML files -->
-            <!-- 
-            <plugin>
-                <groupId>com.phoenixnap.oss</groupId>
-                <artifactId>springmvc-raml-plugin</artifactId>
-                <configuration>
-                    <basePackage>${raml-base-package}</basePackage>
-                    <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
-                    <rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerInterfaceRule</rule>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>generate-springmvc-query</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <ramlPath>${raml-path-query}</ramlPath>
-                        </configuration>
-                        <goals>
-                            <goal>generate-springmvc-endpoints</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>generate-springmvc-download</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <ramlPath>${raml-path-download}</ramlPath>
-                        </configuration>
-                        <goals>
-                            <goal>generate-springmvc-endpoints</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>generate-springmvc-oauth2</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <ramlPath>${raml-path-oauth2}</ramlPath>
-                        </configuration>
-                        <goals>
-                            <goal>generate-springmvc-endpoints</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            -->
-
-            <!-- Create HTML documentation from RAML files -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-html-query</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>raml2html</executable>
-                            <commandlineArgs>-i ${raml-path-query} -o src/site/resources/${project.artifactId}-query.html</commandlineArgs>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-html-download</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>raml2html</executable>
-                            <commandlineArgs>-i ${raml-path-download} -o src/site/resources/${project.artifactId}-download.html</commandlineArgs>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-html-oauth2</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>raml2html</executable>
-                            <commandlineArgs>-i ${raml-path-oauth2} -o src/site/resources/${project.artifactId}-oauth2.html</commandlineArgs>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-        </plugins>
     </build>
 </project>
