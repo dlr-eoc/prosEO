@@ -257,7 +257,7 @@ public class ProseoFilePosix extends ProseoFile {
 				}
 			}
 			for (File f : files) {
-				File targetFile = new File(proFile.getFullPath() + "/" + f.getName());
+				File targetFile = new File(proFile.getFullPath() );
 				if (FileCache.getInstance().containsKey(targetFile.getPath())) { // if (targetFile.exists()) 
 					result.add(targetFile.getPath());
 				} else {
