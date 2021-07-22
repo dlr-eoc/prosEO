@@ -83,9 +83,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> containsKey({})", pathKey);
 		
-		boolean contains = mapCache.containsKey(pathKey);
-		
-		if (!contains) {
+		if (!mapCache.containsKey(pathKey)) {
 			
 			return false; 
 		}
