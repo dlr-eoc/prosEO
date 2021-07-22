@@ -48,22 +48,25 @@ public class ProseoFilePosixTest {
 		TestUtils.printMethodName(this, testName);
 		TestUtils.createEmptyTestDirectory();
 
-		String sourcePath1 = sourceTestPath + "/test1.txt";
-		String sourcePath2 = sourceTestPath + "/test2.txt";
+		String sourcePath1 = sourceTestPath + "/" + "test1.txt";
+		String sourcePath2 = sourceTestPath + "/" + "test2.txt";
 
-		String targetPath = testPath;
+		String targetPath1 = testPath + "/" + "test1.txt";
+		String targetPath2 = testPath + "/" + "test2.txt";
 
 		TestUtils.createFile(sourcePath1, "");
 		TestUtils.createFile(sourcePath2, "");
 		
-		ProseoFile targetFile = ProseoFile.fromPathInfo(targetPath, TestUtils.getInstance().getCfg());
+		ProseoFile targetFile1 = ProseoFile.fromPathInfo(targetPath1, TestUtils.getInstance().getCfg());
+		ProseoFile targetFile2 = ProseoFile.fromPathInfo(targetPath2, TestUtils.getInstance().getCfg());
+		
 		ProseoFile sourceFile;
 		
 		// add new - file not exists and not in cache, cache is empty 
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath1, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+			ArrayList<String> transfered = sourceFile.copyTo(targetFile1, false);
 			
 			if (transfered != null && !transfered.isEmpty()) {
 
@@ -80,7 +83,7 @@ public class ProseoFilePosixTest {
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath2, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+			ArrayList<String> transfered = sourceFile.copyTo(targetFile2, false);
 			
 			if (transfered != null && !transfered.isEmpty()) {
 
@@ -98,7 +101,7 @@ public class ProseoFilePosixTest {
 
 		sourceFile = ProseoFile.fromPathInfo(sourcePath1, TestUtils.getInstance().getCfg());
 		try {
-			ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
+			ArrayList<String> transfered = sourceFile.copyTo(targetFile1, false);
 			
 			if (transfered != null && !transfered.isEmpty()) {
 

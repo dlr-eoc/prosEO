@@ -392,6 +392,22 @@ public class FileCache {
 		return accessedPath;
 
 	}
+	
+	/**
+	 * @param path
+	 * @return
+	 */
+	/* package */ String getPathFromAccessed(String accessedPath) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> getPathFromAccessed({})", accessedPath);
+
+		File file = new File(accessedPath);
+		String path = file.getParent() + "/" + file.getName().replace(PREFIX,"");
+
+		return path;
+
+	}
 
 	/**
 	 * @param path
