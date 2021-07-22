@@ -11,17 +11,24 @@ import java.util.Map.Entry;
 import java.time.Instant;
 
 /**
+ * Map wrapper for file cache with path as key and last accessed and file size
+ * as value
+ * 
  * @author Denys Chaykovskiy
  *
  */
 public class MapCache {
 
+	/** path cache */
 	private Map<String, FileInfo> pathCache = new HashMap<>();
 
+	/** sorted pathes */
 	private List<Entry<String, FileInfo>> sortedPathes;
 
 	/**
-	 * @return the sortedPathes
+	 * Gets sorted pathes
+	 * 
+	 * @return list of sorted pathes
 	 */
 	public List<Entry<String, FileInfo>> getSortedPathes() {
 
@@ -29,7 +36,9 @@ public class MapCache {
 	}
 
 	/**
-	 * @return
+	 * Gets a clone of cache
+	 * 
+	 * @return cloned cache
 	 */
 	public Map<String, FileInfo> getCache() {
 
@@ -40,8 +49,10 @@ public class MapCache {
 	}
 
 	/**
-	 * @param pathKey
-	 * @param fileInfo
+	 * Puts pathkey and fileinfo as a record to path cache
+	 * 
+	 * @param pathKey  path of the file
+	 * @param fileInfo File info as a value
 	 */
 	public void put(String pathKey, FileInfo fileInfo) {
 
@@ -49,8 +60,10 @@ public class MapCache {
 	}
 
 	/**
-	 * @param pathKey
-	 * @return
+	 * Gets the file info
+	 * 
+	 * @param pathKey path of the file
+	 * @return file info
 	 */
 	public FileInfo get(String pathKey) {
 
@@ -58,7 +71,9 @@ public class MapCache {
 	}
 
 	/**
-	 * @param pathKey
+	 * Removes the element from the cache
+	 * 
+	 * @param pathKey path of the file
 	 */
 	public void remove(String pathKey) {
 
@@ -66,7 +81,7 @@ public class MapCache {
 	}
 
 	/**
-	 * 
+	 * Removes all elements from the cache
 	 */
 	public void clear() {
 
@@ -74,8 +89,10 @@ public class MapCache {
 	}
 
 	/**
-	 * @param pathKey
-	 * @return
+	 * Returns true if cache has an element with pathkey
+	 * 
+	 * @param pathKey Path of the file
+	 * @return true if cache has an element
 	 */
 	public boolean containsKey(String pathKey) {
 
@@ -83,15 +100,17 @@ public class MapCache {
 	}
 
 	/**
-	 * @return
+	 * Returns the number of elements in the cache
+	 * 
+	 * @return size of the cache
 	 */
 	public int size() {
 
 		return pathCache.size();
-
 	}
 
 	/**
+	 * Sorting by File Size Ascending
 	 * 
 	 */
 	public void sortByFileSizeAsc() {
@@ -100,6 +119,7 @@ public class MapCache {
 	}
 
 	/**
+	 * Sorting by File Size Descending
 	 * 
 	 */
 	public void sortByFileSizeDesc() {
@@ -108,6 +128,7 @@ public class MapCache {
 	}
 
 	/**
+	 * Sorting by last Accessed Ascending
 	 * 
 	 */
 	public void sortByAccessedAsc() {
@@ -116,6 +137,7 @@ public class MapCache {
 	}
 
 	/**
+	 * Sorting by last Accessed Descending
 	 * 
 	 */
 	public void sortByAccessedDesc() {
@@ -124,7 +146,9 @@ public class MapCache {
 	}
 
 	/**
-	 * @param sortStrategy
+	 * Common method for sorting strategies
+	 * 
+	 * @param sortStrategy Sorting strategy
 	 */
 	private void sortBy(Comparator<Entry<String, FileInfo>> sortStrategy) {
 
@@ -134,7 +158,7 @@ public class MapCache {
 	}
 
 	/**
-	 * @author den
+	 * Sorting by accessed Ascending Comparator
 	 *
 	 */
 	class SortByAccessedAsc implements Comparator<Entry<String, FileInfo>> {
@@ -147,7 +171,7 @@ public class MapCache {
 	}
 
 	/**
-	 * @author den
+	 * Sorting by accessed Descending Comparator
 	 *
 	 */
 	class SortByAccessedDesc implements Comparator<Entry<String, FileInfo>> {
@@ -160,7 +184,7 @@ public class MapCache {
 	}
 
 	/**
-	 * @author den
+	 * Sorting by size Ascending Comparator
 	 *
 	 */
 	class SortBySizeAsc implements Comparator<Entry<String, FileInfo>> {
@@ -174,7 +198,7 @@ public class MapCache {
 	};
 
 	/**
-	 * @author den
+	 * Sorting by size Descending Comparator
 	 *
 	 */
 	class SortBySizeDesc implements Comparator<Entry<String, FileInfo>> {

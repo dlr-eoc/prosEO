@@ -9,27 +9,32 @@ import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.dlr.proseo.storagemgr.rest.ProductControllerImpl;
-
 /**
+ * Common file utilities
+ * 
  * @author Denys Chaykovskiy
  *
  */
 public class FileUtils {
 
+	/** the full path to file */
 	private String path;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(FileUtils.class);
 
 	/**
-	 * @return
+	 * Gets the path to file
+	 * 
+	 * @return the path to file
 	 */
 	public String getPath() {
 		return path;
 	}
 
 	/**
+	 * Sets the path to file
+	 * 
 	 * @param path
 	 */
 	public void setPath(String path) {
@@ -37,7 +42,9 @@ public class FileUtils {
 	}
 
 	/**
-	 * @param path
+	 * Constructor sets the path
+	 * 
+	 * @param path Path to file
 	 */
 	public FileUtils(String path) {
 
@@ -45,9 +52,9 @@ public class FileUtils {
 	}
 
 	/**
-	 * @param path
-	 * @param fileName
-	 * @param content
+	 * Creates the file with the content
+	 * 
+	 * @param content Content of the file
 	 */
 	public void createFile(String content) {
 
@@ -70,8 +77,9 @@ public class FileUtils {
 	}
 
 	/**
-	 * @param path
-	 * @return
+	 * Gets the file size
+	 * 
+	 * @return the file size
 	 */
 	public long getFileSize() {
 
@@ -81,9 +89,9 @@ public class FileUtils {
 	}
 
 	/**
-	 * @param path
-	 * @return
-	 * @throws IOException
+	 * Gets the file content
+	 * 
+	 * @return the content of the file
 	 */
 	public String getFileContent() {
 
@@ -101,8 +109,9 @@ public class FileUtils {
 	}
 
 	/**
-	 * @param path
-	 * @param exceptionMessage
+	 * Checks if path is a file
+	 * 
+	 * @param exceptionMessage Exception Message will be shown if path is not a file
 	 */
 	private void checkIfFile(String exceptionMessage) {
 
