@@ -1,0 +1,28 @@
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+ #       org.apache.http: DEBUG
+ #       org.springframework.web.client: DEBUG
+proseo:
+    xbip:
+        # Satellite identifier (e. g. "PTS", "S5P" ...)
+        satellite: PTS
+        # X-band station unit ID (if used, default "00")
+        station.unit: 01
+        # Path to the XBIP directory (mounted WebDAV volume)
+        directory: /Path/to/WebDAV/volume
+        # Interval between pickup point checks in milliseconds (e. g. every min)
+        check.interval: 60000
+        
+        history:
+            # Path to the file for storing transfer history (on a persistent volume)
+            file: /Path/to/transfer/history/file
+            # Interval to truncate transfer history file in milliseconds (e. g. daily)
+            truncate.interval: 86400000
+            # Period to retain transfer history entries for, in milliseconds (e. g. one week)
+            retention: 604800000
+            
+    l0:
+        # path to the target CADU directory (for L0 processing)
+        directory.cadu: /Path/to/CADU/directory

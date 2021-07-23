@@ -38,7 +38,7 @@ public abstract class BaseMonitor {
 	/** Interval between pickup point checks in milliseconds, default is one second */
 	private long checkInterval = 1000;
 	
-	/** Interval to truncate transfer history file, default is one day */
+	/** Interval to truncate transfer history file in milliseconds, default is one day */
 	private long truncateInterval = 24 * 60 * 60 * 1000;
 	
 	/** Period to retain transfer history entries for, default is seven days */
