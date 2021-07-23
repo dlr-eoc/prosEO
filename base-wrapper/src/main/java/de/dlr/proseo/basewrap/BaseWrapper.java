@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -87,7 +86,7 @@ public class BaseWrapper {
 			".xml";
 	protected String REL_CONTAINER_JOF_PATH = CONTAINER_JOF_PATH;
 	/** Directory prefix of produced output data (available for wrapper subclasses) */
-	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = String.valueOf(JOB_ORDER_ID);
+	protected static final String CONTAINER_OUTPUTS_PATH_PREFIX = "processor" + File.separator + String.valueOf(JOB_ORDER_ID);
 
 	/* Message strings */
 	private static final String MSG_CHECKING_ENVIRONMENT = "Checking {} environment variables:";
@@ -261,7 +260,11 @@ public class BaseWrapper {
 
 		logger.info(MSG_CHECKING_ENVIRONMENT, ENV_VARS.values().length);
 		for (ENV_VARS e: ENV_VARS.values()) {
-			logger.info("... {} = {}", e, System.getenv(e.toString()));
+			if (ENV_VARS.PROSEO_PW == e || ENV_VARS.STORAGE_PASSWORD == e) {
+				logger.info("... {} = {}", e, "(not disclosed)");
+			} else {
+				logger.info("... {} = {}", e, System.getenv(e.toString()));
+			}
 		}
 
 		boolean envOK = true;
@@ -847,7 +850,8 @@ public class BaseWrapper {
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 					// Nothing to do
-					return null;
+					if (logger.isTraceEnabled()) logger.trace("... before visiting directory " + dir);
+					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
@@ -858,13 +862,13 @@ public class BaseWrapper {
 					} catch (IOException e) {
 						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), e.getMessage());
 					}
-					return null;
+					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
 				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
 					logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), "Call to visitFileFailed");
-					return null;
+					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
@@ -875,9 +879,10 @@ public class BaseWrapper {
 					} catch (IOException e) {
 						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString(), e.getMessage());
 					}
-					return null;
+					return FileVisitResult.CONTINUE;
 				}});
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory, e.getMessage());
 		}
 	}

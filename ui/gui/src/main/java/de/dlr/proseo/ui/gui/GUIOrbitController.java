@@ -55,6 +55,12 @@ public class GUIOrbitController extends GUIBaseController {
 		 * Retrieve the orbits of a spacecraft
 		 * 
 		 * @param spacecraft The spacecraft identifier
+		 * @param startTimeFrom Select start time from
+		 * @param startTimeTo Select stop time until
+		 * @param numberFrom Select orbit number from
+		 * @param numberTo Select orbit number to
+		 * @param fromIndex Paging start  
+		 * @param toIndex Paging stop
 		 * @param sortby The sort column
 		 * @param up The sort direction (true for up)
 		 * @param model The model to hold the data
@@ -64,6 +70,10 @@ public class GUIOrbitController extends GUIBaseController {
 		@RequestMapping(value = "/orbits/get")
 		public DeferredResult<String> getOrbits(
 				@RequestParam(required = false, value = "spacecraft") String spacecraft,
+				@RequestParam(required = false, value = "startTimeFrom") String startTimeFrom,
+				@RequestParam(required = false, value = "startTimeTo") String startTimeTo,
+				@RequestParam(required = false, value = "numberFrom") Long numberFrom,
+				@RequestParam(required = false, value = "numberTo") Long numberTo,
 				@RequestParam(required = false, value = "recordFrom") Long fromIndex,
 				@RequestParam(required = false, value = "recordTo") Long toIndex,
 				@RequestParam(required = false, value = "sortby") String sortby,
@@ -88,7 +98,7 @@ public class GUIOrbitController extends GUIBaseController {
 			Long pages = (count / pageSize) + deltaPage;
 			Long page = (from / pageSize) + 1;
 			
-			Mono<ClientResponse> mono = get(spacecraft, from, to);
+			Mono<ClientResponse> mono = get(spacecraft, startTimeFrom, startTimeTo, numberFrom, numberTo, from, to);
 			DeferredResult<String> deferredResult = new DeferredResult<String>();
 			List<Object> orbits = new ArrayList<>();
 
@@ -143,12 +153,28 @@ public class GUIOrbitController extends GUIBaseController {
 			return deferredResult;
 		}
 
-		private Mono<ClientResponse> get(String spacecraft, Long from, Long to) {
+		private Mono<ClientResponse> get(String spacecraft, String startTimeFrom, String startTimeTo, Long numberFrom, Long numberTo, Long from, Long to) {
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String uri = serviceConfig.getOrderManagerUrl() + "/orbits";
 			String divider = "?";
 			if (spacecraft != null) {
 				uri += divider + "spacecraftCode=" + spacecraft;
+				divider ="&";
+			}
+			if (startTimeFrom != null) {
+				uri += divider + "startTimeFrom=" + startTimeFrom;
+				divider ="&";
+			}
+			if (startTimeTo != null) {
+				uri += divider + "startTimeTo=" + startTimeTo;
+				divider ="&";
+			}
+			if (numberFrom != null) {
+				uri += divider + "orbitNumberFrom=" + numberFrom;
+				divider ="&";
+			}
+			if (numberTo != null) {
+				uri += divider + "orbitNumberTo=" + numberTo;
 				divider ="&";
 			}
 			if (from != null) {
