@@ -70,13 +70,19 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.filecheckmaxcycles}")
 	private String fileCheckMaxCycles;
 	
-	/** Wait time for file size check cycle in milliseconds */
-	@Value("${proseo.storageManager.filecheckwaittime}")
-	private String fileCheckWaitTime;
+	@Value("${proseo.storageManagerCache.expectedUsage}")
+	private String expectedCacheUsage;
+	
+	@Value("${proseo.storageManagerCache.maximumUsage}")
+	private String maximumCacheUsage;
 
 	/** Shared secret for Storage Manager download tokens */
 	@Value("${proseo.storageManager.secret}")
 	private String storageManagerSecret;
+	
+	/** Wait time for file size check cycle in milliseconds */
+	@Value("${proseo.storageManager.filecheckwaittime}")
+	private String fileCheckWaitTime;
 	
 	// Alluxio configuration values currently not in use
 	
@@ -248,6 +254,20 @@ public class StorageManagerConfiguration {
 	 */
 	public String getS3EndPoint() {
 		return s3EndPoint;
+	}
+	
+	/**
+	 * @return the expected cache usage
+	 */
+	public String getExpectedCacheUsage() {
+		return expectedCacheUsage;
+	}
+
+	/**
+	 * @return the maximum cache usage
+	 */
+	public String getMaximumCacheUsage() {
+		return maximumCacheUsage;
 	}
 
 }
