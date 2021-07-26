@@ -21,45 +21,58 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix="proseo")
 public class XbipMonitorConfiguration {
 	
+	/** The XBIP Monitor identifier */
+	@Value("${proseo.xbip.id}")
+	private String xbipId;
+	
 	/** The path to the XBIP directory (mounted WebDAV volume) */
-	@Value("${xbip.directory}")
+	@Value("${proseo.xbip.directory}")
 	private String xbipDirectoryPath;
 	
 	/** The satellite identifier (e. g. "S1B") */
-	@Value("${xbip.satellite}")
+	@Value("${proseo.xbip.satellite}")
 	private String xbipSatellite;
 	
 	/** The X-band station unit ID (default "00") */
-	@Value("${xbip.station.unit:00}")
+	@Value("${proseo.xbip.station.unit:00}")
 	private String xbipStationUnit;
 	
 	/** The interval between pickup point checks in milliseconds */
-	@Value("${xbip.check.interval}")
+	@Value("${proseo.xbip.check.interval}")
 	private Long xbipCheckInterval;
 	
 	/** The path to the file for storing transfer history */
-	@Value("${xbip.history.file}")
+	@Value("${proseo.xbip.history.file}")
 	private String xbipHistoryPath;
 	
 	/** The period to retain transfer history entries for, in milliseconds */
-	@Value("${xbip.history.retention}")
+	@Value("${proseo.xbip.history.retention}")
 	private Long xbipHistoryRetention;
 	
 	/** The interval to truncate transfer history file in milliseconds */
-	@Value("${xbip.history.truncate.interval}")
+	@Value("${proseo.xbip.history.truncate.interval}")
 	private Long xbipTruncateInterval;
 	
 	/** The path to the target CADU directory (for L0 processing) */
-	@Value("${l0.directory.cadu}")
+	@Value("${proseo.l0.directory.cadu}")
 	private String l0CaduDirectoryPath;
 	
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
-	@Value("${l0.command}")
+	@Value("${proseo.l0.command}")
 	private String l0Command;
 	
 	/** A logger for this class */
 //	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
 	
+	/**
+	 * Gets the XBIP Monitor identifier
+	 * 
+	 * @return the XBIP Monitor identifier
+	 */
+	public String getXbipId() {
+		return xbipId;
+	}
+
 	/**
 	 * Gets the path to the XBIP directory
 	 * 

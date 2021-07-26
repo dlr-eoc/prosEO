@@ -6,6 +6,7 @@
 package de.dlr.proseo.api.xbipmon;
 
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +60,7 @@ public class XbipMonitor extends BaseMonitor {
 	private String l0ProcessorCommand;
 
 	/** The last copy performance in MiB/s */
-	private Double lastCopyPerformance;
+	private Double lastCopyPerformance = 0.0;
 
 	/** Indicator for parallel copying processes
 	/* package */ Map<String, Boolean> copySuccess = new HashMap<>();
@@ -78,6 +79,8 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_COPY_FAILED = 5306;
 	/* package */ static final int MSG_ID_COPY_FILE_FAILED = 5307;
 	private static final int MSG_ID_COPY_INTERRUPTED = 5307;
+	private static final int MSG_ID_COMMAND_START_FAILED = 5308;
+	private static final int MSG_ID_SESSION_TRANSFER_INCOMPLETE = 5309;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
@@ -88,10 +91,10 @@ public class XbipMonitor extends BaseMonitor {
 	private static final String MSG_COPY_FAILED = "(E%d) Copying of session directory %s failed (cause: %s)";
 	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
 	private static final String MSG_COPY_INTERRUPTED = "(E%d) Copying of session directory %s failed due to interrupt";
+	private static final String MSG_COMMAND_START_FAILED = "(E%d) Start of L0 processing command '%s' failed (cause: %s)";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
-
-
+	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
@@ -185,6 +188,15 @@ public class XbipMonitor extends BaseMonitor {
 		logger.info("CADU target directory  . . : " + caduDirectoryPath);
 		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
 		
+		Thread monitorThread = new Thread() {
+			
+			@Override
+			public void run() {
+				this.run();
+			}
+		};
+		
+		monitorThread.start();
 	}
 	
 	/**
@@ -218,19 +230,47 @@ public class XbipMonitor extends BaseMonitor {
 		if (Files.isDirectory(xbipDirectory) && Files.isReadable(xbipDirectory)) {
 			try (DirectoryStream<Path> xbipList = Files.newDirectoryStream(xbipDirectory, sessionFilter)) {
 				xbipList.forEach(sessionEntry -> {
-						String[] sessionEntryParts = sessionEntry.getFileName().toString().split("_");
-						if (4 == sessionEntryParts.length) {
-							TransferSession transferSession = new TransferSession();
-							transferSession.satelliteIdentifier = satelliteIdentifier;
-							transferSession.stationUnitIdentifier = stationUnitIdentifier;
-							transferSession.sessionIdentifier = sessionEntryParts[2];
-							transferSession.sessionPath = sessionEntry;
-							objectsToTransfer.add(transferSession);
-						} else {
-							logger.warn(String.format(MSG_XBIP_ENTRY_MALFORMED, MSG_ID_XBIP_ENTRY_MALFORMED, sessionEntry.getFileName()));
-						}
+					
+					String[] sessionEntryParts = sessionEntry.getFileName().toString().split("_");
+					
+					if (5 != sessionEntryParts.length) {
+						logger.warn(String.format(MSG_XBIP_ENTRY_MALFORMED, MSG_ID_XBIP_ENTRY_MALFORMED, sessionEntry.getFileName().toString()));
+						return;
+					}
 						
-					});
+					// Check availability of DSIB files in each channel directory
+					String[] channelEntries = sessionEntry.toFile().list();
+					if (0 == channelEntries.length) {
+						logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
+								sessionEntry.getFileName().toString()));
+						return;
+					}
+					for (String channelEntry: channelEntries) {
+						String[] channelEntryParts = channelEntry.split("_");
+						if (2 != channelEntryParts.length) {
+							logger.warn(String.format(MSG_XBIP_ENTRY_MALFORMED, MSG_ID_XBIP_ENTRY_MALFORMED, channelEntry));
+							return;
+						}
+						String dsibFileName = sessionEntry.getFileName().toString()
+								.replace("dat", "ch_" + channelEntryParts[1] + "_DSIB.xml");
+						if (logger.isTraceEnabled()) logger.trace("... checking existence of DSIB file " + dsibFileName);
+						if (!Files.exists(sessionEntry.resolve(channelEntry).resolve(dsibFileName))) {
+							// Session transfer incomplete, skip
+							logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
+									sessionEntry.getFileName().toString()));
+							return;
+						}
+					}
+					
+					// Session transfer is complete, create transfer object
+					TransferSession transferSession = new TransferSession();
+					transferSession.satelliteIdentifier = satelliteIdentifier;
+					transferSession.stationUnitIdentifier = stationUnitIdentifier;
+					transferSession.sessionIdentifier = sessionEntryParts[2];
+					transferSession.sessionPath = sessionEntry;
+					objectsToTransfer.add(transferSession);
+					
+				});
 			} catch (IOException e) {
 				logger.error(String.format(MSG_XBIP_NOT_READABLE, MSG_ID_XBIP_NOT_READABLE, xbipDirectory.toString(), e.getMessage()));
 			}
@@ -369,20 +409,41 @@ public class XbipMonitor extends BaseMonitor {
 	 * the path to the session CADU data as parameter)
 	 */
 	@Override
-	protected boolean triggerFollowOnAction(TransferObject object) {
-		if (logger.isTraceEnabled()) logger.trace(">>> triggerFollowOnAction({})", null == object ? "null" : object.getIdentifier());
+	protected boolean triggerFollowOnAction(TransferObject transferObject) {
+		if (logger.isTraceEnabled()) logger.trace(">>> triggerFollowOnAction({})",
+				null == transferObject ? "null" : transferObject.getIdentifier());
 
-		if (null == object) {
+		if (null == transferObject) {
 			logger.error(String.format(MSG_TRANSFER_OBJECT_IS_NULL, MSG_ID_TRANSFER_OBJECT_IS_NULL));
 			return false;
 		}
 		
-		if (object instanceof TransferSession) {
+		if (transferObject instanceof TransferSession) {
+			TransferSession transferSession = (TransferSession) transferObject;
 			
-			// TODO Call external process
+			// Determine the correct target directory
+			Path sessionDirectory = transferSession.sessionPath.getFileName();
+			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
+
+			// Call external process
+			ProcessBuilder processBuilder = new ProcessBuilder();
+
+			String command = config.getL0Command() + " " + caduDirectory.toString();
+			processBuilder.command(command.split(" "));
+			processBuilder.redirectErrorStream(true);
+			processBuilder.redirectOutput(Redirect.INHERIT);
+			
+			try {
+				
+				processBuilder.start();
+				
+			} catch (IOException e) {
+				logger.error(String.format(MSG_COMMAND_START_FAILED, MSG_ID_COMMAND_START_FAILED, command, e.getMessage()));
+				return false;
+			}
 
 		} else {
-			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier()));
+			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, transferObject.getIdentifier()));
 			return false;
 		}
 

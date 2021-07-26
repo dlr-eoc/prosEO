@@ -19,10 +19,8 @@
     <properties>
         <module.version>0.8.0</module.version>
         <main.basedir>${basedir}/../..</main.basedir>
-        <raml-path-query>src/main/resources/raml/prip-query.raml</raml-path-query>
-        <raml-path-download>src/main/resources/raml/prip-download.raml</raml-path-download>
-        <raml-path-oauth2>src/main/resources/raml/prip-oauth2.raml</raml-path-oauth2>
-        <raml-base-package>de.dlr.proseo.api.prip.rest</raml-base-package>
+        <raml-path>src/main/resources/raml/xbip-monitor-api.raml</raml-path>
+        <raml-base-package>de.dlr.proseo.api.xbipmon.rest</raml-base-package>
     </properties>
 
     <dependencies>
@@ -104,7 +102,7 @@
                 <configuration>
                     <basePackage>${raml-base-package}</basePackage>
                     <injectHttpHeadersParameter>true</injectHttpHeadersParameter>
-                    <rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerInterfaceRule</rule>
+                    <rule>com.phoenixnap.oss.ramlplugin.raml2code.rules.Spring4ControllerDecoratorRule</rule>
                 </configuration>
                 <executions>
                     <execution>
