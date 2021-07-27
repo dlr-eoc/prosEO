@@ -11,11 +11,11 @@ proseo:
         # Satellite identifier (e. g. "PTS", "S5P" ...)
         satellite: S1B
         # X-band station unit ID (if used, default "00")
-        station.unit: 01
+        station.unit: "01"
         # Path to the XBIP directory (mounted WebDAV volume)
-        directory: src/test/resources/xbip
-        # Interval between pickup point checks in milliseconds (e. g. every min) --> every 20 s
-        check.interval: 20000
+        directory: src/test/resources/xbip/NOMINAL
+        # Interval between pickup point checks in milliseconds (e. g. every min) --> every 3 s
+        check.interval: 3000
         
         history:
             # Path to the file for storing transfer history (on a persistent volume)
@@ -25,8 +25,11 @@ proseo:
             # Period to retain transfer history entries for, in milliseconds (e. g. one week) --> every hour
             retention: 3600000
             
+        # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes) --> 500 B
+        performance.minsize: 500
+            
     l0:
         # path to the target CADU directory (for L0 processing)
         directory.cadu: target/test/cadu
         # command to execute for L0 processing
-        command: echo Starting L0 processing for CADU directory
+        command: /bin/ls -lR

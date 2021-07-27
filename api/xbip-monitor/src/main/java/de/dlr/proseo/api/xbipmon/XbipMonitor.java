@@ -25,6 +25,7 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
@@ -38,6 +39,7 @@ import de.dlr.proseo.api.basemon.TransferObject;
  * @author Dr. Thomas Bassler
  */
 @Component
+@Scope("prototype")
 public class XbipMonitor extends BaseMonitor {
 	
 	/** The path to the XBIP directory (mounted WebDAV volume) */
@@ -59,10 +61,10 @@ public class XbipMonitor extends BaseMonitor {
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
 	private String l0ProcessorCommand;
 
-	/** The last copy performance in MiB/s */
-	private Double lastCopyPerformance = 0.0;
+	/** The last copy performance in MiB/s (static, because it may be read and written from different threads) */
+	private static Double lastCopyPerformance = 0.0;
 
-	/** Indicator for parallel copying processes
+	/** Indicator for parallel copying processes */
 	/* package */ Map<String, Boolean> copySuccess = new HashMap<>();
 
 	/** The XBIP Monitor configuration to use */
@@ -81,6 +83,8 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_COPY_INTERRUPTED = 5307;
 	private static final int MSG_ID_COMMAND_START_FAILED = 5308;
 	private static final int MSG_ID_SESSION_TRANSFER_INCOMPLETE = 5309;
+	private static final int MSG_ID_SESSION_TRANSFER_COMPLETED = 5310;
+	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
@@ -95,6 +99,8 @@ public class XbipMonitor extends BaseMonitor {
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
+	private static final String MSG_SESSION_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed with result %s";
+	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
@@ -156,7 +162,7 @@ public class XbipMonitor extends BaseMonitor {
 		 */
 		@Override
 		public String getIdentifier() {
-			return String.format("%s|%s|%s", satelliteIdentifier, stationUnitIdentifier, sessionIdentifier);
+			return String.format("%s_%s_%s", stationUnitIdentifier, satelliteIdentifier, sessionIdentifier);
 		}
 		
 	}
@@ -188,15 +194,6 @@ public class XbipMonitor extends BaseMonitor {
 		logger.info("CADU target directory  . . : " + caduDirectoryPath);
 		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
 		
-		Thread monitorThread = new Thread() {
-			
-			@Override
-			public void run() {
-				this.run();
-			}
-		};
-		
-		monitorThread.start();
 	}
 	
 	/**
@@ -204,7 +201,7 @@ public class XbipMonitor extends BaseMonitor {
 	 * 
 	 * @return the last copy performance in MiB/s
 	 */
-	public Double getLastCopyPerformance() {
+	synchronized public Double getLastCopyPerformance() {
 		return lastCopyPerformance;
 	}
 
@@ -213,8 +210,37 @@ public class XbipMonitor extends BaseMonitor {
 	 * 
 	 * @param copyPerformance the copy performance in MiB/s
 	 */
-	/* package */ synchronized void setLastCopyPerformance(Double copyPerformance) {
+	synchronized /* package */ void setLastCopyPerformance(Double copyPerformance) {
 		lastCopyPerformance = copyPerformance;
+	}
+	
+	/**
+	 * Thread-safe method to put the given value at the given key into map copySuccess
+	 * 
+	 * @param key the map key
+	 * @param value the map value
+	 */
+	synchronized /* package */ void putCopySuccess(String key, Boolean value) {
+		copySuccess.put(key, value);
+	}
+	
+	/**
+	 * Thread-safe method to get the value at the given key from map copySuccess
+	 * 
+	 * @param key the map key
+	 * @return the map value
+	 */
+	synchronized /* package */ Boolean getCopySuccess(String key) {
+		return copySuccess.get(key);
+	}
+	
+	/**
+	 * Thread-safe method to remove the value at the given key from map copySuccess
+	 * 
+	 * @param key the map key
+	 */
+	synchronized /* package */ void removeCopySuccess(String key) {
+		copySuccess.remove(key);
 	}
 
 	/**
@@ -228,8 +254,16 @@ public class XbipMonitor extends BaseMonitor {
 		List<TransferObject> objectsToTransfer = new ArrayList<>();
 		
 		if (Files.isDirectory(xbipDirectory) && Files.isReadable(xbipDirectory)) {
+			
+			if (logger.isTraceEnabled()) logger.trace("... checking directory {} with session filter {}", xbipDirectory, sessionFilter);
+			
 			try (DirectoryStream<Path> xbipList = Files.newDirectoryStream(xbipDirectory, sessionFilter)) {
+				
+				if (logger.isTraceEnabled()) logger.trace("... xbipList created " + xbipList);
+				
 				xbipList.forEach(sessionEntry -> {
+
+					if (logger.isTraceEnabled()) logger.trace("... checking sessionEntry " + sessionEntry.getFileName());
 					
 					String[] sessionEntryParts = sessionEntry.getFileName().toString().split("_");
 					
@@ -246,27 +280,33 @@ public class XbipMonitor extends BaseMonitor {
 						return;
 					}
 					for (String channelEntry: channelEntries) {
+
+						if (logger.isTraceEnabled()) logger.trace("... checking channelEntry " + channelEntry);
+						
 						String[] channelEntryParts = channelEntry.split("_");
 						if (2 != channelEntryParts.length) {
 							logger.warn(String.format(MSG_XBIP_ENTRY_MALFORMED, MSG_ID_XBIP_ENTRY_MALFORMED, channelEntry));
 							return;
 						}
 						String dsibFileName = sessionEntry.getFileName().toString()
-								.replace("dat", "ch_" + channelEntryParts[1] + "_DSIB.xml");
-						if (logger.isTraceEnabled()) logger.trace("... checking existence of DSIB file " + dsibFileName);
-						if (!Files.exists(sessionEntry.resolve(channelEntry).resolve(dsibFileName))) {
+								.replace("dat", "ch" + channelEntryParts[1] + "_DSIB.xml");
+						Path dsibFilePath = sessionEntry.resolve(channelEntry).resolve(dsibFileName);
+						if (logger.isTraceEnabled()) logger.trace("... checking existence of DSIB file " + dsibFilePath);
+						if (!Files.exists(dsibFilePath)) {
 							// Session transfer incomplete, skip
 							logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
 									sessionEntry.getFileName().toString()));
 							return;
 						}
 					}
+
+					if (logger.isTraceEnabled()) logger.trace("... downloadable session found!");
 					
 					// Session transfer is complete, create transfer object
 					TransferSession transferSession = new TransferSession();
 					transferSession.satelliteIdentifier = satelliteIdentifier;
 					transferSession.stationUnitIdentifier = stationUnitIdentifier;
-					transferSession.sessionIdentifier = sessionEntryParts[2];
+					transferSession.sessionIdentifier = sessionEntryParts[3];
 					transferSession.sessionPath = sessionEntry;
 					objectsToTransfer.add(transferSession);
 					
@@ -300,7 +340,7 @@ public class XbipMonitor extends BaseMonitor {
 			TransferSession transferSession = (TransferSession) object;
 			
 			// Optimistically we assume success (actually: it's an AND condition)
-			copySuccess.put(transferSession.getIdentifier(), true);
+			putCopySuccess(transferSession.getIdentifier(), true);
 
 			List<Thread> copyTasks = new ArrayList<>();
 			
@@ -344,16 +384,19 @@ public class XbipMonitor extends BaseMonitor {
 
 									Instant copyStart = Instant.now();
 
-									Files.copy(sessionChannelFile, caduChannelDirectory, StandardCopyOption.REPLACE_EXISTING,
+									Files.copy(
+											sessionChannelFile,
+											caduChannelDirectory.resolve(sessionChannelFile.getFileName()),
+											StandardCopyOption.REPLACE_EXISTING,
 											StandardCopyOption.COPY_ATTRIBUTES);
 
 									Duration copyDuration = Duration.between(copyStart, Instant.now());
 									Double copyPerformance = sessionChannelFile.toFile().length() / // Bytes
-									(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
+											(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
 											/ (1024 * 1024); // --> MiB/s
 									
-									// Record the performance for files of sufficient size (currently 20 MiB) - TODO make threshold configurable
-									if (20 * 1024 * 1024 < sessionChannelFile.toFile().length()) {
+									// Record the performance for files of sufficient size
+									if (config.getXbipPerformanceMinSize() < sessionChannelFile.toFile().length()) {
 										setLastCopyPerformance(copyPerformance);
 									}
 									
@@ -363,7 +406,7 @@ public class XbipMonitor extends BaseMonitor {
 								} catch (IOException e) {
 									logger.error(String.format(MSG_COPY_FILE_FAILED, MSG_ID_COPY_FILE_FAILED,
 											sessionChannelFile.toString(), e.getMessage()));
-									copySuccess.put(transferSession.getIdentifier(), false);
+									putCopySuccess(transferSession.getIdentifier(), false);
 								}
 							}
 
@@ -391,10 +434,10 @@ public class XbipMonitor extends BaseMonitor {
 			}
 			
 			// Check whether any copy action failed
-			Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
-			copySuccess.remove(transferSession.getIdentifier());
+			Boolean myCopySuccess = getCopySuccess(transferSession.getIdentifier());
+			removeCopySuccess(transferSession.getIdentifier());
 			
-			if (logger.isTraceEnabled()) logger.trace("<<< transferToTargetDir: " + (myCopySuccess ? "SUCCESS" : "FAILURE"));
+			logger.info(String.format(MSG_SESSION_TRANSFER_COMPLETED, MSG_ID_SESSION_TRANSFER_COMPLETED, transferSession.getIdentifier(), (myCopySuccess ? "SUCCESS" : "FAILURE")));
 			
 			return myCopySuccess;
 
@@ -431,11 +474,13 @@ public class XbipMonitor extends BaseMonitor {
 			String command = config.getL0Command() + " " + caduDirectory.toString();
 			processBuilder.command(command.split(" "));
 			processBuilder.redirectErrorStream(true);
-			processBuilder.redirectOutput(Redirect.INHERIT);
+			processBuilder.redirectOutput(Redirect.DISCARD);
 			
 			try {
 				
 				processBuilder.start();
+				
+				logger.info(String.format(MSG_FOLLOW_ON_ACTION_STARTED, MSG_ID_FOLLOW_ON_ACTION_STARTED, transferSession.getIdentifier(), command));
 				
 			} catch (IOException e) {
 				logger.error(String.format(MSG_COMMAND_START_FAILED, MSG_ID_COMMAND_START_FAILED, command, e.getMessage()));

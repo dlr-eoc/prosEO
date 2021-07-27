@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Dr. Thomas Bassler
  */
-public abstract class BaseMonitor {
+public abstract class BaseMonitor extends Thread {
 	
 	/** Interval in millliseconds to check for completed subtasks */
 	private static final long TASK_WAIT_INTERVAL = 500;
@@ -491,8 +491,10 @@ public abstract class BaseMonitor {
 	}
 	
 	/**
-	 * Run forever (convenience function for calling {@link #run(Integer)} with a <code>null</code> argument)
+	 * Run forever (as required by Thread superclass, at the same time convenience function for calling {@link #run(Integer)} 
+	 * with a <code>null</code> argument)
 	 */
+	@Override
 	public void run() {
 		run(null);
 	}

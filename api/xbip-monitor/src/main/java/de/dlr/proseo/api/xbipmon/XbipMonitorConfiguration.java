@@ -5,8 +5,6 @@
  */
 package de.dlr.proseo.api.xbipmon;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -53,6 +51,10 @@ public class XbipMonitorConfiguration {
 	@Value("${proseo.xbip.history.truncate.interval}")
 	private Long xbipTruncateInterval;
 	
+	/** The minimum size in bytes of a file to be used for performance measurements */
+	@Value("${proseo.xbip.performance.minsize}")
+	private Long xbipPerformanceMinSize;
+	
 	/** The path to the target CADU directory (for L0 processing) */
 	@Value("${proseo.l0.directory.cadu}")
 	private String l0CaduDirectoryPath;
@@ -60,9 +62,6 @@ public class XbipMonitorConfiguration {
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
 	@Value("${proseo.l0.command}")
 	private String l0Command;
-	
-	/** A logger for this class */
-//	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
 	
 	/**
 	 * Gets the XBIP Monitor identifier
@@ -134,6 +133,15 @@ public class XbipMonitorConfiguration {
 	 */
 	public Long getXbipHistoryRetention() {
 		return xbipHistoryRetention;
+	}
+
+	/**
+	 * Gets the minimum size for files used in performance measurements
+	 * 
+	 * @return the minimum file size in bytes
+	 */
+	public Long getXbipPerformanceMinSize() {
+		return xbipPerformanceMinSize;
 	}
 
 	/**
