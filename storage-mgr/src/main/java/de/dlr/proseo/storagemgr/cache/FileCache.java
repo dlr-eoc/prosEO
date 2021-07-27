@@ -119,25 +119,9 @@ public class FileCache {
 	private void init() {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> init({})");
-
-		path = cfg.getPosixWorkerMountPoint();
-
-		File directory = new File(path);
-
-		mapCache = new MapCache();
-
-		if (!directory.exists()) {
-
-			if (!directory.mkdirs()) {
-
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
-			}
-		}
-
-		putFilesToCache(path);
-
-		theFileCache = this;
+			logger.trace(">>> init()");
+		
+		setPath(cfg.getPosixWorkerMountPoint());
 	}
 
 	/**
@@ -199,6 +183,35 @@ public class FileCache {
 
 		return 100.0 * usedBytes / totalBytes;
 	}
+	
+	
+	/**
+	 * Clears the cache only (without deleting of files), sets the path and puts files in cache
+	 * 
+	 * @param pathKey The Cache Path 
+	 */
+	/* package */  void setPath(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setPath({})", pathKey);
+		
+		theFileCache = this;
+		path = pathKey;
+		
+		mapCache = new MapCache();
+
+		File directory = new File(path);
+	
+		if (!directory.exists()) {
+
+			if (!directory.mkdirs()) {
+
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+			}
+		}
+
+		putFilesToCache(path);
+	}
 
 	/**
 	 * Gets the path key from file cache
@@ -227,13 +240,26 @@ public class FileCache {
 	}
 
 	/**
-	 * Removes all cache elements and their files and accessed files on disk
+	 * Clears all cache elements only (files remain on disk) 
 	 * 
 	 */
 	/* package */ void clear() {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> clear()");
+		
+		mapCache.clear();
+	}
+	
+	
+	/**
+	 * Removes all cache elements and their connected files and accessed files from disk
+	 * 
+	 */
+	/* package */ void removeAll() {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> removeAll()");
 
 		Set<String> entries = mapCache.getCache().keySet();
 
@@ -242,7 +268,7 @@ public class FileCache {
 			remove(pathKey);
 		}
 	}
-
+	
 	/**
 	 * Gives the number of elements in cache
 	 * 

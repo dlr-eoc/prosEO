@@ -33,26 +33,27 @@ public class ProseoFilePosixTest {
 	@Autowired
 	private FileCache fileCache;
 
-	String testPath;
+	String testCachePath;
 	String sourceTestPath;
 
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
-		sourceTestPath = testUtils.getSourceTestPath();
+		testCachePath = testUtils.getTestCachePath();
+		sourceTestPath = testUtils.getTestSourcePath();
 	}
 
 	@Test
 	public void testCopyTo() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 
 		String sourcePath1 = sourceTestPath + "/" + "test1.txt";
 		String sourcePath2 = sourceTestPath + "/" + "test2.txt";
 
-		String targetPath1 = testPath + "/" + "test1.txt";
-		String targetPath2 = testPath + "/" + "test2.txt";
+		String targetPath1 = testCachePath + "/" + "test1.txt";
+		String targetPath2 = testCachePath + "/" + "test2.txt";
 
 		TestUtils.createFile(sourcePath1, "");
 		TestUtils.createFile(sourcePath2, "");
@@ -114,10 +115,8 @@ public class ProseoFilePosixTest {
 
 		assertTrue("Cache has not 2 elements: " + fileCache.size(), fileCache.size() == 2);
 		
-	
-
 		fileCache.clear();
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 
 	}
 

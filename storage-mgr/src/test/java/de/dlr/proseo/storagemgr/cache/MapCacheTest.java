@@ -43,7 +43,7 @@ public class MapCacheTest {
 	
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
+		testPath = testUtils.getTestCachePath();
 	}
 
 	/**
@@ -170,7 +170,7 @@ public class MapCacheTest {
 	public void testPathes() throws IOException {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
 
 		File file = new File(testPath);
 
@@ -178,7 +178,7 @@ public class MapCacheTest {
 		System.out.println("Absolute Path: " + file.getAbsolutePath());
 		System.out.println("Canonical Path: " + file.getCanonicalPath());
 		
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 
 	/**

@@ -39,11 +39,13 @@ public class FileCacheTest {
 	@Autowired
 	private FileCache fileCache;
 	
-	String testPath; 
+	String testCachePath; 
+	String cachePath; 
 	
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
+		testCachePath = testUtils.getTestCachePath();
+		cachePath = testUtils.getCachePath();
 	}
 	
 	/**
@@ -53,25 +55,25 @@ public class FileCacheTest {
 	public void testDeleteEmptyDirectoriesToTop() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
 		
-		String emptyDirectories = testPath + "/d1/d2/d3";
+		String emptyDirectories = testCachePath + "/d1/d2/d3";
 		
 		TestUtils.createDirectory(emptyDirectories);
 		
 		File f = new File(emptyDirectories);
 		
-		TestUtils.printDirectoryTree(testPath);
+		TestUtils.printDirectoryTree(testCachePath);
 
 		assertTrue("Empty Directories were not created: " + emptyDirectories, f.exists());
 
 		fileCache.deleteEmptyDirectoriesToTop(emptyDirectories);
 
-		TestUtils.printDirectoryTree(testPath);
+		TestUtils.printDirectoryTree(cachePath);
 
 		assertTrue("Empty Directories were not deleted: " + emptyDirectories, !f.exists());
 		
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -81,10 +83,11 @@ public class FileCacheTest {
 	public void testGetLastAccessed() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 		
 		String testFile = "testLastAccessed.txt";
-		String path = testPath + "/" + testFile;
+		String path = testCachePath + "/" + testFile;
 		FileUtils fileUtils = new FileUtils(path);
 
 		fileUtils.createFile("");
@@ -99,7 +102,8 @@ public class FileCacheTest {
 
 		assertTrue("Last Accessed File not exists: " + f.getPath(), f.exists() && !f.isDirectory());
 		
-		TestUtils.deleteTestDirectory();
+		fileCache.clear();
+		TestUtils.deleteTestDirectories();
 	}
 
 	/**
@@ -131,17 +135,16 @@ public class FileCacheTest {
 	public void testGetPutContainsRemove() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
-		
-		fileCache.clear();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 
-		String path1 = Paths.get(testPath + "/test/test1.txt").toString();
-		String path2 = Paths.get(testPath + "/test1/test2/test2.txt").toString();
-		String path3 = Paths.get(testPath + "/test1/test2/test3.txt").toString();
-		String path4 = Paths.get(testPath + "/test4.x").toString();
-		String path5 = Paths.get(testPath + "/test5.x").toString();
+		String path1 = Paths.get(testCachePath + "/test/test1.txt").toString();
+		String path2 = Paths.get(testCachePath + "/test1/test2/test2.txt").toString();
+		String path3 = Paths.get(testCachePath + "/test1/test2/test3.txt").toString();
+		String path4 = Paths.get(testCachePath + "/test4.x").toString();
+		String path5 = Paths.get(testCachePath + "/test5.x").toString();
 		
-		String pathNotExists =  Paths.get(testPath + "/xxx/xxx/zzz.txt").toString();
+		String pathNotExists =  Paths.get(testCachePath + "/xxx/xxx/zzz.txt").toString();
 		
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
@@ -150,7 +153,7 @@ public class FileCacheTest {
 		TestUtils.createFile(path4, "");
 		TestUtils.createFile(path5, "");
 			
-		fileCache.putFilesToCache(testPath);
+		fileCache.putFilesToCache(testCachePath);
 
 		assertTrue("Cache does not contain 5 elements after dir init: " + fileCache.size(), 
 				fileCache.size() == 5);
@@ -158,7 +161,7 @@ public class FileCacheTest {
 		System.out.println("Before adding the element: " + path1);
 
 		MapCacheTest.printCache("Cache after init, 5 elements:", fileCache.getMapCache());
-		TestUtils.printDirectoryTree(testPath);
+		TestUtils.printDirectoryTree(testCachePath);
 
 		assertTrue("Cache Exists failed: " + path2, fileCache.containsKey(path2));
 
@@ -171,15 +174,15 @@ public class FileCacheTest {
 		fileCache.remove(path2);
 
 		MapCacheTest.printCache("Cache after deleting 1 element: " + path2, fileCache.getMapCache());
-		TestUtils.printDirectoryTree(testPath);
+		TestUtils.printDirectoryTree(testCachePath);
 
 		fileCache.remove(path3);
 
 		MapCacheTest.printCache("Cache after deleting 1 element: " + path3, fileCache.getMapCache());
-		TestUtils.printDirectoryTree(testPath);
+		TestUtils.printDirectoryTree(testCachePath);
 		
 		fileCache.clear();
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 	
 	/**
@@ -189,12 +192,13 @@ public class FileCacheTest {
 	public void testInterface() {
 		
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 		
-		String path1 = Paths.get(testPath + "/" + "test1.txt").toString();
-		String path2 = Paths.get(testPath + "/" + "test2.txt").toString();
-		String path3 = Paths.get(testPath + "/" + "test3.txt").toString();
-		String pathNotExists = Paths.get(testPath + "/xxx/xxx/" + " zzz.txt").toString();
+		String path1 = Paths.get(testCachePath + "/" + "test1.txt").toString();
+		String path2 = Paths.get(testCachePath + "/" + "test2.txt").toString();
+		String path3 = Paths.get(testCachePath + "/" + "test3.txt").toString();
+		String pathNotExists = Paths.get(testCachePath + "/xxx/xxx/" + " zzz.txt").toString();
 		Instant timeNotChanged;
 		Instant timeNotChanged2; 
 		Instant timeChanged; 
@@ -202,7 +206,7 @@ public class FileCacheTest {
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		
-		fileCache.putFilesToCache(testPath);
+		fileCache.putFilesToCache(testCachePath);
 	
 		assertTrue("Cache does not contain 2 elements after dir init: " + fileCache.size(), 
 				fileCache.size() == 2);
@@ -304,6 +308,6 @@ public class FileCacheTest {
 				fileCache.size() == 3);
 	
 		fileCache.clear();
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 }

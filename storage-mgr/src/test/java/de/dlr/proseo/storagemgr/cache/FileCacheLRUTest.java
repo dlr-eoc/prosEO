@@ -30,11 +30,11 @@ public class FileCacheLRUTest {
 	@Autowired
 	private FileCache fileCache;
 	
-	String testPath; 
+	String testCachePath; 
 	
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
+		testCachePath = testUtils.getTestCachePath();
 	}
 	
 	/**
@@ -44,24 +44,25 @@ public class FileCacheLRUTest {
 	public void testLRU() {
 			 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 
-		String path1 = testPath + "/test1.txt";
-		String path2 = testPath + "/test2.txt";
-		String path3 = testPath + "/test3.txt";
+		String path1 = testCachePath + "/test1.txt";
+		String path2 = testCachePath + "/test2.txt";
+		String path3 = testCachePath + "/test3.txt";
 		
 		TestUtils.createFile(path1, "");
 		TestUtils.createFile(path2, "");
 		TestUtils.createFile(path3, "");
 		
-		fileCache.putFilesToCache(testPath);
+		fileCache.putFilesToCache(testCachePath);
 		
 		assertTrue("Cache has not 3 elements: " + fileCache.size(), fileCache.size() == 3);
 
 		// TO-DO: Test LRU, cfg is null 
 		
 		fileCache.clear();
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 
 
