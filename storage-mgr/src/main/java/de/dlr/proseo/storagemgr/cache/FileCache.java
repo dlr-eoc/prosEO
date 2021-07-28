@@ -1,6 +1,8 @@
 package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +22,7 @@ import org.springframework.util.Assert;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 
 /**
- * File cache for managing files in cache storage. 
+ * File cache for managing files in cache storage.
  * 
  * @author Denys Chaykovskiy
  *
@@ -120,7 +122,7 @@ public class FileCache {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> init()");
-		
+
 		setPath(cfg.getPosixWorkerMountPoint());
 	}
 
@@ -183,25 +185,25 @@ public class FileCache {
 
 		return 100.0 * usedBytes / totalBytes;
 	}
-	
-	
+
 	/**
-	 * Clears the cache only (without deleting of files), sets the path and puts files in cache
+	 * Clears the cache only (without deleting of files), sets the path and puts
+	 * files in cache
 	 * 
-	 * @param pathKey The Cache Path 
+	 * @param pathKey The Cache Path
 	 */
-	/* package */  void setPath(String pathKey) {
+	/* package */ void setPath(String pathKey) {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> setPath({})", pathKey);
-		
+
 		theFileCache = this;
 		path = pathKey;
-		
+
 		mapCache = new MapCache();
 
 		File directory = new File(path);
-	
+
 		if (!directory.exists()) {
 
 			if (!directory.mkdirs()) {
@@ -240,20 +242,20 @@ public class FileCache {
 	}
 
 	/**
-	 * Clears all cache elements only (files remain on disk) 
+	 * Clears all cache elements only (files remain on disk)
 	 * 
 	 */
 	/* package */ void clear() {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> clear()");
-		
+
 		mapCache.clear();
 	}
-	
-	
+
 	/**
-	 * Removes all cache elements and their connected files and accessed files from disk
+	 * Removes all cache elements and their connected files and accessed files from
+	 * disk
 	 * 
 	 */
 	/* package */ void removeAll() {
@@ -268,7 +270,7 @@ public class FileCache {
 			remove(pathKey);
 		}
 	}
-	
+
 	/**
 	 * Gives the number of elements in cache
 	 * 
@@ -299,11 +301,6 @@ public class FileCache {
 		return PREFIX;
 	}
 
-	/**
-	 * Puts all files to cache from directory path recursively
-	 * 
-	 * @param path Path to directory
-	 */
 	/* package */ void putFilesToCache(String path) {
 
 		if (logger.isTraceEnabled())
@@ -313,14 +310,28 @@ public class FileCache {
 
 		if (!directory.exists()) {
 
-			throw new IllegalArgumentException("Wrong path: " + path);
+			if (!directory.mkdirs()) { // try to create
+
+				throw new IllegalArgumentException("Wrong path for FileCache: " + path);
+			}
 		}
 
 		File[] files = directory.listFiles();
 
 		for (File file : files) {
 
-			if (!isCacheFile(file.getName())) {
+			if (mapCache.containsKey(file.getPath())) {
+
+				continue;
+			}
+
+			if (isPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromAccessed(file.getName())))) {
+
+				file.delete();
+				continue;
+			}
+
+			if (!isCacheFile(file.getPath())) {
 
 				continue;
 			}
@@ -328,14 +339,31 @@ public class FileCache {
 			if (file.isDirectory()) {
 
 				putFilesToCache(file.getPath());
-			} else if (file.isFile()) {
+			}
 
-				if (!containsKey(file.getPath())) {
+			else if (file.isFile()) {
 
-					put(file.getPath());
-				}
+				putNotUpdateAccessed(file.getPath());
 			}
 		}
+	}
+
+	/**
+	 * Puts the element to map without update accessed-info. If element exists, it
+	 * will be overwritten.
+	 *
+	 * @param pathKey File path as a key
+	 */
+	public void putNotUpdateAccessed(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> putNotUpdateAccessed({})", pathKey);
+
+		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
+
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+
+		mapCache.put(pathKey, fileInfo);
 	}
 
 	/**
