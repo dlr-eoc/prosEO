@@ -315,33 +315,47 @@ public class FileCache {
 				throw new IllegalArgumentException("Wrong path for FileCache: " + path);
 			}
 		}
-
+	
 		File[] files = directory.listFiles();
+		
 
 		for (File file : files) {
-
+			
 			if (mapCache.containsKey(file.getPath())) {
 
 				continue;
 			}
+			
+			if (file.isDirectory()) {
+				
+				if (new FileUtils(file.getPath()).isEmptyDirectory()) {
+			
+					deleteEmptyDirectoriesToTop(file.getPath());	
+				}
+				else {
+			
+					putFilesToCache(file.getPath());
+				}
+				
+				continue;
+			}
 
-			if (isPrefixFile(file.getPath()) && !Files.exists(Paths.get(getPathFromAccessed(file.getName())))) {
+			if (isPrefixFile(file.getPath()) && 
+					!Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
 
 				file.delete();
-				continue;
+				
+				if (new FileUtils(path).isEmptyDirectory()) {
+				
+					deleteEmptyDirectoriesToTop(path);	
+				
+					return;
+				}
+				
+				continue; 
 			}
-
-			if (!isCacheFile(file.getPath())) {
-
-				continue;
-			}
-
-			if (file.isDirectory()) {
-
-				putFilesToCache(file.getPath());
-			}
-
-			else if (file.isFile()) {
+			
+			else if (file.isFile() && isCacheFile(file.getPath())) {
 
 				putNotUpdateAccessed(file.getPath());
 			}
@@ -358,6 +372,11 @@ public class FileCache {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> putNotUpdateAccessed({})", pathKey);
+		
+		if (!isCacheFile(pathKey)) {
+			
+			return; 
+		}
 
 		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
 
@@ -517,17 +536,17 @@ public class FileCache {
 	/**
 	 * Returns true if the file is the cache file (not accessed and not hidden file)
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file is the cache file
 	 */
-	private boolean isCacheFile(String fileName) {
+	private boolean isCacheFile(String path) {
 
-		if (isPrefixFile(fileName)) {
+		if (isPrefixFile(path)) {
 
 			return false;
 		}
 
-		if (isHiddenFile(fileName)) {
+		if (isHiddenFile(path)) {
 
 			return false;
 
@@ -539,10 +558,12 @@ public class FileCache {
 	/**
 	 * Returns true if the file has the access prefix
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file has the prefix
 	 */
-	private boolean isPrefixFile(String fileName) {
+	private boolean isPrefixFile(String path) {
+		
+		String fileName = new File(path).getName();
 
 		return fileName.startsWith(PREFIX) ? true : false;
 	}
@@ -550,10 +571,12 @@ public class FileCache {
 	/**
 	 * Returns true if the file is a hidden file
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file is hidden
 	 */
-	private boolean isHiddenFile(String fileName) {
+	private boolean isHiddenFile(String path) {
+		
+		String fileName = new File(path).getName();
 
 		return fileName.startsWith(".") ? true : false;
 	}
