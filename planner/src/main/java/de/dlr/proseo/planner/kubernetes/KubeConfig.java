@@ -495,7 +495,7 @@ public class KubeConfig {
 				if (stdout == null) {
 					stdout = "";
 				}
-				js.setProcessingStdOut("Job on Processing Fycility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
 				js = RepositoryService.getJobStepRepository().save(js);
 				UtilService.getJobStepUtil().checkFinish(js);
 			}			
