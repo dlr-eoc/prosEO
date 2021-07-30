@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.annotation.PostConstruct;
@@ -21,70 +22,70 @@ public class TestUtils {
 	private static final String TEST_SEPARATOR = "===============================================";
 	private static final String PRINT_DIRECTORY_HEADER = "----- Directory";
 	private static final String TEST_DIRECTORY = "testdata";
-	
-	private static final String JAR_PATH_KEY = "+++JAR+++";
-	
+
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
-	
-	private static TestUtils theTestUtils; 
-	
+
+	private static TestUtils theTestUtils;
+
 	public static TestUtils getInstance() {
-		
+
 		return theTestUtils;
 	}
-	
+
 	@PostConstruct
 	public void init() {
-		
+
 		theTestUtils = this;
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public StorageManagerConfiguration getCfg() {
+
+		return cfg;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getSourcePath() {
+
+		return cfg.getPosixMountPoint();
+	}
 		
-		return cfg; 
-	}
-	
-	/**
-	 * 
-	 * @param cfgPath
-	 * @return
-	 */
-	public String getAbsolutePahfromKeyPath(String cfgPath) {
-
-		String path;
-
-		if (cfgPath.contains(JAR_PATH_KEY)) {
-
-			path = cfgPath.replace(JAR_PATH_KEY, "");
-			path = new File("").getAbsolutePath() + path;
-		} else {
-
-			path = cfgPath;
-		}
-
-		return path;
-	}
-
-	
 	/**
 	 * @return
 	 */
-	public String getTestPath() {
-		
-		return new File(cfg.getPosixWorkerMountPoint()).getAbsolutePath();
+	public String getCachePath() {
+
+		return cfg.getPosixWorkerMountPoint();
 	}
 	
 	/**
 	 * @return
 	 */
-	public String getSourceTestPath() {
+	public String getTestSourcePath() {
 
-		return new File(cfg.getPosixMountPoint()).getAbsolutePath();
+		return getTestPath(cfg.getPosixMountPoint());
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getTestCachePath() {
+
+		return getTestPath(cfg.getPosixWorkerMountPoint());
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 */
+	private String getTestPath(String path) {
+
+		return Paths.get(path, TEST_DIRECTORY).toString();
 	}
 
 	/**
@@ -97,31 +98,31 @@ public class TestUtils {
 		System.out.println("TEST " + object.getClass().getSimpleName() + "." + testName.getMethodName());
 		System.out.println();
 	}
-	
+
 	/**
 	 * @param path
 	 */
 	public static void createFile(String path, String content) {
-		
-		File file = new File(path); 
-		
+
+		File file = new File(path);
+
 		if (!file.getPath().contains(TEST_DIRECTORY)) {
 
 			System.out.println("Attempt to create file not in test dir: " + file.getPath());
 			return;
 		}
-		
-		FileUtils fileUtils = new FileUtils(path); 
+
+		FileUtils fileUtils = new FileUtils(path);
 		fileUtils.createFile(content);
 	}
-	
+
 	/**
 	 * @param path
 	 */
 	public static void deleteFile(String path) {
-		
-		File file = new File(path); 
-		
+
+		File file = new File(path);
+
 		if (!file.getPath().contains(TEST_DIRECTORY)) {
 
 			System.out.println("Attempt to delete file not in test dir: " + file.getPath());
@@ -129,36 +130,39 @@ public class TestUtils {
 		}
 		
 		if (!file.delete()) {
-			
+
 			System.out.println("File was NOT deleted: " + file.getPath());
 		}
 	}
-	
+
 	/**
 	 * 
 	 */
-	public static void createEmptyTestDirectory() {
+	public static void createEmptyTestDirectories() {
 
-		deleteDirectory(TestUtils.getInstance().getTestPath());
-
-		createDirectory(TestUtils.getInstance().getTestPath());
+		deleteDirectory(TestUtils.getInstance().getTestCachePath());
+		createDirectory(TestUtils.getInstance().getTestCachePath());
+		
+		deleteDirectory(TestUtils.getInstance().getTestSourcePath());
+		createDirectory(TestUtils.getInstance().getTestSourcePath());
 	}
 
 	/**
 	 * 
 	 */
-	public static void deleteTestDirectory() {
-		
-		deleteDirectory(TestUtils.getInstance().getTestPath());
+	public static void deleteTestDirectories() {
+
+		deleteDirectory(TestUtils.getInstance().getTestCachePath());
+		deleteDirectory(TestUtils.getInstance().getTestSourcePath());
 	}
 
 	/**
 	 * @param path
 	 */
 	public static void createDirectory(String path) {
-		
+
 		File file = new File(path);
-		
+
 		if (!file.getPath().contains(TEST_DIRECTORY)) {
 
 			System.out.println("Attempt to create dir not in test dir: " + file.getPath());
@@ -185,7 +189,8 @@ public class TestUtils {
 
 		if (!file.getPath().contains(TEST_DIRECTORY)) {
 
-			System.out.println("Attempt to delete file/dir not in test dir: " + file.getPath());
+			System.out.println("WARNING! Attempt to delete file/dir not in test dir(" + 
+			   TEST_DIRECTORY + "): " + file.getPath());
 			return;
 		}
 
@@ -193,6 +198,7 @@ public class TestUtils {
 			if (subFile.isDirectory()) {
 				deleteDirectory(subFile.getPath());
 			} else {
+				
 				subFile.delete();
 			}
 		}
@@ -214,20 +220,20 @@ public class TestUtils {
 		}
 		System.out.println();
 	}
-	
+
 	/**
 	 * @param message
 	 * @param arrayList
 	 */
 	public static void printArrayList(String message, ArrayList<String> arrayList) {
-		
+
 		System.out.println();
 		System.out.println(message);
 		for (String element : arrayList) {
-			
+
 			System.out.println(element);
 		}
-		System.out.println(); 
+		System.out.println();
 	}
 
 	/**
@@ -246,6 +252,8 @@ public class TestUtils {
 	 * @param depth
 	 */
 	private static void printDirectoryTree(String directoryPath, String depth) {
+		
+		System.out.println("printDirectoryTree: " + directoryPath + " " + " depth: " + depth);
 
 		File directory = new File(directoryPath);
 
@@ -259,7 +267,7 @@ public class TestUtils {
 		}
 
 		for (File file : files) {
-			if (file.isFile()) {
+			if (file.isFile()) {	
 				System.out.println(depth + OUTPUT_FILE_SIGN + file.getName());
 			}
 		}

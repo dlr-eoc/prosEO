@@ -89,6 +89,19 @@ public class FileUtils {
 	}
 
 	/**
+	 * Checks if the directory is empty
+	 * 
+	 * @param path full path to the directory
+	 * @return true if directory is empty 
+	 */
+	public boolean isEmptyDirectory() {
+		
+		File directory = new File(path);
+						
+	    return directory.list().length > 0 ? false : true;
+	}
+
+	/**
 	 * Gets the file content
 	 * 
 	 * @return the content of the file
@@ -111,12 +124,9 @@ public class FileUtils {
 	/**
 	 * Checks if path is a file
 	 * 
-	 * @param exceptionMessage Exception Message will be shown if path is not a file
+	 * @param exceptionMessage Exception will be thrown if path is not a file
 	 */
 	private void checkIfFile(String exceptionMessage) {
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> checkIfFile({})", exceptionMessage);
 
 		File file = new File(path);
 

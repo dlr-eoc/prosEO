@@ -35,11 +35,11 @@ public class ProductfileControllerImplTest {
 	@Autowired
 	private FileCache fileCache;
 
-	String testPath;
+	String testCachePath;
 
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
+		testCachePath = testUtils.getTestCachePath();
 	}
 
 	@LocalServerPort
@@ -52,8 +52,8 @@ public class ProductfileControllerImplTest {
 	public void testGetRestFileInfoByPathInfo() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
-		fileCache.clear();
+		TestUtils.createEmptyTestDirectories();
+		fileCache.setPath(testCachePath);
 
 		String str = restTemplate.getForObject("http://localhost:" + port + "/proseo/storage-mgr/x/info", String.class);
 
@@ -64,11 +64,11 @@ public class ProductfileControllerImplTest {
 		String file1 = "file1.txt";
 		String file2 = "file2.txt";
 
-		String sourcePath = TestUtils.getInstance().getSourceTestPath();
+		String sourcePath = TestUtils.getInstance().getTestSourcePath();
 		String sourcePath1 = Paths.get(sourcePath + "/" + file1).toString();
 		String sourcePath2 = Paths.get(sourcePath + "/" + file2).toString();
 
-		String destPath = TestUtils.getInstance().getTestPath();
+		String destPath = TestUtils.getInstance().getTestCachePath();
 		String destPath1 = Paths.get(destPath + "/" + file1).toString();
 		String destPath2 = Paths.get(destPath + "/" + file2).toString();
 
@@ -126,13 +126,14 @@ public class ProductfileControllerImplTest {
 
 		// file1 and file2 deleted from dest and from cache
 
-		fileCache.clear();
+		fileCache.remove(destPath2);
 
 		assertTrue("File1 exists: " + destPath1, !new File(destPath1).exists());
 		assertTrue("File2 exists: " + destPath2, !new File(destPath2).exists());
 
 		assertTrue("Cache does not have 0 elements. Cache Size: " + fileCache.size(), fileCache.size() == 0);
 
-		TestUtils.deleteTestDirectory();
+		fileCache.clear();
+		TestUtils.deleteTestDirectories();
 	}
 }

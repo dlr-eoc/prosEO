@@ -37,7 +37,7 @@ public class FileUtilsTest {
 	
 	@PostConstruct
 	private void init() {
-		testPath = testUtils.getTestPath();
+		testPath = testUtils.getTestCachePath();
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class FileUtilsTest {
 	public void testCreateSizeContent() {
 
 		TestUtils.printMethodName(this, testName);
-		TestUtils.createEmptyTestDirectory();
+		TestUtils.createEmptyTestDirectories();
 
 		String testFile = testPath + "/test.txt";
 		String testContent = "Content";
@@ -65,7 +65,7 @@ public class FileUtilsTest {
 		assertTrue("Content is wrong: " + fileUtils.getFileContent(),
 				fileUtils.getFileContent().equals(testContent));
 		
-		TestUtils.deleteTestDirectory();
+		TestUtils.deleteTestDirectories();
 	}
 
 }

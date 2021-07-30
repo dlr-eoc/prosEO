@@ -26,9 +26,8 @@ proseo:
 #      alluxioUnderFsMaxPrefixes: 500
 
     posix:
-      mountPoint: target/testdata/backend
-      workerMountPoint: target/testdata/cache
-
+      mountPoint: target/data/backend
+      workerMountPoint: target/data/cache
 
     joborder:
       bucket: internal

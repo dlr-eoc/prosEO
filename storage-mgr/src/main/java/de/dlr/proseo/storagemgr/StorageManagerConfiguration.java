@@ -1,5 +1,6 @@
 package de.dlr.proseo.storagemgr;
 
+import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -136,17 +137,17 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
-	 * @return the posixWorkerMountPoint
+	 * @return the absolutePath of posixWorkerMountPoint
 	 */
 	public String getPosixWorkerMountPoint() {
-		return posixWorkerMountPoint;
+		return new File(posixWorkerMountPoint).getAbsolutePath();
 	}
 
 	/**
-	 * @return the posixMountPoint
+	 * @return the absolute path of posixMountPoint
 	 */
 	public String getPosixMountPoint() {
-		return posixMountPoint;
+		return new File(posixMountPoint).getAbsolutePath();
 	}
 
 	/**

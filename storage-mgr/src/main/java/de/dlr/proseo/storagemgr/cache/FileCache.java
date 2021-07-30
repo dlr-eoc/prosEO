@@ -1,6 +1,8 @@
 package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +22,7 @@ import org.springframework.util.Assert;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 
 /**
- * File cache for managing files in cache storage. 
+ * File cache for managing files in cache storage.
  * 
  * @author Denys Chaykovskiy
  *
@@ -119,27 +121,9 @@ public class FileCache {
 	private void init() {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> init({})");
+			logger.trace(">>> init()");
 
-		// TODO: check if it is allowed to use absolute path here => path =
-		// cfg.getPosixWorkerMountPoint();
-		path = new File(cfg.getPosixWorkerMountPoint()).getAbsolutePath();
-
-		File directory = new File(path);
-
-		mapCache = new MapCache();
-
-		if (!directory.exists()) {
-
-			if (!directory.mkdirs()) {
-
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
-			}
-		}
-
-		putFilesToCache(path);
-
-		theFileCache = this;
+		setPath(cfg.getPosixWorkerMountPoint());
 	}
 
 	/**
@@ -203,6 +187,35 @@ public class FileCache {
 	}
 
 	/**
+	 * Clears the cache only (without deleting of files), sets the path and puts
+	 * files in cache
+	 * 
+	 * @param pathKey The Cache Path
+	 */
+	/* package */ void setPath(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> setPath({})", pathKey);
+
+		theFileCache = this;
+		path = pathKey;
+
+		mapCache = new MapCache();
+
+		File directory = new File(path);
+
+		if (!directory.exists()) {
+
+			if (!directory.mkdirs()) {
+
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+			}
+		}
+
+		putFilesToCache(path);
+	}
+
+	/**
 	 * Gets the path key from file cache
 	 * 
 	 * @param pathKey Path to file
@@ -229,13 +242,26 @@ public class FileCache {
 	}
 
 	/**
-	 * Removes all cache elements and their files and accessed files on disk
+	 * Clears all cache elements only (files remain on disk)
 	 * 
 	 */
 	/* package */ void clear() {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> clear()");
+
+		mapCache.clear();
+	}
+
+	/**
+	 * Removes all cache elements and their connected files and accessed files from
+	 * disk
+	 * 
+	 */
+	/* package */ void removeAll() {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> removeAll()");
 
 		Set<String> entries = mapCache.getCache().keySet();
 
@@ -275,11 +301,6 @@ public class FileCache {
 		return PREFIX;
 	}
 
-	/**
-	 * Puts all files to cache from directory path recursively
-	 * 
-	 * @param path Path to directory
-	 */
 	/* package */ void putFilesToCache(String path) {
 
 		if (logger.isTraceEnabled())
@@ -289,29 +310,79 @@ public class FileCache {
 
 		if (!directory.exists()) {
 
-			throw new IllegalArgumentException("Wrong path: " + path);
-		}
+			if (!directory.mkdirs()) { // try to create
 
+				throw new IllegalArgumentException("Wrong path for FileCache: " + path);
+			}
+		}
+	
 		File[] files = directory.listFiles();
+		
 
 		for (File file : files) {
-
-			if (!isCacheFile(file.getName())) {
+			
+			if (mapCache.containsKey(file.getPath())) {
 
 				continue;
 			}
-
+			
 			if (file.isDirectory()) {
-
-				putFilesToCache(file.getPath());
-			} else if (file.isFile()) {
-
-				if (!containsKey(file.getPath())) {
-
-					put(file.getPath());
+				
+				if (new FileUtils(file.getPath()).isEmptyDirectory()) {
+			
+					deleteEmptyDirectoriesToTop(file.getPath());	
 				}
+				else {
+			
+					putFilesToCache(file.getPath());
+				}
+				
+				continue;
+			}
+
+			if (isPrefixFile(file.getPath()) && 
+					!Files.exists(Paths.get(getPathFromAccessed(file.getPath())))) {
+
+				file.delete();
+				
+				if (new FileUtils(path).isEmptyDirectory()) {
+				
+					deleteEmptyDirectoriesToTop(path);	
+				
+					return;
+				}
+				
+				continue; 
+			}
+			
+			else if (file.isFile() && isCacheFile(file.getPath())) {
+
+				putNotUpdateAccessed(file.getPath());
 			}
 		}
+	}
+
+	/**
+	 * Puts the element to map without update accessed-info. If element exists, it
+	 * will be overwritten.
+	 *
+	 * @param pathKey File path as a key
+	 */
+	public void putNotUpdateAccessed(String pathKey) {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> putNotUpdateAccessed({})", pathKey);
+		
+		if (!isCacheFile(pathKey)) {
+			
+			return; 
+		}
+
+		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
+
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+
+		mapCache.put(pathKey, fileInfo);
 	}
 
 	/**
@@ -465,17 +536,17 @@ public class FileCache {
 	/**
 	 * Returns true if the file is the cache file (not accessed and not hidden file)
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file is the cache file
 	 */
-	private boolean isCacheFile(String fileName) {
+	private boolean isCacheFile(String path) {
 
-		if (isPrefixFile(fileName)) {
+		if (isPrefixFile(path)) {
 
 			return false;
 		}
 
-		if (isHiddenFile(fileName)) {
+		if (isHiddenFile(path)) {
 
 			return false;
 
@@ -487,10 +558,12 @@ public class FileCache {
 	/**
 	 * Returns true if the file has the access prefix
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file has the prefix
 	 */
-	private boolean isPrefixFile(String fileName) {
+	private boolean isPrefixFile(String path) {
+		
+		String fileName = new File(path).getName();
 
 		return fileName.startsWith(PREFIX) ? true : false;
 	}
@@ -498,10 +571,12 @@ public class FileCache {
 	/**
 	 * Returns true if the file is a hidden file
 	 * 
-	 * @param fileName the full path to the file
+	 * @param path the full path to the file
 	 * @return true if the file is hidden
 	 */
-	private boolean isHiddenFile(String fileName) {
+	private boolean isHiddenFile(String path) {
+		
+		String fileName = new File(path).getName();
 
 		return fileName.startsWith(".") ? true : false;
 	}
