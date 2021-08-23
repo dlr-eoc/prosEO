@@ -702,9 +702,9 @@ public class OrderUtil {
 				if (all) {
 					Boolean completed = RepositoryService.getJobRepository().countJobFailedByProcessingOrderId(order.getId()) == 0;
 					if (completed) {
-						order.setOrderState(OrderState.COMPLETED);
+						forceSetOrderStateFailedOrCompleted(OrderState.COMPLETED, order);
 					} else {
-						order.setOrderState(OrderState.FAILED);
+						forceSetOrderStateFailedOrCompleted(OrderState.FAILED, order);
 					}
 					checkFurther = true;
 					RepositoryService.getOrderRepository().save(order);
@@ -744,9 +744,9 @@ public class OrderUtil {
 				}
 				if (allHasFinished) {
 					if (hasFailed) {
-						order.setOrderState(OrderState.FAILED);
+						forceSetOrderStateFailedOrCompleted(OrderState.FAILED, order);
 					} else {
-						order.setOrderState(OrderState.COMPLETED);
+						forceSetOrderStateFailedOrCompleted(OrderState.COMPLETED, order);
 					}
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);
@@ -1041,6 +1041,41 @@ public class OrderUtil {
 		
 		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
 		//List<FluxTable> tables = client.getQueryApi().query(query, org);
+	}
+	
+	/**
+	 * Set the order state out of standard state diagram. Used for error conditions.
+	 * 
+	 * @param the new order state
+	 */
+	private void forceSetOrderStateFailedOrCompleted(OrderState state, ProcessingOrder order) {
+		if (state == OrderState.COMPLETED || state == OrderState.FAILED) {
+			switch (order.getOrderState()) {
+			case INITIAL:
+				order.setOrderState(OrderState.APPROVED);
+			case APPROVED:
+				order.setOrderState(OrderState.PLANNED);
+			case PLANNED:
+				order.setOrderState(OrderState.RELEASED);	
+			case RELEASED:
+				order.setOrderState(OrderState.RUNNING);
+			case SUSPENDING:
+				order.setOrderState(OrderState.PLANNED);
+				order.setOrderState(OrderState.RELEASED);
+				order.setOrderState(OrderState.RUNNING);	
+			case RUNNING:
+				order.setOrderState(state);
+				break;
+			case COMPLETED:
+			case FAILED:
+				break;
+			default:
+				break;
+			}	
+		} else {
+			// use standard setting state
+			order.setOrderState(state);
+		}
 	}
 
 }

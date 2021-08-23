@@ -49,6 +49,7 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
+import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
@@ -300,17 +301,18 @@ public class ProductIngestor {
 		Point point = Point.measurement("product")
 				.addField("name", newProductFile.getProductFileName())
 				.addField("id", newProductFile.getId()) // to distinct products with same names at different facilities
-				.addField("data_take_id", newProductFile.getId()) // TODO real data take id
-				.addField("source", "-") // TODO get source ?
 				.addField("size", newProductFile.getFileSize())
 				.addField("type", newModelProduct.getProductionType() == null ? "" : newModelProduct.getProductionType().toString())
-				.addField("quality_check", "-") // TODO get source ?
 				.addField("data_availability_time", newModelProduct.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(newModelProduct.getRawDataAvailabilityTime()))
 				.addField("sensing_start_time", OrbitTimeFormatter.format(newModelProduct.getSensingStartTime()))
 				.addField("sensing_stop_time", OrbitTimeFormatter.format(newModelProduct.getSensingStopTime()))
 				.addField("generation_time", OrbitTimeFormatter.format(newModelProduct.getGenerationTime()))
 				.addField("publication_time", OrbitTimeFormatter.format(newModelProduct.getPublicationTime()))
 				.time(Instant.now(), WritePrecision.NS);
+		for (String key : newModelProduct.getParameters().keySet()) {
+			point.addField(key, newModelProduct.getParameters().get(key).getParameterValue());
+		}
+
 
 		try (WriteApi writeApi = client.getWriteApi()) {
 			writeApi.writePoint(bucket, org, point);
@@ -509,17 +511,17 @@ public class ProductIngestor {
 		Point point = Point.measurement("product")
 				.addField("name", modelProductFile.getProductFileName())
 				.addField("id", modelProductFile.getId()) // to distinct products with same names at different facilities
-				.addField("data_take_id", modelProductFile.getId()) // TODO real data take id
-				.addField("source", "-") // TODO get source ?
 				.addField("size", modelProductFile.getFileSize())
 				.addField("type", modelProduct.getProductionType() == null ? "" : modelProduct.getProductionType().toString())
-				.addField("quality_check", "-") // TODO get source ?
 				.addField("data_availability_time", modelProduct.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(modelProduct.getRawDataAvailabilityTime()))
 				.addField("sensing_start_time", OrbitTimeFormatter.format(modelProduct.getSensingStartTime()))
 				.addField("sensing_stop_time", OrbitTimeFormatter.format(modelProduct.getSensingStopTime()))
 				.addField("generation_time", OrbitTimeFormatter.format(modelProduct.getGenerationTime()))
 				.addField("publication_time", OrbitTimeFormatter.format(modelProduct.getPublicationTime()))
 				.time(Instant.now(), WritePrecision.NS);
+		for (String key : modelProduct.getParameters().keySet()) {
+			point.addField(key, modelProduct.getParameters().get(key).getParameterValue());
+		}
 
 		try (WriteApi writeApi = client.getWriteApi()) {
 			writeApi.writePoint(bucket, org, point);
