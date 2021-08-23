@@ -1,5 +1,9 @@
 package de.dlr.proseo.ordermgr.rest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -30,11 +34,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
+
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -49,6 +62,8 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
+import de.dlr.proseo.model.util.ProseoUtil;
+import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
@@ -144,6 +159,9 @@ public class ProcessingOrderMgr {
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
+	
+	@Autowired
+	private OrdermgrConfiguration config;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -372,9 +390,9 @@ public class ProcessingOrderMgr {
 	
 		// Everything OK, store new order in database
 		modelOrder = RepositoryService.getOrderRepository().save(modelOrder);
-		
+		logOrderState(modelOrder);
 		logInfo(MSG_ORDER_CREATED, MSG_ID_ORDER_CREATED, order.getIdentifier(), order.getMissionCode());
-
+		
 		return OrderUtil.toRestOrder(modelOrder);
 
 		
@@ -1017,5 +1035,84 @@ public class ProcessingOrderMgr {
 		return result;
 
 	}
+
+	public HttpHeaders logOrderState(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", order.getId());
+
+		// calculate necessary data
+		// get all job steps
+		List<JobStep> jobSteps = new ArrayList<JobStep>();
+		for (Job job : order.getJobs()) {
+			jobSteps.addAll(job.getJobSteps());
+		}
+		Integer runningJobSteps = 0;
+		Integer completedJobSteps = 0;
+		Integer failedJobSteps = 0;
+		Integer allJobSteps = jobSteps.size();
+
+		for (JobStep jobStep : jobSteps) {
+			switch (jobStep.getJobStepState()) {
+			case INITIAL:
+				break;
+			case WAITING_INPUT:
+				break;
+			case READY:
+				break;
+			case RUNNING:
+				runningJobSteps++;
+				break;
+			case COMPLETED:
+				completedJobSteps++;
+				break;
+			case FAILED:
+				failedJobSteps++;
+				break;
+			default:
+				break;
+			}
+		}
+
+
+		String token = "aY5a0AosR89dnUaxE8PqT0bh8TOunlSerS5h1du35Q45ygzHJ5KT9MX-GZiyCmdOBPsAkvC2hD7pyQ8rAPSolw==";
+		String bucket = "order";
+		String org = "proseo";
+		
+		InfluxDBClient client = InfluxDBClientFactory.create("http://localhost:8086", token.toCharArray());
+		// Use a Data Point to write data
+
+		Point point = Point.measurement("progress")
+		.addField("name", order.getIdentifier())
+		.addField("state", order.getOrderState().toString())
+		.addField("failed_job_steps", allJobSteps == 0 ? 0 : failedJobSteps * 100 / allJobSteps)
+		.addField("completed_job_steps", allJobSteps == 0 ? 0 : completedJobSteps * 100 / allJobSteps)
+		.addField("running_job_steps", allJobSteps == 0 ? 0 : runningJobSteps * 100 / allJobSteps)
+		.addField("finished_job_steps", allJobSteps == 0 ? 0 : (failedJobSteps + completedJobSteps) * 100 / allJobSteps)
+		.addField("all_job_steps", allJobSteps)
+		.time(Instant.now(), WritePrecision.NS);
+
+		try (WriteApi writeApi = client.getWriteApi()) {
+			writeApi.writePoint(bucket, org, point);
+		}
+
+		logger.trace(point.toLineProtocol());
+		
+	    try {  
+	    	 Files.writeString(
+	    		        Path.of("influxDB.log"),
+	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
+	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
+	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
+	    		    );
+	    } catch (SecurityException e) {  
+	        e.printStackTrace();  
+	    } catch (IOException e) {  
+	        e.printStackTrace();  
+	    }  
+		
+		return new HttpHeaders();
+
+
+	}
+
 
 }

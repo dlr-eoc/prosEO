@@ -5,11 +5,15 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -19,16 +23,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
+
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
@@ -75,6 +86,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.FAILED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
 			case RUNNING:
@@ -121,6 +133,7 @@ public class OrderUtil {
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;		
 			case RELEASED:		
@@ -146,6 +159,7 @@ public class OrderUtil {
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;	
 			case RUNNING:
@@ -247,6 +261,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.APPROVED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_APPROVED;
 				break;			
 			case APPROVED:
@@ -308,6 +323,7 @@ public class OrderUtil {
 					}
 					order.incrementVersion();
 					order = RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 				}
 				break;	
 			case PLANNED:	
@@ -370,6 +386,7 @@ public class OrderUtil {
 				}
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -422,6 +439,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.RUNNING);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RELEASED;
 				break;				
 			case RUNNING:
@@ -475,6 +493,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.PLANNED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
 			case RUNNING:
@@ -498,16 +517,19 @@ public class OrderUtil {
 					// check whether some jobs are already finished
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_SUSPENDED;
 				} else if (allFinished) {
 					// check whether some jobs are already finished
 					order.setOrderState(OrderState.COMPLETED);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_COMPLETED;
 				} else {
 					order.setOrderState(OrderState.SUSPENDING); // direct transition to PLANNED not allowed
 					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
 				break;	
@@ -579,6 +601,7 @@ public class OrderUtil {
 						RepositoryService.getOrderRepository().save(order);
 						answer = Messages.ORDER_RETRIED;
 					}
+					logOrderState(order);
 				} else {
 					answer = Messages.ORDER_COULD_NOT_RETRY;
 				}
@@ -620,6 +643,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.CLOSED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_CLOSED;
 				break;			
 			case CLOSED:
@@ -733,6 +757,7 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				em.merge(order);
+				logOrderState(order);
 			}
 		}
  		return answer;
@@ -917,6 +942,7 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				em.merge(order);
 			}
+			logOrderState(order);
 		}
 	}
 	
@@ -937,5 +963,84 @@ public class OrderUtil {
 		}
 	}
 
+	public void logOrderState(ProcessingOrder order) {
+
+		String token = ProductionPlanner.config.getLogToken();
+		String bucket = "order";
+		String org = ProductionPlanner.config.getLogOrg();
+
+		InfluxDBClient client = InfluxDBClientFactory.create(ProductionPlanner.config.getLogHost(), token.toCharArray());
+
+		// calculate necessary data
+		// get all job steps
+		List<JobStep> jobSteps = new ArrayList<JobStep>();
+		for (Job job : order.getJobs()) {
+			jobSteps.addAll(job.getJobSteps());
+		}
+		Integer runningJobSteps = 0;
+		Integer completedJobSteps = 0;
+		Integer failedJobSteps = 0;
+		Integer allJobSteps = jobSteps.size();
+
+		for (JobStep jobStep : jobSteps) {
+			switch (jobStep.getJobStepState()) {
+			case INITIAL:
+				break;
+			case WAITING_INPUT:
+				break;
+			case READY:
+				break;
+			case RUNNING:
+				runningJobSteps++;
+				break;
+			case COMPLETED:
+				completedJobSteps++;
+				break;
+			case FAILED:
+				failedJobSteps++;
+				break;
+			default:
+				break;
+			}
+		}
+
+		// Use a Data Point to write data
+
+		Point point = Point.measurement("progress")
+		.addField("name", order.getIdentifier())
+		.addField("state", order.getOrderState().toString())
+		.addField("failed_job_steps", allJobSteps == 0 ? 0 : failedJobSteps * 100 / allJobSteps)
+		.addField("completed_job_steps", allJobSteps == 0 ? 0 : completedJobSteps * 100 / allJobSteps)
+		.addField("running_job_steps", allJobSteps == 0 ? 0 : runningJobSteps * 100 / allJobSteps)
+		.addField("finished_job_steps", allJobSteps == 0 ? 0 : (failedJobSteps + completedJobSteps) * 100 / allJobSteps)
+		.addField("all_job_steps", allJobSteps)
+		.time(Instant.now(), WritePrecision.NS);
+
+		try (WriteApi writeApi = client.getWriteApi()) {
+			writeApi.writePoint(bucket, org, point);
+		}
+
+		
+		logger.trace(point.toLineProtocol());
+
+		
+	    try {  
+	    	 Files.writeString(
+	    		        Path.of("influxDB.log"),
+	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
+	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
+	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
+	    		    );
+	    } catch (SecurityException e) {  
+	        e.printStackTrace();  
+	    } catch (IOException e) {  
+	        e.printStackTrace();  
+	    }  
+
+		
+		
+		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
+		//List<FluxTable> tables = client.getQueryApi().query(query, org);
+	}
 
 }

@@ -13,6 +13,9 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    log.org: proseo
+    log.host: http://localhost:8086
+    log.token: TheInfluxDBToken
     wrapper:
         # User and password for wrapper callbacks
         user: wrapper

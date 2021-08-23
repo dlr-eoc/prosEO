@@ -560,6 +560,7 @@ public class KubeJob {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
+					UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 				}
 			}
 			KubeJobFinish toFini = new KubeJobFinish(this, jobname);

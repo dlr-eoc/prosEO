@@ -58,8 +58,41 @@ public class IngestorConfiguration {
 	private String storageManagerValidity;
 	private Long storageManagerValidityLong = null;
 	
+	/** Log organization for influxDB */
+	@Value("${proseo.log.org}")
+	private String logOrg;
+
+	/** Log token for influxDB */
+	@Value("${proseo.log.token}")
+	private String logToken;
+
+	/** Log host for influxDB */
+	@Value("${proseo.log.host}")
+	private String logHost;
+		
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestorConfiguration.class);
+	
+	/**
+	 * @return the logHost
+	 */
+	public String getLogHost() {
+		return logHost;
+	}
+
+	/**
+	 * @return the logOrg
+	 */
+	public String getLogOrg() {
+		return logOrg;
+	}
+
+	/**
+	 * @return the logToken
+	 */
+	public String getLogToken() {
+		return logToken;
+	}
 	
 	/**
 	 * Gets the URL of the prosEO Production Planner component

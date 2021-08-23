@@ -13,6 +13,9 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    log.org: proseo
+    log.host: http://localhost:8086
+    log.token: TheInfluxDBToken
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         # Connection timeout in ms
