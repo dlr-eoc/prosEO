@@ -52,7 +52,7 @@ public enum OrderState {
 		case RUNNING:
 			return other.equals(SUSPENDING) || other.equals(COMPLETED) || other.equals(FAILED);
 		case SUSPENDING:
-			return other.equals(PLANNED);
+			return other.equals(PLANNED) || other.equals(COMPLETED) || other.equals(FAILED);
 		}
 		return false;
 	}
