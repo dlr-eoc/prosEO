@@ -13,6 +13,18 @@ influxDB
   For consistent data are two directories needed for data and config file(s).
   For initial setup these directories have to be empty.
 
+  For configuration it is possible to use the influx client, see
+    https://docs.influxdata.com/influxdb/v2.0/reference/cli/influx/
+  for details:
+
+  docker exec influxdb2 influx bucket create -n operation -o proseo
+  docker exec influxdb2 influx bucket create -n order -o proseo
+  docker exec influxdb2 influx bucket create -n production -o proseo
+  docker exec influxdb2 influx bucket create -n telegraf -o proseo -r 30d
+
+  docker exec influxdb2 influx user create --name example-username --password ExAmPl3PA55W0rD
+
+
 telegraf
   To log docker and docker images:
   https://github.com/influxdata/telegraf/blob/master/plugins/inputs/docker/README.md
