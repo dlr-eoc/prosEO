@@ -505,6 +505,7 @@ public class JobStepUtil {
 				js.incrementVersion();
 				RepositoryService.getJobStepRepository().save(js);
 				em.merge(js);
+				UtilService.getOrderUtil().logOrderState(js.getJob().getProcessingOrder());
 				Messages.JOBSTEP_STARTED.log(logger, String.valueOf(js.getId()));
 				answer = true;
 				break;

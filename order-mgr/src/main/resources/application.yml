@@ -15,6 +15,9 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
+    log.org: proseo
+    log.host: http://localhost:8086
+    log.token: TheInfluxDBToken
     ingestor:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
         # Connection timeout in ms

@@ -13,6 +13,9 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    log.org: proseo
+    log.host: http://localhost:8086
+    log.token: TheInfluxDBToken
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
         # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files

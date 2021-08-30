@@ -65,6 +65,39 @@ public class ProductionPlannerConfiguration {
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+	
+	/** Log organization for influxDB */
+	@Value("${proseo.log.org}")
+	private String logOrg;
+
+	/** Log token for influxDB */
+	@Value("${proseo.log.token}")
+	private String logToken;
+
+	/** Log host for influxDB */
+	@Value("${proseo.log.host}")
+	private String logHost;
+	
+	/**
+	 * @return the logHost
+	 */
+	public String getLogHost() {
+		return logHost;
+	}
+
+	/**
+	 * @return the logOrg
+	 */
+	public String getLogOrg() {
+		return logOrg;
+	}
+
+	/**
+	 * @return the logToken
+	 */
+	public String getLogToken() {
+		return logToken;
+	}
 
 	/**
 	 * @return the productionPlannerFileCheckMaxCycles

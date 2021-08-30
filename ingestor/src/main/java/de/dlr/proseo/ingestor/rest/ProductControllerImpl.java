@@ -290,7 +290,7 @@ public class ProductControllerImpl implements ProductController {
 		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({})", id);
 		
 		try {
-			return new ResponseEntity<>(productManager.getDownloadTokenById(id, fileName), HttpStatus.OK);
+			return new ResponseEntity<>(productManager.getDownloadTokenById(id, fileName, httpHeaders), HttpStatus.OK);
 		} catch (IllegalArgumentException e) {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
 		} catch (NoResultException e) {

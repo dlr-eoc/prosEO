@@ -357,10 +357,16 @@ public class KubeConfig {
 		} else {
 			kubeJobList = new HashMap<String, KubeJob>();
 			if (processingEngineToken != null && !processingEngineToken.isEmpty()) {
-				client = Config.fromToken(url, 
+				try {
+					client = null;
+					client = Config.fromToken(url, 
 						 processingEngineToken, 
 						 false);
-			} else {
+				} catch (Exception ex) {
+					logger.info(ex.getMessage());
+				}
+			}
+			if (client == null) {
                 try {
                 	// describes Kubernetes in Docker
                 	String kconf = ProductionPlanner.config.getProductionPlannerKubeConfig();
@@ -374,6 +380,9 @@ public class KubeConfig {
                 if (client == null) {
                     client = Config.fromUrl(url, false);
                 }
+			}
+			if (client == null) {
+				logger.error("Could not connect with facility " + url);
 			}
 			if (logger.isTraceEnabled()) {
 				client.setDebugging(true);

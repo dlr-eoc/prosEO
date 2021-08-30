@@ -28,6 +28,9 @@ public class OrdermgrConfiguration {
 	
 	// Default connection timeout is 30 s
 	private static final Long DEFAULT_TIMEOUT = 30000L;
+
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(OrdermgrConfiguration.class);
 	
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
@@ -45,9 +48,39 @@ public class OrdermgrConfiguration {
 	/** Password for Ingestor connections */
 	@Value("${proseo.ingestor.password}")
 	private String ingestorPassword;
+
+	/** Log organization for influxDB */
+	@Value("${proseo.log.org}")
+	private String logOrg;
+
+	/** Log token for influxDB */
+	@Value("${proseo.log.token}")
+	private String logToken;
+
+	/** Log host for influxDB */
+	@Value("${proseo.log.host}")
+	private String logHost;
 	
-	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrdermgrConfiguration.class);
+	/**
+	 * @return the logHost
+	 */
+	public String getLogHost() {
+		return logHost;
+	}
+	
+	/**
+	 * @return the logOrg
+	 */
+	public String getLogOrg() {
+		return logOrg;
+	}
+
+	/**
+	 * @return the logToken
+	 */
+	public String getLogToken() {
+		return logToken;
+	}
 	
 	/**
 	 * Gets the URL of the prosEO Ingestor component

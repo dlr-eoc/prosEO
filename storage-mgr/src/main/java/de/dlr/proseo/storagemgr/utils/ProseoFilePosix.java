@@ -17,6 +17,7 @@ import org.springframework.core.io.FileSystemResource;
 import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.fs.s3.S3Ops;
 import software.amazon.awssdk.services.s3.S3Client;
 
@@ -256,13 +257,14 @@ public class ProseoFilePosix extends ProseoFile {
 				}
 			}
 			for (File f : files) {
-				File targetFile = new File(proFile.getFullPath() + "/" + f.getName());
-				if (targetFile.exists()) {
+				File targetFile = new File(proFile.getFullPath() );
+				if (FileCache.getInstance().containsKey(targetFile.getPath())) { // if (targetFile.exists()) 
 					result.add(targetFile.getPath());
 				} else {
 					FileUtils.copyFile(f, targetFile);
 					if (targetFile.exists()) {
 						targetFile.setWritable(true, false);
+						FileCache.getInstance().put(targetFile.getPath()); 
 						result.add(targetFile.getPath());
 					} else {
 						logger.error("Cannot copy from source {} to target {}", f.getCanonicalPath(), targetFile.getCanonicalPath());

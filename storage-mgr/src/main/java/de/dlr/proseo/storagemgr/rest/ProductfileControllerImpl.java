@@ -67,7 +67,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 	}
 
 	/**
-	 * Copy source file named pathInfo to local storage used by workers.
+	 * Copy source file named pathInfo to file cache used by processors.
 	 * The local file name is: posixWorkerMountPoint + relative source file path
 	 * @param pathInfo Source file name
 	 * @return Local file name
@@ -117,20 +117,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 		RestFileInfo response = new RestFileInfo();
 		if (pathInfo != null) {
 			ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-			String targetRelPath = String.valueOf(productId);
-			String aPath = sourceFile.getRelPathAndFile();
-			while (aPath.startsWith("/")) {
-				aPath = aPath.substring(1);			
-			}
-			String relPath = "";
-			int pos = aPath.indexOf('/');
-			if (pos >= 0) {
-				relPath = aPath.substring(pos + 1);
-			} else {
-				relPath = aPath;
-			}
-			// replace top relPath directory
-			ProseoFile targetFile = ProseoFile.fromType(StorageType.valueOf(cfg.getDefaultStorageType()), targetRelPath + "/" + relPath, cfg);
+			ProseoFile targetFile = ProseoFile.fromType(
+					StorageType.valueOf(cfg.getDefaultStorageType()),
+					String.valueOf(productId) + "/" + sourceFile.getFileName(),
+					cfg);
 			try {
 				// wait until source file is really copied
 				if (sourceFile.getFsType() == StorageType.POSIX) {
@@ -162,7 +152,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 									HttpStatus.INTERNAL_SERVER_ERROR);
 						}
 						if (i >= max) {
-							logger.error(MSG_FILE_NOT_FETCHED, aPath);
+							logger.error(MSG_FILE_NOT_FETCHED, sourceFile.getFullPath());
 						}
 					}
 				}

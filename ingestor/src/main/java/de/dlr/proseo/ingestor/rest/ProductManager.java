@@ -5,9 +5,15 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
@@ -26,9 +32,15 @@ import org.slf4j.LoggerFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -52,6 +64,7 @@ import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
+import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -102,6 +115,7 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = 2032;
 	private static final int MSG_ID_EXCEPTION = 2033;
 	private static final int MSG_ID_PRODUCTFILE_NOT_AVAILABLE = 2034;
+	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 2056;
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
 	
 	/* Message string constants */
@@ -141,6 +155,8 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_MODIFIED = "(I%d) Product with id %d modified";
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
 	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with ID %s retrieved";
+
+	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
 	
 	/* Other string constants */
 	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
@@ -1128,7 +1144,7 @@ public class ProductManager {
 	 * @throws NoResultException if no product with the given ID or no file with the given name exists
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String getDownloadTokenById(Long id, String fileName)
+	public String getDownloadTokenById(Long id, String fileName, HttpHeaders httpHeaders)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);
 		
@@ -1152,6 +1168,43 @@ public class ProductManager {
 				if (fileName.equals(productFile.getProductFileName()) || fileName.equals(productFile.getZipFileName())
 						|| productFile.getAuxFileNames().contains(fileName)) {
 					found = true;
+
+					//  log this product 
+					String token = ingestorConfig.getLogToken();
+					String bucket = "production";
+					String org = ingestorConfig.getLogOrg();
+
+					InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
+					// Get username and password from HTTP Authentication header for authentication with Production Planner
+					String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
+					// Use a Data Point to write data
+					Point point = Point.measurement("download")
+							.addField("name", productFile.getProductFileName())
+							.addField("size", productFile.getFileSize())
+							.addField("facility", productFile.getProcessingFacility().getName())
+							.addField("download_start_time", OrbitTimeFormatter.format(Instant.now()))
+							.addField("download_end_time", "tbd") // TODO how to get this
+							.addField("user", userPassword[0])
+							.time(Instant.now(), WritePrecision.NS);
+
+					try (WriteApi writeApi = client.getWriteApi()) {
+						writeApi.writePoint(bucket, org, point);
+					}
+
+					logger.trace(point.toLineProtocol());
+					
+				    try {  
+				    	 Files.writeString(
+				    		        Path.of("influxDB.log"),
+				    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
+				    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
+				    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
+				    		    );
+				    } catch (SecurityException e) {  
+				        e.printStackTrace();  
+				    } catch (IOException e) {  
+				        e.printStackTrace();  
+				    }  
 					break;
 				}
 			}
@@ -1165,6 +1218,28 @@ public class ProductManager {
 		logInfo(MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, id, fileName);
 		
 		return downloadToken;
+	}
+
+	/**
+	 * Parse an HTTP authentication header into username and password
+	 * @param authHeader the authentication header to parse
+	 * @return a string array containing the username and the password
+	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 */
+	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
+		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+
+		if (null == authHeader) {
+			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] authParts = authHeader.split(" ");
+		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
+			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			throw new IllegalArgumentException (message);
+		}
+		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
+		return userPassword;
 	}
 	
 }
