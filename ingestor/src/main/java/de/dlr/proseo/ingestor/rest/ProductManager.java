@@ -5,15 +5,11 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
@@ -64,7 +60,6 @@ import de.dlr.proseo.model.enums.UserRole;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -115,9 +110,8 @@ public class ProductManager {
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = 2032;
 	private static final int MSG_ID_EXCEPTION = 2033;
 	private static final int MSG_ID_PRODUCTFILE_NOT_AVAILABLE = 2034;
-	private static final int MSG_ID_AUTH_MISSING_OR_INVALID = 2056;
-//	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;	
-	
+	private static final int MSG_ID_MONITORING_FAILED = 2035;
+
 	/* Message string constants */
 	private static final String MSG_PRODUCT_MISSING = "(E%d) Product not set";
 	private static final String MSG_PRODUCT_ID_MISSING = "(E%d) Product ID not set";
@@ -147,6 +141,7 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED = "(E%d) Download token for product with ID %d and file name %s provided";
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_PRODUCTFILE_NOT_AVAILABLE = "(E%d) Product with ID %d has no file named %s";
+	private static final String MSG_MONITORING_FAILED = "(E%d) Error sending monitoring message for product with ID %d and file name %s (cause: %s)";
 	
 	private static final String MSG_PRODUCT_DELETED = "(I%d) Product with id %d deleted";
 	private static final String MSG_PRODUCT_LIST_RETRIEVED = "(I%d) Product list of size %d retrieved for mission '%s', product classes '%s', start time '%s', stop time '%s'";
@@ -156,8 +151,6 @@ public class ProductManager {
 	private static final String MSG_PRODUCT_NOT_MODIFIED = "(I%d) Product with id %d not modified (no changes)";
 	private static final String MSG_PRODUCT_RETRIEVED = "(I%d) Product with ID %s retrieved";
 
-	private static final String MSG_AUTH_MISSING_OR_INVALID = "(E%d) Basic authentication missing or invalid: %s";
-	
 	/* Other string constants */
 	private static final String FACILITY_QUERY_SQL = "SELECT count(*) FROM product_processing_facilities ppf WHERE ppf.product_id = :product_id";
 	
@@ -1169,43 +1162,17 @@ public class ProductManager {
 						|| productFile.getAuxFileNames().contains(fileName)) {
 					found = true;
 
-					//  log this product 
-					String token = ingestorConfig.getLogToken();
-					String bucket = "production";
-					String org = ingestorConfig.getLogOrg();
-
-					InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
-					// Get username and password from HTTP Authentication header for authentication with Production Planner
-					String[] userPassword = parseAuthenticationHeader(httpHeaders.getFirst(HttpHeaders.AUTHORIZATION));
-					// Use a Data Point to write data
-					Point point = Point.measurement("download")
-							.addField("name", productFile.getProductFileName())
-							.addField("size", productFile.getFileSize())
-							.addField("facility", productFile.getProcessingFacility().getName())
-							.addField("download_start_time", OrbitTimeFormatter.format(Instant.now()))
-							.addField("download_end_time", "tbd") // TODO how to get this
-							.addField("user", userPassword[0])
-							.time(Instant.now(), WritePrecision.NS);
-
-					try (WriteApi writeApi = client.getWriteApi()) {
-						writeApi.writePoint(bucket, org, point);
+					// Create monitoring message for product generation and publication
+					if (null != ingestorConfig.getLogHost()) {
+						try {
+							monitorProductDownload(productFile);
+						} catch (Exception e) {
+							// Log failed monitoring, but continue with ingestion
+							logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
+									product.getId(), productFile.getProductFileName(), e.getMessage());
+						}
 					}
-
-					logger.trace(point.toLineProtocol());
 					
-				    try {  
-				    	 Files.writeString(
-				    		        Path.of("influxDB.log"),
-				    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-				    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-				    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-				    		    );
-				    } catch (SecurityException e) {  
-				        e.printStackTrace();  
-				    } catch (IOException e) {  
-				        e.printStackTrace();  
-				    }  
-					break;
 				}
 			}
 			if (!found) {
@@ -1221,25 +1188,34 @@ public class ProductManager {
 	}
 
 	/**
-	 * Parse an HTTP authentication header into username and password
-	 * @param authHeader the authentication header to parse
-	 * @return a string array containing the username and the password
-	 * @throws IllegalArgumentException if the authentication header cannot be parsed
+	 * Adds a monitoring message for product file download
+	 * 
+	 * @param productFile the product file downloaded
+	 * @throws DateTimeException if any of the product dates cannot be formatted
 	 */
-	private String[] parseAuthenticationHeader(String authHeader) throws IllegalArgumentException {
-		if (logger.isTraceEnabled()) logger.trace(">>> parseAuthenticationHeader({})", authHeader);
+	private void monitorProductDownload(ProductFile productFile) throws DateTimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> monitorProductDownload({})", productFile.getProductFileName());
+		
+		String token = ingestorConfig.getLogToken();
+		String bucket = ingestorConfig.getLogBucket();
+		String org = ingestorConfig.getLogOrg();
 
-		if (null == authHeader) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
+		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
+		
+		// Use a Data Point to write data
+		Point point = Point.measurement("download")
+				.addField("name", productFile.getProductFileName())
+				.addField("size", productFile.getFileSize())
+				.addField("facility", productFile.getProcessingFacility().getName())
+				.addField("download_start_time", OrbitTimeFormatter.format(Instant.now()))
+				.addField("user", securityService.getUser())
+				.time(Instant.now(), WritePrecision.NS);
+
+		try (WriteApi writeApi = client.getWriteApi()) {
+			writeApi.writePoint(bucket, org, point);
 		}
-		String[] authParts = authHeader.split(" ");
-		if (2 != authParts.length || !"Basic".equals(authParts[0])) {
-			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
-			throw new IllegalArgumentException (message);
-		}
-		String[] userPassword = (new String(Base64.getDecoder().decode(authParts[1]))).split(":"); // guaranteed to work as per BasicAuth specification
-		return userPassword;
+
+		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
 	}
-	
+
 }

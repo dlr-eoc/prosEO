@@ -13,9 +13,15 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
-    log.org: proseo
-    log.host: http://localhost:8086
-    log.token: TheInfluxDBToken
+    log:
+#        # Host and port for InfluxDB monitoring --> activate only when available in test environment!
+#        host: http://localhost:8086
+#        # Authentication token for InfluxDB
+#        token: TheInfluxDBToken
+#        # InfluxDB organization to use
+#        org: proseo
+#        # InfluxDB bucket to use
+#        bucket: production
     productionPlanner:
         url: http://localhost:8090/castlemock/mock/rest/project/DB3vth/application/5SS2aW/planner
         # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files

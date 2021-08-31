@@ -5,10 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -49,7 +46,6 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
-import de.dlr.proseo.model.Parameter;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
@@ -59,7 +55,6 @@ import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
-import de.dlr.proseo.model.util.ProseoUtil;
 
 /**
  * Services required to ingest products from pickup points into the prosEO database, and to create, read, updated and delete
@@ -95,6 +90,7 @@ public class ProductIngestor {
 	// Same as in ProductManager
 	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
+	private static final int MSG_ID_MONITORING_FAILED = 2035;
 	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
@@ -116,6 +112,7 @@ public class ProductIngestor {
 	// Same as in ProductManager
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
+	private static final String MSG_MONITORING_FAILED = "(E%d) Error sending monitoring message for product with ID %d and file name %s (cause: %s)";
 	
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
@@ -199,6 +196,46 @@ public class ProductIngestor {
 		return message;
 	}
 	
+	/**
+	 * Adds a monitoring message for product file ingestion
+	 * 
+	 * @param productFile the product file ingested
+	 * @param product the product, for which the file was ingested
+	 * @throws DateTimeException if any of the product dates cannot be formatted
+	 */
+	private void monitorProductIngestion(de.dlr.proseo.model.ProductFile productFile, Product product) throws DateTimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> monitorProductIngestion({}, {})", productFile.getProductFileName(), product.getId());
+		
+		String token = ingestorConfig.getLogToken();
+		String bucket = ingestorConfig.getLogBucket();
+		String org = ingestorConfig.getLogOrg();
+
+		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
+		// Use a Data Point to write data
+
+		Point point = Point.measurement("product")
+				.addField("name", productFile.getProductFileName())
+				.addField("id", productFile.getId()) // to distinct products with same names at different facilities
+				.addField("size", productFile.getFileSize())
+				.addField("type", product.getProductionType() == null ? "" : product.getProductionType().toString())
+				.addField("data_availability_time", 
+						product.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(product.getRawDataAvailabilityTime()))
+				.addField("sensing_start_time", OrbitTimeFormatter.format(product.getSensingStartTime()))
+				.addField("sensing_stop_time", OrbitTimeFormatter.format(product.getSensingStopTime()))
+				.addField("generation_time", OrbitTimeFormatter.format(product.getGenerationTime()))
+				.addField("publication_time", OrbitTimeFormatter.format(product.getPublicationTime()))
+				.time(Instant.now(), WritePrecision.NS);
+		for (String key : product.getParameters().keySet()) {
+			point.addField(key, product.getParameters().get(key).getParameterValue());
+		}
+
+		try (WriteApi writeApi = client.getWriteApi()) {
+			writeApi.writePoint(bucket, org, point);
+		}
+
+		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
+	}
+
 	/**
 	 * Find a processing facility by name (transaction wrapper for repository method)
 	 * 
@@ -284,54 +321,23 @@ public class ProductIngestor {
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
 		newProductFile.setProduct(newModelProduct);
 		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+
 		newModelProduct.getProductFile().add(newProductFile);
+		// Check for first time ingestion (defines publication time)
 		if (null == newModelProduct.getPublicationTime()) {
 			newModelProduct.setPublicationTime(Instant.now());
+			// Create monitoring message for product generation and publication
+			if (null != ingestorConfig.getLogHost()) {
+				try {
+					monitorProductIngestion(newProductFile, newModelProduct);
+				} catch (Exception e) {
+					// Log failed monitoring, but continue with ingestion
+					logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
+							newModelProduct.getId(), newProductFile.getProductFileName(), e.getMessage());
+				}
+			}
 		}
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
-		
-
-		String token = ingestorConfig.getLogToken();
-		String bucket = "production";
-		String org = ingestorConfig.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
-		// Use a Data Point to write data
-
-		Point point = Point.measurement("product")
-				.addField("name", newProductFile.getProductFileName())
-				.addField("id", newProductFile.getId()) // to distinct products with same names at different facilities
-				.addField("size", newProductFile.getFileSize())
-				.addField("type", newModelProduct.getProductionType() == null ? "" : newModelProduct.getProductionType().toString())
-				.addField("data_availability_time", newModelProduct.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(newModelProduct.getRawDataAvailabilityTime()))
-				.addField("sensing_start_time", OrbitTimeFormatter.format(newModelProduct.getSensingStartTime()))
-				.addField("sensing_stop_time", OrbitTimeFormatter.format(newModelProduct.getSensingStopTime()))
-				.addField("generation_time", OrbitTimeFormatter.format(newModelProduct.getGenerationTime()))
-				.addField("publication_time", OrbitTimeFormatter.format(newModelProduct.getPublicationTime()))
-				.time(Instant.now(), WritePrecision.NS);
-		for (String key : newModelProduct.getParameters().keySet()) {
-			point.addField(key, newModelProduct.getParameters().get(key).getParameterValue());
-		}
-
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-
-		logger.trace(point.toLineProtocol());
-		
-	    try {  
-	    	 Files.writeString(
-	    		        Path.of("influxDB.log"),
-	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-	    		    );
-	    } catch (SecurityException e) {  
-	        e.printStackTrace();  
-	    } catch (IOException e) {  
-	        e.printStackTrace();  
-	    }  
 		
 		// Product ingestion successful
 		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
@@ -496,51 +502,22 @@ public class ProductIngestor {
 		modelProductFile.setProduct(product.get());
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
 		
+		// Check for first time ingestion (defines publication time)
 		if (null == modelProduct.getPublicationTime()) {
 			modelProduct.setPublicationTime(Instant.now());
+			// Create monitoring message for product generation and publication
+			if (null != ingestorConfig.getLogHost()) {
+				try {
+					monitorProductIngestion(modelProductFile, modelProduct);
+				} catch (Exception e) {
+					// Log failed monitoring, but continue with ingestion
+					logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
+							modelProduct.getId(), modelProductFile.getProductFileName(), e.getMessage());
+				}
+			}
 		}
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 
-		String token = ingestorConfig.getLogToken();
-		String bucket = "production";
-		String org = ingestorConfig.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
-		// Use a Data Point to write data
-
-		Point point = Point.measurement("product")
-				.addField("name", modelProductFile.getProductFileName())
-				.addField("id", modelProductFile.getId()) // to distinct products with same names at different facilities
-				.addField("size", modelProductFile.getFileSize())
-				.addField("type", modelProduct.getProductionType() == null ? "" : modelProduct.getProductionType().toString())
-				.addField("data_availability_time", modelProduct.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(modelProduct.getRawDataAvailabilityTime()))
-				.addField("sensing_start_time", OrbitTimeFormatter.format(modelProduct.getSensingStartTime()))
-				.addField("sensing_stop_time", OrbitTimeFormatter.format(modelProduct.getSensingStopTime()))
-				.addField("generation_time", OrbitTimeFormatter.format(modelProduct.getGenerationTime()))
-				.addField("publication_time", OrbitTimeFormatter.format(modelProduct.getPublicationTime()))
-				.time(Instant.now(), WritePrecision.NS);
-		for (String key : modelProduct.getParameters().keySet()) {
-			point.addField(key, modelProduct.getParameters().get(key).getParameterValue());
-		}
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-
-		logger.trace(point.toLineProtocol());
-		
-	    try {  
-	    	 Files.writeString(
-	    		        Path.of("influxDB.log"),
-	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-	    		    );
-	    } catch (SecurityException e) {  
-	        e.printStackTrace();  
-	    } catch (IOException e) {  
-	        e.printStackTrace();  
-	    }  
 		// Return the updated REST product file
 		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
 

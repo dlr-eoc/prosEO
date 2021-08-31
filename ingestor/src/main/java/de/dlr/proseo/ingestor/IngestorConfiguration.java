@@ -58,41 +58,24 @@ public class IngestorConfiguration {
 	private String storageManagerValidity;
 	private Long storageManagerValidityLong = null;
 	
-	/** Log organization for influxDB */
-	@Value("${proseo.log.org}")
-	private String logOrg;
-
-	/** Log token for influxDB */
-	@Value("${proseo.log.token}")
-	private String logToken;
-
-	/** Log host for influxDB */
-	@Value("${proseo.log.host}")
+	/** Log host for influxDB (default null means no monitor logging will take place) */
+	@Value("${proseo.log.host:#{null}}")
 	private String logHost;
 		
+	/** Log token for influxDB (default "EMPTY" will probably fail at application level, but avoids NullPointerException) */
+	@Value("${proseo.log.token:EMPTY}")
+	private String logToken;
+
+	/** Log organization for influxDB (default "proseo") */
+	@Value("${proseo.log.org:proseo}")
+	private String logOrg;
+
+	/** Log bucket for influxDB (default "production") */
+	@Value("${proseo.log.bucket:production}")
+	private String logBucket;
+
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestorConfiguration.class);
-	
-	/**
-	 * @return the logHost
-	 */
-	public String getLogHost() {
-		return logHost;
-	}
-
-	/**
-	 * @return the logOrg
-	 */
-	public String getLogOrg() {
-		return logOrg;
-	}
-
-	/**
-	 * @return the logToken
-	 */
-	public String getLogToken() {
-		return logToken;
-	}
 	
 	/**
 	 * Gets the URL of the prosEO Production Planner component
@@ -176,6 +159,42 @@ public class IngestorConfiguration {
 			}
 		}
 		return storageManagerValidityLong.longValue();
+	}
+
+	/**
+	 * Gets the connection string (protocol, host and port) for the monitoring host
+	 * 
+	 * @return the logging host URL
+	 */
+	public String getLogHost() {
+		return logHost;
+	}
+
+	/**
+	 * Gets the authentication token for the monitoring host
+	 * 
+	 * @return the log authentication token
+	 */
+	public String getLogToken() {
+		return logToken;
+	}
+	
+	/**
+	 * Gets the organization to use for monitoring calls
+	 * 
+	 * @return the logging organization
+	 */
+	public String getLogOrg() {
+		return logOrg;
+	}
+
+	/**
+	 * Gets the bucket in the monitoring database to use
+	 * 
+	 * @return the logging bucket
+	 */
+	public String getLogBucket() {
+		return logBucket;
 	}
 
 }
