@@ -128,6 +128,7 @@ public class JobOrderControllerImpl implements JoborderController {
 				response.setMessage("XML Doc parsed from attribute jobOrderStringBase64 is not valid...");
 				return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
 			}
+			// TODO - Change to ProseoFile.fromTypeAndBucket(..., cfg.getJoborderBucket(), ...);
 			ProseoFile proFile = ProseoFile.fromType(StorageType.valueOf(joborder.getFsType()), objKey, cfg);
 			if (proFile != null) {
 				if (proFile.writeBytes(bytes)) {
