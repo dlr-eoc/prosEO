@@ -5,10 +5,6 @@
  */
 package de.dlr.proseo.planner.util;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +32,6 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
@@ -964,12 +959,11 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
-
-		String token = ProductionPlanner.config.getLogToken();
-		String bucket = "order";
-		String org = ProductionPlanner.config.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ProductionPlanner.config.getLogHost(), token.toCharArray());
+		
+		// No logging, if monitoring host is not set
+		if (null == ProductionPlanner.config.getLogHost()) {
+			return;
+		}
 
 		// calculate necessary data
 		// get all job steps
@@ -1004,6 +998,12 @@ public class OrderUtil {
 			}
 		}
 
+		String token = ProductionPlanner.config.getLogToken();
+		String bucket = ProductionPlanner.config.getLogBucket();
+		String org = ProductionPlanner.config.getLogOrg();
+
+		InfluxDBClient client = InfluxDBClientFactory.create(ProductionPlanner.config.getLogHost(), token.toCharArray());
+
 		// Use a Data Point to write data
 
 		Point point = Point.measurement("progress")
@@ -1021,23 +1021,21 @@ public class OrderUtil {
 		}
 
 		
-		logger.trace(point.toLineProtocol());
+		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
 
 		
-	    try {  
-	    	 Files.writeString(
-	    		        Path.of("influxDB.log"),
-	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-	    		    );
-	    } catch (SecurityException e) {  
-	        e.printStackTrace();  
-	    } catch (IOException e) {  
-	        e.printStackTrace();  
-	    }  
-
-		
+//	    try {  
+//	    	 Files.writeString(
+//	    		        Path.of("influxDB.log"),
+//	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
+//	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
+//	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
+//	    		    );
+//	    } catch (SecurityException e) {  
+//	        e.printStackTrace();  
+//	    } catch (IOException e) {  
+//	        e.printStackTrace();  
+//	    }  
 		
 		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
 		//List<FluxTable> tables = client.getQueryApi().query(query, org);

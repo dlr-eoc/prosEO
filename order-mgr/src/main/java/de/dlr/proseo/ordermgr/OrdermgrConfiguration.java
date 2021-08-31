@@ -29,9 +29,6 @@ public class OrdermgrConfiguration {
 	// Default connection timeout is 30 s
 	private static final Long DEFAULT_TIMEOUT = 30000L;
 
-	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(OrdermgrConfiguration.class);
-	
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;
@@ -49,38 +46,24 @@ public class OrdermgrConfiguration {
 	@Value("${proseo.ingestor.password}")
 	private String ingestorPassword;
 
-	/** Log organization for influxDB */
-	@Value("${proseo.log.org}")
-	private String logOrg;
-
-	/** Log token for influxDB */
-	@Value("${proseo.log.token}")
+	/** Log host for influxDB (default null means no monitor logging will take place) */
+	@Value("${proseo.log.host:#{null}}")
+	private String logHost;
+		
+	/** Log token for influxDB (default "EMPTY" will probably fail at application level, but avoids NullPointerException) */
+	@Value("${proseo.log.token:EMPTY}")
 	private String logToken;
 
-	/** Log host for influxDB */
-	@Value("${proseo.log.host}")
-	private String logHost;
-	
-	/**
-	 * @return the logHost
-	 */
-	public String getLogHost() {
-		return logHost;
-	}
-	
-	/**
-	 * @return the logOrg
-	 */
-	public String getLogOrg() {
-		return logOrg;
-	}
+	/** Log organization for influxDB (default "proseo") */
+	@Value("${proseo.log.org:proseo}")
+	private String logOrg;
 
-	/**
-	 * @return the logToken
-	 */
-	public String getLogToken() {
-		return logToken;
-	}
+	/** Log bucket for influxDB (default "production") */
+	@Value("${proseo.log.bucket:production}")
+	private String logBucket;
+
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(OrdermgrConfiguration.class);
 	
 	/**
 	 * Gets the URL of the prosEO Ingestor component
@@ -128,6 +111,42 @@ public class OrdermgrConfiguration {
 	 */
 	public String getIngestorPassword() {
 		return ingestorPassword;
+	}
+
+	/**
+	 * Gets the connection string (protocol, host and port) for the monitoring host
+	 * 
+	 * @return the logging host URL
+	 */
+	public String getLogHost() {
+		return logHost;
+	}
+
+	/**
+	 * Gets the authentication token for the monitoring host
+	 * 
+	 * @return the log authentication token
+	 */
+	public String getLogToken() {
+		return logToken;
+	}
+	
+	/**
+	 * Gets the organization to use for monitoring calls
+	 * 
+	 * @return the logging organization
+	 */
+	public String getLogOrg() {
+		return logOrg;
+	}
+
+	/**
+	 * Gets the bucket in the monitoring database to use
+	 * 
+	 * @return the logging bucket
+	 */
+	public String getLogBucket() {
+		return logBucket;
 	}
 
 }

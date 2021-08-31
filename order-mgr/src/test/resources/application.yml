@@ -15,9 +15,15 @@ logging:
             dlr:
                 proseo: TRACE
 proseo:
-    log.org: proseo
-    log.host: http://localhost:8086
-    log.token: TheInfluxDBToken
+    log:
+#        # Host and port for InfluxDB monitoring --> Activate if present in test environment
+#        host: http://localhost:8086
+#        # Authentication token for InfluxDB
+#        token: TheInfluxDBToken
+#        # InfluxDB organization to use
+#        org: proseo
+#        # InfluxDB bucket to use
+#        bucket: order
     ingestor:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
         # Connection timeout in ms

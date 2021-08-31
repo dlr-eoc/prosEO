@@ -13,6 +13,15 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
 proseo:
+    log:
+        # Host and port for InfluxDB monitoring
+        host: http://localhost:8086
+        # Authentication token for InfluxDB
+        token: TheInfluxDBToken
+        # InfluxDB organization to use
+        org: proseo
+        # InfluxDB bucket to use
+        bucket: order
     wrapper:
         # User and password for wrapper callbacks
         user: wrapper

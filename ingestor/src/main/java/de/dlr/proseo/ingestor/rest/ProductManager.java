@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -1137,7 +1136,7 @@ public class ProductManager {
 	 * @throws NoResultException if no product with the given ID or no file with the given name exists
 	 * @throws SecurityException if a cross-mission data access was attempted
 	 */
-	public String getDownloadTokenById(Long id, String fileName, HttpHeaders httpHeaders)
+	public String getDownloadTokenById(Long id, String fileName)
 			throws IllegalArgumentException, NoResultException, SecurityException {
 		if (logger.isTraceEnabled()) logger.trace(">>> getDownloadTokenById({}, {})", id, fileName);
 		

@@ -64,6 +64,7 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
 import de.dlr.proseo.model.util.ProseoUtil;
 import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
+import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
@@ -1036,8 +1037,18 @@ public class ProcessingOrderMgr {
 
 	}
 
-	public HttpHeaders logOrderState(ProcessingOrder order) {
+	/**
+	 * Write a monitoring entry for an order state change
+	 * 
+	 * @param order the order, for which the state changed
+	 */
+	private void logOrderState(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", order.getId());
+
+		// No logging, if monitoring host is not set
+		if (null == config.getLogHost()) {
+			return;
+		}
 
 		// calculate necessary data
 		// get all job steps
@@ -1073,11 +1084,12 @@ public class ProcessingOrderMgr {
 		}
 
 
-		String token = "aY5a0AosR89dnUaxE8PqT0bh8TOunlSerS5h1du35Q45ygzHJ5KT9MX-GZiyCmdOBPsAkvC2hD7pyQ8rAPSolw==";
-		String bucket = "order";
+		String token = config.getLogToken();
+		String bucket = config.getLogBucket();
 		String org = "proseo";
 		
-		InfluxDBClient client = InfluxDBClientFactory.create("http://localhost:8086", token.toCharArray());
+		InfluxDBClient client = InfluxDBClientFactory.create(config.getLogHost(), token.toCharArray());
+
 		// Use a Data Point to write data
 
 		Point point = Point.measurement("progress")
@@ -1094,25 +1106,7 @@ public class ProcessingOrderMgr {
 			writeApi.writePoint(bucket, org, point);
 		}
 
-		logger.trace(point.toLineProtocol());
-		
-	    try {  
-	    	 Files.writeString(
-	    		        Path.of("influxDB.log"),
-	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
-	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
-	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
-	    		    );
-	    } catch (SecurityException e) {  
-	        e.printStackTrace();  
-	    } catch (IOException e) {  
-	        e.printStackTrace();  
-	    }  
-		
-		return new HttpHeaders();
-
-
+		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
 	}
-
 
 }
