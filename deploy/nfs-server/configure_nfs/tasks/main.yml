@@ -1,0 +1,33 @@
+---
+- name: Install NFS
+  yum:
+    name: nfs-utils
+    state: present
+    
+- name: Prepare export directory
+  file:
+    path: /exports/
+    mode: 0755
+    state: directory
+
+- name: Prepare export subdirectories
+  file:
+    path: "/exports/{{ item }}"
+    mode: 0777
+    state: directory
+  loop:
+  - proseodata
+  - transfer
+
+- name: Create exports file
+  blockinfile:
+    dest: /etc/exports
+    create: yes
+    block: |
+      /exports 10.9.42.0/24(rw)
+
+- name: Enable NFS
+  service:
+    name: nfs
+    state: restarted
+    enabled: yes

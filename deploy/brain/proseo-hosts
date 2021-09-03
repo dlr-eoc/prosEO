@@ -1,0 +1,6 @@
+[brain]
+10.9.42.21
+
+[brain:vars]
+# Configure bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'

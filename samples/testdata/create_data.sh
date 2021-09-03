@@ -103,7 +103,7 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "name": "localhost",
     "description": "Docker Desktop Minikube",
     "processingEngineUrl": "http://host.docker.internal:8001/",
-    "processingEngineToken": "TBD",
+    "processingEngineToken": "<from Kubernetes>",
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",

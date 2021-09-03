@@ -1,0 +1,14 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: ********
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE

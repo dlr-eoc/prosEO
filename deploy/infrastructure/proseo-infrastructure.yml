@@ -1,0 +1,167 @@
+---
+# Deploy an infrastructure for prosEO
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+  
+  # --- Data Center ---
+  
+  - name: Create a data center
+    datacenter:
+      name: "{{ datacenter.name }}"
+      description: "{{ datacenter.description }}"
+      location: "{{ datacenter.location }}"
+    register: datacenter_response
+    
+  - name: Show data center
+    debug:
+      msg: "{{ datacenter_response }}"
+  
+  # --- Hosts ---
+  
+  - name: Provision bastion hosts
+    server:
+      datacenter: "{{ datacenter.name }}"
+      count: 2
+      auto_increment: false
+      name: "{{ item }}"
+      image: centos:7
+      cores: "{{ bastion.cores }}"
+      ram: "{{ bastion.ram }}"
+      volume_size: "{{ bastion.disk }}"
+      ssh_keys: keys/id_rsa
+    loop:
+    - bastion-control
+    - bastion-prip
+    register: bastionhosts
+
+  - name: Provision brain host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "brain"
+      image: centos:7
+      cores: "{{ brain.cores }}"
+      ram: "{{ brain.ram }}"
+      volume_size: "{{ brain.disk }}"
+      ssh_keys: keys/id_rsa
+    register: brainhost
+  
+  - name: Provision NFS host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "nfs-server"
+      image: centos:7
+      cores: "{{ nfs.cores }}"
+      ram: "{{ nfs.ram }}"
+      volume_size: "{{ nfs.disk }}"
+      ssh_keys: keys/id_rsa
+    register: nfshost
+  
+  - name: Provision loghost
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "loghost"
+      image: centos:7
+      cores: "{{ log.cores }}"
+      ram: "{{ log.ram }}"
+      volume_size: "{{ log.disk }}"
+      ssh_keys: keys/id_rsa
+  
+  - name: Provision Kubernetes master
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "master"
+      image: centos:7
+      cores: "{{ master.cores }}"
+      ram: "{{ master.ram }}"
+      volume_size: "{{ master.disk }}"
+      ssh_keys: keys/id_rsa
+  
+  - name: Provision Kubernetes workers
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "worker%02d"
+      count: 3
+      image: centos:7
+      cores: "{{ worker.cores }}"
+      ram: "{{ worker.ram }}"
+      volume_size: "{{ worker.disk }}"
+      ssh_keys: keys/id_rsa
+    register: workers
+  
+  # --- Networks ---
+  
+  - name: Create network for control instance bastion
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "lancontrol"
+    register: lancontrol
+  - name: Create network for PRIP bastion
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "lanprippublic"
+    register: lanprippublic
+  - name: Create private network for internal nodes
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "laninternal"
+      public: false
+    register: laninternal
+  - name: Create private network for PRIP and Storage Manager
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "lanpripinternal"
+      public: false
+    register: lanpripinternal
+    
+  # --- Public IPs ---
+  
+  - name: Create public IPs
+    ipblock:
+      name: "{{ datacenter.name }}"
+      location: "{{ datacenter.location }}"
+      size: 3
+    register: ipblock
+      
+  # --- Network Interface Cards ---
+  
+  - name: Create NIC on lancontrol
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: bastion-control
+      lan: "{{ lancontrol.id }}"
+      ips:
+      - "{{ ipblock[0].ip }}"
+      dhcp: false
+      
+  - name: Create NIC on lanprip
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: bastion-prip
+      lan: "{{ lanprip.id }}"
+      ips:
+      - "{{ ipblock[1].ip }}"
+      dhcp: false
+      
+  - name: Create NICs on laninternal
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: "{{ item.id }}"
+      lan: "{{ laninternal.id }}"
+      nat: true
+    with_items: "{{ ionos.machines }}"
+    
+  - name: Create NICs on lanprip
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: "{{ item }}"
+      lan: "{{ laninternal.id }}"
+      nat: true
+    loop:
+    - "{{ bastionhosts[1].id }}"
+    - "{{ brainhost.id }}"
+    - "{{ nfshost.id }}"
+    
+      

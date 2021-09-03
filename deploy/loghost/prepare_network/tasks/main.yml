@@ -1,0 +1,25 @@
+---
+# Prepare network settings
+- name: Set hostname
+  hostname:
+    name: loghost
+    
+- name: Remove default route
+  shell: route del default
+  
+- name: Set default route
+  shell: route add default gw 10.9.42.225
+
+- name: Set DNS resolution
+  lineinfile:
+    path: /etc/resolv.conf
+    regexp: '^nameserver'
+    line: nameserver 8.8.8.8
+    insertbefore: BOF
+  
+- name: disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  

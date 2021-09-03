@@ -1,0 +1,71 @@
+---
+- name: Install nginx packages
+  yum:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - httpd-tools
+    - nginx
+
+- name: Create key directory
+  file:
+    dest: /etc/nginx/certs
+    owner: root
+    group: root
+    mode: 0700
+    state: directory
+
+- name: Copy server cert and key
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/nginx/certs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+  - servercert.pem
+  - serverkey.pem
+
+- name: Configure nginx HTTP->HTTPS redirection
+  blockinfile:
+    dest: /etc/nginx/default.d/redirect.conf
+    create: yes
+    block: |
+      return 301 https://$host$request_uri;
+
+- name: Configure HTTPS proxy
+  copy:
+    src: nginx_ssl.conf
+    dest: /etc/nginx/conf.d/ssl.conf
+
+- name: Remove old proxy password file
+  file:
+    path: /etc/nginx/htpasswd
+    state: absent
+
+- name: Create new proxy password file
+  file:
+    path: /etc/nginx/htpasswd
+    state: touch
+
+- name: Configure proxy users
+  command: "htpasswd -b /etc/nginx/htpasswd '{{ item.key }}' '{{ item.value }}'"
+  with_dict: "{{ nginx_users|default([]) }}"
+
+- name: Ensure library for managing SELinux is available
+  yum:
+    name: libsemanage-python
+    state: present
+
+- name: Allow network connections from HTTP server in SELinux
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
+
+- name: (Re-)start nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes

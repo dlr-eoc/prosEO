@@ -1,0 +1,47 @@
+version: '3'
+services:
+  influxdb:
+    image: influxdb:2.0.7
+    hostname: influxdb
+    volumes:
+      - /opt/proseo/log/influxdb/data:/var/lib/influxdb2
+      - /opt/proseo/log/influxdb/config:/etc/influxdb2
+    labels:
+      - "traefik.enable=false"
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=proseoadmin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=<password from bastion nginx config>
+      - DOCKER_INFLUXDB_INIT_ORG=proseo
+      - DOCKER_INFLUXDB_INIT_BUCKET=telegraf
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=<my_influxdb_token>
+    restart: unless-stopped
+ 
+  telegraf:
+    image: telegraf
+    hostname: telegraf
+    volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/proseo/log/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+    labels:
+      - "traefik.enable=false"
+    depends_on:
+      - influxdb
+    restart: unless-stopped
+
+  grafana:
+    hostname: grafana
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - /opt/proseo/log/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=proseoadmin
+      - GF_SECURITY_ADMIN_PASSWORD=<password from bastion nginx config>
+    depends_on:
+      - influxdb
+    restart: unless-stopped

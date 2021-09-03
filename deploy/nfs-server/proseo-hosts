@@ -1,0 +1,9 @@
+[nfsserver]
+10.9.42.23
+
+[nfsserver:vars]
+# Configure bastion as proxy for NFS server
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[bastion_control]
+85.215.x.x

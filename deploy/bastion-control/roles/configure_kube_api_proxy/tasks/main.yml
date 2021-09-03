@@ -1,0 +1,36 @@
+---
+- name: Create systemd configuration for proxy
+  blockinfile:
+    dest: /etc/systemd/system/kubectl-proxy.service
+    create: yes
+    block: |
+      [Unit]
+      Description=kubectl proxy {{ kubectl_proxy_port }}
+      After=network.target
+      [Service]
+      User=root
+      ExecStart=/bin/bash -c "/usr/bin/kubectl proxy --address=localhost --port={{ kubectl_proxy_port }}"
+      StartLimitInterval=0
+      RestartSec=10
+      Restart=always
+      [Install]
+      WantedBy=multi-user.target
+  register: kubeproxy_config
+
+- name: Refresh systemd configuration
+  systemd:
+    daemon_reload: yes
+
+- name: Start kubectl proxy
+  service:
+    name: kubectl-proxy
+    state: started
+    enabled: yes
+  when: kubeproxy_config is not changed
+
+- name: (Re-)start kubectl proxy
+  service:
+    name: kubectl-proxy
+    state: restarted
+    enabled: yes
+  when: kubeproxy_config is changed
