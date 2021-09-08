@@ -50,9 +50,9 @@ docker exec -it proseo_proseo-db_1 /bin/bash
 ```
 Within this shell, run the provided SQL script:
 ```
-psql proseo -U postgres -h localhost <create_view_product_processing_facilities.sql
+psql proseo -U postgres -h localhost </proseo/create_view_product_processing_facilities.sql
 ```
-You will be asked to provide the password for the `postgres` user. Enter the password configured in the `docker-compose.yml` file
+You may be asked to provide the password for the `postgres` user. Enter the password configured in the `docker-compose.yml` file
 in `brain/prepare_proseo/files`.
 
 The control instance can be stopped using the script `stop_control_instance.sh`. To stop only the prosEO microservices, but not

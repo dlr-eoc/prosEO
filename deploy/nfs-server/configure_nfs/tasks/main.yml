@@ -1,14 +1,61 @@
 ---
-- name: Install NFS
+- name: Install NFS and LVM2
   yum:
-    name: nfs-utils
+    name: nfs-utils,lvm2
     state: present
     
+- name: Create partitions on NFS disks
+  parted:
+    device: "{{ item }}"
+    number: 1
+    flags: [ lvm ]
+    state: present
+  loop:
+  - /dev/vdb
+  - /dev/vdc
+  - /dev/vdd
+  - /dev/vde
+  - /dev/vdf
+  - /dev/vdg
+  - /dev/vdh
+  - /dev/vdi
+  - /dev/vdj
+  - /dev/vdk
+  - /dev/vdl
+  - /dev/vdm
+  - /dev/vdn
+  - /dev/vdo
+  - /dev/vdp
+  
+- name: Create logical volume group for NFS (30 TB)
+  lvg:
+    vg: vg.nfs
+    pvs: /dev/vdb1,/dev/vdc1,/dev/vdd1,/dev/vde1,/dev/vdf1,/dev/vdg1,/dev/vdh1,/dev/vdi1,/dev/vdj1,/dev/vdk1,/dev/vdl1,/dev/vdm1,/dev/vdn1,/dev/vdo1,/dev/vdp1
+    pesize: 2000G
+
+- name: Create logical volume for NFS (30 TB)
+  lvol:
+    vg: vg.nfs
+    lv: lv.nfs
+    size: 30000G
+    
+- name: Format NFS volume
+  filesystem:
+    fstype: xfs
+    dev: /dev/vg.nfs/lv.nfs
+  
 - name: Prepare export directory
   file:
     path: /exports/
     mode: 0755
     state: directory
+
+- name: Mount NFS volume into export directory
+  mount:
+    path: /exports
+    src: /dev/vg.nfs/lv.nfs
+    fstype: xfs
+    state: mounted
 
 - name: Prepare export subdirectories
   file:
