@@ -2,7 +2,21 @@ prosEO Deployment Example
 =========================
 
 
+This document describes how to deploy a prosEO processing facility on a new set of
+(virtual) machines, e. g. as provisioned by some cloud service provider.
+
 # Prerequisites
+
+The (virtual) machines need to at least fulfil the following requirements:
+- Linux installed
+- Ability to run Docker and Kubernetes (i. e. standard CentOS kernel, no provider-specific builds)
+
+Suggested sizing for a small to medium installation:
+- CPUs: Bastion host and Kubernetes master 4 CPUs each, worker nodes 8-16 CPUs each (depending on the processors to be run)
+- RAM: Bastion host and Kubernetes master 8-16 GB each, worker nodes 32 GB or more (again depending on the processors)
+- Disk: Bastion host 40 GB system; NFS server 10 TB data (or more, we are talking earth observation satellite data here!);
+  Kubernetes master 40 GB system; worker nodes 40 GB system, 80 GB Docker library and scratch working area (depening on processor needs)
+- Optional: Access to some object storage conforming to the AWS S3 protocol (if not, more disk space will be needed for the NFS server)
 
 The procedure below assumes that a cloud infrastructure has been deployed according to the details given in the
 `infrastructure` subdirectory.

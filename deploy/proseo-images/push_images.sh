@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TAG_SUFFIX="cpros"
+TAG_SUFFIX="proseo"
 
 #check arg
 if [[ "$#" -eq 0 || "$#" -ne 1 ]]

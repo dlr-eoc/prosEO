@@ -77,3 +77,46 @@ kubectl get secret -n kube-system \
 You can now access the Kubernetes dashboard from any browser (e. g. on your local workstation) using the URL
 <https://your.bastion.host/kubectl/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/>
 clicking on "Token" at the login screen and providing the saved token string as input.
+
+
+# Configure access to the NFS server in Kubernetes
+
+For the Kubernetes worker nodes to get access to the NFS server, a persistent volume with an NFS driver must be
+set up. Create an `kubernetes/nfs-pv.yaml` file from the template file given in the `kubernetes` folder, replacing
+the NFS server IP address with the actual address in your environment. Then create the NFS persistent volume:
+```
+kubectl apply -f kubernetes/nfs-pv.yaml
+```
+
+
+# Configure an account for the Production Planner
+
+For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
+information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
+
+Create the account, role and role binding, and retrieve the authentication token for the new account:
+```bash
+kubectl apply -f kubernetes/planner-account.yaml
+kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
+```
+
+
+# Create a Kubernetes secret for private Docker registry access
+
+Create a Kubernetes secret holding the credentials for the private registry on some host, which has both `kubectl` and Docker
+(not Docker Desktop!) configured (e. g. the Kubernetes master node):
+```sh
+docker login <registry-url>
+# Check if docker client file is under ~/.docker/config.json, and make sure it actually contains the desired credentials
+cat ~/.docker/config.json
+# Create Kubernetes secret
+kubectl create secret generic proseo-regcred  --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson
+```
+See also: <https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/>
+
+
+# Alternative deployment of Storage Manager in Kubernetes
+
+Instead of running the Storage Manager as a Docker container on the NFS server, as the present deployment description
+assumes, it may also be started as a service in Kubernetes. A sample service definition can be found in
+`kubernetes/storage-mgr.yaml.template`.

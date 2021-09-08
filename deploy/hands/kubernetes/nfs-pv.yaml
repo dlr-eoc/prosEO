@@ -1,5 +1,5 @@
 ---
-# The externally mounted file system for product ingestion (simulated)
+# The file system for product ingestion
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -13,7 +13,7 @@ spec:
     storage: 100Gi
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: proseo-nfs-server.default.svc.cluster.local
+    server: 192.168.0.130
     path: /exports/transfer
 
 ---
@@ -31,5 +31,5 @@ spec:
     storage: 200Gi
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: proseo-nfs-server.default.svc.cluster.local
+    server: 192.168.0.130
     path: /exports/proseodata
