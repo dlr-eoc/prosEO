@@ -21,22 +21,13 @@
   
   # --- Networks ---
   
-#  - name: Create network for control instance bastion
-#    lan:
-#      datacenter: "{{ datacenter.name }}"
-#      name: "lancontrol"
-#    register: lancontrol
-#  - name: Create network for PRIP bastion
-#    lan:
-#      datacenter: "{{ datacenter.name }}"
-#      name: "lanprippublic"
-#    register: lanprippublic
   - name: Create private network for internal nodes
     lan:
       datacenter: "{{ datacenter.name }}"
       name: "laninternal"
       public: false
     register: laninternal
+    
   - name: Create private network for PRIP and Storage Manager
     lan:
       datacenter: "{{ datacenter.name }}"
@@ -46,7 +37,6 @@
     
   - name: Show networks
     debug:
-      # msg: "[ {{ lancontrol }},{{ lanprippublic }},{{ laninternal }},{{ lanpripinternal }} ]"
       msg: "[ {{ laninternal }},{{ lanpripinternal }} ]"
   
   # --- Public IPs ---
@@ -75,10 +65,8 @@
       cores: "{{ bastion.cores }}"
       ram: "{{ bastion.ram }}"
       volume_size: "{{ bastion.disk }}"
+      # Public IPs must be updated manually after provisioning
       assign_public_ip: true
-      # nic_ips does not work, IP address must be set later
-#      nic_ips:
-#      - "{{ item.ip }}"
       ssh_keys:
       - "{{ all.ssh_key }}"
     loop:
@@ -86,25 +74,6 @@
     - bastion-prip
     register: bastionhosts
     
-  - name: Show bastion hosts
-    debug:
-      msg: "{{ bastionhosts }}"
-  
-  - name: Set external IP addresses on bastion hosts
-    nic:
-      datacenter:  "{{ datacenter.name }}"
-      server: "{{ item.host.id }}"
-      # does not work
-      id: "{{ item.host.entities.nics.items[0].id }}"
-      ips:
-      - "{{ item.ip }}"
-      state: update
-    loop:
-    - host: "{{ bastionhosts.results[0].machines[0] }}"
-      ip: "{{ public_ips.ipblock.properties.ips[0] }}"
-    - host: "{{ bastionhosts.results[1].machines[0] }}"
-      ip: "{{ public_ips.ipblock.properties.ips[1] }}"
-
   - name: Show bastion hosts
     debug:
       msg: "{{ bastionhosts }}"
@@ -119,8 +88,6 @@
       cores: "{{ brain.cores }}"
       ram: "{{ brain.ram }}"
       volume_size: "{{ brain.disk }}"
-      # nat apparently has no effect whatsoever
-#      nat: true
       ssh_keys:
       - "{{ all.ssh_key }}"
     register: brainhost
@@ -142,6 +109,15 @@
       ssh_keys:
       - "{{ all.ssh_key }}"
     register: nfshost
+    
+  - name: Add NFS disk volumes of 2 TB each to NFS host
+    volume:
+      datacenter: "{{ datacenter.name }}"
+#      server: "nfs-server"
+      name: "nfsdisk%02d"
+      count: "{{ nfs.disk_count }}"
+      size: 2048
+      licence_type: OTHER
   
   - name: Show NFS host
     debug:
@@ -203,55 +179,18 @@
   
   # --- Network Interface Cards ---
   
-#  - name: Create NIC on lancontrol
-#    nic:
-#      datacenter: "{{ datacenter.name }}"
-#      server: bastion-control
-#      lan: "{{ lancontrol.lan.id }}"
-#      name: "NIC lancontrol"
-#      ips:
-#      - "{{ public_ips.ipblock.properties.ips[0] }}"
-#      dhcp: false
-#    register: lancontrol_nic
-#      
-#  - name: Show NIC on lancontrol
-#    debug:
-#      msg: "{{ lancontrol_nic }}"
-#  
-#  - name: Create NIC on lanprippublic
-#    nic:
-#      datacenter: "{{ datacenter.name }}"
-#      server: bastion-prip
-#      lan: "{{ lanprippublic.lan.id }}"
-#      name: "NIC lanprippublic"
-#      ips:
-#      - "{{ public_ips.ipblock.properties.ips[1] }}"
-#      dhcp: false
-#    register: lanprippublic_nic
-#      
-#  - name: Show NIC on lanprippublic
-#    debug:
-#      msg: "{{ lanprippublic_nic }}"
-      
   - name: Create NICs on laninternal
     nic:
       datacenter: "{{ datacenter.name }}"
-      server: "{{ item.host }}"
+      server: "{{ item }}"
       lan: "{{ laninternal.lan.id }}"
       name: "NIC laninternal"
-      ips:
-      - "{{ item.ip }}"
     loop:
-    - host: "{{ bastionhosts.results[0].machines[0].id }}"
-      ip: 10.10.10.10
-    - host: "{{ brainhost.machines[0].id }}"
-      ip: 10.10.10.11
-    - host: "{{ nfshost.machines[0].id }}"
-      ip: 10.10.10.12
-    - host: "{{ loghost.machines[0].id }}"
-      ip: 10.10.10.13
-    - host: "{{ kube_master.machines[0].id }}"
-      ip: 10.10.10.14
+    - "{{ bastionhosts.results[0].machines[0].id }}"
+    - "{{ brainhost.machines[0].id }}"
+    - "{{ nfshost.machines[0].id }}"
+    - "{{ loghost.machines[0].id }}"
+    - "{{ kube_master.machines[0].id }}"
     register: laninternal_nics
       
   - name: Show NICs on laninternal
@@ -294,10 +233,11 @@
       datacenter_id: "{{ datacenter_response.datacenter.id }}"
       name: "NAT Gateway"
       public_ips:
-      - "{{ public_ips.ipblock.properties.ips[2] }}"
+      - "{{ public_ips.ipblock.properties.ips[0] }}"
       lans:
       - id: "{{ laninternal.lan.id }}"
-        gateway_ips: "10.10.10.240/24"
+        # Placeholder, must be updated manually after provisioning
+        gateway_ips: "10.1.2.3/24"
     register: nat_gateway
     
   - name: Show NAT Gateway
@@ -311,8 +251,9 @@
       name: "NAT for laninternal"
       type: "SNAT"
       protocol: "TCP"
-      source_subnet: "10.10.10.0/24"
-      public_ip: "{{ public_ips.ipblock.properties.ips[2] }}"
+      # Placeholder, must be updated manually after provisioning
+      source_subnet: "10.1.2.0/24"
+      public_ip: "{{ public_ips.ipblock.properties.ips[0] }}"
     register: nat_gateway_rule
 
   - name: Show NAT Gateway Rule

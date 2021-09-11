@@ -19,7 +19,8 @@ Suggested sizing for a small to medium installation:
 - Optional: Access to some object storage conforming to the AWS S3 protocol (if not, more disk space will be needed for the NFS server)
 
 The procedure below assumes that a cloud infrastructure has been deployed according to the details given in the
-`infrastructure` subdirectory.
+`infrastructure` subdirectory. The IP addresses of the virtual machines must be recorded in a file called `proseo-hosts`
+(derived from template file `proseo-hosts.template`).
 
 
 # General Procedure

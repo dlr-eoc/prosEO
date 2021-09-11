@@ -28,8 +28,11 @@ in the above mentioned container. The following files have been changed:
 - `group_vars/k8s_cluster/addons.yml`
 - `group_vars/k8s_cluster/k8s_cluster.yml`
 
-The `inventory.ini` file was replaced by a `hosts.yml` file. This file must be updated,
-whenever the physical (VM) infrastructure has been changed.
+The `inventory.ini` file was replaced by a `hosts.yml` file. This file must be updated according to the physical (VM)
+infrastructure, and whenever the infrastructure has been changed.
+
+A file `predeploy.yml` has been added to setup the networking in newly provisioned hosts. In this file the IP address
+of the network gateway must be updated to the actual IP address of the provisioned gateway.
 
 
 # Deploy the configuration

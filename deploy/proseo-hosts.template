@@ -1,0 +1,29 @@
+[bastion_control]
+85.215.x.x
+
+[bastion_prip]
+85.215.x.x
+
+[brain]
+10.9.42.21
+
+[brain:vars]
+# Configure control instance bastion as proxy for brain
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[nat_gateway]
+10.9.42.225
+
+[loghost]
+10.9.42.24
+
+[loghost:vars]
+# Configure bastion as proxy for NFS server
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'
+
+[nfsserver]
+10.9.42.23
+
+[nfsserver:vars]
+# Configure bastion as proxy for NFS server
+ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.x.x"'

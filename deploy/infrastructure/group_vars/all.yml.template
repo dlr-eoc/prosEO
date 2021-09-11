@@ -39,8 +39,10 @@ nfs:
     cores: 2
     # RAM in MiB
     ram: 4096
-    # Disk size in GB
-    disk: 2000
+    # System disk size in GB
+    disk: 100
+    # Number of 2 TB NFS disk
+    disk_count: 4
     
 # Log host configuration:
 log:
