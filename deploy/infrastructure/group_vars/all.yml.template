@@ -6,7 +6,7 @@ all:
     # image: centos:7
     # UUID from 'ionosctl image list' for alias 'centos:7' and location 'de/txl'
     image: "9856c488-0ac9-11ec-9fa6-1e5ea9024c03"
-    image_password: "prosEO21ionos"
+    image_password: "<root OS login password>"
     ssh_key: "{{ lookup('file', 'keys/id_rsa.pub') }}"
 
 # Data Center configuration:
