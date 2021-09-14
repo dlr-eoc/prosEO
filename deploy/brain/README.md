@@ -8,13 +8,15 @@ The configuration of the CProS Brain consists of two parts:
 # Deployment preparation
 
 Before deploying the brain, the database password defined during the creation of the prosEO images must be configured.
-To this end, copy the file `ansible/prepare_proseo/docker-compose.yml.template` into `ansible/prepare_proseo/docker-compose.yml`
+To this end, copy the file `prepare_proseo/docker-compose.yml.template` into `ansible/prepare_proseo/docker-compose.yml`
 and enter the password in the line beginning with `- POSTGRES_PASSWORD=`.
+
+Further, the IP address of the NAT gateway must be updated in `prepare_network/tasks/main.yml`.
 
 
 # Ansible configuration
 
 The Ansible configuration boils down to just running:
 ```
-ansible-playbook -i proseo-hosts -u root -b -v --private-key keys/id_rsa brain.yml
+ansible-playbook -i ../proseo-hosts -u root -b -v --private-key keys/id_rsa brain.yml
 ```

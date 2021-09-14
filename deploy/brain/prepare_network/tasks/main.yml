@@ -4,11 +4,16 @@
   hostname:
     name: brain
     
+- name: Check existence of default route
+  shell: route
+  register: route_response
+  
 - name: Remove default route
   shell: route del default
+  when: route_response.stdout.find('default') != -1
   
 - name: Set default route
-  shell: route add default gw 10.9.42.225
+  shell: route add default gw 10.8.212.240
 
 - name: Set DNS resolution
   lineinfile:

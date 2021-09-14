@@ -24,7 +24,12 @@ the file `application.yml.template` needs to be copied into a new file `applicat
 for the new `application.yml` files:
 - All files except in `proseo-ui-gui` and `proseo-storage-mgr`: Set the database password in the property `spring.datasource.password`.
 - In `proseo-ingestor` and `proseo-storage-mgr`: Set the shared secret in the property `proseo.storageManager.secret`.
-- In `proseo-ingestor`, `proseo-planner` and `proseo-order-mgr`: Set the InfluxDB authentication token in the property `proseo.log.token`.
+- In `proseo-ingestor`, `proseo-planner` and `proseo-order-mgr`: If logging in an InfluxDB is to be used:
+  - Uncomment the properties under `proseo.log`.
+  - Set the InfluxDB authentication token in the property `proseo.log.token`.
+  - Set the correct IP address for the loghost in the property `proseo.log.host`.
+- In `proseo-storage-mgr`: If an S3 backend storage is to be used, the S3 endpoint, the region and the credentials
+  (access key, secret access key) must be configured.
 
 Changes to the logging configuration may be applied to the `logback.xml` files as needed, however the standard configuration
 should be a reasonable starting point.

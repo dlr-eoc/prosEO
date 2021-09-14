@@ -185,6 +185,7 @@
       server: "{{ item }}"
       lan: "{{ laninternal.lan.id }}"
       name: "NIC laninternal"
+      dhcp: true
     loop:
     - "{{ bastionhosts.results[0].machines[0].id }}"
     - "{{ brainhost.machines[0].id }}"
@@ -203,6 +204,7 @@
       server: "{{ item.id }}"
       lan: "{{ laninternal.lan.id }}"
       name: "NIC laninternal"
+      dhcp: true
     loop: "{{ workers.machines }}"
     register: laninternal_worker_nics
       
@@ -216,6 +218,7 @@
       server: "{{ item }}"
       lan: "{{ lanpripinternal.lan.id }}"
       name: "NIC lanpripinternal"
+      dhcp: true
     loop:
     - "{{ bastionhosts.results[1].machines[0].id }}"
     - "{{ brainhost.machines[0].id }}"
@@ -250,7 +253,7 @@
       nat_gateway_id: "{{ nat_gateway.nat_gateway.id }}"
       name: "NAT for laninternal"
       type: "SNAT"
-      protocol: "TCP"
+      protocol: "ALL"
       # Placeholder, must be updated manually after provisioning
       source_subnet: "10.1.2.0/24"
       public_ip: "{{ public_ips.ipblock.properties.ips[0] }}"

@@ -1,5 +1,0 @@
-/var/log/clamscan.log {
-    weekly
-    notifempty
-    create 640 root root
-}

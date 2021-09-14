@@ -10,34 +10,19 @@
     number: 1
     flags: [ lvm ]
     state: present
-  loop:
-  - /dev/vdb
-  - /dev/vdc
-  - /dev/vdd
-  - /dev/vde
-  - /dev/vdf
-  - /dev/vdg
-  - /dev/vdh
-  - /dev/vdi
-  - /dev/vdj
-  - /dev/vdk
-  - /dev/vdl
-  - /dev/vdm
-  - /dev/vdn
-  - /dev/vdo
-  - /dev/vdp
+  loop: "{{ nfs_disk.list }}"
   
-- name: Create logical volume group for NFS (30 TB)
+- name: Create logical volume group for NFS (2 TB each)
   lvg:
     vg: vg.nfs
-    pvs: /dev/vdb1,/dev/vdc1,/dev/vdd1,/dev/vde1,/dev/vdf1,/dev/vdg1,/dev/vdh1,/dev/vdi1,/dev/vdj1,/dev/vdk1,/dev/vdl1,/dev/vdm1,/dev/vdn1,/dev/vdo1,/dev/vdp1
-    pesize: 2000G
+    pvs: "{{ nfs_disk.devices }}"
+    pesize: "{{ nfs_disk.size }}"
 
-- name: Create logical volume for NFS (30 TB)
+- name: Create logical volume for NFS (6 TB)
   lvol:
     vg: vg.nfs
     lv: lv.nfs
-    size: 30000G
+    size: "{{ nfs_disk.total_size }}"
     
 - name: Format NFS volume
   filesystem:
@@ -71,7 +56,7 @@
     dest: /etc/exports
     create: yes
     block: |
-      /exports 10.9.42.0/24(rw)
+      /exports {{ subnet }}(rw)
 
 - name: Enable NFS
   service:

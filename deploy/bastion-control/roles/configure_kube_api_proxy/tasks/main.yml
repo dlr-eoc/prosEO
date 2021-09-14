@@ -21,16 +21,8 @@
   systemd:
     daemon_reload: yes
 
-- name: Start kubectl proxy
-  service:
-    name: kubectl-proxy
-    state: started
-    enabled: yes
-  when: kubeproxy_config is not changed
-
 - name: (Re-)start kubectl proxy
   service:
     name: kubectl-proxy
     state: restarted
     enabled: yes
-  when: kubeproxy_config is changed

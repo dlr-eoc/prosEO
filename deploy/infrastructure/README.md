@@ -46,6 +46,7 @@ some manual adaptations have to be made:
   or whatever your IP block has been named –, which have not yet been assigned to the NAT Gateway),
 - Set the internal LAN address of the NAT Gateway,
 - Set the network address of `laninternal` in the NAT rule of the NAT Gateway.
+- For all hosts and all NICs, activate DHCP by checking the respective box.
 
 Apart from that, creating new volumes within a server does not work. Thus the NFS server disks need to be moved into the NFS
 server manually.

@@ -1,7 +1,7 @@
 version: '3'
 services:
   proseo-storage-mgr:
-    image: ${REGISTRY_URL}/proseo-storage-mgr:${VERSION}-cpros
+    image: ${REGISTRY_URL}/proseo-storage-mgr:${VERSION}-proseo
     volumes:
       - /opt/prosEO/log:/proseo/log
       - /exports/proseodata:/proseo/data

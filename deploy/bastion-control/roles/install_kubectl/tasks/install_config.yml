@@ -14,8 +14,11 @@
 
 - name: Copy kubectl config
   copy:
-    src: "kubectl.conf"
+    src: "{{ sourcefile | basename }}"
     dest: "{{ user_home.stdout }}/.kube/config"
     mode: 0600
     owner: "{{ user }}"
     group: "{{ user }}"
+  vars:
+    sourcefile: "roles/install_kubectl/files/kubectl.conf"
+  when: sourcefile is file

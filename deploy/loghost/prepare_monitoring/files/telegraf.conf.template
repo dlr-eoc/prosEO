@@ -5,7 +5,7 @@
   ##   To use TCP, set endpoint = "tcp://[ip]:[port]"
   ##   To use environment variables (ie, docker-machine), set endpoint = "ENV"
   # endpoint = "unix:///var/run/docker.sock"
-  endpoint = "tcp://10.9.42.21:2375"
+  endpoint = "tcp://10.x.x.x:2375"
 
   ## Set to true to collect Swarm metrics(desired_replicas, running_replicas)
   ## Note: configure this in one of the manager nodes in a Swarm cluster.

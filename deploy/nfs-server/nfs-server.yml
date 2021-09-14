@@ -20,6 +20,6 @@
   - name: Mount transfer directory on bastion host
     mount:
       path: /mnt
-      src: 10.9.42.23:/exports
+      src: "{{ groups['nfsserver'][0] }}:/exports"
       fstype: nfs
       state: mounted

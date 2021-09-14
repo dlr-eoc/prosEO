@@ -10,10 +10,10 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 100Gi
+    storage: 2000Gi
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: 192.168.0.130
+    server: 10.8.212.13
     path: /exports/transfer
 
 ---
@@ -28,8 +28,8 @@ spec:
   accessModes:
     - ReadWriteMany
   capacity:
-    storage: 200Gi
+    storage: 4000Gi
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: 192.168.0.130
+    server: 10.8.212.13
     path: /exports/proseodata

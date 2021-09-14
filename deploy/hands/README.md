@@ -21,7 +21,7 @@ docker run --rm -it --mount type=bind,source="$(pwd)"/inventory,dst=/inventory \
 ```
 
 
-# Configure Kubernetes cluster
+# Deploy Kubernetes cluster
 
 The files in `inventory/proseo` have been copied from the `inventory/sample` directory
 in the above mentioned container. The following files have been changed:
@@ -29,7 +29,8 @@ in the above mentioned container. The following files have been changed:
 - `group_vars/k8s_cluster/k8s_cluster.yml`
 
 The `inventory.ini` file was replaced by a `hosts.yml` file. This file must be updated according to the physical (VM)
-infrastructure, and whenever the infrastructure has been changed.
+infrastructure, and whenever the infrastructure has been changed. Also in the file `group_vars/k8s_cluster/k8s_cluster.yml`
+the IP address of the bastion host for the control instance needs to be updated in the variable `ansible_ssh_common_args`.
 
 A file `predeploy.yml` has been added to setup the networking in newly provisioned hosts. In this file the IP address
 of the network gateway must be updated to the actual IP address of the provisioned gateway.
@@ -56,7 +57,12 @@ To update deployments use the `scale.yml` and `remove-node.yml`. For further ins
 (https://kubespray.io/#/docs/nodes)
 
 
-# Configure access to the Kubernetes Dashboard
+# Configure Kubernetes
+
+As an optional preparation for the following steps, configure your local `kubectl` (on the deployment controller) to access
+the Kubernetes instance using the file `/root/.kube/config` found on the Kubernetes master node.
+
+## Configure access to the Kubernetes Dashboard
 
 The Kubernetes Dashboard has already been deployed with Kubernetes. To get access to the Dashboard, first an administrator
 account must be created in Kubernetes. The file `kube-admin.yaml` contains the required configuration.
@@ -78,11 +84,11 @@ kubectl get secret -n kube-system \
 ```
 
 You can now access the Kubernetes dashboard from any browser (e. g. on your local workstation) using the URL
-<https://your.bastion.host/kubectl/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/>
+https://your.bastion.host/kubectl/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
 clicking on "Token" at the login screen and providing the saved token string as input.
 
 
-# Configure access to the NFS server in Kubernetes
+## Configure access to the NFS server in Kubernetes
 
 For the Kubernetes worker nodes to get access to the NFS server, a persistent volume with an NFS driver must be
 set up. Create an `kubernetes/nfs-pv.yaml` file from the template file given in the `kubernetes` folder, replacing
@@ -92,7 +98,7 @@ kubectl apply -f kubernetes/nfs-pv.yaml
 ```
 
 
-# Configure an account for the Production Planner
+## Configure an account for the Production Planner
 
 For the Production Planner, an account with access to the Kubernetes API is required. The account must be able to read general
 information about the Kubernetes cluster (health state, node list) and to fully manage jobs and pods (create, update, list, delete).
@@ -104,7 +110,7 @@ kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' '
 ```
 
 
-# Create a Kubernetes secret for private Docker registry access
+## Create a Kubernetes secret for private Docker registry access
 
 Create a Kubernetes secret holding the credentials for the private registry on some host, which has both `kubectl` and Docker
 (not Docker Desktop!) configured (e. g. the Kubernetes master node):

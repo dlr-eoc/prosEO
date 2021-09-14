@@ -1,3 +1,0 @@
----
-- name: OS dependent tasks
-  include_tasks: "{{ ansible_os_family|lower }}.yml"

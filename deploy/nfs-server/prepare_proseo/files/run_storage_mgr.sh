@@ -24,4 +24,4 @@ fi
 export REGISTRY_URL=$1
 export VERSION=$2
 
-docker-compose -p cpros up -d
+docker-compose -p proseo up -d

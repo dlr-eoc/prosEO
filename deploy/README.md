@@ -27,9 +27,10 @@ The procedure below assumes that a cloud infrastructure has been deployed accord
 
 The deployment of a full prosEO environment requires the following steps:
 1. Create images for the prosEO microservices (see `proseo-images/REAMDE.md`).
-2. Configure the bastion host for the prosEO Control Instance ("brain", see `bastion-control/README.md`).
+2. Configure the bastion host for the prosEO Control Instance (see `bastion-control/README.md`).
 3. Configure the Kubernetes cluster (the "hands", see `hands/README.md`).
-4. Re-run the configuration for the bastion host after adding the file `kubectl.conf` in `bastion-control/roles/install_kubectl/files`.
+4. Re-run the configuration for the bastion host after adding the file `/root/.kube/config` found on the Kubernetes master node
+   as `kubectl.conf` in `bastion-control/roles/install_kubectl/files`.
 5. Configure the prosEO Control Instance (the "brain", see `brain/README.md`).
 6. Configure the bastion host for the prosEO PRIP (see `bastion-prip.REAMDE.md`).
 7. Configure the NFS server (see `nfs-server/README.md`).
@@ -52,10 +53,10 @@ Administrative access usually is through the bastion host for the control instan
 
 Log in to the brain host via the control instance bastion host, then create the containers for the prosEO microservices:
 ```
-cd /opt/proseo
+cd /opt/prosEO
 export PGADMIN_EMAIL=some.custom@email.address
 export PGADMIN_PASSWORD=some-pw
-./run_control_instance.sh
+./run_control_instance.sh <private Docker registry> <version>
 ```
 
 __First start:__ After the first start, the view for products with product files available on any Processing Facility
@@ -74,6 +75,15 @@ The control instance can be stopped using the script `stop_control_instance.sh`.
 the database (e. g. for maintenance work on the database) use the script `stop_brain.sh`.
 
 
+# Starting the prosEO Storage Manager
+
+Log in to the brain host via the control instance bastion host, then create the containers for the prosEO microservices:
+```
+cd /opt/prosEO
+./run_storage_mgr.sh <private Docker registry> <version>
+```
+
+
 # Starting the logging and monitoring
 
 Starting the logging and monitoring consists of two tasks:
@@ -86,15 +96,15 @@ Starting the logging and monitoring consists of two tasks:
 Log in to the loghost via the control instance bastion host, then create the containers for InfluxDB, Grafana and Telegraf:
 ```
 cd /opt/proseo
-docker-compose -p cpros up -d
+docker-compose -p proseo up -d
 ```
 
 ## Configure the monitoring database (only once!)
 
 ```
-  docker exec cpros_influxdb_1 influx bucket create -n operation -o proseo
-  docker exec cpros_influxdb_1 influx bucket create -n order -o proseo
-  docker exec cpros_influxdb_1 influx bucket create -n production -o proseo
+  docker exec proseo_influxdb_1 influx bucket create -n operation -o proseo
+  docker exec proseo_influxdb_1 influx bucket create -n order -o proseo
+  docker exec proseo_influxdb_1 influx bucket create -n production -o proseo
 
-  docker exec cpros_influxdb_1 influx user create --name example-username --password ExAmPl3PA55W0rD
+  docker exec proseo_influxdb_1 influx user create --name example-username --password ExAmPl3PA55W0rD
 ```

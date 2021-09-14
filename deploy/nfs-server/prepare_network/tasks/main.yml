@@ -4,11 +4,16 @@
   hostname:
     name: nfs-server
     
+- name: Check existence of default route
+  shell: route
+  register: route_response
+  
 - name: Remove default route
   shell: route del default
+  when: route_response.stdout.find('default') != -1
   
 - name: Set default route
-  shell: route add default gw 10.9.42.225
+  shell: "route add default gw {{ nat_gateway_ip }}"
 
 - name: Set DNS resolution
   lineinfile:

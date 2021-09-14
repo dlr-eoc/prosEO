@@ -1,3 +1,0 @@
-# Ignore all of the kubespray submodule except for requirements.txt
-kubespray/
-!kubespray/requirements.txt

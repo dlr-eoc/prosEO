@@ -12,14 +12,21 @@ found in each of the directories:
 - `install_kubectl/files`
 - `configure_nginx_proxy/files`
 
-In the `group_vars` directory, create a file `bastion.yml` with the administrative user and password and an
-email address for alerts from rkhunter (see file `bastion.yml.template` for the required contents).
+In the `group_vars` directory, create a file `bastion_control.yml` with the administrative user and password and an
+email address for alerts from rkhunter (see file `bastion_control.yml.template` for the required contents).
 
 
 # Bastion host configuration
 
-To configure the bastion host, run the following command from the current directory:
+For an initial configuration of the bastion host, run the following command from the current directory:
 ```
-ansible-playbook -i proseo-hosts -u root -b -v --private-key roles/configure_users/files/id_rsa bastion-control.yml
+ansible-playbook -i ../proseo-hosts -u root -b -v --private-key roles/configure_users/files/id_rsa bastion-control-init.yml
 ```
-(Use `-u proseoadmin` for subsequent executions, because after the first execution root access will be denied.)
+
+This changes the administrative access to the `proseoadmin` user. Use `-u proseoadmin` for all subsequent executions, because after
+the first execution root access will be denied.
+
+After the deployment of Kubernetes complete the bastion host configuration:
+```
+ansible-playbook -i ../proseo-hosts -u proseoadmin -b -v --private-key roles/configure_users/files/id_rsa bastion-control.yml
+```

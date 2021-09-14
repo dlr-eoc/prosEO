@@ -42,6 +42,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=proseoadmin
       - GF_SECURITY_ADMIN_PASSWORD=<password from bastion nginx config>
+      - GF_SERVER_ROOT_URL=/proseo/grafana/
     depends_on:
       - influxdb
     restart: unless-stopped

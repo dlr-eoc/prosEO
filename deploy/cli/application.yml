@@ -11,21 +11,37 @@ proseo:
     cli:
         syntaxfile: ui-cli-syntax.yml
     
-    # Configuration for Integration Test Environment
+    # Configuration for IONOS Validation Environment
     userManager:
-        url: https://proseo.proseo-bcm.de/proseo/user-mgr/v0.1
+        url: https://85.215.220.164/proseo/user-mgr/v0.1
     ingestor:
-        url: https://proseo.proseo-bcm.de/proseo/ingestor/v0.1
+        url: https://85.215.220.164/proseo/ingestor/v0.1
     orderManager:
-        url: https://proseo.proseo-bcm.de/proseo/order-mgr/v0.1
+        url: https://85.215.220.164/proseo/order-mgr/v0.1
     productionPlanner:
-        url: https://proseo.proseo-bcm.de/proseo/planner/v0.1
+        url: https://85.215.220.164/proseo/planner/v0.1
     processorManager:
-        url: https://proseo.proseo-bcm.de/proseo/processor-mgr/v0.1
+        url: https://85.215.220.164/proseo/processor-mgr/v0.1
     productClassManager:
-        url: https://proseo.proseo-bcm.de/proseo/productclass-mgr/v0.1
+        url: https://85.215.220.164/proseo/productclass-mgr/v0.1
     facilityManager:
-        url: https://proseo.proseo-bcm.de/proseo/facility-mgr/v0.1
+        url: https://85.215.220.164/proseo/facility-mgr/v0.1
+
+    # Configuration for old Integration Test Environment
+#    userManager:
+#        url: https://proseo.proseo-bcm.de/proseo/user-mgr/v0.1
+#    ingestor:
+#        url: https://proseo.proseo-bcm.de/proseo/ingestor/v0.1
+#    orderManager:
+#        url: https://proseo.proseo-bcm.de/proseo/order-mgr/v0.1
+#    productionPlanner:
+#        url: https://proseo.proseo-bcm.de/proseo/planner/v0.1
+#    processorManager:
+#        url: https://proseo.proseo-bcm.de/proseo/processor-mgr/v0.1
+#    productClassManager:
+#        url: https://proseo.proseo-bcm.de/proseo/productclass-mgr/v0.1
+#    facilityManager:
+#        url: https://proseo.proseo-bcm.de/proseo/facility-mgr/v0.1
 
     # Configuration for local deployment
 #    userManager:
