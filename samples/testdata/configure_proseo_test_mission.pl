@@ -2,10 +2,10 @@
 eval 'exec perl -S $0 $*' if 0;
 
 #
-# configure_s5p_proseo.pl
-# -----------------------
+# configure_proseo_test_mission.pl
+# --------------------------------
 #
-# Configure prosEO for the Sentinel-5 Precursor (S5P) mission
+# Configure prosEO for the prosEO Test Mission (PTM)
 #
 use 5.016;
 use strict;

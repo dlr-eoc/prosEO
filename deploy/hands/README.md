@@ -91,10 +91,11 @@ clicking on "Token" at the login screen and providing the saved token string as 
 ## Configure access to the NFS server in Kubernetes
 
 For the Kubernetes worker nodes to get access to the NFS server, a persistent volume with an NFS driver must be
-set up. Create an `kubernetes/nfs-pv.yaml` file from the template file given in the `kubernetes` folder, replacing
+set up. Create a `kubernetes/nfs-pv.yaml` file from the template file given in the `kubernetes` folder, replacing
 the NFS server IP address with the actual address in your environment. Then create the NFS persistent volume:
 ```
 kubectl apply -f kubernetes/nfs-pv.yaml
+kubectl apply -f kubernetes/nfs-pvc.yaml
 ```
 
 

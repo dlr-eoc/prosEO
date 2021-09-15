@@ -27,3 +27,8 @@
       name: firewalld
       state: stopped
       enabled: no
+
+  - name: Install NFS client
+    yum:
+      name: nfs-utils
+      state: present
