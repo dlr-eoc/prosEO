@@ -8,11 +8,11 @@ package de.dlr.proseo.planner.kubernetes;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -529,15 +529,15 @@ public class KubeJob {
 				if (js.isPresent()) {
 					try {
 						if (aJob.getStatus() != null) {
-							DateTime d;
+							OffsetDateTime d;
 							d = aJob.getStatus().getStartTime();
 							if (d != null) {
-								js.get().setProcessingStartTime(d.toDate().toInstant());
+								js.get().setProcessingStartTime(d.toInstant());
 							}
 
 							d = aJob.getStatus().getCompletionTime();
 							if (d != null) {
-								js.get().setProcessingCompletionTime(d.toDate().toInstant());
+								js.get().setProcessingCompletionTime(d.toInstant());
 							}
 							if (aJob.getStatus().getConditions() != null) {
 								List<V1JobCondition> jobCondList = aJob.getStatus().getConditions();
@@ -631,15 +631,15 @@ public class KubeJob {
 				if (js.isPresent()) {
 					try {
 						if (aJob.getStatus() != null) {
-							DateTime d;
+							OffsetDateTime d;
 							d = aJob.getStatus().getStartTime();
 							if (d != null) {
-								js.get().setProcessingStartTime(d.toDate().toInstant());
+								js.get().setProcessingStartTime(d.toInstant());
 							}
 
-							DateTime cd = aJob.getStatus().getCompletionTime();
+							OffsetDateTime cd = aJob.getStatus().getCompletionTime();
 							if (cd != null) {
-								js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+								js.get().setProcessingCompletionTime(cd.toInstant());
 							} else {
 								// something wrong with job, try to get info from pod
 								if (aPod != null) {
@@ -665,7 +665,7 @@ public class KubeJob {
 											js.get().incrementVersion();
 											if (cd == null) {
 												cd = jc.getLastProbeTime();
-												js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+												js.get().setProcessingCompletionTime(cd.toInstant());
 											}
 											success = true;
 										} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
@@ -680,7 +680,7 @@ public class KubeJob {
 											js.get().incrementVersion();	
 											if (cd == null) {
 												cd = jc.getLastProbeTime();
-												js.get().setProcessingCompletionTime(cd.toDate().toInstant());
+												js.get().setProcessingCompletionTime(cd.toInstant());
 											}
 											success = true;
 										}
