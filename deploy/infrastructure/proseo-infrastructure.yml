@@ -163,7 +163,7 @@
     server:
       datacenter: "{{ datacenter.name }}"
       name: "worker%02d"
-      count: 3
+      count: "{{ worker.count }}"
       image: "{{ all.image }}"
       image_password: "{{ all.image_password }}"
       cores: "{{ worker.cores }}"

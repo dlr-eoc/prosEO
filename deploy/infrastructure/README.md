@@ -56,3 +56,20 @@ server manually.
 
 The IP addresses of the virtual machines must be extracted from the provisioned infrastructure and entered in a file
 called `proseo-hosts` in the `deploy` directory (start from template file `proseo-hosts.template`).
+
+
+# Server parameter updates after initial deployment
+
+Server parameters (cores, RAM) are not updated with the (implied) `state: present` of the general deployment script. To increase
+or decrease the number of cores or the assigned RAM, `state: update` must be used. For this the Ansible playbook
+`proseo-server-update.yml` is provided. Before running this playbook, it needs to be updated to reflect the actual number
+of worker nodes. Then it can be run with:
+```
+export ANSIBLE_LIBRARY=</path/to/ionos/module-ansible>
+export IONOS_USERNAME=<IONOS DCD user>
+export IONOS_PASSWORD=<IONOS DCD password>
+ansible-playbook proseo-server-update.yml
+```
+
+Whenever the CPU and memory resources of a Kubernetes worker node are updated, the `kubelet` on the worker node needs to be
+restarted (for details see `../hands/README.md`).

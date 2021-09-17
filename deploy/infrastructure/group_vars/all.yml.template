@@ -64,10 +64,12 @@ master:
     
 # Kubernetes Worker configuration:
 worker:
+    # Number of worker nodes
+    count: 4
     # Number of cores (vCPUs = 2 x cores)
     cores: 8
     # RAM in MiB
-    ram: 49152
+    ram: 81920
     # Disk size in GB
     disk: 80
     

@@ -54,7 +54,21 @@ After generating the cluster, a file called `kubeadm_certificate_key.creds` will
 has been excluded from management by Git.
 
 To update deployments use the `scale.yml` and `remove-node.yml`. For further instructions see
-(https://kubespray.io/#/docs/nodes)
+(https://kubespray.io/#/docs/nodes).
+
+If a worker node was changed in terms of CPU and memory resources available, `kubectl` must be restarted. First drain the
+worker node:
+```
+kubectl drain <worker node> --ignore-daemonsets --delete-emptydir-data"
+```
+Log in to the worker node and restart `kubectl`:
+```
+systemctl restart kubelet
+```
+Reactivate the worker node in Kubernetes:
+```
+kubectl uncordon <worker node>
+```
 
 
 # Configure Kubernetes
