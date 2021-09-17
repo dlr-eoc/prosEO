@@ -17,6 +17,8 @@
 		<module>prip</module>
 		<module>base-monitor</module>
 		<module>xbip-monitor</module>
+		<module>edip-monitor</module>
+		<module>auxip-monitor</module>
 	</modules>
 
 	<url>https://github.com/dlr-eoc/prosEO/api</url>

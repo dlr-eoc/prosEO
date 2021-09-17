@@ -1,0 +1,35 @@
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+ #       org.apache.http: DEBUG
+ #       org.springframework.web.client: DEBUG
+proseo:
+    edip:
+        # EDIP Monitor identifier (must be unique for all EDIP monitors on the same host)
+        id: PTS-INU-01
+        # Satellite identifier (e. g. "PTS", "S5P" ...)
+        satellite: PTS
+        # X-band station unit ID (if used, default "00")
+        station.unit: "01"
+        # Path to the EDIP directory (mounted WebDAV volume)
+        directory: /Path/to/WebDAV/volume/NOMINAL
+        # Interval between pickup point checks in milliseconds (e. g. every min)
+        check.interval: 60000
+        
+        history:
+            # Path to the file for storing transfer history (on a persistent volume)
+            file: /Path/to/transfer/history/file
+            # Interval to truncate transfer history file in milliseconds (e. g. daily)
+            truncate.interval: 86400000
+            # Period to retain transfer history entries for, in milliseconds (e. g. one week)
+            retention: 604800000
+            
+        # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
+        performance.minsize: 20971520
+            
+    l0:
+        # path to the target CADU directory (for L0 processing)
+        directory.cadu: /Path/to/CADU/directory
+        # command to execute for L0 processing
+        command: /Path/to/L0/processing/script 
