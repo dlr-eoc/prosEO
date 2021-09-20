@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -52,11 +53,11 @@ public class ProseoFilePosix extends ProseoFile {
 			aPath = aPath.substring(1);			
 		}
 		if (fullPath) {
-			String base = cfg.getPosixMountPoint();
+			String base = Paths.get(cfg.getPosixMountPoint()).toAbsolutePath().toString();
 			while (base.startsWith("/")) {
 				base = base.substring(1);			
 			}
-			String baseWorker = cfg.getPosixWorkerMountPoint();
+			String baseWorker = Paths.get(cfg.getPosixWorkerMountPoint()).toAbsolutePath().toString();
 			while (baseWorker.startsWith("/")) {
 				baseWorker = baseWorker.substring(1);			
 			}

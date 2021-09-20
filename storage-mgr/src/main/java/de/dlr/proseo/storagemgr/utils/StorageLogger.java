@@ -28,7 +28,7 @@ public class StorageLogger {
 	public static String logInfo(Logger logger, String messageFormat, int messageId, Object... messageParameters) {
 
 		String message = createMessage(messageFormat, messageId, messageParameters);
-		logger.error(message);
+		logger.info(message);
 
 		return message;
 	}
