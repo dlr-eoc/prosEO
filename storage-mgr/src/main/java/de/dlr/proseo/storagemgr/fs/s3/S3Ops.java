@@ -6,7 +6,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +53,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -268,65 +272,60 @@ public class S3Ops {
 	 * 
 	 * @param s3            a given instantiated S3Client
 	 * @param s3Object      URI of S3-Object (e.g. s3://bucket/path/to/some/file)
-	 * @param ContainerPath local target filePath
+	 * @param containerPath local target filePath
 	 * @return true, if the operation succeeded, false otherwise
 	 */
-	public static Boolean v2FetchFile(S3Client s3, String s3Object, String ContainerPath) {
+	public static Boolean v2FetchFile(S3Client s3, String s3Object, String containerPath) {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v2FetchFile({}, {}, {})",
-				(null == s3 ? "MISSING" : s3.serviceName()), s3Object, ContainerPath);
+				(null == s3 ? "MISSING" : s3.serviceName()), s3Object, containerPath);
 
 		try {
-			File f = new File(ContainerPath);
-			if (Files.exists(Paths.get(ContainerPath), LinkOption.NOFOLLOW_LINKS))
-				f.delete();
-			File subdirs = new File(FilenameUtils.getPrefix(ContainerPath) + FilenameUtils.getPath(ContainerPath));
+			Path targetPath = Paths.get(containerPath);
+			File subdirs = targetPath.getParent().toFile();
 			subdirs.mkdirs();
 
 			AmazonS3URI s3uri = new AmazonS3URI(s3Object);
 			
 			ResponseInputStream<GetObjectResponse> is = s3.getObject(GetObjectRequest.builder().bucket(s3uri.getBucket()).key(s3uri.getKey()).build());
-			if (is != null) {
-				Boolean hasError = false;
-				try {
-					Files.copy(is, Paths.get(ContainerPath));
+			if (null == is) {
+				logger.error("Failed accessing S3 object {} (received 'null' response)", s3Object);
+				return false;
+			} else {
+				try (is) {
+					Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+					// Unfortunately returning from Files.copy() does not mean the file is fully written to disk!
+					Long contentLength = is.response().contentLength();
+					while (Files.size(targetPath) < contentLength) {
+						logger.info("... waiting to complete writing of {}", containerPath);
+						Thread.sleep(500);
+					}
 				} catch (IOException e) {
-					hasError = true;
-					logger.error("Failed to copy " + s3Object + " to " + "file://" + ContainerPath + " | " + e.getMessage());                
-				}
-				try {
-					is.close();
-				} catch (IOException e) {
-					hasError = true;
-					logger.error("Failed to close input stream of " + s3Object + " | " + e.getMessage());
-				}
-				if (hasError) {
-					return hasError;
+					logger.error("Failed to copy S3 object {} to file {} (cause: {})", s3Object, containerPath, e.getMessage());
+					return false;
+				} catch (InterruptedException e) {
+					logger.error("Interrupted while copying S3 object {} to file {} (cause: {})", s3Object, containerPath, e.getMessage());
+					return false;
 				}
 			}
-			logger.info("Copied " + s3Object + " to " + "file://" + ContainerPath);
+			logger.info("Copied S3 object {} to file {}", s3Object, containerPath);
 			return true;
-		} catch (software.amazon.awssdk.core.exception.SdkClientException e) {
+		} catch (SdkClientException e) {
 			try {
 				if (e.getCause().getCause().getCause().getClass().equals(FileAlreadyExistsException.class)) {
 					return true;
 				}
 			} catch (Exception ee) {
+				ee.printStackTrace();
 				logger.error(ee.getMessage());
 			}
-			logger.error(e.getMessage());
+			logger.error("Failed accessing S3 object {} (cause: {}: {})", s3Object, e.getClass().getName(), e.getMessage());
 			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
-			logger.error(s3Object + " --> " + e.getMessage());
-			return false;
-		} catch (software.amazon.awssdk.services.s3.model.NoSuchBucketException e) {
-			logger.error(s3Object + " --> " + e.getMessage());
-			return false;
-		} catch (software.amazon.awssdk.services.s3.model.S3Exception e) {
-			logger.error(e.getMessage());
+		} catch (S3Exception e) {
+			logger.error("Failed accessing S3 object {} (cause: {}: {}, details {})", s3Object, e.getClass().getName(), e.getMessage(), e.awsErrorDetails());
 			return false;
 		} catch (SecurityException e) {
-			logger.error(e.getMessage());
+			logger.error("Security exception accessing S3 object {} (cause: {})", s3Object, e.getMessage());
 			return false;
 		}
 	}
