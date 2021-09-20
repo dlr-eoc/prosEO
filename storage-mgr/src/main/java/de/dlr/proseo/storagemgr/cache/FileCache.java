@@ -1,4 +1,4 @@
-package de.dlr.proseo.storagemgr.cache;
+	package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
 import java.time.Instant;
@@ -153,9 +153,10 @@ public class FileCache {
 			logger.trace(">>> deleteLRU()");
 
 		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
+		int maximumUsage = Integer.valueOf(cfg.getMaximumCacheUsage());
 		double realUsage = getRealUsage();
 
-		if (realUsage <= expectedUsage) {
+		if (realUsage < maximumUsage) {
 			return;
 		}
 
@@ -181,6 +182,11 @@ public class FileCache {
 			remove(pathToDelete.getKey());
 
 			realUsage = getRealUsage();
+		}
+		
+		// We have a serious problem, if we still do not have enough cache space
+		if (realUsage >= maximumUsage) {
+			logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", realUsage, maximumUsage);
 		}
 	}
 

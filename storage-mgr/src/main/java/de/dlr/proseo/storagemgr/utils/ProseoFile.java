@@ -1,6 +1,7 @@
 package de.dlr.proseo.storagemgr.utils;
 
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FilenameUtils;
@@ -204,10 +205,13 @@ public abstract class ProseoFile {
 				return new ProseoFileS3(aPath, true, cfg);
 			} else if (aPath.startsWith("alluxio:")) {
 				return new ProseoFileAlluxio(aPath, true, cfg);
-			} else if (aPath.startsWith("/")) {
+			} else {
+				if (!aPath.startsWith("/")) {
+					aPath = Paths.get(aPath).toAbsolutePath().toString();
+				}
 				return new ProseoFilePosix(aPath, true, cfg);
 			}
-			logger.warn("Unknown FS type in path: {}", pathInfo);
+			//logger.warn("Unknown FS type in path: {}", pathInfo);
 		}
 		return null;
 	}
