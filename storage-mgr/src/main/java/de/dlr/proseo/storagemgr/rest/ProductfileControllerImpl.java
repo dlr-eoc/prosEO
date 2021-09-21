@@ -38,10 +38,10 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String MSG_TARGET_PATH_MISSING = "(E%d) No target path given";
 	private static final String MSG_FILES_UPDATED = "(I%d) Product file %s uploaded for product ID %d";
 
-	private static final int MSG_ID_EXCEPTION_THROWN = 4001;
-	private static final int MSG_ID_FILE_COPIED = 4002;
-	private static final int MSG_ID_FILE_NOT_FOUND = 4003;
-	private static final int MSG_ID_FILES_UPDATED = 4004;
+	private static final int MSG_ID_EXCEPTION_THROWN = 4051;
+	private static final int MSG_ID_FILE_COPIED = 4052;
+	private static final int MSG_ID_FILE_NOT_FOUND = 4053;
+	private static final int MSG_ID_FILES_UPDATED = 4054;
 
 	// Same as in ProseFileS3
 	private static final int MSG_ID_TARGET_PATH_MISSING = 4100;

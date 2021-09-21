@@ -95,7 +95,7 @@ public class ProseoFilePosix extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();	
 		
-		logger.trace("ProseoFilePosix created: {}", this);
+		logger.trace("ProseoFilePosix created: {}", this.getFullPath());
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class ProseoFilePosix extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();						
 		
-		logger.trace("ProseoFilePosix created: {}", this);
+		logger.trace("ProseoFilePosix created: {}", this.getFullPath());
 	}
 
 	/* (non-Javadoc)
@@ -188,7 +188,7 @@ public class ProseoFilePosix extends ProseoFile {
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> copyTo({}, {})", 
-				(null == proFile ? "MISSING" : proFile.fileName), recursive);
+				(null == proFile ? "MISSING" : proFile.getFullPath()), recursive);
 		
 		if (proFile == null) {
 			logger.error("Illegal call of ProseoFilePosix::copyTo(ProseoFile, Boolean) with null argument");
@@ -258,7 +258,11 @@ public class ProseoFilePosix extends ProseoFile {
 				}
 			}
 			for (File f : files) {
-				File targetFile = new File(proFile.getFullPath() );
+				String targetFileName = proFile.getFullPath();
+				if (proFile.isDirectory()) {
+					targetFileName += File.separator + f.getName();
+				}
+				File targetFile = new File(targetFileName);
 				if (FileCache.getInstance().containsKey(targetFile.getPath())) { // if (targetFile.exists()) 
 					result.add(targetFile.getPath());
 				} else {

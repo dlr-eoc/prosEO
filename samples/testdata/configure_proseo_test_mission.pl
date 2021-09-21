@@ -644,6 +644,6 @@ $cli_script->close();
 
 say 'IMPORTANT:';
 say '(1) Please change user passwords after completing script-based configuration!';
-say '(2) Make sure the sysadm credentials are present in ' . $OUT_FILE_DIR . '/sysadm.cred!';
+say '(2) Make sure the sysadm credentials are present in sysadm.cred!';
 
 say '--- prosEO Test Mission setup complete ---';

@@ -96,7 +96,7 @@ public class ProseoFileS3 extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();
 
-		logger.trace("ProseoFileS3 created: {}", this);
+		logger.trace("ProseoFileS3 created: {}", this.getFullPath());
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class ProseoFileS3 extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();
 
-		logger.trace("ProseoFileS3 created: {}", this);
+		logger.trace("ProseoFileS3 created: {}", this.getFullPath());
 	}
 
 	/*
@@ -222,7 +222,7 @@ public class ProseoFileS3 extends ProseoFile {
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 
 		if (logger.isTraceEnabled())
-			logger.trace(">>> copyTo({}, {})", (null == proFile ? "MISSING" : proFile.fileName), recursive);
+			logger.trace(">>> copyTo({}, {})", (null == proFile ? "MISSING" : proFile.getFullPath()), recursive);
 
 		if (null == proFile) {
 			throw new IllegalArgumentException(StorageLogger.logError(logger, MSG_TARGET_PATH_MISSING, MSG_ID_TARGET_PATH_MISSING));

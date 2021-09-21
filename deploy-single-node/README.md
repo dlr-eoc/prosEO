@@ -22,7 +22,7 @@ Install and run Docker Desktop and activate Kubernetes as described here:
   2) Activate Kubernetes: <https://docs.docker.com/docker-for-windows/>
 
 Deploy and run a Kubernetes dashboard without requiring a login:
-1) Download the recommended dashboard configuration from <https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta8/aio/deploy/recommended.yaml>
+1) Download the recommended dashboard configuration from <https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml>
 2) Copy the recommended configuration to a new file `kubernetes/kubernetes-dashboard.yaml`.
 3) Edit `kubernetes/kubernetes-dashboard.yaml`:
    a) Locate the deployment entry for `kubernetes-dashboard` (around line 170)
@@ -31,9 +31,9 @@ Deploy and run a Kubernetes dashboard without requiring a login:
 4) Run the dashboard:
    ```
    kubectl apply -f kubernetes/kubernetes-dashboard.yaml
-   kubectl proxy --accept-hosts='.*' &
+   nohup kubectl proxy --accept-hosts='.*' &
    ```
-5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>.
+5) Access the dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/.
 
 
 ## Step 2: Deploy the prosEO Control Instance
@@ -136,8 +136,8 @@ export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
 docker-compose -p proseo up -d
 ```
 
-The `testdata` directory contains convenience scripts for these steps. A template for the `docker-compose.yml` file
-can be found at `<project root>/deploy/brain/prepare_proseo/files`.
+The `proseo-images` directory may be populated with convenience scripts for these steps (see `proseo-images/README.md`).
+A template for the `docker-compose.yml` file can be found at `<project root>/deploy/brain/prepare_proseo/files`.
 
 
 # Step 3: Setup the Kubernetes Cluster with Storage Manager and File System Cache
@@ -232,7 +232,7 @@ subjects:
 
 Create the account, role and role binding, and retrieve the authentication token for the new account:
 ```bash
-kubectl apply -f planner-account.yaml
+kubectl apply -f kubernetes/planner-account.yaml
 kubectl describe secret/$(kubectl get secrets | grep proseo-planner | cut -d ' ' -f 1)
 ```
 
