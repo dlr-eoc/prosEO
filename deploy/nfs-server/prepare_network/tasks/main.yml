@@ -13,7 +13,7 @@
   when: route_response.stdout.find('default') != -1
   
 - name: Set default route
-  shell: "route add default gw {{ nat_gateway_ip }}"
+  shell: route add default gw {{ groups['nat_gateway'][0] }}
 
 - name: Set DNS resolution
   lineinfile:

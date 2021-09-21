@@ -92,13 +92,14 @@ public class ProductfileControllerImpl implements ProductfileController {
 		try {
 			ArrayList<String> transferredFiles = sourceFile.copyTo(targetFile, false);
 			if (transferredFiles != null && !transferredFiles.isEmpty()) {
-				logger.info(MSG_FILE_COPIED, MSG_ID_FILE_COPIED, sourceFile.getFullPath(), targetFile.getFullPath());
-
 				RestFileInfo response = new RestFileInfo();
 				response.setStorageType(targetFile.getFsType().toString());
 				response.setFilePath(targetFile.getFullPath());
 				response.setFileName(targetFile.getFileName());
 				response.setFileSize(targetFile.getLength());
+
+				StorageLogger.logInfo(logger, MSG_FILE_COPIED, MSG_ID_FILE_COPIED, sourceFile.getFullPath(), targetFile.getFullPath());
+
 				return new ResponseEntity<>(response, HttpStatus.OK);
 			} else {
 				return new ResponseEntity<>(
@@ -174,12 +175,13 @@ public class ProductfileControllerImpl implements ProductfileController {
 				ArrayList<String> transfered = sourceFile.copyTo(targetFile, false);
 
 				if (transfered != null && !transfered.isEmpty()) {
-					StorageLogger.logInfo(logger, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
-					
 					response.setStorageType(targetFile.getFsType().toString());
 					response.setFilePath(targetFile.getFullPath());
 					response.setFileName(targetFile.getFileName());
 					response.setFileSize(targetFile.getLength());
+
+					StorageLogger.logInfo(logger, MSG_FILES_UPDATED, MSG_ID_FILES_UPDATED, pathInfo, productId);
+					
 					return new ResponseEntity<>(response, HttpStatus.CREATED);
 				}
 			} catch (Exception e) {

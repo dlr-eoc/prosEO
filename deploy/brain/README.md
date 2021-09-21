@@ -11,8 +11,6 @@ Before deploying the brain, the database password defined during the creation of
 To this end, copy the file `prepare_proseo/docker-compose.yml.template` into `ansible/prepare_proseo/docker-compose.yml`
 and enter the password in the line beginning with `- POSTGRES_PASSWORD=`.
 
-Further, the IP address of the NAT gateway must be updated in `prepare_network/tasks/main.yml`.
-
 
 # Ansible configuration
 

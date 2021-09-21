@@ -12,8 +12,6 @@ into `telegraf.conf`. Then replace the following placeholders:
 
 Furthermore, ensure that in `telegraf.conf` the `endpoint` variable points to the correct Docker instance.
 
-The IP address of the NAT gateway must be updated in `prepare_network/tasks/main.yml`.
-
 
 # Deploy configuration
 

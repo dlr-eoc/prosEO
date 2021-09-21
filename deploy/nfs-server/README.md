@@ -8,7 +8,6 @@ runs locally on this machine.
 
 In the directory `group_vars` create a file `nfsserver.yml` from the provided template file `nfsserver.yml.template` and
 fill in the following parameters:
-- IP address of the NAT gateway
 - Actual range of virtual disks available
 - Individual disk size and total size
 - Subnet address for NFS clients
