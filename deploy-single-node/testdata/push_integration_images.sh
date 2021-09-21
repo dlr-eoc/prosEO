@@ -1,1 +1,0 @@
-../../../integration-tests/push_integration_images.sh

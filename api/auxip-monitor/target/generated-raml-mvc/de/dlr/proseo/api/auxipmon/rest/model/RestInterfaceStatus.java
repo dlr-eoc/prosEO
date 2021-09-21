@@ -10,7 +10,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 public class RestInterfaceStatus implements Serializable
 {
 
-    final static long serialVersionUID = -6982679777903242313L;
+    final static long serialVersionUID = 1127253573470163878L;
     /**
      * Interface identifier
      * 

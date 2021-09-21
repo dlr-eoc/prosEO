@@ -1,1 +1,0 @@
-../../../samples/testdata/configure_proseo_test_mission.pl

@@ -37,9 +37,9 @@ docker push localhost:5000/proseo-storage-mgr:latest
 
 # File server is on "hostPath"
 # Update the path in the Persistent Volume configuration
-sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../nfs-pv.yaml.template >../nfs-pv.yaml
+sed "s|%SHARED_STORAGE_PATH%|${SHARED_STORAGE_PATH}|" <../kubernetes/nfs-pv.yaml.template >../kubernetes/nfs-pv.yaml
 # Create the Persistent Volumes
-kubectl apply -f ../nfs-pv.yaml
+kubectl apply -f ../kubernetes/nfs-pv.yaml
 
 # Simulated "internal" POSIX storage area (must correspond to the specs in nfs-server-local.yaml)
 mkdir -p ${SHARED_STORAGE_PATH}/proseodata
@@ -139,7 +139,7 @@ cp -pR ${INGEST_DIR}/* ${SHARED_STORAGE_PATH}/transfer/
 # -------------------------
 
 # Create the storage manager in the local Minikube
-kubectl apply -f ../storage-mgr-local.yaml
+kubectl apply -f ../kubernetes/storage-mgr-local.yaml
 
 
 # -------------------------
@@ -147,7 +147,7 @@ kubectl apply -f ../storage-mgr-local.yaml
 # -------------------------
 
 # Create a dashboard at http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-kubectl apply -f ../kubernetes-dashboard.yaml
+kubectl apply -f ../kubernetes/kubernetes-dashboard.yaml
 kubectl proxy --accept-hosts='.*' &
 
 

@@ -23,14 +23,14 @@ Install and run Docker Desktop and activate Kubernetes as described here:
 
 Deploy and run a Kubernetes dashboard without requiring a login:
 1) Download the recommended dashboard configuration from <https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta8/aio/deploy/recommended.yaml>
-2) Copy the recommended configuration to a new file `kubernetes-dashboard.yaml`.
-3) Edit `kubernetes-dashboard.yaml`:
+2) Copy the recommended configuration to a new file `kubernetes/kubernetes-dashboard.yaml`.
+3) Edit `kubernetes/kubernetes-dashboard.yaml`:
    a) Locate the deployment entry for `kubernetes-dashboard` (around line 170)
    b) Locate the subsection `spec.template.spec.containers.args` and add entries for
       `--enable-skip-login` and `--disable-settings-authorizer`
 4) Run the dashboard:
    ```
-   kubectl apply -f kubernetes-dashboard.yaml
+   kubectl apply -f kubernetes/kubernetes-dashboard.yaml
    kubectl proxy --accept-hosts='.*' &
    ```
 5) Access the dashboard at <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/>.
