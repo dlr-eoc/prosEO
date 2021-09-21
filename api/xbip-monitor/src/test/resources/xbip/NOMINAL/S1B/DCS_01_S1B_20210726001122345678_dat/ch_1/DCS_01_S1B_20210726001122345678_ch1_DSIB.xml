@@ -5,7 +5,7 @@
     <time_stop>2021-07-26T11:22:33Z</time_stop>
     <time_created>2021-07-26T16:15:00Z</time_created>
     <time_finished>2021-07-26T16:15:30Z</time_finished>
-    <data_size>33424770800</data_size>
+    <data_size>150</data_size>
     <dsdb_list>
         <dsdb_name>DCS_02_S1B_20210726001122345678_ch1_DSDB_00001.raw</dsdb_name>
         <dsdb_name>DCS_02_S1B_20210726001122345678_ch1_DSDB_00002.raw</dsdb_name>

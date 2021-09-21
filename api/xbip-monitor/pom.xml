@@ -51,6 +51,10 @@
             <version>1.0.1.RELEASE</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+        <dependency>
             <groupId>de.dlr.proseo</groupId>
             <artifactId>proseo-base-monitor</artifactId>
             <version>${project.version}</version>

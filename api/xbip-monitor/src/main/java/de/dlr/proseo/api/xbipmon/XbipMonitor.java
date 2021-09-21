@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
 
@@ -66,6 +68,9 @@ public class XbipMonitor extends BaseMonitor {
 
 	/** Indicator for parallel copying processes */
 	/* package */ Map<String, Boolean> copySuccess = new HashMap<>();
+	
+	/** Total data size per session */
+	private Map<String, Long> sessionDataSizes = new HashMap<>();
 
 	/** The XBIP Monitor configuration to use */
 	@Autowired
@@ -85,6 +90,8 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_SESSION_TRANSFER_INCOMPLETE = 5309;
 	private static final int MSG_ID_SESSION_TRANSFER_COMPLETED = 5310;
 	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
+	private static final int MSG_ID_CANNOT_READ_DSIB_FILE = 5312;
+	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
@@ -96,6 +103,9 @@ public class XbipMonitor extends BaseMonitor {
 	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
 	private static final String MSG_COPY_INTERRUPTED = "(E%d) Copying of session directory %s failed due to interrupt";
 	private static final String MSG_COMMAND_START_FAILED = "(E%d) Start of L0 processing command '%s' failed (cause: %s)";
+	private static final String MSG_CANNOT_READ_DSIB_FILE = "(E%d) Cannot read DSIB file %s (cause: %s)";
+	private static final String MSG_DATA_SIZE_MISMATCH = "(E%d) Data size mismatch copying session directory %s: "
+			+ "expected size %d, actual size %d";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
@@ -105,6 +115,9 @@ public class XbipMonitor extends BaseMonitor {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
 	
+	/**
+	 * Class describing a download session
+	 */
 	protected static class TransferSession implements TransferObject {
 		
 		/** The satellite identifier */
@@ -118,6 +131,9 @@ public class XbipMonitor extends BaseMonitor {
 		
 		/** The path to the session data on the XBIP */
 		private Path sessionPath;
+		
+		/** The DSIB files for the session */
+		private List<Path> dsibFilePaths = new ArrayList<>();
 
 		/**
 		 * Gets the session identifier
@@ -165,8 +181,42 @@ public class XbipMonitor extends BaseMonitor {
 			return String.format("%s_%s_%s", stationUnitIdentifier, satelliteIdentifier, sessionIdentifier);
 		}
 		
+		/**
+		 * Gets the DSIB file for a given channel
+		 * 
+		 * @param channel the channel identifier ("ch_x")
+		 * @return the path to the DSIB file belonging to the given channel, or null, if no suitable file was found
+		 */
+		public Path getDsibFileForChannel(String channel) {
+			String[] channelParts = channel.split("_");
+			if (2 == channelParts.length) {
+				for (Path dsibFilePath: dsibFilePaths) {
+					if (dsibFilePath.toString().endsWith("ch" + channelParts[1] + "_DSIB.xml")) {
+						return dsibFilePath;
+					}
+				}
+			}
+			return null;
+		}
+		
 	}
 	
+	/**
+	 * Class describing a download channel
+	 */
+	protected static class DataSessionInformationBlock {
+		public String session_id;
+		public String time_start;
+		public String time_stop;
+		public String time_created;
+		public String time_finished;
+		public Long data_size;
+		public List<String> dsdb_list;
+	}
+	
+	/**
+	 * Initialize global parameters
+	 */
 	@PostConstruct
 	private void init() {
 		xbipDirectory = Paths.get(config.getXbipDirectoryPath());
@@ -244,6 +294,48 @@ public class XbipMonitor extends BaseMonitor {
 	}
 
 	/**
+	 * Thread-safe method to put the given value at the given key into map sessionDataSizes
+	 * 
+	 * @param key the map key
+	 * @param value the map value
+	 */
+	synchronized /* package */ void putSessionDataSizes(String key, Long value) {
+		sessionDataSizes.put(key, value);
+	}
+	
+	/**
+	 * Thread-safe method to get the value at the given key from map sessionDataSizes
+	 * 
+	 * @param key the map key
+	 * @return the map value
+	 */
+	synchronized /* package */ Long getSessionDataSizes(String key) {
+		return sessionDataSizes.get(key);
+	}
+	
+	/**
+	 * Thread-safe method to remove the value at the given key from map sessionDataSizes
+	 * 
+	 * @param key the map key
+	 */
+	synchronized /* package */ void removeSessionDataSizes(String key) {
+		sessionDataSizes.remove(key);
+	}
+
+	/**
+	 * Thread-safe method to calculate total session download size
+	 * 
+	 * @param caduSize the size of the CADU chunk to add to the session download size
+	 */
+	synchronized private void addToSessionDataSize(String sessionId, long caduSize) {
+		if (null == sessionDataSizes.get(sessionId)) {
+			sessionDataSizes.put(sessionId, caduSize);
+		} else {
+			sessionDataSizes.put(sessionId, sessionDataSizes.get(sessionId) + caduSize);
+		}
+	}
+	
+	/**
 	 * Check the configured XBIP satellite directory for sessions (without filtering);
 	 * note that the passed reference time stamp is ignored, as on the XBIP there is no reliable value to compare it against
 	 */
@@ -273,6 +365,8 @@ public class XbipMonitor extends BaseMonitor {
 					}
 						
 					// Check availability of DSIB files in each channel directory
+					List<Path> dsibFilePaths = new ArrayList<>();
+					
 					String[] channelEntries = sessionEntry.toFile().list();
 					if (0 == channelEntries.length) {
 						logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
@@ -298,6 +392,7 @@ public class XbipMonitor extends BaseMonitor {
 									sessionEntry.getFileName().toString()));
 							return;
 						}
+						dsibFilePaths.add(dsibFilePath);
 					}
 
 					if (logger.isTraceEnabled()) logger.trace("... downloadable session found!");
@@ -308,6 +403,7 @@ public class XbipMonitor extends BaseMonitor {
 					transferSession.stationUnitIdentifier = stationUnitIdentifier;
 					transferSession.sessionIdentifier = sessionEntryParts[3];
 					transferSession.sessionPath = sessionEntry;
+					transferSession.dsibFilePaths = dsibFilePaths;
 					objectsToTransfer.add(transferSession);
 					
 				});
@@ -347,6 +443,8 @@ public class XbipMonitor extends BaseMonitor {
 			// Determine the correct target directory
 			Path sessionDirectory = transferSession.sessionPath.getFileName();
 			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
+			long expectedSessionDataSize = 0L;
+			putSessionDataSizes(transferSession.getIdentifier(), 0L);
 			
 			// Check all channel directories
 			for (String channel: Arrays.asList("ch_1", "ch_2")) {
@@ -358,13 +456,27 @@ public class XbipMonitor extends BaseMonitor {
 					continue;
 				}
 				
+				// Parse DSIB file
+				Path dsibFilePath = transferSession.getDsibFileForChannel(channel);
+				DataSessionInformationBlock dsib = null;
+				try {
+					dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
+				} catch (IOException e) {
+					logger.error(String.format(
+							MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+					return false;
+				}
+				if (logger.isDebugEnabled())
+					logger.debug("DSIB: data size: {}, # of CADU files: {}", dsib.data_size, dsib.dsdb_list.size());
+				expectedSessionDataSize += dsib.data_size;
+				
 				// Create target directory for channel data
 				Path caduChannelDirectory = caduDirectory.resolve(channel);
 				try {
 					Files.createDirectories(caduChannelDirectory);
 				} catch (IOException e) {
-					logger.error(
-							String.format(MSG_CANNOT_CREATE_TARGET_DIR, MSG_ID_CANNOT_CREATE_TARGET_DIR, caduDirectory.toString()));
+					logger.error(String.format(
+							MSG_CANNOT_CREATE_TARGET_DIR, MSG_ID_CANNOT_CREATE_TARGET_DIR, caduDirectory.toString()));
 					return false;
 				}
 				
@@ -400,6 +512,10 @@ public class XbipMonitor extends BaseMonitor {
 										setLastCopyPerformance(copyPerformance);
 									}
 									
+									if (sessionChannelFile.toString().toLowerCase().endsWith("raw")) {
+										// Calculate total download size
+										addToSessionDataSize(transferSession.getIdentifier(), sessionChannelFile.toFile().length());
+									}
 									if (logger.isTraceEnabled())
 										logger.trace("... Copying of file {} complete, duration {}, speed {} MiB/s",
 												sessionChannelFile, copyDuration, copyPerformance);
@@ -416,6 +532,7 @@ public class XbipMonitor extends BaseMonitor {
 						// Start the copying task asynchronically
 						copyTask.start();
 					});
+					
 				} catch (IOException e) {
 					logger.error(String.format(MSG_COPY_FAILED, MSG_ID_COPY_FAILED, sessionChannelDirectory.toString()));
 					return false;
@@ -432,6 +549,16 @@ public class XbipMonitor extends BaseMonitor {
 					return false;
 				}
 			}
+			
+			// Check the total session data size
+			if (expectedSessionDataSize != getSessionDataSizes(transferSession.getIdentifier())) {
+				logger.error(String.format(MSG_DATA_SIZE_MISMATCH, MSG_ID_DATA_SIZE_MISMATCH,
+						transferSession.sessionPath.toString(), expectedSessionDataSize, getSessionDataSizes(transferSession.getIdentifier())));
+				putCopySuccess(transferSession.getIdentifier(), false);
+			} else {
+				if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
+			}
+			removeSessionDataSizes(transferSession.getIdentifier());
 			
 			// Check whether any copy action failed
 			Boolean myCopySuccess = getCopySuccess(transferSession.getIdentifier());
