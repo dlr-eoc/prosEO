@@ -333,6 +333,9 @@ function setParams() {
     searchTmp = addURLParamValuePrim('visibility', $('#visibility').val(), search);
     if (searchTmp != null) {search = searchTmp};
     if (search != loc) {
+        if (search == '') {
+            search = '?';
+        }
         history.pushState({info: search}, null, search);
     }
 }
