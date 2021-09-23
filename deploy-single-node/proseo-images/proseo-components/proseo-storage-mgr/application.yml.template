@@ -12,10 +12,10 @@ proseo:
       s3EndPoint: https://my.cloud.provider.com 
       s3Region: eu-de
       s3MaxNumberOfBuckets: 50
-      s3DefaultBucket: proseo-data-001
+      s3DefaultBucket: proseo-backend
 
     alluxio:
-      alluxioUnderFsS3Bucket: otc-proseo01-internal
+      alluxioUnderFsS3Bucket: proseo-backend-alluxio
       alluxioUnderFsS3BucketPrefix: underfs
 
       # Alluxio configuration values currently not in use       
@@ -25,20 +25,26 @@ proseo:
 
     posix:
       # Mount point for backend storage (for meaningful testing the volume should be different from workerMountPoint)
-      mountPoint: /mnt/backend
+      mountPoint: /proseo/data/backend
       # Mount point for file cache
       workerMountPoint: /proseo/data/cache
     joborder:
       bucket: otc-proseo01-internal
       prefix: joborders
     storageManager:
-      defaultStorageType: S3
+      defaultStorageType: POSIX
       # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
       filecheckwaittime: 1000
       filecheckmaxcycles: 50
-      # Shared secred for download token
+      # Shared secret for download token
       secret: MyVeryLongSecretMustBeAtLeast32Bytes
        
+      cache:
+        # Recommended minimum cache usage for efficient operation (percentage of file system size)
+        expectedUsage: 75
+        # Maximum cache usage (percentage of file system size)
+        maximumUsage: 85
+
     # Alluxio configuration values currently not in use       
 #    mountpoints:
 #     #ALLUXIO-properties are only used for answering GET-requests on endpoint /info

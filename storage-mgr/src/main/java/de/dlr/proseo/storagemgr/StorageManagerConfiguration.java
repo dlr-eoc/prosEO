@@ -70,10 +70,12 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.filecheckmaxcycles}")
 	private String fileCheckMaxCycles;
 	
-	@Value("${proseo.storageManagerCache.expectedUsage}")
+	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.expectedUsage}")
 	private String expectedCacheUsage;
 	
-	@Value("${proseo.storageManagerCache.maximumUsage}")
+	/** Maximum cache usage (percentage of file system size) */
+	@Value("${proseo.storageManager.cache.maximumUsage}")
 	private String maximumCacheUsage;
 
 	/** Shared secret for Storage Manager download tokens */
