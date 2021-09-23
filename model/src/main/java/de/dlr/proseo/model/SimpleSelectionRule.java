@@ -534,13 +534,19 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @param stopTime the stop time to use in the database query
 	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
 	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @param facilityQuerySql an SQL selection string to add to the selection rule SQL query
+	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return an SQL string representing this rule
 	 */
 	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions,
-			Map<String, String> productColumnMapping) {
+			Map<String, String> productColumnMapping, String facilityQuerySql, String facilityQuerySqlSubselect) {
+		
 		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
 		if (null != additionalFilterConditions) {
 			allFilterConditions.putAll(additionalFilterConditions);
+		}
+		if (null == facilityQuerySql) {
+			facilityQuerySql = "";
 		}
 
 		// Generate query projection
@@ -585,7 +591,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			else
 				simpleRuleQuery.append(" OR ");
 			simpleRuleQuery.append(simplePolicy.asSqlQueryCondition(
-					sourceProductClass, startTime, stopTime, allFilterConditions, productColumnMapping));
+					sourceProductClass, startTime, stopTime, allFilterConditions, productColumnMapping, facilityQuerySqlSubselect));
 		}
 		if (1 < simplePolicies.size()) {
 			// Close parentheses for multiple policies
@@ -608,7 +614,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			}
 		}
 
-		return simpleRuleQuery.append(')').toString();
+		return simpleRuleQuery.append(facilityQuerySql).append(')').toString();
 	}
 	
 	/* (non-Javadoc)

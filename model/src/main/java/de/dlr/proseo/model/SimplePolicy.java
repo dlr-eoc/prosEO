@@ -821,10 +821,16 @@ public class SimplePolicy extends PersistentObject {
 	 * @param stopTime the stop time to use in the condition
 	 * @param filterConditions filter conditions to apply
 	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return a ProductQuery object representing this policy
 	 */
-	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, Map<String, Parameter> filterConditions, Map<String, String> productColumnMapping) {
+	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, 
+			Map<String, Parameter> filterConditions, Map<String, String> productColumnMapping, String facilityQuerySqlSubselect) {
 		StringBuilder simplePolicyQuery = new StringBuilder();
+		
+		if (null == facilityQuerySqlSubselect) {
+			facilityQuerySqlSubselect = "";
+		}
 
 		/* Build JOIN and WHERE clauses for sub-SELECT clauses */
 		
@@ -871,6 +877,7 @@ public class SimplePolicy extends PersistentObject {
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		case LatestStopValidity:
@@ -879,6 +886,7 @@ public class SimplePolicy extends PersistentObject {
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		case ClosestStartValidity:
@@ -896,6 +904,7 @@ public class SimplePolicy extends PersistentObject {
 				    .append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 				    .append(" AND p2.sensing_start_time <= '").append(selectionCentreString).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 				    .append(") ")
 				.append("OR p.sensing_start_time > '").append(selectionCentreString)
 				.append("' AND p.sensing_start_time < ")
@@ -904,6 +913,7 @@ public class SimplePolicy extends PersistentObject {
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 					.append(" AND p2.sensing_start_time > '").append(selectionCentreString).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 					.append("))");
 			break;
 		case ClosestStopValidity:
@@ -920,6 +930,7 @@ public class SimplePolicy extends PersistentObject {
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 					.append(" AND p2.sensing_stop_time <= '").append(selectionCentreString).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 					.append(") ")
 				.append("OR p.sensing_stop_time > '").append(selectionCentreString)
 				.append("' AND p.sensing_stop_time < ")
@@ -928,6 +939,7 @@ public class SimplePolicy extends PersistentObject {
 					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 					.append(" AND p2.sensing_stop_time > '").append(selectionCentreString).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 					.append("))");
 			break;
 		case LatestValCover:
@@ -944,6 +956,7 @@ public class SimplePolicy extends PersistentObject {
 					.append("' AND p2.sensing_stop_time >= '")
 					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds()))).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 					.append(")");
 			break;
 		case ValIntersect:
@@ -968,6 +981,7 @@ public class SimplePolicy extends PersistentObject {
 					.append("' AND p2.sensing_stop_time >= '")
 					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
 					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
 					.append(")");
 			break;
 		case LastCreated:
@@ -976,6 +990,7 @@ public class SimplePolicy extends PersistentObject {
 				.append(subSelectQuery)
 				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
 				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
 				.append(")");
 			break;
 		default:

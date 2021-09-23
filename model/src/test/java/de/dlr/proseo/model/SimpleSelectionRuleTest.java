@@ -407,7 +407,7 @@ public class SimpleSelectionRuleTest {
 				for (SimpleSelectionRule simpleSelectionRule: simpleRules) {
 					
 					assertEquals("Unexpected SQL query for selection rule string " + i, expectedSqlQueries[i], 
-							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null, productColumnMapping));
+							simpleSelectionRule.asSqlQuery(TEST_START_TIME, TEST_STOP_TIME, null, productColumnMapping, null, null));
 				}
 			} catch (IllegalArgumentException | ParseException e) {
 				e.printStackTrace();

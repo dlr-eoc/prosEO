@@ -39,9 +39,13 @@ import de.dlr.proseo.model.util.SelectionItem;
 @Service
 public class ProductQueryService {
 	
-	private static final String FACILITY_QUERY_SQL = ":facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
+	/* Used by the Production Planner for the creation of product queries */
+	public static final String FACILITY_QUERY_SQL =
+			" AND :facility_id IN (SELECT processing_facility_id FROM product_processing_facilities ppf WHERE ppf.product_id = p.id)";
+	public static final String FACILITY_QUERY_SQL_SUBSELECT = FACILITY_QUERY_SQL.replace("ppf", "ppf2").replace("p.id", "p2.id");
 
 	/** Mapping from Product attributes to SQL column names */
+	// Used by the Production Planner for the creation of product queries
 	private Map<String, String> productColumnMapping = new HashMap<>();
 	
 	/** JPA entity manager */
@@ -139,7 +143,7 @@ public class ProductQueryService {
 		ProcessingFacility facility = job.getProcessingFacility();
 		
 		// Execute the query (native SQL due to use of recursive SQL view product_processing_facilities)
-		String sqlQuery = productQuery.getSqlQueryCondition() + " AND " + FACILITY_QUERY_SQL;
+		String sqlQuery = productQuery.getSqlQueryCondition();
 		if (logger.isDebugEnabled()) logger.debug("Executing SQL query: " + sqlQuery);
 		
 		Query query = em.createNativeQuery(sqlQuery, Product.class);
