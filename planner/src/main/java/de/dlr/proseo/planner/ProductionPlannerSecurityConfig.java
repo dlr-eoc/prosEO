@@ -66,6 +66,7 @@ public class ProductionPlannerSecurityConfig extends WebSecurityConfigurerAdapte
 				.antMatchers(HttpMethod.GET, "/**/processingfacilities").hasAnyRole(UserRole.FACILITY_READER.toString())
 				.antMatchers("/**/processingfacilities/*/finish/*").hasAnyRole(UserRole.JOBSTEP_PROCESSOR.toString())
 				.antMatchers("/**/product/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString(), UserRole.JOBSTEP_PROCESSOR.toString())
+				.antMatchers("/**/actuator/health").permitAll()
 				.anyRequest().hasAnyRole(UserRole.ORDER_MGR.toString())
 			.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)

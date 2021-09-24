@@ -52,6 +52,7 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 			.authorizeRequests()
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
+				.antMatchers("/**/actuator/health").permitAll()
 				.anyRequest().hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)

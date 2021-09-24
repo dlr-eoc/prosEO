@@ -19,12 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.WriteApi;
-import com.influxdb.client.domain.WritePrecision;
-import com.influxdb.client.write.Point;
-
 import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
@@ -959,7 +953,9 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
-		
+
+		// TODO monitoring
+		/*
 		// No logging, if monitoring host is not set
 		if (null == ProductionPlanner.config.getLogHost()) {
 			return;
@@ -1039,6 +1035,8 @@ public class OrderUtil {
 		
 		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
 		//List<FluxTable> tables = client.getQueryApi().query(query, org);
+		 * 
+		 */
 	}
 
 }

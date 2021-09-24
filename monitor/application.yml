@@ -1,0 +1,58 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: sequel09Master
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    monitor:
+        connectTimeout: 1000
+        readTimeout: 1000
+        cycle: 10000
+        services:
+            -
+                name: planner
+                url: http://192.168.20.155:8080/actuator/health
+                hasActuator: true
+                isProseo: true
+            -
+                name: proseo
+                url: http://192.168.20.155:5432
+                docker: machine1
+                hasActuator: false
+                isProseo: true
+            -
+                name: xbip-monitor
+                url: http://192.168.20.156:8080/actuator/health
+                kubernetes: kube1
+                hasActuator: true
+                isProseo: true
+            -
+                name: matera
+                url: http://192.168.20.156:8080/proseo/xbip-monitor/v1/mti/status
+                hasActuator: false
+                isProseo: false
+            -
+                name: root_minio_1
+                docker: machine2
+                hasActuator: false
+                isProseo: false
+        dockers:
+            -
+                name: machine1
+                ip: localhost
+                port: 2375
+                apiVersion: 1.40
+            -
+                name: machine2
+                ip: 192.168.20.191
+                port: 2375
+                apiVersion: 1.40

@@ -66,6 +66,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 				.antMatchers(HttpMethod.GET, "/**/orbits").hasAnyRole(UserRole.MISSION_READER.toString())
 				.antMatchers("/**/orbits").hasAnyRole(UserRole.MISSION_MGR.toString())
+				.antMatchers("/**/actuator/health").permitAll()
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

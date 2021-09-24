@@ -37,8 +37,6 @@
 		<maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
 		<junit.version>4.13.1</junit.version>
 		<spring-boot-starter-test.version>2.1.6.RELEASE</spring-boot-starter-test.version>
-		<influxdb-client-java.version>3.1.0</influxdb-client-java.version>
-		<kotlin-stdlib.version>1.5.10</kotlin-stdlib.version>
 	</properties>
 
 	<modules>

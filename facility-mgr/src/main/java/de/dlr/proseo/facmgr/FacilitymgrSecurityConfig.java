@@ -52,6 +52,7 @@ public class FacilitymgrSecurityConfig extends WebSecurityConfigurerAdapter {
 				.and()
 			.authorizeRequests()
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.FACILITY_READER.toString())
+				.antMatchers("/**/actuator/health").permitAll()
 				.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)

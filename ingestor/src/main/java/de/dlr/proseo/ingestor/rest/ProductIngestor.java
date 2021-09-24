@@ -33,11 +33,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.WriteApi;
-import com.influxdb.client.domain.WritePrecision;
-import com.influxdb.client.write.Point;
 
 import de.dlr.proseo.ingestor.IngestorConfiguration;
 import de.dlr.proseo.ingestor.rest.model.IngestorProduct;
@@ -90,7 +85,6 @@ public class ProductIngestor {
 	// Same as in ProductManager
 	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
-	private static final int MSG_ID_MONITORING_FAILED = 2035;
 	
 //	private static final int MSG_ID_NOT_IMPLEMENTED = 9000;
 	
@@ -112,8 +106,7 @@ public class ProductIngestor {
 	// Same as in ProductManager
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	private static final String MSG_MONITORING_FAILED = "(E%d) Error sending monitoring message for product with ID %d and file name %s (cause: %s)";
-	
+
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
 	private static final String MSG_PRODUCT_FILE_INGESTED = "(I%d) Product file %s ingested for product ID %d at processing facility %s";
@@ -196,46 +189,6 @@ public class ProductIngestor {
 		return message;
 	}
 	
-	/**
-	 * Adds a monitoring message for product file ingestion
-	 * 
-	 * @param productFile the product file ingested
-	 * @param product the product, for which the file was ingested
-	 * @throws DateTimeException if any of the product dates cannot be formatted
-	 */
-	private void monitorProductIngestion(de.dlr.proseo.model.ProductFile productFile, Product product) throws DateTimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> monitorProductIngestion({}, {})", productFile.getProductFileName(), product.getId());
-		
-		String token = ingestorConfig.getLogToken();
-		String bucket = ingestorConfig.getLogBucket();
-		String org = ingestorConfig.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
-		// Use a Data Point to write data
-
-		Point point = Point.measurement("product")
-				.addField("name", productFile.getProductFileName())
-				.addField("id", productFile.getId()) // to distinct products with same names at different facilities
-				.addField("size", productFile.getFileSize())
-				.addField("type", product.getProductionType() == null ? "" : product.getProductionType().toString())
-				.addField("data_availability_time", 
-						product.getRawDataAvailabilityTime() == null ? "" : OrbitTimeFormatter.format(product.getRawDataAvailabilityTime()))
-				.addField("sensing_start_time", OrbitTimeFormatter.format(product.getSensingStartTime()))
-				.addField("sensing_stop_time", OrbitTimeFormatter.format(product.getSensingStopTime()))
-				.addField("generation_time", OrbitTimeFormatter.format(product.getGenerationTime()))
-				.addField("publication_time", OrbitTimeFormatter.format(product.getPublicationTime()))
-				.time(Instant.now(), WritePrecision.NS);
-		for (String key : product.getParameters().keySet()) {
-			point.addField(key, product.getParameters().get(key).getParameterValue());
-		}
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-
-		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
-	}
-
 	/**
 	 * Find a processing facility by name (transaction wrapper for repository method)
 	 * 
@@ -326,16 +279,6 @@ public class ProductIngestor {
 		// Check for first time ingestion (defines publication time)
 		if (null == newModelProduct.getPublicationTime()) {
 			newModelProduct.setPublicationTime(Instant.now());
-			// Create monitoring message for product generation and publication
-			if (null != ingestorConfig.getLogHost()) {
-				try {
-					monitorProductIngestion(newProductFile, newModelProduct);
-				} catch (Exception e) {
-					// Log failed monitoring, but continue with ingestion
-					logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
-							newModelProduct.getId(), newProductFile.getProductFileName(), e.getMessage());
-				}
-			}
 		}
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
 		
@@ -505,16 +448,6 @@ public class ProductIngestor {
 		// Check for first time ingestion (defines publication time)
 		if (null == modelProduct.getPublicationTime()) {
 			modelProduct.setPublicationTime(Instant.now());
-			// Create monitoring message for product generation and publication
-			if (null != ingestorConfig.getLogHost()) {
-				try {
-					monitorProductIngestion(modelProductFile, modelProduct);
-				} catch (Exception e) {
-					// Log failed monitoring, but continue with ingestion
-					logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
-							modelProduct.getId(), modelProductFile.getProductFileName(), e.getMessage());
-				}
-			}
 		}
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
 

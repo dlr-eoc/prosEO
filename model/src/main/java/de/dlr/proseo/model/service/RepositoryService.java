@@ -15,6 +15,11 @@ import de.dlr.proseo.model.dao.InputFilterRepository;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
+import de.dlr.proseo.model.dao.MonExtServiceRepository;
+import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
+import de.dlr.proseo.model.dao.MonServiceRepository;
+import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
+import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
@@ -109,6 +114,26 @@ public class RepositoryService {
 	/** The repository for the ClassOutputParameter class */
 	@Autowired
     private ClassOutputParameterRepository classOutputParameterRepository;
+
+	/** The repository for the MonService class */
+	@Autowired
+    private MonServiceRepository monServiceRepository;
+
+	/** The repository for the MonService class */
+	@Autowired
+    private MonExtServiceRepository monExtServiceRepository;
+	
+	/** The repository for the MonServiceStates class */
+	@Autowired
+    private MonServiceStateRepository monServiceStateRepository;
+
+	/** The repository for the MonServiceStateOperation class */
+	@Autowired
+    private MonServiceStateOperationRepository monServiceStateOperationRepository;
+
+	/** The repository for the MonServiceStateOperation class */
+	@Autowired
+    private MonExtServiceStateOperationRepository monExtServiceStateOperationRepository;
 
 	/**
 	 * Singleton constructor
@@ -278,6 +303,53 @@ public class RepositoryService {
 	 */
 	public static ClassOutputParameterRepository getClassOutputParameterRepository() {
 		return theRepositoryService.classOutputParameterRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonService class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonServiceRepository getMonServiceRepository() {
+		return theRepositoryService.monServiceRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonService class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonExtServiceRepository getMonExtServiceRepository() {
+		return theRepositoryService.monExtServiceRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStates class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonServiceStateRepository getMonServiceStateRepository() {
+		return theRepositoryService.monServiceStateRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStateOperation class
+	 * 
+	 * @return the monServiceStateOperationRepository
+	 */
+	public static MonServiceStateOperationRepository getMonServiceStateOperationRepository() {
+		// TODO Auto-generated method stub
+		return theRepositoryService.monServiceStateOperationRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStateOperation class
+	 * 
+	 * @return the monServiceStateOperationRepository
+	 */
+	public static MonExtServiceStateOperationRepository getMonExtServiceStateOperationRepository() {
+		// TODO Auto-generated method stub
+		return theRepositoryService.monExtServiceStateOperationRepository;
 	}
 
 }
