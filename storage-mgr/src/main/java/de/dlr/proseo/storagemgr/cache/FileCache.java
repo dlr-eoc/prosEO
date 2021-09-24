@@ -33,7 +33,7 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 public class FileCache {
 
 	/** Path to file cache storage */
-	private String path;
+	private String cachePath;
 
 	/** Prefix for accessed files */
 	private static final String PREFIX = "accessed-";
@@ -69,11 +69,16 @@ public class FileCache {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> put({})", pathKey);
-
-		// This line is for safety, it can be removed for productivity
-		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
-
-		FileInfo fileInfo;
+		
+		// Ensure call is legal
+		if (!new File(pathKey).exists()) {
+			logger.error("> File can't be put to cache, it does not exist: " + pathKey);
+			return;
+		}
+		if (!pathKey.startsWith(cachePath)) {
+			if (logger.isTraceEnabled()) logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
+			return;
+		}
 
 		if (!mapCache.containsKey(pathKey)) {
 
@@ -81,7 +86,7 @@ public class FileCache {
 		}
 
 		rewriteFileAccessed(pathKey);
-		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
@@ -127,9 +132,9 @@ public class FileCache {
 
 		// TODO: check if it is allowed to use absolute path here => path =
 		// cfg.getPosixWorkerMountPoint();
-		path = new File(cfg.getPosixWorkerMountPoint()).getAbsolutePath();
+		cachePath = new File(cfg.getPosixCachePath()).getAbsolutePath();
 
-		File directory = new File(path);
+		File directory = new File(cachePath);
 
 		mapCache = new MapCache();
 
@@ -137,11 +142,11 @@ public class FileCache {
 
 			if (!directory.mkdirs()) {
 
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + cachePath);
 			}
 		}
 
-		putFilesToCache(path);
+		putFilesToCache(cachePath);
 
 		theFileCache = this;
 	}
@@ -218,7 +223,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRealUsage()");
 
-		File file = new File(path);
+		File file = new File(cachePath);
 		long totalBytes = file.getTotalSpace(); // total disk space in bytes
 		long freeBytes = file.getUsableSpace();
 		long usedBytes = totalBytes - freeBytes;
@@ -382,7 +387,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteEmptyDirectoriesToTop({})", directoryToDelete);
 
-		if (null == directoryToDelete || directoryToDelete.equals(path)) {
+		if (null == directoryToDelete || directoryToDelete.equals(cachePath)) {
 			return;
 		}
 

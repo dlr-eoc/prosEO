@@ -26,10 +26,10 @@ proseo:
 #      alluxioUnderFsMaxPrefixes: 500
 
     posix:
-      # Mount point for backend storage (for ease of operations the path should be different from workerMountPoint)
-      mountPoint: target/testdata/backend
+      # Mount point for backend storage (must be different from cachePath)
+      backendPath: target/testdata/backend
       # Mount point for file cache
-      workerMountPoint: target/testdata/cache
+      cachePath: target/testdata/cache
 
     joborder:
       bucket: internal

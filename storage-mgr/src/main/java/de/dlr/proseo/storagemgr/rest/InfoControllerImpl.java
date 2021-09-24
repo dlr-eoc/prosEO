@@ -52,8 +52,8 @@ public class InfoControllerImpl implements InfoController {
 		
 
 		Posix posix = new Posix();
-		posix.setMountPoint(cfg.getPosixMountPoint());
-		posix.setWorkerMountPoint(cfg.getPosixWorkerMountPoint());
+		posix.setBackendPath(cfg.getPosixBackendPath());
+		posix.setCachePath(cfg.getPosixCachePath());
 		response.setPosix(posix);
 		Joborder joborder = new Joborder();
 		joborder.setBucket(cfg.getJoborderBucket());

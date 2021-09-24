@@ -94,7 +94,7 @@ public class ProductfileControllerImpl implements ProductfileController {
 		}
 
 		ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
-		ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixWorkerMountPoint() + "/" + sourceFile.getRelPathAndFile(), cfg);
+		ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixCachePath() + "/" + sourceFile.getRelPathAndFile(), cfg);
 		
 		// Acquire lock on requested product file
 		try {

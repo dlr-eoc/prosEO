@@ -76,7 +76,7 @@ public class TestUtils {
 	 */
 	public String getTestPath() {
 		
-		return new File(cfg.getPosixWorkerMountPoint()).getAbsolutePath();
+		return new File(cfg.getPosixCachePath()).getAbsolutePath();
 	}
 	
 	/**
@@ -84,7 +84,7 @@ public class TestUtils {
 	 */
 	public String getSourceTestPath() {
 
-		return new File(cfg.getPosixMountPoint()).getAbsolutePath();
+		return new File(cfg.getPosixBackendPath()).getAbsolutePath();
 	}
 
 	/**

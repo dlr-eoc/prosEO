@@ -53,27 +53,27 @@ public class ProseoFilePosix extends ProseoFile {
 			aPath = aPath.substring(1);			
 		}
 		if (fullPath) {
-			String base = Paths.get(cfg.getPosixMountPoint()).toAbsolutePath().toString();
-			while (base.startsWith("/")) {
-				base = base.substring(1);			
+			String baseBackend = Paths.get(cfg.getPosixBackendPath()).toAbsolutePath().toString();
+			while (baseBackend.startsWith("/")) {
+				baseBackend = baseBackend.substring(1);			
 			}
-			String baseWorker = Paths.get(cfg.getPosixWorkerMountPoint()).toAbsolutePath().toString();
-			while (baseWorker.startsWith("/")) {
-				baseWorker = baseWorker.substring(1);			
+			String baseCache = Paths.get(cfg.getPosixCachePath()).toAbsolutePath().toString();
+			while (baseCache.startsWith("/")) {
+				baseCache = baseCache.substring(1);			
 			}
-			if (aPath.startsWith(base)) {
-				basePath = base;
-				if (aPath.length() == base.length()) {
+			if (aPath.startsWith(baseBackend)) {
+				basePath = baseBackend;
+				if (aPath.length() == baseBackend.length()) {
 					relPath = "/";
 				} else {
-					relPath = aPath.substring(base.length() + 1);
+					relPath = aPath.substring(baseBackend.length() + 1);
 				}
-			} else if (aPath.startsWith(baseWorker)) {
-				basePath = baseWorker;
-				if (aPath.length() == baseWorker.length()) {
+			} else if (aPath.startsWith(baseCache)) {
+				basePath = baseCache;
+				if (aPath.length() == baseCache.length()) {
 					relPath = "/";
 				} else {
-					relPath = aPath.substring(baseWorker.length() + 1);
+					relPath = aPath.substring(baseCache.length() + 1);
 				}
 			} else {
 				int pos = aPath.indexOf('/');
@@ -87,7 +87,7 @@ public class ProseoFilePosix extends ProseoFile {
 			}
 		} else {
 			relPath = aPath;
-			basePath = cfg.getPosixMountPoint().trim();
+			basePath = cfg.getPosixBackendPath().trim();
 			while (basePath.startsWith("/")) {
 				basePath = basePath.substring(1);			
 			}				

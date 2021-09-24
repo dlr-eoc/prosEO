@@ -59,11 +59,11 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
 
-	@Value("${proseo.posix.mountPoint}")
-	private String posixMountPoint;
+	@Value("${proseo.posix.backendPath}")
+	private String posixBackendPath;
 
-	@Value("${proseo.posix.workerMountPoint}")
-	private String posixWorkerMountPoint;
+	@Value("${proseo.posix.cachePath}")
+	private String posixCachePath;
 	
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
@@ -160,17 +160,21 @@ public class StorageManagerConfiguration {
 	}
 
 	/**
-	 * @return the posixWorkerMountPoint
+	 * Gets the path to the POSIX file cache
+	 * 
+	 * @return the POSIX cache path
 	 */
-	public String getPosixWorkerMountPoint() {
-		return posixWorkerMountPoint;
+	public String getPosixCachePath() {
+		return posixCachePath;
 	}
 
 	/**
-	 * @return the posixMountPoint
+	 * Gets the path to the POSIX backend storage (if used)
+	 * 
+	 * @return the POSIX backend storage path
 	 */
-	public String getPosixMountPoint() {
-		return posixMountPoint;
+	public String getPosixBackendPath() {
+		return posixBackendPath;
 	}
 
 	/**
