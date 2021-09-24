@@ -26,20 +26,30 @@ proseo:
 #      alluxioUnderFsMaxPrefixes: 500
 
     posix:
+      # Mount point for backend storage (for ease of operations the path should be different from workerMountPoint)
       mountPoint: /proseo/data/backend
+      # Mount point for file cache
       workerMountPoint: /proseo/data/cache
+      
     joborder:
       bucket: internal
       prefix: joborders
+      
     storageManager:
+      # Default type for backend storage
       defaultStorageType: S3
-
-      # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-      filecheckwaittime: 1000
-      filecheckmaxcycles: 50
+      
+      # Control checks on input files
+      filecheck:
+        # Wait time between checks
+        waittime: 500
+        # Maximum number of checks
+        maxcycles: 600
+        
       # Shared secret for download token
       secret: MyVeryLongSecretMustBeAtLeast32Bytes
-        
+      
+      # File cache control
       cache:
         # Recommended minimum cache usage for efficient operation (percentage of file system size)
         expectedUsage: 75
@@ -53,7 +63,3 @@ proseo:
 #        k8sNode:
 #          alluxioCache: /mnt/alluxio
 #          alluxioFuse: /alluxio-fuse
-          
-    # Connection timeout in ms
-    http.timeout: 10000
-        

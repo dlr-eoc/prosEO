@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentSkipListSet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,16 +39,21 @@ public class ProductfileControllerImpl implements ProductfileController {
 	private static final String MSG_FILE_COPIED = "(I%d) Requested object %s copied to target path %s";
 	private static final String MSG_TARGET_PATH_MISSING = "(E%d) No target path given";
 	private static final String MSG_FILES_UPDATED = "(I%d) Product file %s uploaded for product ID %d";
+	private static final String MSG_READ_TIMEOUT = "(E%d) Read for file %s timed out after %s seconds";
 
 	private static final int MSG_ID_EXCEPTION_THROWN = 4051;
 	private static final int MSG_ID_FILE_COPIED = 4052;
 	private static final int MSG_ID_FILE_NOT_FOUND = 4053;
 	private static final int MSG_ID_FILES_UPDATED = 4054;
+	private static final int MSG_ID_READ_TIMEOUT = 4055;
 
 	// Same as in ProseFileS3
 	private static final int MSG_ID_TARGET_PATH_MISSING = 4100;
 
 	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
+	
+	// Lock table for products currently being downloaded from backend storage
+	private static ConcurrentSkipListSet<String> productLockSet = new ConcurrentSkipListSet<>();
 
 	private static Logger logger = LoggerFactory.getLogger(ProductfileControllerImpl.class);
 
@@ -88,6 +95,32 @@ public class ProductfileControllerImpl implements ProductfileController {
 
 		ProseoFile sourceFile = ProseoFile.fromPathInfo(pathInfo, cfg);
 		ProseoFile targetFile = ProseoFile.fromPathInfo(cfg.getPosixWorkerMountPoint() + "/" + sourceFile.getRelPathAndFile(), cfg);
+		
+		// Acquire lock on requested product file
+		try {
+			int i = 0;
+			for (; i < cfg.getFileCheckMaxCycles(); ++i) {
+				synchronized(productLockSet) {
+					if (!productLockSet.contains(sourceFile.getFileName())) {
+						productLockSet.add(sourceFile.getFileName());
+						break;
+					}
+				}
+				if (logger.isDebugEnabled())
+					logger.debug("... waiting for concurrent access to {} to terminate", sourceFile.getFileName());
+				Thread.sleep(500);
+			};
+			if (i == cfg.getFileCheckMaxCycles()) {
+				return new ResponseEntity<>(
+						errorHeaders(StorageLogger.logError(
+								logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT, sourceFile.getFileName(),
+								cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
+						HttpStatus.SERVICE_UNAVAILABLE);
+			}
+		} catch (InterruptedException e) {
+			return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
+					e.getClass().toString() + ": " + e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 
 		try {
 			ArrayList<String> transferredFiles = sourceFile.copyTo(targetFile, false);
@@ -111,6 +144,8 @@ public class ProductfileControllerImpl implements ProductfileController {
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(StorageLogger.logError(logger, MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 					e.getClass().toString() + ": " + e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+		} finally {
+			productLockSet.remove(sourceFile.getFileName());
 		}
 	}
 
@@ -141,24 +176,22 @@ public class ProductfileControllerImpl implements ProductfileController {
 					int i = 0;
 					Path fp = Path.of(sourceFile.getFullPath());
 					if (fp.toFile().isFile()) {
-						Integer wait = Integer.valueOf(cfg.getFileCheckWaitTime());
-						Integer max = Integer.valueOf(cfg.getFileCheckMaxCycles());
+						Long wait = cfg.getFileCheckWaitTime();
+						Long max = cfg.getFileCheckMaxCycles();
 						try {
-							synchronized (this) {
-								while (Files.size(fp) < fileSize && i < max) {
-									if (logger.isDebugEnabled()) {
-										logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
-									}
-									i++;
-									try {
-										this.wait(wait);
-									} catch (InterruptedException e) {
-										// Do nothing (except for debug
-										// logging), we just stay in the while
-										// loop
-										if (logger.isDebugEnabled())
-											logger.debug("... wait interrupted, cause: " + e.getMessage());
-									}
+							while (Files.size(fp) < fileSize && i < max) {
+								if (logger.isDebugEnabled()) {
+									logger.debug("Wait for fully copied file {}", sourceFile.getFullPath());
+								}
+								i++;
+								try {
+									Thread.sleep(wait);
+								} catch (InterruptedException e) {
+									return new ResponseEntity<>(
+											errorHeaders(StorageLogger.logError(
+													logger, MSG_READ_TIMEOUT, MSG_ID_READ_TIMEOUT, sourceFile.getFileName(),
+													cfg.getFileCheckMaxCycles() * cfg.getFileCheckWaitTime() / 1000)),
+											HttpStatus.SERVICE_UNAVAILABLE);
 								}
 							}
 						} catch (IOException e) {

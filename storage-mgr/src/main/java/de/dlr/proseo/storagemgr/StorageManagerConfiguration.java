@@ -2,6 +2,8 @@ package de.dlr.proseo.storagemgr;
 
 import java.util.Arrays;
 
+import javax.annotation.PostConstruct;
+
 /**
  * StorageManagerConfiguration.java
  * 
@@ -66,25 +68,25 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.storageManager.defaultStorageType}")
 	private String defaultStorageType;
 
-	/** Maximum cycles for file size check */
-	@Value("${proseo.storageManager.filecheckmaxcycles}")
-	private String fileCheckMaxCycles;
-	
 	/** Recommended minimum cache usage for efficient operation (percentage of file system size) */
 	@Value("${proseo.storageManager.cache.expectedUsage}")
-	private String expectedCacheUsage;
+	private Integer expectedCacheUsage;
 	
 	/** Maximum cache usage (percentage of file system size) */
 	@Value("${proseo.storageManager.cache.maximumUsage}")
-	private String maximumCacheUsage;
+	private Integer maximumCacheUsage;
 
 	/** Shared secret for Storage Manager download tokens */
 	@Value("${proseo.storageManager.secret}")
 	private String storageManagerSecret;
 	
+	/** Maximum cycles for file size check */
+	@Value("${proseo.storageManager.filecheck.maxcycles}")
+	private Long fileCheckMaxCycles;
+	
 	/** Wait time for file size check cycle in milliseconds */
-	@Value("${proseo.storageManager.filecheckwaittime}")
-	private String fileCheckWaitTime;
+	@Value("${proseo.storageManager.filecheck.waittime}")
+	private Long fileCheckWaitTime;
 	
 	// Alluxio configuration values currently not in use
 	
@@ -102,6 +104,26 @@ public class StorageManagerConfiguration {
 //	
 //	@Value("${proseo.mountpoints.alluxio.k8sNode.alluxioFuse}")
 //	private String alluxioK8sMountPointFuse;
+	
+	/** Singleton object */
+	private static StorageManagerConfiguration theConfiguration = null;
+	
+	/**
+	 * Sets the singleton object for this class
+	 */
+	@PostConstruct
+	private void init() {
+		theConfiguration = this;
+	}
+	
+	/**
+	 * Gets the singleton object for this class
+	 * 
+	 * @return the singleton StorageManagerConfiguration
+	 */
+	public static StorageManagerConfiguration getConfiguration() {
+		return theConfiguration;
+	}
 	
 	
 	/**
@@ -126,14 +148,14 @@ public class StorageManagerConfiguration {
     /**
 	 * @return the fileCheckMaxCycles
 	 */
-	public String getFileCheckMaxCycles() {
+	public Long getFileCheckMaxCycles() {
 		return fileCheckMaxCycles;
 	}
 
 	/**
 	 * @return the fileCheckWaitTime
 	 */
-	public String getFileCheckWaitTime() {
+	public Long getFileCheckWaitTime() {
 		return fileCheckWaitTime;
 	}
 
@@ -261,14 +283,14 @@ public class StorageManagerConfiguration {
 	/**
 	 * @return the expected cache usage
 	 */
-	public String getExpectedCacheUsage() {
+	public Integer getExpectedCacheUsage() {
 		return expectedCacheUsage;
 	}
 
 	/**
 	 * @return the maximum cache usage
 	 */
-	public String getMaximumCacheUsage() {
+	public Integer getMaximumCacheUsage() {
 		return maximumCacheUsage;
 	}
 

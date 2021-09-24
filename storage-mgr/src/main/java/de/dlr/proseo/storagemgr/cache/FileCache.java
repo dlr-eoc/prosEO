@@ -1,6 +1,10 @@
 	package de.dlr.proseo.storagemgr.cache;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
@@ -143,51 +147,65 @@ public class FileCache {
 	}
 
 	/**
-	 * Delete Strategy LRU if the disk space is lower as expected usage in
-	 * application.yml
-	 * 
+	 * Cleanup cache by Least Recently Used strategy, if disk usage is higher than maximum usage configured
 	 */
 	private void deleteLRU() {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteLRU()");
 
-		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
-		int maximumUsage = Integer.valueOf(cfg.getMaximumCacheUsage());
-		double realUsage = getRealUsage();
-
-		if (realUsage < maximumUsage) {
+		// Check whether cleanup is needed
+		if (getRealUsage() < cfg.getMaximumCacheUsage()) {
 			return;
 		}
 
-		long startTime = System.nanoTime();
+		// Run cache cleanup in background
+		Thread deleteLRUTask = new Thread() {
 
-		mapCache.sortByAccessedAsc();
+			@Override
+			public void run() {
+				
+				// Only one cleanup task at the same time allowed
+				synchronized (theFileCache) {
+					
+					// Once we get here, the cache may already have been cleared by a concurrent thread
+					if (getRealUsage() < cfg.getMaximumCacheUsage()) {
+						return;
+					}
 
-		List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
-		Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
-		Entry<String, FileInfo> pathToDelete;
+					long startTime = System.nanoTime();
+					
+					mapCache.sortByAccessedAsc();
+					
+					List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
+					Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
+					
+					long endTime = System.nanoTime();
+					long duration = endTime - startTime;
+					
+					if (logger.isTraceEnabled())
+						logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
+								duration, size());
+					
+					long entryCount = 0;
+					while (getRealUsage() > cfg.getExpectedCacheUsage() && cacheIterator.hasNext()) {
+						remove(cacheIterator.next().getKey());
+						++entryCount;
+					}
+					logger.info("Cache cleanup removed {} entries from file cache in {} ms", entryCount,
+							(System.nanoTime() - startTime) / 1000000);
+					
+					// We have a serious problem, if we still do not have enough cache space
+					if (getRealUsage() >= cfg.getMaximumCacheUsage()) {
+						logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", getRealUsage(),
+								cfg.getMaximumCacheUsage());
+					}
+				}
+			}
 
-		long endTime = System.nanoTime();
-		long duration = endTime - startTime;
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
-					duration, size());
-
-		while (realUsage > expectedUsage && cacheIterator.hasNext()) {
-
-			pathToDelete = cacheIterator.next();
-
-			remove(pathToDelete.getKey());
-
-			realUsage = getRealUsage();
-		}
+		};
+		deleteLRUTask.start();
 		
-		// We have a serious problem, if we still do not have enough cache space
-		if (realUsage >= maximumUsage) {
-			logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", realUsage, maximumUsage);
-		}
 	}
 
 	/**

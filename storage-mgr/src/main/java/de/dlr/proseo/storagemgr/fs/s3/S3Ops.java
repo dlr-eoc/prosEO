@@ -5,14 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,7 @@ import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
 
 import alluxio.exception.FileAlreadyExistsException;
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -53,8 +52,6 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -101,8 +98,9 @@ public class S3Ops {
 	 * @param bucketName the bucket name
 	 * @param prefix the bucket prefix
 	 * @return the keys contained in the bucket
+	 * @throws SdkClientException if any error occurred in the communication with the S3 backend storage
 	 */
-	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) {
+	public static List<String> listObjectsInBucket(AmazonS3 s3, String bucketName, String prefix) throws SdkClientException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> listObjectsInBucket({}, {}, {})", s3, bucketName, prefix);
 		
@@ -122,32 +120,13 @@ public class S3Ops {
 		}
 		List<String> folderLike = new ArrayList<String>();
 		ObjectListing objects = null;
-		try {
-			objects = s3.listObjects(listObjectsRequest);
-		} catch (AmazonServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw e;
-		} catch (com.amazonaws.SdkClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw e;
-		}
+		objects = s3.listObjects(listObjectsRequest);
+
 		for (S3ObjectSummary f : objects.getObjectSummaries()) {
 			folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 		}
 		while (objects.isTruncated()) {
-			try {
-				objects = s3.listNextBatchOfObjects(objects);
-			} catch (AmazonServiceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw e;
-			} catch (com.amazonaws.SdkClientException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw e;
-			}
+			objects = s3.listNextBatchOfObjects(objects);
 			for (S3ObjectSummary f : objects.getObjectSummaries()) {
 				folderLike.add("s3://" + f.getBucketName() + "/" + f.getKey());
 			}
@@ -163,19 +142,19 @@ public class S3Ops {
 	 */
 	public static ArrayList<String> listBuckets(S3Client s3) {
 		
-			if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
-				
-			ArrayList<String> buckets = new ArrayList<String>();
-			ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
-			ListBucketsResponse listBucketsResponse = null;
-			try {
-				listBucketsResponse = s3.listBuckets(listBucketsRequest);
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-				throw e;
-			}
-			listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
-			return buckets;
+		if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
+			
+		ArrayList<String> buckets = new ArrayList<String>();
+		ListBucketsRequest listBucketsRequest = ListBucketsRequest.builder().build();
+		ListBucketsResponse listBucketsResponse = null;
+		try {
+			listBucketsResponse = s3.listBuckets(listBucketsRequest);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
+		listBucketsResponse.buckets().stream().forEach(x -> buckets.add(x.name()));
+		return buckets;
 	}
 
 	/**
@@ -296,9 +275,15 @@ public class S3Ops {
 					Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
 					// Unfortunately returning from Files.copy() does not mean the file is fully written to disk!
 					Long contentLength = is.response().contentLength();
-					while (Files.size(targetPath) < contentLength) {
+					int i = 0;
+					long maxCycles = StorageManagerConfiguration.getConfiguration().getFileCheckMaxCycles();
+					long waitTime = StorageManagerConfiguration.getConfiguration().getFileCheckWaitTime();
+					while (Files.size(targetPath) < contentLength && i < maxCycles) {
 						logger.info("... waiting to complete writing of {}", containerPath);
-						Thread.sleep(500);
+						Thread.sleep(waitTime);
+					}
+					if (maxCycles <= i) {
+						throw new IOException("Read timed out after " + (maxCycles * waitTime) + " ms");
 					}
 				} catch (IOException e) {
 					logger.error("Failed to copy S3 object {} to file {} (cause: {})", s3Object, containerPath, e.getMessage());
