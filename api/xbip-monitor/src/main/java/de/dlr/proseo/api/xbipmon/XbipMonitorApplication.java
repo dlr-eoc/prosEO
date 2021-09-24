@@ -6,6 +6,8 @@
 
 package de.dlr.proseo.api.xbipmon;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -39,7 +41,7 @@ public class XbipMonitorApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		
-		Thread xbipMonitor = (XbipMonitor) applicationContext.getBean("xbipMonitor");
+		Thread xbipMonitor = (XbipMonitor) applicationContext.getBean(XbipMonitor.class);
 		
 		taskExecutor.execute(xbipMonitor);
 	}

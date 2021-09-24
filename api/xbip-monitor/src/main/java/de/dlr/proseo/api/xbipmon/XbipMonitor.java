@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 
@@ -41,7 +42,7 @@ import de.dlr.proseo.api.basemon.TransferObject;
  * @author Dr. Thomas Bassler
  */
 @Component
-@Scope("prototype")
+@Scope("singleton")
 public class XbipMonitor extends BaseMonitor {
 	
 	/** The path to the XBIP directory (mounted WebDAV volume) */
@@ -67,10 +68,10 @@ public class XbipMonitor extends BaseMonitor {
 	private static Double lastCopyPerformance = 0.0;
 
 	/** Indicator for parallel copying processes */
-	/* package */ Map<String, Boolean> copySuccess = new HashMap<>();
+	/* package */ Map<String, Boolean> copySuccess = new ConcurrentHashMap<>();
 	
 	/** Total data size per session */
-	private Map<String, Long> sessionDataSizes = new HashMap<>();
+	private Map<String, Long> sessionDataSizes = new ConcurrentHashMap<>();
 
 	/** The XBIP Monitor configuration to use */
 	@Autowired
@@ -265,64 +266,6 @@ public class XbipMonitor extends BaseMonitor {
 	}
 	
 	/**
-	 * Thread-safe method to put the given value at the given key into map copySuccess
-	 * 
-	 * @param key the map key
-	 * @param value the map value
-	 */
-	synchronized /* package */ void putCopySuccess(String key, Boolean value) {
-		copySuccess.put(key, value);
-	}
-	
-	/**
-	 * Thread-safe method to get the value at the given key from map copySuccess
-	 * 
-	 * @param key the map key
-	 * @return the map value
-	 */
-	synchronized /* package */ Boolean getCopySuccess(String key) {
-		return copySuccess.get(key);
-	}
-	
-	/**
-	 * Thread-safe method to remove the value at the given key from map copySuccess
-	 * 
-	 * @param key the map key
-	 */
-	synchronized /* package */ void removeCopySuccess(String key) {
-		copySuccess.remove(key);
-	}
-
-	/**
-	 * Thread-safe method to put the given value at the given key into map sessionDataSizes
-	 * 
-	 * @param key the map key
-	 * @param value the map value
-	 */
-	synchronized /* package */ void putSessionDataSizes(String key, Long value) {
-		sessionDataSizes.put(key, value);
-	}
-	
-	/**
-	 * Thread-safe method to get the value at the given key from map sessionDataSizes
-	 * 
-	 * @param key the map key
-	 * @return the map value
-	 */
-	synchronized /* package */ Long getSessionDataSizes(String key) {
-		return sessionDataSizes.get(key);
-	}
-	
-	/**
-	 * Thread-safe method to remove the value at the given key from map sessionDataSizes
-	 * 
-	 * @param key the map key
-	 */
-	synchronized /* package */ void removeSessionDataSizes(String key) {
-		sessionDataSizes.remove(key);
-	}
-
-	/**
 	 * Thread-safe method to calculate total session download size
 	 * 
 	 * @param caduSize the size of the CADU chunk to add to the session download size
@@ -436,7 +379,7 @@ public class XbipMonitor extends BaseMonitor {
 			TransferSession transferSession = (TransferSession) object;
 			
 			// Optimistically we assume success (actually: it's an AND condition)
-			putCopySuccess(transferSession.getIdentifier(), true);
+			copySuccess.put(transferSession.getIdentifier(), true);
 
 			List<Thread> copyTasks = new ArrayList<>();
 			
@@ -444,7 +387,7 @@ public class XbipMonitor extends BaseMonitor {
 			Path sessionDirectory = transferSession.sessionPath.getFileName();
 			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
 			long expectedSessionDataSize = 0L;
-			putSessionDataSizes(transferSession.getIdentifier(), 0L);
+			sessionDataSizes.put(transferSession.getIdentifier(), 0L);
 			
 			// Check all channel directories
 			for (String channel: Arrays.asList("ch_1", "ch_2")) {
@@ -522,7 +465,7 @@ public class XbipMonitor extends BaseMonitor {
 								} catch (IOException e) {
 									logger.error(String.format(MSG_COPY_FILE_FAILED, MSG_ID_COPY_FILE_FAILED,
 											sessionChannelFile.toString(), e.getMessage()));
-									putCopySuccess(transferSession.getIdentifier(), false);
+									copySuccess.put(transferSession.getIdentifier(), false);
 								}
 							}
 
@@ -551,18 +494,18 @@ public class XbipMonitor extends BaseMonitor {
 			}
 			
 			// Check the total session data size
-			if (expectedSessionDataSize != getSessionDataSizes(transferSession.getIdentifier())) {
+			if (expectedSessionDataSize != sessionDataSizes.get(transferSession.getIdentifier())) {
 				logger.error(String.format(MSG_DATA_SIZE_MISMATCH, MSG_ID_DATA_SIZE_MISMATCH,
-						transferSession.sessionPath.toString(), expectedSessionDataSize, getSessionDataSizes(transferSession.getIdentifier())));
-				putCopySuccess(transferSession.getIdentifier(), false);
+						transferSession.sessionPath.toString(), expectedSessionDataSize, sessionDataSizes.get(transferSession.getIdentifier())));
+				copySuccess.put(transferSession.getIdentifier(), false);
 			} else {
 				if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
 			}
-			removeSessionDataSizes(transferSession.getIdentifier());
+			sessionDataSizes.remove(transferSession.getIdentifier());
 			
 			// Check whether any copy action failed
-			Boolean myCopySuccess = getCopySuccess(transferSession.getIdentifier());
-			removeCopySuccess(transferSession.getIdentifier());
+			Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
+			copySuccess.remove(transferSession.getIdentifier());
 			
 			logger.info(String.format(MSG_SESSION_TRANSFER_COMPLETED, MSG_ID_SESSION_TRANSFER_COMPLETED, transferSession.getIdentifier(), (myCopySuccess ? "SUCCESS" : "FAILURE")));
 			
