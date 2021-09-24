@@ -1,5 +1,4 @@
 FROM localhost:5000/proseo-planner:0.8.1
-ADD logback.xml /usr/share/planner/logback.xml
 ADD application.yml /usr/share/planner/application.yml
 
 # Uncomment the next line, if a fixed login to a Kubernetes instance is required, and provide kube_config from the template file

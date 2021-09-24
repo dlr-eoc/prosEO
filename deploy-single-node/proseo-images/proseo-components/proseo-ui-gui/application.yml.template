@@ -6,6 +6,12 @@ spring:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
         password: ********
+logging:
+    file: /proseo/log/proseo-ui-gui.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.apache.http: DEBUG
 proseo:
     user: NONE
     password: NONE

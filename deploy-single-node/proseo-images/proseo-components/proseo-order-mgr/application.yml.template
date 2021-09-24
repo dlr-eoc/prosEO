@@ -9,6 +9,7 @@ spring:
         username: postgres
         password: ********
 logging:
+    file: /proseo/log/proseo-order-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

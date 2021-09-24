@@ -9,9 +9,12 @@ spring:
         username: postgres
         password: ********
 logging:
+    file: /proseo/log/proseo-order-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
+        org.apache.http: DEBUG
+        org.springframework.web.client: DEBUG
 proseo:
     log:
         # Host and port for InfluxDB monitoring

@@ -22,9 +22,23 @@
         </encoder>
         <target>System.err</target>
     </appender>
+    
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/proseo/log/proseo-sample-wrapper.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>/proseo/log/%d{yyyy-MM,aux}/proseo-sample-wrapper.%d{yyyy-MM-dd}.log</fileNamePattern>
+            
+            <!-- keep 90 days' worth of history -->
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+    </appender>
+    
     <logger name="software.amazon.awssdk" level="ERROR"/>
+    
     <root level="INFO">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="STDERR" />
+        <appender-ref ref="FILE" />
     </root>
 </configuration>
