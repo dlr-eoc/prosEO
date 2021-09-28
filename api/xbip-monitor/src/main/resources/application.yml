@@ -18,6 +18,7 @@ proseo:
         # Interval between pickup point checks in milliseconds (e. g. every min)
         check.interval: 60000
         
+        # Download history
         history:
             # Path to the file for storing transfer history (on a persistent volume)
             file: /Path/to/transfer/history/file
@@ -28,6 +29,22 @@ proseo:
             
         # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
         performance.minsize: 20971520
+        
+        ## Multi-threading control
+        #session:
+            ## Maximum number of parallel transfer sessions (default 1 = no parallel downloads)
+            #maxthreads: 1
+            ## Interval in millliseconds to check for completed transfer sessions (default 500 ms)
+            #wait: 500
+            ## Maximum number of wait cycles for transfer session completion checks (default 3600 = total timeout of 30 min)
+            #maxcycles: 3600
+        #file:
+            ## Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads)
+            #maxthreads: 1
+            ## Interval in millliseconds to check for completed file downloads (default 500 ms)
+            #wait: 500
+            ## Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min)
+            #maxcycles: 3600
             
     l0:
         # path to the target CADU directory (for L0 processing)

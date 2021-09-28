@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import javax.annotation.PostConstruct;
 
@@ -64,6 +65,15 @@ public class XbipMonitor extends BaseMonitor {
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
 	private String l0ProcessorCommand;
 
+	/** Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads) */
+	private int maxFileDownloadThreads = 1;
+	
+	/** Interval in millliseconds to check for completed file downloads (default 500 ms) */
+	private int fileWaitInterval = 500;
+	
+	/** Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min) */
+	private int maxFileWaitCycles = 3600;
+	
 	/** The last copy performance in MiB/s (static, because it may be read and written from different threads) */
 	private static Double lastCopyPerformance = 0.0;
 
@@ -93,6 +103,7 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
 	private static final int MSG_ID_CANNOT_READ_DSIB_FILE = 5312;
 	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
+	private static final Object MSG_ID_COPY_TIMEOUT = 5314;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
@@ -107,6 +118,7 @@ public class XbipMonitor extends BaseMonitor {
 	private static final String MSG_CANNOT_READ_DSIB_FILE = "(E%d) Cannot read DSIB file %s (cause: %s)";
 	private static final String MSG_DATA_SIZE_MISMATCH = "(E%d) Data size mismatch copying session directory %s: "
 			+ "expected size %d, actual size %d";
+	private static final String MSG_COPY_TIMEOUT = "(E%d) Timeout after %s s during wait for download of file %s, download cancelled";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
@@ -231,6 +243,14 @@ public class XbipMonitor extends BaseMonitor {
 		this.setTruncateInterval(config.getXbipTruncateInterval());
 		this.setHistoryRetentionDuration(Duration.ofMillis(config.getXbipHistoryRetention()));
 		
+		// Multi-threading control
+		this.setMaxDownloadThreads(config.getMaxDownloadThreads());
+		this.setTaskWaitInterval(config.getTaskWaitInterval());
+		this.setMaxWaitCycles(config.getMaxWaitCycles());
+		this.setMaxFileDownloadThreads(config.getMaxFileDownloadThreads());
+		this.setFileWaitInterval(config.getFileWaitInterval());
+		this.setMaxFileWaitCycles(config.getMaxFileWaitCycles());
+		
 		caduDirectoryPath = Paths.get(config.getL0CaduDirectoryPath());
 		l0ProcessorCommand = config.getL0Command();
 		
@@ -244,9 +264,69 @@ public class XbipMonitor extends BaseMonitor {
 		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
 		logger.info("CADU target directory  . . : " + caduDirectoryPath);
 		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
+		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
+		logger.info("Transfer session wait time : " + this.getTaskWaitInterval());
+		logger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
+		logger.info("Max. file download threads : " + this.getMaxFileDownloadThreads());
+		logger.info("File download wait time  . : " + this.getFileWaitInterval());
+		logger.info("Max. file wait cycles  . . : " + this.getMaxFileWaitCycles());
 		
 	}
 	
+	/**
+	 * Gets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @return the maximum number of parallel file download threads
+	 */
+	public int getMaxFileDownloadThreads() {
+		return maxFileDownloadThreads;
+	}
+
+	/**
+	 * Sets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @param maxFileDownloadThreads the maximum number of parallel file download threads to set
+	 */
+	public void setMaxFileDownloadThreads(int maxFileDownloadThreads) {
+		this.maxFileDownloadThreads = maxFileDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval to check for completed file downloads
+	 * 
+	 * @return the check interval in millliseconds
+	 */
+	public int getFileWaitInterval() {
+		return fileWaitInterval;
+	}
+
+	/**
+	 * Sets the interval to check for completed file downloads
+	 * 
+	 * @param fileWaitInterval the check interval in millliseconds to set
+	 */
+	public void setFileWaitInterval(int fileWaitInterval) {
+		this.fileWaitInterval = fileWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public int getMaxFileWaitCycles() {
+		return maxFileWaitCycles;
+	}
+
+	/**
+	 * Sets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @param maxFileWaitCycles the maximum number of wait cycles to set
+	 */
+	public void setMaxFileWaitCycles(int maxFileWaitCycles) {
+		this.maxFileWaitCycles = maxFileWaitCycles;
+	}
+
 	/**
 	 * Gets the last copy performance for monitoring purposes
 	 * 
@@ -390,6 +470,8 @@ public class XbipMonitor extends BaseMonitor {
 			sessionDataSizes.put(transferSession.getIdentifier(), 0L);
 			
 			// Check all channel directories
+			Semaphore semaphore = new Semaphore(maxFileDownloadThreads);
+			
 			for (String channel: Arrays.asList("ch_1", "ch_2")) {
 				Path sessionChannelDirectory = transferSession.sessionPath.resolve(channel);
 				
@@ -433,6 +515,17 @@ public class XbipMonitor extends BaseMonitor {
 
 							@Override
 							public void run() {
+								// Check whether parallel execution is allowed
+								try {
+									semaphore.acquire();
+									if (logger.isDebugEnabled())
+										logger.debug("... file download semaphore acquired, {} permits remaining",
+												semaphore.availablePermits());
+								} catch (InterruptedException e) {
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									return;
+								}
+								
 								try {
 									if (logger.isTraceEnabled())
 										logger.trace("... Copying file {} to directory {}", sessionChannelFile, caduChannelDirectory);
@@ -467,6 +560,12 @@ public class XbipMonitor extends BaseMonitor {
 											sessionChannelFile.toString(), e.getMessage()));
 									copySuccess.put(transferSession.getIdentifier(), false);
 								}
+
+								// Release parallel thread
+								semaphore.release();
+								if (logger.isDebugEnabled())
+									logger.debug("... file download semaphore released, {} permits now available",
+											semaphore.availablePermits());
 							}
 
 						};
@@ -482,14 +581,24 @@ public class XbipMonitor extends BaseMonitor {
 				}
 			}
 			
-			// Join all copying subtasks
+			// Wait for all copying subtasks
 			if (logger.isTraceEnabled()) logger.trace("... waiting for all subtasks to complete");
 			for (Thread copyTask: copyTasks) {
-				try {
-					copyTask.join();
-				} catch (InterruptedException e) {
-					logger.error(String.format(MSG_COPY_INTERRUPTED, MSG_ID_COPY_INTERRUPTED, transferSession.sessionPath.toString()));
-					return false;
+				int k = 0;
+				while (copyTask.isAlive() && k < maxFileWaitCycles) {
+					try {
+						Thread.sleep(fileWaitInterval);
+					} catch (InterruptedException e) {
+						logger.error(String.format(MSG_COPY_INTERRUPTED, MSG_ID_COPY_INTERRUPTED, transferSession.sessionPath.toString()));
+						return false;
+					}
+					++k;
+				}
+				if (k == maxFileWaitCycles) {
+					// Timeout reached --> kill download and report error
+					copyTask.interrupt();
+					logger.error(MSG_COPY_TIMEOUT, MSG_ID_COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
+							transferSession.sessionPath.toString());
 				}
 			}
 			

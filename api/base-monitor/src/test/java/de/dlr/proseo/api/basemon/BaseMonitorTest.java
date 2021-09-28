@@ -105,7 +105,7 @@ public class BaseMonitorTest {
 		}
 		
 		private boolean randomResult(String methodName) {
-			int success = (int) (Math.random() + 0.5);
+			int success = (int) (Math.random() + 0.7);
 			logger.info("... method {} returns {}", methodName, success == 1 ? "SUCCESS" : "FAILED");
 			return success == 1;
 		}
@@ -175,6 +175,7 @@ public class BaseMonitorTest {
 		
 		BaseMonitor testMonitor = new TestMonitor();
 		testMonitor.setTransferHistoryFile(TEST_HISTORY_FILE);
+		testMonitor.setMaxDownloadThreads(3);
 		testMonitor.run(5); // 5 cycles should be sufficient for "transferring" all files "successfully"
 		
 		// History file should now contain all download entries exactly once

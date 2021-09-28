@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,15 @@ public abstract class BaseMonitor extends Thread {
 	/** Reference time stamp for retrieving objects from pickup point */
 	private Instant referenceTimeStamp = Instant.EPOCH;
 	
+	/** Maximum number of parallel download threads (default 1 = no parallel downloads) */
+	private int maxDownloadThreads = 1;
+	
+	/** Interval in millliseconds to check for completed subtasks (default 500 ms) */
+	private int taskWaitInterval = 500;
+	
+	/** Maximum number of wait cycles for task completion checks (default 3600 = total timeout of 30 min) */
+	private int maxWaitCycles = 3600;
+	
 	/* Message ID constants */
 	private static final int MSG_ID_INTERRUPTED = 5200;
 	private static final int MSG_ID_TRANSFER_FAILED = 5201;
@@ -68,6 +79,8 @@ public abstract class BaseMonitor extends Thread {
 	private static final int MSG_ID_HISTORY_ENTRIES_READ = 5208;
 	private static final int MSG_ID_HISTORY_ENTRIES_TRUNCATED = 5209;
 	private static final int MSG_ID_TASK_WAIT_INTERRUPTED = 5209;
+	private static final int MSG_ID_SUBTASK_TIMEOUT = 5210;
+	protected static final int MSG_ID_ABORTING_TASK = 5211;
 	
 	/* Message string constants */
 	private static final String MSG_INTERRUPTED = "(I%d) Interrupt received while waiting for next check of pickup point";
@@ -80,7 +93,9 @@ public abstract class BaseMonitor extends Thread {
 	private static final String MSG_ILLEGAL_HISTORY_ENTRY_DATE = "(E%d) Transfer history entry date '%s' has illegal format";
 	private static final String MSG_HISTORY_ENTRIES_READ = "(I%d) %d history entries read from history file %s, reference time for next pickup point lookup is %s";
 	private static final String MSG_HISTORY_ENTRIES_TRUNCATED = "(I%d) %d entries truncated from transfer history file %s";
-	private static final String MSG_TASK_WAIT_INTERRUPTED = "(I%d) Wait for task completion interrupted, continuing wait";
+	private static final String MSG_TASK_WAIT_INTERRUPTED = "(E%d) Wait for task completion interrupted, monitoring loop aborted";
+	private static final String MSG_SUBTASK_TIMEOUT = "(E%d) Timeout after %s s during wait for task completion, task cancelled";
+	protected static final String MSG_ABORTING_TASK = "(E%d) Aborting download task due to exception (cause: %s)";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
@@ -155,6 +170,60 @@ public abstract class BaseMonitor extends Thread {
 	 */
 	public void setHistoryRetentionDuration(Duration historyRetentionDuration) {
 		this.historyRetentionDuration = historyRetentionDuration;
+	}
+
+	/**
+	 * Gets the maximum number of parallel download threads
+	 * 
+	 * @return the maximum number of download threads
+	 */
+	public int getMaxDownloadThreads() {
+		return maxDownloadThreads;
+	}
+
+	/**
+	 * Sets the maximum number of parallel download threads
+	 * 
+	 * @param maxDownloadThreads the maximum number of download threads to set
+	 */
+	public void setMaxDownloadThreads(int maxDownloadThreads) {
+		this.maxDownloadThreads = maxDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval to check for completed subtasks
+	 * 
+	 * @return the task wait interval in millliseconds
+	 */
+	public int getTaskWaitInterval() {
+		return taskWaitInterval;
+	}
+
+	/**
+	 * Sets the interval to check for completed subtasks
+	 * 
+	 * @param taskWaitInterval the task wait interval in millliseconds to set
+	 */
+	public void setTaskWaitInterval(int taskWaitInterval) {
+		this.taskWaitInterval = taskWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for task completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public int getMaxWaitCycles() {
+		return maxWaitCycles;
+	}
+
+	/**
+	 * Sets the maximum number of wait cycles for task completion checks
+	 * 
+	 * @param maxWaitCycles the maximum number of wait cycles to set
+	 */
+	public void setMaxWaitCycles(int maxWaitCycles) {
+		this.maxWaitCycles = maxWaitCycles;
 	}
 
 	/**
@@ -429,6 +498,8 @@ public abstract class BaseMonitor extends Thread {
 			List<Thread> transferTasks = new ArrayList<>();
 			
 			// Transfer all objects not yet processed
+			Semaphore semaphore = new Semaphore(maxDownloadThreads);
+			
 			for (TransferObject objectToTransfer: objectsToTransfer) {
 				
 				// Setup parallel transfers
@@ -436,6 +507,15 @@ public abstract class BaseMonitor extends Thread {
 
 					@Override
 					public void run() {
+						// Check whether parallel execution is allowed
+						try {
+							semaphore.acquire();
+							if (logger.isDebugEnabled()) logger.debug("... task semaphore acquired, {} permits remaining", semaphore.availablePermits());
+						} catch (InterruptedException e) {
+							logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+							return;
+						}
+						
 						// Transfer object to local target directory
 						if (transferToTargetDir(objectToTransfer)) {
 							
@@ -443,7 +523,7 @@ public abstract class BaseMonitor extends Thread {
 							try {
 								recordTransfer(objectToTransfer, checkTimeStamp);
 							} catch (IOException e) {
-								logger.error(String.format(MSG_ABORTING_MONITOR, MSG_ID_ABORTING_MONITOR, e.getMessage()));
+								logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
 								return;
 							}
 							
@@ -455,6 +535,10 @@ public abstract class BaseMonitor extends Thread {
 						} else {
 							logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
 						}
+
+						// Release parallel thread
+						semaphore.release();
+						if (logger.isDebugEnabled()) logger.debug("... task semaphore released, {} permits now available", semaphore.availablePermits());
 					}
 				};
 				transferTasks.add(transferTask);
@@ -465,12 +549,20 @@ public abstract class BaseMonitor extends Thread {
 			// Wait for all tasks to complete
 			if (logger.isTraceEnabled()) logger.trace("... waiting for all subtasks to complete");
 			for (Thread transferTask: transferTasks) {
-				while (transferTask.isAlive()) {
+				int k = 0;
+				while (transferTask.isAlive() && k < maxWaitCycles) {
 					try {
-						Thread.sleep(TASK_WAIT_INTERVAL);
+						Thread.sleep(taskWaitInterval);
 					} catch (InterruptedException e) {
-						logger.warn(String.format(MSG_TASK_WAIT_INTERRUPTED, MSG_ID_TASK_WAIT_INTERRUPTED));
+						logger.error(String.format(MSG_TASK_WAIT_INTERRUPTED, MSG_ID_TASK_WAIT_INTERRUPTED));
+						return;
 					}
+					++k;
+				}
+				if (k == maxWaitCycles) {
+					// Timeout reached --> kill task and report error
+					transferTask.interrupt();
+					logger.error(MSG_SUBTASK_TIMEOUT, MSG_ID_SUBTASK_TIMEOUT, (maxWaitCycles * taskWaitInterval) / 1000);
 				}
 			}
 						

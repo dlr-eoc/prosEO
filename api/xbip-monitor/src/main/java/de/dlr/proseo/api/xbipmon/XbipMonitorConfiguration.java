@@ -63,6 +63,30 @@ public class XbipMonitorConfiguration {
 	@Value("${proseo.l0.command}")
 	private String l0Command;
 	
+	/** Maximum number of parallel transfer sessions */
+	@Value("${proseo.xbip.session.maxthreads:1}")
+	private Integer maxDownloadThreads;
+	
+	/** Interval in millliseconds to check for completed transfer sessions */
+	@Value("${proseo.xbip.session.wait:500}")
+	private Integer taskWaitInterval;
+	
+	/** Maximum number of wait cycles for transfer session completion checks */
+	@Value("${proseo.xbip.session.maxcycles:3600}")
+	private Integer maxWaitCycles;
+	
+	/** Maximum number of parallel file download threads within a download session */
+	@Value("${proseo.xbip.file.maxthreads:1}")
+	private Integer maxFileDownloadThreads;
+	
+	/** Interval in millliseconds to check for completed file downloads */
+	@Value("${proseo.xbip.file.wait:500}")
+	private Integer fileWaitInterval;
+	
+	/** Maximum number of wait cycles for file download completion checks */
+	@Value("${proseo.xbip.file.maxcycles:3600}")
+	private Integer maxFileWaitCycles;
+	
 	/**
 	 * Gets the XBIP Monitor identifier
 	 * 
@@ -160,6 +184,60 @@ public class XbipMonitorConfiguration {
 	 */
 	public String getL0Command() {
 		return l0Command;
+	}
+
+	/**
+	 * Gets the maximum number of parallel transfer session threads
+	 * 
+	 * @return the maximum number of transfer session threads
+	 */
+	public Integer getMaxDownloadThreads() {
+		return maxDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval to check for completed transfer sessions
+	 * 
+	 * @return the transfer session wait interval in millliseconds
+	 */
+	public Integer getTaskWaitInterval() {
+		return taskWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for transfer session completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public Integer getMaxWaitCycles() {
+		return maxWaitCycles;
+	}
+
+	/**
+	 * Gets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @return the maximum number of parallel file download threads
+	 */
+	public Integer getMaxFileDownloadThreads() {
+		return maxFileDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval to check for completed file downloads
+	 * 
+	 * @return the check interval in millliseconds
+	 */
+	public Integer getFileWaitInterval() {
+		return fileWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public Integer getMaxFileWaitCycles() {
+		return maxFileWaitCycles;
 	}
 
 }
