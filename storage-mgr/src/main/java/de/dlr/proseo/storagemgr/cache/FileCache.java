@@ -329,15 +329,19 @@ public class FileCache {
 
 				continue;
 			}
+			
+			String pathKey = file.getPath();
 
 			if (file.isDirectory()) {
 
-				putFilesToCache(file.getPath());
+				putFilesToCache(pathKey);
 			} else if (file.isFile()) {
 
-				if (!containsKey(file.getPath())) {
+				if (!containsKey(pathKey)) {
 
-					put(file.getPath());
+					FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+
+					mapCache.put(pathKey, fileInfo);
 				}
 			}
 		}
