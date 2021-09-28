@@ -33,6 +33,7 @@ import com.amazonaws.services.s3.transfer.MultipleFileUpload;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.services.s3.transfer.model.CopyResult;
 
 import alluxio.exception.FileAlreadyExistsException;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -64,7 +65,11 @@ public class S3Ops {
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(S3Ops.class);
 
+	/** Chunk size for uploads to S3 storage (5 MB) */
 	private static final Long MULTIPART_UPLOAD_PARTSIZE_BYTES = (long) (5 * 1024 * 1024);
+
+	/** Maximum number of retries for data uploads to S3 storage */
+	private static final int MAX_UPLOAD_RETRIES = 3;
 	
 	
 	/**
@@ -356,38 +361,47 @@ public class S3Ops {
 	 * @param recursive   true, if subdirectories shall be copied, too, false otherwise
 	 * @param pause       (not used)
 	 * @return a list of uploaded keys or null, if the operation failed
+	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
+	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1UploadDir(AmazonS3 v1S3Client, String sourceDirPath, String targetBucketName, String targetKeyPrefix,
-			boolean recursive, boolean pause) {
+			boolean recursive, boolean pause) throws AmazonClientException, InterruptedException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadDir({}, {}, {}, {}, {})", 
 				v1S3Client, sourceDirPath, targetBucketName, targetKeyPrefix, recursive, pause);
 		
 		ArrayList<String> response = new ArrayList<String>();
-		TransferManager xfer_mgr = TransferManagerBuilder.standard()
+		TransferManager transferManager = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
 		AmazonS3URI s3uri = new AmazonS3URI(targetBucketName);
 		String bucket = s3uri.getBucket();
-		try {
-			MultipleFileUpload xfer = xfer_mgr.uploadDirectory(bucket, targetKeyPrefix, new File(sourceDirPath), recursive);
-			// loop with Transfer.isDone()
-			// or block with Transfer.waitForCompletion()
 
-			V1XferMgrProgress.waitForCompletion(xfer);
-			xfer_mgr.shutdownNow(false);
-
-			// check files in s3 & add to response
-			List<S3ObjectSummary> list = v1S3Client.listObjectsV2(bucket, targetKeyPrefix).getObjectSummaries();
-			for (S3ObjectSummary o : list) {
-				response.add(o.getKey());
+		for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+			try {
+				transferManager
+					.uploadDirectory(bucket, targetKeyPrefix, new File(sourceDirPath), recursive)
+					.waitForCompletion();
+				// Success, so no retry required
+				break;
+			} catch (Exception e) {
+				if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+					throw e;
+				} else {
+					logger.warn("Uploading directory {} failed (cause: {}), retrying ...", sourceDirPath, e.getMessage());
+				}
 			}
-			logger.info("Copied dir://{} to {}/{}", sourceDirPath, targetBucketName, targetKeyPrefix);
+		}
 
-			return response;
-		} catch (AmazonServiceException e) {
-			logger.error(e.getMessage());
-			return null;
-		} 
+		transferManager.shutdownNow(false);
+
+		// check files in s3 & add to response
+		List<S3ObjectSummary> list = v1S3Client.listObjectsV2(bucket, targetKeyPrefix).getObjectSummaries();
+		for (S3ObjectSummary o : list) {
+			response.add(o.getKey());
+		}
+		logger.info("Copied dir://{} to {}/{}", sourceDirPath, targetBucketName, targetKeyPrefix);
+
+		return response;
 	}
 
 
@@ -403,9 +417,11 @@ public class S3Ops {
 	 * @param targetKeyPrefix The key in the bucket to store the file
 	 * @param pause       (not used)
 	 * @return a single-element list of keys uploaded or null, if the operation failed
+	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
+	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1UploadFile(AmazonS3 v1S3Client, String sourceFilePath, String targetBucketName, String targetKeyPrefix,
-			boolean pause) {
+			boolean pause) throws AmazonClientException, InterruptedException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1UploadFile({}, {}, {}, {}, {})", 
 				v1S3Client, sourceFilePath, targetBucketName, targetKeyPrefix, pause);
@@ -422,24 +438,30 @@ public class S3Ops {
 			}
 			AmazonS3URI s3uri = new AmazonS3URI(targetBucketName);
 			String bucket = s3uri.getBucket();
-			TransferManager xfer_mgr = TransferManagerBuilder.standard()
+			TransferManager transferManager = TransferManagerBuilder.standard()
 					.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(v1S3Client).build();
-			try {
-				// logger.info("before upload: " + bucket + ", " + key_name + ", " + f);
-				Upload xfer = xfer_mgr.upload(bucket, targetKeyName, f);
-				// loop with Transfer.isDone()
-				// or block with Transfer.waitForCompletion()
-				V1XferMgrProgress.waitForCompletion(xfer);
-				// logger.info("after upload: " + bucket + ", " + key_name + ", " + f);
-				String result = "s3://" + bucket + (targetKeyName.startsWith("/") ? "" : "/") + targetKeyName;
-				response.add(result);
-				logger.info("Copied file://{} to {}", sourceFilePath, result);
-				xfer_mgr.shutdownNow(false);
-				return response;
-			} catch (AmazonServiceException e) {
-				logger.error(e.getErrorMessage());
-				return null;
+
+			for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+				try {
+					transferManager
+					.upload(bucket, targetKeyName, f)
+						.waitForCompletion();
+					// Success, so no retry required
+					break;
+				} catch (Exception e) {
+					if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+						throw e;
+					} else {
+						logger.warn("Uploading file {} failed (cause: {}), retrying ...", sourceFilePath, e.getMessage());
+					}
+				}
 			}
+			
+			String result = "s3://" + bucket + (targetKeyName.startsWith("/") ? "" : "/") + targetKeyName;
+			response.add(result);
+			logger.info("Copied file://{} to {}", sourceFilePath, result);
+			transferManager.shutdownNow(false);
+			return response;
 		} else {
 			return null;
 		}
@@ -454,9 +476,11 @@ public class S3Ops {
 	 * @param targetPathPrefix  the key prefix to set for the target bucket
 	 * @param pause       (not used)
 	 * @return a list of uploaded keys or null, if the operation failed
+	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
+	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1Upload(AmazonS3 v1S3Client, String sourcePath, String targetBucketName, String targetPathPrefix,
-			boolean pause) {
+			boolean pause) throws AmazonClientException, InterruptedException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Upload({}, {}, {}, {}, {})", 
 				v1S3Client, sourcePath, targetBucketName, targetPathPrefix, pause);
@@ -467,20 +491,25 @@ public class S3Ops {
 		}
 		File f = new File(sourcePath);
 
-		ArrayList<String> response;
-		if (f.isFile()) {
-			response = v1UploadFile(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, false);
-			if (null != response) {
-				return response;
+		ArrayList<String> response = null;
+		try {
+			if (f.isFile()) {
+				response = v1UploadFile(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, false);
 			}
-		}
-		if (f.isDirectory()) {
-			response = v1UploadDir(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, true, false);
-			if (null != response) {
-				return response;
+			if (f.isDirectory()) {
+				response = v1UploadDir(v1S3Client, sourcePath, targetBucketName, targetPathPrefix, true, false);
 			}
+		} catch (AmazonServiceException e) {
+			logger.error("Amazon service error: " + e.getMessage());
+			throw e;
+		} catch (AmazonClientException e) {
+			logger.error("Amazon client error: " + e.getMessage());
+			throw e;
+		} catch (InterruptedException e) {
+			logger.error("Transfer interrupted: " + e.getMessage());
+			throw e;
 		}
-		return null;
+		return response;
 	}
 
 	/**
@@ -492,9 +521,11 @@ public class S3Ops {
 	 * @param destBucketName the bucket to copy to
 	 * @param destObjectPrefix the object key to copy to 
 	 * @return a list of copied keys or null, if the operation failed
+	 * @throws AmazonClientException if an error occurred during communication with the S3 backend storage
+	 * @throws InterruptedException if the wait for the upload completion was interrupted
 	 */
 	public static ArrayList<String> v1Copy(AmazonS3 s3Client, String sourceBucketName, String sourceObjectKeyPrefix,
-			String destBucketName, String destObjectPrefix) {
+			String destBucketName, String destObjectPrefix) throws AmazonClientException, InterruptedException {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> v1Copy({}, {}, {}, {}, {})", 
 				s3Client, sourceBucketName, sourceObjectKeyPrefix, destBucketName, destObjectPrefix);
@@ -506,7 +537,7 @@ public class S3Ops {
 		}
 		
 		ArrayList<String> response = new ArrayList<String>();
-		TransferManager xfer_mgr = TransferManagerBuilder.standard()
+		TransferManager transferManager = TransferManagerBuilder.standard()
 				.withMultipartCopyPartSize(MULTIPART_UPLOAD_PARTSIZE_BYTES).withS3Client(s3Client).build();
 		try {
 
@@ -517,14 +548,29 @@ public class S3Ops {
 			for (S3ObjectSummary o : list) {
 				// destinationKey is built using this pattern: <destObjectPrefix>/<last elem of key>
 				String key = o.getKey();
-				Copy xfer = xfer_mgr.copy(sourceBucketName, key, destBucketName, destObjectPrefix+separator+key);
-				V1XferMgrProgress.waitForCompletion(xfer);
+				
+				for (int i = 1; i <= MAX_UPLOAD_RETRIES ; ++i) {
+					try {
+						transferManager
+							.copy(sourceBucketName, key, destBucketName, destObjectPrefix+separator+key)
+							.waitForCompletion();
+						// Success, so no retry required
+						break;
+					} catch (Exception e) {
+						if (i >= MAX_UPLOAD_RETRIES) { // fail at the last try
+							throw e;
+						} else {
+							logger.warn("Copying s3://{}/{} failed (cause: {}), retrying ...", sourceBucketName, key, e.getMessage());
+						}
+					}
+				}
+
 				response.add("s3://" + destBucketName + "/" + destObjectPrefix + "/" + key);
 				logger.info("Copied s3://{}/{} to s3://{}/{}/{}", sourceBucketName, key, destBucketName, destObjectPrefix,key);
 			}
 
 
-			xfer_mgr.shutdownNow(false);
+			transferManager.shutdownNow(false);
 			return response;
 		} catch (AmazonServiceException e) {
 			logger.error(e.getErrorMessage());

@@ -49,4 +49,12 @@
     group: users
     mode: 0644
   loop: "{{ sudoers }}"
-    
+
+- name: Add mappings to /etc/hosts for easier access to inner nodes
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+  loop: "{{ inner_nodes }}"
+

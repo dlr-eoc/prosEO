@@ -27,3 +27,14 @@ ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoa
 [nfsserver:vars]
 # Configure bastion as proxy for NFS server
 ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoadmin@85.215.220.164"'
+
+[master]
+10.8.212.15
+
+[workers]
+10.8.212.16
+10.8.212.17
+10.8.212.18
+10.8.212.19
+10.8.212.20
+10.8.212.21
