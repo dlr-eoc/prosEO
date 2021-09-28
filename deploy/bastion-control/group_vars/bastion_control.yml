@@ -3,3 +3,15 @@ nginx_users:
 - proseoadmin: VVRVOzcXe1PsvpWnFpqbPWoB
 
 rkhunter_email: thomas.bassler@dlr.de
+
+inner_nodes:
+    - { name: brain, ip: "{{ groups['brain'][0] }}" }
+    - { name: loghost, ip: "{{ groups['loghost'][0] }}" }
+    - { name: nfsserver, ip: "{{ groups['nfsserver'][0] }}" }
+    - { name: master, ip: "{{ groups['master'][0] }}" }
+    - { name: worker1, ip: "{{ groups['workers'][0] }}" }
+    - { name: worker2, ip: "{{ groups['workers'][1] }}" }
+    - { name: worker3, ip: "{{ groups['workers'][2] }}" }
+    - { name: worker4, ip: "{{ groups['workers'][3] }}" }
+    - { name: worker5, ip: "{{ groups['workers'][4] }}" }
+    - { name: worker6, ip: "{{ groups['workers'][5] }}" }

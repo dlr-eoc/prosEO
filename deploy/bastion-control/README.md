@@ -12,8 +12,9 @@ found in each of the directories:
 - `install_kubectl/files`
 - `configure_nginx_proxy/files`
 
-In the `group_vars` directory, create a file `bastion_control.yml` with the administrative user and password and an
-email address for alerts from rkhunter (see file `bastion_control.yml.template` for the required contents).
+In the `group_vars` directory, create a file `bastion_control.yml` with the administrative user and password, an
+email address for alerts from rkhunter and the list of inner nodes to be easily accessible from the bastion host
+by entries to `/etc/hosts` (see file `bastion_control.yml.template` for the required contents).
 
 
 # Bastion host configuration
