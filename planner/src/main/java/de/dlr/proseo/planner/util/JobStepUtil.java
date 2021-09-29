@@ -71,18 +71,20 @@ public class JobStepUtil {
 	@Autowired
 	RestTemplateBuilder rtb;
 	
-    public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
-    	String query = "select js from JobStep js " + 
-        		" inner join Job j on js.job.id = j.id " + 
-        		" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
-        		" inner join Mission m on o.mission.id = m.id " + 
-        		" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
-    	// em.createNativeQ
-        return em.createQuery(query,
-          JobStep.class)
-        		.setMaxResults(limit)
-        		.getResultList();
-    }
+	public List<JobStep> findOrderedByJobStepStateAndMission(JobStepState state, String mission, int limit) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrderedByJobStepStateAndMission({}, {}, {})", state, mission, limit);
+
+		String query = "select js from JobStep js " + 
+				" inner join Job j on js.job.id = j.id " + 
+				" inner join ProcessingOrder o on j.processingOrder.id = o.id" + 
+				" inner join Mission m on o.mission.id = m.id " + 
+				" where js.jobStepState = '" + state + "' and m.code = '" + mission + "' order by js.processingCompletionTime desc";
+		// em.createNativeQ
+		return em.createQuery(query,
+			JobStep.class)
+				.setMaxResults(limit)
+				.getResultList();
+	}
     
 	/**
 	 * Search for not satisfied product queries referencing product class on processing facility and check which are now satisfied. 
@@ -93,6 +95,10 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public void searchForJobStepsToRun(ProcessingFacility processingFacility, ProductClass pc) {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchForJobStepsToRun({}, {})",
+				(null == processingFacility ? "null" : processingFacility.getName()),
+				(null == pc ? "null" : pc.getProductType()));
+
 		// Search for all job steps on processingFacility with states INITIAL, WAITING_INPUT
 		List<de.dlr.proseo.model.JobStep.JobStepState> jobStepStates = new ArrayList<>();
 		jobStepStates.add(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
@@ -139,6 +145,9 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Messages suspend(JobStep js, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})",
+				(null == js ? "null" : js.getId()), force);
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED
@@ -203,6 +212,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Messages cancel(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -257,6 +268,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Messages retry(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == js ? "null" : js.getId()));
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -318,6 +331,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Boolean checkFinish(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", (null == js ? "null" : js.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -353,6 +368,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Boolean delete(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == js ? "null" : js.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -402,6 +419,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Boolean deleteForced(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteForced({})", (null == js ? "null" : js.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -450,6 +469,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Messages resume(JobStep js, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({}, {})", (null == js ? "null" : js.getId()), force);
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -492,6 +513,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public Boolean startJobStep(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> startJobStep({})", (null == js ? "null" : js.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		if (js != null) {
@@ -530,6 +553,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public void checkJobStepQueries(JobStep js, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkJobStepQueries({}, {})", (null == js ? "null" : js.getId()), force);
+
 		Boolean hasUnsatisfiedInputQueries = false;
 		if (js.getJobStepState() == JobStepState.INITIAL || js.getJobStepState() == JobStepState.WAITING_INPUT) {
 			if (   js.getJob() != null 
@@ -573,6 +598,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	private void deleteProduct(Product p) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProduct({})", (null == p ? "null" : p.getId()));
+
 		if (p!= null) {
 			if (p.getEnclosingProduct() != null) {
 				p.getEnclosingProduct().getComponentProducts().remove(p);
@@ -591,6 +618,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
     public void checkForJobStepsToRun() {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun()");
+
     	if (productionPlanner != null) {
     		Collection<KubeConfig> kcs = productionPlanner.getKubeConfigs();
     		if (kcs != null) {
@@ -605,12 +634,21 @@ public class JobStepUtil {
 	/**
 	 * If onlyRun is false, check unsatisfied queries of product class on processing facility (defined in Kube config).
 	 * Start ready job steps on facility.
+	 * 
+	 * Method is synchronized to avoid different threads (background dispatching and event-triggered dispatching) to
+	 * interfere with each other.
+	 * 
 	 * @param kc KubeConfig
 	 * @param pc ProductClass
 	 * @param onlyRun
 	 */
 	@Transactional
-    public void checkForJobStepsToRun(KubeConfig kc, ProductClass pc, Boolean onlyRun) {
+    synchronized public void checkForJobStepsToRun(KubeConfig kc, ProductClass pc, Boolean onlyRun) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {}, {})",
+				(null == kc ? "null" : kc.getId()),
+				(null == pc ? "null" : pc.getProductType()),
+				onlyRun);
+
 		if (productionPlanner != null) {
 			if (kc != null) {
 				List<JobStepState> states = new ArrayList<JobStepState>();
@@ -638,11 +676,19 @@ public class JobStepUtil {
 	/**
 	 * Check unsatisfied queries of job step on processing facility (defined in Kube config).
 	 * Start ready job steps on facility.
+	 * 
+	 * Method is synchronized to avoid different threads (simultaneous event-triggered dispatching) to
+	 * interfere with each other.
+	 * 
 	 * @param kc KubeConfig
 	 * @param js JobStep
 	 */
 	@Transactional
-    public void checkJobStepToRun(KubeConfig kc, JobStep js) {
+    synchronized public void checkJobStepToRun(KubeConfig kc, JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkForJobStepsToRun({}, {})",
+				(null == kc ? "null" : kc.getId()),
+				(null == js ? "null" : js.getId()));
+
 		if (productionPlanner != null) {
 			if (kc != null && js != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
@@ -663,11 +709,19 @@ public class JobStepUtil {
 	/**
 	 * Check unsatisfied queries of job steps in job on processing facility (defined in Kube config).
 	 * Start ready job steps on facility.
+	 * 
+	 * Method is synchronized to avoid different threads (simultaneous event-triggered dispatching) to
+	 * interfere with each other.
+	 * 
 	 * @param kc KubeConfig
 	 * @param job Job
 	 */
 	@Transactional
-    public void checkJobToRun(KubeConfig kc, Job job) {
+    synchronized public void checkJobToRun(KubeConfig kc, Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkJobToRun({}, {})",
+				(null == kc ? "null" : kc.getId()),
+				(null == job ? "null" : job.getId()));
+
 		if (productionPlanner != null) {
 			if (kc != null && job != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
@@ -692,11 +746,19 @@ public class JobStepUtil {
 	/**
 	 * Check unsatisfied queries of job steps in processing order on processing facility (defined in Kube config).
 	 * Start ready job steps on facility.
+	 * 
+	 * Method is synchronized to avoid different threads (simultaneous event-triggered dispatching) to
+	 * interfere with each other.
+	 * 
 	 * @param kc KubeConfig
 	 * @param order ProcessingOrder
 	 */
 	@Transactional
-    public void checkOrderToRun(KubeConfig kc, ProcessingOrder order) {
+    synchronized public void checkOrderToRun(KubeConfig kc, ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkOrderToRun({}, {})",
+				(null == kc ? "null" : kc.getId()),
+				(null == order ? "null" : order.getId()));
+
 		if (productionPlanner != null) {
 			if (kc != null && order != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
@@ -729,6 +791,8 @@ public class JobStepUtil {
 	 */
 	@Transactional
 	public void checkCreatedProducts(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProducts({})", (null == js ? "null" : js.getId()));
+
 		if (js != null && js.getJobStepState() == JobStepState.COMPLETED) {
 			ProcessingFacility pf = js.getJob().getProcessingFacility();
 			if (pf != null) {
@@ -761,7 +825,10 @@ public class JobStepUtil {
 	@Transactional
 	private List<Product> checkCreatedProduct(Product p, ProcessingFacility pf) {
 		List<Product> productsToRemove = new ArrayList<Product>();
-		
+		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProduct({})",
+				(null == p ? "null" : p.getId()),
+				(null == pf ? "null" : pf.getName()));
+
 		if (p != null && pf != null) {
 			Set<Product> pList = p.getComponentProducts();
 			if (pList.isEmpty()) {
@@ -830,7 +897,7 @@ public class JobStepUtil {
 	}
 	
 	/**
-	 * Collect products of a ptoduct tree into list
+	 * Recursively collect products of a product tree into list
 	 * 
 	 * @param p Root product
 	 * @param list Product list
@@ -853,6 +920,10 @@ public class JobStepUtil {
 	 */
 	@Transactional
     private Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProduct(Product[{}], {})",
+				(null == list ? "null" : list.size()),
+				(null == pf ? "null" : pf.getName()));
+
 		Boolean answer = true;
 		for (Product p : list) {
 			if (p.getProductFile().isEmpty()) {
@@ -875,7 +946,15 @@ public class JobStepUtil {
 		return answer;
 	}
 	
+	/**
+	 * Delete the Job Order file for the given job step from the Storage Manager
+	 * 
+	 * @param js the job step to delete the JOF from
+	 * @return true on success, false otherwise
+	 */
 	private Boolean deleteJOF(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteJOF({})", (null == js ? "null" : js.getId()));
+
 		if (js != null && js.getJobOrderFilename() != null) {
 			ProcessingFacility facility = js.getJob().getProcessingFacility();
 			String storageManagerUrl = facility.getStorageManagerUrl()

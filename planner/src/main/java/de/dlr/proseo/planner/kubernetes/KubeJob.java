@@ -49,7 +49,6 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
-import io.kubernetes.client.openapi.models.V1ResourceRequirementsBuilder;
 
 /**
  * A KubeJob describes the complete information to run a Kubernetes job.
@@ -235,6 +234,10 @@ public class KubeJob {
 	 * @return The created kube job or null for not proseo jobs
 	 */
 	public KubeJob rebuild(KubeConfig aKubeConfig, V1Job aJob) {
+		if (logger.isTraceEnabled()) logger.trace(">>> rebuild({}, {}, {})",
+				(null == aKubeConfig ? "null" : aKubeConfig.getId()),
+				(null == aJob ? "null" : aJob.getKind()));
+		
 		kubeConfig = aKubeConfig;
 		if (aKubeConfig.isConnected() && aJob != null) {
 			jobName = aJob.getMetadata().getName();
@@ -256,12 +259,16 @@ public class KubeJob {
 
 	/**
 	 * Create the Kubernetes job on processing facility (based on constructor parameters)
+	 * 
+	 * Method is synchronized to avoid different threads (background dispatching and event-triggered dispatching) to
+	 * interfere with each other.
+	 * 
 	 * @param aKubeConfig The processing facility
 	 * @return The kube job
 	 * @throws Exception 
 	 */
 	@Transactional
-	public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
+	synchronized public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
 		
 		kubeConfig = aKubeConfig;
@@ -414,11 +421,11 @@ public class KubeJob {
 				.endEnv()
 				.addNewEnv()
 				.withName("FILECHECK_MAX_CYCLES")
-				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckMaxCycles())
+				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckMaxCycles().toString())
 				.endEnv()
 				.addNewEnv()
 				.withName("FILECHECK_WAIT_TIME")
-				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckWaitTime())
+				.withValue(ProductionPlanner.config.getProductionPlannerFileCheckWaitTime().toString())
 				.endEnv()
 				.addNewVolumeMount()
 				.withName("proseo-mnt")
@@ -448,7 +455,7 @@ public class KubeJob {
 				.build();
 		try {
 			if (logger.isTraceEnabled()) {
-				logger.info("Creating job {}", job.toString());
+				logger.trace("Creating job {}", job.toString());
 			}
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
@@ -476,6 +483,8 @@ public class KubeJob {
 	 * Search pod for job and set podName
 	 */
 	public void searchPod() {
+		if (logger.isTraceEnabled()) logger.trace(">>> searchPod()");
+		
 		if (kubeConfig != null && kubeConfig.isConnected()) {
 			V1PodList pl;
 			try {
@@ -489,8 +498,7 @@ public class KubeJob {
 					}
 				}
 			} catch (ApiException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 			}
 		}
 	}
@@ -502,6 +510,8 @@ public class KubeJob {
 	 * @param jobname The job name
 	 */
 	public void finish(KubeConfig aKubeConfig, String jobname) {
+		if (logger.isTraceEnabled()) logger.trace(">>> finish({}, {})", (null == aKubeConfig ? "null" : aKubeConfig.getId()), jobname);
+		
 		if (aKubeConfig != null || kubeConfig != null) {
 			if (kubeConfig == null) {
 				kubeConfig = aKubeConfig;
@@ -516,12 +526,9 @@ public class KubeJob {
 					try {
 						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
 						aPlan.setLog(log);
-					} catch (ApiException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+						return;
 					}
 				}
 				Long jobStepId = this.getJobId();
@@ -592,13 +599,15 @@ public class KubeJob {
 	 */
 	
 	/**
-	 * Get all the information of a Kubernetes job which is stored in job step
+	 * Update all the information of a Kubernetes job which is stored in job step
 	 * 
 	 * @param aJobName The Kubernetes job name
 	 * @return true after success
 	 */
 	@Transactional
-	public boolean getInfo(String aJobName) {
+	public boolean updateInfo(String aJobName) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateInfo({})", aJobName);
+		
 		boolean success = false;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
@@ -622,8 +631,8 @@ public class KubeJob {
 					} catch (ApiException e1) {
 						// ignore, normally the pod has no log
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+						return false;
 					}
 				}
 				Long jobStepId = this.getJobId();
@@ -706,9 +715,9 @@ public class KubeJob {
 										}
 										podMessages += "\n\n";
 									}
-								} catch (ApiException e2) {
-									// TODO Auto-generated catch block
-									e2.printStackTrace();
+								} catch (ApiException e) {
+									logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+									return false;
 								}
 							}
 							// cancel pod and job, write reasons into job step log
@@ -743,9 +752,11 @@ public class KubeJob {
 	 * @return true after success
 	 */
 	@Transactional
-	public boolean getFinishInfo(String aJobName) {
+	public boolean updateFinishInfoAndDelete(String aJobName) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateFinishInfoAndDelete({})", aJobName);
+		
 		boolean success = false;
-		success = getInfo(aJobName);
+		success = updateInfo(aJobName);
 		if (success) {
 			Long jobStepId = this.getJobId();
 			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
@@ -768,6 +779,9 @@ public class KubeJob {
 	 * @param genTime The generation time
 	 */
 	void setGenerationTime(Product product, Instant genTime, Duration retentionPeriod) {
+		if (logger.isTraceEnabled()) logger.trace(">>> setGenerationTime({}, {}, {})",
+				(null == product ? "null" : product.getId()), genTime, retentionPeriod);
+		
 		if (product != null && genTime != null) {			
 			product.setGenerationTime(genTime);
 			if (retentionPeriod != null) {
@@ -800,10 +814,10 @@ public class KubeJob {
 	}
 	
 	/**
-	 * Get the maximum setting of cpus of processor tasks
+	 * Get the requested memory size of processor tasks
 	 * @param proc The Processor
-	 * @param cpus The default cpus value
-	 * @return The requested cpus maximum
+	 * @param minMem The minimum memory size
+	 * @return The requested memory size
 	 */
 	private Integer getMinMemory(Processor proc, Integer minMem) {
 		if (proc != null) {
