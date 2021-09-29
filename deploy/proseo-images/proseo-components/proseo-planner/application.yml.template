@@ -12,6 +12,7 @@ logging:
     file: /proseo/log/proseo-prodplanner.log
     level:
         root: INFO
+        okhttp3: WARN
         de.dlr.proseo: TRACE
 proseo:
     log:

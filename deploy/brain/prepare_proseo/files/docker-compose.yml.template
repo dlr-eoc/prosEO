@@ -9,6 +9,10 @@ services:
       - /opt/prosEO/pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-ingestor:
     image: ${REGISTRY_URL}/proseo-ingestor:${VERSION}-proseo
@@ -18,6 +22,10 @@ services:
       - "8081:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-order-mgr:
     image: ${REGISTRY_URL}/proseo-order-mgr:${VERSION}-proseo
@@ -27,6 +35,10 @@ services:
       - "8082:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-prodplanner:
     image: ${REGISTRY_URL}/proseo-planner:${VERSION}-proseo
@@ -36,6 +48,10 @@ services:
       - "8083:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-processor-mgr:
     image: ${REGISTRY_URL}/proseo-processor-mgr:${VERSION}-proseo
@@ -45,6 +61,10 @@ services:
       - "8084:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-productclass-mgr:
     image: ${REGISTRY_URL}/proseo-productclass-mgr:${VERSION}-proseo
@@ -54,6 +74,10 @@ services:
       - "8085:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-user-mgr:
     image: ${REGISTRY_URL}/proseo-user-mgr:${VERSION}-proseo
@@ -63,6 +87,10 @@ services:
       - "8086:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-facility-mgr:
     image: ${REGISTRY_URL}/proseo-facility-mgr:${VERSION}-proseo
@@ -72,6 +100,10 @@ services:
       - "8087:8080"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-gui:
     image: ${REGISTRY_URL}/proseo-ui-gui:${VERSION}-proseo
@@ -87,6 +119,10 @@ services:
       - proseo-processor-mgr
       - proseo-productclass-mgr
       - proseo-facility-mgr
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-api-prip:
     image: ${REGISTRY_URL}/proseo-api-prip:${VERSION}-proseo
@@ -97,6 +133,10 @@ services:
     depends_on:
       - proseo-user-mgr
       - proseo-ingestor
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
   proseo-pgadmin:
     image: ${REGISTRY_URL}/dpage/pgadmin4:latest-proseo
@@ -111,6 +151,10 @@ services:
       - "8443:443"
     depends_on:
       - proseo-db
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     # No automatic restart
 
 networks:
