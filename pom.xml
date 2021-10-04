@@ -55,6 +55,7 @@
 		<module>user-mgr</module>
 		<module>facility-mgr</module>
 		<module>common</module>
+		<module>monitor</module>
 	</modules>
 
 	<dependencyManagement>
