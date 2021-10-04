@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RestOps {
+	
+	private static int MAX_RETRIES = 5;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(RestOps.class);
@@ -44,7 +46,7 @@ public class RestOps {
 		Response response = null;
 		String content = payLoad==null?"":payLoad;
 		int retry = 0;
-		while (retry < 10) {
+		while (retry < MAX_RETRIES) {
 			try {
 				Client client =  javax.ws.rs.client.ClientBuilder.newClient().register(new RestAuth(user, pw));
 				WebTarget webTarget = client.target(endPoint).path(endPointPath);
@@ -62,6 +64,10 @@ public class RestOps {
 					logger.info(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(content, MediaType.APPLICATION_JSON));
 					break;
+				case PATCH:
+					logger.info(method + " " + webTarget.getUri());
+					response = webTarget.request(MediaType.APPLICATION_JSON).method(HttpMethod.PATCH.toString(), Entity.entity(content, MediaType.APPLICATION_JSON));
+					break;
 				case GET:
 					logger.info(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).get();
@@ -69,15 +75,22 @@ public class RestOps {
 				default:
 					throw new UnsupportedOperationException(method + " not implemented");
 				}
-				if (logger.isDebugEnabled()) logger.debug("response = " + response);
+				if (logger.isDebugEnabled())
+					logger.debug("response: " + (null == response ? "null" : 
+							" status = " + response.getStatus() + ", has body = " + response.hasEntity()));
 				responseInfo.sethttpCode(response.getStatus());
-				responseInfo.sethttpResponse(response.readEntity(String.class));
+				responseInfo.setHttpWarning(response.getHeaderString("Warning"));
+				if (response.hasEntity()) {
+					responseInfo.sethttpResponse(response.readEntity(String.class));
+				} else {
+					responseInfo.sethttpResponse("");
+				}
 				response.close();
 				client.close();
 				return responseInfo;
 			} catch (ProcessingException e) {
 				logger.error("Exception during REST API call: " + e.getMessage(), e);
-				if (retry < 5) {
+				if (retry < (MAX_RETRIES - 1)) {
 					// sometimes there is the exception "no route to host" which isn't really true
 					// therefore wait a little bit and try again.
 					//
@@ -86,8 +99,8 @@ public class RestOps {
 					try {
 						TimeUnit.SECONDS.sleep(1);
 					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						logger.error("Exception during retry wait: " + e.getMessage(), e1);
+						return null;
 					}
 				} else {
 					return null;

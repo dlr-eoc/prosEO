@@ -67,6 +67,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages cancel(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -115,6 +117,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages reset(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> reset({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -188,6 +192,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages delete(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -247,6 +253,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages approve(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> approve({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.ORDER_ALREADY_APPROVED;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -298,23 +306,26 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Message plan(ProcessingOrder order,  ProcessingFacility procFacility) {
-		Message answer = new Message(Messages.FALSE);
+	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
+		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
+				(null == procFacility ? "null" : procFacility.getName()));
+		
+		Messages answer = Messages.FALSE;
 		if (order != null && procFacility != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer.setMessage(Messages.ORDER_HASTOBE_APPROVED);
+				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
-				answer = orderDispatcher.publishOrder(order, procFacility);
-				if (answer.isTrue()) {
+				Message publishAnswer = orderDispatcher.publishOrder(order, procFacility);
+				if (publishAnswer.isTrue()) {
 					if (order.getJobs().isEmpty()) {
 						order.setOrderState(OrderState.COMPLETED);
-						answer.setMessage(Messages.ORDER_PRODUCT_EXIST);
+						answer = Messages.ORDER_PRODUCT_EXIST;
 					} else {
 						order.setOrderState(OrderState.PLANNED);
-						answer.setMessage(Messages.ORDER_PLANNED);
+						answer = Messages.ORDER_PLANNED;
 					}
 					order.incrementVersion();
 					order = RepositoryService.getOrderRepository().save(order);
@@ -322,25 +333,25 @@ public class OrderUtil {
 				}
 				break;	
 			case PLANNED:	
-				answer.setMessage(Messages.ORDER_ALREADY_PLANNED);
+				answer = Messages.ORDER_ALREADY_PLANNED;
 				break;
 			case RELEASED:
-				answer.setMessage(Messages.ORDER_ALREADY_RELEASED);
+				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer.setMessage(Messages.ORDER_ALREADY_RUNNING);
+				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer.setMessage(Messages.ORDER_ALREADY_SUSPENDING);
+				answer = Messages.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer.setMessage(Messages.ORDER_ALREADY_COMPLETED);
+				answer = Messages.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer.setMessage(Messages.ORDER_ALREADY_FAILED);
+				answer = Messages.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer.setMessage(Messages.ORDER_ALREADY_CLOSED);
+				answer = Messages.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -358,6 +369,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages resume(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -417,6 +430,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages startOrder(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> startOrder({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -468,6 +483,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages suspend(ProcessingOrder order, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -553,6 +570,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages retry(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -620,6 +639,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages close(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -660,6 +681,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Boolean checkFinish(Long orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", orderId);
+		
 		Boolean answer = false;	
 		Boolean checkFurther = false;
 		Boolean hasChanged = false;
@@ -766,6 +789,8 @@ public class OrderUtil {
 	 * @return List of processinig facilities
 	 */
 	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProcessingFacilities({})", (null == order ? "null" : order.getId()));
+		
 		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
 		if (order != null) {
 			for (Job j : order.getJobs()) {
@@ -788,6 +813,8 @@ public class OrderUtil {
 
 	@Transactional
 	public void updateState(ProcessingOrder orderOrig, JobState jState) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == orderOrig ? "null" : orderOrig.getId()), jState);
+		
 		ProcessingOrder order = null;
 		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(orderOrig.getId());
 		if (oOrder.isPresent()) {
@@ -950,6 +977,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {
+		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == order ? "null" : order.getId()), failed);
+		
 		if (failed && !order.getHasFailedJobSteps()) {
 			order.setHasFailedJobSteps(failed);
 			order.incrementVersion();
@@ -959,6 +988,7 @@ public class OrderUtil {
 	}
 
 	public void logOrderState(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
 		
 		// No logging, if monitoring host is not set
 		if (null == ProductionPlanner.config.getLogHost()) {

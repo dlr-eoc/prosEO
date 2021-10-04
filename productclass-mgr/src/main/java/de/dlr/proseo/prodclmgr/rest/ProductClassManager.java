@@ -603,7 +603,7 @@ public class ProductClassManager {
 		}
 		modelProductClass.setMission(mission);
 		
-		// Make sure a configured processor with the same identifier does not yet exist for the mission
+		// Make sure a product class with the same product type does not yet exist for the mission
 		if (null != RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(
 				productClass.getMissionCode(), productClass.getProductType())) {
 			throw new IllegalArgumentException(logError(MSG_PRODUCT_CLASS_EXISTS, MSG_ID_PRODUCT_CLASS_EXISTS,
@@ -620,7 +620,7 @@ public class ProductClassManager {
 		
 		for (String componentClass: productClass.getComponentClasses()) {
 			ProductClass modelComponentClass = RepositoryService.getProductClassRepository().findByMissionCodeAndProductType(mission.getCode(), componentClass);
-			if (null == modelProductClass.getEnclosingClass()) {
+			if (null == modelComponentClass) {
 				throw new IllegalArgumentException(logError(MSG_INVALID_COMPONENT_CLASS, MSG_ID_INVALID_COMPONENT_CLASS,
 						componentClass, mission.getCode()));
 			}

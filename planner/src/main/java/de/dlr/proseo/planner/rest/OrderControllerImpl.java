@@ -14,7 +14,6 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
-import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
@@ -27,7 +26,6 @@ import de.dlr.proseo.planner.util.UtilService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -52,7 +50,7 @@ public class OrderControllerImpl implements OrderController {
 	@Autowired
 	private SecurityService securityService;
 
-	
+	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
 
@@ -67,18 +65,25 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<List<RestOrder>> getOrders() {
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrders()");
 		
-		Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
-		List<RestOrder> list = new ArrayList<RestOrder>();
+		try {
+			Iterable<ProcessingOrder> orders = RepositoryService.getOrderRepository().findAll();
+			List<RestOrder> list = new ArrayList<RestOrder>();
 
-		for (ProcessingOrder po : orders) {
-			RestOrder ro = RestUtil.createRestOrder(po);
-			list.add(ro);			
+			for (ProcessingOrder po : orders) {
+				RestOrder ro = RestUtil.createRestOrder(po);
+				list.add(ro);			
+			}
+			
+			Messages.ORDERS_RETRIEVED.log(logger);
+
+			return new ResponseEntity<>(list, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-		return new ResponseEntity<>(list, responseHeaders, HttpStatus.OK);
 	}
 
 	/**
@@ -88,18 +93,27 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> getOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			RestOrder ro = RestUtil.createRestOrder(order);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+		if (logger.isTraceEnabled()) logger.trace(">>> getOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+			
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			} else {
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				Messages.ORDER_RETRIEVED.log(logger, orderId);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
+			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	/**
 	 * Approve processing order of id
@@ -108,28 +122,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> approveOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.approve(order);
-			if (msg.isTrue()) {
-				// canceled
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+		if (logger.isTraceEnabled()) logger.trace(">>> approveOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+			
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				// already running or at end, could not approve
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				Messages msg = orderUtil.approve(order);
+				// Already logged
+				
+				if (msg.isTrue()) {
+					// approved
+					RestOrder ro = RestUtil.createRestOrder(order);
+
+					return new ResponseEntity<>(ro, HttpStatus.OK);
+				} else {
+					// already running or at end, could not approve
+					String message = msg.format(orderId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
 			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String message =  Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 	
@@ -140,28 +162,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> resetOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.reset(order);
-			if (msg.isTrue()) {
-				// canceled
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+		if (logger.isTraceEnabled()) logger.trace(">>> resetOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+			
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				Messages msg = orderUtil.reset(order);
+				// Already logged
+				
+				if (msg.isTrue()) {
+					// reset
+					RestOrder ro = RestUtil.createRestOrder(order);
+
+					return new ResponseEntity<>(ro, HttpStatus.OK);
+				} else {
+					// illegal state for reset
+					String message = msg.format(orderId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
 			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 	
@@ -172,27 +202,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> deleteOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.delete(order);
-			if (msg.isTrue()) {
-				// deleted
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NO_CONTENT);
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+			
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				Messages msg = orderUtil.delete(order);
+				// Already logged
+				
+				if (msg.isTrue()) {
+					// deleted
+					RestOrder ro = RestUtil.createRestOrder(order);
+
+					return new ResponseEntity<>(ro, HttpStatus.OK);
+				} else {
+					// illegal state for delete
+					String message = msg.format(orderId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
 			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-		logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 	/**
@@ -202,92 +241,67 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> planOrder(String releaseId, String facility) {
-		if (releaseId != null && facility != null) {
-			productionPlanner.updateKubeConfig(facility);
-			ProcessingOrder order = findOrder(releaseId);
-			ProcessingFacility pf = null;
-			KubeConfig kc = productionPlanner.getKubeConfig(facility);
-			if (kc != null) {
-				pf = kc.getProcessingFacility();
-			}
-			if (pf == null) {
-				pf = RepositoryService.getFacilityRepository().findByName(facility);
-			}
-			@SuppressWarnings("unchecked")
-			ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, FacilityState.STARTING); 
-			if (re != null) {
-				return re;
-			}
-			if (kc != null) {
-				pf = kc.getProcessingFacility();
-			} else {
-				pf = null;
-			}
-			if (order != null && pf != null) {
-				Message msg = orderUtil.plan(order, pf);
-				if (msg.isTrue()) {
-					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMessage().formatWithPrefix(order.getIdentifier());
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
-				} else if (msg.getMessage().getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
-					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMessage().formatWithPrefix(order.getIdentifier());
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.CREATED);
-				} else if (msg.getMessage().getType() == Messages.MessageType.W) {
-					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMsgStringWithPrefix();					
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
-				} else {
-					RestOrder ro = RestUtil.createRestOrder(order);
-					String message = msg.getMsgStringWithPrefix();					
-					HttpHeaders responseHeaders = new HttpHeaders();
-					responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-					return new ResponseEntity<>(ro, responseHeaders, HttpStatus.BAD_REQUEST);
-				}
-			} else {
-				String message = "";
-				if (order == null && pf == null) {
-					message = Messages.ORDER_FACILITY_NOT_EXIST.formatWithPrefix(releaseId, facility);
-					Messages.ORDER_FACILITY_NOT_EXIST.log(logger, releaseId, facility);
-				} else {
-					if (order == null) {
-						message = Messages.ORDER_NOT_EXIST.formatWithPrefix(releaseId);
-						Messages.ORDER_NOT_EXIST.log(logger, releaseId);
-					}
-					if (pf == null) {
-						message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(facility);
-						Messages.FACILITY_NOT_EXIST.log(logger, facility);
-					}
-				}
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-				return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
-			}
-		} else {
-			String message = "";
+		if (logger.isTraceEnabled()) logger.trace(">>> planOrder({}, {})", releaseId, facility);
+		
+		if (null == releaseId || null == facility) {
+			String message = null;
 			if (releaseId == null && facility == null) {
-				message = Messages.PARAM_ID_FACILITY_NOT_SET.formatWithPrefix();
-				Messages.PARAM_ID_FACILITY_NOT_SET.log(logger);
-			} else {
-				if (releaseId == null) {
-					message = Messages.PARAM_ID_NOT_SET.formatWithPrefix();
-					Messages.PARAM_ID_NOT_SET.log(logger);
-				}
-				if (facility == null) {
-					message = Messages.PARAM_FACILITY_NOT_SET.formatWithPrefix();
-					Messages.PARAM_FACILITY_NOT_SET.log(logger);
-				}
+				message = Messages.PARAM_ID_FACILITY_NOT_SET.log(logger);
+			} else if (releaseId == null) {
+				message = Messages.PARAM_ID_NOT_SET.log(logger);
+			} else if (facility == null) {
+				message = Messages.PARAM_FACILITY_NOT_SET.log(logger);
 			}
-			logger.error(message);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+		
+		try {
+			ProcessingOrder order = findOrder(releaseId);
+
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, releaseId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			}
+			
+			// Check the status of the requested processing facility
+			KubeConfig kc = productionPlanner.updateKubeConfig(facility);
+			if (null == kc) {
+				String message = Messages.FACILITY_NOT_EXIST.log(logger, facility);
+
+		    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			}
+			
+			ProcessingFacility pf = kc.getProcessingFacility();
+			if (pf.getFacilityState() != FacilityState.RUNNING && pf.getFacilityState() != FacilityState.STARTING) {
+				String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, facility, pf.getFacilityState().toString());
+
+		    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
+			
+			Messages msg = orderUtil.plan(order, pf);
+			if (msg.isTrue()) {
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				return new ResponseEntity<>(ro, HttpStatus.CREATED);
+			} else if (msg.getCode() == Messages.ORDER_PRODUCT_EXIST.getCode()) {
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				return new ResponseEntity<>(ro, HttpStatus.CREATED);
+			} else if (msg.getType() == Messages.MessageType.W) {
+				RestOrder ro = RestUtil.createRestOrder(order);
+				String message = msg.formatWithPrefix();					
+
+				return new ResponseEntity<>(ro, Messages.errorHeaders(message), HttpStatus.NOT_MODIFIED);
+			} else {
+				String message = msg.formatWithPrefix();					
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -298,16 +312,26 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> releaseOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+			
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			}
+			
 			Messages msg = orderUtil.resume(order);
+			
+			// Check whether the release triggers any job steps
 			boolean found = false;
 			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
-				@SuppressWarnings("unchecked")
-				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, null); 
-				if (re != null) {
-					return re;
+				if (pf.getFacilityState() != FacilityState.RUNNING) {
+					continue;
 				}
+
 				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
 				if (kc != null) {
 					found = true;
@@ -317,72 +341,37 @@ public class OrderControllerImpl implements OrderController {
 			if (!found) {
 				UtilService.getJobStepUtil().checkForJobStepsToRun();
 			}
-			if (msg.isTrue()) {				
-				// canceled
+			
+			// Already logged
+			
+			if (msg.isTrue()) {
+				// resumed
 				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				// illegal state for resume
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	
 	/**
-	 * Resume processing order of id (at the moment the same functionality as releaseOrder)
+	 * Resume processing order of id (currently an alias for releaseOrder)
 	 * 
 	 */
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> resumeOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.resume(order);
-			boolean found = false;
-			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
-				@SuppressWarnings("unchecked")
-				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, null); 
-				if (re != null) {
-					return re;
-				}
-				KubeConfig kc = productionPlanner.getKubeConfig(pf.getName());
-				if (kc != null) {
-					found = true;
-					UtilService.getJobStepUtil().checkOrderToRun(kc, order);
-				}
-			}
-			if (!found) {
-				UtilService.getJobStepUtil().checkForJobStepsToRun();
-			}
-			if (msg.isTrue()) {				
-				// canceled
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
-			}
-		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		if (logger.isTraceEnabled()) logger.trace(">>> resumeOrder({})", orderId);
+		
+		return releaseOrder(orderId);
 	}
 
 	/**
@@ -392,30 +381,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> cancelOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.cancel(order);
-			if (msg.isTrue()) {
-				// canceled
-				String message = msg.formatWithPrefix(orderId);
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not cancel
-				String message = msg.formatWithPrefix(orderId);
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+		if (logger.isTraceEnabled()) logger.trace(">>> cancelOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
+			
+			Messages msg = orderUtil.cancel(order);
+			// Already logged
+			
+			if (msg.isTrue()) {
+				// cancelled
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
+			} else {
+				// illegal state for cancel
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 	/**
@@ -425,30 +420,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> closeOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.close(order);
-			if (msg.isTrue()) {
-				// canceled
-				String message = msg.formatWithPrefix(orderId);
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), message);
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not cancel
-				String message = msg.formatWithPrefix(orderId);
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+		if (logger.isTraceEnabled()) logger.trace(">>> closeOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
+			
+			Messages msg = orderUtil.close(order);
+			// Already logged
+			
+			if (msg.isTrue()) {
+				// closed
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
+			} else {
+				// illegal state for close
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 	/**
@@ -458,36 +459,51 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> suspendOrder(String orderId, Boolean force) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
-				@SuppressWarnings("unchecked")
-				ResponseEntity<RestOrder> re = (ResponseEntity<RestOrder>) productionPlanner.checkFacility(pf, 
-						((force != null && force) ? FacilityState.STOPPING : null)); 
-				if (re != null) {
-					return re;
-				}
+		if (logger.isTraceEnabled()) logger.trace(">>> suspendOrder({}, force: {})", orderId, force);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
+			if (null == force) {
+				force = false;
+			}
+			
+			if (force) {
+				// "Suspend force" is only allowed, if the processing facilities are available
+				for (ProcessingFacility pf : orderUtil.getProcessingFacilities(order)) {
+					if (pf.getFacilityState() != FacilityState.RUNNING) {
+						String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, pf.getName(),
+								pf.getFacilityState().toString());
+
+						return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+					}
+				} 
+			}
+			
 			Messages msg = orderUtil.suspend(order, force);
+			// Already logged
+			
 			if (msg.isTrue()) {
-				// canceled
+				// suspended
 				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
 			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+				// illegal state for suspend
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 	
 	/**
@@ -497,28 +513,36 @@ public class OrderControllerImpl implements OrderController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestOrder> retryOrder(String orderId) {
-		ProcessingOrder order = this.findOrder(orderId);
-		if (order != null) {
-			Messages msg = orderUtil.retry(order);
-			if (msg.isTrue()) {
-				// canceled
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not suspend
-				RestOrder ro = RestUtil.createRestOrder(order);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(orderId));
-				return new ResponseEntity<>(ro, responseHeaders, HttpStatus.NOT_MODIFIED);
+		if (logger.isTraceEnabled()) logger.trace(">>> retryOrder({})", orderId);
+		
+		try {
+			ProcessingOrder order = this.findOrder(orderId);
+
+			if (null == order) {
+				String message = Messages.ORDER_NOT_EXIST.log(logger, orderId);
+				
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 			}
+			
+			Messages msg = orderUtil.retry(order);
+			// Already logged
+			
+			if (msg.isTrue()) {
+				// retrying
+				RestOrder ro = RestUtil.createRestOrder(order);
+
+				return new ResponseEntity<>(ro, HttpStatus.OK);
+			} else {
+				// illegal state for retry
+				String message = msg.format(orderId);
+
+				return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.ORDER_NOT_EXIST.log(logger, orderId);
-		String message = Messages.ORDER_NOT_EXIST.formatWithPrefix(orderId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 
@@ -530,7 +554,8 @@ public class OrderControllerImpl implements OrderController {
 	 */
 	@Transactional
 	private ProcessingOrder findOrder(String orderId) {
-		
+		if (logger.isTraceEnabled()) logger.trace(">>> findOrder({})", orderId);
+				
 		String missionCode = securityService.getMission();
 
 		ProcessingOrder order = null;

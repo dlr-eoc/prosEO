@@ -27,7 +27,11 @@ securitySchemes:
 
 types:
   # Referenced model types
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
@@ -119,3 +123,11 @@ resourceTypes:
           body:
             application/json:
               type: SelectionRuleString
+  /processingorders:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder

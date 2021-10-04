@@ -7,12 +7,12 @@ package de.dlr.proseo.planner.rest;
 
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -24,6 +24,7 @@ import de.dlr.proseo.model.rest.model.RestProcessingFacility;
 import de.dlr.proseo.planner.Messages;
 import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.util.UtilService;
+import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.kubernetes.KubeJob;
 /**
  * Spring MVC controller for the prosEO planner; implements the services required to handle
@@ -47,14 +48,26 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
     /**
      * Get attached processing facilities
      * 
+     * @return a list of JSON objects describing the processing facilities
      */
 	@Override
 	@Transactional
     public ResponseEntity<List<RestProcessingFacility>> getRestProcessingFacilities() {
-		productionPlanner.updateKubeConfigs();
-		if (productionPlanner.getKubeConfigs() != null) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilities()");
+		
+		try {
+			productionPlanner.updateKubeConfigs();
+			Collection<KubeConfig> kubeConfigs = productionPlanner.getKubeConfigs();
+			
+			if (null == kubeConfigs) {
+				String message = Messages.FACILITY_NOT_DEFINED.log(logger);
+
+		    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+			}
+
 			List<RestProcessingFacility> l = new ArrayList<RestProcessingFacility>();
-			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: productionPlanner.getKubeConfigs()) {
+			
+			for (de.dlr.proseo.planner.kubernetes.KubeConfig kc: kubeConfigs) {
 				l.add(new RestProcessingFacility(
 						kc.getLongId(),
 						kc.getVersion(),
@@ -70,26 +83,35 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 						kc.getStorageManagerPassword(),
 						kc.getStorageType().toString()));
 			}
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(l, responseHeaders, HttpStatus.OK);
+
+			return new ResponseEntity<>(l, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.FACILITY_NOT_DEFINED.log(logger);
-    	String message = Messages.FACILITY_NOT_DEFINED.formatWithPrefix();
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
     /**
      * Get production planner processing facility by name
      * 
+     * @param name the processing facility name
+     * @return a JSON object describing the processing facility
      */
 	@Override
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> getRestProcessingFacilityByName(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getRestProcessingFacilityByName({})", name);
+		
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
-		if (kc != null) {
+		
+		if (null == kc) {
+			String message = Messages.FACILITY_NOT_EXIST.log(logger, name);
+
+	    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+		
+		try {
 			RestProcessingFacility pf = new RestProcessingFacility(
 					null,
 					null,
@@ -104,29 +126,38 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					kc.getStorageManagerUser(),
 					kc.getStorageManagerPassword(),
 					kc.getStorageType().toString());
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
-		} else {
-			Messages.FACILITY_NOT_EXIST.log(logger, name);
-	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
-	    	HttpHeaders responseHeaders = new HttpHeaders();
-	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+
+			return new ResponseEntity<>(pf, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
     /**
      * Synchronize and run job steps of processing facility identified by name
      * 
+     * @param name the processing facility name
+     * @return a JSON object describing the processing facility that was synchronized
      */
 	@Override
 	@Transactional
 	public ResponseEntity<RestProcessingFacility> synchronizeFacility(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> synchronizeFacility({})", name);
+		
 		productionPlanner.updateKubeConfig(name);
 		de.dlr.proseo.planner.kubernetes.KubeConfig kc = productionPlanner.getKubeConfig(name);
-		if (kc != null) {
+		
+		if (null == kc) {
+			String message = Messages.FACILITY_NOT_EXIST.log(logger, name);
+
+	    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+		
+		try {
 			kc.sync();
 			UtilService.getJobStepUtil().checkForJobStepsToRun(kc, null, false);
+			
 			RestProcessingFacility pf = new RestProcessingFacility(
 					kc.getLongId(),
 					null,
@@ -141,28 +172,38 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 					kc.getStorageManagerUser(),
 					kc.getStorageManagerPassword(),
 					kc.getStorageType().toString());
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(pf, responseHeaders, HttpStatus.OK);
-		} else {
-			Messages.FACILITY_NOT_EXIST.log(logger, name);
-	    	String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix(name);
-	    	HttpHeaders responseHeaders = new HttpHeaders();
-	    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-	    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+
+			return new ResponseEntity<>(pf, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 	
     /**
-     * Kubernetes pod (identified by podname) and job (identified by name)  has finished with state
+     * Kubernetes pod and job has finished with state
      * 
+     * @param podname name of the Kubernetes pod
+     * @param name the Kubernetes job name
+     * @param status finish status
+     * @return a JSON object describing the finished pod (currently not implemented)
      */
 	@Override
 	@Transactional
     public ResponseEntity<PlannerPod> finishKubeJob(String podname, String name, String status) {
+		if (logger.isTraceEnabled()) logger.trace(">>> finishKubeJob({}, {}, {})", podname, name, status);
+		
 		de.dlr.proseo.planner.kubernetes.KubeConfig aKubeConfig = productionPlanner.getKubeConfig(name);
-		if (aKubeConfig != null) {
-			// todo check for existing pod, jobstep, ... 
+		
+		if (null == aKubeConfig) {
+			String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, "for job " + name, "Not connected");
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		}
+		
+		try {
+			// TODO check for existing pod, jobstep, ... 
 			// set jobstep and pod status,
 			// finish jobstep, collect log and data, ...
 			
@@ -171,18 +212,19 @@ public class ProcessingfacilityControllerImpl implements ProcessingfacilityContr
 			if (kj != null) {
 				kj.finish(aKubeConfig, podname);
 			}
-			// todo delete finished jobs asynchron
+			// TODO delete finished jobs asynchron
 			// aKubeConfig.deleteJob(podname);
 			
+			// TODO Correctly fill return entity PlannerPod
 			
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), "");
-			return new ResponseEntity<>(responseHeaders, HttpStatus.OK);
+			String message = Messages.KUBEJOB_FINISH_TRIGGERED.log(logger, aKubeConfig.getId(), kj.getJobName());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		String message = String.format("Processing facility is not connected)", 2000);
-		logger.error(message);
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		
 	}
 }

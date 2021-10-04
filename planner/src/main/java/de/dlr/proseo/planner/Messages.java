@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.springframework.http.HttpHeaders;
 
 /**
  * Messages, codes and states
@@ -26,6 +27,8 @@ public enum Messages {
 	HTTP_HEADER_WARNING				(true, MessageType.W, "Warning"),
 	HTTP_HEADER_SUCCESS				(true, MessageType.I, "Success"),
 	MSG_PREFIX						(true, MessageType.I, "199 proseo-planner "), 
+	ORDERS_RETRIEVED				(true, MessageType.I, "List of processing orders retrieved"), 
+	ORDER_RETRIEVED					(true, MessageType.I, "Processing order '%s' retrieved"), 
 	ORDER_APPROVED					(true, MessageType.I, "Processing order '%s' is approved"), 
 	ORDER_PLANNED					(true, MessageType.I, "Processing order '%s' is planned"), 
 	ORDER_RELEASED					(true, MessageType.I, "Processing order '%s' is released"), 
@@ -67,15 +70,19 @@ public enum Messages {
 	ORDER_NOTHING_TO_PUBLISH		(true, MessageType.I, "Processing order '%s' has state '%s', nothing to publish"),
 	FACILITY_NOT_EXIST				(false, MessageType.E, "Processing facility '%s' does not exist"),
 	FACILITY_NOT_DEFINED			(false, MessageType.E, "No processing facility defined"),
+	JOBS_RETRIEVED					(true, MessageType.I, "Jobs for processing order '%s' retrieved"), 
+	JOBCOUNT_RETRIEVED				(true, MessageType.I, "Job count for processing order '%s' retrieved"), 
+	JOBGRAPH_RETRIEVED				(true, MessageType.I, "Dependency graph for job '%s' retrieved"), 
+	JOB_RETRIEVED					(true, MessageType.I, "Job '%s' retrieved"), 
 	JOB_RELEASED					(true, MessageType.I, "Job '%s' is released"), 
-	JOB_CANCELED					(true, MessageType.I, "Job '%s' is canceled"), 
-	JOB_DELETED 					(true, MessageType.I, "Job '%s' is canceled"), 
+	JOB_CANCELED					(true, MessageType.I, "Job '%s' is cancelled"), 
+	JOB_DELETED 					(true, MessageType.I, "Job '%s' is deleted"), 
 	JOB_SUSPENDED					(true, MessageType.I, "Job '%s' is suspended"), 
 	JOB_HOLD						(true, MessageType.I, "Job '%s' is on hold"), 
 	JOB_INITIAL						(true, MessageType.I, "Job '%s' is initial"), 
 	JOB_RETRIED						(true, MessageType.I, "Job '%s' set to inital"), 
 	JOB_STARTED						(true, MessageType.I, "Job '%s' is started"), 
-	JOB_COMPLETED					(true, MessageType.I, "Job '%s' completed"), 
+	JOB_COMPLETED					(true, MessageType.I, "Job '%s' is completed"), 
 	JOB_ALREADY_RELEASED			(false, MessageType.W, "Job '%s' is already released"), 
 	JOB_HASTOBE_RELEASED			(false, MessageType.E, "Job '%s' has to be released"), 
 	JOB_ALREADY_HOLD				(false, MessageType.W, "Job '%s' is on hold"), 
@@ -84,6 +91,8 @@ public enum Messages {
 	JOB_ALREADY_FAILED				(false, MessageType.W, "Job '%s' already failed"), 
 	JOB_COULD_NOT_RETRY				(false, MessageType.E, "Job '%s' has to be in state FAILED to retry"), 
 	JOB_NOT_EXIST					(false, MessageType.E, "Job '%s' does not exist"),
+	JOBSTEPS_RETRIEVED				(true, MessageType.I, "Job steps of status %s retrieved for mission %s"), 
+	JOBSTEP_RETRIEVED				(true, MessageType.I, "Job step '%s' retrieved"), 
 	JOBSTEP_WAITING					(true, MessageType.I, "Job step '%s' is waiting for input"), 
 	JOBSTEP_READY					(true, MessageType.I, "Job step '%s' is ready to run"), 
 	JOBSTEP_CANCELED				(true, MessageType.I, "Job step '%s' is canceled"), 
@@ -112,12 +121,14 @@ public enum Messages {
 	PLANNER_AUTH_DATASOURCE			(true, MessageType.I, "Initializing authentication from datasource '%s'"),
 	KUBEDISPATCHER_CONFIG_NOT_SET	(false, MessageType.E, "KubeDispatcherRunOnce: KubeConfig not set"),
 	KUBEDISPATCHER_RUN_ONCE			(true, MessageType.I, "KubeDispatcher run once and finish"),
-	KUBEDISPATCHER_CYCLE			(true, MessageType.I, "KubeDispatcher cycle"),
+	KUBEDISPATCHER_CYCLE			(true, MessageType.I, "KubeDispatcher cycle started"),
+	KUBEDISPATCHER_SLEEP			(true, MessageType.I, "KubeDispatcher cycle completed, sleeping for %d ms"),
 	KUBEDISPATCHER_INTERRUPT		(true, MessageType.I, "KubeDispatcher interrupt"),
 	KUBEDISPATCHER_PLANNER_NOT_SET	(false, MessageType.E, "KubeDispatcher: Production planner not set"),
 	KUBECONFIG_JOB_NOT_FOUND		(false, MessageType.E, "Job '%s' not found, is it already finished?"),
 	KUBEJOB_CREATED					(true, MessageType.I, "Kubernetes job '%s/%s' created"),
 	KUBEJOB_FINISHED				(true, MessageType.I, "Kubernetes job '%s/%s' finished"),
+	KUBEJOB_FINISH_TRIGGERED		(true, MessageType.I, "Finishing of Kubernetes job '%s/%s' triggered"),
 	KUBERNETES_NOT_CONNECTED        (false, MessageType.E, "Kubernetes configuration %s not connected"),
 	JOB_STEP_NOT_FOUND              (false, MessageType.E, "No job step found for id %d"),
 	CONFIG_PROC_DISABLED            (false, MessageType.W, "Configured processor %s is disabled"), 
@@ -127,8 +138,8 @@ public enum Messages {
 	// Same as in other services
 	ILLEGAL_CROSS_MISSION_ACCESS 	(false, MessageType.E, "Illegal cross-mission access to mission %s (logged in to %s)"),
 	
-	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s is not available cause it is: %s"),
-	RUNTIME_EXCEPTION				(false, MessageType.E, "%s"),
+	FACILITY_NOT_AVAILABLE			(false, MessageType.W, "Processing facility %s not available (cause: %s)"),
+	RUNTIME_EXCEPTION				(false, MessageType.E, "Exception encountered: %s"),
 	
 	DUMMY							(true, MessageType.I, "(%d)")
 	;
@@ -264,6 +275,19 @@ public enum Messages {
 		return logPrim(logger, this.formatWithPrefix(messageParameters));
 	}
 
+	/**
+	 * Create an HTTP "Warning" header with the given text message
+	 * 
+	 * @param message the message text
+	 * @return an HttpHeaders object with a warning message
+	 */
+	public static HttpHeaders errorHeaders(String message) {
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.set(HTTP_HEADER_WARNING.getDescription(),
+				MSG_PREFIX.getDescription() + (null == message ? "null" : message.replaceAll("\n", " ")));
+		return responseHeaders;
+	}
+	
 	/**
 	 * Get the message code.
 	 * 

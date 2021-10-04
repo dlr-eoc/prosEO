@@ -246,7 +246,7 @@ public class BaseWrapper {
 		}
 
 		// Step 2: Remove any leading and trailing slashes
-		workFileName.replaceAll("^/+", "").replaceAll("/+$", "");
+		workFileName.replace("^/+", "").replace("/+$", "");
 
 		return workFileName;
 	}
@@ -546,7 +546,9 @@ public class BaseWrapper {
 							}
 						}
 						try {
-							Files.createDirectories(filePath);} catch (IOException | SecurityException e) {
+							Files.createDirectories(filePath);
+						} 
+						catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath);
 							throw new WrapperException();
 						}

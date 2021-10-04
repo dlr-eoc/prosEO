@@ -8,6 +8,10 @@ services:
       - /exports/transfer:/mnt
     ports:
       - "8080:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
     restart: unless-stopped
 
 networks:
