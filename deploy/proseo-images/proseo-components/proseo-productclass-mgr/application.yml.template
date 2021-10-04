@@ -13,3 +13,4 @@ logging:
     level:
         root: INFO
         de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN

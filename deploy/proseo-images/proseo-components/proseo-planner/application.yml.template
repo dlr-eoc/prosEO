@@ -14,6 +14,7 @@ logging:
         root: INFO
         okhttp3: WARN
         de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     log:
         # Host and port for InfluxDB monitoring

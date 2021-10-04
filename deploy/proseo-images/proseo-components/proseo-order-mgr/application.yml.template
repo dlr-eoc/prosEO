@@ -15,6 +15,7 @@ logging:
         de.dlr.proseo: TRACE
         org.apache.http: DEBUG
         org.springframework.web.client: DEBUG
+        org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     log:
         # Host and port for InfluxDB monitoring

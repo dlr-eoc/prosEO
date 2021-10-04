@@ -12,6 +12,7 @@ logging:
         root: INFO
         de.dlr.proseo: TRACE
         org.apache.http: DEBUG
+        org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     user: NONE
     password: NONE
