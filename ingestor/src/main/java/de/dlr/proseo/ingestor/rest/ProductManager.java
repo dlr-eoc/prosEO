@@ -31,11 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.WriteApi;
-import com.influxdb.client.domain.WritePrecision;
-import com.influxdb.client.write.Point;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -1162,14 +1157,12 @@ public class ProductManager {
 					found = true;
 
 					// Create monitoring message for product generation and publication
-					if (null != ingestorConfig.getLogHost()) {
-						try {
-							monitorProductDownload(productFile);
-						} catch (Exception e) {
-							// Log failed monitoring, but continue with ingestion
-							logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
-									product.getId(), productFile.getProductFileName(), e.getMessage());
-						}
+					try {
+						monitorProductDownload(productFile);
+					} catch (Exception e) {
+						// Log failed monitoring, but continue with ingestion
+						logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
+								product.getId(), productFile.getProductFileName(), e.getMessage());
 					}
 					
 				}
@@ -1195,6 +1188,8 @@ public class ProductManager {
 	private void monitorProductDownload(ProductFile productFile) throws DateTimeException {
 		if (logger.isTraceEnabled()) logger.trace(">>> monitorProductDownload({})", productFile.getProductFileName());
 		
+		// TODO monitoring
+		/*
 		String token = ingestorConfig.getLogToken();
 		String bucket = ingestorConfig.getLogBucket();
 		String org = ingestorConfig.getLogOrg();
@@ -1215,6 +1210,7 @@ public class ProductManager {
 		}
 
 		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
+		*/
 	}
 
 }

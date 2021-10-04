@@ -1,0 +1,47 @@
+#%RAML 1.0
+title: prosEO Monitor REST Services API
+version: v0.1
+protocols: [ HTTP, HTTPS ] 
+baseUri: /proseo/monitor/{version}
+mediaType: application/json
+
+types:
+  RestId: !include ../../../../../interfaces/src/main/resources/raml/types/id.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+/info:
+  type: standard
+  get:
+    description: Get information about monitoring 
+    displayName: getInfo
+    responses:
+      200:
+        body:
+          text/plain:

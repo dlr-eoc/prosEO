@@ -69,16 +69,6 @@
 			<artifactId>springmvc-raml-plugin</artifactId>
 			<type>maven-plugin</type>
 		</dependency>
-		<dependency>
-			<groupId>com.influxdb</groupId>
-			<artifactId>influxdb-client-java</artifactId>
-			<version>${influxdb-client-java.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-stdlib</artifactId>
-			<version>${kotlin-stdlib.version}</version>
-		</dependency>
 	</dependencies>
 
 	<build>

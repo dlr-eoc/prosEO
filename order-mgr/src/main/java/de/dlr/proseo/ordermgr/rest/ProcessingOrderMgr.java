@@ -33,12 +33,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.WriteApi;
-import com.influxdb.client.domain.WritePrecision;
-import com.influxdb.client.write.Point;
-
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
 import de.dlr.proseo.model.Job;
@@ -57,7 +51,6 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.util.OrderUtil;
-import de.dlr.proseo.ordermgr.OrdermgrConfiguration;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrbitQuery;
@@ -153,9 +146,6 @@ public class ProcessingOrderMgr {
 	/** Utility class for user authorizations */
 	@Autowired
 	private SecurityService securityService;
-	
-	@Autowired
-	private OrdermgrConfiguration config;
 
 	/** JPA entity manager */
 	@PersistenceContext
@@ -623,7 +613,10 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setProductionType(changedOrder.getProductionType());
 		}
-		if (!Objects.equals(modelOrder.getProductRetentionPeriod(), changedOrder.getProductRetentionPeriod())) {
+		if ((modelOrder.getProductRetentionPeriod() != null && 
+				!modelOrder.getProductRetentionPeriod().equals(changedOrder.getProductRetentionPeriod()))
+			|| (changedOrder.getProductRetentionPeriod() != null && 
+					!changedOrder.getProductRetentionPeriod().equals(modelOrder.getProductRetentionPeriod()))) {
 			orderChanged = true;
 			stateChangeOnly = false;
 			modelOrder.setProductRetentionPeriod(changedOrder.getProductRetentionPeriod());
@@ -1037,7 +1030,8 @@ public class ProcessingOrderMgr {
 	 */
 	private void logOrderState(ProcessingOrder order) {
 		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", order.getId());
-
+		// TODO monitoring
+		/*
 		// No logging, if monitoring host is not set
 		if (null == config.getLogHost()) {
 			return;
@@ -1098,8 +1092,9 @@ public class ProcessingOrderMgr {
 		try (WriteApi writeApi = client.getWriteApi()) {
 			writeApi.writePoint(bucket, org, point);
 		}
-
+		
 		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
+		*/
 	}
 
 }

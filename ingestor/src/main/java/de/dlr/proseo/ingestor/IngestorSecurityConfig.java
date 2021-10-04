@@ -58,6 +58,7 @@ public class IngestorSecurityConfig extends WebSecurityConfigurerAdapter {
 						UserRole.PRODUCT_READER_ALL.toString())
 				.antMatchers(HttpMethod.POST, "/**/ingest/*").hasAnyRole(UserRole.PRODUCT_INGESTOR.toString())
 				.antMatchers(HttpMethod.POST, "/**/ingest/*/*").hasAnyRole(UserRole.PRODUCT_GENERATOR.toString())
+				.antMatchers("/**/actuator/health").permitAll()
 				.anyRequest().hasAnyRole(UserRole.PRODUCT_MGR.toString())
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)

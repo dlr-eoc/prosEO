@@ -70,6 +70,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers("/**/login").authenticated()
 			.antMatchers(HttpMethod.GET, "/**/users/*").authenticated() // Any user may change their own password
 			.antMatchers(HttpMethod.PATCH, "/**/users/*").authenticated() // Any user may change their own password
+			.antMatchers("/**/actuator/health").permitAll()
 			.anyRequest().hasAnyRole(UserRole.ROOT.toString(), UserRole.USERMGR.toString())
 		.and()
 		.csrf().disable(); // Required for POST requests (or configure CSRF)
