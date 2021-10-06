@@ -642,6 +642,11 @@ public class JobUtil {
 				if (hasFailed) {
 					job.setJobState(JobState.FAILED);
 				} else {
+					if (job.getJobState() == JobState.FAILED) {
+						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.RELEASED);
+						job.setJobState(JobState.STARTED);
+					}
 					job.setJobState(JobState.COMPLETED);
 				}
 				job.incrementVersion();

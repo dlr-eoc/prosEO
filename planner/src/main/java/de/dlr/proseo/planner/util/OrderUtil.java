@@ -952,6 +952,11 @@ public class OrderUtil {
 				if (hasFailed) {
 					order.setOrderState(OrderState.FAILED);
 				} else {
+					if (order.getOrderState() == OrderState.FAILED) {
+						order.setOrderState(OrderState.PLANNED);
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
+					}
 					order.setOrderState(OrderState.COMPLETED);
 				}
 				order.incrementVersion();

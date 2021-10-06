@@ -629,6 +629,7 @@ public class JobStepUtil {
     			}
     		}
     	}
+		if (logger.isTraceEnabled()) logger.trace("<<< checkForJobStepsToRun()");
     }
 
 	/**
@@ -671,6 +672,10 @@ public class JobStepUtil {
 				checkForJobStepsToRun();
 			}
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< checkForJobStepsToRun({}, {}, {})",
+				(null == kc ? "null" : kc.getId()),
+				(null == pc ? "null" : pc.getProductType()),
+				onlyRun);
     }
 
 	/**

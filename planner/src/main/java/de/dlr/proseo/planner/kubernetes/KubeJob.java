@@ -495,12 +495,14 @@ public class KubeJob {
 					String pn = p.getMetadata().getName();
 					if (pn.startsWith(jobName)) {
 						podNames.add(pn);
+						if (logger.isTraceEnabled()) logger.trace("     Pod found: {}", pn);
 					}
 				}
 			} catch (ApiException e) {
 				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 			}
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< searchPod()");
 	}
 	
 	/**
@@ -613,10 +615,15 @@ public class KubeJob {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
 			if (aJob == null) {
 				// job not found, try to remove
+				if (logger.isTraceEnabled()) logger.trace("    updateInfo: job not found");
 				return true;
 			}
 			if (podNames.isEmpty()) {
 				searchPod();
+			}
+			if (podNames.isEmpty()) {
+				if (logger.isTraceEnabled()) logger.trace("    updateInfo: pod not found");
+				return false;
 			}
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
 
@@ -630,16 +637,20 @@ public class KubeJob {
 						aPlan.setLog(log);
 					} catch (ApiException e1) {
 						// ignore, normally the pod has no log
+						if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
 					} catch (Exception e) {
 						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 						return false;
 					}
+				} else {
+					if (logger.isTraceEnabled()) logger.trace("    updateInfo: container not found");
 				}
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 				if (js.isPresent()) {
 					try {
 						if (aJob.getStatus() != null) {
+							if (logger.isTraceEnabled()) logger.trace("    updateInfo: analyze job state");
 							OffsetDateTime d;
 							d = aJob.getStatus().getStartTime();
 							if (d != null) {
@@ -728,6 +739,8 @@ public class KubeJob {
 							// kubeConfig.getApiV1().listNamespacedEvent("default",null,false,null,"involvedObject.name=proseojob733-bwzf4",null,null,null,null,false);
 
 
+						} else {
+							if (logger.isTraceEnabled()) logger.trace("    updateInfo: status not found");
 						}
 					} catch (Exception e) {
 						e.printStackTrace();						
@@ -741,6 +754,7 @@ public class KubeJob {
 				}
 			}
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< updateInfo({})", aJobName);
 		return success;
 	}
 
