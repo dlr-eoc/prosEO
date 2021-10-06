@@ -96,7 +96,6 @@
         <dependency>
             <groupId>com.phoenixnap.oss</groupId>
             <artifactId>springmvc-raml-plugin</artifactId>
-            <version>${raml-plugin-version}</version>
             <type>maven-plugin</type>
         </dependency>
         <!-- Implicit dependencies for classes generated from RAML spec -->

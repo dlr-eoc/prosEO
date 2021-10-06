@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 public class RestOps {
 	
-	private static int MAX_RETRIES = 5;
+	private static int MAX_RETRIES = 3;
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(RestOps.class);
@@ -35,7 +35,8 @@ public class RestOps {
 	 * @param payLoad the request payload as string
 	 * @param queryParams the http query parameter (mandatory for PUT, optional for GET)
 	 * @param method the HTTP method (defaults to POST)
-	 * @return ArrayList holding HTTP return code and response as String
+	 * @return response object holding HTTP return code, "Warning" header, if available, and response as String,
+	 *         or null, if the REST request failed with an exception
 	 */
 	public static HttpResponseInfo restApiCall(String user, String pw, String endPoint, String endPointPath, String payLoad,
 			Map<String,String> queryParams, HttpMethod method) {
@@ -57,19 +58,19 @@ public class RestOps {
 				}
 				switch (method) {
 				case POST:
-					logger.info(method + " " + webTarget.getUri());
+					if (logger.isDebugEnabled()) logger.debug(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).post(Entity.entity(content, MediaType.APPLICATION_JSON));
 					break;
 				case PUT:
-					logger.info(method + " " + webTarget.getUri());
+					if (logger.isDebugEnabled()) logger.debug(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).put(Entity.entity(content, MediaType.APPLICATION_JSON));
 					break;
 				case PATCH:
-					logger.info(method + " " + webTarget.getUri());
+					if (logger.isDebugEnabled()) logger.debug(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).method(HttpMethod.PATCH.toString(), Entity.entity(content, MediaType.APPLICATION_JSON));
 					break;
 				case GET:
-					logger.info(method + " " + webTarget.getUri());
+					if (logger.isDebugEnabled()) logger.debug(method + " " + webTarget.getUri());
 					response = webTarget.request(MediaType.APPLICATION_JSON).get();
 					break;
 				default:
@@ -77,7 +78,8 @@ public class RestOps {
 				}
 				if (logger.isDebugEnabled())
 					logger.debug("response: " + (null == response ? "null" : 
-							" status = " + response.getStatus() + ", has body = " + response.hasEntity()));
+							" status = " + response.getStatus() + ", has body = " + response.hasEntity()),
+							" warning = " + response.getHeaderString("Warning"));
 				responseInfo.sethttpCode(response.getStatus());
 				responseInfo.setHttpWarning(response.getHeaderString("Warning"));
 				if (response.hasEntity()) {

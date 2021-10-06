@@ -31,4 +31,4 @@ proseo:
         url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
 
     # Connection timeout in ms
-    http.timeout: 10000
+    http.timeout: 600000
