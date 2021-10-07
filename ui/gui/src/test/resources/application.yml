@@ -1,3 +1,17 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+    datasource:
+        url: jdbc:postgresql://localhost:5432/proseo
+        username: postgres
+        password: ********
+logging:
+    file: /proseo/log/proseo-ui-gui.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+        org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
     user: NONE
     password: NONE
@@ -5,9 +19,6 @@ proseo:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
-        # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-        filecheckwaittime: 1000
-        filecheckmaxcycles: 50
     orderManager:
         url: http://proseo-order-mgr:8080/proseo/order-mgr/v0.1
     processorManager:
@@ -16,3 +27,11 @@ proseo:
         url: http://proseo-productclass-mgr:8080/proseo/productclass-mgr/v0.1
     userManager:
         url: http://proseo-user-mgr:8080/proseo/user-mgr/v0.1
+    facilityManager:
+        url: http://proseo-facility-mgr:8080/proseo/facility-mgr/v0.1
+    
+    # Connection timeout for asynchronous requests in ms
+    gui.timeout: 240000
+        
+    # Connection timeout for synchronous requests in ms
+    http.timeout: 10000
