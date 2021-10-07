@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import de.dlr.proseo.model.rest.InfoController;
-
 @Component
 public class InfoControllerImpl implements InfoController {
 	
