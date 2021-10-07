@@ -36,7 +36,7 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
 	/** The Production Planner instance */
     @Autowired
@@ -48,15 +48,14 @@ public class ProductControllerImpl implements ProductController {
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<?> getObjectByProductid(String productid) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByProductid({})", productid);
 		
 		// look for product
 		try {
-			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
-			KubeConfig aKubeConfig = searchForProduct(p, null);
-			aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
+			KubeConfig aKubeConfig = findKubeConfigForProduct(productid);
+			
+			
 			if (aKubeConfig != null) {
 				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, null, true);
 			}
@@ -69,6 +68,24 @@ public class ProductControllerImpl implements ProductController {
 		Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
 		
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
+	}
+
+	/**
+	 * Find uppermost enclosing product and get its processing facility (represented by KubeConfig)
+	 * 
+	 * @param productid the product database ID
+	 * @return the processing facility as KubeConfig
+	 * @throws NumberFormatException if the product ID is not numeric
+	 */
+	@Transactional
+	private KubeConfig findKubeConfigForProduct(String productid) throws NumberFormatException {
+		if (logger.isTraceEnabled()) logger.trace(">>> findKubeConfigForProduct({})", productid);
+		
+		Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
+		KubeConfig aKubeConfig = searchForProduct(p, null);
+		aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
+		
+		return aKubeConfig;
 	}
 
 	/**
