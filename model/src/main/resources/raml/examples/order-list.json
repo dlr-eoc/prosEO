@@ -85,6 +85,7 @@
         "uuid": "3fcab4f3-457a-4424-9287-269286e5c03c",
         "orderState": "RELEASED",
         "executionTime": "2019-10-31T12:00:00",
+        "evictionTime": "2019-11-05T07:25:18",
         "startTime": "2018-06-13T09:23:45.678",
         "stopTime": "2018-06-13T10:53:45.678",
         "slicingType": "TIME_SLICE",

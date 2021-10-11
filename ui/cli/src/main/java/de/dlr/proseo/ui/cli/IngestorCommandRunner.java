@@ -478,7 +478,7 @@ public class IngestorCommandRunner {
 		}
 
 		/* Compare attributes of database product with updated product */
-		// No modification of ID, version, mission code, product class or UUID allowed
+		// No modification of ID, version, mission code, product class, UUID or download history allowed
 		if (isDeleteAttributes || null != updatedProduct.getFileClass()) {
 			restProduct.setFileClass(updatedProduct.getFileClass());
 		}

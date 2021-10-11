@@ -363,6 +363,10 @@ public class MissionControllerImpl implements MissionController {
 					missionChanged = true;
 					modelMission.setProductRetentionPeriod(changedMission.getProductRetentionPeriod());
 				}
+				if (!Objects.equals(modelMission.getOrderRetentionPeriod(), changedMission.getOrderRetentionPeriod())) {
+					missionChanged = true;
+					modelMission.setOrderRetentionPeriod(changedMission.getOrderRetentionPeriod());
+				}
 				if (!modelMission.getFileClasses().equals(changedMission.getFileClasses()))	{
 					missionChanged = true;
 					modelMission.getFileClasses().clear();

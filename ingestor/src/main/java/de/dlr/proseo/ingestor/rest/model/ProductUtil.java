@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ParameterType;
@@ -128,6 +129,14 @@ public class ProductUtil {
 		if (null != modelProduct.getEvictionTime()) {
 			restProduct.setEvictionTime(OrbitTimeFormatter.format(modelProduct.getEvictionTime()));
 		}
+		for (DownloadHistory historyEntry: modelProduct.getDownloadHistory()) {
+			RestDownloadHistory restHistoryEntry = new RestDownloadHistory();
+			restHistoryEntry.setUsername(historyEntry.getUsername());
+			restHistoryEntry.setProductFileName(historyEntry.getProductFileName());
+			restHistoryEntry.setProductFileSize(historyEntry.getProductFileSize());
+			restHistoryEntry.setDateTime(OrbitTimeFormatter.format(historyEntry.getDateTime()));
+			restProduct.getDownloadHistory().add(restHistoryEntry);
+		}
 		if (null != modelProduct.getProductionType()) {
 			restProduct.setProductionType(modelProduct.getProductionType().toString());
 		}
@@ -170,7 +179,8 @@ public class ProductUtil {
 	}
 	
 	/**
-	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no object references)
+	 * Convert a REST product into a prosEO model product (scalar and embedded attributes only, no object references);
+	 * does not create or update the download history.
 	 * 
 	 * @param restProduct the REST product
 	 * @return a (roughly) equivalent model product or null, if no REST product was given

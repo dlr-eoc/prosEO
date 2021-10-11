@@ -550,6 +550,12 @@ public class ProcessingOrderMgr {
 			stateChangeOnly = false;
 			modelOrder.setExecutionTime(changedOrder.getExecutionTime());
 		}
+		if ((null == modelOrder.getEvictionTime() && null != changedOrder.getEvictionTime())
+				|| null != modelOrder.getEvictionTime() && !modelOrder.getEvictionTime().equals(changedOrder.getEvictionTime())) {
+			orderChanged = true;
+			stateChangeOnly = false;
+			modelOrder.setEvictionTime(changedOrder.getEvictionTime());
+		}
 		if (!changedOrder.getSlicingType().equals(OrderSlicingType.ORBIT)) {
 			// use start/stop time only for time slicing. For Orbits it is set below.
 			if (modelOrder.getStartTime() == null) {

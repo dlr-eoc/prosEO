@@ -55,6 +55,7 @@ import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.service.SecurityService;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.model.ConfiguredProcessor;
+import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
 
@@ -1156,15 +1157,15 @@ public class ProductManager {
 						|| productFile.getAuxFileNames().contains(fileName)) {
 					found = true;
 
-					// Create monitoring message for product generation and publication
-					try {
-						monitorProductDownload(productFile);
-					} catch (Exception e) {
-						// Log failed monitoring, but continue with ingestion
-						logError(MSG_MONITORING_FAILED, MSG_ID_MONITORING_FAILED,
-								product.getId(), productFile.getProductFileName(), e.getMessage());
-					}
+					// Create download history entry
+					DownloadHistory historyEntry = new DownloadHistory();
+					historyEntry.setProductFile(productFile);
+					historyEntry.setProductFileName(productFile.getProductFileName());
+					historyEntry.setProductFileSize(productFile.getFileSize());
+					historyEntry.setUsername(securityService.getUser());
+					historyEntry.setDateTime(Instant.now());
 					
+					product.getDownloadHistory().add(historyEntry);
 				}
 			}
 			if (!found) {
@@ -1177,40 +1178,6 @@ public class ProductManager {
 		logInfo(MSG_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, MSG_ID_PRODUCT_DOWNLOAD_TOKEN_REQUESTED, id, fileName);
 		
 		return downloadToken;
-	}
-
-	/**
-	 * Adds a monitoring message for product file download
-	 * 
-	 * @param productFile the product file downloaded
-	 * @throws DateTimeException if any of the product dates cannot be formatted
-	 */
-	private void monitorProductDownload(ProductFile productFile) throws DateTimeException {
-		if (logger.isTraceEnabled()) logger.trace(">>> monitorProductDownload({})", productFile.getProductFileName());
-		
-		// TODO monitoring
-		/*
-		String token = ingestorConfig.getLogToken();
-		String bucket = ingestorConfig.getLogBucket();
-		String org = ingestorConfig.getLogOrg();
-
-		InfluxDBClient client = InfluxDBClientFactory.create(ingestorConfig.getLogHost(), token.toCharArray());
-		
-		// Use a Data Point to write data
-		Point point = Point.measurement("download")
-				.addField("name", productFile.getProductFileName())
-				.addField("size", productFile.getFileSize())
-				.addField("facility", productFile.getProcessingFacility().getName())
-				.addField("download_start_time", OrbitTimeFormatter.format(Instant.now()))
-				.addField("user", securityService.getUser())
-				.time(Instant.now(), WritePrecision.NS);
-
-		try (WriteApi writeApi = client.getWriteApi()) {
-			writeApi.writePoint(bucket, org, point);
-		}
-
-		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
-		*/
 	}
 
 }
