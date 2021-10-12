@@ -5,7 +5,7 @@ spring:
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
         username: postgres
-        password: ********
+        password: somepwd
 logging:
     file: /proseo/log/proseo-ui-gui.log
     level:
