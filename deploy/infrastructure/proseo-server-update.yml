@@ -83,12 +83,12 @@
     server:
       datacenter: "{{ datacenter.name }}"
       instance_ids:
-      - worker01
-      - worker02
-      - worker03
+#      - worker01
+#      - worker02
+#      - worker03
       - worker04
-#      - worker05
-#      - worker06
+      - worker05
+      - worker06
       cores: "{{ worker.cores }}"
       ram: "{{ worker.ram }}"
       state: update

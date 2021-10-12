@@ -15,3 +15,7 @@ inner_nodes:
     - { name: worker4, ip: "{{ groups['workers'][3] }}" }
     - { name: worker5, ip: "{{ groups['workers'][4] }}" }
     - { name: worker6, ip: "{{ groups['workers'][5] }}" }
+    - { name: worker7, ip: "{{ groups['workers'][6] }}" }
+    - { name: worker8, ip: "{{ groups['workers'][7] }}" }
+    - { name: worker9, ip: "{{ groups['workers'][8] }}" }
+    - { name: worker10, ip: "{{ groups['workers'][9] }}" }

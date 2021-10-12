@@ -38,3 +38,7 @@ ansible_ssh_common_args='-o ProxyCommand="ssh -i keys/id_rsa -W %h:%p -q proseoa
 10.8.212.19
 10.8.212.20
 10.8.212.21
+10.8.212.22
+10.8.212.23
+10.8.212.24
+10.8.212.25

@@ -59,7 +59,7 @@ To update deployments use the `scale.yml` and `remove-node.yml`. For further ins
 If a worker node was changed in terms of CPU and memory resources available, `kubectl` must be restarted. First drain the
 worker node:
 ```
-kubectl drain <worker node> --ignore-daemonsets --delete-emptydir-data"
+kubectl drain <worker node> --ignore-daemonsets --delete-emptydir-data
 ```
 Log in to the worker node and restart `kubectl`:
 ```
