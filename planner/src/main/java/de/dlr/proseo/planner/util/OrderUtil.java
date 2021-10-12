@@ -5,8 +5,10 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
@@ -759,6 +762,13 @@ public class OrderUtil {
 						order.setOrderState(OrderState.FAILED);
 					} else {
 						order.setOrderState(OrderState.COMPLETED);
+						// If the order is in systematic processing and the mission has an order retention period,
+						// the order is automatically closed after completion and the eviction time is set.
+						Duration retPeriod = order.getMission().getOrderRetentionPeriod();
+						if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
+							order.setEvictionTime(Instant.now().plus(retPeriod));
+							order.setOrderState(OrderState.CLOSED);
+						}
 					}
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);

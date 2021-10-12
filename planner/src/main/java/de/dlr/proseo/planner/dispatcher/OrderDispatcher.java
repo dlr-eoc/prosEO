@@ -897,6 +897,7 @@ public class OrderDispatcher {
 		p.setSensingStartTime(startTime);
 		p.setSensingStopTime(stopTime);
 		p.setProductionType(job.getProcessingOrder().getProductionType());
+		p.setEvictionTime(null);
 		if (null != js) {
 			p.setMode(js.getProcessingMode());
 		}
