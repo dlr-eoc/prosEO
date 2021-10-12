@@ -117,7 +117,7 @@ public class Product extends PersistentObject {
 	/**
 	 * The download history for this product
 	 */
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "product")
+	@ElementCollection
 	private Set<DownloadHistory> downloadHistory = new HashSet<>();
 	
 	/** Type of production process generating this product */
