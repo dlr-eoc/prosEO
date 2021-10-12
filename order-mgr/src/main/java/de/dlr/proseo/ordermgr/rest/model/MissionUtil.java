@@ -50,6 +50,9 @@ public class MissionUtil {
 		if (null != modelMission.getProductRetentionPeriod()) {
 			restMission.setProductRetentionPeriod(modelMission.getProductRetentionPeriod().getSeconds());
 		}
+		if (null != modelMission.getOrderRetentionPeriod()) {
+			restMission.setOrderRetentionPeriod(modelMission.getOrderRetentionPeriod().getSeconds());
+		}
 
 		if (null != modelMission.getFileClasses()) {
 			restMission.getFileClasses().addAll(modelMission.getFileClasses());
@@ -113,6 +116,9 @@ public class MissionUtil {
 		}
 		if (null != restMission.getProductRetentionPeriod()) {
 			modelMission.setProductRetentionPeriod(Duration.ofSeconds(restMission.getProductRetentionPeriod()));
+		}
+		if (null != restMission.getOrderRetentionPeriod()) {
+			modelMission.setOrderRetentionPeriod(Duration.ofSeconds(restMission.getOrderRetentionPeriod()));
 		}
 
 		modelMission.getFileClasses().addAll(restMission.getFileClasses());
