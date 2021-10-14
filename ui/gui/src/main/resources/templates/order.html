@@ -80,7 +80,8 @@
                     <th><span th:text="#{uuid}">uuid</span></th>
                     <th><span th:text="#{processingmode}">processingmode</span></th>
                     <th><span th:text="#{processingtype}">productiontype</span></th>
-                    <th colspan="2"><span th:text="#{startstoptime}">startstoptime</span></th>
+                    <th colspan="1"><span th:text="#{startstoptime}">startstoptime</span></th>
+                    <th><span th:text="#{evictiontime}">evictiontime</span></th>
                     <th><span th:text="#{inputclassesstoplist}">inputproductclasses</span></th>
                     <th><span th:text="#{percentcomplete}">percentcomplete</span></th>
                     <th><span>&nbsp;</span></th>
@@ -139,7 +140,9 @@
                     <td th:text="${ord?.uuid}"></td>
                     <td th:text="${ord?.processingMode}"></td>
                     <td th:text="${ord?.productionType}"></td>
-                    <td colspan="2"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                    <td colspan="1"><span th:text="${ord?.startTime}">startTime</span> &ndash; <span th:text="${ord?.stopTime}">stopTime</span></td>
+                    <td th:unless="${ord?.evictionTime}" text=""></td>
+                    <td th:if="${ord?.evictionTime}" th:text="${ord?.evictionTime}"></td>
                     <td><a 
                        th:if="${hasroleproductclassreader}"
                        th:each="comp : ${ord?.inputProductClasses}" 

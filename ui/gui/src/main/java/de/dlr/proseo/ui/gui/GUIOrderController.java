@@ -45,6 +45,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
@@ -514,6 +515,8 @@ public class GUIOrderController extends GUIBaseController {
 		if (updateOrder.getProductRetentionPeriod() != null) {
 			updateOrder.setProductRetentionPeriod(updateOrder.getProductRetentionPeriod() * 86400);
 		}
+		updateOrder.setStartTime(normStartEnd(updateOrder.getStartTime(), updateOrder.getSlicingType()));
+		updateOrder.setStopTime(normStartEnd(updateOrder.getStopTime(), updateOrder.getSlicingType()));
 		RestOrder origOrder = null;
 		if (updateOrder.getId() != null && updateOrder.getId() > 0) {
 			origOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),
@@ -991,6 +994,20 @@ public class GUIOrderController extends GUIBaseController {
     	}
 
     	return result;
+    }
+    
+    private String normStartEnd(String se, String type) {
+    	String val = se;
+    	if (se != null) {
+    		if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
+    			val = val + "T00:00:00.000000";
+    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
+    			val = val + "-01T00:00:00.000000";
+    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
+    			val = val + "-01-01T00:00:00.000000";
+    		}
+    	}
+        return val;
     }
 }
 
