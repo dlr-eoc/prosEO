@@ -23,6 +23,6 @@ public interface MonExtServiceRepository extends JpaRepository<MonExtService, Lo
 	 * @param name the name of the service
 	 * @return the unique mon service identified by the name
 	 */
-	public MonExtService findByName(String name);
+	public MonExtService findByNameId(String name);
 
 }

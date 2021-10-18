@@ -110,10 +110,14 @@ public class MonitorConfiguration {
 
 
 	public static class Service {
-			/**
-			 * The service name
-			 */
-			private String name;
+		/**
+		 * The service caption
+		 */
+		private String name;
+		/**
+		 * The service name
+		 */
+		private String nameId;
 			/**
 			 * The machine url service is running on
 			 */
@@ -150,6 +154,12 @@ public class MonitorConfiguration {
 				return name;
 			}
 			/**
+			 * @return the name
+			 */
+			public String getNameId() {
+				return nameId;
+			}
+			/**
 			 * @return the url
 			 */
 			public String getUrl() {
@@ -160,6 +170,12 @@ public class MonitorConfiguration {
 			 */
 			public void setName(String name) {
 				this.name = name;
+			}
+			/**
+			 * @param name the name to set
+			 */
+			public void setNameId(String nameId) {
+				this.nameId = nameId;
 			}
 			/**
 			 * @param url the url to set

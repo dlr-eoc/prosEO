@@ -59,31 +59,33 @@ public class Monitor extends Thread {
 	}
 
 	@Transactional
-	public MonService getMonService(String name) {
-		MonService ms = monServices.get(name);
+	public MonService getMonService(String nameId, String name) {
+		MonService ms = monServices.get(nameId);
 		if (ms == null) {
-			ms = RepositoryService.getMonServiceRepository().findByName(name);
+			ms = RepositoryService.getMonServiceRepository().findByNameId(nameId);
 			if (ms == null) {
 				ms = new MonService();
 				ms.setName(name);
+				ms.setNameId(nameId);
 				ms = RepositoryService.getMonServiceRepository().save(ms);
 			}
-			monServices.put(name, ms);
+			monServices.put(nameId, ms);
 		}
 		return ms;
 	}
 	
 	@Transactional
-	public MonExtService getMonExtService(String name) {
-		MonExtService ms = monExtServices.get(name);
+	public MonExtService getMonExtService(String nameId, String name) {
+		MonExtService ms = monExtServices.get(nameId);
 		if (ms == null) {
-			ms = RepositoryService.getMonExtServiceRepository().findByName(name);
+			ms = RepositoryService.getMonExtServiceRepository().findByNameId(nameId);
 			if (ms == null) {
 				ms = new MonExtService();
 				ms.setName(name);
+				ms.setNameId(nameId);
 				ms = RepositoryService.getMonExtServiceRepository().save(ms);
 			}
-			monExtServices.put(name, ms);
+			monExtServices.put(nameId, ms);
 		}
 		return ms;
 	}
