@@ -36,9 +36,9 @@ brain:
 # NFS server configuration:
 nfs:
     # Number of cores (vCPUs = 2 x cores)
-    cores: 2
+    cores: 8
     # RAM in MiB
-    ram: 4096
+    ram: 24576
     # System disk size in GB
     disk: 100
     # Number of 2 TB NFS disk
