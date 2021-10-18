@@ -81,7 +81,7 @@ public class DockerService {
 				.build();
 		Request request = Request.builder()
 				.method(Request.Method.GET)
-				.path("/containers/" + ms.getName() + "/json")
+				.path("/containers/" + ms.getNameId() + "/json")
 				.build();
 
 		try (Response response = httpClient.execute(request)) {

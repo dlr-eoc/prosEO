@@ -10,13 +10,33 @@ import javax.persistence.Table;
 	@Index(unique = true, columnList = "name")
 })
 public class MonExtService extends PersistentObject {
-	
+
 	/**
-	 * The service name
+	 * The service caption
 	 */
 	@Column(nullable = false)
 	private String name;
 
+	/**
+	 * The service name
+	 */
+	@Column(nullable = false)
+	private String nameId;
+
+	/**
+	 * @return the nameId
+	 */
+	public String getNameId() {
+		return nameId;
+	}
+
+	/**
+	 * @param nameId the nameId to set
+	 */
+	public void setNameId(String nameId) {
+		this.nameId = nameId;
+	}
+	
 	/**
 	 * @return the name
 	 */

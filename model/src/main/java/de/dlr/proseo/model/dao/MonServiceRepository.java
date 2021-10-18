@@ -23,6 +23,6 @@ public interface MonServiceRepository extends JpaRepository<MonService, Long> {
 	 * @param name the name of the service
 	 * @return the unique mon service identified by the name
 	 */
-	public MonService findByName(String name);
+	public MonService findByNameId(String name);
 
 }

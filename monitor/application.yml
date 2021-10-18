@@ -19,29 +19,34 @@ proseo:
         cycle: 10000
         services:
             -
-                name: planner
+                name: Planner
+                nameId: planner
                 url: http://192.168.20.155:8080/actuator/health
                 hasActuator: true
                 isProseo: true
             -
-                name: proseo
+                name: Database
+                nameId: proseo
                 url: http://192.168.20.155:5432
                 docker: machine1
                 hasActuator: false
                 isProseo: true
             -
-                name: xbip-monitor
+                name: XBIP-Monitor
+                nameId: xbip-monitor
                 url: http://192.168.20.156:8080/actuator/health
                 kubernetes: kube1
                 hasActuator: true
                 isProseo: true
             -
-                name: matera
+                name: Matera
+                nameId: matera
                 url: http://192.168.20.156:8080/proseo/xbip-monitor/v1/mti/status
                 hasActuator: false
                 isProseo: false
             -
-                name: root_minio_1
+                name: "Object Storage"
+                nameId: root_minio_1
                 docker: machine2
                 hasActuator: false
                 isProseo: false

@@ -38,11 +38,15 @@ import de.dlr.proseo.model.util.MonServiceStates;
 public class MicroService {
 
 	private static Logger logger = LoggerFactory.getLogger(MicroService.class);
-	
+
+	/**
+	 * The service caption
+	 */
+	private String name;
 	/**
 	 * The service name
 	 */
-	private String name;
+	private String nameId;
 	/**
 	 * The machine url service is running on
 	 */
@@ -90,6 +94,13 @@ public class MicroService {
 	}
 
 	/**
+	 * @return the name
+	 */
+	public String getNameId() {
+		return nameId;
+	}
+
+	/**
 	 * @return the url
 	 */
 	public String getUrl() {
@@ -126,6 +137,7 @@ public class MicroService {
 
 	public MicroService(MonitorConfiguration.Service service) {
 		this.name = service.getName();
+		this.nameId = service.getNameId();
 		this.url = service.getUrl();
 		this.docker = service.getDocker();
 		this.isProseo = service.getIsProseo();
@@ -136,8 +148,6 @@ public class MicroService {
 	public void check(Monitor monitor) {
 
 		String serviceUrl = this.getUrl();
-
-		MonService ms = monitor.getMonService(this.getName()); 
 
 		if (this.getHasActuator()) {
 			RestTemplate restTemplate = MonitorApplication.rtb
@@ -193,14 +203,14 @@ public class MicroService {
 	public void createEntry(Monitor monitor) {
 		if (getIsProseo()) {
 			MonServiceStateOperation ms = new MonServiceStateOperation();
-			ms.setMonService(monitor.getMonService(getName()));
+			ms.setMonService(monitor.getMonService(getNameId(), getName()));
 			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
 			ms.setMonServiceState(aState.get());
 			ms.setDatetime(Instant.now());
 			ms = RepositoryService.getMonServiceStateOperationRepository().save(ms);
 		} else {
 			MonExtServiceStateOperation ms = new MonExtServiceStateOperation();
-			ms.setMonExtService(monitor.getMonExtService(getName()));
+			ms.setMonExtService(monitor.getMonExtService(getNameId(), getName()));
 			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
 			ms.setMonServiceState(aState.get());
 			ms.setDatetime(Instant.now());
