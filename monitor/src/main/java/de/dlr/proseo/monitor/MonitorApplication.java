@@ -16,27 +16,17 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import de.dlr.proseo.model.service.RepositoryService;
-import de.dlr.proseo.monitor.microservice.Monitor;
-import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.monitor.microservice.MonitorServices;
+import de.dlr.proseo.monitor.order.MonitorOrders;
 
 /*
  * prosEO Planner application
@@ -72,7 +62,7 @@ public class MonitorApplication implements CommandLineRunner {
 
 
 	/** 
-	 * Monitor configuration 
+	 * MonitorServices configuration 
 	 */
 	@Autowired
 	MonitorConfiguration monitorConfig;
@@ -87,6 +77,9 @@ public class MonitorApplication implements CommandLineRunner {
 	@PersistenceContext
 	private EntityManager em;
 
+	private MonitorServices monServices = null;
+	private MonitorOrders monOrders = null;
+	
 	/**
 	 * Initialize and run application 
 	 * 
@@ -98,37 +91,85 @@ public class MonitorApplication implements CommandLineRunner {
 		spa.run(args);
 	}
 
-	
+
+	/**
+	 * Start the kube dispatcher thread
+	 */
+	public void startMonitorServices() {
+		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorServices()");
+		
+		if (monServices == null || !monServices.isAlive()) {
+			monServices = new MonitorServices(monitorConfig);
+			monServices.start();
+		} else {
+			if (monServices.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+
+	/**
+	 * Stop the kube dispatcher thread
+	 */
+	public void stopMonitorServices() {
+		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorServices()");
+		
+		if (monServices != null && monServices.isAlive()) {
+			monServices.interrupt();
+			int i = 0;
+			while (monServices.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monServices = null;
+	}
+	/**
+	 * Start the kube dispatcher thread
+	 */
+	public void startMonitorOrders() {
+		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
+		
+		if (monOrders == null || !monOrders.isAlive()) {
+			monOrders = new MonitorOrders(monitorConfig);
+			monOrders.start();
+		} else {
+			if (monOrders.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+
+	/**
+	 * Stop the kube dispatcher thread
+	 */
+	public void stopMonitorOrders() {
+		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
+		
+		if (monOrders != null && monOrders.isAlive()) {
+			monOrders.interrupt();
+			int i = 0;
+			while (monOrders.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monOrders = null;
+	}
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {
-		//		
-		//		List<String> pfs = new ArrayList<String>();
-		//		
-		//        for (int i = 0; i < arg0.length; i++) {
-		//        	if (arg0[i].equalsIgnoreCase("-processingfacility") && (i + 1) < arg0.length) {
-		//        		pfs.add(arg0[i+1]);
-		//        	}
-		//        } 
-      
-		InetAddress ip;
-		String hostname;
-		// TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 		config = monitorConfig;
 		rtb = rtba;
-		try {
-			ip = InetAddress.getLocalHost();
-			hostname = ip.getHostName();
-			hostIP = ip.getHostAddress();
-			hostName = hostname;
-			System.out.println("Your current IP address : " + ip);
-			System.out.println("Your current Hostname : " + hostname);
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+		
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		try {
@@ -140,10 +181,9 @@ public class MonitorApplication implements CommandLineRunner {
 		} catch (TransactionException e) {
 			e.printStackTrace();
 		}
-		
-		Monitor mon = new Monitor();
-		mon.run(monitorConfig);
-		
+
+		startMonitorServices();
+		startMonitorOrders();		
 	}
 
 	
