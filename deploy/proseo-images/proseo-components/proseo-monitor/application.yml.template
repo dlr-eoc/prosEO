@@ -1,0 +1,148 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://10.x.x.a:5432/proseo
+        username: postgres
+        password: "********"
+logging:
+    file: /proseo/log/proseo-monitor.log
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    monitor:
+        connectTimeout: 1000
+        readTimeout: 1000
+        cycle: 10000
+        services:
+            # prosEO Metadata Database
+            -
+                name: "Metadata Database"
+                nameId: proseo_proseo-db_1
+                url: http://10.x.x.a:5432
+                docker: brain
+                hasActuator: false
+                isProseo: true
+            # prosEO Internal Services
+            -
+                name: "PRIP API"
+                nameId: proseo_proseo-api-prip_1
+                url: http://10.x.x.a:8089/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Facility Manager"
+                nameId: proseo_proseo-facility-mgr_1
+                url: http://10.x.x.a:8087/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Ingestor"
+                nameId: proseo_proseo-ingestor_1
+                url: http://10.x.x.a:8081/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Grafana"
+                nameId: proseo_grafana_1
+                url: http://10.x.x.c:3000/login
+                docker: loghost
+                hasActuator: false
+                isProseo: true
+            -
+                name: "Order Manager"
+                nameId: proseo_proseo-order-mgr_1
+                url: http://10.x.x.a:8082/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Production Planner"
+                nameId: proseo_proseo-prodplanner_1
+                url: http://10.x.x.a:8083/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Processor Manager"
+                nameId: proseo_proseo-processor-mgr_1
+                url: http://10.x.x.a:8084/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Product Class Manager"
+                nameId: proseo_proseo-productclass-mgr_1
+                url: http://10.x.x.a:8085/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "Storage Manager"
+                nameId: proseo_proseo-productclass-mgr_1
+                url: http://10.x.x.b:8080/actuator/health
+                docker: nfsserver
+                hasActuator: true
+                isProseo: true
+            -
+                name: "GUI"
+                nameId: proseo_proseo-gui_1
+                url: http://10.x.x.a:8088/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+            -
+                name: "User Manager"
+                nameId: proseo_proseo-user-mgr_1
+                url: http://10.x.x.a:8086/actuator/health
+                docker: brain
+                hasActuator: true
+                isProseo: true
+#            -
+#                name: "XBIP Inuvik"
+#                nameId: xbip_xbip-inu_1
+#                url: http://10.x.x.b:8081/actuator/health
+#                docker: nfsserver
+#                hasActuator: true
+#                isProseo: true
+
+            # prosEO Supporting Services (shown as "Internal")
+            -
+                name: "S3 Object Storage"
+                nameId: cloud_s3
+                url: https://my.cloud.provider.com
+                # Returns 401, not 200
+                hasActuator: false
+                isProseo: true
+                
+            # prosEO External Services (sample: via XBIP on nfsserver)
+#            -
+#                name: "Inuvik Ground Station"
+#                nameId: pts_inu
+#                url: http://10.x.x.b:8001/proseo/xbip-monitor/v1/PTS-INU
+#                hasActuator: false
+#                isProseo: false
+        dockers:
+            -
+                name: brain
+                ip: 10.x.x.a
+                port: 2375
+                apiVersion: 1.40
+            -
+                name: nfsserver
+                ip: 10.x.x.b
+                port: 2375
+                apiVersion: 1.40
+            -
+                name: loghost
+                ip: 10.x.x.c
+                port: 2375
+                apiVersion: 1.40
+                

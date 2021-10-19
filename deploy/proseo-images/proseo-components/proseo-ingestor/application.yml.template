@@ -15,15 +15,6 @@ logging:
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
-    log:
-        # Host and port for InfluxDB monitoring
-        host: http://10.9.42.24:8086
-        # Authentication token for InfluxDB
-        token: <my_influxdb_token>
-        # InfluxDB organization to use
-        org: proseo
-        # InfluxDB bucket to use
-        bucket: production
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         # Connection timeout in ms

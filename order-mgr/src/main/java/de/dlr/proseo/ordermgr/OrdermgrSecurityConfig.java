@@ -51,6 +51,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/**/actuator/health").permitAll()
 				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
 				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
 				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
@@ -66,7 +67,6 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 
 				.antMatchers(HttpMethod.GET, "/**/orbits").hasAnyRole(UserRole.MISSION_READER.toString())
 				.antMatchers("/**/orbits").hasAnyRole(UserRole.MISSION_MGR.toString())
-				.antMatchers("/**/actuator/health").permitAll()
 				.and()
 			.csrf().disable(); // Required for POST requests (or configure CSRF)
 	}

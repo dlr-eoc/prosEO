@@ -8,7 +8,7 @@ logging:
 proseo:
     xbip:
         # XBIP Monitor identifier (must be unique for all XBIP monitors on the same host)
-        id: PTS-INU-01
+        id: PTS-INU
         # Satellite identifier (e. g. "PTS", "S5P" ...)
         satellite: PTS
         # Path to the XBIP directory (mounted WebDAV volume)
