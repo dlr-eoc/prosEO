@@ -505,12 +505,14 @@ public class KubeConfig {
 			// If no job with this name is running, change state to FAILED and set info in log
 			if (!kJobs.containsKey(aName)) {
 				Product jsp = js.getOutputProduct();
+				Boolean wasFailed = true;
 				if (jsp != null) {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
 					UtilService.getJobStepUtil().collectProducts(jsp, jspList);
 					if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						js.setJobStepState(JobStepState.COMPLETED);
+						wasFailed = false;
 					} else {
 						js.setJobStepState(JobStepState.FAILED);
 					}
@@ -523,7 +525,9 @@ public class KubeConfig {
 				if (stdout == null) {
 					stdout = "";
 				}
-				js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				if (wasFailed) {
+					js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				}
 				js = RepositoryService.getJobStepRepository().save(js);
 				UtilService.getJobStepUtil().checkFinish(js);
 			}			
