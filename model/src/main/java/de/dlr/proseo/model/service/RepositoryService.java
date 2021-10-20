@@ -17,7 +17,6 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.MonExtServiceRepository;
 import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
-import de.dlr.proseo.model.dao.MonOrderProgressRepository;
 import de.dlr.proseo.model.dao.MonOrderStateRepository;
 import de.dlr.proseo.model.dao.MonServiceRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
@@ -141,10 +140,6 @@ public class RepositoryService {
 	@Autowired
     private MonOrderStateRepository monOrderStateRepository;
 	
-	/** The repository for the MonOrderProgress class */
-	@Autowired
-    private MonOrderProgressRepository monOrderProgressRepository;
-
 	/**
 	 * Singleton constructor
 	 */
@@ -369,15 +364,6 @@ public class RepositoryService {
 	 */
 	public static MonOrderStateRepository getMonOrderStateRepository() {
 		return theRepositoryService.monOrderStateRepository;
-	}
-
-	/**
-	 * Gets the repository for the MonOrderProgressOperation class
-	 * 
-	 * @return the monOrderProgressRepository
-	 */
-	public static MonOrderProgressRepository getMonOrderProgressRepository() {
-		return theRepositoryService.monOrderProgressRepository;
 	}
 
 }

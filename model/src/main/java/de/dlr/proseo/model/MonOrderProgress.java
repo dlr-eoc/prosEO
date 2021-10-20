@@ -3,22 +3,16 @@ package de.dlr.proseo.model;
 import java.time.Instant;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
+import javax.persistence.Embeddable;
 import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-@Entity
+@Embeddable
 @Table(indexes = {
 	@Index(unique = false, columnList = "datetime")
 })
-public class MonOrderProgress extends PersistentObject {
-
-	/**
-	 * The processing order
-	 */
-	@ManyToOne
-	private ProcessingOrder processingOrder;
+public class MonOrderProgress {
 	
 	/**
 	 * The current order state
@@ -56,13 +50,6 @@ public class MonOrderProgress extends PersistentObject {
 	 */
 	@Column(name = "datetime", columnDefinition = "TIMESTAMP")
 	private Instant datetime;
-
-	/**
-	 * @return the processingOrder
-	 */
-	public ProcessingOrder getProcessingOrder() {
-		return processingOrder;
-	}
 
 	/**
 	 * @return the monOrderState
@@ -111,13 +98,6 @@ public class MonOrderProgress extends PersistentObject {
 	 */
 	public Instant getDatetime() {
 		return datetime;
-	}
-
-	/**
-	 * @param processingOrder the processingOrder to set
-	 */
-	public void setProcessingOrder(ProcessingOrder processingOrder) {
-		this.processingOrder = processingOrder;
 	}
 
 	/**

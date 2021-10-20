@@ -18,6 +18,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.InetAddress;
@@ -130,11 +131,12 @@ public class MonitorApplication implements CommandLineRunner {
 	/**
 	 * Start the kube dispatcher thread
 	 */
+	@Transactional
 	public void startMonitorOrders() {
 		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
 		
 		if (monOrders == null || !monOrders.isAlive()) {
-			monOrders = new MonitorOrders(monitorConfig);
+			monOrders = new MonitorOrders(monitorConfig, txManager);
 			monOrders.start();
 		} else {
 			if (monOrders.isInterrupted()) {
