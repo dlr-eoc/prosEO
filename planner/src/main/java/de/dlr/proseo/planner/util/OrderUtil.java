@@ -602,6 +602,9 @@ public class OrderUtil {
 				}
 				if (all) {
 					if (allCompleted) {
+						order.setOrderState(OrderState.PLANNED);
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
 						order.setOrderState(OrderState.COMPLETED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);

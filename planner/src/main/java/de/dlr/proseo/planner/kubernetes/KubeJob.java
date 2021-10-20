@@ -103,6 +103,10 @@ public class KubeJob {
 	 */
 	private KubeConfig kubeConfig;
 	
+	private enum UpdateInfoResult {
+		TRUE, FALSE, CHANGED;
+	}
+	
 	/**
 	 * @return the jobId
 	 */
@@ -607,23 +611,23 @@ public class KubeJob {
 	 * @return true after success
 	 */
 	@Transactional
-	public boolean updateInfo(String aJobName) {
+	public UpdateInfoResult updateInfo(String aJobName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateInfo({})", aJobName);
 		
-		boolean success = false;
+		UpdateInfoResult success = UpdateInfoResult.FALSE;
 		if (kubeConfig != null && kubeConfig.isConnected() && aJobName != null) {
 			V1Job aJob = kubeConfig.getV1Job(aJobName);
 			if (aJob == null) {
 				// job not found, try to remove
 				if (logger.isTraceEnabled()) logger.trace("    updateInfo: job not found");
-				return true;
+				return UpdateInfoResult.TRUE;
 			}
 			if (podNames.isEmpty()) {
 				searchPod();
 			}
 			if (podNames.isEmpty()) {
 				if (logger.isTraceEnabled()) logger.trace("    updateInfo: pod not found");
-				return false;
+				return UpdateInfoResult.FALSE;
 			}
 			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
 
@@ -640,7 +644,7 @@ public class KubeJob {
 						if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
 					} catch (Exception e) {
 						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-						return false;
+						return UpdateInfoResult.FALSE;
 					}
 				} else {
 					if (logger.isTraceEnabled()) logger.trace("    updateInfo: container not found");
@@ -648,6 +652,7 @@ public class KubeJob {
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 				if (js.isPresent()) {
+					int oldVersion = js.get().getVersion();
 					try {
 						if (aJob.getStatus() != null) {
 							if (logger.isTraceEnabled()) logger.trace("    updateInfo: analyze job state");
@@ -672,6 +677,9 @@ public class KubeJob {
 								if (jobCondList != null) {
 									for (V1JobCondition jc : jobCondList) {
 										if ((jc.getType().equalsIgnoreCase("complete") || jc.getType().equalsIgnoreCase("completed")) && jc.getStatus().equalsIgnoreCase("true")) {
+											if (js.get().getJobStepState() == de.dlr.proseo.model.JobStep.JobStepState.FAILED) {
+												js.get().setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.INITIAL);
+											}
 											if (JobStepState.READY.equals(js.get().getJobStepState())) {
 												// Sometimes we don't get the state transition to RUNNING
 												js.get().setJobStepState(JobStepState.RUNNING); // otherwise we cannot set it to COMPLETED
@@ -687,7 +695,7 @@ public class KubeJob {
 												cd = jc.getLastProbeTime();
 												js.get().setProcessingCompletionTime(cd.toInstant());
 											}
-											success = true;
+											success = UpdateInfoResult.TRUE;
 										} else if ((jc.getType().equalsIgnoreCase("failed") || jc.getType().equalsIgnoreCase("failure")) && jc.getStatus().equalsIgnoreCase("true")) {
 											if (JobStepState.READY.equals(js.get().getJobStepState())) {
 												// Sometimes we don't get the state transition to RUNNING
@@ -702,14 +710,14 @@ public class KubeJob {
 												cd = jc.getLastProbeTime();
 												js.get().setProcessingCompletionTime(cd.toInstant());
 											}
-											success = true;
+											success = UpdateInfoResult.TRUE;
 										}
 									}
 								}
 							}
 							// Check conditions
 							// if one is false, read events for more detailed info
-							if (!success && aPod.getStatus().getConditions() != null) {
+							if (!success.equals(UpdateInfoResult.TRUE) && aPod.getStatus().getConditions() != null) {
 								podMessages += "Job Step Conditions (Type - Status):\n";
 								List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
 								for (V1PodCondition pc : pobCondList) {
@@ -728,7 +736,7 @@ public class KubeJob {
 									}
 								} catch (ApiException e) {
 									logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-									return false;
+									return UpdateInfoResult.FALSE;
 								}
 							}
 							// cancel pod and job, write reasons into job step log
@@ -750,7 +758,16 @@ public class KubeJob {
 					} else {
 						js.get().setProcessingStdOut(podMessages);
 					}
-					RepositoryService.getJobStepRepository().save(js.get());	
+
+					Optional<JobStep> jsn = RepositoryService.getJobStepRepository().findById(jobStepId);
+					if (jsn.isPresent()) {
+						if (oldVersion == jsn.get().getVersion()) {
+							RepositoryService.getJobStepRepository().save(js.get());
+						} else {
+							if (logger.isTraceEnabled()) logger.trace("    updateInfo: job step changed by others");
+							success = UpdateInfoResult.CHANGED;
+						}
+					}						
 				}
 			}
 		}
@@ -769,21 +786,21 @@ public class KubeJob {
 	public boolean updateFinishInfoAndDelete(String aJobName) {
 		if (logger.isTraceEnabled()) logger.trace(">>> updateFinishInfoAndDelete({})", aJobName);
 		
-		boolean success = false;
+		UpdateInfoResult success = UpdateInfoResult.FALSE;
 		success = updateInfo(aJobName);
-		if (success) {
+		if (success.equals(UpdateInfoResult.TRUE)) {
 			Long jobStepId = this.getJobId();
 			Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 			if (js.isPresent()) {							
 				UtilService.getJobStepUtil().checkFinish(js.get());
 			}
 		}
-		if (success) {
+		if (!success.equals(UpdateInfoResult.FALSE)) {
 			// delete kube job
 			kubeConfig.deleteJob(aJobName);
 			Messages.KUBEJOB_FINISHED.log(logger, kubeConfig.getId(), aJobName);
 		}
-		return success;
+		return !success.equals(UpdateInfoResult.FALSE);
 	}
 	
 	/**

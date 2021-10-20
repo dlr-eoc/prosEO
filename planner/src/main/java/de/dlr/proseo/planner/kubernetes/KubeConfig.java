@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
@@ -503,7 +504,20 @@ public class KubeConfig {
 			String aName = ProductionPlanner.jobNamePrefix + js.getId();
 			// If no job with this name is running, change state to FAILED and set info in log
 			if (!kJobs.containsKey(aName)) {
-				js.setJobStepState(JobStepState.FAILED);	
+				Product jsp = js.getOutputProduct();
+				if (jsp != null) {
+					// collect output products
+					List<Product> jspList = new ArrayList<Product>();
+					UtilService.getJobStepUtil().collectProducts(jsp, jspList);
+					if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
+						js.setJobStepState(JobStepState.COMPLETED);
+					} else {
+						js.setJobStepState(JobStepState.FAILED);
+					}
+				} else {
+					js.setJobStepState(JobStepState.FAILED);
+				}
+				
 				js.incrementVersion();
 				String stdout = js.getProcessingStdOut();
 				if (stdout == null) {

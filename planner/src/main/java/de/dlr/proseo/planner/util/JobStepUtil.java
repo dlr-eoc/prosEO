@@ -908,7 +908,7 @@ public class JobStepUtil {
 	 * @param list Product list
 	 */
 	@Transactional
-    private void collectProducts(Product p, List<Product> list) {
+	public void collectProducts(Product p, List<Product> list) {
 		if (p != null) {
 			list.add(p);
 			for (Product cp : p.getComponentProducts()) {
@@ -924,7 +924,7 @@ public class JobStepUtil {
 	 * @return true if all products are generated
 	 */
 	@Transactional
-    private Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
+	public Boolean checkProducts(List<Product> list, ProcessingFacility pf) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkCreatedProduct(Product[{}], {})",
 				(null == list ? "null" : list.size()),
 				(null == pf ? "null" : pf.getName()));
