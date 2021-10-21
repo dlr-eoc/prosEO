@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.time.Instant;
 import java.time.Duration;
 
+import org.apache.http.NoHttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestHealth;
@@ -145,39 +147,77 @@ public class MicroService {
 		this.state = MonServiceStates.STOPPED_ID;
 	}
 	
-	public void check(Monitor monitor) {
+	public void check(MonitorServices monitor) {
 
 		String serviceUrl = this.getUrl();
 
-		if (this.getHasActuator()) {
-			RestTemplate restTemplate = MonitorApplication.rtb
-					.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
-					.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
-					.build();
-			try {
-				ResponseEntity<RestHealth> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
-				if (HttpStatus.OK.equals(response.getStatusCode())) {
-					// check whether service is running in docker
-					if (response.getBody().getStatus().equalsIgnoreCase("UP")) {
+		if (serviceUrl != null) {
+			if (this.getHasActuator()) {
+				RestTemplate restTemplate = MonitorApplication.rtb
+						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.build();
+				try {
+					ResponseEntity<RestHealth> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
+					if (HttpStatus.OK.equals(response.getStatusCode())) {
+						// check whether service is running in docker
+						if (response.getBody().getStatus().equalsIgnoreCase("UP")) {
+							this.state = MonServiceStates.RUNNING_ID;
+							createEntry(monitor);
+							return;
+						}
+					}
+				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
+					logger.error(e.getMessage());
+					// TODO
+				} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+					logger.error(e.getMessage());
+					// TODO
+				} catch (RestClientException e) {
+					logger.error(e.getMessage());
+					// TODO
+				} catch (Exception e) {
+					logger.error(e.getMessage());
+					// TODO
+				}
+			} else {
+				RestTemplate restTemplate = MonitorApplication.rtb
+						.setReadTimeout(Duration.ofMillis(MonitorApplication.config.getReadTimeout()))
+						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
+						.build();
+				try {
+					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
+					if (response.getStatusCode().is2xxSuccessful() || 
+							response.getStatusCode().is3xxRedirection() || 
+							HttpStatus.BAD_REQUEST.equals(response.getStatusCode()) || 
+							HttpStatus.UNAUTHORIZED.equals(response.getStatusCode()) || 
+							HttpStatus.FORBIDDEN.equals(response.getStatusCode())) {
+						// We got an answer and assume the service is running
 						this.state = MonServiceStates.RUNNING_ID;
 						createEntry(monitor);
 						return;
 					}
+				} catch (HttpClientErrorException.NotFound e) {
+					logger.error(e.getMessage());
+					// TODO
+				} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
+					// We got an answer and assume the service is running
+					this.state = MonServiceStates.RUNNING_ID;
+					createEntry(monitor);
+					return;
+				} catch (RestClientResponseException e) {				
+					logger.error(e.getMessage());
+					// TODO
+				} catch (RestClientException e) {
+					logger.error(e.getMessage());
+					// TODO
+				} catch (Exception e) {
+					logger.error(e.getMessage());
+					// TODO
 				}
-			} catch (HttpClientErrorException.BadRequest | HttpClientErrorException.NotFound e) {
-				logger.error(e.getMessage());
-				// TODO
-			} catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
-				logger.error(e.getMessage());
-				// TODO
-			} catch (RestClientException e) {
-				logger.error(e.getMessage());
-				// TODO
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-				// TODO
 			}
-		} 
+		}
+		
 		// service does not answer or answer unknown state, check further if docker or kubernetes are set, else set to stopped
 		if (monitor.getDockerService(this.getDocker()) == null && monitor.getKubernetes(this.getKubernetes()) == null) {
 			this.state = MonServiceStates.STOPPED_ID;
@@ -200,7 +240,7 @@ public class MicroService {
 	}
 	
 	@Transactional
-	public void createEntry(Monitor monitor) {
+	public void createEntry(MonitorServices monitor) {
 		if (getIsProseo()) {
 			MonServiceStateOperation ms = new MonServiceStateOperation();
 			ms.setMonService(monitor.getMonService(getNameId(), getName()));

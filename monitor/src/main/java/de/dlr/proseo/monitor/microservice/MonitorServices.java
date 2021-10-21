@@ -19,16 +19,18 @@ import de.dlr.proseo.monitor.MonitorApplication;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
 @Transactional
-public class Monitor extends Thread {
+public class MonitorServices extends Thread {
 
-	private static Logger logger = LoggerFactory.getLogger(Monitor.class);
+	private static Logger logger = LoggerFactory.getLogger(MonitorServices.class);
 	private List<MicroService> services;
 	private Map<String, DockerService> dockers;
 	private Map<String, MonService> monServices;
 	private Map<String, MonExtService> monExtServices;
 	private Map<String, MonServiceState> monServiceStates;
+	private MonitorConfiguration config;
 	
-	public Monitor() {
+	public MonitorServices(MonitorConfiguration config) {
+		this.config = config;
 		this.services = new ArrayList<MicroService>();
 		this.monServices = new HashMap<String, MonService>();
 		this.monExtServices = new HashMap<String, MonExtService>();
@@ -90,10 +92,14 @@ public class Monitor extends Thread {
 		return ms;
 	}
 	
-    public void run(MonitorConfiguration config) {
+    public void run() {
     	Long wait = (long) 100000;
     	try {
-    		wait = config.getCycle();
+    		if (config.getServiceCycle() != null) {
+    			wait = config.getServiceCycle();
+    		} else {
+    			wait = config.getCycle();
+    		}
     	} catch (NumberFormatException e) {
     		wait = (long) 100000;
     	}

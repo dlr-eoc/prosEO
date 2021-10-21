@@ -172,7 +172,27 @@ public class ProcessingOrder extends PersistentObject {
 	/** The processing jobs belonging to this order */	
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "processingOrder")
 	private Set<Job> jobs = new HashSet<>();
+
+	/**
+	 * The progress monitoring for this order
+	 */
+	@ElementCollection
+	private Set<MonOrderProgress> monOrderProgress = new HashSet<>();
 	
+	/**
+	 * @return the monOrderProgress
+	 */
+	public Set<MonOrderProgress> getMonOrderProgress() {
+		return monOrderProgress;
+	}
+
+	/**
+	 * @param monOrderProgress the monOrderProgress to set
+	 */
+	public void setMonOrderProgress(Set<MonOrderProgress> monOrderProgress) {
+		this.monOrderProgress = monOrderProgress;
+	}
+
 	/**
 	 * Gets the owning mission
 	 * 

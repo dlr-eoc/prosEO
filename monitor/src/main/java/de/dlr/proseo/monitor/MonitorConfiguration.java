@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration class for the prosEO Monitor component
+ * Configuration class for the prosEO MonitorServices component
  * 
  * @author Ernst Melchinger
  *
@@ -43,10 +43,34 @@ public class MonitorConfiguration {
 	 * Cycle wait time
 	 */
 	private Long cycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long serviceCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long orderCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long productCycle;
 	
 
 	
 	 /**
+	 * @return the productCycle
+	 */
+	public Long getProductCycle() {
+		return productCycle;
+	}
+	/**
+	 * @param productCycle the productCycle to set
+	 */
+	public void setProductCycle(Long productCycle) {
+		this.productCycle = productCycle;
+	}
+	/**
 	 * @return the services
 	 */
 	public List<Service> getServices() {
@@ -106,6 +130,31 @@ public class MonitorConfiguration {
 	 */
 	public void setCycle(Long cycle) {
 		this.cycle = cycle;
+	}
+
+	/**
+	 * @return the serviceCycle
+	 */
+	public Long getServiceCycle() {
+		return serviceCycle;
+	}
+	/**
+	 * @return the orderCycle
+	 */
+	public Long getOrderCycle() {
+		return orderCycle;
+	}
+	/**
+	 * @param serviceCycle the serviceCycle to set
+	 */
+	public void setServiceCycle(Long serviceCycle) {
+		this.serviceCycle = serviceCycle;
+	}
+	/**
+	 * @param orderCycle the orderCycle to set
+	 */
+	public void setOrderCycle(Long orderCycle) {
+		this.orderCycle = orderCycle;
 	}
 
 

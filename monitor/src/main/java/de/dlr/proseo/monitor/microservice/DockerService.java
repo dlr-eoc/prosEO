@@ -70,7 +70,7 @@ public class DockerService {
 		this.apiVersion = docker.getApiVersion();
 	}
 	
-	public void check(MicroService ms, Monitor monitor) {
+	public void check(MicroService ms, MonitorServices monitor) {
 		DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
 				.withDockerHost("tcp://" + getIp() + ":" + getPort())
 				.withDockerTlsVerify(false)

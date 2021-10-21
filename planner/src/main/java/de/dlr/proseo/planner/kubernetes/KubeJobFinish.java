@@ -70,13 +70,15 @@ public class KubeJobFinish extends Thread {
     			try {
     				sleep(wait);
     				found = kubeJob.updateFinishInfoAndDelete(jobName);
+    				if (found) {
+    		    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
+    		    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
+    		    		kd.start();    					
+    				}
     			}
     			catch(InterruptedException e) {
     			}
     		}
-    		// Check once for runnable job steps, which can be started as a result of "kubeJob" being finished 
-    		KubeDispatcher kd = new KubeDispatcher(null, kubeJob.getKubeConfig(), true);
-    		kd.start();
     	}
     }    	
 }

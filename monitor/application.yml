@@ -17,6 +17,9 @@ proseo:
         connectTimeout: 1000
         readTimeout: 1000
         cycle: 10000
+        serviceCycle: 10000
+        orderCycle: 5000
+        productCycle: 60000
         services:
             -
                 name: Planner
@@ -27,7 +30,7 @@ proseo:
             -
                 name: Database
                 nameId: proseo
-                url: http://192.168.20.155:5432
+                url: http://192.168.20.155:5432/
                 docker: machine1
                 hasActuator: false
                 isProseo: true
@@ -47,6 +50,7 @@ proseo:
             -
                 name: "Object Storage"
                 nameId: root_minio_1
+                url: http://192.168.20.191:9000/
                 docker: machine2
                 hasActuator: false
                 isProseo: false
