@@ -51,10 +51,26 @@ public class MonitorConfiguration {
 	 * Cycle wait time
 	 */
 	private Long orderCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long productCycle;
 	
 
 	
 	 /**
+	 * @return the productCycle
+	 */
+	public Long getProductCycle() {
+		return productCycle;
+	}
+	/**
+	 * @param productCycle the productCycle to set
+	 */
+	public void setProductCycle(Long productCycle) {
+		this.productCycle = productCycle;
+	}
+	/**
 	 * @return the services
 	 */
 	public List<Service> getServices() {

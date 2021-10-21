@@ -18,6 +18,10 @@ import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.MonExtServiceRepository;
 import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonOrderStateRepository;
+import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
+import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
+import de.dlr.proseo.model.dao.MonProductProductionMonthRepository;
+import de.dlr.proseo.model.dao.MonProductionTypeRepository;
 import de.dlr.proseo.model.dao.MonServiceRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
@@ -139,6 +143,22 @@ public class RepositoryService {
 	/** The repository for the MonOrderState class */
 	@Autowired
     private MonOrderStateRepository monOrderStateRepository;
+	
+	/** The repository for the MonProductionType class */
+	@Autowired
+    private MonProductionTypeRepository monProductionTypeRepository;
+	
+	/** The repository for the MonProductProductionDay class */
+	@Autowired
+    private MonProductProductionDayRepository monProductProductionDayRepository;
+	
+	/** The repository for the MonProductProductionHour class */
+	@Autowired
+    private MonProductProductionHourRepository monProductProductionHourRepository;
+	
+	/** The repository for the MonProductProductionMonth class */
+	@Autowired
+    private MonProductProductionMonthRepository monProductProductionMonthRepository;
 	
 	/**
 	 * Singleton constructor
@@ -364,6 +384,34 @@ public class RepositoryService {
 	 */
 	public static MonOrderStateRepository getMonOrderStateRepository() {
 		return theRepositoryService.monOrderStateRepository;
+	}
+
+	/**
+	 * @return the monProductionTypeRepository
+	 */
+	public static MonProductionTypeRepository getMonProductionTypeRepository() {
+		return theRepositoryService.monProductionTypeRepository;
+	}
+
+	/**
+	 * @return the monProductProductionDayRepository
+	 */
+	public static MonProductProductionDayRepository getMonProductProductionDayRepository() {
+		return theRepositoryService.monProductProductionDayRepository;
+	}
+
+	/**
+	 * @return the monProductProductionHourRepository
+	 */
+	public static MonProductProductionHourRepository getMonProductProductionHourRepository() {
+		return theRepositoryService.monProductProductionHourRepository;
+	}
+
+	/**
+	 * @return the monProductProductionMonthRepository
+	 */
+	public static MonProductProductionMonthRepository getMonProductProductionMonthRepository() {
+		return theRepositoryService.monProductProductionMonthRepository;
 	}
 
 }

@@ -20,6 +20,10 @@ INSERT into mon_order_state (id, VERSION, NAME) VALUES (6, 1, 'COMPLETED');
 INSERT into mon_order_state (id, VERSION, NAME) VALUES (7, 1, 'FAILED');
 INSERT into mon_order_state (id, VERSION, NAME) VALUES (8, 1, 'CLOSED');
 
+INSERT into mon_production_type (id, VERSION, NAME, NAME_ID) VALUES (1, 1, 'systematic_production', 'SYSTEMATIC');
+INSERT into mon_production_type (id, VERSION, NAME, NAME_ID) VALUES (2, 1, 'on-demand default', 'ON_DEMAND_DEFAULT');
+INSERT into mon_production_type (id, VERSION, NAME, NAME_ID) VALUES (3, 1, 'on-demand non-default', 'ON_DEMAND_NON_DEFAULT');
+
 Prepare docker instances to get access of API.
 
 Edit /lib/systemd/system/docker.service

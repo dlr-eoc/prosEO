@@ -19,6 +19,7 @@ proseo:
         cycle: 10000
         serviceCycle: 10000
         orderCycle: 5000
+        productCycle: 60000
         services:
             -
                 name: Planner

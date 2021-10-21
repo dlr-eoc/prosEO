@@ -21,13 +21,12 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
+import de.dlr.proseo.monitor.product.MonitorProducts;
 
 /*
  * prosEO Planner application
@@ -80,6 +79,7 @@ public class MonitorApplication implements CommandLineRunner {
 
 	private MonitorServices monServices = null;
 	private MonitorOrders monOrders = null;
+	private MonitorProducts monProducts = null;
 	
 	/**
 	 * Initialize and run application 
@@ -164,6 +164,42 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 		monOrders = null;
 	}
+	/**
+	 * Start the kube dispatcher thread
+	 */
+	@Transactional
+	public void startMonitorProducts() {
+		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
+		
+		if (monProducts == null || !monProducts.isAlive()) {
+			monProducts = new MonitorProducts(monitorConfig, txManager);
+			monProducts.start();
+		} else {
+			if (monProducts.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+
+	/**
+	 * Stop the kube dispatcher thread
+	 */
+	public void stopMonitorProducts() {
+		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
+		
+		if (monProducts != null && monProducts.isAlive()) {
+			monProducts.interrupt();
+			int i = 0;
+			while (monProducts.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monOrders = null;
+	}
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
 	 */
@@ -175,7 +211,6 @@ public class MonitorApplication implements CommandLineRunner {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		try {
-			@SuppressWarnings("unused")
 			String dummy = transactionTemplate.execute((status) -> {
 				
 				return null;
@@ -184,8 +219,9 @@ public class MonitorApplication implements CommandLineRunner {
 			e.printStackTrace();
 		}
 
-		startMonitorServices();
-		startMonitorOrders();		
+		//startMonitorServices();
+		//startMonitorOrders();	
+		startMonitorProducts();		
 	}
 
 	

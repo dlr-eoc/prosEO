@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Product;
+import de.dlr.proseo.model.enums.ProductionType;
 
 /**
  * Data Access Object for the Product class
@@ -50,6 +51,34 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 			+ " and p.sensingStartTime between ?3 and ?4")
 	public List<Product> findByMissionCodeAndProductTypeAndSensingStartTimeBetween(
 			String missionCode, String productType, Instant sensingStartTimeFrom, Instant sensingStartTimeTo);
+
+	/**
+	 * Get all products of a given mission and class with their publication times in the given time interval
+	 * 
+	 * @param missionCode the mission code
+	 * @param productType the prosEO product type
+	 * @param publicationTimeFrom the earliest publication time
+	 * @param publicationTimeTo the latest publication time
+	 * @return a list of products satisfying the search criteria
+	 */
+	
+	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productionType = ?2"
+			+ " and p.publicationTime is not null and p.publicationTime between ?3 and ?4")
+	public List<Product> findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
+			String missionCode, ProductionType productionType, Instant publicationTimeFrom, Instant publicationTimeTo);
+	/**
+	 * Get all products of a given mission and class with their publication times in the given time interval
+	 * 
+	 * @param missionCode the mission code
+	 * @param productType the prosEO product type
+	 * @param generationTimeFrom the earliest generation time
+	 * @param generationTimeTo the latest generation time
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from Product p where p.productClass.mission.code = ?1 and p.productionType = ?2"
+			+ " and p.generationTime is not null and p.generationTime between ?3 and ?4")
+	public List<Product> findByMissionCodeAndProductionTypeAndGeneratedAndGenerationTimeBetween(
+			String missionCode, ProductionType productionType, Instant generationTimeFrom, Instant generationTimeTo);
 
 	/**
 	 * Get all products of a given mission and class with their sensing start time before the end of a time interval

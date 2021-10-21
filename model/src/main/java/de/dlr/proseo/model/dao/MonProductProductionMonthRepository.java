@@ -1,0 +1,36 @@
+package de.dlr.proseo.model.dao;
+
+import java.time.Instant;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import de.dlr.proseo.model.MonProductProductionMonth;
+
+/**
+ * Data Access Object for the MonProductProductionMonth class
+ * 
+ * @author Ernst Melchinger
+ *
+ */
+@Repository
+public interface MonProductProductionMonthRepository extends JpaRepository<MonProductProductionMonth, Long> {
+
+	/**
+	 * Get a list of products
+	 * 
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select max(d.datetime) from MonProductProductionMonth d")
+	public Instant findLastDatetime();
+	
+	/**
+	 * Get a list of products
+	 * 
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.monProductionType.id = ?2 and p.datetime = ?3")
+	public List<MonProductProductionMonth> findByProductionTypeAndDatetime(long missionId, long mpt, Instant datetime);
+}
