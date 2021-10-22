@@ -21,7 +21,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.MonProductProductionHour;
-import de.dlr.proseo.model.MonProductionType;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ProductionType;
@@ -40,17 +39,11 @@ public class MonitorProducts extends Thread {
 	@PersistenceContext
 	private EntityManager em;
 	
-	private Map<String, MonProductionType> monProductionTypes;
 	private MonitorConfiguration config;
 
 	public MonitorProducts(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
-		this.monProductionTypes = new HashMap<String, MonProductionType>();
-		
-		for (MonProductionType mos : RepositoryService.getMonProductionTypeRepository().findAll()) {
-			monProductionTypes.put(mos.getNameId(), mos);
-		}
 	}
 	
 	@Transactional
@@ -69,21 +62,20 @@ public class MonitorProducts extends Thread {
 		timeTo = timeFrom.plus(1, ChronoUnit.HOURS);
 		// loop over missions and production types 
 		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
-			for (String mpt : monProductionTypes.keySet()) {
-				MonProductionType monProductionType = monProductionTypes.get(mpt);
-				ProductionType pt = ProductionType.valueOf(mpt);
+			for (ProductionType mpt : ProductionType.values()) {
+				// MonProductionType monProductionType = monProductionTypes.get(mpt);
 				timeFrom = timeFromOrig;
 				timeTo = timeFrom.plus(1, ChronoUnit.HOURS);
 				// loop over missing entries
 				while (timeFrom.isBefore(now)) {
 					List<Product> products = RepositoryService.getProductRepository()
 						.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(mission.getCode(), 
-								pt, 
+								mpt, 
 								timeFrom,
 								timeTo
 								);
 					MonProductProductionHour mppd = null;
-					List<MonProductProductionHour> mppdList = RepositoryService.getMonProductProductionHourRepository().findByProductionTypeAndDatetime(mission.getId(), monProductionType.getId(), timeFrom);
+					List<MonProductProductionHour> mppdList = RepositoryService.getMonProductProductionHourRepository().findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFrom);
 					if (mppdList.isEmpty()) {
 						mppd = new MonProductProductionHour();						
 					} else if (mppdList.size() > 1) {
@@ -95,7 +87,7 @@ public class MonitorProducts extends Thread {
 						mppd = mppdList.get(0);
 					}
 					mppd.setMission(mission);
-					mppd.setMonProductionType(monProductionType);
+					mppd.setMonProductionType(mpt.getValue());
 					mppd.setCount(0);
 					mppd.setFileSize(0);
 					mppd.setProductionLatencyAvg(0);
