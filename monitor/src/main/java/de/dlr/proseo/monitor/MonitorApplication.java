@@ -219,8 +219,8 @@ public class MonitorApplication implements CommandLineRunner {
 			e.printStackTrace();
 		}
 
-		//startMonitorServices();
-		//startMonitorOrders();	
+		startMonitorServices();
+		startMonitorOrders();	
 		startMonitorProducts();		
 	}
 
