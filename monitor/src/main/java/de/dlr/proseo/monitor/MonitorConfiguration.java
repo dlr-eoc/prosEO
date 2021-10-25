@@ -56,9 +56,24 @@ public class MonitorConfiguration {
 	 */
 	private Long productCycle;
 	
-
+	/**
+	 * Start creating aggregation at this time
+	 */
+	private String productAggregationStart;
 	
 	 /**
+	 * @return the productAggregationStart
+	 */
+	public String getProductAggregationStart() {
+		return productAggregationStart;
+	}
+	/**
+	 * @param productAggregationStart the productAggregationStart to set
+	 */
+	public void setProductAggregationStart(String productAggregationStart) {
+		this.productAggregationStart = productAggregationStart;
+	}
+	/**
 	 * @return the productCycle
 	 */
 	public Long getProductCycle() {

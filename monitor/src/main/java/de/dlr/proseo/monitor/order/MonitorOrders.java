@@ -43,6 +43,7 @@ public class MonitorOrders extends Thread {
 	public MonitorOrders(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
+		this.setName("MonitorOrders");
 		this.monOrderStates = new HashMap<String, MonOrderState>();
 		
 		for (MonOrderState mos : RepositoryService.getMonOrderStateRepository().findAll()) {

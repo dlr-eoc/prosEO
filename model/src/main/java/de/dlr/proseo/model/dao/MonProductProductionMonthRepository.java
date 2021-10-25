@@ -31,6 +31,15 @@ public interface MonProductProductionMonthRepository extends JpaRepository<MonPr
 	 * 
 	 * @return a list of products satisfying the search criteria
 	 */
-	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.monProductionType = ?2 and p.datetime = ?3")
+	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime = ?3")
 	public List<MonProductProductionMonth> findByProductionTypeAndDatetime(long missionId, String mpt, Instant datetime);
+
+	/**
+	 * Get a list of products
+	 * 
+	 * @return a list of products satisfying the search criteria
+	 */
+	@Query("select p from MonProductProductionMonth p where p.mission.id = ?1 and p.productionType = ?2 and p.datetime >= ?3 and p.datetime < ?4")
+	public List<MonProductProductionMonth> findByMissionCodeAndProductionTypeAndDateTimeBetween(long missionId, String mpt, Instant timeFrom, Instant timeTo);
+
 }

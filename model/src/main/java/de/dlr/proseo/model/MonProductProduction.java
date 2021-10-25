@@ -11,7 +11,7 @@ import javax.persistence.Table;
 @MappedSuperclass
 @Table(indexes = {
 		@Index(unique = false, columnList = "datetime"),
-		@Index(unique = false, columnList = "mission_id, monProductionType")
+		@Index(unique = false, columnList = "mission_id, productionType")
 	})
 abstract public class MonProductProduction extends PersistentObject {
 	/**
@@ -30,7 +30,7 @@ abstract public class MonProductProduction extends PersistentObject {
 	/**
 	 * The production type
 	 */
-	private String monProductionType;
+	private String productionType;
 	/**
 	 * Minimum latency
 	 */
@@ -79,10 +79,10 @@ abstract public class MonProductProduction extends PersistentObject {
 		return count;
 	}
 	/**
-	 * @return the monProductionType
+	 * @return the productionType
 	 */
-	public String getMonProductionType() {
-		return monProductionType;
+	public String getProductionType() {
+		return productionType;
 	}
 	/**
 	 * @return the productionLatencyMin
@@ -145,10 +145,10 @@ abstract public class MonProductProduction extends PersistentObject {
 		this.count = count;
 	}
 	/**
-	 * @param monProductionType the monProductionType to set
+	 * @param productionType the productionType to set
 	 */
-	public void setMonProductionType(String monProductionType) {
-		this.monProductionType = monProductionType;
+	public void setProductionType(String productionType) {
+		this.productionType = productionType;
 	}
 	/**
 	 * @param productionLatencyMin the productionLatencyMin to set
