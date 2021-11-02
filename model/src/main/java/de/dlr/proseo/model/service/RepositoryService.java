@@ -21,6 +21,9 @@ import de.dlr.proseo.model.dao.MonOrderStateRepository;
 import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
 import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
 import de.dlr.proseo.model.dao.MonProductProductionMonthRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownlinkDayRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownlinkMonthRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownloadRepository;
 import de.dlr.proseo.model.dao.MonServiceRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
@@ -150,10 +153,22 @@ public class RepositoryService {
 	/** The repository for the MonProductProductionHour class */
 	@Autowired
     private MonProductProductionHourRepository monProductProductionHourRepository;
-	
+
 	/** The repository for the MonProductProductionMonth class */
 	@Autowired
     private MonProductProductionMonthRepository monProductProductionMonthRepository;
+
+	/** The repository for the MonRawDataDownlinkDay class */
+	@Autowired
+    private MonRawDataDownlinkDayRepository monRawDataDownlinkDayRepository;
+
+	/** The repository for the MonRawDataDownlinkMonth class */
+	@Autowired
+    private MonRawDataDownlinkMonthRepository monRawDataDownlinkMonthRepository;
+
+	/** The repository for the MonRawDataDownload class */
+	@Autowired
+    private MonRawDataDownloadRepository monRawDataDownloadRepository;
 	
 	/**
 	 * Singleton constructor
@@ -400,6 +415,27 @@ public class RepositoryService {
 	 */
 	public static MonProductProductionMonthRepository getMonProductProductionMonthRepository() {
 		return theRepositoryService.monProductProductionMonthRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkDayRepository
+	 */
+	public static MonRawDataDownlinkDayRepository getMonRawDataDownlinkDayRepository() {
+		return theRepositoryService.monRawDataDownlinkDayRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkMonthRepository
+	 */
+	public static MonRawDataDownlinkMonthRepository getMonRawDataDownlinkMonthRepository() {
+		return theRepositoryService.monRawDataDownlinkMonthRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkRepository
+	 */
+	public static MonRawDataDownloadRepository getMonRawDataDownloadRepository() {
+		return theRepositoryService.monRawDataDownloadRepository;
 	}
 
 }

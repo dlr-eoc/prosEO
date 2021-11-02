@@ -68,6 +68,7 @@ public class KubeJobFinish extends Thread {
 
     		while (!found && i < maxCycles) {
     			try {
+    				i++;
     				sleep(wait);
     				found = kubeJob.updateFinishInfoAndDelete(jobName);
     				if (found) {

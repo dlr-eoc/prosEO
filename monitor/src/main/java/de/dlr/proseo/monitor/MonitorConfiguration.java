@@ -55,23 +55,39 @@ public class MonitorConfiguration {
 	 * Cycle wait time
 	 */
 	private Long productCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long rawdataCycle;
 	
 	/**
 	 * Start creating aggregation at this time
 	 */
-	private String productAggregationStart;
+	private String aggregationStart;
 	
 	 /**
-	 * @return the productAggregationStart
+	 * @return the rawdataCycle
 	 */
-	public String getProductAggregationStart() {
-		return productAggregationStart;
+	public Long getRawdataCycle() {
+		return rawdataCycle;
+	}
+	/**
+	 * @param rawdataCycle the rawdataCycle to set
+	 */
+	public void setRawdataCycle(Long rawdataCycle) {
+		this.rawdataCycle = rawdataCycle;
+	}
+	/**
+	 * @return the aggregationStart
+	 */
+	public String getAggregationStart() {
+		return aggregationStart;
 	}
 	/**
 	 * @param productAggregationStart the productAggregationStart to set
 	 */
-	public void setProductAggregationStart(String productAggregationStart) {
-		this.productAggregationStart = productAggregationStart;
+	public void setAggregationStart(String aggregationStart) {
+		this.aggregationStart = aggregationStart;
 	}
 	/**
 	 * @return the productCycle

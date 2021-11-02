@@ -18,9 +18,10 @@ proseo:
         readTimeout: 1000
         cycle: 10000
         serviceCycle: 10000
-        orderCycle: 5000
+        orderCycle: 30000
         productCycle: 60000
-        productAggregationStart: "2021-10-19T00:00:00.000000Z"
+        rawdataCycle: 60000
+        aggregationStart: "2021-10-19T00:00:00.000000Z"
         services:
             -
                 name: "Production Planner"

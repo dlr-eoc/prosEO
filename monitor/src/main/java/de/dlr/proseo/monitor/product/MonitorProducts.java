@@ -62,11 +62,11 @@ public class MonitorProducts extends Thread {
 		if (lastEntryDatetime ==  null) {
 			// no entry found, begin at now.
 			timeFrom = now.truncatedTo(ChronoUnit.HOURS);
-			if (config.getProductAggregationStart() != null) {
+			if (config.getAggregationStart() != null) {
 				try {
-					timeFrom = Instant.parse(config.getProductAggregationStart()).truncatedTo(ChronoUnit.HOURS);
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.HOURS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getProductAggregationStart());
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -169,11 +169,11 @@ public class MonitorProducts extends Thread {
 		if (lastEntryDatetime ==  null) {
 			// no entry found, begin at now.
 			timeFrom = now.truncatedTo(ChronoUnit.DAYS);
-			if (config.getProductAggregationStart() != null) {
+			if (config.getAggregationStart() != null) {
 				try {
-					timeFrom = Instant.parse(config.getProductAggregationStart()).truncatedTo(ChronoUnit.DAYS);
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getProductAggregationStart());
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
 				}
 			} 
 		} else {
@@ -275,11 +275,11 @@ public class MonitorProducts extends Thread {
 		if (lastEntryDatetime ==  null) {
 			// no entry found, begin at now.
 			timeFrom = now.truncatedTo(ChronoUnit.DAYS);
-			if (config.getProductAggregationStart() != null) {
+			if (config.getAggregationStart() != null) {
 				try {
-					timeFrom = Instant.parse(config.getProductAggregationStart()).truncatedTo(ChronoUnit.DAYS);
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
 				} catch (DateTimeParseException ex) {
-					logger.warn("Illegal config value productAggregationStart; {}", config.getProductAggregationStart());
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
 				}
 			} 
 		} else {
