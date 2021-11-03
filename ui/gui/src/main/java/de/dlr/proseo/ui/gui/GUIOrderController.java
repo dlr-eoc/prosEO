@@ -136,6 +136,8 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "from") String from,
 			@RequestParam(required = false, value = "to") String to,
 			@RequestParam(required = false, value = "products") String products,
+			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
+			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
@@ -145,7 +147,8 @@ public class GUIOrderController extends GUIBaseController {
 		if (identifier != null && identifier.indexOf("*") < 0) {
 			myIdent = identifier;
 		}
-		Mono<ClientResponse> mono = orderService.get(myIdent);
+		Mono<ClientResponse> mono = orderService.get(identifier, states, products, from, to, 
+				recordFrom, recordTo, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
 		mono.doOnError(e -> {
@@ -156,7 +159,8 @@ public class GUIOrderController extends GUIBaseController {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
 			if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(orderList -> {
-					orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
+					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
+					orders.addAll(orderList);
 					String key = MAPKEY_ID;
 					if (sortby != null) {
 						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID) || sortby.contentEquals("orderState")) {
@@ -164,8 +168,8 @@ public class GUIOrderController extends GUIBaseController {
 						}
 					}
 					Boolean isUp = (null == up ? true : up);
-					MapComparator oc = new MapComparator(key, isUp);
-					orders.sort(oc);
+//					MapComparator oc = new MapComparator(key, isUp);
+//					orders.sort(oc);
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));

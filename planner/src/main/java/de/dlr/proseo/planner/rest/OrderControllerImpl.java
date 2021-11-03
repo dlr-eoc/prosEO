@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.Query;
+
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.FacilityState;
@@ -86,6 +88,33 @@ public class OrderControllerImpl implements OrderController {
 		}
 	}
 
+	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+		String missionCode = securityService.getMission(); 
+		if (null == mission) {
+			mission = missionCode;
+		} else {
+			// Ensure user is authorized for the requested mission
+			if (!securityService.isAuthorizedForMission(mission)) {
+				throw new SecurityException(Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger,
+						mission, missionCode));
+			} 
+		}
+		
+		try {
+			List<RestOrder> list = orderUtil.getAndSelectOrders(missionCode, identifier, state, productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+						
+			Messages.ORDERS_RETRIEVED.log(logger);
+
+			return new ResponseEntity<>(list, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	/**
 	 * Get processing order of id
 	 * 

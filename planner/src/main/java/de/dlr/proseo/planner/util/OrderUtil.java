@@ -7,13 +7,14 @@ package de.dlr.proseo.planner.util;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,16 +23,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.enums.ProductionType;
+import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
@@ -808,7 +808,140 @@ public class OrderUtil {
 		}
 		return pfList;
 	}
+
+	@Transactional
+	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		Iterable<ProcessingOrder> orders;
+		List<RestOrder> list = new ArrayList<RestOrder>();
+		Query query = createOrdersQuery(mission, identifier, state, 
+				productClass, startTime, stopTime, recordFrom, recordTo, orderBy, false);
+
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof ProcessingOrder) {
+				// Filter depending on product visibility and user authorization
+				ProcessingOrder order = (ProcessingOrder) resultObject;
+				list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+			}
+		}		
+
+		return list;
+	}
 	
+	@Transactional
+	public String countSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		Iterable<ProcessingOrder> orders;
+		List<RestOrder> list = new ArrayList<RestOrder>();
+		
+		return null;
+	}
+	
+
+	/**
+	 * Create a JPQL query to retrieve the requested set of products
+	 * 
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param jobStepId get input products of job step
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return JPQL Query
+	 */
+	private Query createOrdersQuery(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy, Boolean count) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				productClass, startTime, stopTime, recordFrom, recordTo, orderBy, count);
+		
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(p) from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		}
+		if (null != state && 0 < state.length) {
+			jpqlQuery += " and p.orderState in (";
+			for (int i = 0; i < state.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":orderState" + i;
+			}
+			jpqlQuery += ")";
+		}
+		if (null != identifier) {
+			jpqlQuery += " and upper(p.identifier) like :identifier";
+		}
+//		if (null != productClass && 0 < productClass.length) {
+//			jpqlQuery += " and p.requestedProductClasses.productType in (";
+//			for (int i = 0; i < productClass.length; ++i) {
+//				if (0 < i) jpqlQuery += ", ";
+//				jpqlQuery += ":productClass" + i;
+//			}
+//			jpqlQuery += ")";
+//		}
+		if (null != startTime) {
+			jpqlQuery += " and p.startTime >= :startTime";
+		}
+		if (null != stopTime) {
+			jpqlQuery += " and p.stopTime <= :stopTime";
+		}
+				
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				String[] orderb = orderBy[i].split(" ");
+				jpqlQuery += "p.";
+				jpqlQuery += orderb[0];
+				if (orderb.length > 1) {
+					jpqlQuery += " ";
+					jpqlQuery += orderb[1];
+				}
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		if (null != mission) {
+			query.setParameter("missionCode", mission);
+		}
+		if (null != state && 0 < state.length) {
+			for (int i = 0; i < state.length; ++i) {
+				query.setParameter("orderState" + i, OrderState.valueOf(state[i]));
+			}
+		}
+		if (null != identifier) {
+			query.setParameter("identifier", identifier.toUpperCase());
+		}
+//		if (null != productClass && 0 < productClass.length) {
+//			for (int i = 0; i < productClass.length; ++i) {
+//				query.setParameter("productClass" + i, productClass[i]);
+//			}
+//		}
+
+		if (null != startTime) {
+			query.setParameter("startTime", Instant.parse(startTime + "T00:00:00Z"));
+		}
+		
+		if (null != stopTime) {
+			query.setParameter("stopTime", Instant.parse(stopTime + "T00:00:00Z").plus(1, ChronoUnit.DAYS));
+		}
+		// length of record list
+		if (recordFrom != null && recordFrom >= 0) {
+			query.setFirstResult(recordFrom.intValue());
+		}
+		if (recordTo != null && recordTo >= 0) {
+			query.setMaxResults(recordTo.intValue() - recordFrom.intValue());
+		}
+		return query;
+	}
+
 	
 	/**
 	 * Update the order state depending on job state
