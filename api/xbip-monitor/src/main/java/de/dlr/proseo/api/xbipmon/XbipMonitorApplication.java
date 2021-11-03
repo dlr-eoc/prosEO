@@ -6,6 +6,8 @@
 
 package de.dlr.proseo.api.xbipmon;
 
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +36,16 @@ public class XbipMonitorApplication implements CommandLineRunner {
     @Autowired
     private TaskExecutor taskExecutor;
 
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(XbipMonitorApplication.class);
+	
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(XbipMonitorApplication.class, args);
 	}
 
 	@Override
 	public void run(String... args) throws Exception {
+		if (logger.isTraceEnabled()) logger.trace(">>> run({})", Arrays.asList(args));
 		
 		Thread xbipMonitor = (XbipMonitor) applicationContext.getBean(XbipMonitor.class);
 		

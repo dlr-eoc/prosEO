@@ -509,7 +509,7 @@ public class ProductEntityProcessor implements EntityProcessor, MediaEntityProce
 		}
 		
 		// Get the service URI of the Storage Manager service
-		String storageManagerUrl = productFile.getProcessingFacility().getStorageManagerUrl();
+		String storageManagerUrl = productFile.getProcessingFacility().getExternalStorageManagerUrl();
 		
 		// Build the download URI: Set pathInfo to zipped file if available, to product file otherwise
 		URIBuilder uriBuilder = null;

@@ -124,12 +124,12 @@ public class XbipMonitor extends BaseMonitor {
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
+	private static Logger logger = LoggerFactory.getLogger(XbipMonitor.class);
 	
 	/**
 	 * Class describing a download session
 	 */
-	protected static class TransferSession implements TransferObject {
+	public static class TransferSession implements TransferObject {
 		
 		/** The satellite identifier */
 		private String satelliteIdentifier;
@@ -212,7 +212,7 @@ public class XbipMonitor extends BaseMonitor {
 	/**
 	 * Class describing a download channel
 	 */
-	protected static class DataSessionInformationBlock {
+	public static class DataSessionInformationBlock {
 		public String session_id;
 		public String time_start;
 		public String time_stop;

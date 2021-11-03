@@ -56,6 +56,7 @@ public class FacilityCommandRunner {
 	private static final String PROMPT_FACILITY_NAME = "Facility name (empty field cancels): ";
 	private static final String PROMPT_PROCENG_URL = "Processing engine URL (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_URL = "Storage manager URL (empty field cancels): ";
+	private static final String PROMPT_EXTERNAL_STORAGEMGR_URL = "Storage manager URL for external clients (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_USER = "Storage manager username (empty field cancels): ";
 	private static final String PROMPT_STORAGEMGR_PASSWD = "Storage manager password (empty field cancels): ";
 	private static final String PROMPT_LOCAL_STORAGEMGR_URL = "Kubernetes-local storage manager URL (empty field cancels): ";
@@ -216,6 +217,15 @@ public class FacilityCommandRunner {
 		}
 		if (null == restFacility.getStorageManagerUrl() || restFacility.getStorageManagerUrl().isBlank()) {
 			System.out.print(PROMPT_STORAGEMGR_URL);
+			String response = System.console().readLine();
+			if (response.isBlank()) {
+				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
+				return;
+			}
+			restFacility.setStorageManagerUrl(response);
+		}
+		if (null == restFacility.getExternalStorageManagerUrl() || restFacility.getExternalStorageManagerUrl().isBlank()) {
+			System.out.print(PROMPT_EXTERNAL_STORAGEMGR_URL);
 			String response = System.console().readLine();
 			if (response.isBlank()) {
 				System.out.println(uiMsg(MSG_ID_OPERATION_CANCELLED));
@@ -491,6 +501,9 @@ public class FacilityCommandRunner {
 		}
 		if (null != updatedFacility.getStorageManagerUrl() && !updatedFacility.getStorageManagerUrl().isBlank()) {
 			restFacility.setStorageManagerUrl(updatedFacility.getStorageManagerUrl());
+		}
+		if (null != updatedFacility.getExternalStorageManagerUrl() && !updatedFacility.getExternalStorageManagerUrl().isBlank()) {
+			restFacility.setExternalStorageManagerUrl(updatedFacility.getExternalStorageManagerUrl());
 		}
 		if (isDeleteAttributes ||
 				null != updatedFacility.getLocalStorageManagerUrl() && !updatedFacility.getLocalStorageManagerUrl().isBlank()) {

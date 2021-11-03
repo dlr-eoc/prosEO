@@ -29,7 +29,10 @@
         description: Maximum number of jobs schedulable per worker node (default 1)
       storageManagerUrl:
         type: string
-        description: The URL to access this facility's storage manager
+        description: The URL to access this facility's storage manager from the control instance
+      externalStorageManagerUrl:
+        type: string
+        description: The URL to access this facility's storage manager from an external client (via PRIP API)
       localStorageManagerUrl?:
         type: string
         description: URL of the locally accessible Storage Manager
