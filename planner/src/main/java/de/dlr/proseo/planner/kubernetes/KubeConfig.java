@@ -131,6 +131,11 @@ public class KubeConfig {
 	private String storageManagerUrl;
 	
 	/**
+	 * The URL to access this facility's storage manager from an external client (via PRIP API)
+	 */
+	private String externalStorageManagerUrl;
+	
+	/**
 	 * The default storage type 
 	 */
 	private StorageType storageType;
@@ -204,6 +209,20 @@ public class KubeConfig {
 	 */
 	public void setStorageManagerUrl(String storageManagerUrl) {
 		this.storageManagerUrl = storageManagerUrl;
+	}
+
+	/**
+	 * @return the externalStorageManagerUrl
+	 */
+	public String getExternalStorageManagerUrl() {
+		return externalStorageManagerUrl;
+	}
+
+	/**
+	 * @param externalStorageManagerUrl the externalStorageManagerUrl to set
+	 */
+	public void setExternalStorageManagerUrl(String externalStorageManagerUrl) {
+		this.externalStorageManagerUrl = externalStorageManagerUrl;
 	}
 
 	/**
@@ -301,6 +320,7 @@ public class KubeConfig {
 		storageManagerUrl = pf.getStorageManagerUrl();
 		storageType = pf.getDefaultStorageType();
 		localStorageManagerUrl = pf.getLocalStorageManagerUrl();
+		externalStorageManagerUrl = pf.getExternalStorageManagerUrl();
 		processingEngineToken = pf.getProcessingEngineToken();
 		storageManagerUser = pf.getStorageManagerUser();
 		storageManagerPassword = pf.getStorageManagerPassword();
