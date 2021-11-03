@@ -1,7 +1,11 @@
 package de.dlr.proseo.monitor.product;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
@@ -20,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.Mission;
+import de.dlr.proseo.model.MonProductProductionDay;
 import de.dlr.proseo.model.MonProductProductionHour;
+import de.dlr.proseo.model.MonProductProductionMonth;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductFile;
 import de.dlr.proseo.model.enums.ProductionType;
@@ -44,6 +50,7 @@ public class MonitorProducts extends Thread {
 	public MonitorProducts(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
+		this.setName("MonitorProducts");
 	}
 	
 	@Transactional
@@ -55,6 +62,13 @@ public class MonitorProducts extends Thread {
 		if (lastEntryDatetime ==  null) {
 			// no entry found, begin at now.
 			timeFrom = now.truncatedTo(ChronoUnit.HOURS);
+			if (config.getAggregationStart() != null) {
+				try {
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.HOURS);
+				} catch (DateTimeParseException ex) {
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+				}
+			} 
 		} else {
 			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.HOURS);
 		}
@@ -63,11 +77,12 @@ public class MonitorProducts extends Thread {
 		// loop over missions and production types 
 		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
 			for (ProductionType mpt : ProductionType.values()) {
-				// MonProductionType monProductionType = monProductionTypes.get(mpt);
+				// ProductionType productionType = monProductionTypes.get(mpt);
 				timeFrom = timeFromOrig;
 				timeTo = timeFrom.plus(1, ChronoUnit.HOURS);
 				// loop over missing entries
 				while (timeFrom.isBefore(now)) {
+					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Hours for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
 					List<Product> products = RepositoryService.getProductRepository()
 						.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(mission.getCode(), 
 								mpt, 
@@ -75,7 +90,8 @@ public class MonitorProducts extends Thread {
 								timeTo
 								);
 					MonProductProductionHour mppd = null;
-					List<MonProductProductionHour> mppdList = RepositoryService.getMonProductProductionHourRepository().findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFrom);
+					List<MonProductProductionHour> mppdList = RepositoryService.getMonProductProductionHourRepository()
+							.findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFrom);
 					if (mppdList.isEmpty()) {
 						mppd = new MonProductProductionHour();						
 					} else if (mppdList.size() > 1) {
@@ -87,7 +103,7 @@ public class MonitorProducts extends Thread {
 						mppd = mppdList.get(0);
 					}
 					mppd.setMission(mission);
-					mppd.setMonProductionType(mpt.getValue());
+					mppd.setProductionType(mpt.getValue());
 					mppd.setCount(0);
 					mppd.setFileSize(0);
 					mppd.setProductionLatencyAvg(0);
@@ -99,11 +115,11 @@ public class MonitorProducts extends Thread {
 					mppd.setDatetime(timeFrom);
 					int count = 0;
 					int fileSize = 0;
-					int productionLatencySum = 0;
+					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
 					int productionLatencyMax = 0;
-					int totalLatencySum = 0;
+					BigInteger totalLatencySum = BigInteger.valueOf(0);
 					int totalLatencyAvg = 0;
 					int totalLatencyMin = Integer.MAX_VALUE;
 					int totalLatencyMax = 0;
@@ -119,25 +135,26 @@ public class MonitorProducts extends Thread {
 						} else {
 							prodLatency = totalLatency;
 						}
-						productionLatencySum += prodLatency;
+						productionLatencySum = productionLatencySum.add(BigInteger.valueOf(prodLatency));
 						productionLatencyMin = Math.min(productionLatencyMin, prodLatency);
-						productionLatencyMax = Math.max(productionLatencyMax, totalLatency);
-						totalLatencySum += totalLatency;
-						totalLatencyMin = Math.min(totalLatencyMin, prodLatency);
+						productionLatencyMax = Math.max(productionLatencyMax, prodLatency);
+						totalLatencySum = totalLatencySum.add(BigInteger.valueOf(totalLatency));
+						totalLatencyMin = Math.min(totalLatencyMin, totalLatency);
 						totalLatencyMax = Math.max(totalLatencyMax, totalLatency);
 						for (ProductFile f : product.getProductFile()) {
 							fileSize += f.getFileSize();
 						}
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum / count;
-						totalLatencyAvg = totalLatencySum / count;
+						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
 						mppd.setCount(count);
 						mppd.setFileSize(fileSize);
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
-						mppd.setProductionLatencyMin(productionLatencyMin);
+						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
 						mppd.setTotalLatencyAvg(totalLatencyAvg);
+						mppd.setTotalLatencyMin(totalLatencyMin==Integer.MAX_VALUE?0:totalLatencyMin);
 						mppd.setTotalLatencyMin(totalLatencyMin);
 						mppd.setTotalLatencyMax(totalLatencyMax);
 					}
@@ -147,6 +164,225 @@ public class MonitorProducts extends Thread {
 				}
 			}
 		}
+		// now we have to summarize this into to day table
+		lastEntryDatetime = RepositoryService.getMonProductProductionDayRepository().findLastDatetime();
+		if (lastEntryDatetime ==  null) {
+			// no entry found, begin at now.
+			timeFrom = now.truncatedTo(ChronoUnit.DAYS);
+			if (config.getAggregationStart() != null) {
+				try {
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
+				} catch (DateTimeParseException ex) {
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+				}
+			} 
+		} else {
+			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.DAYS);
+		}
+		timeFromOrig = timeFrom;
+		timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
+
+		// loop over missions and production types 
+		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
+			for (ProductionType mpt : ProductionType.values()) {
+				// ProductionType productionType = monProductionTypes.get(mpt);
+				timeFrom = timeFromOrig;
+				timeTo = timeFrom.plus(1, ChronoUnit.DAYS);
+				// loop over missing entries
+				while (timeFrom.isBefore(now)) {
+					//List<Product> products = RepositoryService.getProductRepository()
+					//	.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
+					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Days for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
+					List<MonProductProductionHour> hourList = RepositoryService.getMonProductProductionHourRepository()
+							.findByMissionCodeAndProductionTypeAndDateTimeBetween(mission.getId(),
+								mpt.getValue(), 
+								timeFrom,
+								timeTo
+								);
+					MonProductProductionDay mppd = null;
+					List<MonProductProductionDay> mppdList = RepositoryService.getMonProductProductionDayRepository().findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFrom);
+					if (mppdList.isEmpty()) {
+						mppd = new MonProductProductionDay();						
+					} else if (mppdList.size() > 1) {
+						// should not be
+						// create a warning
+						logger.warn("Duplicate entries in MonProductProductionDay at {}", timeFrom);
+						mppd = mppdList.get(0);
+					} else {
+						mppd = mppdList.get(0);
+					}
+					mppd.setMission(mission);
+					mppd.setProductionType(mpt.getValue());
+					mppd.setCount(0);
+					mppd.setFileSize(0);
+					mppd.setProductionLatencyAvg(0);
+					mppd.setProductionLatencyMin(0);
+					mppd.setProductionLatencyMax(0);
+					mppd.setTotalLatencyAvg(0);
+					mppd.setTotalLatencyMin(0);
+					mppd.setTotalLatencyMax(0);
+					mppd.setDatetime(timeFrom);
+					int count = 0;
+					int fileSize = 0;
+					BigInteger productionLatencySum = BigInteger.valueOf(0);
+					int productionLatencyAvg = 0;
+					int productionLatencyMin = Integer.MAX_VALUE;
+					int productionLatencyMax = 0;
+					BigInteger totalLatencySum = BigInteger.valueOf(0);
+					int totalLatencyAvg = 0;
+					int totalLatencyMin = Integer.MAX_VALUE;
+					int totalLatencyMax = 0;
+					// now we have an entry
+					// analyze products and collect aggregation
+					for (MonProductProductionHour productProduction : hourList) {
+						int prodLatency = productProduction.getProductionLatencyAvg();
+						int totalLatency = productProduction.getTotalLatencyAvg();
+						count += productProduction.getCount();
+						productionLatencySum = productionLatencySum.add(BigInteger.valueOf(prodLatency).multiply(BigInteger.valueOf(productProduction.getCount())));
+ 						if (productProduction.getProductionLatencyMin() > 0) {
+							productionLatencyMin = Math.min(productionLatencyMin, productProduction.getProductionLatencyMin());
+						}
+						productionLatencyMax = Math.max(productionLatencyMax, productProduction.getProductionLatencyMax());
+						
+						totalLatencySum = totalLatencySum.add(BigInteger.valueOf(totalLatency).multiply(BigInteger.valueOf(productProduction.getCount())));
+						if (productProduction.getTotalLatencyMin() > 0) {
+							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
+						}
+						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
+						fileSize += productProduction.getFileSize();
+					}
+					if (count > 0) {
+						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						mppd.setCount(count);
+						mppd.setFileSize(fileSize);
+						mppd.setProductionLatencyAvg(productionLatencyAvg);
+						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
+						mppd.setProductionLatencyMax(productionLatencyMax);
+						mppd.setTotalLatencyAvg(totalLatencyAvg);
+						mppd.setTotalLatencyMin(totalLatencyMin==Integer.MAX_VALUE?0:totalLatencyMin);
+						mppd.setTotalLatencyMax(totalLatencyMax);
+					}
+					RepositoryService.getMonProductProductionDayRepository().save(mppd);					
+					timeFrom = timeTo;
+					timeTo = timeTo.plus(1, ChronoUnit.DAYS);
+				}
+			}
+		}
+
+		// now we have to summarize this into to month table
+		lastEntryDatetime = RepositoryService.getMonProductProductionMonthRepository().findLastDatetime();
+		if (lastEntryDatetime ==  null) {
+			// no entry found, begin at now.
+			timeFrom = now.truncatedTo(ChronoUnit.DAYS);
+			if (config.getAggregationStart() != null) {
+				try {
+					timeFrom = Instant.parse(config.getAggregationStart()).truncatedTo(ChronoUnit.DAYS);
+				} catch (DateTimeParseException ex) {
+					logger.warn("Illegal config value productAggregationStart; {}", config.getAggregationStart());
+				}
+			} 
+		} else {
+			timeFrom = lastEntryDatetime.truncatedTo(ChronoUnit.DAYS);
+		}
+		ZonedDateTime zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
+		int d = zdt.getDayOfMonth() - 1;
+		zdt = zdt.minusDays(d);
+		timeFrom = zdt.toInstant();
+		timeFromOrig = timeFrom;
+		timeTo = zdt.plusMonths(1).toInstant();
+
+		// loop over missions and production types 
+		for (Mission mission : RepositoryService.getMissionRepository().findAll()) {
+			for (ProductionType mpt : ProductionType.values()) {
+				// ProductionType productionType = monProductionTypes.get(mpt);
+				timeFrom = timeFromOrig;
+				zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
+				timeTo = zdt.plusMonths(1).toInstant();
+				// loop over missing entries
+				while (timeFrom.isBefore(now)) {
+					//List<Product> products = RepositoryService.getProductRepository()
+					//	.findByMissionCodeAndProductionTypeAndPublicatedAndPublicationTimeBetween(
+					if (logger.isTraceEnabled()) logger.trace(">>> Aggregate Months for {}, {}, {}", timeFrom, mission.getCode(), mpt.getValue());
+					List<MonProductProductionDay> dayList = RepositoryService.getMonProductProductionDayRepository()
+							.findByMissionCodeAndProductionTypeAndDateTimeBetween(mission.getId(),
+								mpt.getValue(), 
+								timeFrom,
+								timeTo
+								);
+					MonProductProductionMonth mppd = null;
+					List<MonProductProductionMonth> mppdList = RepositoryService.getMonProductProductionMonthRepository().findByProductionTypeAndDatetime(mission.getId(), mpt.getValue(), timeFrom);
+					if (mppdList.isEmpty()) {
+						mppd = new MonProductProductionMonth();						
+					} else if (mppdList.size() > 1) {
+						// should not be
+						// create a warning
+						logger.warn("Duplicate entries in MonProductProductionDay at {}", timeFrom);
+						mppd = mppdList.get(0);
+					} else {
+						mppd = mppdList.get(0);
+					}
+					mppd.setMission(mission);
+					mppd.setProductionType(mpt.getValue());
+					mppd.setCount(0);
+					mppd.setFileSize(0);
+					mppd.setProductionLatencyAvg(0);
+					mppd.setProductionLatencyMin(0);
+					mppd.setProductionLatencyMax(0);
+					mppd.setTotalLatencyAvg(0);
+					mppd.setTotalLatencyMin(0);
+					mppd.setTotalLatencyMax(0);
+					mppd.setDatetime(timeFrom);
+					int count = 0;
+					int fileSize = 0;
+					BigInteger productionLatencySum = BigInteger.valueOf(0);
+					int productionLatencyAvg = 0;
+					int productionLatencyMin = Integer.MAX_VALUE;
+					int productionLatencyMax = 0;
+					BigInteger totalLatencySum = BigInteger.valueOf(0);
+					int totalLatencyAvg = 0;
+					int totalLatencyMin = Integer.MAX_VALUE;
+					int totalLatencyMax = 0;
+					// now we have an entry
+					// analyze products and collect aggregation
+					for (MonProductProductionDay productProduction : dayList) {
+						int prodLatency = productProduction.getProductionLatencyAvg();
+						int totalLatency = productProduction.getTotalLatencyAvg();
+						count += productProduction.getCount();
+						productionLatencySum = productionLatencySum.add(BigInteger.valueOf(prodLatency).multiply(BigInteger.valueOf(productProduction.getCount())));
+						if (productProduction.getProductionLatencyMin() > 0) {
+							productionLatencyMin = Math.min(productionLatencyMin, productProduction.getProductionLatencyMin());
+						}
+						productionLatencyMax = Math.max(productionLatencyMax, productProduction.getProductionLatencyMax());
+						
+						totalLatencySum = totalLatencySum.add(BigInteger.valueOf(totalLatency).multiply(BigInteger.valueOf(productProduction.getCount())));
+						if (productProduction.getTotalLatencyMin() > 0) {
+							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
+						}
+						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
+						fileSize += productProduction.getFileSize();
+					}
+					if (count > 0) {
+						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						mppd.setCount(count);
+						mppd.setFileSize(fileSize);
+						mppd.setProductionLatencyAvg(productionLatencyAvg);
+						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
+						mppd.setProductionLatencyMax(productionLatencyMax);
+						mppd.setTotalLatencyAvg(totalLatencyAvg);
+						mppd.setTotalLatencyMin(totalLatencyMin==Integer.MAX_VALUE?0:totalLatencyMin);
+						mppd.setTotalLatencyMax(totalLatencyMax);
+					}
+					RepositoryService.getMonProductProductionMonthRepository().save(mppd);					
+					timeFrom = timeTo;
+					zdt = ZonedDateTime.ofInstant(timeFrom, ZoneId.of("UTC"));
+					timeTo = zdt.plusMonths(1).toInstant();
+				}
+			}
+		}
+		
+		
 		
 	}
 	

@@ -10,39 +10,38 @@ import javax.persistence.Table;
 
 @MappedSuperclass
 @Table(indexes = {
-		@Index(unique = false, columnList = "datetime"),
-		@Index(unique = false, columnList = "mission_id, productionType")
+		@Index(unique = false, columnList = "datetime")
 	})
-abstract public class MonProductProduction extends PersistentObject {
+abstract public class MonRawDataDownlinkBase extends PersistentObject {
 	/**
 	 * The mission
 	 */
 	@ManyToOne
 	private Mission mission;
 	/**
-	 * The file size
+	 * The spacecraft code
 	 */
-	private long fileSize;
+	private String spacecraftCode;
+	/**
+	 * The downliad size
+	 */
+	private long downloadSize;
 	/**
 	 * The product count
 	 */
 	private int count;
 	/**
-	 * The production type
-	 */
-	private String productionType;
-	/**
 	 * Minimum latency
 	 */
-	private int productionLatencyMin;
+	private int downloadLatencyMin;
 	/**
 	 * Maximum latency
 	 */
-	private int productionLatencyMax;
+	private int downloadLatencyMax;
 	/**
 	 * Average latency
 	 */
-	private int productionLatencyAvg;
+	private int downloadLatencyAvg;
 	/**
 	 * Minimum latency
 	 */
@@ -67,40 +66,10 @@ abstract public class MonProductProduction extends PersistentObject {
 		return mission;
 	}
 	/**
-	 * @return the fileSize
-	 */
-	public long getFileSize() {
-		return fileSize;
-	}
-	/**
 	 * @return the count
 	 */
 	public int getCount() {
 		return count;
-	}
-	/**
-	 * @return the productionType
-	 */
-	public String getProductionType() {
-		return productionType;
-	}
-	/**
-	 * @return the productionLatencyMin
-	 */
-	public int getProductionLatencyMin() {
-		return productionLatencyMin;
-	}
-	/**
-	 * @return the productionLatencyMax
-	 */
-	public int getProductionLatencyMax() {
-		return productionLatencyMax;
-	}
-	/**
-	 * @return the productionLatencyAvg
-	 */
-	public int getProductionLatencyAvg() {
-		return productionLatencyAvg;
 	}
 	/**
 	 * @return the totalLatencyMin
@@ -133,40 +102,10 @@ abstract public class MonProductProduction extends PersistentObject {
 		this.mission = mission;
 	}
 	/**
-	 * @param fileSize the fileSize to set
-	 */
-	public void setFileSize(long fileSize) {
-		this.fileSize = fileSize;
-	}
-	/**
 	 * @param count the count to set
 	 */
 	public void setCount(int count) {
 		this.count = count;
-	}
-	/**
-	 * @param productionType the productionType to set
-	 */
-	public void setProductionType(String productionType) {
-		this.productionType = productionType;
-	}
-	/**
-	 * @param productionLatencyMin the productionLatencyMin to set
-	 */
-	public void setProductionLatencyMin(int productionLatencyMin) {
-		this.productionLatencyMin = productionLatencyMin;
-	}
-	/**
-	 * @param productionLatencyMax the productionLatencyMax to set
-	 */
-	public void setProductionLatencyMax(int productionLatencyMax) {
-		this.productionLatencyMax = productionLatencyMax;
-	}
-	/**
-	 * @param productionLatencyAvg the productionLatencyAvg to set
-	 */
-	public void setProductionLatencyAvg(int productionLatencyAvg) {
-		this.productionLatencyAvg = productionLatencyAvg;
 	}
 	/**
 	 * @param totalLatencyMin the totalLatencyMin to set
@@ -191,6 +130,66 @@ abstract public class MonProductProduction extends PersistentObject {
 	 */
 	public void setDatetime(Instant datetime) {
 		this.datetime = datetime;
+	}
+	/**
+	 * @return the spacecraftCode
+	 */
+	public String getSpacecraftCode() {
+		return spacecraftCode;
+	}
+	/**
+	 * @return the downloadSize
+	 */
+	public long getDownloadSize() {
+		return downloadSize;
+	}
+	/**
+	 * @return the downloadLatencyMin
+	 */
+	public int getDownloadLatencyMin() {
+		return downloadLatencyMin;
+	}
+	/**
+	 * @return the downloadLatencyMax
+	 */
+	public int getDownloadLatencyMax() {
+		return downloadLatencyMax;
+	}
+	/**
+	 * @return the downloadLatencyAvg
+	 */
+	public int getDownloadLatencyAvg() {
+		return downloadLatencyAvg;
+	}
+	/**
+	 * @param spacecraftCode the spacecraftCode to set
+	 */
+	public void setSpacecraftCode(String spacecraftCode) {
+		this.spacecraftCode = spacecraftCode;
+	}
+	/**
+	 * @param downloadSize the downloadSize to set
+	 */
+	public void setDownloadSize(long downloadSize) {
+		this.downloadSize = downloadSize;
+	}
+	/**
+	 * @param downloadLatencyMin the downloadLatencyMin to set
+	 */
+	public void setDownloadLatencyMin(int downloadLatencyMin) {
+		this.downloadLatencyMin = downloadLatencyMin;
+	}
+	/**
+	 * @param downloadLatencyMax the downloadLatencyMax to set
+	 */
+	public void setDownloadLatencyMax(int downloadLatencyMax) {
+		this.downloadLatencyMax = downloadLatencyMax;
+	}
+	/**
+	 * @param downloadLatencyAvg the downloadLatencyAvg to set
+	 */
+	public void setDownloadLatencyAvg(int downloadLatencyAvg) {
+		this.downloadLatencyAvg = downloadLatencyAvg;
 	}
 
 }

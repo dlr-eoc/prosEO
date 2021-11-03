@@ -27,6 +27,7 @@ import javax.persistence.PersistenceContext;
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
 import de.dlr.proseo.monitor.product.MonitorProducts;
+import de.dlr.proseo.monitor.rawdata.MonitorRawdatas;
 
 /*
  * prosEO Planner application
@@ -80,6 +81,7 @@ public class MonitorApplication implements CommandLineRunner {
 	private MonitorServices monServices = null;
 	private MonitorOrders monOrders = null;
 	private MonitorProducts monProducts = null;
+	private MonitorRawdatas monRawdatas = null;
 	
 	/**
 	 * Initialize and run application 
@@ -200,6 +202,42 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 		monOrders = null;
 	}
+	/**
+	 * Start the kube dispatcher thread
+	 */
+	@Transactional
+	public void startMonitorRawdatas() {
+		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
+		
+		if (monRawdatas == null || !monRawdatas.isAlive()) {
+			monRawdatas = new MonitorRawdatas(monitorConfig, txManager);
+			monRawdatas.start();
+		} else {
+			if (monRawdatas.isInterrupted()) {
+				// kubeDispatcher
+			}
+		}
+	}
+
+	/**
+	 * Stop the kube dispatcher thread
+	 */
+	public void stopMonitorRawdatas() {
+		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
+		
+		if (monRawdatas != null && monRawdatas.isAlive()) {
+			monRawdatas.interrupt();
+			int i = 0;
+			while (monRawdatas.isAlive() && i < 100) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		monOrders = null;
+	}
 	/* (non-Javadoc)
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
 	 */
@@ -221,7 +259,8 @@ public class MonitorApplication implements CommandLineRunner {
 
 		startMonitorServices();
 		startMonitorOrders();	
-		startMonitorProducts();		
+		startMonitorProducts();	
+		startMonitorRawdatas();			
 	}
 
 	

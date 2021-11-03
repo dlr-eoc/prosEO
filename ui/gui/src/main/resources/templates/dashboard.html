@@ -169,10 +169,10 @@
 											th:text="${jobstep?.jobStepState}"></span></td>
 										<td><a th:href="'order?id=' + ${jobstep?.orderId}"><span
 												th:text="${jobstep?.orderIdentifier}"></span></a></td>
+										<td><span th:text="${jobstep?.processingMode}"></span></td>
 										<td><a
 											th:href="'/productclass-show?productClass=' + ${jobstep?.outputProductClass}"
 											th:text="' ' + ${jobstep?.outputProductClass}"></a></td>
-										<td><span th:text="${jobstep?.processingMode}"></span></td>
 										<td><a th:each="comp : ${jobstep?.inputProductClasses}"
 											class="proseo-list-item"
 											th:href="'/productclass-show?productClass=' + ${comp}"

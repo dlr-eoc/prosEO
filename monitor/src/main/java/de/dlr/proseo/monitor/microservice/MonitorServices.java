@@ -31,6 +31,7 @@ public class MonitorServices extends Thread {
 	
 	public MonitorServices(MonitorConfiguration config) {
 		this.config = config;
+		this.setName("MonitorServices");
 		this.services = new ArrayList<MicroService>();
 		this.monServices = new HashMap<String, MonService>();
 		this.monExtServices = new HashMap<String, MonExtService>();

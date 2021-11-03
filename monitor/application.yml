@@ -18,11 +18,13 @@ proseo:
         readTimeout: 1000
         cycle: 10000
         serviceCycle: 10000
-        orderCycle: 5000
+        orderCycle: 30000
         productCycle: 60000
+        rawdataCycle: 60000
+        aggregationStart: "2021-10-19T00:00:00.000000Z"
         services:
             -
-                name: Planner
+                name: "Production Planner"
                 nameId: planner
                 url: http://192.168.20.155:8080/actuator/health
                 hasActuator: true
@@ -34,6 +36,13 @@ proseo:
                 docker: machine1
                 hasActuator: false
                 isProseo: true
+            -
+                name: Grafana
+                nameId: jovial_hofstadter
+                url: http://192.168.20.155:3000/
+                docker: machine1
+                hasActuator: false
+                isProseo: true                
             -
                 name: XBIP-Monitor
                 nameId: xbip-monitor
@@ -48,12 +57,12 @@ proseo:
                 hasActuator: false
                 isProseo: false
             -
-                name: "Object Storage"
+                name: "S3 Object Storage"
                 nameId: root_minio_1
                 url: http://192.168.20.191:9000/
                 docker: machine2
                 hasActuator: false
-                isProseo: false
+                isProseo: true
         dockers:
             -
                 name: machine1
