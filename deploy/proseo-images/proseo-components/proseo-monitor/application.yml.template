@@ -15,9 +15,14 @@ logging:
         de.dlr.proseo: TRACE
 proseo:
     monitor:
-        connectTimeout: 1000
-        readTimeout: 1000
+        connectTimeout: 5000
+        readTimeout: 5000
         cycle: 10000
+        serviceCycle: 10000
+        orderCycle: 30000
+        productCycle: 60000
+        rawdataCycle: 60000
+        aggregationStart: "yyyy-mm-ddT00:00:00.000000Z"
         services:
             # prosEO Metadata Database
             -
@@ -27,6 +32,7 @@ proseo:
                 docker: brain
                 hasActuator: false
                 isProseo: true
+ 
             # prosEO Internal Services
             -
                 name: "PRIP API"
@@ -86,7 +92,7 @@ proseo:
                 isProseo: true
             -
                 name: "Storage Manager"
-                nameId: proseo_proseo-productclass-mgr_1
+                nameId: proseo_proseo-storage-mgr_1
                 url: http://10.x.x.b:8080/actuator/health
                 docker: nfsserver
                 hasActuator: true

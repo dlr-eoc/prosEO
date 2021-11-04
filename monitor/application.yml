@@ -23,12 +23,15 @@ proseo:
         rawdataCycle: 60000
         aggregationStart: "2021-10-19T00:00:00.000000Z"
         services:
+            # prosEO Metadata Database
             -
                 name: "Production Planner"
                 nameId: planner
                 url: http://192.168.20.155:8080/actuator/health
                 hasActuator: true
                 isProseo: true
+
+            # prosEO Internal Services
             -
                 name: Database
                 nameId: proseo
@@ -56,6 +59,8 @@ proseo:
                 url: http://192.168.20.156:8080/proseo/xbip-monitor/v1/mti/status
                 hasActuator: false
                 isProseo: false
+
+            # prosEO Supporting Services (shown as "Internal")
             -
                 name: "S3 Object Storage"
                 nameId: root_minio_1
