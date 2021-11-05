@@ -93,18 +93,8 @@ Starting the logging and monitoring consists of two tasks:
 
 ## Start the logging and monitoring applications
 
-Log in to the loghost via the control instance bastion host, then create the containers for InfluxDB, Grafana and Telegraf:
+Log in to the loghost via the control instance bastion host, then create the containers for the prosEO Monitor and Grafana:
 ```
 cd /opt/proseo
 docker-compose -p proseo up -d
-```
-
-## Configure the monitoring database (only once!)
-
-```
-  docker exec proseo_influxdb_1 influx bucket create -n operation -o proseo
-  docker exec proseo_influxdb_1 influx bucket create -n order -o proseo
-  docker exec proseo_influxdb_1 influx bucket create -n production -o proseo
-
-  docker exec proseo_influxdb_1 influx user create --name example-username --password ExAmPl3PA55W0rD
 ```

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
@@ -299,7 +300,11 @@ public class FacmgrManager {
 		if (!modelFacility.getStorageManagerUrl().equals(changedFacility.getStorageManagerUrl())) {
 			facilityChanged = true;
 			modelFacility.setStorageManagerUrl(changedFacility.getStorageManagerUrl());
-		}	
+		}
+		if (!Objects.equals(modelFacility.getExternalStorageManagerUrl(), changedFacility.getExternalStorageManagerUrl())) {
+			facilityChanged = true;
+			modelFacility.setExternalStorageManagerUrl(changedFacility.getExternalStorageManagerUrl());
+		}
 		if (null == modelFacility.getLocalStorageManagerUrl()) {
 			if (null == changedFacility.getLocalStorageManagerUrl()) {
 				// No change

@@ -31,10 +31,6 @@ public class XbipMonitorConfiguration {
 	@Value("${proseo.xbip.satellite}")
 	private String xbipSatellite;
 	
-	/** The X-band station unit ID (default "00") */
-	@Value("${proseo.xbip.station.unit:00}")
-	private String xbipStationUnit;
-	
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.xbip.check.interval}")
 	private Long xbipCheckInterval;
@@ -112,15 +108,6 @@ public class XbipMonitorConfiguration {
 	 */
 	public String getXbipSatellite() {
 		return xbipSatellite;
-	}
-
-	/**
-	 * Gets the X-band station unit ID
-	 * 
-	 * @return the 2-digit station unit ID
-	 */
-	public String getXbipStationUnit() {
-		return xbipStationUnit;
 	}
 
 	/**

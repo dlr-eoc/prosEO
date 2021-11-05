@@ -161,7 +161,7 @@ public class XbipMonitorTest {
 		Path historyFilePath = Paths.get(TEST_DATA_DIR + File.separator + "history.file");
 		assertTrue("History file not found", Files.exists(historyFilePath));
 		try {
-			assertEquals("History file has unexpected size: ", 112, Files.size(historyFilePath));
+			assertEquals("History file has unexpected size: ", 106, Files.size(historyFilePath));
 		} catch (IOException e) {
 			fail("Cannot access history file, cause: " + e.getMessage());
 		}

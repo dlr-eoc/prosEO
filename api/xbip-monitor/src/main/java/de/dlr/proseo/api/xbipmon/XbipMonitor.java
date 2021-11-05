@@ -16,7 +16,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,12 +51,8 @@ public class XbipMonitor extends BaseMonitor {
 	/** The satellite identifier (e. g. "S1B") */
 	private String satelliteIdentifier;
 	
-	/** The X-band station unit ID */
-	private String stationUnitIdentifier;
-
-	/** Filter for directory based on station unit ID */
-	private String sessionFilter;
-	private static String SESSION_FILTER_FORMAT = "DCS_%s_*_dat";
+	/** Filter for directory */
+	private static String SESSION_FILTER_FORMAT = "DCS_*_*_dat";
 	
 	/** The path to the target CADU directory (for L0 processing) */
 	private Path caduDirectoryPath;
@@ -103,11 +98,11 @@ public class XbipMonitor extends BaseMonitor {
 	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
 	private static final int MSG_ID_CANNOT_READ_DSIB_FILE = 5312;
 	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
-	private static final Object MSG_ID_COPY_TIMEOUT = 5314;
+	private static final int MSG_ID_COPY_TIMEOUT = 5314;
+	private static final int MSG_ID_SKIPPING_SESSION_DIRECTORY = 5315;
 
 	/* Message string constants */
 	private static final String MSG_XBIP_NOT_READABLE = "(E%d) XBIP directory %s not readable (cause: %s)";
-	private static final String MSG_XBIP_ENTRY_MALFORMED = "(E%d) Malformed XBIP directory entry %s found - skipped";
 	private static final String MSG_TRANSFER_OBJECT_IS_NULL = "(E%d) Transfer object is null - skipped";
 	private static final String MSG_INVALID_TRANSFER_OBJECT_TYPE = "(E%d) Transfer object %s of invalid type found - skipped";
 	private static final String MSG_CANNOT_CREATE_TARGET_DIR = "(E%d) Cannot create channel directory in target directory %s - skipped";
@@ -120,24 +115,24 @@ public class XbipMonitor extends BaseMonitor {
 			+ "expected size %d, actual size %d";
 	private static final String MSG_COPY_TIMEOUT = "(E%d) Timeout after %s s during wait for download of file %s, download cancelled";
 
+	private static final String MSG_XBIP_ENTRY_MALFORMED = "(W%d) Malformed XBIP directory entry %s found - skipped";
+	private static final String MSG_SKIPPING_SESSION_DIRECTORY = "(W%d) Skipping inaccessible session directory %s";
+	
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
 	private static final String MSG_SESSION_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed with result %s";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(XbipMonitorConfiguration.class);
+	private static Logger logger = LoggerFactory.getLogger(XbipMonitor.class);
 	
 	/**
 	 * Class describing a download session
 	 */
-	protected static class TransferSession implements TransferObject {
+	public static class TransferSession implements TransferObject {
 		
 		/** The satellite identifier */
 		private String satelliteIdentifier;
-		
-		/** The X-band station unit ID */
-		private String stationUnitIdentifier;
 		
 		/** The XBIP session identifier */
 		private String sessionIdentifier;
@@ -191,7 +186,7 @@ public class XbipMonitor extends BaseMonitor {
 		 */
 		@Override
 		public String getIdentifier() {
-			return String.format("%s_%s_%s", stationUnitIdentifier, satelliteIdentifier, sessionIdentifier);
+			return String.format("%s_%s", satelliteIdentifier, sessionIdentifier);
 		}
 		
 		/**
@@ -217,7 +212,7 @@ public class XbipMonitor extends BaseMonitor {
 	/**
 	 * Class describing a download channel
 	 */
-	protected static class DataSessionInformationBlock {
+	public static class DataSessionInformationBlock {
 		public String session_id;
 		public String time_start;
 		public String time_stop;
@@ -234,9 +229,7 @@ public class XbipMonitor extends BaseMonitor {
 	private void init() {
 		xbipDirectory = Paths.get(config.getXbipDirectoryPath());
 		satelliteIdentifier = config.getXbipSatellite();
-		stationUnitIdentifier = config.getXbipStationUnit();
 		xbipDirectory = xbipDirectory.resolve(satelliteIdentifier);
-		sessionFilter = String.format(SESSION_FILTER_FORMAT, stationUnitIdentifier);
 		
 		this.setTransferHistoryFile(Paths.get(config.getXbipHistoryPath()));
 		this.setCheckInterval(config.getXbipCheckInterval());
@@ -257,7 +250,6 @@ public class XbipMonitor extends BaseMonitor {
 		logger.info("------  Starting XBIP Monitor  ------");
 		logger.info("XBIP directory . . . . . . : " + xbipDirectory);
 		logger.info("Satellite  . . . . . . . . : " + satelliteIdentifier);
-		logger.info("X-band station unit  . . . : " + stationUnitIdentifier);
 		logger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
 		logger.info("XBIP check interval  . . . : " + this.getCheckInterval());
 		logger.info("History truncation interval: " + this.getTruncateInterval());
@@ -370,9 +362,9 @@ public class XbipMonitor extends BaseMonitor {
 		
 		if (Files.isDirectory(xbipDirectory) && Files.isReadable(xbipDirectory)) {
 			
-			if (logger.isTraceEnabled()) logger.trace("... checking directory {} with session filter {}", xbipDirectory, sessionFilter);
+			if (logger.isTraceEnabled()) logger.trace("... checking directory {} with session filter {}", xbipDirectory, SESSION_FILTER_FORMAT);
 			
-			try (DirectoryStream<Path> xbipList = Files.newDirectoryStream(xbipDirectory, sessionFilter)) {
+			try (DirectoryStream<Path> xbipList = Files.newDirectoryStream(xbipDirectory, SESSION_FILTER_FORMAT)) {
 				
 				if (logger.isTraceEnabled()) logger.trace("... xbipList created " + xbipList);
 				
@@ -391,6 +383,11 @@ public class XbipMonitor extends BaseMonitor {
 					List<Path> dsibFilePaths = new ArrayList<>();
 					
 					String[] channelEntries = sessionEntry.toFile().list();
+					if (null == channelEntries) {
+						logger.warn(String.format(MSG_SKIPPING_SESSION_DIRECTORY, MSG_ID_SKIPPING_SESSION_DIRECTORY,
+								sessionEntry.getFileName().toString()));
+						return;
+					}
 					if (0 == channelEntries.length) {
 						logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
 								sessionEntry.getFileName().toString()));
@@ -423,7 +420,6 @@ public class XbipMonitor extends BaseMonitor {
 					// Session transfer is complete, create transfer object
 					TransferSession transferSession = new TransferSession();
 					transferSession.satelliteIdentifier = satelliteIdentifier;
-					transferSession.stationUnitIdentifier = stationUnitIdentifier;
 					transferSession.sessionIdentifier = sessionEntryParts[3];
 					transferSession.sessionPath = sessionEntry;
 					transferSession.dsibFilePaths = dsibFilePaths;
