@@ -186,7 +186,7 @@ public class MicroService {
 						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
-					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
+					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, String.class);
 					if (response.getStatusCode().is2xxSuccessful() || 
 							response.getStatusCode().is3xxRedirection() || 
 							HttpStatus.BAD_REQUEST.equals(response.getStatusCode()) || 
