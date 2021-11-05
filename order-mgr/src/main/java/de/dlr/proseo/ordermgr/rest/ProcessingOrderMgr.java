@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1102,5 +1103,186 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
 		*/
 	}
+
+	@Transactional
+	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		Iterable<ProcessingOrder> orders;
+		List<RestOrder> list = new ArrayList<RestOrder>();
+		Query query = createOrdersQuery(mission, identifier, state, 
+				startTime, stopTime, orderBy, false);
+
+		List<String> productClasses = null;
+		if (productClass != null && productClass.length > 0) {
+			productClasses = new ArrayList<String>();
+			for (String s : productClass) {
+				productClasses.add(s);
+			}			
+		}
+		if (recordFrom == null) {
+			recordFrom = (long) 0;
+		}
+		if (recordTo == null) {
+			recordTo = Long.MAX_VALUE;
+		}
+		Long i = recordFrom;
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof ProcessingOrder) {
+				// Filter depending on product visibility and user authorization
+				ProcessingOrder order = (ProcessingOrder) resultObject;
+				if (productClasses != null) {
+					for (ProductClass pc : order.getRequestedProductClasses()) {
+						if (productClasses.contains(pc.getProductType())) {
+							i++;
+							list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+							break;
+						}
+					}
+				} else {
+					i++;
+					list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+				}
+			}
+			if (i >= recordTo) {
+				break;
+			}
+		}		
+
+		return list;
+	}
+	
+	@Transactional
+	public String countSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		Iterable<ProcessingOrder> orders;
+		List<ProcessingOrder> list = new ArrayList<ProcessingOrder>();
+		Query query = createOrdersQuery(mission, identifier, state, 
+				startTime, stopTime, orderBy, true);
+
+		List<String> productClasses = null;
+		if (productClass != null && productClass.length > 0) {
+			productClasses = new ArrayList<String>();
+			for (String s : productClass) {
+				productClasses.add(s);
+			}			
+		}
+		if (recordFrom == null) {
+			recordFrom = (long) 0;
+		}
+		if (recordTo == null) {
+			recordTo = Long.MAX_VALUE;
+		}
+		Long i = recordFrom;
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof ProcessingOrder) {
+				// Filter depending on product visibility and user authorization
+				ProcessingOrder order = (ProcessingOrder) resultObject;
+				if (productClasses != null) {
+					for (ProductClass pc : order.getRequestedProductClasses()) {
+						if (productClasses.contains(pc.getProductType())) {
+							i++;
+							list.add(order);
+							break;
+						}
+					}
+				} else {
+					i++;
+					list.add(order);
+				}
+			}
+			if (i >= recordTo) {
+				break;
+			}
+		}		
+
+		
+		return null;
+	}
+	
+
+	/**
+	 * Create a JPQL query to retrieve the requested set of products
+	 * 
+	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param productClass an array of product types
+	 * @param startTimeFrom earliest sensing start time
+	 * @param startTimeTo latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param jobStepId get input products of job step
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @return JPQL Query
+	 */
+	private Query createOrdersQuery(String mission, String identifier, String[] state, 
+			String startTime, String stopTime, String[] orderBy, Boolean count) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				startTime, stopTime, orderBy, count);
+		
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(p) from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		}
+		if (null != state && 0 < state.length) {
+			jpqlQuery += " and p.orderState in (";
+			for (int i = 0; i < state.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":orderState" + i;
+			}
+			jpqlQuery += ")";
+		}
+		if (null != identifier) {
+			jpqlQuery += " and upper(p.identifier) like :identifier";
+		}
+		if (null != startTime) {
+			jpqlQuery += " and p.startTime >= :startTime";
+		}
+		if (null != stopTime) {
+			jpqlQuery += " and p.stopTime <= :stopTime";
+		}
+				
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				String[] orderb = orderBy[i].split(" ");
+				jpqlQuery += "p.";
+				jpqlQuery += orderb[0];
+				if (orderb.length > 1) {
+					jpqlQuery += " ";
+					jpqlQuery += orderb[1];
+				}
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		if (null != mission) {
+			query.setParameter("missionCode", mission);
+		}
+		if (null != state && 0 < state.length) {
+			for (int i = 0; i < state.length; ++i) {
+				query.setParameter("orderState" + i, OrderState.valueOf(state[i]));
+			}
+		}
+		if (null != identifier) {
+			query.setParameter("identifier", identifier.toUpperCase());
+		}
+
+		if (null != startTime) {
+			query.setParameter("startTime", Instant.parse(startTime + "T00:00:00Z"));
+		}
+		
+		if (null != stopTime) {
+			query.setParameter("stopTime", Instant.parse(stopTime + "T00:00:00Z").plus(1, ChronoUnit.DAYS));
+		}
+		return query;
+	}
+
 
 }

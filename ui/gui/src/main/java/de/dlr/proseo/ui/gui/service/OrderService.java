@@ -43,7 +43,7 @@ public class OrderService {
 			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getProductionPlanner() + "/orders/select";
+		String uri = config.getOrderManager() + "/orders/select";
 		
 		String divider = "?";
 		if (mission != null && !mission.isEmpty()) {

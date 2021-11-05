@@ -74,26 +74,6 @@ resourceTypes:
       displayName: deleteOrder
       responses:
         204:
-  /select:
-    get:
-      description: Get all processing orders selected by parameters
-      displayName: getAndSelectOrders
-      queryParameters:
-        mission?: string
-        identifier?: string
-        state?: string[]
-        productClass?: string[]
-        startTime?: string
-        stopTime?: string
-        recordFrom?: integer
-        recordTo?: integer
-        orderBy?: string[]
-      responses:
-        200:
-          body:
-            application/json:
-              type: RestOrder[]
-              example: !include ../../../../../model/src/main/resources/raml/examples/order-list.json
   /approve:
     /{id}:
       patch:
