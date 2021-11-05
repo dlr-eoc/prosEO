@@ -114,7 +114,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -142,14 +142,25 @@ public class MonitorProducts extends Thread {
 						totalLatencyMin = Math.min(totalLatencyMin, totalLatency);
 						totalLatencyMax = Math.max(totalLatencyMax, totalLatency);
 						for (ProductFile f : product.getProductFile()) {
-							fileSize += f.getFileSize();
+							fileSize = fileSize.add(BigInteger.valueOf(f.getFileSize()));
 						}
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
@@ -223,7 +234,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -249,13 +260,24 @@ public class MonitorProducts extends Thread {
 							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
 						}
 						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
-						fileSize += productProduction.getFileSize();
+						fileSize = fileSize.add(BigInteger.valueOf(productProduction.getFileSize()));
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
@@ -334,7 +356,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -360,13 +382,24 @@ public class MonitorProducts extends Thread {
 							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
 						}
 						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
-						fileSize += productProduction.getFileSize();
+						fileSize = fileSize.add(BigInteger.valueOf(productProduction.getFileSize()));
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
