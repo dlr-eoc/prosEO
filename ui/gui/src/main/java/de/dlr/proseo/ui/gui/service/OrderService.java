@@ -77,11 +77,11 @@ public class OrderService {
 			uri += divider + "stopTime=" + to;
 			divider ="&";
 		}
-		if (recordFrom != null && !to.isEmpty()) {
+		if (recordFrom != null) {
 			uri += divider + "recordFrom=" + recordFrom;
 			divider ="&";
 		}
-		if (recordTo != null && !to.isEmpty()) {
+		if (recordTo != null) {
 			uri += divider + "recordTo=" + recordTo;
 			divider ="&";
 		}

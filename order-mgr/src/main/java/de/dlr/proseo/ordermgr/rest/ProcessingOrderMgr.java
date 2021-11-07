@@ -1126,26 +1126,30 @@ public class ProcessingOrderMgr {
 		if (recordTo == null) {
 			recordTo = Long.MAX_VALUE;
 		}
-		Long i = recordFrom;
+		Long i = (long) 0;
 		for (Object resultObject: query.getResultList()) {
-			if (resultObject instanceof ProcessingOrder) {
-				// Filter depending on product visibility and user authorization
-				ProcessingOrder order = (ProcessingOrder) resultObject;
-				if (productClasses != null) {
-					for (ProductClass pc : order.getRequestedProductClasses()) {
-						if (productClasses.contains(pc.getProductType())) {
-							i++;
-							list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
-							break;
+			if (i < recordFrom) {
+				i++;
+			} else {
+				if (resultObject instanceof ProcessingOrder) {
+					// Filter depending on product visibility and user authorization
+					ProcessingOrder order = (ProcessingOrder) resultObject;
+					if (productClasses != null) {
+						for (ProductClass pc : order.getRequestedProductClasses()) {
+							if (productClasses.contains(pc.getProductType())) {
+								i++;
+								list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+								break;
+							}
 						}
+					} else {
+						i++;
+						list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
 					}
-				} else {
-					i++;
-					list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
 				}
-			}
-			if (i >= recordTo) {
-				break;
+				if (i >= recordTo) {
+					break;
+				}
 			}
 		}		
 
@@ -1156,10 +1160,8 @@ public class ProcessingOrderMgr {
 	public String countSelectOrders(String mission, String identifier, String[] state, 
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
 
-		Iterable<ProcessingOrder> orders;
-		List<ProcessingOrder> list = new ArrayList<ProcessingOrder>();
 		Query query = createOrdersQuery(mission, identifier, state, 
-				startTime, stopTime, orderBy, true);
+				startTime, stopTime, orderBy, false);
 
 		List<String> productClasses = null;
 		if (productClass != null && productClass.length > 0) {
@@ -1174,22 +1176,20 @@ public class ProcessingOrderMgr {
 		if (recordTo == null) {
 			recordTo = Long.MAX_VALUE;
 		}
-		Long i = recordFrom;
+		Long i = (long) 0;
 		for (Object resultObject: query.getResultList()) {
 			if (resultObject instanceof ProcessingOrder) {
 				// Filter depending on product visibility and user authorization
-				ProcessingOrder order = (ProcessingOrder) resultObject;
 				if (productClasses != null) {
+					ProcessingOrder order = (ProcessingOrder) resultObject;
 					for (ProductClass pc : order.getRequestedProductClasses()) {
 						if (productClasses.contains(pc.getProductType())) {
 							i++;
-							list.add(order);
 							break;
 						}
 					}
 				} else {
 					i++;
-					list.add(order);
 				}
 			}
 			if (i >= recordTo) {
@@ -1198,7 +1198,7 @@ public class ProcessingOrderMgr {
 		}		
 
 		
-		return null;
+		return i.toString();
 	}
 	
 
@@ -1243,7 +1243,7 @@ public class ProcessingOrderMgr {
 			jpqlQuery += " and p.startTime >= :startTime";
 		}
 		if (null != stopTime) {
-			jpqlQuery += " and p.stopTime <= :stopTime";
+			jpqlQuery += " and p.startTime <= :stopTime";
 		}
 				
 		// order by
@@ -1275,11 +1275,11 @@ public class ProcessingOrderMgr {
 		}
 
 		if (null != startTime) {
-			query.setParameter("startTime", Instant.parse(startTime + "T00:00:00Z"));
+			query.setParameter("startTime", OrbitTimeFormatter.parseDateTime(startTime));
 		}
 		
 		if (null != stopTime) {
-			query.setParameter("stopTime", Instant.parse(stopTime + "T00:00:00Z").plus(1, ChronoUnit.DAYS));
+			query.setParameter("stopTime", OrbitTimeFormatter.parseDateTime(stopTime));
 		}
 		return query;
 	}
