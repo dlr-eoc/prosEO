@@ -121,11 +121,11 @@ public class MonitorRawdatas extends Thread {
 					// analyze products and collect aggregation
 					for (MonRawDataDownload rawData : rawDatas) {
 						count++;
-						int totalLatency = (int)Duration.between(rawData.getDownloadTime(), rawData.getDataStopTime()).toSeconds();
+						int totalLatency = (int)Duration.between(rawData.getDataStopTime(), rawData.getDownloadTime()).toSeconds();
 						int  prodLatency;
 						
 						if (rawData.getRawDataAvailabilityTime() != null) {
-							prodLatency = (int)Duration.between(rawData.getDownloadTime(), rawData.getRawDataAvailabilityTime()).toSeconds();
+							prodLatency = (int)Duration.between(rawData.getRawDataAvailabilityTime(), rawData.getDownloadTime()).toSeconds();
 						} else {
 							prodLatency = totalLatency;
 						}
