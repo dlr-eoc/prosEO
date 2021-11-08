@@ -27,6 +27,12 @@ import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+/**
+ * The thread monitoring the raw data
+ * 
+ * @author Melchinger
+ *
+ */
 @Transactional
 public class MonitorRawdatas extends Thread {
 	private static Logger logger = LoggerFactory.getLogger(MonitorRawdatas.class);	
@@ -38,15 +44,27 @@ public class MonitorRawdatas extends Thread {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
+	/**
+	 * The monitor configuration (application.yml) 
+	 */
 	private MonitorConfiguration config;
 
+	/**
+	 * Instantiate the monitor raw data thread
+	 * 
+	 * @param config The monitor configuration
+	 * @param txManager The transaction manager
+	 */
 	public MonitorRawdatas(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
 		this.setName("MonitorRawdatas");
 	}
-	
+
+	/**
+	 * Collect the monitoring information of raw data for day and month
+	 */
 	@Transactional
 	public void checkRawDatas() {
 		Instant now = Instant.now();
@@ -292,11 +310,11 @@ public class MonitorRawdatas extends Thread {
 				}
 			}
 		}
-		
-		
-		
 	}
-	
+
+    /**
+     * Start the monitor thread
+     */	
     public void run() {
     	Long wait = (long) 100000;
     	try {

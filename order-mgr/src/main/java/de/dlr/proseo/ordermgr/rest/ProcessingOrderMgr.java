@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -16,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,8 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -1104,11 +1100,25 @@ public class ProcessingOrderMgr {
 		*/
 	}
 
+	/**
+	 * Retrieve a list of orders satisfying the selection parameters
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
+	 * @param productClass an array of product types
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * 
+	 * @return The result list
+	 */
 	@Transactional
 	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, 
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
 
-		Iterable<ProcessingOrder> orders;
 		List<RestOrder> list = new ArrayList<RestOrder>();
 		Query query = createOrdersQuery(mission, identifier, state, 
 				startTime, stopTime, orderBy, false);
@@ -1156,6 +1166,21 @@ public class ProcessingOrderMgr {
 		return list;
 	}
 	
+	/**
+	 * Calculate the amount of orders satisfying the selection parameters
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
+	 * @param productClass an array of product types
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * 
+	 * @return The order count
+	 */
 	@Transactional
 	public String countSelectOrders(String mission, String identifier, String[] state, 
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
@@ -1205,14 +1230,17 @@ public class ProcessingOrderMgr {
 	/**
 	 * Create a JPQL query to retrieve the requested set of products
 	 * 
-	 * @param mission the mission code (will be set to logged in mission, if not given; otherwise must match logged in mission)
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
 	 * @param productClass an array of product types
-	 * @param startTimeFrom earliest sensing start time
-	 * @param startTimeTo latest sensing start time
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
 	 * @param recordFrom first record of filtered and ordered result to return
 	 * @param recordTo last record of filtered and ordered result to return
-	 * @param jobStepId get input products of job step
 	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @param count if true, do count, otherwise retrieve 
+	 * 
 	 * @return JPQL Query
 	 */
 	private Query createOrdersQuery(String mission, String identifier, String[] state, 

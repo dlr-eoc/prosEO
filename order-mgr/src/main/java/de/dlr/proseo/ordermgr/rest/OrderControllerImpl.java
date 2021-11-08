@@ -122,6 +122,10 @@ public class OrderControllerImpl implements OrderController {
 		}
 	}
 
+	
+	/**
+	 * Retrieve a list of orders satisfying the selection parameters
+	 */
 	@Override
 	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state, 
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
@@ -138,6 +142,10 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	/**
+	 * Calculate the amount of orders satisfying the selection parameters
+	 * 
+	 */
 	@Override
 	public ResponseEntity<String> countSelectOrders(String mission, String identifier, String[] state, 
 			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {

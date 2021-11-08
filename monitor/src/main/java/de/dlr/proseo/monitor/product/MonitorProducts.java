@@ -7,11 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -33,6 +29,12 @@ import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+/**
+ * The thread monitoring the products
+ * 
+ * @author Melchinger
+ *
+ */
 @Transactional
 public class MonitorProducts extends Thread {
 	private static Logger logger = LoggerFactory.getLogger(MonitorProducts.class);	
@@ -44,15 +46,27 @@ public class MonitorProducts extends Thread {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
+	/**
+	 * The monitor configuration (application.yml) 
+	 */
 	private MonitorConfiguration config;
 
+	/**
+	 * Instantiate the monitor products thread
+	 * 
+	 * @param config The monitor configuration
+	 * @param txManager The transaction manager
+	 */
 	public MonitorProducts(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
 		this.setName("MonitorProducts");
 	}
-	
+
+	/**
+	 * Collect the monitoring information of production for hour, day and month
+	 */
 	@Transactional
 	public void checkProducts() {
 		Instant now = Instant.now();
@@ -414,11 +428,11 @@ public class MonitorProducts extends Thread {
 				}
 			}
 		}
-		
-		
-		
 	}
-	
+
+    /**
+     * Start the monitor thread
+     */
     public void run() {
     	Long wait = (long) 100000;
     	try {
