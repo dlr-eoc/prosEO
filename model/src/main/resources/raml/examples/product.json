@@ -16,7 +16,7 @@
     },
     "parameters": [
         {
-            "key": "copernicusCollection",
+            "key": "baselineCollection",
             "parameterType": "INTEGER",
             "parameterValue": "99"
         },
