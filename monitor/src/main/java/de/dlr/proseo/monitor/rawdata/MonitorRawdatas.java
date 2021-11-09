@@ -27,6 +27,12 @@ import de.dlr.proseo.model.Spacecraft;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+/**
+ * The thread monitoring the raw data
+ * 
+ * @author Melchinger
+ *
+ */
 @Transactional
 public class MonitorRawdatas extends Thread {
 	private static Logger logger = LoggerFactory.getLogger(MonitorRawdatas.class);	
@@ -38,15 +44,27 @@ public class MonitorRawdatas extends Thread {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
+	/**
+	 * The monitor configuration (application.yml) 
+	 */
 	private MonitorConfiguration config;
 
+	/**
+	 * Instantiate the monitor raw data thread
+	 * 
+	 * @param config The monitor configuration
+	 * @param txManager The transaction manager
+	 */
 	public MonitorRawdatas(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
 		this.setName("MonitorRawdatas");
 	}
-	
+
+	/**
+	 * Collect the monitoring information of raw data for day and month
+	 */
 	@Transactional
 	public void checkRawDatas() {
 		Instant now = Instant.now();
@@ -108,7 +126,7 @@ public class MonitorRawdatas extends Thread {
 					downlinkDay.setTotalLatencyMax(0);
 					downlinkDay.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger downloadLatencySum = BigInteger.valueOf(0);
 					int downloadLatencyAvg = 0;
 					int downloadLatencyMin = Integer.MAX_VALUE;
@@ -121,11 +139,11 @@ public class MonitorRawdatas extends Thread {
 					// analyze products and collect aggregation
 					for (MonRawDataDownload rawData : rawDatas) {
 						count++;
-						int totalLatency = (int)Duration.between(rawData.getDownloadTime(), rawData.getDataStopTime()).toSeconds();
+						int totalLatency = (int)Duration.between(rawData.getDataStopTime(), rawData.getDownloadTime()).toSeconds();
 						int  prodLatency;
 						
 						if (rawData.getRawDataAvailabilityTime() != null) {
-							prodLatency = (int)Duration.between(rawData.getDownloadTime(), rawData.getRawDataAvailabilityTime()).toSeconds();
+							prodLatency = (int)Duration.between(rawData.getRawDataAvailabilityTime(), rawData.getDownloadTime()).toSeconds();
 						} else {
 							prodLatency = totalLatency;
 						}
@@ -135,13 +153,24 @@ public class MonitorRawdatas extends Thread {
 						totalLatencySum = totalLatencySum.add(BigInteger.valueOf(totalLatency));
 						totalLatencyMin = Math.min(totalLatencyMin, totalLatency);
 						totalLatencyMax = Math.max(totalLatencyMax, totalLatency);
-						fileSize += rawData.getDownloadSize();
+						fileSize = fileSize.add(BigInteger.valueOf(rawData.getDownloadSize()));
 					}
 					if (count > 0) {
-						downloadLatencyAvg = downloadLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = downloadLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("downloadLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						downloadLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						downlinkDay.setCount(count);
-						downlinkDay.setDownloadSize(fileSize);
+						downlinkDay.setDownloadSize(fileSize.longValue());
 						downlinkDay.setDownloadLatencyAvg(downloadLatencyAvg);
 						downlinkDay.setDownloadLatencyMin(downloadLatencyMin==Integer.MAX_VALUE?0:downloadLatencyMin);
 						downlinkDay.setDownloadLatencyMax(downloadLatencyMax);
@@ -223,7 +252,7 @@ public class MonitorRawdatas extends Thread {
 					rawDataMonth.setTotalLatencyMax(0);
 					rawDataMonth.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger downloadLatencySum = BigInteger.valueOf(0);
 					int downloadLatencyAvg = 0;
 					int downloadLatencyMin = Integer.MAX_VALUE;
@@ -249,13 +278,24 @@ public class MonitorRawdatas extends Thread {
 							totalLatencyMin = Math.min(totalLatencyMin, downlinkDay.getTotalLatencyMin());
 						}
 						totalLatencyMax = Math.max(totalLatencyMax, downlinkDay.getTotalLatencyMax());
-						fileSize += downlinkDay.getDownloadSize();
+						fileSize = fileSize.add(BigInteger.valueOf(downlinkDay.getDownloadSize()));
 					}
 					if (count > 0) {
-						downloadLatencyAvg = downloadLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = downloadLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("downloadLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						downloadLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						rawDataMonth.setCount(count);
-						rawDataMonth.setDownloadSize(fileSize);
+						rawDataMonth.setDownloadSize(fileSize.longValue());
 						rawDataMonth.setDownloadLatencyAvg(downloadLatencyAvg);
 						rawDataMonth.setDownloadLatencyMin(downloadLatencyMin==Integer.MAX_VALUE?0:downloadLatencyMin);
 						rawDataMonth.setDownloadLatencyMax(downloadLatencyMax);
@@ -270,11 +310,11 @@ public class MonitorRawdatas extends Thread {
 				}
 			}
 		}
-		
-		
-		
 	}
-	
+
+    /**
+     * Start the monitor thread
+     */	
     public void run() {
     	Long wait = (long) 100000;
     	try {

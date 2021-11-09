@@ -11,9 +11,6 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +22,12 @@ import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+/**
+ * The thread monitoring the orders
+ * 
+ * @author Melchinger
+ *
+ */
 @Transactional
 public class MonitorOrders extends Thread {
 	private static Logger logger = LoggerFactory.getLogger(MonitorOrders.class);	
@@ -37,9 +40,23 @@ public class MonitorOrders extends Thread {
 	@PersistenceContext
 	private EntityManager em;
 	
+	/**
+	 * Hold the order state cache 
+	 */
 	private Map<String, MonOrderState> monOrderStates;
+	
+	
+	/**
+	 * The monitor configuration (application.yml) 
+	 */
 	private MonitorConfiguration config;
 
+	/**
+	 * Instantiate the monitor order thread
+	 * 
+	 * @param config The monitor configuration
+	 * @param txManager The transaction manager
+	 */
 	public MonitorOrders(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
@@ -50,7 +67,10 @@ public class MonitorOrders extends Thread {
 			monOrderStates.put(mos.getName(), mos);
 		}
 	}
-	
+		
+	/**
+	 * Collect the monitoring information of orders
+	 */
 	@Transactional
 	public void checkOrders() {
 		Instant now = Instant.now();
@@ -88,6 +108,9 @@ public class MonitorOrders extends Thread {
 		}
 	}
 	
+    /**
+     * Start the monitor thread
+     */
     public void run() {
     	Long wait = (long) 100000;
     	try {

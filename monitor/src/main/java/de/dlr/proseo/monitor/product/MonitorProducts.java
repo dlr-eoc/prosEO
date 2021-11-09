@@ -7,11 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -33,6 +29,12 @@ import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+/**
+ * The thread monitoring the products
+ * 
+ * @author Melchinger
+ *
+ */
 @Transactional
 public class MonitorProducts extends Thread {
 	private static Logger logger = LoggerFactory.getLogger(MonitorProducts.class);	
@@ -44,15 +46,27 @@ public class MonitorProducts extends Thread {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-	
+
+	/**
+	 * The monitor configuration (application.yml) 
+	 */
 	private MonitorConfiguration config;
 
+	/**
+	 * Instantiate the monitor products thread
+	 * 
+	 * @param config The monitor configuration
+	 * @param txManager The transaction manager
+	 */
 	public MonitorProducts(MonitorConfiguration config, PlatformTransactionManager txManager) {
 		this.config = config;
 		this.txManager = txManager;
 		this.setName("MonitorProducts");
 	}
-	
+
+	/**
+	 * Collect the monitoring information of production for hour, day and month
+	 */
 	@Transactional
 	public void checkProducts() {
 		Instant now = Instant.now();
@@ -114,7 +128,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -142,14 +156,25 @@ public class MonitorProducts extends Thread {
 						totalLatencyMin = Math.min(totalLatencyMin, totalLatency);
 						totalLatencyMax = Math.max(totalLatencyMax, totalLatency);
 						for (ProductFile f : product.getProductFile()) {
-							fileSize += f.getFileSize();
+							fileSize = fileSize.add(BigInteger.valueOf(f.getFileSize()));
 						}
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
@@ -223,7 +248,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -249,13 +274,24 @@ public class MonitorProducts extends Thread {
 							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
 						}
 						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
-						fileSize += productProduction.getFileSize();
+						fileSize = fileSize.add(BigInteger.valueOf(productProduction.getFileSize()));
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
@@ -334,7 +370,7 @@ public class MonitorProducts extends Thread {
 					mppd.setTotalLatencyMax(0);
 					mppd.setDatetime(timeFrom);
 					int count = 0;
-					int fileSize = 0;
+					BigInteger fileSize = BigInteger.valueOf(0);
 					BigInteger productionLatencySum = BigInteger.valueOf(0);
 					int productionLatencyAvg = 0;
 					int productionLatencyMin = Integer.MAX_VALUE;
@@ -360,13 +396,24 @@ public class MonitorProducts extends Thread {
 							totalLatencyMin = Math.min(totalLatencyMin, productProduction.getTotalLatencyMin());
 						}
 						totalLatencyMax = Math.max(totalLatencyMax, productProduction.getTotalLatencyMax());
-						fileSize += productProduction.getFileSize();
+						fileSize = fileSize.add(BigInteger.valueOf(productProduction.getFileSize()));
 					}
 					if (count > 0) {
-						productionLatencyAvg = productionLatencySum.divide(BigInteger.valueOf(count)).intValue();
-						totalLatencyAvg = totalLatencySum.divide(BigInteger.valueOf(count)).intValue();
+						BigInteger bix = productionLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("productionLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						productionLatencyAvg = bix.intValue();
+						bix = totalLatencySum.divide(BigInteger.valueOf(count));
+						if (bix.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) >= 0) {
+							logger.error("totalLatencyAvg: {} >= Integer.MAX_VALUE", bix.toString());
+						}
+						totalLatencyAvg = bix.intValue();
+						if (fileSize.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+							logger.error("downloadSize: {} >= Long.MAX_VALUE", fileSize.toString());
+						}
 						mppd.setCount(count);
-						mppd.setFileSize(fileSize);
+						mppd.setFileSize(fileSize.longValue());
 						mppd.setProductionLatencyAvg(productionLatencyAvg);
 						mppd.setProductionLatencyMin(productionLatencyMin==Integer.MAX_VALUE?0:productionLatencyMin);
 						mppd.setProductionLatencyMax(productionLatencyMax);
@@ -381,11 +428,11 @@ public class MonitorProducts extends Thread {
 				}
 			}
 		}
-		
-		
-		
 	}
-	
+
+    /**
+     * Start the monitor thread
+     */
     public void run() {
     	Long wait = (long) 100000;
     	try {

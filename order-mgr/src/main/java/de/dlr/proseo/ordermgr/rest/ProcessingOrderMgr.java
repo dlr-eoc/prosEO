@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -35,8 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
-import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
@@ -1102,5 +1099,218 @@ public class ProcessingOrderMgr {
 		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
 		*/
 	}
+
+	/**
+	 * Retrieve a list of orders satisfying the selection parameters
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
+	 * @param productClass an array of product types
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * 
+	 * @return The result list
+	 */
+	@Transactional
+	public List<RestOrder> getAndSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		List<RestOrder> list = new ArrayList<RestOrder>();
+		Query query = createOrdersQuery(mission, identifier, state, 
+				startTime, stopTime, orderBy, false);
+
+		List<String> productClasses = null;
+		if (productClass != null && productClass.length > 0) {
+			productClasses = new ArrayList<String>();
+			for (String s : productClass) {
+				productClasses.add(s);
+			}			
+		}
+		if (recordFrom == null) {
+			recordFrom = (long) 0;
+		}
+		if (recordTo == null) {
+			recordTo = Long.MAX_VALUE;
+		}
+		Long i = (long) 0;
+		for (Object resultObject: query.getResultList()) {
+			if (i < recordFrom) {
+				i++;
+			} else {
+				if (resultObject instanceof ProcessingOrder) {
+					// Filter depending on product visibility and user authorization
+					ProcessingOrder order = (ProcessingOrder) resultObject;
+					if (productClasses != null) {
+						for (ProductClass pc : order.getRequestedProductClasses()) {
+							if (productClasses.contains(pc.getProductType())) {
+								i++;
+								list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+								break;
+							}
+						}
+					} else {
+						i++;
+						list.add(de.dlr.proseo.model.util.OrderUtil.toRestOrder(order));
+					}
+				}
+				if (i >= recordTo) {
+					break;
+				}
+			}
+		}		
+
+		return list;
+	}
+	
+	/**
+	 * Calculate the amount of orders satisfying the selection parameters
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
+	 * @param productClass an array of product types
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * 
+	 * @return The order count
+	 */
+	@Transactional
+	public String countSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+
+		Query query = createOrdersQuery(mission, identifier, state, 
+				startTime, stopTime, orderBy, false);
+
+		List<String> productClasses = null;
+		if (productClass != null && productClass.length > 0) {
+			productClasses = new ArrayList<String>();
+			for (String s : productClass) {
+				productClasses.add(s);
+			}			
+		}
+		if (recordFrom == null) {
+			recordFrom = (long) 0;
+		}
+		if (recordTo == null) {
+			recordTo = Long.MAX_VALUE;
+		}
+		Long i = (long) 0;
+		for (Object resultObject: query.getResultList()) {
+			if (resultObject instanceof ProcessingOrder) {
+				// Filter depending on product visibility and user authorization
+				if (productClasses != null) {
+					ProcessingOrder order = (ProcessingOrder) resultObject;
+					for (ProductClass pc : order.getRequestedProductClasses()) {
+						if (productClasses.contains(pc.getProductType())) {
+							i++;
+							break;
+						}
+					}
+				} else {
+					i++;
+				}
+			}
+			if (i >= recordTo) {
+				break;
+			}
+		}		
+
+		
+		return i.toString();
+	}
+	
+
+	/**
+	 * Create a JPQL query to retrieve the requested set of products
+	 * 
+	 * @param mission the mission code
+	 * @param identifier the order identifier pattern
+	 * @param state an array of states
+	 * @param productClass an array of product types
+	 * @param startTime earliest sensing start time
+	 * @param stopTime latest sensing start time
+	 * @param recordFrom first record of filtered and ordered result to return
+	 * @param recordTo last record of filtered and ordered result to return
+	 * @param orderBy an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
+	 * @param count if true, do count, otherwise retrieve 
+	 * 
+	 * @return JPQL Query
+	 */
+	private Query createOrdersQuery(String mission, String identifier, String[] state, 
+			String startTime, String stopTime, String[] orderBy, Boolean count) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				startTime, stopTime, orderBy, count);
+		
+		// Find using search parameters
+		String jpqlQuery = null;
+		String join = "";
+		if (count) {
+			jpqlQuery = "select count(p) from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		} else {
+			jpqlQuery = "select p from ProcessingOrder p " + join + " where p.mission.code = :missionCode";
+		}
+		if (null != state && 0 < state.length) {
+			jpqlQuery += " and p.orderState in (";
+			for (int i = 0; i < state.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				jpqlQuery += ":orderState" + i;
+			}
+			jpqlQuery += ")";
+		}
+		if (null != identifier) {
+			jpqlQuery += " and upper(p.identifier) like :identifier";
+		}
+		if (null != startTime) {
+			jpqlQuery += " and p.startTime >= :startTime";
+		}
+		if (null != stopTime) {
+			jpqlQuery += " and p.startTime <= :stopTime";
+		}
+				
+		// order by
+		if (null != orderBy && 0 < orderBy.length) {
+			jpqlQuery += " order by ";
+			for (int i = 0; i < orderBy.length; ++i) {
+				if (0 < i) jpqlQuery += ", ";
+				String[] orderb = orderBy[i].split(" ");
+				jpqlQuery += "p.";
+				jpqlQuery += orderb[0];
+				if (orderb.length > 1) {
+					jpqlQuery += " ";
+					jpqlQuery += orderb[1];
+				}
+			}
+		}
+
+		Query query = em.createQuery(jpqlQuery);
+		if (null != mission) {
+			query.setParameter("missionCode", mission);
+		}
+		if (null != state && 0 < state.length) {
+			for (int i = 0; i < state.length; ++i) {
+				query.setParameter("orderState" + i, OrderState.valueOf(state[i]));
+			}
+		}
+		if (null != identifier) {
+			query.setParameter("identifier", identifier.toUpperCase());
+		}
+
+		if (null != startTime) {
+			query.setParameter("startTime", OrbitTimeFormatter.parseDateTime(startTime));
+		}
+		
+		if (null != stopTime) {
+			query.setParameter("stopTime", OrbitTimeFormatter.parseDateTime(stopTime));
+		}
+		return query;
+	}
+
 
 }

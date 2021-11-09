@@ -4,14 +4,10 @@ import java.util.Optional;
 import java.time.Instant;
 import java.time.Duration;
 
-import org.apache.http.NoHttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -20,7 +16,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.interfaces.rest.model.RestHealth;
 import de.dlr.proseo.model.MonExtServiceStateOperation;
-import de.dlr.proseo.model.MonService;
 import de.dlr.proseo.model.MonServiceState;
 import de.dlr.proseo.model.MonServiceStateOperation;
 import de.dlr.proseo.model.service.RepositoryService;
@@ -30,7 +25,6 @@ import de.dlr.proseo.model.util.MonServiceStates;
 
 /**
  * Represent a microservice to check status
- * The microservice has to be a spring boot application 
  * 
  * @author Melchinger
  *
@@ -137,6 +131,11 @@ public class MicroService {
 		this.state = state;
 	}
 
+	/**
+	 * Instantiate a micro service 
+	 * 
+	 * @param service A service defined in monitor configuration (application.yml)
+	 */
 	public MicroService(MonitorConfiguration.Service service) {
 		this.name = service.getName();
 		this.nameId = service.getNameId();
@@ -147,6 +146,11 @@ public class MicroService {
 		this.state = MonServiceStates.STOPPED_ID;
 	}
 	
+	/**
+	 * Check the state of this service
+	 * 
+	 * @param monitor The basic Monitor thread
+	 */
 	public void check(MonitorServices monitor) {
 
 		String serviceUrl = this.getUrl();
@@ -186,7 +190,7 @@ public class MicroService {
 						.setConnectTimeout(Duration.ofMillis(MonitorApplication.config.getConnectTimeout()))
 						.build();
 				try {
-					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, RestHealth.class);
+					ResponseEntity<?> response = restTemplate.getForEntity(serviceUrl, String.class);
 					if (response.getStatusCode().is2xxSuccessful() || 
 							response.getStatusCode().is3xxRedirection() || 
 							HttpStatus.BAD_REQUEST.equals(response.getStatusCode()) || 
@@ -239,9 +243,15 @@ public class MicroService {
 		
 	}
 	
+	/**
+	 * Create a new database entry of this 
+	 * 
+	 * @param monitor The basic Monitor thread
+	 */
 	@Transactional
 	public void createEntry(MonitorServices monitor) {
 		if (getIsProseo()) {
+			// It is a prosEO service
 			MonServiceStateOperation ms = new MonServiceStateOperation();
 			ms.setMonService(monitor.getMonService(getNameId(), getName()));
 			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());
@@ -249,6 +259,7 @@ public class MicroService {
 			ms.setDatetime(Instant.now());
 			ms = RepositoryService.getMonServiceStateOperationRepository().save(ms);
 		} else {
+			// It is an external service
 			MonExtServiceStateOperation ms = new MonExtServiceStateOperation();
 			ms.setMonExtService(monitor.getMonExtService(getNameId(), getName()));
 			Optional<MonServiceState> aState = RepositoryService.getMonServiceStateRepository().findById(getState());

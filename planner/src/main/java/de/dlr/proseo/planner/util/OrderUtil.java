@@ -8,13 +8,11 @@ package de.dlr.proseo.planner.util;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
@@ -31,7 +28,6 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
-import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
@@ -808,7 +804,7 @@ public class OrderUtil {
 		}
 		return pfList;
 	}
-	
+
 	
 	/**
 	 * Update the order state depending on job state

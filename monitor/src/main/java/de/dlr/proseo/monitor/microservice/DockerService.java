@@ -16,6 +16,13 @@ import com.github.dockerjava.transport.DockerHttpClient.Response;
 import de.dlr.proseo.model.util.MonServiceStates;
 import de.dlr.proseo.monitor.MonitorConfiguration;
 
+
+/**
+ * Represent a docker "machine" to check status of a service
+ *  
+ * @author Melchinger
+ *
+ */
 public class DockerService {
 
 	/**
@@ -63,6 +70,11 @@ public class DockerService {
 		return apiVersion;
 	}
 
+	/**
+	 * Instantiate the docker service
+	 * 
+	 * @param docker A docker machine defined in monitor configuration (application.yml)
+	 */
 	public DockerService(MonitorConfiguration.Docker docker) {
 		this.name = docker.getName();
 		this.ip = docker.getIp();
@@ -70,6 +82,12 @@ public class DockerService {
 		this.apiVersion = docker.getApiVersion();
 	}
 	
+	/**
+	 * Checck whether the service is running on this docker
+	 * 
+	 * @param ms A micro service
+	 * @param monitor The basic Monitor thread
+	 */
 	public void check(MicroService ms, MonitorServices monitor) {
 		DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
 				.withDockerHost("tcp://" + getIp() + ":" + getPort())

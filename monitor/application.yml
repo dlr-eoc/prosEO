@@ -14,13 +14,20 @@ logging:
         de.dlr.proseo: TRACE
 proseo:
     monitor:
+        # Timeout settings for HTTP requests
         connectTimeout: 1000
         readTimeout: 1000
+        # default cycle wait time
         cycle: 10000
+        # cycle wait time for checking services
         serviceCycle: 10000
+        # cycle wait time for checking orders
         orderCycle: 30000
+        # cycle wait time for checking products
         productCycle: 60000
+        # cycle wait time for checking raw data
         rawdataCycle: 60000
+        # if no entries are in an aggregation table this date is used to begin generating the entries
         aggregationStart: "2021-10-19T00:00:00.000000Z"
         services:
             # prosEO Metadata Database
