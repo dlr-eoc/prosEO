@@ -16,9 +16,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import javax.annotation.PostConstruct;
 
@@ -28,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
 
@@ -35,11 +38,12 @@ import de.dlr.proseo.api.basemon.TransferObject;
  * Monitor for EDRS Interface Points
  * 
  * EDRS Interface Points are FTP-S servers. FTP-S connection is based on the Apache Commons Net library. TODO
+ * Workaround for now: Mount the FTP-S directory as a network volume using "rclone".
  * 
  * @author Dr. Thomas Bassler
  */
 @Component
-@Scope("prototype")
+@Scope("singleton")
 public class EdipMonitor extends BaseMonitor {
 	
 	/** The path to the EDIP directory (mounted WebDAV volume) */
@@ -48,24 +52,32 @@ public class EdipMonitor extends BaseMonitor {
 	/** The satellite identifier (e. g. "S1B") */
 	private String satelliteIdentifier;
 	
-	/** The X-band station unit ID */
-	private String stationUnitIdentifier;
+	/** Filter for directory */
+	private static String SESSION_FILTER_FORMAT = "DCS_*_*_dat";
 
-	/** Filter for directory based on station unit ID */
-	private String sessionFilter;
-	private static String SESSION_FILTER_FORMAT = "DCS_%s_*_dat";
-	
 	/** The path to the target CADU directory (for L0 processing) */
 	private Path caduDirectoryPath;
 	
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
 	private String l0ProcessorCommand;
 
+	/** Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads) */
+	private int maxFileDownloadThreads = 1;
+	
+	/** Interval in millliseconds to check for completed file downloads (default 500 ms) */
+	private int fileWaitInterval = 500;
+	
+	/** Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min) */
+	private int maxFileWaitCycles = 3600;
+	
 	/** The last copy performance in MiB/s (static, because it may be read and written from different threads) */
 	private static Double lastCopyPerformance = 0.0;
 
 	/** Indicator for parallel copying processes */
-	/* package */ Map<String, Boolean> copySuccess = new HashMap<>();
+	/* package */ Map<String, Boolean> copySuccess = new ConcurrentHashMap<>();
+	
+	/** Total data size per session */
+	private Map<String, Long> sessionDataSizes = new ConcurrentHashMap<>();
 
 	/** The EDIP Monitor configuration to use */
 	@Autowired
@@ -87,10 +99,13 @@ public class EdipMonitor extends BaseMonitor {
 	private static final int MSG_ID_SESSION_TRANSFER_INCOMPLETE = 5309;
 	private static final int MSG_ID_SESSION_TRANSFER_COMPLETED = 5310;
 	private static final int MSG_ID_FOLLOW_ON_ACTION_STARTED = 5311;
+	private static final int MSG_ID_CANNOT_READ_DSIB_FILE = 5312;
+	private static final int MSG_ID_DATA_SIZE_MISMATCH = 5313;
+	private static final int MSG_ID_COPY_TIMEOUT = 5314;
+	private static final int MSG_ID_SKIPPING_SESSION_DIRECTORY = 5315;
 
 	/* Message string constants */
 	private static final String MSG_EDIP_NOT_READABLE = "(E%d) EDIP directory %s not readable (cause: %s)";
-	private static final String MSG_EDIP_ENTRY_MALFORMED = "(E%d) Malformed EDIP directory entry %s found - skipped";
 	private static final String MSG_TRANSFER_OBJECT_IS_NULL = "(E%d) Transfer object is null - skipped";
 	private static final String MSG_INVALID_TRANSFER_OBJECT_TYPE = "(E%d) Transfer object %s of invalid type found - skipped";
 	private static final String MSG_CANNOT_CREATE_TARGET_DIR = "(E%d) Cannot create channel directory in target directory %s - skipped";
@@ -98,6 +113,13 @@ public class EdipMonitor extends BaseMonitor {
 	/* package */ static final String MSG_COPY_FILE_FAILED = "(E%d) Copying of session data file %s failed (cause: %s)";
 	private static final String MSG_COPY_INTERRUPTED = "(E%d) Copying of session directory %s failed due to interrupt";
 	private static final String MSG_COMMAND_START_FAILED = "(E%d) Start of L0 processing command '%s' failed (cause: %s)";
+	private static final String MSG_CANNOT_READ_DSIB_FILE = "(E%d) Cannot read DSIB file %s (cause: %s)";
+	private static final String MSG_DATA_SIZE_MISMATCH = "(E%d) Data size mismatch copying session directory %s: "
+			+ "expected size %d, actual size %d";
+	private static final String MSG_COPY_TIMEOUT = "(E%d) Timeout after %s s during wait for download of file %s, download cancelled";
+
+	private static final String MSG_EDIP_ENTRY_MALFORMED = "(W%d) Malformed EDIP directory entry %s found - skipped";
+	private static final String MSG_SKIPPING_SESSION_DIRECTORY = "(W%d) Skipping inaccessible session directory %s";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_SESSION_TRANSFER_INCOMPLETE = "(I%d) Transfer for session %s still incomplete - skipped";
@@ -107,19 +129,22 @@ public class EdipMonitor extends BaseMonitor {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(EdipMonitorConfiguration.class);
 	
-	protected static class TransferSession implements TransferObject {
+	/**
+	 * Class describing a download session
+	 */
+	public static class TransferSession implements TransferObject {
 		
 		/** The satellite identifier */
 		private String satelliteIdentifier;
-		
-		/** The X-band station unit ID */
-		private String stationUnitIdentifier;
 		
 		/** The EDIP session identifier */
 		private String sessionIdentifier;
 		
 		/** The path to the session data on the EDIP */
 		private Path sessionPath;
+
+		/** The DSIB files for the session */
+		private List<Path> dsibFilePaths = new ArrayList<>();
 
 		/**
 		 * Gets the session identifier
@@ -164,23 +189,63 @@ public class EdipMonitor extends BaseMonitor {
 		 */
 		@Override
 		public String getIdentifier() {
-			return String.format("%s_%s_%s", stationUnitIdentifier, satelliteIdentifier, sessionIdentifier);
+			return String.format("%s_%s", satelliteIdentifier, sessionIdentifier);
+		}
+		
+		/**
+		 * Gets the DSIB file for a given channel
+		 * 
+		 * @param channel the channel identifier ("ch_x")
+		 * @return the path to the DSIB file belonging to the given channel, or null, if no suitable file was found
+		 */
+		public Path getDsibFileForChannel(String channel) {
+			String[] channelParts = channel.split("_");
+			if (2 == channelParts.length) {
+				for (Path dsibFilePath: dsibFilePaths) {
+					if (dsibFilePath.toString().endsWith("ch" + channelParts[1] + "_DSIB.xml")) {
+						return dsibFilePath;
+					}
+				}
+			}
+			return null;
 		}
 		
 	}
 	
+	/**
+	 * Class describing a download channel
+	 */
+	public static class DataSessionInformationBlock {
+		public String session_id;
+		public String time_start;
+		public String time_stop;
+		public String time_created;
+		public String time_finished;
+		public Long data_size;
+		public List<String> dsdb_list;
+	}
+	
+	/**
+	 * Initialize global parameters
+	 */
 	@PostConstruct
 	private void init() {
 		edipDirectory = Paths.get(config.getEdipDirectoryPath());
 		satelliteIdentifier = config.getEdipSatellite();
-		stationUnitIdentifier = config.getEdipStationUnit();
 		edipDirectory = edipDirectory.resolve(satelliteIdentifier);
-		sessionFilter = String.format(SESSION_FILTER_FORMAT, stationUnitIdentifier);
 		
 		this.setTransferHistoryFile(Paths.get(config.getEdipHistoryPath()));
 		this.setCheckInterval(config.getEdipCheckInterval());
 		this.setTruncateInterval(config.getEdipTruncateInterval());
 		this.setHistoryRetentionDuration(Duration.ofMillis(config.getEdipHistoryRetention()));
+		
+		// Multi-threading control
+		this.setMaxDownloadThreads(config.getMaxDownloadThreads());
+		this.setTaskWaitInterval(config.getTaskWaitInterval());
+		this.setMaxWaitCycles(config.getMaxWaitCycles());
+		this.setMaxFileDownloadThreads(config.getMaxFileDownloadThreads());
+		this.setFileWaitInterval(config.getFileWaitInterval());
+		this.setMaxFileWaitCycles(config.getMaxFileWaitCycles());
 		
 		caduDirectoryPath = Paths.get(config.getL0CaduDirectoryPath());
 		l0ProcessorCommand = config.getL0Command();
@@ -188,16 +253,75 @@ public class EdipMonitor extends BaseMonitor {
 		logger.info("------  Starting EDIP Monitor  ------");
 		logger.info("EDIP directory . . . . . . : " + edipDirectory);
 		logger.info("Satellite  . . . . . . . . : " + satelliteIdentifier);
-		logger.info("X-band station unit  . . . : " + stationUnitIdentifier);
 		logger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
 		logger.info("EDIP check interval  . . . : " + this.getCheckInterval());
 		logger.info("History truncation interval: " + this.getTruncateInterval());
 		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
 		logger.info("CADU target directory  . . : " + caduDirectoryPath);
 		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
+		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
+		logger.info("Transfer session wait time : " + this.getTaskWaitInterval());
+		logger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
+		logger.info("Max. file download threads : " + this.getMaxFileDownloadThreads());
+		logger.info("File download wait time  . : " + this.getFileWaitInterval());
+		logger.info("Max. file wait cycles  . . : " + this.getMaxFileWaitCycles());
 		
 	}
 	
+	/**
+	 * Gets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @return the maximum number of parallel file download threads
+	 */
+	public int getMaxFileDownloadThreads() {
+		return maxFileDownloadThreads;
+	}
+
+	/**
+	 * Sets the maximum number of parallel file download threads within a download session
+	 * 
+	 * @param maxFileDownloadThreads the maximum number of parallel file download threads to set
+	 */
+	public void setMaxFileDownloadThreads(int maxFileDownloadThreads) {
+		this.maxFileDownloadThreads = maxFileDownloadThreads;
+	}
+		
+	/**
+	 * Gets the interval to check for completed file downloads
+	 * 
+	 * @return the check interval in millliseconds
+	 */
+	public int getFileWaitInterval() {
+		return fileWaitInterval;
+	}
+	
+	/**
+	 * Sets the interval to check for completed file downloads
+	 * 
+	 * @param fileWaitInterval the check interval in millliseconds to set
+	 */
+	public void setFileWaitInterval(int fileWaitInterval) {
+		this.fileWaitInterval = fileWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @return the maximum number of wait cycles
+	 */
+	public int getMaxFileWaitCycles() {
+		return maxFileWaitCycles;
+	}
+
+	/**
+	 * Sets the maximum number of wait cycles for file download completion checks
+	 * 
+	 * @param maxFileWaitCycles the maximum number of wait cycles to set
+	 */
+	public void setMaxFileWaitCycles(int maxFileWaitCycles) {
+		this.maxFileWaitCycles = maxFileWaitCycles;
+	}
+
 	/**
 	 * Gets the last copy performance for monitoring purposes
 	 * 
@@ -217,34 +341,18 @@ public class EdipMonitor extends BaseMonitor {
 	}
 	
 	/**
-	 * Thread-safe method to put the given value at the given key into map copySuccess
+	 * Thread-safe method to calculate total session download size
 	 * 
-	 * @param key the map key
-	 * @param value the map value
+	 * @param caduSize the size of the CADU chunk to add to the session download size
 	 */
-	synchronized /* package */ void putCopySuccess(String key, Boolean value) {
-		copySuccess.put(key, value);
+	synchronized private void addToSessionDataSize(String sessionId, long caduSize) {
+		if (null == sessionDataSizes.get(sessionId)) {
+			sessionDataSizes.put(sessionId, caduSize);
+		} else {
+			sessionDataSizes.put(sessionId, sessionDataSizes.get(sessionId) + caduSize);
+		}
 	}
 	
-	/**
-	 * Thread-safe method to get the value at the given key from map copySuccess
-	 * 
-	 * @param key the map key
-	 * @return the map value
-	 */
-	synchronized /* package */ Boolean getCopySuccess(String key) {
-		return copySuccess.get(key);
-	}
-	
-	/**
-	 * Thread-safe method to remove the value at the given key from map copySuccess
-	 * 
-	 * @param key the map key
-	 */
-	synchronized /* package */ void removeCopySuccess(String key) {
-		copySuccess.remove(key);
-	}
-
 	/**
 	 * Check the configured EDIP satellite directory for sessions (without filtering);
 	 * note that the passed reference time stamp is ignored, as on the EDIP there is no reliable value to compare it against
@@ -257,9 +365,9 @@ public class EdipMonitor extends BaseMonitor {
 		
 		if (Files.isDirectory(edipDirectory) && Files.isReadable(edipDirectory)) {
 			
-			if (logger.isTraceEnabled()) logger.trace("... checking directory {} with session filter {}", edipDirectory, sessionFilter);
+			if (logger.isTraceEnabled()) logger.trace("... checking directory {} with session filter {}", edipDirectory, SESSION_FILTER_FORMAT);
 			
-			try (DirectoryStream<Path> edipList = Files.newDirectoryStream(edipDirectory, sessionFilter)) {
+			try (DirectoryStream<Path> edipList = Files.newDirectoryStream(edipDirectory, SESSION_FILTER_FORMAT)) {
 				
 				if (logger.isTraceEnabled()) logger.trace("... edipList created " + edipList);
 				
@@ -269,13 +377,20 @@ public class EdipMonitor extends BaseMonitor {
 					
 					String[] sessionEntryParts = sessionEntry.getFileName().toString().split("_");
 					
-					if (5 != sessionEntryParts.length) {
+					if (4 != sessionEntryParts.length) {
 						logger.warn(String.format(MSG_EDIP_ENTRY_MALFORMED, MSG_ID_EDIP_ENTRY_MALFORMED, sessionEntry.getFileName().toString()));
 						return;
 					}
 						
 					// Check availability of DSIB files in each channel directory
+					List<Path> dsibFilePaths = new ArrayList<>();
+					
 					String[] channelEntries = sessionEntry.toFile().list();
+					if (null == channelEntries) {
+						logger.warn(String.format(MSG_SKIPPING_SESSION_DIRECTORY, MSG_ID_SKIPPING_SESSION_DIRECTORY,
+								sessionEntry.getFileName().toString()));
+						return;
+					}
 					if (0 == channelEntries.length) {
 						logger.info(String.format(MSG_SESSION_TRANSFER_INCOMPLETE, MSG_ID_SESSION_TRANSFER_INCOMPLETE,
 								sessionEntry.getFileName().toString()));
@@ -300,6 +415,7 @@ public class EdipMonitor extends BaseMonitor {
 									sessionEntry.getFileName().toString()));
 							return;
 						}
+						dsibFilePaths.add(dsibFilePath);
 					}
 
 					if (logger.isTraceEnabled()) logger.trace("... downloadable session found!");
@@ -307,9 +423,9 @@ public class EdipMonitor extends BaseMonitor {
 					// Session transfer is complete, create transfer object
 					TransferSession transferSession = new TransferSession();
 					transferSession.satelliteIdentifier = satelliteIdentifier;
-					transferSession.stationUnitIdentifier = stationUnitIdentifier;
-					transferSession.sessionIdentifier = sessionEntryParts[3];
+					transferSession.sessionIdentifier = sessionEntryParts[2];
 					transferSession.sessionPath = sessionEntry;
+					transferSession.dsibFilePaths = dsibFilePaths;
 					objectsToTransfer.add(transferSession);
 					
 				});
@@ -342,15 +458,19 @@ public class EdipMonitor extends BaseMonitor {
 			TransferSession transferSession = (TransferSession) object;
 			
 			// Optimistically we assume success (actually: it's an AND condition)
-			putCopySuccess(transferSession.getIdentifier(), true);
+			copySuccess.put(transferSession.getIdentifier(), true);
 
 			List<Thread> copyTasks = new ArrayList<>();
 			
 			// Determine the correct target directory
 			Path sessionDirectory = transferSession.sessionPath.getFileName();
 			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
+			long expectedSessionDataSize = 0L;
+			sessionDataSizes.put(transferSession.getIdentifier(), 0L);
 			
 			// Check all channel directories
+			Semaphore semaphore = new Semaphore(maxFileDownloadThreads);
+			
 			for (String channel: Arrays.asList("ch_1", "ch_2")) {
 				Path sessionChannelDirectory = transferSession.sessionPath.resolve(channel);
 				
@@ -360,13 +480,27 @@ public class EdipMonitor extends BaseMonitor {
 					continue;
 				}
 				
+				// Parse DSIB file
+				Path dsibFilePath = transferSession.getDsibFileForChannel(channel);
+				DataSessionInformationBlock dsib = null;
+				try {
+					dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
+				} catch (IOException e) {
+					logger.error(String.format(
+							MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+					return false;
+				}
+				if (logger.isDebugEnabled())
+					logger.debug("DSIB: data size: {}, # of CADU files: {}", dsib.data_size, dsib.dsdb_list.size());
+				expectedSessionDataSize += dsib.data_size;
+				
 				// Create target directory for channel data
 				Path caduChannelDirectory = caduDirectory.resolve(channel);
 				try {
 					Files.createDirectories(caduChannelDirectory);
 				} catch (IOException e) {
-					logger.error(
-							String.format(MSG_CANNOT_CREATE_TARGET_DIR, MSG_ID_CANNOT_CREATE_TARGET_DIR, caduDirectory.toString()));
+					logger.error(String.format(
+							MSG_CANNOT_CREATE_TARGET_DIR, MSG_ID_CANNOT_CREATE_TARGET_DIR, caduDirectory.toString()));
 					return false;
 				}
 				
@@ -380,6 +514,17 @@ public class EdipMonitor extends BaseMonitor {
 
 							@Override
 							public void run() {
+								// Check whether parallel execution is allowed
+								try {
+									semaphore.acquire();
+									if (logger.isDebugEnabled())
+										logger.debug("... file download semaphore acquired, {} permits remaining",
+												semaphore.availablePermits());
+								} catch (InterruptedException e) {
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									return;
+								}
+								
 								try {
 									if (logger.isTraceEnabled())
 										logger.trace("... Copying file {} to directory {}", sessionChannelFile, caduChannelDirectory);
@@ -402,14 +547,24 @@ public class EdipMonitor extends BaseMonitor {
 										setLastCopyPerformance(copyPerformance);
 									}
 									
+									if (sessionChannelFile.toString().toLowerCase().endsWith("raw")) {
+										// Calculate total download size
+										addToSessionDataSize(transferSession.getIdentifier(), sessionChannelFile.toFile().length());
+									}
 									if (logger.isTraceEnabled())
 										logger.trace("... Copying of file {} complete, duration {}, speed {} MiB/s",
 												sessionChannelFile, copyDuration, copyPerformance);
 								} catch (IOException e) {
 									logger.error(String.format(MSG_COPY_FILE_FAILED, MSG_ID_COPY_FILE_FAILED,
 											sessionChannelFile.toString(), e.getMessage()));
-									putCopySuccess(transferSession.getIdentifier(), false);
+									copySuccess.put(transferSession.getIdentifier(), false);
 								}
+
+								// Release parallel thread
+								semaphore.release();
+								if (logger.isDebugEnabled())
+									logger.debug("... file download semaphore released, {} permits now available",
+											semaphore.availablePermits());
 							}
 
 						};
@@ -424,20 +579,40 @@ public class EdipMonitor extends BaseMonitor {
 				}
 			}
 			
-			// Join all copying subtasks
+			// Wait for all copying subtasks
 			if (logger.isTraceEnabled()) logger.trace("... waiting for all subtasks to complete");
 			for (Thread copyTask: copyTasks) {
+				int k = 0;
+				while (copyTask.isAlive() && k < maxFileWaitCycles) {
 				try {
-					copyTask.join();
+						Thread.sleep(fileWaitInterval);
 				} catch (InterruptedException e) {
 					logger.error(String.format(MSG_COPY_INTERRUPTED, MSG_ID_COPY_INTERRUPTED, transferSession.sessionPath.toString()));
 					return false;
 				}
+					++k;
+				}
+				if (k == maxFileWaitCycles) {
+					// Timeout reached --> kill download and report error
+					copyTask.interrupt();
+					logger.error(MSG_COPY_TIMEOUT, MSG_ID_COPY_TIMEOUT, (maxFileWaitCycles * fileWaitInterval) / 1000,
+							transferSession.sessionPath.toString());
+				}
 			}
 			
+			// Check the total session data size
+			if (expectedSessionDataSize != sessionDataSizes.get(transferSession.getIdentifier())) {
+				logger.error(String.format(MSG_DATA_SIZE_MISMATCH, MSG_ID_DATA_SIZE_MISMATCH,
+						transferSession.sessionPath.toString(), expectedSessionDataSize, sessionDataSizes.get(transferSession.getIdentifier())));
+				copySuccess.put(transferSession.getIdentifier(), false);
+			} else {
+				if (logger.isTraceEnabled()) logger.trace("... total session data size is as expected: " + expectedSessionDataSize);
+			}
+			sessionDataSizes.remove(transferSession.getIdentifier());
+			
 			// Check whether any copy action failed
-			Boolean myCopySuccess = getCopySuccess(transferSession.getIdentifier());
-			removeCopySuccess(transferSession.getIdentifier());
+			Boolean myCopySuccess = copySuccess.get(transferSession.getIdentifier());
+			copySuccess.remove(transferSession.getIdentifier());
 			
 			logger.info(String.format(MSG_SESSION_TRANSFER_COMPLETED, MSG_ID_SESSION_TRANSFER_COMPLETED, transferSession.getIdentifier(), (myCopySuccess ? "SUCCESS" : "FAILURE")));
 			
@@ -470,10 +645,22 @@ public class EdipMonitor extends BaseMonitor {
 			Path sessionDirectory = transferSession.sessionPath.getFileName();
 			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
 
+			// Parse DSIB file of channel 1 for time stamps
+			Path dsibFilePath = transferSession.getDsibFileForChannel("ch_1");
+			DataSessionInformationBlock dsib = null;
+			try {
+				dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
+			} catch (IOException e) {
+				logger.error(String.format(
+						MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+				return false;
+			}
+
 			// Call external process
 			ProcessBuilder processBuilder = new ProcessBuilder();
 
-			String command = config.getL0Command() + " " + caduDirectory.toString();
+			String command = config.getL0Command() + " " + caduDirectory.toString()
+				+ " " + dsib.time_start.replace("Z", "") + " " + dsib.time_finished.replace("Z", "");
 			processBuilder.command(command.split(" "));
 			processBuilder.redirectErrorStream(true);
 			processBuilder.redirectOutput(Redirect.DISCARD);

@@ -6,6 +6,10 @@
 
 package de.dlr.proseo.api.edipmon;
 
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -32,14 +36,18 @@ public class EdipMonitorApplication implements CommandLineRunner {
     @Autowired
     private TaskExecutor taskExecutor;
 
+	/** A logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(EdipMonitorApplication.class);
+	
 	public static void main(String[] args) throws Exception {
 		SpringApplication.run(EdipMonitorApplication.class, args);
 	}
 
 	@Override
 	public void run(String... args) throws Exception {
+		if (logger.isTraceEnabled()) logger.trace(">>> run({})", Arrays.asList(args));
 		
-		Thread edipMonitor = (EdipMonitor) applicationContext.getBean("edipMonitor");
+		Thread edipMonitor = (EdipMonitor) applicationContext.getBean(EdipMonitor.class);
 		
 		taskExecutor.execute(edipMonitor);
 	}

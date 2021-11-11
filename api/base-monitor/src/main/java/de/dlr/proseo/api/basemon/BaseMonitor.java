@@ -562,7 +562,7 @@ public abstract class BaseMonitor extends Thread {
 				if (k == maxWaitCycles) {
 					// Timeout reached --> kill task and report error
 					transferTask.interrupt();
-					logger.error(MSG_SUBTASK_TIMEOUT, MSG_ID_SUBTASK_TIMEOUT, (maxWaitCycles * taskWaitInterval) / 1000);
+					logger.error(String.format(MSG_SUBTASK_TIMEOUT, MSG_ID_SUBTASK_TIMEOUT, (maxWaitCycles * taskWaitInterval) / 1000));
 				}
 			}
 						

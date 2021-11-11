@@ -50,6 +50,10 @@
 			<artifactId>reactor-spring</artifactId>
 			<version>1.0.1.RELEASE</version>
 		</dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
 		<!-- https://mvnrepository.com/artifact/commons-net/commons-net -->
 		<dependency>
 			<groupId>commons-net</groupId>
@@ -138,6 +142,29 @@
 					<commandlineArgs>-i ${raml-path} -o src/site/resources/${project.artifactId}.html</commandlineArgs>
 				</configuration>
 			</plugin>
+
+            <!-- Create JAR file to extend specific monitors from -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extendable-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>extendable</classifier>
+                            <includes>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitor.class</include>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitor$*.class</include>
+                                <include>de/dlr/proseo/api/edipmon/EdipMonitorConfiguration.class</include>
+                                <include>de/dlr/proseo/api/edipmon/rest/**</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
 			<!-- Build Docker image -->
 			<plugin>

@@ -643,10 +643,22 @@ public class XbipMonitor extends BaseMonitor {
 			Path sessionDirectory = transferSession.sessionPath.getFileName();
 			Path caduDirectory = caduDirectoryPath.resolve(sessionDirectory);
 
+			// Parse DSIB file of channel 1 for time stamps
+			Path dsibFilePath = transferSession.getDsibFileForChannel("ch_1");
+			DataSessionInformationBlock dsib = null;
+			try {
+				dsib = (new XmlMapper()).readValue(dsibFilePath.toFile(), DataSessionInformationBlock.class);
+			} catch (IOException e) {
+				logger.error(String.format(
+						MSG_CANNOT_READ_DSIB_FILE, MSG_ID_CANNOT_READ_DSIB_FILE, dsibFilePath.toString(), e.getMessage()));
+				return false;
+			}
+
 			// Call external process
 			ProcessBuilder processBuilder = new ProcessBuilder();
 
-			String command = config.getL0Command() + " " + caduDirectory.toString();
+			String command = config.getL0Command() + " " + caduDirectory.toString()
+				+ " " + dsib.time_start.replace("Z", "") + " " + dsib.time_finished.replace("Z", "");
 			processBuilder.command(command.split(" "));
 			processBuilder.redirectErrorStream(true);
 			processBuilder.redirectOutput(Redirect.DISCARD);
