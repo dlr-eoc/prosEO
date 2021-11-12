@@ -1,0 +1,8 @@
+[
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3000, "startTime": "2019-11-04T09:00:00.200000", "stopTime": "2019-11-04T10:41:10.300000" },
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3001, "startTime": "2019-11-04T10:41:10.300000", "stopTime": "2019-11-04T12:22:20.400000" },
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3002, "startTime": "2019-11-04T12:22:20.400000", "stopTime": "2019-11-04T14:03:30.500000" },
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3003, "startTime": "2019-11-04T14:03:30.500000", "stopTime": "2019-11-04T15:44:40.600000" },
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3004, "startTime": "2019-11-04T15:44:40.600000", "stopTime": "2019-11-04T17:25:50.700000" },
+    { "missionCode": "PTM", "spacecraftCode": "PTS", "orbitNumber": 3005, "startTime": "2019-11-04T17:25:50.700000", "stopTime": "2019-11-04T19:07:00.800000" }
+]

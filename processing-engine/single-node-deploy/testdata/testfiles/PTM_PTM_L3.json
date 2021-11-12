@@ -1,0 +1,1 @@
+{ "missionCode": "PTM", "productType": "PTM_L3", "processingLevel": "L3", "visibility": "PUBLIC", "processorClass": "PTML3", "defaultSlicingType": "TIME_SLICE", "defaultSliceDuration": 14400 }

@@ -1,0 +1,3 @@
+
+    FOR L0________ SELECT ValIntersect(0, 0);
+    FOR AUX_IERS_B SELECT LatestValIntersect(60 D, 60 D)
