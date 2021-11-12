@@ -31,7 +31,7 @@ import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 public class FileCache {
 
 	/** Path to file cache storage */
-	private String path;
+	private String cachePath;
 
 	/** Prefix for accessed files */
 	private static final String PREFIX = "accessed-";
@@ -68,10 +68,15 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> put({})", pathKey);
 
-		// This line is for safety, it can be removed for productivity
-		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
-
-		FileInfo fileInfo;
+		// Ensure call is legal
+		if (!new File(pathKey).exists()) {
+			logger.error("> File can't be put to cache, it does not exist: " + pathKey);
+			return;
+		}
+		if (!pathKey.startsWith(cachePath)) {
+			if (logger.isTraceEnabled()) logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
+			return;
+		}
 
 		if (!mapCache.containsKey(pathKey)) {
 
@@ -79,7 +84,7 @@ public class FileCache {
 		}
 
 		rewriteFileAccessed(pathKey);
-		fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
+		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
 		mapCache.put(pathKey, fileInfo);
 	}
@@ -123,49 +128,69 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> init()");
 
-		setPath(cfg.getPosixWorkerMountPoint());
+		setPath(cfg.getPosixCachePath());
 	}
 
 	/**
-	 * Delete Strategy LRU if the disk space is lower as expected usage in
-	 * application.yml
-	 * 
+	 * Cleanup cache by Least Recently Used strategy, if disk usage is higher than maximum usage configured
 	 */
 	private void deleteLRU() {
 
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteLRU()");
 
-		int expectedUsage = Integer.valueOf(cfg.getExpectedCacheUsage());
-		double realUsage = getRealUsage();
-
-		if (realUsage <= expectedUsage) {
+		// Check whether cleanup is needed
+		if (getRealUsage() < cfg.getMaximumCacheUsage()) {
 			return;
 		}
 
-		long startTime = System.nanoTime();
+		// Run cache cleanup in background
+		Thread deleteLRUTask = new Thread() {
 
-		mapCache.sortByAccessedAsc();
+			@Override
+			public void run() {
+				
+				// Only one cleanup task at the same time allowed
+				synchronized (theFileCache) {
+					
+					// Once we get here, the cache may already have been cleared by a concurrent thread
+					if (getRealUsage() < cfg.getMaximumCacheUsage()) {
+						return;
+					}
 
-		List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
-		Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
-		Entry<String, FileInfo> pathToDelete;
+					long startTime = System.nanoTime();
+					
+					mapCache.sortByAccessedAsc();
+					
+					List<Entry<String, FileInfo>> sortedPathes = mapCache.getSortedPathes();
+					Iterator<Entry<String, FileInfo>> cacheIterator = sortedPathes.iterator();
+					
+					long endTime = System.nanoTime();
+					long duration = endTime - startTime;
+					
+					if (logger.isTraceEnabled())
+						logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
+								duration, size());
+					
+					long entryCount = 0;
+					while (getRealUsage() > cfg.getExpectedCacheUsage() && cacheIterator.hasNext()) {
+						remove(cacheIterator.next().getKey());
+						++entryCount;
+					}
+					logger.info("Cache cleanup removed {} entries from file cache in {} ms", entryCount,
+							(System.nanoTime() - startTime) / 1000000);
+					
+					// We have a serious problem, if we still do not have enough cache space
+					if (getRealUsage() >= cfg.getMaximumCacheUsage()) {
+						logger.error("Disk usage {} exceeds maximum usage {} after emptying cache", getRealUsage(),
+								cfg.getMaximumCacheUsage());
+					}
+				}
+			}
 
-		long endTime = System.nanoTime();
-		long duration = endTime - startTime;
-
-		if (logger.isTraceEnabled())
-			logger.trace(">>> deleteLRU.duration of sorting({} ms, {} ns, Cache size - {} records)", duration / 1000000,
-					duration, size());
-
-		while (realUsage > expectedUsage && cacheIterator.hasNext()) {
-
-			pathToDelete = cacheIterator.next();
-
-			remove(pathToDelete.getKey());
-
-			realUsage = getRealUsage();
-		}
+		};
+		deleteLRUTask.start();
+		
 	}
 
 	/**
@@ -178,7 +203,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> getRealUsage()");
 
-		File file = new File(path);
+		File file = new File(cachePath);
 		long totalBytes = file.getTotalSpace(); // total disk space in bytes
 		long freeBytes = file.getUsableSpace();
 		long usedBytes = totalBytes - freeBytes;
@@ -187,7 +212,7 @@ public class FileCache {
 	}
 
 	/**
-	 * Clears the cache only (without deleting of files), sets the path and puts
+	 * Clears the cache only (without deleting of files), sets the cache path and puts
 	 * files in cache
 	 * 
 	 * @param pathKey The Cache Path
@@ -198,21 +223,21 @@ public class FileCache {
 			logger.trace(">>> setPath({})", pathKey);
 
 		theFileCache = this;
-		path = pathKey;
+		cachePath = pathKey;
 
 		mapCache = new MapCache();
 
-		File directory = new File(path);
+		File directory = new File(cachePath);
 
 		if (!directory.exists()) {
 
 			if (!directory.mkdirs()) {
 
-				throw new IllegalArgumentException("Cannot create directory for FileCache:" + path);
+				throw new IllegalArgumentException("Cannot create directory for FileCache:" + cachePath);
 			}
 		}
 
-		putFilesToCache(path);
+		putFilesToCache(cachePath);
 	}
 
 	/**
@@ -378,7 +403,15 @@ public class FileCache {
 			return; 
 		}
 
-		Assert.isTrue(new File(pathKey).exists(), "> File can't be put to cache, it does not exist: " + pathKey);
+		// Ensure call is legal
+		if (!new File(pathKey).exists()) {
+			logger.error("> File can't be put to cache, it does not exist: " + pathKey);
+			return;
+		}
+		if (!pathKey.startsWith(cachePath)) {
+			if (logger.isTraceEnabled()) logger.trace("... not adding {} to cache, because it is considered a backend file", pathKey);
+			return;
+		}
 
 		FileInfo fileInfo = new FileInfo(getFileAccessed(pathKey), getFileSize(pathKey));
 
@@ -429,7 +462,7 @@ public class FileCache {
 		if (logger.isTraceEnabled())
 			logger.trace(">>> deleteEmptyDirectoriesToTop({})", directoryToDelete);
 
-		if (null == directoryToDelete || directoryToDelete.equals(path)) {
+		if (null == directoryToDelete || directoryToDelete.equals(cachePath)) {
 			return;
 		}
 
