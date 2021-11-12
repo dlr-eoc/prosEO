@@ -1,4 +1,5 @@
 logging:
+    file: /proseo/log/proseo-storage-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
@@ -26,24 +27,35 @@ proseo:
 #      alluxioUnderFsMaxPrefixes: 500
 
     posix:
-      mountPoint: target/data/backend
-      workerMountPoint: target/data/cache
+      # Mount point for backend storage (must be different from cachePath)
+      backendPath: /proseo/data/backend
+      # Mount point for file cache
+      cachePath: /proseo/data/cache
       
     joborder:
       bucket: internal
       prefix: joborders
+      
     storageManager:
+      # Default type for backend storage
       defaultStorageType: S3
-
-      # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
-      filecheckwaittime: 1000
-      filecheckmaxcycles: 50
-      # Shared secred for download token
-      secret: MyVeryLongSecretMustBeAtLeast32Bytes
+      
+      # Control checks on input files
+      filecheck:
+        # Wait time between checks
+        waittime: 500
+        # Maximum number of checks
+        maxcycles: 600
         
-    storageManagerCache: 
-      expectedUsage: 95
-      maximumUsage: 99
+      # Shared secret for download token
+      secret: MyVeryLongSecretMustBeAtLeast32Bytes
+      
+      # File cache control
+      cache:
+        # Recommended minimum cache usage for efficient operation (percentage of file system size)
+        expectedUsage: 75
+        # Maximum cache usage (percentage of file system size)
+        maximumUsage: 85
 
     # Alluxio configuration values currently not in use       
 #    mountpoints:
@@ -52,7 +64,3 @@ proseo:
 #        k8sNode:
 #          alluxioCache: /mnt/alluxio
 #          alluxioFuse: /alluxio-fuse
-          
-    # Connection timeout in ms
-    http.timeout: 10000
-        

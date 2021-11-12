@@ -71,11 +71,12 @@
                     <th><span th:text="#{fileclasses}">fileclasses</span></th>
                     <th><span th:text="#{processingmodes}">processingmodes</span></th>
                     <th><span th:text="#{productretentionperiod}">productretentionperiod</span></th>
+                    <th><span th:text="#{orderretentionperiod}">orderretentionperiod</span></th>
                     <th colspan="2"><span th:text="#{spacecrafts}">spacecrafts</span>, <span th:text="#{payloads}">payloads</span></th>
               </tr>
               <tr>   
               <th>&nbsp;</th>           
-              <th colspan="7"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
+              <th colspan="8"><span th:text="#{productfiletemplate}">productfiletemplate</span></th>
               </tr>
             </thead>
             <tbody th:unless="${missions} == null">
@@ -92,6 +93,7 @@
                        class="proseo-list-item"  
                        th:text="${comp}"></span></td>
                 <td class="first-row" th:text="${(mission?.productRetentionPeriod!=null)?(mission?.productRetentionPeriod/86400):''}"></td>
+                <td class="first-row" th:text="${(mission?.orderRetentionPeriod!=null)?(mission?.orderRetentionPeriod/86400):''}"></td>
                 <td class="first-row" colspan="2">                
                 <table class="table">
                   <tbody>

@@ -1,0 +1,35 @@
+---
+# The common storage area for Storage Manager and Processing Engine
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proseo-nfs
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany # Access modes for volumes is defined under Persistent Volumes
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      name: proseo-nfs-share
+
+---
+# The (usually externally mounted) file system to ingest products from
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proseo-ingest
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteMany # Access modes for volumes is defined under Persistent Volumes
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 500Gi
+  selector:
+    matchLabels:
+      name: proseo-ingest-share

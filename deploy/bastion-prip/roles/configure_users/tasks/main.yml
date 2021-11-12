@@ -1,0 +1,52 @@
+---
+# Create local admin users
+- name: Create local admin users
+  user:
+    name: "{{ item }}"
+    comment: Local Admin User
+    groups: users
+  loop: "{{ sudoers }}"
+  
+- name: Ensure .ssh directory exists
+  file:
+    path: "~{{ item }}/.ssh"
+    state: directory
+    owner: "{{ item }}"
+    group: users
+    mode: 0700
+  loop: "{{ sudoers }}"
+
+- name: Set authorized key for SSH login
+  authorized_key:
+    key: "{{ lookup('file', 'id_rsa.pub') }}"
+    user: "{{ item }}"
+    state: present
+  loop: "{{ sudoers }}"
+  
+- name: Add to sudoers file
+  lineinfile:
+    path: /etc/sudoers
+    regexp: "^{{ item }}.*"
+    line: "{{ item }}  ALL=(ALL)   NOPASSWD: ALL"
+    create: yes
+    state: present
+  loop: "{{ sudoers }}"
+
+- name: Copy private key for SSH to inner nodes
+  copy:
+    src: id_rsa
+    dest: .ssh/id_rsa
+    owner: "{{ item }}"
+    group: users
+    mode: 0600
+  loop: "{{ sudoers }}"
+
+- name: Copy public key for SSH to inner nodes
+  copy:
+    src: id_rsa.pub
+    dest: .ssh/id_rsa.pub
+    owner: "{{ item }}"
+    group: users
+    mode: 0644
+  loop: "{{ sudoers }}"
+    

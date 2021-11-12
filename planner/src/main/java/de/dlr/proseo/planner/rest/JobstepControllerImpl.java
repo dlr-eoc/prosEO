@@ -12,18 +12,18 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
+import de.dlr.proseo.model.service.SecurityService;
+import de.dlr.proseo.model.Job;
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.rest.JobstepController;
-import de.dlr.proseo.model.rest.model.RestJob;
 import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.Status;
 import de.dlr.proseo.planner.Messages;
@@ -48,7 +48,11 @@ public class JobstepControllerImpl implements JobstepController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(JobstepControllerImpl.class);
+
+	/** Utility class for user authorizations */
+	@Autowired
+	private SecurityService securityService;
 
 	/** The Production Planner instance */
     @Autowired
@@ -65,34 +69,53 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override
 	@Transactional
     public ResponseEntity<List<RestJobStep>> getJobSteps(Status status, String mission, Long last) {		
-		List<RestJobStep> list = new ArrayList<RestJobStep>(); 
-		List<JobStep> it ;
-		if (status == null || status.value().equalsIgnoreCase("NONE")) {
-			it = RepositoryService.getJobStepRepository().findAll();
-		} else if (mission != null) {
-			JobStepState state = JobStepState.valueOf(status.toString());
-			//it = new ArrayList<JobStep>();
-			if (last != null && last > 0) {
-				List<JobStep> itall = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
-				if (last < itall.size()) {
-					it = itall.subList(0, last.intValue());
-				} else {
-					it = itall;
+		if (logger.isTraceEnabled()) logger.trace(">>> getJobSteps({}, {}, {})", status, mission, last);
+		
+		if (null == mission || mission.isBlank()) {
+			mission = securityService.getMission();
+		} else if (!mission.equals(securityService.getMission())) {
+			String message = Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, mission, securityService.getMission());
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.FORBIDDEN);
+		}
+		
+		try {
+			List<RestJobStep> list = new ArrayList<RestJobStep>(); 
+			List<JobStep> it;
+			if (status == null || status.value().equalsIgnoreCase("NONE")) {
+				List<JobStep> allJobSteps = RepositoryService.getJobStepRepository().findAll();
+				it = new ArrayList<>();
+				for (JobStep js: allJobSteps) {
+					if (js.getJob().getProcessingOrder().getMission().getCode().equals(mission)) {
+						it.add(js);
+					}
 				}
 			} else {
-				it = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
+				JobStepState state = JobStepState.valueOf(status.toString());
+				//it = new ArrayList<JobStep>();
+				if (last != null && last > 0) {
+					List<JobStep> itall = jobStepUtil.findOrderedByJobStepStateAndMission(state, mission, last.intValue());
+					if (last < itall.size()) {
+						it = itall.subList(0, last.intValue());
+					} else {
+						it = itall;
+					}
+				} else {
+					it = RepositoryService.getJobStepRepository().findAllByJobStepStateAndMissionOrderByDate(state, mission);
+				}
 			}
-		} else {
-			JobStepState state = JobStepState.valueOf(status.toString());
-			it = RepositoryService.getJobStepRepository().findAllByJobStepState(state);
+			for (JobStep js : it) {
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				list.add(pjs);			
+			}
+			
+			Messages.JOBSTEPS_RETRIEVED.log(logger, status, mission);
+
+			return new ResponseEntity<>(list, HttpStatus.OK);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		for (JobStep js : it) {
-			RestJobStep pjs = RestUtil.createRestJobStep(js);
-			list.add(pjs);			
-		}
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-		return new ResponseEntity<>(list, responseHeaders, HttpStatus.OK);
 	}
 
     /**
@@ -102,29 +125,37 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override
 	@Transactional
 	public ResponseEntity<RestJobStep> getJobStep(String name) {
-		JobStep js = this.findJobStepByNameOrId(name);
-		if (js != null) {
-			if (js.getJobStepState() == JobStepState.RUNNING && js.getJob() != null) {
-				if (js.getJob().getProcessingFacility() != null) {
-					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
-					if (kc != null) {
-						KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
-						if (kj != null) {
-							kj.getInfo(ProductionPlanner.jobNamePrefix + js.getId());
+		if (logger.isTraceEnabled()) logger.trace(">>> getJobStep({})", name);
+		
+		try {
+			JobStep js = this.findJobStepByNameOrId(name);
+			if (js != null) {
+				Job job = js.getJob();
+				if (js.getJobStepState() == JobStepState.RUNNING && job != null) {
+					if (job.getProcessingFacility() != null) {
+						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+						if (kc != null) {
+							KubeJob kj = kc.getKubeJob(ProductionPlanner.jobNamePrefix + js.getId());
+							if (kj != null) {
+								kj.updateInfo(ProductionPlanner.jobNamePrefix + js.getId());
+							}
 						}
 					}
 				}
+				RestJobStep pjs = RestUtil.createRestJobStep(js);
+
+				Messages.JOBSTEPS_RETRIEVED.log(logger, name);
+
+				return new ResponseEntity<>(pjs, HttpStatus.OK);
 			}
-			RestJobStep pjs = RestUtil.createRestJobStep(js);
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), Messages.OK.getDescription());
-			return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+			String message = Messages.JOBSTEP_NOT_EXIST.log(logger, name);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-    	String message = Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(name);
-    	logger.error(message);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-    	return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 		
 	}
 
@@ -135,40 +166,49 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> resumeJobStep(String jobstepId) {
-		JobStep js = this.findJobStepByNameOrId(jobstepId);
-		if (js != null) {
-			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility(), null); 
-			if (re != null) {
-				return re;
-			}
-			Messages msg = jobStepUtil.resume(js, true);
-			if (msg.isTrue()) {
-				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
-				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
-					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
-					if (kc != null) {
-						UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
-					}
+		if (logger.isTraceEnabled()) logger.trace(">>> resumeJobStep({})", jobstepId);
+		
+		try {
+			JobStep js = this.findJobStepByNameOrId(jobstepId);
+			if (js != null) {
+				Job job = js.getJob();
+				if (job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+							job.getProcessingFacility().getFacilityState().toString());
+
+			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
-				// canceled
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not suspend
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+
+				Messages msg = jobStepUtil.resume(js, true);
+				// Already logged
+				
+				if (msg.isTrue()) {
+					UtilService.getJobUtil().updateState(job, js.getJobStepState());
+					if (job != null && job.getProcessingFacility() != null) {
+						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+						if (kc != null) {
+							UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
+						}
+					}
+					// resumed
+					RestJobStep pjs = RestUtil.createRestJobStep(js);
+
+					return new ResponseEntity<>(pjs, HttpStatus.OK);
+				} else {
+					// illegal state for resume
+					String message = msg.format(jobstepId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
 			}
+			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
     /**
@@ -178,35 +218,40 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> cancelJobStep(String jobstepId) {
-		JobStep js = this.findJobStepByNameOrId(jobstepId);
-		if (js != null) {
-			Messages msg = jobStepUtil.cancel(js);
-			if (msg.isTrue()) {
-				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
-				if (js.getJob() != null && js.getJob().getProcessingFacility() != null) {
-					KubeConfig kc = productionPlanner.getKubeConfig(js.getJob().getProcessingFacility().getName());
-					if (kc != null) {
-						UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
+		if (logger.isTraceEnabled()) logger.trace(">>> cancelJobStep({})", jobstepId);
+		
+		try {
+			JobStep js = this.findJobStepByNameOrId(jobstepId);
+			if (js != null) {
+				Job job = js.getJob();
+				Messages msg = jobStepUtil.cancel(js);
+				if (msg.isTrue()) {
+					UtilService.getJobUtil().updateState(job, js.getJobStepState());
+					if (job != null && job.getProcessingFacility() != null) {
+						KubeConfig kc = productionPlanner.getKubeConfig(job.getProcessingFacility().getName());
+						if (kc != null) {
+							UtilService.getJobStepUtil().checkJobStepToRun(kc, js);
+						}
 					}
+					// cancelled
+					RestJobStep pjs = RestUtil.createRestJobStep(js);
+
+					return new ResponseEntity<>(pjs, HttpStatus.OK);
+				} else {
+					// illegal state for cancel
+					String message = msg.format(jobstepId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
-				// canceled
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not suspend
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
 			}
+			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
     /**
@@ -217,35 +262,48 @@ public class JobstepControllerImpl implements JobstepController {
 	@Override 
 	@Transactional
 	public ResponseEntity<RestJobStep> suspendJobStep(String jobstepId, Boolean force) {
-		JobStep js = this.findJobStepByNameOrId(jobstepId);
-		if (js != null) {
-			@SuppressWarnings("unchecked")
-			ResponseEntity<RestJobStep> re = (ResponseEntity<RestJobStep>) productionPlanner.checkFacility(js.getJob().getProcessingFacility(), 
-					((force != null && force) ? FacilityState.STOPPING : null)); 
-			if (re != null) {
-				return re;
-			}
-			Messages msg = jobStepUtil.suspend(js, force); 
-			if (msg.isTrue()) {
-				// suspended
-				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			} else {
-				// already running or at end, could not suspend
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			}
+		if (logger.isTraceEnabled()) logger.trace(">>> suspendJobStep({}, force: {})", jobstepId, force);
+		
+		if (null == force) {
+			force = false;
 		}
-		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
+		
+		try {
+			JobStep js = this.findJobStepByNameOrId(jobstepId);
+			if (js != null) {
+				Job job = js.getJob();
+				
+				// "Suspend force" is only allowed, if the processing facility is available
+				if (force && job.getProcessingFacility().getFacilityState() != FacilityState.RUNNING) {
+					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
+							job.getProcessingFacility().getFacilityState().toString());
+
+			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
+
+				Messages msg = jobStepUtil.suspend(js, force); 
+				if (msg.isTrue()) {
+					// suspended
+					UtilService.getJobUtil().updateState(job, js.getJobStepState());
+					RestJobStep pjs = RestUtil.createRestJobStep(js);
+
+					return new ResponseEntity<>(pjs, HttpStatus.OK);
+				} else {
+					// illegal state for suspend
+					String message = msg.format(jobstepId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
+			}
+			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			e.printStackTrace();
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	/**
@@ -255,6 +313,8 @@ public class JobstepControllerImpl implements JobstepController {
 	 */
 	@Transactional
 	private JobStep findJobStepByNameOrId(String nameOrId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> findJobStepByNameOrId({})", nameOrId);
+		
 		JobStep js = null;
 		Long id = null;
 		if (nameOrId != null) {
@@ -270,6 +330,16 @@ public class JobstepControllerImpl implements JobstepController {
 				}
 			}
 		}
+
+		if (null != js) {
+			// Ensure user is authorized for the mission of the order
+			String missionCode = securityService.getMission();
+			String orderMissionCode = js.getJob().getProcessingOrder().getMission().getCode();
+			if (!missionCode.equals(orderMissionCode)) {
+				Messages.ILLEGAL_CROSS_MISSION_ACCESS.log(logger, orderMissionCode, missionCode);
+				return null;
+			} 
+		}
 		return js;
 	}
 
@@ -280,27 +350,34 @@ public class JobstepControllerImpl implements JobstepController {
 	@Transactional
 	@Override
 	public ResponseEntity<RestJobStep> retryJobStep(String jobstepId) {
-		JobStep js = this.findJobStepByNameOrId(jobstepId);
-		if (js != null) {
-			Messages msg = jobStepUtil.retry(js);
-			if (msg.isTrue()) {
-				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_SUCCESS.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
-			} else {
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), msg.formatWithPrefix(jobstepId));
-				return new ResponseEntity<>(pjs, responseHeaders, HttpStatus.OK);
+		if (logger.isTraceEnabled()) logger.trace(">>> retryJobStep({})", jobstepId);
+		
+		try {
+			JobStep js = this.findJobStepByNameOrId(jobstepId);
+			if (js != null) {
+				Job job = js.getJob();
+				Messages msg = jobStepUtil.retry(js);
+				// Already logged
+				
+				if (msg.isTrue()) {
+					UtilService.getJobUtil().updateState(job, js.getJobStepState());
+					RestJobStep pjs = RestUtil.createRestJobStep(js);
+
+					return new ResponseEntity<>(pjs, HttpStatus.OK);
+				} else {
+					String message = msg.format(jobstepId);
+
+					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
+				}
 			}
+			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
+
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
+			
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-		String message =  Messages.JOBSTEP_NOT_EXIST.formatWithPrefix(jobstepId);
-    	HttpHeaders responseHeaders = new HttpHeaders();
-    	responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-		return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);
 	}
 
 }

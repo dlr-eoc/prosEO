@@ -28,7 +28,7 @@ public class OrdermgrConfiguration {
 	
 	// Default connection timeout is 30 s
 	private static final Long DEFAULT_TIMEOUT = 30000L;
-	
+
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
 	private String ingestorUrl;

@@ -73,6 +73,9 @@ public class OrderUtil {
 		if (null != processingOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(Date.from(processingOrder.getExecutionTime()));
 		}
+		if (null != processingOrder.getEvictionTime()) {
+			restOrder.setEvictionTime(Date.from(processingOrder.getEvictionTime()));
+		}
 		if(null != processingOrder.getSlicingType()) {
 			restOrder.setSlicingType(processingOrder.getSlicingType().name());
 		}
@@ -264,7 +267,14 @@ public class OrderUtil {
 			try {
 				processingOrder.setExecutionTime(restOrder.getExecutionTime().toInstant());
 			} catch (DateTimeException e) {
-				throw new IllegalArgumentException(String.format("Invalid sensing stop time '%s'", restOrder.getExecutionTime()));
+				throw new IllegalArgumentException(String.format("Invalid execution time '%s'", restOrder.getExecutionTime()));
+			} 
+		}
+		if (null != restOrder.getEvictionTime()) {
+			try {
+				processingOrder.setEvictionTime(restOrder.getEvictionTime().toInstant());
+			} catch (DateTimeException e) {
+				throw new IllegalArgumentException(String.format("Invalid eviction time '%s'", restOrder.getEvictionTime()));
 			} 
 		}
 		if (null != restOrder.getOutputFileClass()) {

@@ -78,6 +78,13 @@ public class ProcessingOrder extends PersistentObject {
 	private Instant executionTime;
 	
 	/**
+	 * Time for automatic order deletion, if an orderRetentionPeriod is set for the mission and
+	 * the productionType is SYSTEMATIC_PRODUCTION.
+	 */
+	@Column(name = "eviction_time", columnDefinition = "TIMESTAMP")
+	private Instant evictionTime;
+	
+	/**
 	 * The start time of the time interval to process. If a range of orbit numbers is given, this time is set to the earliest
 	 * start time of the selected orbits.
 	 */
@@ -165,7 +172,27 @@ public class ProcessingOrder extends PersistentObject {
 	/** The processing jobs belonging to this order */	
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "processingOrder")
 	private Set<Job> jobs = new HashSet<>();
+
+	/**
+	 * The progress monitoring for this order
+	 */
+	@ElementCollection
+	private Set<MonOrderProgress> monOrderProgress = new HashSet<>();
 	
+	/**
+	 * @return the monOrderProgress
+	 */
+	public Set<MonOrderProgress> getMonOrderProgress() {
+		return monOrderProgress;
+	}
+
+	/**
+	 * @param monOrderProgress the monOrderProgress to set
+	 */
+	public void setMonOrderProgress(Set<MonOrderProgress> monOrderProgress) {
+		this.monOrderProgress = monOrderProgress;
+	}
+
 	/**
 	 * Gets the owning mission
 	 * 
@@ -260,6 +287,24 @@ public class ProcessingOrder extends PersistentObject {
 	 */
 	public void setExecutionTime(Instant executionTime) {
 		this.executionTime = executionTime;
+	}
+
+	/**
+	 * Gets the order eviction time (if any)
+	 * 
+	 * @return the eviction time
+	 */
+	public Instant getEvictionTime() {
+		return evictionTime;
+	}
+
+	/**
+	 * Sets the order eviction time
+	 * 
+	 * @param evictionTime the eviction time to set (may be null)
+	 */
+	public void setEvictionTime(Instant evictionTime) {
+		this.evictionTime = evictionTime;
 	}
 
 	/**

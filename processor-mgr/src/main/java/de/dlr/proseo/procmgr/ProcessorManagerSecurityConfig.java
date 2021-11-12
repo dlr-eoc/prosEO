@@ -51,6 +51,7 @@ public class ProcessorManagerSecurityConfig extends WebSecurityConfigurerAdapter
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/**/actuator/health").permitAll()
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PROCESSOR_READER.toString())
 				.antMatchers("/**/processorclasses", "/**/processors").hasAnyRole(UserRole.PROCESSORCLASS_MGR.toString())
 				.antMatchers("/**/configurations", "/**/configuredprocessors").hasAnyRole(UserRole.CONFIGURATION_MGR.toString())

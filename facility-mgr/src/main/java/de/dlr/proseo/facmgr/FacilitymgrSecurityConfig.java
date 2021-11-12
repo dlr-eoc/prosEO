@@ -51,6 +51,7 @@ public class FacilitymgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/**/actuator/health").permitAll()
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.FACILITY_READER.toString())
 				.anyRequest().hasAnyRole(UserRole.FACILITY_MGR.toString())
 				.and()

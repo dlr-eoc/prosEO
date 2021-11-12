@@ -40,7 +40,7 @@ public class ProductionPlannerConfiguration {
 	
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
-	private String productionPlannerCycleWaitTime;
+	private Integer productionPlannerCycleWaitTime;
 	
 	/** Kubernetes configuration file name */
 	@Value("${proseo.productionPlanner.kubeconfig}")
@@ -48,19 +48,19 @@ public class ProductionPlannerConfiguration {
 
 	/** Maximum cycle for K8s job finish */
 	@Value("${proseo.productionPlanner.maxcycles}")
-	private String productionPlannerMaxCycles;
+	private Integer productionPlannerMaxCycles;
 	
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.dispatcherwaittime}")
-	private String productionPlannerDispatcherWaitTime;
+	private Integer productionPlannerDispatcherWaitTime;
 
 	/** Maximum cycles for file size check */
 	@Value("${proseo.productionPlanner.filecheckmaxcycles}")
-	private String productionPlannerFileCheckMaxCycles;
+	private Integer productionPlannerFileCheckMaxCycles;
 	
 	/** Wait time for file size check cycle in milliseconds */
 	@Value("${proseo.productionPlanner.filecheckwaittime}")
-	private String productionPlannerFileCheckWaitTime;
+	private Integer productionPlannerFileCheckWaitTime;
 
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
@@ -69,14 +69,14 @@ public class ProductionPlannerConfiguration {
 	/**
 	 * @return the productionPlannerFileCheckMaxCycles
 	 */
-	public String getProductionPlannerFileCheckMaxCycles() {
+	public Integer getProductionPlannerFileCheckMaxCycles() {
 		return productionPlannerFileCheckMaxCycles;
 	}
 
 	/**
 	 * @return the productionPlannerFileCheckWaitTime
 	 */
-	public String getProductionPlannerFileCheckWaitTime() {
+	public Integer getProductionPlannerFileCheckWaitTime() {
 		return productionPlannerFileCheckWaitTime;
 	}
 
@@ -97,21 +97,21 @@ public class ProductionPlannerConfiguration {
 	/**
 	 * @return the productionPlannerCycleWaitTime
 	 */
-	public String getProductionPlannerCycleWaitTime() {
+	public Integer getProductionPlannerCycleWaitTime() {
 		return productionPlannerCycleWaitTime;
 	}
 
 	/**
 	 * @return the productionPlannerDispatcherWaitTime
 	 */
-	public String getProductionPlannerDispatcherWaitTime() {
+	public Integer getProductionPlannerDispatcherWaitTime() {
 		return productionPlannerDispatcherWaitTime;
 	}
 
 	/**
 	 * @return the productionPlannerMaxCycles
 	 */
-	public String getProductionPlannerMaxCycles() {
+	public Integer getProductionPlannerMaxCycles() {
 		return productionPlannerMaxCycles;
 	}
 

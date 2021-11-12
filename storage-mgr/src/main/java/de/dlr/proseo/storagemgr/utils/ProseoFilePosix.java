@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -52,27 +53,27 @@ public class ProseoFilePosix extends ProseoFile {
 			aPath = aPath.substring(1);			
 		}
 		if (fullPath) {
-			String base = cfg.getPosixMountPoint();
-			while (base.startsWith("/")) {
-				base = base.substring(1);			
+			String baseBackend = Paths.get(cfg.getPosixBackendPath()).toAbsolutePath().toString();
+			while (baseBackend.startsWith("/")) {
+				baseBackend = baseBackend.substring(1);			
 			}
-			String baseWorker = cfg.getPosixWorkerMountPoint();
-			while (baseWorker.startsWith("/")) {
-				baseWorker = baseWorker.substring(1);			
+			String baseCache = Paths.get(cfg.getPosixCachePath()).toAbsolutePath().toString();
+			while (baseCache.startsWith("/")) {
+				baseCache = baseCache.substring(1);			
 			}
-			if (aPath.startsWith(base)) {
-				basePath = base;
-				if (aPath.length() == base.length()) {
+			if (aPath.startsWith(baseBackend)) {
+				basePath = baseBackend;
+				if (aPath.length() == baseBackend.length()) {
 					relPath = "/";
 				} else {
-					relPath = aPath.substring(base.length() + 1);
+					relPath = aPath.substring(baseBackend.length() + 1);
 				}
-			} else if (aPath.startsWith(baseWorker)) {
-				basePath = baseWorker;
-				if (aPath.length() == baseWorker.length()) {
+			} else if (aPath.startsWith(baseCache)) {
+				basePath = baseCache;
+				if (aPath.length() == baseCache.length()) {
 					relPath = "/";
 				} else {
-					relPath = aPath.substring(baseWorker.length() + 1);
+					relPath = aPath.substring(baseCache.length() + 1);
 				}
 			} else {
 				int pos = aPath.indexOf('/');
@@ -86,7 +87,7 @@ public class ProseoFilePosix extends ProseoFile {
 			}
 		} else {
 			relPath = aPath;
-			basePath = cfg.getPosixMountPoint().trim();
+			basePath = cfg.getPosixBackendPath().trim();
 			while (basePath.startsWith("/")) {
 				basePath = basePath.substring(1);			
 			}				
@@ -94,7 +95,7 @@ public class ProseoFilePosix extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();	
 		
-		logger.trace("ProseoFilePosix created: {}", this);
+		logger.trace("ProseoFilePosix created: {}", this.getFullPath());
 	}
 
 	/**
@@ -117,7 +118,7 @@ public class ProseoFilePosix extends ProseoFile {
 		buildFileName();
 		pathInfo = getFullPath();						
 		
-		logger.trace("ProseoFilePosix created: {}", this);
+		logger.trace("ProseoFilePosix created: {}", this.getFullPath());
 	}
 
 	/* (non-Javadoc)
@@ -187,7 +188,7 @@ public class ProseoFilePosix extends ProseoFile {
 	public ArrayList<String> copyTo(ProseoFile proFile, Boolean recursive) throws Exception {
 		
 		if (logger.isTraceEnabled()) logger.trace(">>> copyTo({}, {})", 
-				(null == proFile ? "MISSING" : proFile.fileName), recursive);
+				(null == proFile ? "MISSING" : proFile.getFullPath()), recursive);
 		
 		if (proFile == null) {
 			logger.error("Illegal call of ProseoFilePosix::copyTo(ProseoFile, Boolean) with null argument");
@@ -257,7 +258,11 @@ public class ProseoFilePosix extends ProseoFile {
 				}
 			}
 			for (File f : files) {
-				File targetFile = new File(proFile.getFullPath() );
+				String targetFileName = proFile.getFullPath();
+				if (proFile.isDirectory()) {
+					targetFileName += File.separator + f.getName();
+				}
+				File targetFile = new File(targetFileName);
 				if (FileCache.getInstance().containsKey(targetFile.getPath())) { // if (targetFile.exists()) 
 					result.add(targetFile.getPath());
 				} else {

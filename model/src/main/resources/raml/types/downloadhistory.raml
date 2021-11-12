@@ -1,0 +1,19 @@
+#%RAML 1.0 DataType
+#  RestDownloadHistory:
+    type: object
+    properties:
+      username:
+        type: string
+        description: The user who initiated the download
+      productFileName:
+        type: string
+        description: The file name of the downloaded ProductFile
+      productFileSize:
+        type: integer
+        format: long
+        description: The product file size in bytes
+      dateTime:
+        type: string
+        description: The time of the download in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
+        pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+        

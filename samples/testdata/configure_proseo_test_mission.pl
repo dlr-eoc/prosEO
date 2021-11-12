@@ -2,10 +2,10 @@
 eval 'exec perl -S $0 $*' if 0;
 
 #
-# configure_s5p_proseo.pl
-# -----------------------
+# configure_proseo_test_mission.pl
+# --------------------------------
 #
-# Configure prosEO for the Sentinel-5 Precursor (S5P) mission
+# Configure prosEO for the prosEO Test Mission (PTM)
 #
 use 5.016;
 use strict;
@@ -158,7 +158,7 @@ my @processors = (
     	tasks => [ 
     	   { taskName => 'ptm_l01b', taskVersion => '0.1.0' }
     	],
-    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
+    	dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.1'
     },
     {
         processorName => 'PTML2', 
@@ -167,7 +167,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l2', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.1'
     },
     {
         processorName => 'PTML3', 
@@ -176,7 +176,7 @@ my @processors = (
         tasks => [ 
            { taskName => 'ptm_l3', taskVersion => '0.1.0' }
         ],
-        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.0'
+        dockerImage => 'localhost:5000/proseo-sample-wrapper:0.8.1'
     }
 );
 my @configurations = (
@@ -644,6 +644,6 @@ $cli_script->close();
 
 say 'IMPORTANT:';
 say '(1) Please change user passwords after completing script-based configuration!';
-say '(2) Make sure the sysadm credentials are present in ' . $OUT_FILE_DIR . '/sysadm.cred!';
+say '(2) Make sure the sysadm credentials are present in sysadm.cred!';
 
 say '--- prosEO Test Mission setup complete ---';

@@ -51,6 +51,7 @@ public class OrdermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/**/actuator/health").permitAll()
 				.antMatchers(HttpMethod.GET, "/**/missions").permitAll()
 				.antMatchers(HttpMethod.POST, "/**/missions").hasAnyRole(UserRole.ROOT.toString())
 				.antMatchers(HttpMethod.DELETE, "/**/missions").hasAnyRole(UserRole.ROOT.toString())

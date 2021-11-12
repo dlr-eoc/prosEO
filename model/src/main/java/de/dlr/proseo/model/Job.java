@@ -96,7 +96,7 @@ public class Job extends PersistentObject {
 			case INITIAL:
 				return other.equals(RELEASED) || other.equals(FAILED);
 			case ON_HOLD:
-				return other.equals(INITIAL);
+				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
 			case RELEASED:
 				return other.equals(INITIAL) || other.equals(STARTED);
 			case STARTED:

@@ -1,0 +1,88 @@
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate.ddl-auto: update
+        open-in-view: false
+        properties.hibernate.jdbc.time_zone: UTC
+    datasource:
+        url: jdbc:postgresql://proseo-db:5432/proseo
+        username: postgres
+        password: sequel09Master
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    monitor:
+        # Timeout settings for HTTP requests
+        connectTimeout: 1000
+        readTimeout: 1000
+        # default cycle wait time
+        cycle: 10000
+        # cycle wait time for checking services
+        serviceCycle: 10000
+        # cycle wait time for checking orders
+        orderCycle: 30000
+        # cycle wait time for checking products
+        productCycle: 60000
+        # cycle wait time for checking raw data
+        rawdataCycle: 60000
+        # if no entries are in an aggregation table this date is used to begin generating the entries
+        aggregationStart: "2021-10-19T00:00:00.000000Z"
+        services:
+            # prosEO Metadata Database
+            -
+                name: "Production Planner"
+                nameId: planner
+                url: http://192.168.20.155:8080/actuator/health
+                hasActuator: true
+                isProseo: true
+
+            # prosEO Internal Services
+            -
+                name: Database
+                nameId: proseo
+                url: http://192.168.20.155:5432/
+                docker: machine1
+                hasActuator: false
+                isProseo: true
+            -
+                name: Grafana
+                nameId: jovial_hofstadter
+                url: http://192.168.20.155:3000/
+                docker: machine1
+                hasActuator: false
+                isProseo: true                
+            -
+                name: XBIP-Monitor
+                nameId: xbip-monitor
+                url: http://192.168.20.156:8080/actuator/health
+                kubernetes: kube1
+                hasActuator: true
+                isProseo: true
+            -
+                name: Matera
+                nameId: matera
+                url: http://192.168.20.156:8080/proseo/xbip-monitor/v1/mti/status
+                hasActuator: false
+                isProseo: false
+
+            # prosEO Supporting Services (shown as "Internal")
+            -
+                name: "S3 Object Storage"
+                nameId: root_minio_1
+                url: http://192.168.20.191:9000/
+                docker: machine2
+                hasActuator: false
+                isProseo: true
+        dockers:
+            -
+                name: machine1
+                ip: localhost
+                port: 2375
+                apiVersion: 1.40
+            -
+                name: machine2
+                ip: 192.168.20.191
+                port: 2375
+                apiVersion: 1.40

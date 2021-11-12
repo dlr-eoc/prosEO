@@ -1,0 +1,265 @@
+---
+# Deploy an infrastructure for prosEO
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+  
+  # --- Data Center ---
+  
+  - name: Create a data center
+    datacenter:
+      name: "{{ datacenter.name }}"
+      description: "{{ datacenter.description }}"
+      location: "{{ datacenter.location }}"
+    register: datacenter_response
+    
+  - name: Show data center
+    debug:
+      msg: "{{ datacenter_response }}"
+  
+  # --- Networks ---
+  
+  - name: Create private network for internal nodes
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "laninternal"
+      public: false
+    register: laninternal
+    
+  - name: Create private network for PRIP and Storage Manager
+    lan:
+      datacenter: "{{ datacenter.name }}"
+      name: "lanpripinternal"
+      public: false
+    register: lanpripinternal
+    
+  - name: Show networks
+    debug:
+      msg: "[ {{ laninternal }},{{ lanpripinternal }} ]"
+  
+  # --- Public IPs ---
+  
+  - name: Create public IPs
+    ipblock:
+      name: "{{ datacenter.name }}"
+      location: "{{ datacenter.location }}"
+      size: 3
+    register: public_ips
+      
+  - name: Show public IPs
+    debug:
+      msg: "{{ public_ips }}"
+  
+  # --- Hosts ---
+  
+  - name: Provision bastion hosts
+    server:
+      datacenter: "{{ datacenter.name }}"
+      count: 2
+      auto_increment: false
+      name: "{{ item }}"
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ bastion.cores }}"
+      ram: "{{ bastion.ram }}"
+      volume_size: "{{ bastion.disk }}"
+      # Public IPs must be updated manually after provisioning
+      assign_public_ip: true
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    loop:
+    - bastion-control
+    - bastion-prip
+    register: bastionhosts
+    
+  - name: Show bastion hosts
+    debug:
+      msg: "{{ bastionhosts }}"
+  
+  - name: Provision brain host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "brain"
+      auto_increment: false
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ brain.cores }}"
+      ram: "{{ brain.ram }}"
+      volume_size: "{{ brain.disk }}"
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: brainhost
+  
+  - name: Show brain host
+    debug:
+      msg: "{{ brainhost }}"
+  
+  - name: Provision NFS host
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "nfs-server"
+      auto_increment: false
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ nfs.cores }}"
+      ram: "{{ nfs.ram }}"
+      volume_size: "{{ nfs.disk }}"
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: nfshost
+    
+  - name: Add NFS disk volumes of 2 TB each to NFS host
+    volume:
+      datacenter: "{{ datacenter.name }}"
+#      server: "nfs-server"
+      name: "nfsdisk%02d"
+      count: "{{ nfs.disk_count }}"
+      size: 2048
+      licence_type: OTHER
+  
+  - name: Show NFS host
+    debug:
+      msg: "{{ nfshost }}"
+  
+  - name: Provision loghost
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "loghost"
+      auto_increment: false
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ log.cores }}"
+      ram: "{{ log.ram }}"
+      volume_size: "{{ log.disk }}"
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: loghost
+  
+  - name: Show loghost
+    debug:
+      msg: "{{ loghost }}"
+  
+  - name: Provision Kubernetes master
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "master"
+      auto_increment: false
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ master.cores }}"
+      ram: "{{ master.ram }}"
+      volume_size: "{{ master.disk }}"
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: kube_master
+  
+  - name: Show Kubernetes master
+    debug:
+      msg: "{{ kube_master }}"
+  
+  - name: Provision Kubernetes workers
+    server:
+      datacenter: "{{ datacenter.name }}"
+      name: "worker%02d"
+      count: "{{ worker.count }}"
+      image: "{{ all.image }}"
+      image_password: "{{ all.image_password }}"
+      cores: "{{ worker.cores }}"
+      ram: "{{ worker.ram }}"
+      volume_size: "{{ worker.disk }}"
+      ssh_keys:
+      - "{{ all.ssh_key }}"
+    register: workers
+  
+  - name: Show Kubernetes workers
+    debug:
+      msg: "{{ workers }}"
+  
+  # --- Network Interface Cards ---
+  
+  - name: Create NICs on laninternal
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: "{{ item }}"
+      lan: "{{ laninternal.lan.id }}"
+      name: "NIC laninternal"
+      dhcp: true
+    loop:
+    - "{{ bastionhosts.results[0].machines[0].id }}"
+    - "{{ brainhost.machines[0].id }}"
+    - "{{ nfshost.machines[0].id }}"
+    - "{{ loghost.machines[0].id }}"
+    - "{{ kube_master.machines[0].id }}"
+    register: laninternal_nics
+      
+  - name: Show NICs on laninternal
+    debug:
+      msg: "{{ laninternal_nics }}"
+
+  - name: Create worker NICs on laninternal
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: "{{ item.id }}"
+      lan: "{{ laninternal.lan.id }}"
+      name: "NIC laninternal"
+      dhcp: true
+    loop: "{{ workers.machines }}"
+    register: laninternal_worker_nics
+      
+  - name: Show worker NICs on laninternal
+    debug:
+      msg: "{{ laninternal_worker_nics }}"
+
+  - name: Create NICs on lanpripinternal
+    nic:
+      datacenter: "{{ datacenter.name }}"
+      server: "{{ item }}"
+      lan: "{{ lanpripinternal.lan.id }}"
+      name: "NIC lanpripinternal"
+      dhcp: true
+    loop:
+    - "{{ bastionhosts.results[1].machines[0].id }}"
+    - "{{ brainhost.machines[0].id }}"
+    - "{{ nfshost.machines[0].id }}"
+    register: lanpripinternal_nics
+      
+  - name: Show NICs on lanpripinternal
+    debug:
+      msg: "{{ lanpripinternal_nics }}"
+
+  # --- Attach laninternal to NAT Gateway ---
+  
+  - name: Create NAT Gateway
+    nat_gateway:
+      datacenter_id: "{{ datacenter_response.datacenter.id }}"
+      name: "NAT Gateway"
+      public_ips:
+      - "{{ public_ips.ipblock.properties.ips[0] }}"
+      lans:
+      - id: "{{ laninternal.lan.id }}"
+        # Placeholder, must be updated manually after provisioning
+        gateway_ips: "10.1.2.3/24"
+    register: nat_gateway
+    
+  - name: Show NAT Gateway
+    debug:
+      msg: "{{ nat_gateway }}"
+
+  - name: Create NAT Gateway Rule
+    nat_gateway_rule:
+      datacenter_id: "{{ datacenter_response.datacenter.id }}"
+      nat_gateway_id: "{{ nat_gateway.nat_gateway.id }}"
+      name: "NAT for laninternal"
+      type: "SNAT"
+      protocol: "ALL"
+      # Placeholder, must be updated manually after provisioning
+      source_subnet: "10.1.2.0/24"
+      public_ip: "{{ public_ips.ipblock.properties.ips[0] }}"
+    register: nat_gateway_rule
+
+  - name: Show NAT Gateway Rule
+    debug:
+      msg: "{{ nat_gateway_rule }}"
+    

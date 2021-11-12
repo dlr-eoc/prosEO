@@ -1,0 +1,23 @@
+#%RAML 1.0
+title: prosEO AUXIP Monitor REST Services
+version: v0.1
+protocols: [ HTTP, HTTPS ]
+baseUri: /proseo/auxip-monitor/{version}/{auxipid}
+mediaType: application/json
+
+
+types:
+  RestInterfaceStatus: !include ../../../../../../interfaces/src/main/resources/raml/types/interfaceStatus.raml
+
+/status:
+  uriParameters:
+    auxipid:
+      description: AUXIP Monitor identifier
+  get:
+    description: Get status info for this AUXIP Monitor
+    responses:
+      200:
+        body:
+          application/json:
+            type: RestInterfaceStatus
+            example: !include ../../../../../../interfaces/src/main/resources/raml/examples/interfaceStatus.json

@@ -5,6 +5,9 @@
  */
 package de.dlr.proseo.planner.rest.model;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 import de.dlr.proseo.model.rest.model.PlannerPod;
 import io.kubernetes.client.openapi.models.V1Job;
 /**
@@ -16,6 +19,7 @@ import io.kubernetes.client.openapi.models.V1Job;
 public class PodKube extends PlannerPod {
 
 	private static final long serialVersionUID = 287477937477814477L;
+	private static DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("dd.MM.uuuu' 'HH:mm:ss").withZone(ZoneId.of("UTC"));
 
 	/**
 	 * Set instance variables and convert data to text
@@ -34,11 +38,11 @@ public class PodKube extends PlannerPod {
 			this.status = "";
 			if (job.getStatus() != null) {
 				if (job.getStatus().getStartTime() != null) { 
-					starttime = job.getStatus().getStartTime().toString("dd.MM.YYYY HH:mm:ss", null);
+					starttime = timeFormatter.format(job.getStatus().getStartTime().toInstant());
 					type = "running";
 				}
 				if (job.getStatus().getCompletionTime() != null) { 
-					completiontime = job.getStatus().getCompletionTime().toString("dd.MM.YYYY HH:mm:ss", null);
+					completiontime = timeFormatter.format(job.getStatus().getCompletionTime().toInstant());
 				}
 				if (job.getStatus() != null) {
 					if (job.getStatus().getSucceeded() != null) {

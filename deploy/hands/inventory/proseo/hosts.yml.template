@@ -1,0 +1,68 @@
+all:
+  hosts:
+    bastion-control:
+      ansible_host: 85.215.x.x
+      ansible_user: root
+      ip: 85.215.x.x
+    master:
+      ansible_host: 10.9.42.22
+      ip: 10.9.42.22
+    worker1:
+      ansible_host: 10.9.42.15
+      ip: 10.9.42.15
+    worker2:
+      ansible_host: 10.9.42.18
+      ip: 10.9.42.18
+    worker3:
+      ansible_host: 10.9.42.12
+      ip: 10.9.42.12
+    worker4:
+      ansible_host: 10.9.42.17
+      ip: 10.9.42.17
+    worker5:
+      ansible_host: 10.9.42.14
+      ip: 10.9.42.14
+    worker6:
+      ansible_host: 10.9.42.16
+      ip: 10.9.42.16
+    worker7:
+      ansible_host: 10.9.42.19
+      ip: 10.9.42.19
+    worker8:
+      ansible_host: 10.9.42.11
+      ip: 10.9.42.11
+    worker9:
+      ansible_host: 10.9.42.20
+      ip: 10.9.42.20
+    worker10:
+      ansible_host: 10.9.42.13
+      ip: 10.9.42.13
+  children:
+    bastion:
+      hosts:
+        bastion-control:
+    kube_control_plane:
+      hosts:
+        master:
+    kube_node:
+      hosts:
+        master:
+        worker1:
+        worker2:
+        worker3:
+        worker4:
+        worker5:
+        worker6:
+        worker7:
+        worker8:
+        worker9:
+        worker10:
+    etcd:
+      hosts:
+        master:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}

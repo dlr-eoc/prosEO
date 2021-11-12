@@ -55,8 +55,11 @@ public class ProcessingFacility extends PersistentObject {
 	 */
 	private Integer maxJobsPerNode = 1;
 	
-	/** The URL to access this facility's storage manager */
+	/** The URL to access this facility's storage manager from the control instance */
 	private String storageManagerUrl;
+	
+	/** The URL to access this facility's storage manager from an external client (via PRIP API) */
+	private String externalStorageManagerUrl;
 	
 	/**
 	 * URL of the locally accessible Storage Manager instance on a specific processing node (to be used by the Processing Engine).
@@ -200,6 +203,26 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
+	 * Gets the URL of the facility's storage manager for external clients
+	 * 
+	 * @return the externalStorageManagerUrl
+	 */
+	public String getExternalStorageManagerUrl() {
+		return externalStorageManagerUrl;
+	}
+
+	/**
+	 * Sets the URL of the facility's storage manager for external clients
+	 * 
+	 * @param externalStorageManagerUrl the externalStorageManagerUrl to set
+	 */
+	public void setExternalStorageManagerUrl(String externalStorageManagerUrl) {
+		this.externalStorageManagerUrl = externalStorageManagerUrl;
+	}
+
+	/**
+	 * Gets the URL of the facility's storage manager for local worker nodes
+	 * 
 	 * @return the localStorageManagerUrl
 	 */
 	public String getLocalStorageManagerUrl() {
@@ -207,6 +230,8 @@ public class ProcessingFacility extends PersistentObject {
 	}
 
 	/**
+	 * Sets the URL of the facility's storage manager for local worker nodes
+	 * 
 	 * @param localStorageManagerUrl the localStorageManagerUrl to set
 	 */
 	public void setLocalStorageManagerUrl(String localStorageManagerUrl) {

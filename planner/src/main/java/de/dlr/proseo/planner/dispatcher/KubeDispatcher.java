@@ -49,10 +49,11 @@ public class KubeDispatcher extends Thread {
     private KubeConfig kubeConfig;
 
 	/** 
-	 * Create new KubeDispatcher for planner 
+	 * Create new KubeDispatcher for planner
+	 * 
 	 * @param p The planner
 	 * @param kc The kube config of facility
-	 * @param onlyRun 
+	 * @param onlyRun set to true to evaluate only runnable job steps or to false to check all job steps
 	 */
 	public KubeDispatcher(ProductionPlanner p, KubeConfig kc, Boolean onlyRun) {
 		super((kc != null && p == null) ? "KubeDispatcherRunOnce" : "KubeDispatcher");
@@ -63,18 +64,20 @@ public class KubeDispatcher extends Thread {
 		runOnce = (kc != null && p == null);
 	}
 	
-	/* (non-Javadoc)
+	/**
+	 * Checks for job steps, which are ready to run; depending on its creation parameter "runOnce" this is
+	 * a one-time process or it is running cyclically until it is terminated externally
+	 * 
 	 * @see java.lang.Thread#run()
 	 */
 	@Transactional
     public void run() {
-    	int wait = 100000;
-    	try {
-    		wait = Integer.parseInt(ProductionPlanner.config.getProductionPlannerDispatcherWaitTime());
-    	} catch (NumberFormatException e) {
-    		wait = 100000;
-    	}
+		if (logger.isTraceEnabled()) logger.trace(">>> run()");
+		
+    	int wait = ProductionPlanner.config.getProductionPlannerDispatcherWaitTime();
+
     	if (runOnce) {
+			Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
     		if (kubeConfig != null) {
     			UtilService.getJobStepUtil().checkForJobStepsToRun(kubeConfig, null, onlyRun);
     		} else {
@@ -84,13 +87,22 @@ public class KubeDispatcher extends Thread {
     		if (productionPlanner != null) {
     			if (wait <= 0) {
 					Messages.KUBEDISPATCHER_RUN_ONCE.log(logger);
-					productionPlanner.checkForJobStepsToRun();
+					try {
+						UtilService.getJobStepUtil().checkForJobStepsToRun();
+					} catch (Exception e) {
+						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+					}
     			} else {
     				while (!this.isInterrupted()) {
     					// look for job steps to run
     					Messages.KUBEDISPATCHER_CYCLE.log(logger);
-    					productionPlanner.checkForJobStepsToRun();
     					try {
+    						UtilService.getJobStepUtil().checkForJobStepsToRun();
+						} catch (Exception e) {
+							logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+						}
+    					try {
+        					Messages.KUBEDISPATCHER_SLEEP.log(logger, wait);
     						sleep(wait);
     					}
     					catch(InterruptedException e) {

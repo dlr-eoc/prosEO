@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -78,9 +79,9 @@ public class SimplePolicy extends PersistentObject {
 	/* Message strings */
 	private static final String MSG_DELTA_TIMES_NEGATIVE = "Delta times must not be negative.";
 	private static final String MSG_ILLEGAL_LIST_OF_DELTA_TIMES = "List of delta times must contain exactly two entries for interval start and end.";
+	private static final String MSG_CANNOT_CREATE_QUERY = "Cannot create query (cause: %s)";
 
-	/** The date format for OQL queries [OBSOLETE IN prosEO CONTEXT] */
-    private static final DateTimeFormatter DATEFORMAT_PL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd'T'HH:mm:ss").withZone(ZoneId.of("UTC"));
+	/** The date format for SQL queries */
     private static final DateTimeFormatter DATEFORMAT_SQL = DateTimeFormatter.ofPattern("yyyy'-'MM'-'dd' 'HH:mm:ss.SSSSSS").withZone(ZoneId.of("UTC"));
 	
 	/** The static class logger */
@@ -631,86 +632,6 @@ public class SimplePolicy extends PersistentObject {
 	}
 	
 	/**
-	 * Format this policy as an OQL query condition [OBSOLETE IN THE prosEO CONTEXT]
-	 * <p>
-	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
-	 * given time interval. It is up to the calling program to select the applicable product.
-	 * 
-	 * @param sourceProductClassName the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
-	 * @param startTime the start time to use in the condition
-	 * @param stopTime the stop time to use in the condition
-	 * 
-	 * @return an OQL string representing this policy
-	 */
-	public String asPlQueryCondition(String sourceProductClassName, final Instant startTime, final Instant stopTime) {
-		StringBuilder simplePolicyQuery = new StringBuilder();
-		
-		switch (policyType) {
-		case LatestValidity:
-		case LatestStartValidity:
-			simplePolicyQuery.append("there exists no corresponding ").append(sourceProductClassName).append(" with greater startTime");
-			break;
-		case LatestStopValidity:
-			simplePolicyQuery.append("there exists no corresponding ").append(sourceProductClassName).append(" with greater stopTime");
-			break;
-		case ClosestStartValidity:
-		case LatestValidityClosest:
-			// This will result in two products, one on either side of the interval centre
-			Instant selectionStartTime = startTime.minusMillis(getDeltaTimeT0().toMilliseconds());
-			Instant selectionStopTime = stopTime.plusMillis(getDeltaTimeT1().toMilliseconds());
-			Duration selectionDuration = Duration.between(selectionStartTime, selectionStopTime);
-			Instant selectionCentre = selectionStartTime.plusSeconds(selectionDuration.getSeconds() / 2);
-			String selectionCentreString = DATEFORMAT_PL.format(selectionCentre);
-			simplePolicyQuery.append("((startTime <= '").append(selectionCentreString)
-				.append("' and there exists no corresponding ").append(sourceProductClassName)
-				.append(" with greater startTime where startTime <= '").append(selectionCentreString)
-				.append("') or (startTime > '").append(selectionCentreString)
-				.append("' and there exists no corresponding ").append(sourceProductClassName)
-				.append(" with less startTime where startTime > '").append(selectionCentreString)
-				.append("'))");
-			break;
-		case ClosestStopValidity:
-			// This will result in two products, one on either side of the interval centre
-			selectionStartTime = startTime.minusMillis(getDeltaTimeT0().toMilliseconds());
-			selectionStopTime = stopTime.plusMillis(getDeltaTimeT1().toMilliseconds());
-			selectionDuration = Duration.between(selectionStartTime, selectionStopTime);
-			selectionCentre = selectionStartTime.plusSeconds(selectionDuration.getSeconds() / 2);
-			selectionCentreString = DATEFORMAT_PL.format(selectionCentre);
-			simplePolicyQuery.append("((stopTime <= '").append(selectionCentreString)
-				.append("' and there exists no corresponding ").append(sourceProductClassName)
-				.append(" with greater stopTime where stopTime <= '").append(selectionCentreString)
-				.append("') or (stopTime > '").append(selectionCentreString)
-				.append("' and there exists no corresponding ").append(sourceProductClassName)
-				.append(" with less stopTime where stopTime > '").append(selectionCentreString)
-				.append("'))");
-			break;
-		case LatestValCover:
-			simplePolicyQuery.append("(startTime <= '")
-				.append(DATEFORMAT_PL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("' and stopTime >= '")
-				.append(DATEFORMAT_PL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("')");
-			break;
-		case ValIntersect:
-		case ValIntersectWithoutDuplicates:
-		case LatestValIntersect:
-			simplePolicyQuery.append("(startTime <= '")
-				.append(DATEFORMAT_PL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' and stopTime >= '")
-				.append(DATEFORMAT_PL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("')");
-			break;
-		case LastCreated:
-			simplePolicyQuery.append("there exists no corresponding ").append(sourceProductClassName).append(" with greater insertionTime");
-			break;
-		default:
-			throw new UnsupportedOperationException(String.format(MSG_POLICY_TYPE_NOT_IMPLEMENTED, policyType.toString()));
-		}
-		
-		return simplePolicyQuery.toString();
-	}
-	
-	/**
 	 * Format this policy as a query condition in JPQL (Java Persistence Query Language). It is assumed that the Product
 	 * class is denoted as "select ... from Product p ..." in the JPQL query, to which the resulting condition is to be
 	 * appended.
@@ -721,22 +642,67 @@ public class SimplePolicy extends PersistentObject {
 	 * @param sourceProductClass the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
 	 * @param startTime the start time to use in the condition
 	 * @param stopTime the stop time to use in the condition
+	 * @param filterConditions filter conditions to apply
 	 * @return a ProductQuery object representing this policy
 	 */
-	public String asJpqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime) {
+	public String asJpqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, Map<String, Parameter> filterConditions) {
 		StringBuilder simplePolicyQuery = new StringBuilder();
+		
+		/* Build JOIN and WHERE clauses for sub-SELECT clauses */
+		
+		// Join with as many instances of the product_parameters table as there are filter conditions
+		int i = 0;
+		StringBuilder subSelectQuery = new StringBuilder();
+		for (String filterKey: filterConditions.keySet()) {
+			// Restrict to actual parameters
+			try {
+				Product.class.getDeclaredField(filterKey);
+				// Nothing to do – not a parameter, but a Product attribute
+			} catch (NoSuchFieldException e) {
+				subSelectQuery.append(String.format("join p2.parameters pp2%d ", i));
+				++i;
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
+		}
+		
+		// Format filter conditions
+		i = 0;
+		StringBuilder filterQuery = new StringBuilder();
+		for (String filterKey: filterConditions.keySet()) {
+			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
+			try {
+				Product.class.getDeclaredField(filterKey);
+				filterQuery.append(
+						String.format(" and p2.%s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
+			} catch (NoSuchFieldException e) {
+				filterQuery.append(String.format(" and key(pp2%d) = '%s' and pp2%d.parameterValue = '%s'", 
+						i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+				++i;
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
+		}
+
+		/* Create query condition for policy */
 		
 		switch (policyType) {
 		case LatestValidity:
 		case LatestStartValidity:
 			simplePolicyQuery.append("p.sensingStartTime >= ")
-					.append("(select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = ")
-					.append(sourceProductClass.getId()).append(")");
+					.append("(select max(p2.sensingStartTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(filterQuery)
+					.append(")");
 			break;
 		case LatestStopValidity:
 			simplePolicyQuery.append("p.sensingStopTime >= ")
-					.append("(select max(p2.sensingStopTime) from Product p2 where p2.productClass.id = ")
-					.append(sourceProductClass.getId()).append(")");
+					.append("(select max(p2.sensingStopTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(filterQuery)
+					.append(")");
 			break;
 		case ClosestStartValidity:
 		case LatestValidityClosest:
@@ -748,12 +714,20 @@ public class SimplePolicy extends PersistentObject {
 			String selectionCentreString = DATEFORMAT_SQL.format(selectionCentre);
 			simplePolicyQuery.append("(p.sensingStartTime <= '").append(selectionCentreString)
 				.append("' and p.sensingStartTime >= ")
-				.append("(select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStartTime <= '").append(selectionCentreString).append("') ")
+					.append("(select max(p2.sensingStartTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStartTime <= '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(") ")
 				.append("or p.sensingStartTime > '").append(selectionCentreString)
 				.append("' and p.sensingStartTime < ")
-				.append("(select min(p2.sensingStartTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStartTime > '").append(selectionCentreString).append("'))");
+					.append("(select min(p2.sensingStartTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStartTime > '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append("))");
 			break;
 		case ClosestStopValidity:
 			// This will result in two products, one on either side of the interval centre
@@ -764,12 +738,20 @@ public class SimplePolicy extends PersistentObject {
 			selectionCentreString = DATEFORMAT_SQL.format(selectionCentre);
 			simplePolicyQuery.append("(p.sensingStopTime <= '").append(selectionCentreString)
 				.append("' and p.sensingStopTime >= ")
-				.append("(select max(p2.sensingStopTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStopTime <= '").append(selectionCentreString).append("') ")
+					.append("(select max(p2.sensingStopTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStopTime <= '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(") ")
 				.append("or p.sensingStopTime > '").append(selectionCentreString)
 				.append("' and p.sensingStopTime < ")
-				.append("(select min(p2.sensingStopTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStopTime > '").append(selectionCentreString).append("'))");
+					.append("(select min(p2.sensingStopTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStopTime > '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append("))");
 			break;
 		case LatestValCover:
 			simplePolicyQuery.append("p.sensingStartTime <= '")
@@ -777,12 +759,15 @@ public class SimplePolicy extends PersistentObject {
 				.append("' and p.sensingStopTime >= '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' and p.generationTime >= ")
-				.append("(select max(p2.generationTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStartTime <= '")
-				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("' and p2.sensingStopTime >= '")
-				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("')");
+					.append("(select max(p2.generationTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStartTime <= '")
+					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
+					.append("' and p2.sensingStopTime >= '")
+					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds()))).append("'")
+					.append(filterQuery)
+					.append(")");
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
@@ -798,17 +783,23 @@ public class SimplePolicy extends PersistentObject {
 				.append("' and p.sensingStopTime >= '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' and p.generationTime >= ")
-				.append("(select max(p2.generationTime) from Product p2 where p2.productClass.id = ").append(sourceProductClass.getId())
-				.append(" and p2.sensingStartTime <= '")
-				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' and p2.sensingStopTime >= '")
-				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("')");
+					.append("(select max(p2.generationTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(" and p2.sensingStartTime <= '")
+					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
+					.append("' and p2.sensingStopTime >= '")
+					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
+					.append(filterQuery)
+					.append(")");
 			break;
 		case LastCreated:
 			simplePolicyQuery.append("p.generationTime >= ")
-					.append("(select max(p2.generationTime) from Product p2 where p2.productClass.id = ")
-					.append(sourceProductClass.getId()).append(")");
+					.append("(select max(p2.generationTime) from Product p2 ")
+					.append(subSelectQuery)
+					.append("where p2.productClass.id = ").append(sourceProductClass.getId())
+					.append(filterQuery)
+					.append(")");
 			break;
 		default:
 			throw new UnsupportedOperationException(String.format(MSG_POLICY_TYPE_NOT_IMPLEMENTED, policyType.toString()));
@@ -828,22 +819,75 @@ public class SimplePolicy extends PersistentObject {
 	 * @param sourceProductClass the source product class to use for the query (only required for LatestValidity and LatestValidityClosest)
 	 * @param startTime the start time to use in the condition
 	 * @param stopTime the stop time to use in the condition
+	 * @param filterConditions filter conditions to apply
+	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return a ProductQuery object representing this policy
 	 */
-	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime) {
+	public String asSqlQueryCondition(ProductClass sourceProductClass, final Instant startTime, final Instant stopTime, 
+			Map<String, Parameter> filterConditions, Map<String, String> productColumnMapping, String facilityQuerySqlSubselect) {
 		StringBuilder simplePolicyQuery = new StringBuilder();
+		
+		if (null == facilityQuerySqlSubselect) {
+			facilityQuerySqlSubselect = "";
+		}
+
+		/* Build JOIN and WHERE clauses for sub-SELECT clauses */
+		
+		// Join with as many instances of the product_parameters table as there are filter conditions
+		int i = 0;
+		StringBuilder subSelectQuery = new StringBuilder();
+		for (String filterKey: filterConditions.keySet()) {
+			// Restrict to actual parameters
+			try {
+				Product.class.getDeclaredField(filterKey);
+				// Nothing to do – not a parameter, but a Product attribute
+			} catch (NoSuchFieldException e) {
+				subSelectQuery.append(String.format("JOIN product_parameters pp2%d ON p2.id = pp2%d.product_id ", i, i));
+				++i;
+			} catch (SecurityException e) {
+				throw new RuntimeException(String.format(MSG_CANNOT_CREATE_QUERY, e.getMessage()), e);
+			}
+		}
+		
+		// Format filter conditions
+		i = 0;
+		StringBuilder filterQuery = new StringBuilder();
+		for (String filterKey: filterConditions.keySet()) {
+			// If the key points to a class attribute, query the attribute value, otherwise query a parameter with this key
+			String columnName = productColumnMapping.get(filterKey);
+			if (null == columnName) {
+				filterQuery.append(
+						String.format(" AND pp2%d.parameters_key = '%s' AND pp2%d.parameter_value = '%s'", 
+								i, filterKey, i, filterConditions.get(filterKey).getStringValue()));
+				++i;
+			} else {
+				filterQuery.append(
+						String.format(" AND p2.%s = '%s'", columnName, filterConditions.get(filterKey).getStringValue()));
+			}
+		}
+		
+		/* Create query condition for policy */
 		
 		switch (policyType) {
 		case LatestValidity:
 		case LatestStartValidity:
 			simplePolicyQuery.append("p.sensing_start_time >= ")
-				.append("(SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = ")
-				.append(sourceProductClass.getId()).append(")");
+				.append("(SELECT MAX(p2.sensing_start_time) FROM product p2 ")
+				.append(subSelectQuery)
+				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
+				.append(")");
 			break;
 		case LatestStopValidity:
 			simplePolicyQuery.append("p.sensing_stop_time >= ")
-				.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = ")
-				.append(sourceProductClass.getId()).append(")");
+				.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 ")
+				.append(subSelectQuery)
+				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
+				.append(")");
 			break;
 		case ClosestStartValidity:
 		case LatestValidityClosest:
@@ -855,12 +899,22 @@ public class SimplePolicy extends PersistentObject {
 			String selectionCentreString = DATEFORMAT_SQL.format(selectionCentre);
 			simplePolicyQuery.append("(p.sensing_start_time <= '").append(selectionCentreString)
 				.append("' AND p.sensing_start_time >= ")
-				.append("(SELECT MAX(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_start_time <= '").append(selectionCentreString).append("') ")
+				    .append("(SELECT MAX(p2.sensing_start_time) FROM product p2 ")
+					.append(subSelectQuery)
+				    .append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				    .append(" AND p2.sensing_start_time <= '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+				    .append(") ")
 				.append("OR p.sensing_start_time > '").append(selectionCentreString)
 				.append("' AND p.sensing_start_time < ")
-				.append("(SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_start_time > '").append(selectionCentreString).append("'))");
+					.append("(SELECT MIN(p2.sensing_start_time) FROM product p2 ")
+					.append(subSelectQuery)
+					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND p2.sensing_start_time > '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+					.append("))");
 			break;
 		case ClosestStopValidity:
 			// This will result in two products, one on either side of the interval centre
@@ -871,12 +925,22 @@ public class SimplePolicy extends PersistentObject {
 			selectionCentreString = DATEFORMAT_SQL.format(selectionCentre);
 			simplePolicyQuery.append("(p.sensing_stop_time <= '").append(selectionCentreString)
 				.append("' AND p.sensing_stop_time >= ")
-				.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_stop_time <= '").append(selectionCentreString).append("') ")
+					.append("(SELECT MAX(p2.sensing_stop_time) FROM product p2 ")
+					.append(subSelectQuery)
+					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND p2.sensing_stop_time <= '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+					.append(") ")
 				.append("OR p.sensing_stop_time > '").append(selectionCentreString)
 				.append("' AND p.sensing_stop_time < ")
-				.append("(SELECT MIN(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_stop_time > '").append(selectionCentreString).append("'))");
+					.append("(SELECT MIN(p2.sensing_stop_time) FROM product p2 ")
+					.append(subSelectQuery)
+					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND p2.sensing_stop_time > '").append(selectionCentreString).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+					.append("))");
 			break;
 		case LatestValCover:
 			simplePolicyQuery.append("p.sensing_start_time <= '")
@@ -884,12 +948,16 @@ public class SimplePolicy extends PersistentObject {
 				.append("' AND p.sensing_stop_time >= '")
 				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
 				.append("' AND p.generation_time >= ")
-				.append("(SELECT MAX(p2.generation_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_start_time <= '")
-				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("' AND p2.sensing_stop_time >= '")
-				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("')");
+					.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+					.append(subSelectQuery)
+					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND p2.sensing_start_time <= '")
+					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
+					.append("' AND p2.sensing_stop_time >= '")
+					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds()))).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+					.append(")");
 			break;
 		case ValIntersect:
 		case ValIntersectWithoutDuplicates:
@@ -905,17 +973,25 @@ public class SimplePolicy extends PersistentObject {
 				.append("' AND p.sensing_stop_time >= '")
 				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
 				.append("' AND p.generation_time >= ")
-				.append("(SELECT MAX(p2.generation_time) FROM product p2 WHERE p2.product_class_id = ").append(sourceProductClass.getId())
-				.append(" AND p2.sensing_start_time <= '")
-				.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
-				.append("' AND p2.sensing_stop_time >= '")
-				.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds())))
-				.append("')");
+					.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+					.append(subSelectQuery)
+					.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+					.append(" AND p2.sensing_start_time <= '")
+					.append(DATEFORMAT_SQL.format(stopTime.plusMillis(getDeltaTimeT1().toMilliseconds())))
+					.append("' AND p2.sensing_stop_time >= '")
+					.append(DATEFORMAT_SQL.format(startTime.minusMillis(getDeltaTimeT0().toMilliseconds()))).append("'")
+					.append(filterQuery)
+					.append(facilityQuerySqlSubselect)
+					.append(")");
 			break;
 		case LastCreated:
 			simplePolicyQuery.append("p.generation_time >= ")
-				.append("(SELECT MAX(p2.generation_time) FROM product p2 WHERE p2.product_class_id = ")
-				.append(sourceProductClass.getId()).append(")");
+				.append("(SELECT MAX(p2.generation_time) FROM product p2 ")
+				.append(subSelectQuery)
+				.append("WHERE p2.product_class_id = ").append(sourceProductClass.getId())
+				.append(filterQuery)
+				.append(facilityQuerySqlSubselect)
+				.append(")");
 			break;
 		default:
 			throw new UnsupportedOperationException(String.format(MSG_POLICY_TYPE_NOT_IMPLEMENTED, policyType.toString()));

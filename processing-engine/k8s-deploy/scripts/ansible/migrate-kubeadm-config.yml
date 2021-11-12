@@ -1,5 +1,0 @@
----
-- hosts: k8s-cluster # equivalent to "all"
-  become: true
-  roles:
-  - migrate_kubeadm_config

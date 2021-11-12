@@ -121,6 +121,47 @@ public class OrderControllerImpl implements OrderController {
 			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
 		}
 	}
+
+	
+	/**
+	 * Retrieve a list of orders satisfying the selection parameters
+	 */
+	@Override
+	public ResponseEntity<List<RestOrder>> getAndSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+		
+		try {
+			List<RestOrder> list = procOrderManager.getAndSelectOrders(mission, identifier, state, productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+						
+			return new ResponseEntity<>(list, HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (Exception e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	/**
+	 * Calculate the amount of orders satisfying the selection parameters
+	 * 
+	 */
+	@Override
+	public ResponseEntity<String> countSelectOrders(String mission, String identifier, String[] state, 
+			String[] productClass, String startTime, String stopTime, Long recordFrom, Long recordTo, String[] orderBy) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getAndSelectOrders({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})", mission, identifier, state, 
+				productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+		
+		try {
+			String count = procOrderManager.countSelectOrders(mission, identifier, state, productClass, startTime, stopTime, recordFrom, recordTo, orderBy);
+						
+			return new ResponseEntity<>(count, HttpStatus.OK);
+		} catch (SecurityException e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.FORBIDDEN);
+		} catch (Exception e) {
+			return new ResponseEntity<>(errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	/**
 	 * Find the order with the given ID
 	 * 

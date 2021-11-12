@@ -15,6 +15,18 @@ import de.dlr.proseo.model.dao.InputFilterRepository;
 import de.dlr.proseo.model.dao.JobRepository;
 import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
+import de.dlr.proseo.model.dao.MonExtServiceRepository;
+import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
+import de.dlr.proseo.model.dao.MonOrderStateRepository;
+import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
+import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
+import de.dlr.proseo.model.dao.MonProductProductionMonthRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownlinkDayRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownlinkMonthRepository;
+import de.dlr.proseo.model.dao.MonRawDataDownloadRepository;
+import de.dlr.proseo.model.dao.MonServiceRepository;
+import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
+import de.dlr.proseo.model.dao.MonServiceStateRepository;
 import de.dlr.proseo.model.dao.OrbitRepository;
 import de.dlr.proseo.model.dao.OrderRepository;
 import de.dlr.proseo.model.dao.ClassOutputParameterRepository;
@@ -110,6 +122,54 @@ public class RepositoryService {
 	@Autowired
     private ClassOutputParameterRepository classOutputParameterRepository;
 
+	/** The repository for the MonService class */
+	@Autowired
+    private MonServiceRepository monServiceRepository;
+
+	/** The repository for the MonService class */
+	@Autowired
+    private MonExtServiceRepository monExtServiceRepository;
+	
+	/** The repository for the MonServiceStates class */
+	@Autowired
+    private MonServiceStateRepository monServiceStateRepository;
+
+	/** The repository for the MonServiceStateOperation class */
+	@Autowired
+    private MonServiceStateOperationRepository monServiceStateOperationRepository;
+
+	/** The repository for the MonServiceStateOperation class */
+	@Autowired
+    private MonExtServiceStateOperationRepository monExtServiceStateOperationRepository;
+	
+	/** The repository for the MonOrderState class */
+	@Autowired
+    private MonOrderStateRepository monOrderStateRepository;
+	
+	/** The repository for the MonProductProductionDay class */
+	@Autowired
+    private MonProductProductionDayRepository monProductProductionDayRepository;
+	
+	/** The repository for the MonProductProductionHour class */
+	@Autowired
+    private MonProductProductionHourRepository monProductProductionHourRepository;
+
+	/** The repository for the MonProductProductionMonth class */
+	@Autowired
+    private MonProductProductionMonthRepository monProductProductionMonthRepository;
+
+	/** The repository for the MonRawDataDownlinkDay class */
+	@Autowired
+    private MonRawDataDownlinkDayRepository monRawDataDownlinkDayRepository;
+
+	/** The repository for the MonRawDataDownlinkMonth class */
+	@Autowired
+    private MonRawDataDownlinkMonthRepository monRawDataDownlinkMonthRepository;
+
+	/** The repository for the MonRawDataDownload class */
+	@Autowired
+    private MonRawDataDownloadRepository monRawDataDownloadRepository;
+	
 	/**
 	 * Singleton constructor
 	 */
@@ -278,6 +338,104 @@ public class RepositoryService {
 	 */
 	public static ClassOutputParameterRepository getClassOutputParameterRepository() {
 		return theRepositoryService.classOutputParameterRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonService class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonServiceRepository getMonServiceRepository() {
+		return theRepositoryService.monServiceRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonService class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonExtServiceRepository getMonExtServiceRepository() {
+		return theRepositoryService.monExtServiceRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStates class
+	 * 
+	 * @return the monServiceRepository
+	 */
+	public static MonServiceStateRepository getMonServiceStateRepository() {
+		return theRepositoryService.monServiceStateRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStateOperation class
+	 * 
+	 * @return the monServiceStateOperationRepository
+	 */
+	public static MonServiceStateOperationRepository getMonServiceStateOperationRepository() {
+		// TODO Auto-generated method stub
+		return theRepositoryService.monServiceStateOperationRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonServiceStateOperation class
+	 * 
+	 * @return the monServiceStateOperationRepository
+	 */
+	public static MonExtServiceStateOperationRepository getMonExtServiceStateOperationRepository() {
+		// TODO Auto-generated method stub
+		return theRepositoryService.monExtServiceStateOperationRepository;
+	}
+
+	/**
+	 * Gets the repository for the MonOrderStateOperation class
+	 * 
+	 * @return the monOrderStateRepository
+	 */
+	public static MonOrderStateRepository getMonOrderStateRepository() {
+		return theRepositoryService.monOrderStateRepository;
+	}
+
+	/**
+	 * @return the monProductProductionDayRepository
+	 */
+	public static MonProductProductionDayRepository getMonProductProductionDayRepository() {
+		return theRepositoryService.monProductProductionDayRepository;
+	}
+
+	/**
+	 * @return the monProductProductionHourRepository
+	 */
+	public static MonProductProductionHourRepository getMonProductProductionHourRepository() {
+		return theRepositoryService.monProductProductionHourRepository;
+	}
+
+	/**
+	 * @return the monProductProductionMonthRepository
+	 */
+	public static MonProductProductionMonthRepository getMonProductProductionMonthRepository() {
+		return theRepositoryService.monProductProductionMonthRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkDayRepository
+	 */
+	public static MonRawDataDownlinkDayRepository getMonRawDataDownlinkDayRepository() {
+		return theRepositoryService.monRawDataDownlinkDayRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkMonthRepository
+	 */
+	public static MonRawDataDownlinkMonthRepository getMonRawDataDownlinkMonthRepository() {
+		return theRepositoryService.monRawDataDownlinkMonthRepository;
+	}
+
+	/**
+	 * @return the monRawDataDownlinkRepository
+	 */
+	public static MonRawDataDownloadRepository getMonRawDataDownloadRepository() {
+		return theRepositoryService.monRawDataDownloadRepository;
 	}
 
 }

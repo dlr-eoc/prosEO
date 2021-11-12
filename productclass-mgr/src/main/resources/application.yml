@@ -9,6 +9,7 @@ spring:
         username: <db_user>
         password: <db_pwd>
 logging:
+    file: /proseo/log/proseo-productclass-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE

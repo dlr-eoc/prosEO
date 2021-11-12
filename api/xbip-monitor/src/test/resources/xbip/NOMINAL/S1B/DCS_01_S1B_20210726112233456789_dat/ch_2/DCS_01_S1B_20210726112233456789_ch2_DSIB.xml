@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DCSU_Session_Information_Block>
+    <session_id>S1B_20210726112233456789</session_id>
+    <time_start>2021-07-26T00:11:22Z</time_start>
+    <time_stop>2021-07-26T11:22:33Z</time_stop>
+    <time_created>2021-07-26T16:15:00Z</time_created>
+    <time_finished>2021-07-26T16:15:30Z</time_finished>
+    <data_size>150</data_size>
+    <dsdb_list>
+        <dsdb_name>DCS_02_S1B_20210726112233456789_ch2_DSDB_00001.raw</dsdb_name>
+        <dsdb_name>DCS_02_S1B_20210726112233456789_ch2_DSDB_00002.raw</dsdb_name>
+        <dsdb_name>DCS_02_S1B_20210726112233456789_ch2_DSDB_00003.raw</dsdb_name>
+    </dsdb_list>
+</DCSU_Session_Information_Block>

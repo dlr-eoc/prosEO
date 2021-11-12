@@ -761,30 +761,6 @@ public class SelectionRule {
 		return selectedProducts;
 	}
 	
-	/**
-	 * Converts the selection rule to a textual condition with respect to a given time interval that can be used in a PL query.
-	 * <p>
-	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
-	 * given time interval. It is up to the calling program to select the applicable product.
-	 * 
-	 * @param startTime the start time of the time interval to check against
-	 * @param stopTime the end time of the time interval to check against
-	 * @return a mapping of aux product types to query strings describing the selection rule
-	 * @throws IllegalArgumentException if startTime or stopTime is null
-	 */
-	public Map<String, String> asPlQueryCondition(final Instant startTime, final Instant stopTime) throws IllegalArgumentException {
-		if (null == startTime || null == stopTime) {
-			throw new IllegalArgumentException(MSG_START_OR_STOP_TIME_NULL);
-		}
-		Map<String, String> plQueries = new HashMap<>();
-		
-		for (String productType: simpleRules.keySet()) {
-			plQueries.put(productType, simpleRules.get(productType).asPlQueryCondition(startTime, stopTime));
-		}
-		
-		return plQueries;
-	}
-
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

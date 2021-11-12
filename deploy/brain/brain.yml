@@ -1,0 +1,10 @@
+---
+# Configure S1B Control Instance ("brain")
+
+- hosts: brain
+  become: true
+  
+  roles:
+  - prepare_network
+  - install_docker
+  - prepare_proseo

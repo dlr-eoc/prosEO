@@ -67,6 +67,7 @@ public class UsermgrSecurityConfig extends WebSecurityConfigurerAdapter {
 		.httpBasic()
 		.and()
 		.authorizeRequests()
+			.antMatchers("/**/actuator/health").permitAll()
 			.antMatchers("/**/login").authenticated()
 			.antMatchers(HttpMethod.GET, "/**/users/*").authenticated() // Any user may change their own password
 			.antMatchers(HttpMethod.PATCH, "/**/users/*").authenticated() // Any user may change their own password

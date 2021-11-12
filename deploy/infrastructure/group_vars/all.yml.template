@@ -1,0 +1,76 @@
+---
+# Configuration variables for prosEO infrastructure on IONOS Cloud
+
+# Global variables
+all:
+    # image: centos:7
+    # UUID from 'ionosctl image list' for alias 'centos:7' and location 'de/txl'
+    image: "9856c488-0ac9-11ec-9fa6-1e5ea9024c03"
+    image_password: "<root OS login password>"
+    ssh_key: "{{ lookup('file', 'keys/id_rsa.pub') }}"
+
+# Data Center configuration:
+datacenter:
+    name: prosEO Data Center
+    description: Virtual Data Center for prosEO
+    location: de/txl
+    
+# Bastion host configuration:
+bastion:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 2
+    # RAM in MiB
+    ram: 8192
+    # Disk size in GB
+    disk: 40
+    
+# Control Instance (brain) configuration:
+brain:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 4
+    # RAM in MiB
+    ram: 12288
+    # Disk size in GB
+    disk: 100
+    
+# NFS server configuration:
+nfs:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 2
+    # RAM in MiB
+    ram: 4096
+    # System disk size in GB
+    disk: 100
+    # Number of 2 TB NFS disk
+    disk_count: 4
+    
+# Log host configuration:
+log:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 2
+    # RAM in MiB
+    ram: 4096
+    # Disk size in GB
+    disk: 500
+    
+# Kubernetes Master configuration:
+master:
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 4
+    # RAM in MiB
+    ram: 8192
+    # Disk size in GB
+    disk: 40
+    
+# Kubernetes Worker configuration:
+worker:
+    # Number of worker nodes
+    count: 4
+    # Number of cores (vCPUs = 2 x cores)
+    cores: 8
+    # RAM in MiB
+    ram: 81920
+    # Disk size in GB
+    disk: 80
+    
+    

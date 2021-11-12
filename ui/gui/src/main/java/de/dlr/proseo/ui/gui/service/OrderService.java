@@ -39,17 +39,62 @@ public class OrderService {
 	private ServiceConnection serviceConnection;
 	
 
-	public Mono<ClientResponse> get(String orderName) {
+	public Mono<ClientResponse> get(String identifier, String states, String products, String from, String to, 
+			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
 		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 		String mission = auth.getMission();
-		String uri = config.getOrderManager() + "/orders";
-		if(null != mission && null != orderName && !orderName.trim().isEmpty()) {
-			uri += "?mission=" + mission + "&identifier=" + orderName.trim();
-		} else if (null != orderName && !orderName.trim().isEmpty()) {
-			uri += "?identifier=" + orderName.trim();
-		} else if (null != mission) { 
-			uri += "?mission=" + mission;
-		} 
+		String uri = config.getOrderManager() + "/orders/select";
+		
+		String divider = "?";
+		if (mission != null && !mission.isEmpty()) {
+			uri += divider + "mission=" + mission;
+			divider ="&";
+		}
+		if (identifier != null && !identifier.isEmpty()) {
+			uri += divider + "identifier=" + identifier.replaceAll("[*]", "%");
+			divider ="&";
+		}
+
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
+		}
+		if (products != null && !products.isEmpty()) {
+			String [] pcs = products.split(":");
+			for (String pc : pcs) {
+				uri += divider + "productClass=" + pc;
+				divider ="&";
+			}
+		}
+		if (from != null && !from.isEmpty()) {
+			uri += divider + "startTime=" + from;
+			divider ="&";
+		}
+		if (to != null && !to.isEmpty()) {
+			uri += divider + "stopTime=" + to;
+			divider ="&";
+		}
+		if (recordFrom != null) {
+			uri += divider + "recordFrom=" + recordFrom;
+			divider ="&";
+		}
+		if (recordTo != null) {
+			uri += divider + "recordTo=" + recordTo;
+			divider ="&";
+		}
+		if (sortCol != null && !sortCol.isEmpty()) {
+			uri += divider + "orderBy=" + sortCol;
+			if (up != null && !up) {
+				uri += " DESC";
+			} else {
+				uri += " ASC";
+			}
+			divider ="&";
+		}
+		
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(
 				HttpClient.create().followRedirect((req, res) -> {

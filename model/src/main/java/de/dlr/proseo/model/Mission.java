@@ -76,8 +76,18 @@ public class Mission extends PersistentObject {
 	/**
 	 * The default period of time for keeping products after their generation.
 	 * If not set for the mission or a processing order, automatic product deletion will not take place.
+	 * If set, must not be less than orderRetentionPeriod, otherwise products cannot be deleted, when reaching their eviction time.
 	 */
 	private Duration productRetentionPeriod;
+	
+	/**
+	 * The default period of time for keeping orders after their completion.
+	 * If not set for the mission, automatic order deletion will not take place.
+	 * If set, must not be greater than productRetentionPeriod, otherwise products cannot be deleted,
+	 * when reaching their eviction time.
+	 * Order deletion will only take place for orders with productionType SYSTEMATIC_PRODUCTION.
+	 */
+	private Duration orderRetentionPeriod;
 	
 	/** The spacecrafts this mission owns */
 	@OneToMany(mappedBy = "mission")
@@ -219,6 +229,24 @@ public class Mission extends PersistentObject {
 	 */
 	public void setProductRetentionPeriod(Duration productRetentionPeriod) {
 		this.productRetentionPeriod = productRetentionPeriod;
+	}
+
+	/**
+	 * Gets the default order retention period
+	 * 
+	 * @return the order retention period
+	 */
+	public Duration getOrderRetentionPeriod() {
+		return orderRetentionPeriod;
+	}
+
+	/**
+	 * Sets the default order retention period
+	 * 
+	 * @param orderRetentionPeriod the order retention period to set
+	 */
+	public void setOrderRetentionPeriod(Duration orderRetentionPeriod) {
+		this.orderRetentionPeriod = orderRetentionPeriod;
 	}
 
 	/**

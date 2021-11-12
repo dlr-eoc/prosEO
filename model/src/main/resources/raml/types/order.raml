@@ -25,6 +25,9 @@
       executionTime?:
         type: datetime-only
         description: Expected execution time (optional, used for scheduling)
+      evictionTime?:
+        type: datetime-only
+        description: Eviction time (optional, used for automatic order deletion)
       startTime?:
         type: string
         description: The start time of the time interval to process in orbit format (YYYY-MM-DDThh:mm:ss[.SSSSSS]). If a range of

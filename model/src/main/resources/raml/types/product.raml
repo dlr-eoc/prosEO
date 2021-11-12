@@ -55,6 +55,9 @@
         type: string
         description: Product eviction time in orbit format (YYYY-MM-DDThh:mm:ss.SSSSSS)
         pattern: ^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d{6}$
+      downloadHistory?:
+        type: RestDownloadHistory[]
+        description: The download history for this product
       productionType?:
         type: string
         description: Type of production process generating this product (SYSTEMATIC, ON_DEMAND_DEFAULT, ON_DEMAND_NON_DEFAULT)

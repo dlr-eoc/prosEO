@@ -643,6 +643,9 @@ public class OrderCommandRunner {
 		if (isDeleteAttributes || null != updatedOrder.getExecutionTime()) {
 			restOrder.setExecutionTime(updatedOrder.getExecutionTime());
 		}
+		if (isDeleteAttributes || null != updatedOrder.getEvictionTime()) {
+			restOrder.setEvictionTime(updatedOrder.getEvictionTime());
+		}
 		if (null != updatedOrder.getSlicingType()) { // mandatory
 			restOrder.setSlicingType(updatedOrder.getSlicingType());
 		}

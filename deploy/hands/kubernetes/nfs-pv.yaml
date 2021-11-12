@@ -1,0 +1,35 @@
+---
+# The file system for product ingestion
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: proseo-ingest-share
+  labels:
+    name: proseo-ingest-share
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 2000Gi
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.8.212.13
+    path: /exports/transfer
+
+---
+# The common storage area for Storage Manager and Processing Engine
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: proseo-nfs-share
+  labels:
+    name: proseo-nfs-share
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 4000Gi
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.8.212.13
+    path: /exports/proseodata

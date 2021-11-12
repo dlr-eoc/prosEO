@@ -93,10 +93,13 @@ public class ProductQuery extends PersistentObject {
 	 * @param selectionRule the selection rule to create the product query from
 	 * @param jobStep the job step to generate the product query for
 	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @param facilityQuerySql an SQL selection string to add to the selection rule SQL query
+	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return a product query object
 	 */
 	public static ProductQuery fromSimpleSelectionRule(SimpleSelectionRule selectionRule, JobStep jobStep,
-			Map<String, String> productColumnMapping) {
+			Map<String, String> productColumnMapping, String facilityQuerySql, String facilityQuerySqlSubselect) {
+		
 		ProductQuery productQuery = new ProductQuery();
 		productQuery.generatingRule = selectionRule;
 		productQuery.jobStep = jobStep;
@@ -108,7 +111,8 @@ public class ProductQuery extends PersistentObject {
 		productQuery.jpqlQueryCondition = selectionRule.asJpqlQuery(
 				jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime(), productQuery.filterConditions);
 		productQuery.sqlQueryCondition = selectionRule.asSqlQuery(
-				jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime(), productQuery.filterConditions, productColumnMapping);
+				jobStep.getJob().getStartTime(), jobStep.getJob().getStopTime(), productQuery.filterConditions,
+				productColumnMapping, facilityQuerySql, facilityQuerySqlSubselect);
 		
 		return productQuery;
 	}

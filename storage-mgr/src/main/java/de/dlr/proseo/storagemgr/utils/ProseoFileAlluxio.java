@@ -59,7 +59,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 		}
 		pathInfo = getFullPath();			
 		
-		logger.trace("ProseoFileAlluxio created: {}", this);
+		logger.trace("ProseoFileAlluxio created: {}", this.getFullPath());
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class ProseoFileAlluxio extends ProseoFile {
 		}
 		pathInfo = getFullPath();								
 		
-		logger.trace("ProseoFileAlluxio created: {}", this);
+		logger.trace("ProseoFileAlluxio created: {}", this.getFullPath());
 	}
 
 	/* (non-Javadoc)

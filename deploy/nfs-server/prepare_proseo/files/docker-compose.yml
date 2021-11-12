@@ -1,0 +1,22 @@
+version: '3'
+services:
+  proseo-storage-mgr:
+    image: ${REGISTRY_URL}/proseo-storage-mgr:${VERSION}-proseo
+    volumes:
+      - /opt/prosEO/log:/proseo/log
+      - /exports/proseodata:/proseo/data
+      - /exports/transfer:/mnt
+    ports:
+      - "8080:8080"
+    logging:
+      driver: local
+      options:
+        max-size: 100m
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.177.57.0/24

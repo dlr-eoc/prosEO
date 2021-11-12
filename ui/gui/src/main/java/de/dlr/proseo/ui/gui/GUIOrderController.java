@@ -8,6 +8,8 @@ import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_DATA_INVALID;
 import static de.dlr.proseo.ui.backend.UIMessages.MSG_ID_ORDER_NOT_FOUND;
 import static de.dlr.proseo.ui.backend.UIMessages.uiMsg;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -45,6 +47,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
@@ -135,6 +138,8 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = false, value = "from") String from,
 			@RequestParam(required = false, value = "to") String to,
 			@RequestParam(required = false, value = "products") String products,
+			@RequestParam(required = false, value = "recordFrom") Long recordFrom,
+			@RequestParam(required = false, value = "recordTo") Long recordTo,
 			@RequestParam(required = false, value = "sortby") String sortby,
 			@RequestParam(required = false, value = "up") Boolean up, Model model) {
 		if (logger.isTraceEnabled())
@@ -144,7 +149,26 @@ public class GUIOrderController extends GUIBaseController {
 		if (identifier != null && identifier.indexOf("*") < 0) {
 			myIdent = identifier;
 		}
-		Mono<ClientResponse> mono = orderService.get(myIdent);
+		Long fromi = null;
+		Long toi = null;
+		if (recordFrom != null && recordFrom >= 0) {
+			fromi = recordFrom;
+		} else {
+			fromi = (long) 0;
+		}
+		Long count = countOrdersL(identifier, states, products, from, to, null, null,
+				sortby, up);
+		if (recordFrom != null && fromi != null && recordTo > fromi) {
+			toi = recordTo;
+		} else if (from != null) {
+			toi = count;
+		}
+		Long pageSize = toi - fromi;
+		Long deltaPage = (long) ((count % pageSize)==0?0:1);
+		Long pages = (count / pageSize) + deltaPage;
+		Long page = (fromi / pageSize) + 1;
+		Mono<ClientResponse> mono = orderService.get(identifier, states, products, from, to, 
+				fromi, toi, sortby, up);
 		DeferredResult<String> deferredResult = new DeferredResult<String>();
 		List<Object> orders = new ArrayList<>();
 		mono.doOnError(e -> {
@@ -153,9 +177,18 @@ public class GUIOrderController extends GUIBaseController {
 		})
 	 	.subscribe(clientResponse -> {
 			logger.trace("Now in Consumer::accept({})", clientResponse);
-			if (clientResponse.statusCode().is2xxSuccessful()) {
+			logger.trace("Now in Consumer::accept({})", clientResponse);
+			if (clientResponse.statusCode().compareTo(HttpStatus.NOT_FOUND) == 0) {
+				// this is no error cause only already planned orders have job steps
+				model.addAttribute("count", 0);
+				model.addAttribute("pageSize", 0);
+				model.addAttribute("pageCount", 0);
+				model.addAttribute("page", 0);
+				deferredResult.setResult("order :: #jobscontent");
+			} else if (clientResponse.statusCode().is2xxSuccessful()) {
 				clientResponse.bodyToMono(List.class).subscribe(orderList -> {
-					orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
+					// orders.addAll(selectOrders(orderList, identifier, states, from, to, products));
+					orders.addAll(orderList);
 					String key = MAPKEY_ID;
 					if (sortby != null) {
 						if (sortby.contentEquals("identifier") || sortby.contentEquals(MAPKEY_ID) || sortby.contentEquals("orderState")) {
@@ -163,11 +196,28 @@ public class GUIOrderController extends GUIBaseController {
 						}
 					}
 					Boolean isUp = (null == up ? true : up);
-					MapComparator oc = new MapComparator(key, isUp);
-					orders.sort(oc);
+//					MapComparator oc = new MapComparator(key, isUp);
+//					orders.sort(oc);
 					model.addAttribute("orders", orders);
 					model.addAttribute("selcol", key);
 					model.addAttribute("selorder", (isUp ? "select-up" : "select-down"));
+					model.addAttribute("count", count);
+					model.addAttribute("pageSize", pageSize);
+					model.addAttribute("pageCount", pages);
+					model.addAttribute("page", page);
+					List<Long> showPages = new ArrayList<Long>();
+					Long start = Math.max(page - 4, 1);
+					Long end = Math.min(page + 4, pages);
+					if (page < 5) {
+						end = Math.min(end + (5 - page), pages);
+					}
+					if (pages - page < 5) {
+						start = Math.max(start - (4 - (pages - page)), 1);
+					}
+					for (Long i = start; i <= end; i++) {
+						showPages.add(i);
+					}
+					model.addAttribute("showPages", showPages);
 					logger.trace(model.toString() + "MODEL TO STRING");
 					logger.trace(">>>>MONO" + orders.toString());
 					deferredResult.setResult("order-show :: #orderscontent");
@@ -514,6 +564,8 @@ public class GUIOrderController extends GUIBaseController {
 		if (updateOrder.getProductRetentionPeriod() != null) {
 			updateOrder.setProductRetentionPeriod(updateOrder.getProductRetentionPeriod() * 86400);
 		}
+		updateOrder.setStartTime(normStartEnd(updateOrder.getStartTime(), updateOrder.getSlicingType()));
+		updateOrder.setStopTime(normStartEnd(updateOrder.getStopTime(), updateOrder.getSlicingType()));
 		RestOrder origOrder = null;
 		if (updateOrder.getId() != null && updateOrder.getId() > 0) {
 			origOrder = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(), "/orders/" + updateOrder.getId(),
@@ -991,6 +1043,123 @@ public class GUIOrderController extends GUIBaseController {
     	}
 
     	return result;
+    }
+
+	public Long countOrdersL(String identifier, String states, String products, String from, String to, 
+			Long recordFrom, Long recordTo, String sortCol, Boolean up) {
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String mission = auth.getMission();
+		String uri = "/orders/countselect";
+		
+		String divider = "?";
+		if (mission != null && !mission.isEmpty()) {
+			uri += divider + "mission=" + mission;
+			divider ="&";
+		}
+		if (identifier != null && !identifier.isEmpty()) {
+			try {
+				uri += divider + "identifier=" + URLEncoder.encode(identifier.replaceAll("[*]", "%"), "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			}
+			divider ="&";
+		}
+
+		if (states != null && !states.isEmpty()) {
+			String [] pcs = states.split(":");
+			for (String pc : pcs) {
+				uri += divider + "state=" + pc;
+				divider ="&";
+			}
+		}
+		if (products != null && !products.isEmpty()) {
+			String [] pcs = products.split(":");
+			for (String pc : pcs) {
+				uri += divider + "productClass=" + pc;
+				divider ="&";
+			}
+		}
+		if (from != null && !from.isEmpty()) {
+			uri += divider + "startTime=" + from;
+			divider ="&";
+		}
+		if (to != null && !to.isEmpty()) {
+			uri += divider + "stopTime=" + to;
+			divider ="&";
+		}
+		if (recordFrom != null) {
+			uri += divider + "recordFrom=" + recordFrom;
+			divider ="&";
+		}
+		if (recordTo != null) {
+			uri += divider + "recordTo=" + recordTo;
+			divider ="&";
+		}
+		if (sortCol != null && !sortCol.isEmpty()) {
+			uri += divider + "orderBy=" + sortCol;
+			if (up != null && !up) {
+				try {
+					uri += URLEncoder.encode(" DESC", "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					uri += "%20DESC";
+					logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				}
+			} else {
+				try {
+					uri += URLEncoder.encode(" ASC", "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					uri += "%20ASC";
+					logger.error(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+				}
+			}
+			divider ="&";
+		}
+
+		Long result = (long) -1;
+		try {
+			String resStr = serviceConnection.getFromService(serviceConfig.getOrderManagerUrl(),
+					uri, String.class, auth.getProseoName(), auth.getPassword());
+
+			if (resStr != null && resStr.length() > 0) {
+				result = Long.valueOf(resStr);
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+			return result;
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+			return result;
+		}
+		return result;
+		
+	}
+    private String normStartEnd(String se, String type) {
+    	String val = se;
+    	if (se != null) {
+    		if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_DAY.toString())) {
+    			val = val + "T00:00:00.000000";
+    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_MONTH.toString())) {
+    			val = val + "-01T00:00:00.000000";
+    		} else if (type.equalsIgnoreCase(OrderSlicingType.CALENDAR_YEAR.toString())) {
+    			val = val + "-01-01T00:00:00.000000";
+    		}
+    	}
+        return val;
     }
 }
 

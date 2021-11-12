@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.enums.FacilityState;
 import de.dlr.proseo.model.enums.StorageType;
@@ -130,6 +131,11 @@ public class KubeConfig {
 	private String storageManagerUrl;
 	
 	/**
+	 * The URL to access this facility's storage manager from an external client (via PRIP API)
+	 */
+	private String externalStorageManagerUrl;
+	
+	/**
 	 * The default storage type 
 	 */
 	private StorageType storageType;
@@ -203,6 +209,20 @@ public class KubeConfig {
 	 */
 	public void setStorageManagerUrl(String storageManagerUrl) {
 		this.storageManagerUrl = storageManagerUrl;
+	}
+
+	/**
+	 * @return the externalStorageManagerUrl
+	 */
+	public String getExternalStorageManagerUrl() {
+		return externalStorageManagerUrl;
+	}
+
+	/**
+	 * @param externalStorageManagerUrl the externalStorageManagerUrl to set
+	 */
+	public void setExternalStorageManagerUrl(String externalStorageManagerUrl) {
+		this.externalStorageManagerUrl = externalStorageManagerUrl;
 	}
 
 	/**
@@ -300,6 +320,7 @@ public class KubeConfig {
 		storageManagerUrl = pf.getStorageManagerUrl();
 		storageType = pf.getDefaultStorageType();
 		localStorageManagerUrl = pf.getLocalStorageManagerUrl();
+		externalStorageManagerUrl = pf.getExternalStorageManagerUrl();
 		processingEngineToken = pf.getProcessingEngineToken();
 		storageManagerUser = pf.getStorageManagerUser();
 		storageManagerPassword = pf.getStorageManagerPassword();
@@ -348,6 +369,8 @@ public class KubeConfig {
 	 * @return true if connected, otherwise false
 	 */
 	public boolean connect() {
+		if (logger.isTraceEnabled()) logger.trace(">>> connect()");
+		
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED)
 			// nothing to do
 			return false;
@@ -357,10 +380,16 @@ public class KubeConfig {
 		} else {
 			kubeJobList = new HashMap<String, KubeJob>();
 			if (processingEngineToken != null && !processingEngineToken.isEmpty()) {
-				client = Config.fromToken(url, 
+				try {
+					client = null;
+					client = Config.fromToken(url, 
 						 processingEngineToken, 
 						 false);
-			} else {
+				} catch (Exception ex) {
+					logger.info(ex.getMessage());
+				}
+			}
+			if (client == null) {
                 try {
                 	// describes Kubernetes in Docker
                 	String kconf = ProductionPlanner.config.getProductionPlannerKubeConfig();
@@ -374,6 +403,9 @@ public class KubeConfig {
                 if (client == null) {
                     client = Config.fromUrl(url, false);
                 }
+			}
+			if (client == null) {
+				logger.error("Could not connect with facility " + url);
 			}
 			if (logger.isTraceEnabled()) {
 				client.setDebugging(true);
@@ -415,6 +447,8 @@ public class KubeConfig {
 	 * @return
 	 */
 	public boolean couldJobRun() {
+		if (logger.isTraceEnabled()) logger.trace(">>> couldJobRun()");
+		
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED 
 				|| getFacilityState() == FacilityState.STOPPING || getFacilityState() == FacilityState.STARTING) {
 			// not available for jobs
@@ -431,6 +465,8 @@ public class KubeConfig {
 	 * Synchronize Kubernetes cluster and planner 
 	 */
 	public void sync() {
+		if (logger.isTraceEnabled()) logger.trace(">>> sync()");
+		
 		if (getFacilityState() == FacilityState.DISABLED || getFacilityState() == FacilityState.STOPPED || getFacilityState() == FacilityState.STARTING)
 			// nothing to do
 			return;
@@ -441,8 +477,7 @@ public class KubeConfig {
 		try {
 			k8sJobList = batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 			return;
 		}
 		// update kubeJob list
@@ -475,7 +510,7 @@ public class KubeConfig {
 			String kName = aJob.getMetadata().getName();
 			KubeJob kj = kubeJobList.get(kName);
 			if (kj != null) {
-				if (kj.getFinishInfo(kName)) {
+				if (kj.updateFinishInfoAndDelete(kName)) {
 					
 				}
 			}			
@@ -489,13 +524,30 @@ public class KubeConfig {
 			String aName = ProductionPlanner.jobNamePrefix + js.getId();
 			// If no job with this name is running, change state to FAILED and set info in log
 			if (!kJobs.containsKey(aName)) {
-				js.setJobStepState(JobStepState.FAILED);	
+				Product jsp = js.getOutputProduct();
+				Boolean wasFailed = true;
+				if (jsp != null) {
+					// collect output products
+					List<Product> jspList = new ArrayList<Product>();
+					UtilService.getJobStepUtil().collectProducts(jsp, jspList);
+					if (UtilService.getJobStepUtil().checkProducts(jspList, js.getJob().getProcessingFacility())) {
+						js.setJobStepState(JobStepState.COMPLETED);
+						wasFailed = false;
+					} else {
+						js.setJobStepState(JobStepState.FAILED);
+					}
+				} else {
+					js.setJobStepState(JobStepState.FAILED);
+				}
+				
 				js.incrementVersion();
 				String stdout = js.getProcessingStdOut();
 				if (stdout == null) {
 					stdout = "";
 				}
-				js.setProcessingStdOut("Job on Processing Fycility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				if (wasFailed) {
+					js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+				}
 				js = RepositoryService.getJobStepRepository().save(js);
 				UtilService.getJobStepUtil().checkFinish(js);
 			}			
@@ -511,8 +563,8 @@ public class KubeConfig {
 		try {
 			list = apiV1.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			return null;
 		}
 		return list;
 	}
@@ -528,8 +580,8 @@ public class KubeConfig {
 			list =  batchApiV1.listJobForAllNamespaces(null, null, null, null, null, null, null, null, null, null);
 			
 		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			return null;
 		}
 		return list;
 	}
@@ -542,6 +594,8 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(String name, String stdoutLogLevel, String stderrLogLevel) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", name, stdoutLogLevel, stderrLogLevel);
+		
 		KubeJob aJob = new KubeJob(Long.parseLong(name), DUMMY_JOF_FILENAME);
 		try {
 			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
@@ -568,6 +622,8 @@ public class KubeConfig {
 	 */
 	@Transactional
 	public KubeJob createJob(long id, String stdoutLogLevel, String stderrLogLevel) {
+		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", id, stdoutLogLevel, stderrLogLevel);
+		
 		KubeJob aJob = new KubeJob(id, DUMMY_JOF_FILENAME);
 		try {
 			aJob = aJob.createJob(this, stdoutLogLevel, stderrLogLevel);
@@ -587,6 +643,8 @@ public class KubeConfig {
 	 * @return true after success, otherwise false
 	 */
 	public boolean deleteJob(KubeJob aJob) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteJob({})", (null == aJob ? "null" : aJob.getJobId()));
+		
 		if (aJob != null) {
 			return (deleteJob(aJob.getJobName()));
 		} else {
@@ -601,6 +659,8 @@ public class KubeConfig {
 	 * @return true after success, otherwise false
 	 */
 	public boolean deleteJob(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteJob({})", name);
+		
 		V1DeleteOptions opt = new V1DeleteOptions();
 		opt.setApiVersion("batchV1");
 		opt.setPropagationPolicy("Foreground");
@@ -636,6 +696,8 @@ public class KubeConfig {
 	 * @return job found or null
 	 */
 	public V1Job getV1Job(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getV1Job({})", name);
+		
 		V1Job aV1Job = null;
 		try {
 			aV1Job = batchApiV1.readNamespacedJob(name, namespace, null, null, null);
@@ -645,16 +707,15 @@ public class KubeConfig {
 				Messages.KUBECONFIG_JOB_NOT_FOUND.log(logger, name);
 				return null;			
 			} else {
-				e. printStackTrace();
+				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 				return null;				
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
 			} else {
-				e. printStackTrace();
+				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 				return null;
 			}
 		}
@@ -667,11 +728,12 @@ public class KubeConfig {
 	 * @return pod found or null
 	 */
 	public V1Pod getV1Pod(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getV1Pod({})", name);
+		
 		V1Pod aV1Pod = null;
 		try {
 			aV1Pod = apiV1.readNamespacedPod(name, namespace, null, null, null);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			if (e instanceof IllegalStateException || e.getCause() instanceof IllegalStateException ) {
 				// nothing to do 
 				// cause there is a bug in Kubernetes API
@@ -679,7 +741,7 @@ public class KubeConfig {
 				// pod not found
 				return null;
 			} else {
-				e. printStackTrace();
+				logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
 				return null;
 			}
 		}
@@ -756,6 +818,8 @@ public class KubeConfig {
 	 * @return true after success, otherwise false
 	 */
 	public boolean deletePodNamed(String name) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deletePodNamed({})", name);
+		
 		if (this.isConnected()) {
 			return this.deleteJob(name);
 		}
@@ -769,6 +833,8 @@ public class KubeConfig {
 	 * @return true after success, otherwise false
 	 */
 	public boolean deletePodsStatus(String status) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deletePodsStatus({})", status);
+		
 		if (this.isConnected()) {		 
 			V1JobList list = this.getJobList();
 			if (list != null) {
@@ -790,6 +856,8 @@ public class KubeConfig {
 	 * @return true if at least one worker node is ready
 	 */
 	public boolean getNodeInfo() {
+		if (logger.isTraceEnabled()) logger.trace(">>> getNodeInfo()");
+		
 		kubeNodes = null;
 		workerCnt = 0;
 		try {
@@ -814,8 +882,8 @@ public class KubeConfig {
 				}						
 			}
 		} catch (ApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+			return false;
 		}
 		
 		return workerCnt > 0;

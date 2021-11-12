@@ -47,6 +47,14 @@
         "generationTime": "2019-10-05T10:13:22.000000",
         "publicationTime": "2019-10-05T10:13:25.926000",
         "evictionTime": "2019-11-05T10:13:25.926000",
+        "downloadHistory": [
+            {
+                "username": "johndoe",
+                "productFileName": "S5P_OPER_L0________20190509T212509_20190509T214507_08138_01.ZIP",
+                "productFileSize": 2625765376,
+                "dateTime": "2019-10-05T17:22:48.294673"
+            }
+        ],
         "orbit": {
             "spacecraftCode": "S5P",
             "orbitNumber": 4711

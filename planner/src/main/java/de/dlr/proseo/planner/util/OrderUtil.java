@@ -5,14 +5,14 @@
  */
 package de.dlr.proseo.planner.util;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +20,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.Job;
-import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
 import de.dlr.proseo.model.enums.OrderState;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.Job.JobState;
-import de.dlr.proseo.model.JobStep.JobStepState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
@@ -61,6 +60,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages cancel(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -75,6 +76,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.FAILED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_CANCELED;
 				break;	
 			case RUNNING:
@@ -108,6 +110,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages reset(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> reset({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -121,6 +125,7 @@ public class OrderUtil {
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;		
 			case RELEASED:		
@@ -146,6 +151,7 @@ public class OrderUtil {
 				order.setHasFailedJobSteps(false);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RESET;
 				break;	
 			case RUNNING:
@@ -179,6 +185,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages delete(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -238,6 +246,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages approve(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> approve({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.ORDER_ALREADY_APPROVED;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -247,6 +257,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.APPROVED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_APPROVED;
 				break;			
 			case APPROVED:
@@ -288,48 +299,52 @@ public class OrderUtil {
 	 * @return Result message
 	 */
 	@Transactional
-	public Message plan(ProcessingOrder order,  ProcessingFacility procFacility) {
-		Message answer = new Message(Messages.FALSE);
+	public Messages plan(ProcessingOrder order,  ProcessingFacility procFacility) {
+		if (logger.isTraceEnabled()) logger.trace(">>> plan({}, {})", (null == order ? "null" : order.getId()),
+				(null == procFacility ? "null" : procFacility.getName()));
+		
+		Messages answer = Messages.FALSE;
 		if (order != null && procFacility != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
 			switch (order.getOrderState()) {
 			case INITIAL:
-				answer.setMessage(Messages.ORDER_HASTOBE_APPROVED);
+				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
-				answer = orderDispatcher.publishOrder(order, procFacility);
-				if (answer.isTrue()) {
+				Message publishAnswer = orderDispatcher.publishOrder(order, procFacility);
+				if (publishAnswer.isTrue()) {
 					if (order.getJobs().isEmpty()) {
 						order.setOrderState(OrderState.COMPLETED);
-						answer.setMessage(Messages.ORDER_PRODUCT_EXIST);
+						answer = Messages.ORDER_PRODUCT_EXIST;
 					} else {
 						order.setOrderState(OrderState.PLANNED);
-						answer.setMessage(Messages.ORDER_PLANNED);
+						answer = Messages.ORDER_PLANNED;
 					}
 					order.incrementVersion();
 					order = RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 				}
 				break;	
 			case PLANNED:	
-				answer.setMessage(Messages.ORDER_ALREADY_PLANNED);
+				answer = Messages.ORDER_ALREADY_PLANNED;
 				break;
 			case RELEASED:
-				answer.setMessage(Messages.ORDER_ALREADY_RELEASED);
+				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
 			case RUNNING:
-				answer.setMessage(Messages.ORDER_ALREADY_RUNNING);
+				answer = Messages.ORDER_ALREADY_RUNNING;
 				break;
 			case SUSPENDING:
-				answer.setMessage(Messages.ORDER_ALREADY_SUSPENDING);
+				answer = Messages.ORDER_ALREADY_SUSPENDING;
 				break;
 			case COMPLETED:
-				answer.setMessage(Messages.ORDER_ALREADY_COMPLETED);
+				answer = Messages.ORDER_ALREADY_COMPLETED;
 				break;
 			case FAILED:
-				answer.setMessage(Messages.ORDER_ALREADY_FAILED);
+				answer = Messages.ORDER_ALREADY_FAILED;
 				break;
 			case CLOSED:
-				answer.setMessage(Messages.ORDER_ALREADY_CLOSED);
+				answer = Messages.ORDER_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -347,6 +362,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages resume(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -370,6 +387,7 @@ public class OrderUtil {
 				}
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				break;	
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
@@ -405,6 +423,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages startOrder(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> startOrder({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -422,6 +442,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.RUNNING);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_RELEASED;
 				break;				
 			case RUNNING:
@@ -455,6 +476,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages suspend(ProcessingOrder order, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == order ? "null" : order.getId()), force);
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -475,6 +498,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.PLANNED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_SUSPENDED;
 				break;			
 			case RUNNING:
@@ -498,16 +522,19 @@ public class OrderUtil {
 					// check whether some jobs are already finished
 					order.setOrderState(OrderState.SUSPENDING);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_SUSPENDED;
 				} else if (allFinished) {
 					// check whether some jobs are already finished
 					order.setOrderState(OrderState.COMPLETED);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_COMPLETED;
 				} else {
 					order.setOrderState(OrderState.SUSPENDING); // direct transition to PLANNED not allowed
 					order.setOrderState(OrderState.PLANNED);
 					RepositoryService.getOrderRepository().save(order);
+					logOrderState(order);
 					answer = Messages.ORDER_SUSPENDED;
 				}
 				break;	
@@ -536,6 +563,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages retry(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -569,6 +598,9 @@ public class OrderUtil {
 				}
 				if (all) {
 					if (allCompleted) {
+						order.setOrderState(OrderState.PLANNED);
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
 						order.setOrderState(OrderState.COMPLETED);
 						order.incrementVersion();
 						RepositoryService.getOrderRepository().save(order);
@@ -579,6 +611,7 @@ public class OrderUtil {
 						RepositoryService.getOrderRepository().save(order);
 						answer = Messages.ORDER_RETRIED;
 					}
+					logOrderState(order);
 				} else {
 					answer = Messages.ORDER_COULD_NOT_RETRY;
 				}
@@ -602,6 +635,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Messages close(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == order ? "null" : order.getId()));
+		
 		Messages answer = Messages.FALSE;
 		if (order != null) {
 			// INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED
@@ -620,6 +655,7 @@ public class OrderUtil {
 				order.setOrderState(OrderState.CLOSED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
+				logOrderState(order);
 				answer = Messages.ORDER_CLOSED;
 				break;			
 			case CLOSED:
@@ -641,6 +677,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public Boolean checkFinish(Long orderId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", orderId);
+		
 		Boolean answer = false;	
 		Boolean checkFurther = false;
 		Boolean hasChanged = false;
@@ -723,6 +761,13 @@ public class OrderUtil {
 						order.setOrderState(OrderState.FAILED);
 					} else {
 						order.setOrderState(OrderState.COMPLETED);
+						// If the order is in systematic processing and the mission has an order retention period,
+						// the order is automatically closed after completion and the eviction time is set.
+						Duration retPeriod = order.getMission().getOrderRetentionPeriod();
+						if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
+							order.setEvictionTime(Instant.now().plus(retPeriod));
+							order.setOrderState(OrderState.CLOSED);
+						}
 					}
 					RepositoryService.getOrderRepository().save(order);
 					em.merge(order);
@@ -733,6 +778,7 @@ public class OrderUtil {
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				em.merge(order);
+				logOrderState(order);
 			}
 		}
  		return answer;
@@ -746,6 +792,8 @@ public class OrderUtil {
 	 * @return List of processinig facilities
 	 */
 	public List<ProcessingFacility> getProcessingFacilities(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getProcessingFacilities({})", (null == order ? "null" : order.getId()));
+		
 		List<ProcessingFacility> pfList = new ArrayList<ProcessingFacility>();
 		if (order != null) {
 			for (Job j : order.getJobs()) {
@@ -756,7 +804,7 @@ public class OrderUtil {
 		}
 		return pfList;
 	}
-	
+
 	
 	/**
 	 * Update the order state depending on job state
@@ -768,6 +816,8 @@ public class OrderUtil {
 
 	@Transactional
 	public void updateState(ProcessingOrder orderOrig, JobState jState) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == orderOrig ? "null" : orderOrig.getId()), jState);
+		
 		ProcessingOrder order = null;
 		Optional<ProcessingOrder> oOrder = RepositoryService.getOrderRepository().findById(orderOrig.getId());
 		if (oOrder.isPresent()) {
@@ -911,12 +961,18 @@ public class OrderUtil {
 				if (hasFailed) {
 					order.setOrderState(OrderState.FAILED);
 				} else {
+					if (order.getOrderState() == OrderState.FAILED) {
+						order.setOrderState(OrderState.PLANNED);
+						order.setOrderState(OrderState.RELEASED);
+						order.setOrderState(OrderState.RUNNING);
+					}
 					order.setOrderState(OrderState.COMPLETED);
 				}
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
 				em.merge(order);
 			}
+			logOrderState(order);
 		}
 	}
 	
@@ -929,6 +985,8 @@ public class OrderUtil {
 	 */
 	@Transactional
 	public void setHasFailedJobSteps(ProcessingOrder order, Boolean failed) {
+		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == order ? "null" : order.getId()), failed);
+		
 		if (failed && !order.getHasFailedJobSteps()) {
 			order.setHasFailedJobSteps(failed);
 			order.incrementVersion();
@@ -937,5 +995,92 @@ public class OrderUtil {
 		}
 	}
 
+	public void logOrderState(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> logOrderState({})", (null == order ? "null" : order.getId()));
+		
+		// TODO monitoring
+		/*
+		// No logging, if monitoring host is not set
+		if (null == ProductionPlanner.config.getLogHost()) {
+			return;
+		}
+
+		// calculate necessary data
+		// get all job steps
+		List<JobStep> jobSteps = new ArrayList<JobStep>();
+		for (Job job : order.getJobs()) {
+			jobSteps.addAll(job.getJobSteps());
+		}
+		Integer runningJobSteps = 0;
+		Integer completedJobSteps = 0;
+		Integer failedJobSteps = 0;
+		Integer allJobSteps = jobSteps.size();
+
+		for (JobStep jobStep : jobSteps) {
+			switch (jobStep.getJobStepState()) {
+			case INITIAL:
+				break;
+			case WAITING_INPUT:
+				break;
+			case READY:
+				break;
+			case RUNNING:
+				runningJobSteps++;
+				break;
+			case COMPLETED:
+				completedJobSteps++;
+				break;
+			case FAILED:
+				failedJobSteps++;
+				break;
+			default:
+				break;
+			}
+		}
+
+		String token = ProductionPlanner.config.getLogToken();
+		String bucket = ProductionPlanner.config.getLogBucket();
+		String org = ProductionPlanner.config.getLogOrg();
+
+		InfluxDBClient client = InfluxDBClientFactory.create(ProductionPlanner.config.getLogHost(), token.toCharArray());
+
+		// Use a Data Point to write data
+
+		Point point = Point.measurement("progress")
+		.addField("name", order.getIdentifier())
+		.addField("state", order.getOrderState().toString())
+		.addField("failed_job_steps", allJobSteps == 0 ? 0 : failedJobSteps * 100 / allJobSteps)
+		.addField("completed_job_steps", allJobSteps == 0 ? 0 : completedJobSteps * 100 / allJobSteps)
+		.addField("running_job_steps", allJobSteps == 0 ? 0 : runningJobSteps * 100 / allJobSteps)
+		.addField("finished_job_steps", allJobSteps == 0 ? 0 : (failedJobSteps + completedJobSteps) * 100 / allJobSteps)
+		.addField("all_job_steps", allJobSteps)
+		.time(Instant.now(), WritePrecision.NS);
+
+		try (WriteApi writeApi = client.getWriteApi()) {
+			writeApi.writePoint(bucket, org, point);
+		}
+
+		
+		if (logger.isTraceEnabled()) logger.trace(point.toLineProtocol());
+
+		
+//	    try {  
+//	    	 Files.writeString(
+//	    		        Path.of("influxDB.log"),
+//	    		        "docker exec influxdb2 influx write -o " + org + " --bucket " + bucket + " \"" + 
+//	    		        ProseoUtil.escape(point.toLineProtocol()) + "\"" + System.lineSeparator(),
+//	    		        StandardOpenOption.CREATE, StandardOpenOption.APPEND
+//	    		    );
+//	    } catch (SecurityException e) {  
+//	        e.printStackTrace();  
+//	    } catch (IOException e) {  
+//	        e.printStackTrace();  
+//	    }  
+		
+		//String query = String.format("from(bucket:\"myBucket\") |> range(start: -1h)", bucket);
+		//List<FluxTable> tables = client.getQueryApi().query(query, org);
+		 * 
+		 */
+	}
 
 }

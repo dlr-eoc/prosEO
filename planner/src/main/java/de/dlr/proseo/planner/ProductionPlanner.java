@@ -15,9 +15,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,8 +30,6 @@ import javax.persistence.PersistenceContext;
 
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.model.ProcessingFacility;
-import de.dlr.proseo.model.enums.FacilityState;
-import de.dlr.proseo.model.rest.model.RestOrder;
 import de.dlr.proseo.planner.dispatcher.KubeDispatcher;
 import de.dlr.proseo.planner.kubernetes.KubeConfig;
 import de.dlr.proseo.planner.util.JobStepUtil;
@@ -120,6 +115,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * @param pw
 	 */
 	public void updateAuth(Long orderId, String user, String pw) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateAuth({}, user, password)", orderId);
+		
 		if (orderPwCache.containsKey(orderId)) {
 			Map<String, String> aMap = orderPwCache.get(orderId);
 			if (aMap.containsKey(user)) {
@@ -162,14 +159,6 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 	
 	/**
-	 * Look for job step ready to run. 
-	 */
-	@Transactional
-	public void checkForJobStepsToRun() {
-		jobStepUtil.checkForJobStepsToRun();
-	};
-	
-	/**
 	 * Initialize and run application 
 	 * 
 	 * @param args command line arguments
@@ -186,6 +175,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Transactional
 	public void updateKubeConfigs() {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfigs()");
+		
 		KubeConfig kubeConfig = null;
 			
 		for (ProcessingFacility pf : RepositoryService.getFacilityRepository().findAll()) {
@@ -221,35 +212,45 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Try to connect processing facility.
 	 * Add new kube config for not connected facility, remove kube config for not connectable facility.
 	 * 
-	 * @param facilityName
+	 * @param facilityName the name of the processing facility to connect
+	 * @return the KubeConfig object for this processing facility, or null, if the facility is not connected
 	 */
-	public void updateKubeConfig(String facilityName) {
-		KubeConfig kubeConfig = null;
-		if (facilityName != null) {
-			ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName); 
-			if (pf != null) {
-				kubeConfig = getKubeConfig(pf.getName());
-				if (kubeConfig != null) {
-					kubeConfig.setFacility(pf);
-					if (!kubeConfig.connect()) {
-						// error
-						kubeConfigs.remove(pf.getName().toLowerCase());
-						kubeConfig = null;
-						Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
-					}
-				}
-				if (kubeConfig == null) {
-					kubeConfig = new KubeConfig(pf);
-					if (kubeConfig != null && kubeConfig.connect()) {
-						kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
-						Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
-						Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
-					} else {
-						Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
-					}
-				}
+	public KubeConfig updateKubeConfig(String facilityName) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateKubeConfig({})", facilityName);
+		
+		if (null == facilityName) {
+			return null;
+		}
+		
+		ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(facilityName);
+		if (null == pf) {
+			return null;
+		}
+		
+		KubeConfig kubeConfig = getKubeConfig(pf.getName());
+		
+		if (null == kubeConfig) {
+			// Planner does not know facility yet, so create a new KubeConfig object and make sure it can be connected
+			kubeConfig = new KubeConfig(pf);
+			if (kubeConfig.connect()) {
+				kubeConfigs.put(pf.getName().toLowerCase(), kubeConfig);
+				Messages.PLANNER_FACILITY_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+				Messages.PLANNER_FACILITY_WORKER_CNT.log(logger, String.valueOf(kubeConfig.getWorkerCnt()));
+			} else {
+				Messages.PLANNER_FACILITY_NOT_CONNECTED.log(logger, pf.getName(), pf.getProcessingEngineUrl());
+				kubeConfig = null;
+			}
+		} else {
+			// Update information in KubeConfig object and make sure it can be connected
+			kubeConfig.setFacility(pf);
+			if (!kubeConfig.connect()) {
+				// error
+				kubeConfigs.remove(pf.getName().toLowerCase());
+				Messages.PLANNER_FACILITY_DISCONNECTED.log(logger, pf.getName());
+				kubeConfig = null;
 			}
 		}
+		return kubeConfig;
 	}
 	
 	/* (non-Javadoc)
@@ -257,6 +258,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {
+		if (logger.isTraceEnabled()) logger.trace(">>> run({})", arg0.toString());
+		
 		//		
 		//		List<String> pfs = new ArrayList<String>();
 		//		
@@ -301,6 +304,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Start the kube dispatcher thread
 	 */
 	public void startDispatcher() {
+		if (logger.isTraceEnabled()) logger.trace(">>> startDispatcher()");
+		
 		if (kubeDispatcher == null || !kubeDispatcher.isAlive()) {
 			kubeDispatcher = new KubeDispatcher(this, null, false);
 			kubeDispatcher.start();
@@ -315,6 +320,8 @@ public class ProductionPlanner implements CommandLineRunner {
 	 * Stop the kube dispatcher thread
 	 */
 	public void stopDispatcher() {
+		if (logger.isTraceEnabled()) logger.trace(">>> stopDispatcher()");
+		
 		if (kubeDispatcher != null && kubeDispatcher.isAlive()) {
 			kubeDispatcher.interrupt();
 			int i = 0;
@@ -327,36 +334,5 @@ public class ProductionPlanner implements CommandLineRunner {
 			}
 		}
 		kubeDispatcher = null;
-	}
-	
-	/**
-	 * Check availability processing facility for actions
-	 * 
-	 * @param pf Processing facility 
-	 * @return RestEntity if not available, null otherwise
-	 */
-	public ResponseEntity<?> checkFacility(ProcessingFacility procf, FacilityState secondState) {
-		if (procf == null) {
-			String message = Messages.FACILITY_NOT_EXIST.formatWithPrefix("unknown");
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-			return new ResponseEntity<>(responseHeaders, HttpStatus.NOT_FOUND);		
-		} else {
-			ProcessingFacility pf = RepositoryService.getFacilityRepository().findByName(procf.getName());
-			if ((pf != null) 
-					&& !((pf.getFacilityState() == FacilityState.RUNNING)
-					     || (secondState != null && (pf.getFacilityState() == secondState)))) {	
-				
-				String message = Messages.FACILITY_NOT_AVAILABLE.formatWithPrefix(pf.getName(), pf.getFacilityState().toString());
-				HttpHeaders responseHeaders = new HttpHeaders();
-				responseHeaders.set(Messages.HTTP_HEADER_WARNING.getDescription(), message);
-				if (pf.getFacilityState() == FacilityState.DISABLED) {
-					return new ResponseEntity<>(responseHeaders, HttpStatus.BAD_REQUEST);
-				} else {
-					return new ResponseEntity<>(responseHeaders, HttpStatus.SERVICE_UNAVAILABLE);
-				}
-			}
-		}
-		return null;
 	}
 }

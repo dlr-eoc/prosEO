@@ -6,7 +6,6 @@
 package de.dlr.proseo.ingestor.rest;
 
 import java.util.ConcurrentModificationException;
-import java.util.Date;
 import java.util.List;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;

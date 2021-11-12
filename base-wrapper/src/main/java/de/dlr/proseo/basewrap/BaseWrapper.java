@@ -246,7 +246,7 @@ public class BaseWrapper {
 		}
 
 		// Step 2: Remove any leading and trailing slashes
-		workFileName.replaceAll("^/+", "").replaceAll("/+$", "");
+		workFileName.replace("^/+", "").replace("/+$", "");
 
 		return workFileName;
 	}
@@ -472,13 +472,16 @@ public class BaseWrapper {
 					String inputFileName = rfi.getFilePath();
 					
 					// wait for copy completion due to NFS caching of clients
-					int i = 0;
 					Path fp = Path.of(inputFileName);
 					if (fp.toFile().isFile()) {
 						Integer wait = Integer.valueOf(ENV_FILECHECK_WAIT_TIME);
 						Integer max = Integer.valueOf(ENV_FILECHECK_MAX_CYCLES);
 						try {
+							if (logger.isDebugEnabled())
+								logger.debug("... Testing wait for download of {}, wait interval {}, max cycles {}; size is {}, expected {}",
+										inputFileName, wait, max, Files.size(fp), rfi.getFileSize());
 							synchronized (this) {
+								int i = 0;
 								while ((Files.size(fp) < rfi.getFileSize()) && (i < max)) {
 									if (logger.isDebugEnabled()) {
 										logger.debug("Wait for fully copied file {}", inputFileName);
@@ -492,14 +495,17 @@ public class BaseWrapper {
 											logger.debug("... wait interrupted, cause: " + e.getMessage());
 									}
 								}
+								if (i >= max) {
+									logger.error(MSG_FILE_NOT_FETCHED, inputFileName);
+									throw new WrapperException();
+								}
 							}
 						} catch (IOException e) {
 							logger.error(MSG_UNABLE_TO_ACCESS_FILE, inputFileName);
 							throw new WrapperException();
 						}
-						if (i >= max) {
-							logger.error(MSG_FILE_NOT_FETCHED, inputFileName);
-						}
+					} else {
+						logger.info("Skipping wait for {}, because it's not a file", inputFileName);
 					}
 					fn.setFileName(inputFileName);
 					// Check for time intervals for this file and update their file names, too
@@ -540,7 +546,9 @@ public class BaseWrapper {
 							}
 						}
 						try {
-							Files.createDirectories(filePath);} catch (IOException | SecurityException e) {
+							Files.createDirectories(filePath);
+						} 
+						catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath);
 							throw new WrapperException();
 						}

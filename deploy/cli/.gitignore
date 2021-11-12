@@ -1,0 +1,5 @@
+/application.yml
+/proseo-ui-cli*
+/cli_*
+/*.cred
+/*-config

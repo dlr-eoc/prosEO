@@ -1,0 +1,21 @@
+---
+- name: Determine the user's home directory
+  shell: "getent passwd {{ user }}  | awk -F: '{ print $6 }'"
+  changed_when: false
+  register: user_home
+
+- name: Ensure kubernetes config directory
+  file:
+    dest: "{{ user_home.stdout }}/.kube"
+    state: directory
+    mode: 0700
+    owner: "{{ user }}"
+    group: "{{ user }}"
+
+- name: Copy kubectl config
+  copy:
+    src: "kubectl.conf"
+    dest: "{{ user_home.stdout }}/.kube/config"
+    mode: 0600
+    owner: "{{ user }}"
+    group: "{{ user }}"

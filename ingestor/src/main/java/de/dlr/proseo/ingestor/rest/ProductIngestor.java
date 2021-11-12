@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.ingestor.rest;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public class ProductIngestor {
 	// Same as in ProductManager
 	private static final String MSG_PRODUCT_CLASS_INVALID = "(E%d) Product type %s invalid";
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
-	
+
 	private static final String MSG_NEW_PRODUCT_ADDED = "(I%d) New product with ID %d and product type %s added to database";
 	private static final String MSG_PRODUCT_FILE_RETRIEVED = "(I%d) Product file retrieved for product ID %d at processing facility %s";
 	private static final String MSG_PRODUCT_FILE_INGESTED = "(I%d) Product file %s ingested for product ID %d at processing facility %s";
@@ -273,12 +274,13 @@ public class ProductIngestor {
 		Product newModelProduct = RepositoryService.getProductRepository().findById(newProduct.getId()).get();
 		newProductFile.setProduct(newModelProduct);
 		newProductFile = RepositoryService.getProductFileRepository().save(newProductFile);
+
 		newModelProduct.getProductFile().add(newProductFile);
+		// Check for first time ingestion (defines publication time)
 		if (null == newModelProduct.getPublicationTime()) {
 			newModelProduct.setPublicationTime(Instant.now());
 		}
 		newModelProduct = RepositoryService.getProductRepository().save(newModelProduct);
-		
 		
 		// Product ingestion successful
 		logInfo(MSG_NEW_PRODUCT_ADDED, MSG_ID_NEW_PRODUCT_ADDED, newModelProduct.getId(), newModelProduct.getProductClass().getProductType());
@@ -443,11 +445,12 @@ public class ProductIngestor {
 		modelProductFile.setProduct(product.get());
 		modelProductFile = RepositoryService.getProductFileRepository().save(modelProductFile);
 		
+		// Check for first time ingestion (defines publication time)
 		if (null == modelProduct.getPublicationTime()) {
 			modelProduct.setPublicationTime(Instant.now());
 		}
 		modelProduct.getProductFile().add(modelProductFile);  // Autosave with commit
-		
+
 		// Return the updated REST product file
 		logInfo(MSG_PRODUCT_FILE_INGESTED, MSG_ID_PRODUCT_FILE_INGESTED, productFile.getProductFileName(), productId, facility.getName());
 

@@ -27,18 +27,25 @@ securitySchemes:
 
 types:
   # Referenced model types
+  RestClassOutputParameter: !include ../../../../../model/src/main/resources/raml/types/classoutputparameter.raml
   RestConfiguredProcessor: !include ../../../../../model/src/main/resources/raml/types/configuredprocessor.raml
+  RestDownloadHistory: !include ../../../../../model/src/main/resources/raml/types/downloadhistory.raml
+  RestInputFilter: !include ../../../../../model/src/main/resources/raml/types/inputfilter.raml
+  RestOrbitQuery: !include ../../../../../model/src/main/resources/raml/types/orbitquery.raml
+  RestOrder: !include ../../../../../model/src/main/resources/raml/types/order.raml
   RestParameter: !include ../../../../../model/src/main/resources/raml/types/parameter.raml
   RestProduct: !include ../../../../../model/src/main/resources/raml/types/product.raml
   RestProductFile: !include ../../../../../model/src/main/resources/raml/types/productfile.raml
   # Interface types
   RestInfo: !include ../../../main/resources/raml/types/info.raml
+  RestInterfaceStatus: !include ../../../main/resources/raml/types/interfaceStatus.raml
   RestFileInfo: !include ../../../main/resources/raml/types/fileinfo.raml
   RestJoborder: !include ../../../main/resources/raml/types/joborderBase64.raml
   RestProductFS: !include ../../../main/resources/raml/types/productFS.raml
   RestStorage: !include ../../../main/resources/raml/types/storage.raml
   IngestorProduct: !include ../../../main/resources/raml/types/ingestorproduct.raml
   SelectionRuleString: !include ../../../main/resources/raml/types/selectionrulestring.raml
+  RestHealth: !include ../../../main/resources/raml/types/health.raml
 
 resourceTypes:
   standard:
@@ -70,6 +77,14 @@ resourceTypes:
           body:
             application/json:
               type: RestInfo
+  /interfacestatus:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestInterfaceStatus
   /joborders:
     type: standard
     get:
@@ -110,3 +125,19 @@ resourceTypes:
           body:
             application/json:
               type: SelectionRuleString
+  /processingorders:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestOrder
+  /healths:
+    type: standard
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: RestHealth

@@ -1,0 +1,6 @@
+/proseo-ui-cli.*
+/testfiles
+/configure_proseo_test_mission.pl
+/cli_*.txt
+/*.cred
+/test*.json

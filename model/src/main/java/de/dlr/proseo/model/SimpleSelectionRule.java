@@ -440,64 +440,6 @@ public class SimpleSelectionRule extends PersistentObject {
 	}
 	
 	/**
-	 * Format this rule as an OQL query
-	 * <p>
-	 * Limitation: For LatestValidityClosest the query may return two products, one to each side of the centre of the
-	 * given time interval. It is up to the calling program to select the applicable product.
-	 * 
-	 * @param startTime the start time to use in the database query
-	 * @param stopTime the stop time to use in the database query
-	 * @return an OQL string representing this rule
-	 */
-	public String asPlQueryCondition(final Instant startTime, final Instant stopTime) {
-		// Generate query projection
-		StringBuilder simpleRuleQuery = new StringBuilder("select startTime, stopTime from ");
-		simpleRuleQuery.append(sourceProductClass.getProductType()).append(" where ");
-		
-		// Ensure canonical ordering of policies
-		simplePolicies.sort(new Comparator<SimplePolicy>() {
-			@Override
-			public int compare(SimplePolicy o1, SimplePolicy o2) {
-				return o1.getPolicyType().compareTo(o2.getPolicyType());
-			}});
-		
-		// Generate query condition
-		if (0 < filterConditions.size()) {
-			// Wrap everything in parentheses for later addition of filter conditions
-			simpleRuleQuery.append("(");
-		}
-		
-		// Format policies
-		if (1 < simplePolicies.size()) {
-			// Wrap multiple policies in parentheses
-			simpleRuleQuery.append("(");
-		}
-		boolean first = true;
-		for (SimplePolicy simplePolicy: simplePolicies) {
-			if (first)
-				first = false;
-			else
-				simpleRuleQuery.append(" or ");
-			simpleRuleQuery.append(simplePolicy.asPlQueryCondition(sourceProductClass.getProductType(), startTime, stopTime));
-		}
-		if (1 < simplePolicies.size()) {
-			// Close parentheses for multiple policies
-			simpleRuleQuery.append(")");
-		}
-		
-		// Format filter conditions
-		if (0 < filterConditions.size()) {
-			for (String filterKey: filterConditions.keySet()) {
-				simpleRuleQuery.append(String.format(" and %s = '%s'", filterKey, filterConditions.get(filterKey).getStringValue()));
-			}
-			// Close parentheses of query string with filter conditions
-			simpleRuleQuery.append(")");
-		}
-		return simpleRuleQuery.toString();
-	}
-	
-	
-	/**
 	 * Format this rule as a JPQL (Java Persistence Query Language) query. The condition in the "where" clause
 	 * is set in parentheses, so further conditions/filters can be appended to the resulting query.
 	 * <p>
@@ -555,7 +497,7 @@ public class SimpleSelectionRule extends PersistentObject {
 				first = false;
 			else
 				simpleRuleQuery.append(" or ");
-			simpleRuleQuery.append(simplePolicy.asJpqlQueryCondition(sourceProductClass, startTime, stopTime));
+			simpleRuleQuery.append(simplePolicy.asJpqlQueryCondition(sourceProductClass, startTime, stopTime, allFilterConditions));
 		}
 		if (1 < simplePolicies.size()) {
 			// Close parentheses for multiple policies
@@ -592,13 +534,19 @@ public class SimpleSelectionRule extends PersistentObject {
 	 * @param stopTime the stop time to use in the database query
 	 * @param additionalFilterConditions filter conditions to apply in addition to the rule's own filters (optional)
 	 * @param productColumnMapping a mapping from attribute names of the Product class to the corresponding SQL column names
+	 * @param facilityQuerySql an SQL selection string to add to the selection rule SQL query
+	 * @param facilityQuerySqlSubselect an SQL selection string to add to sub-SELECTs in selection policy SQL query conditions
 	 * @return an SQL string representing this rule
 	 */
 	public String asSqlQuery(final Instant startTime, final Instant stopTime, Map<String, Parameter> additionalFilterConditions,
-			Map<String, String> productColumnMapping) {
+			Map<String, String> productColumnMapping, String facilityQuerySql, String facilityQuerySqlSubselect) {
+		
 		Map<String, Parameter> allFilterConditions = new HashMap<>(filterConditions);
 		if (null != additionalFilterConditions) {
 			allFilterConditions.putAll(additionalFilterConditions);
+		}
+		if (null == facilityQuerySql) {
+			facilityQuerySql = "";
 		}
 
 		// Generate query projection
@@ -642,7 +590,8 @@ public class SimpleSelectionRule extends PersistentObject {
 				first = false;
 			else
 				simpleRuleQuery.append(" OR ");
-			simpleRuleQuery.append(simplePolicy.asSqlQueryCondition(sourceProductClass, startTime, stopTime));
+			simpleRuleQuery.append(simplePolicy.asSqlQueryCondition(
+					sourceProductClass, startTime, stopTime, allFilterConditions, productColumnMapping, facilityQuerySqlSubselect));
 		}
 		if (1 < simplePolicies.size()) {
 			// Close parentheses for multiple policies
@@ -665,7 +614,7 @@ public class SimpleSelectionRule extends PersistentObject {
 			}
 		}
 
-		return simpleRuleQuery.append(')').toString();
+		return simpleRuleQuery.append(facilityQuerySql).append(')').toString();
 	}
 	
 	/* (non-Javadoc)

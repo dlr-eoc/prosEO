@@ -7,13 +7,20 @@ package de.dlr.proseo.planner.rest;
 
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
@@ -36,39 +43,82 @@ public class ProductControllerImpl implements ProductController {
 	/**
 	 * Logger of this class
 	 */
-	private static Logger logger = LoggerFactory.getLogger(JobControllerImpl.class);
+	private static Logger logger = LoggerFactory.getLogger(ProductControllerImpl.class);
 
 	/** The Production Planner instance */
     @Autowired
     private ProductionPlanner productionPlanner;
     
+	/** Transaction manager for transaction control */
+	@Autowired
+	private PlatformTransactionManager txManager;
+
+	/** JPA entity manager */
+	@PersistenceContext
+	private EntityManager em;
+	
 	/**
 	 * Product created and available, sent by prosEO Ingestor.
 	 * Look now for new satisfied product queries and job steps. Try to start them. 
 	 * 
 	 */
 	@Override
-	@Transactional
 	public ResponseEntity<?> getObjectByProductid(String productid) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getObjectByProductid({})", productid);
 		
 		// look for product
+		KubeConfig aKubeConfig = null;
+		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
+
 		try {
-			Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
-			KubeConfig aKubeConfig = searchForProduct(p, null);
-			aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
+			// Transaction to check the delete preconditions
+			aKubeConfig = transactionTemplate.execute((status) -> {						
+				return findKubeConfigForProduct(productid);
+			});
+		} catch (NoResultException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(Messages.errorHeaders(e.getMessage()), HttpStatus.NOT_FOUND);
+		} catch (IllegalArgumentException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(Messages.errorHeaders(e.getMessage()), HttpStatus.BAD_REQUEST);
+		} catch (TransactionException e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity<>(Messages.errorHeaders(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (RuntimeException e) {
+			logger.error(e.getMessage(), e);
+			return new ResponseEntity<>(Messages.errorHeaders(e.getMessage()), HttpStatus.NOT_MODIFIED);
+		}
+		try {
 			if (aKubeConfig != null) {
 				UtilService.getJobStepUtil().checkForJobStepsToRun(aKubeConfig, null, true);
 			}
 		} catch (Exception e) {
 			if (logger.isDebugEnabled()) logger.debug("Exception in planning check: ", e);
-			Messages.PLANNING_CHECK_FAILED.log(logger, Long.valueOf(productid), e.getMessage());
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			String message = Messages.PLANNING_CHECK_FAILED.log(logger, Long.valueOf(productid), e.getMessage());
+			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		Messages.PLANNING_CHECK_COMPLETE.log(logger, Long.valueOf(productid));
 		
 		return new ResponseEntity<>("Checked", HttpStatus.OK);
+	}
+
+	/**
+	 * Find uppermost enclosing product and get its processing facility (represented by KubeConfig)
+	 * 
+	 * @param productid the product database ID
+	 * @return the processing facility as KubeConfig
+	 * @throws NumberFormatException if the product ID is not numeric
+	 */
+	@Transactional
+	private KubeConfig findKubeConfigForProduct(String productid) throws NumberFormatException {
+		if (logger.isTraceEnabled()) logger.trace(">>> findKubeConfigForProduct({})", productid);
+		
+		Product p = RepositoryService.getProductRepository().getOne(Long.valueOf(productid));
+		KubeConfig aKubeConfig = searchForProduct(p, null);
+		aKubeConfig = searchForEnclosingProduct(p.getEnclosingProduct(), aKubeConfig);
+		
+		return aKubeConfig;
 	}
 
 	/**
@@ -79,6 +129,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param kubeConfig Kube config to use 
 	 * @return Kube Config used
 	 */
+	@Transactional
 	private KubeConfig searchForProduct(Product p, KubeConfig kubeConfig) {
 		if (logger.isTraceEnabled()) logger.trace(">>> searchForProduct({}, KubeConfig)", (null == p ? "null" : p.getId()));
 		
@@ -121,6 +172,7 @@ public class ProductControllerImpl implements ProductController {
 	 * @param kubeConfig Kube config to use 
 	 * @return Kube Config used
 	 */
+	@Transactional
 	private KubeConfig searchForProductPrim(Product p, KubeConfig kubeConfig) {
 		if (logger.isTraceEnabled()) logger.trace(">>> searchForProductPrim({}, KubeConfig)", (null == p ? "null" : p.getId()));
 		

@@ -437,6 +437,9 @@ public class MissionCommandRunner {
 		if (isDeleteAttributes || null != updatedMission.getProductRetentionPeriod()) {
 			restMission.setProductRetentionPeriod(updatedMission.getProductRetentionPeriod());
 		}
+		if (isDeleteAttributes || null != updatedMission.getOrderRetentionPeriod()) {
+			restMission.setOrderRetentionPeriod(updatedMission.getOrderRetentionPeriod());
+		}
 		
 		/* Update mission using Order Manager service */
 		try {

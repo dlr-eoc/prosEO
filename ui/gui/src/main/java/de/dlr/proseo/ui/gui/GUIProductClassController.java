@@ -73,7 +73,7 @@ public class GUIProductClassController extends GUIBaseController {
 			} else {
 				from = (long) 0;
 			}
-			Long count = countProductClasses();
+			Long count = countProductClasses(productClass, processorClass, level, visibility);
 			if (toIndex != null && from != null && toIndex > from) {
 				to = toIndex;
 			} else if (from != null) {
@@ -142,7 +142,7 @@ public class GUIProductClassController extends GUIBaseController {
 			return deferredResult;
 		}
 
-	    private Long countProductClasses() {
+	    private Long countProductClasses(String productType, String processorClass, String level, String visibility) {
 	    	
 			GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
 			String mission = auth.getMission();
@@ -150,6 +150,28 @@ public class GUIProductClassController extends GUIBaseController {
 			String uri = "/productclasses/count";
 			if (mission != null && !mission.isEmpty()) {
 				uri += divider + "mission=" + mission;
+				divider ="&";
+			}
+			if (productType != null && !productType.isEmpty()) {
+				String [] pcs = productType.split(",");
+				for (String pc : pcs) {
+					uri += divider + "productType=" + pc;
+					divider ="&";
+				}
+			}
+			if (processorClass != null && !processorClass.isEmpty()) {
+				String [] pcs = processorClass.split(",");
+				for (String pc : pcs) {
+					uri += divider + "processorClass=" + pc;
+					divider ="&";
+				}
+			}
+			if (level != null) {
+				uri += divider + "level=" + level;
+				divider ="&";
+			}
+			if (visibility != null) {
+				uri += divider + "visibility=" + visibility;
 				divider ="&";
 			}
 			Long result = (long) -1;

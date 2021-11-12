@@ -114,6 +114,12 @@ public class Product extends PersistentObject {
 	@Column(name = "eviction_time", columnDefinition = "TIMESTAMP(6)")
 	private Instant evictionTime;
 	
+	/**
+	 * The download history for this product
+	 */
+	@ElementCollection
+	private Set<DownloadHistory> downloadHistory = new HashSet<>();
+	
 	/** Type of production process generating this product */
 	@Enumerated(EnumType.STRING)
 	private ProductionType productionType;
@@ -348,6 +354,22 @@ public class Product extends PersistentObject {
 		this.evictionTime = evictionTime;
 	}
 	
+	/**
+	 * Gets the product download history
+	 * 
+	 * @return the download history
+	 */
+	public Set<DownloadHistory> getDownloadHistory() {
+		return downloadHistory;
+	}
+	/**
+	 * Sets the product download history
+	 * 
+	 * @param downloadHistory the download history to set
+	 */
+	public void setDownloadHistory(Set<DownloadHistory> downloadHistory) {
+		this.downloadHistory = downloadHistory;
+	}
 	/**
 	 * Gets the production type of the product
 	 * 

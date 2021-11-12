@@ -1,0 +1,31 @@
+spring:
+    main:
+        web-application-type: NONE
+logging:
+    level:
+        root: INFO
+        org.apache.http: INFO
+        de.dlr.proseo: TRACE
+    file: proseo-ui-cli.log
+proseo:
+    cli:
+        syntaxfile: ui-cli-syntax.yml
+    
+    # Configuration for Integration Test Environment
+    userManager:
+        url: https://85.215.x.x/proseo/user-mgr/v0.1
+    ingestor:
+        url: https://85.215.x.x/proseo/ingestor/v0.1
+    orderManager:
+        url: https://85.215.x.x/proseo/order-mgr/v0.1
+    productionPlanner:
+        url: https://85.215.x.x/proseo/planner/v0.1
+    processorManager:
+        url: https://85.215.x.x/proseo/processor-mgr/v0.1
+    productClassManager:
+        url: https://85.215.x.x/proseo/productclass-mgr/v0.1
+    facilityManager:
+        url: https://85.215.x.x/proseo/facility-mgr/v0.1
+
+    # Connection timeout in ms
+    http.timeout: 1800000

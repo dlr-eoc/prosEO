@@ -38,6 +38,7 @@ import de.dlr.proseo.storagemgr.utils.StorageType;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.rest.model.RestProductFS;
 import de.dlr.proseo.storagemgr.utils.ProseoFile;
+import de.dlr.proseo.storagemgr.utils.StorageLogger;
 
 /**
  * Spring MVC controller for the prosEO Storage Manager; implements the services
@@ -59,6 +60,10 @@ public class ProductControllerImpl implements ProductController {
 	private static final int MSG_ID_TOKEN_INVALID = 4005;
 	private static final int MSG_ID_TOKEN_EXPIRED = 4006;
 	private static final int MSG_ID_TOKEN_MISMATCH = 4007;
+	private static final int MSG_ID_FILES_REGISTERED = 4008;
+	private static final int MSG_ID_FILES_LISTED = 4009;
+	private static final int MSG_ID_FILE_RETRIEVED = 4010;
+	private static final int MSG_ID_FILE_DELETED = 4011;
 
 	/* Message strings */
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown: %s";
@@ -68,6 +73,10 @@ public class ProductControllerImpl implements ProductController {
 	private static final String MSG_TOKEN_INVALID = "(E%d) Authentication token %s invalid (cause: %s)";
 	private static final String MSG_TOKEN_EXPIRED = "(E%d) Authentication token expired at %s";
 	private static final String MSG_TOKEN_MISMATCH = "(E%d) Authentication token not valid for file %s";
+	private static final String MSG_FILES_REGISTERED = "(I%d) Files registered: %s";
+	private static final String MSG_FILES_LISTED = "(I%d) Files listed: %s";
+	private static final String MSG_FILE_RETRIEVED = "(I%d) File %s retrieved from byte %d to byte %d (%d bytes transferred)";
+	private static final String MSG_FILE_DELETED = "(I%d) File %s deleted";
 	
 	/* Submessages for token evaluation */
 	private static final String MSG_TOKEN_PAYLOAD_INVALID = "The payload of the JWT doesn't represent a valid JSON object and a JWT claims set";
@@ -131,12 +140,12 @@ public class ProductControllerImpl implements ProductController {
 				(null == restProductFS ? "MISSING" : restProductFS.getProductId()));
 		
 		// get node name info...
-		String hostName = "";
+		String hostName = null;
 		try {
 			InetAddress iAddress = InetAddress.getLocalHost();
 			hostName = iAddress.getHostName();
 		} catch (UnknownHostException e1) {
-
+			hostName = "(UNKNOWN)";
 		}
 
 		RestProductFS response = new RestProductFS();
@@ -162,9 +171,11 @@ public class ProductControllerImpl implements ProductController {
 					transferSum.addAll(transfered);
 				}
 			}
-			if (logger.isDebugEnabled()) logger.debug("Files registered: {}", transferSum);
 			setRestProductFS(response, restProductFS, targetFile.getBasePath(), true, targetFile.getFullPath() + "/",
 					transferSum, false, "registration executed on node " + hostName);
+
+			StorageLogger.logInfo(logger, MSG_FILES_REGISTERED, MSG_ID_FILES_REGISTERED, transferSum.toString());
+
 			return new ResponseEntity<>(response, HttpStatus.CREATED);
 		} catch (Exception e) {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
@@ -203,6 +214,9 @@ public class ProductControllerImpl implements ProductController {
 			return new ResponseEntity<>(errorHeaders(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN,
 					e.getClass().toString() + ": " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
 		}	
+
+		StorageLogger.logInfo(logger, MSG_FILES_LISTED, MSG_ID_FILES_LISTED, response.toString());
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -372,6 +386,8 @@ public class ProductControllerImpl implements ProductController {
 			headers.setContentLength(len);
 			InputStreamResource fsr = new InputStreamResource(stream);
 			if (fsr != null) {
+				StorageLogger.logInfo(logger, MSG_FILE_RETRIEVED, MSG_ID_FILE_RETRIEVED, pathInfo, from, to, len);
+
 				return new ResponseEntity<>(fsr, headers, status);
 			}
 		} catch (Exception e) {
@@ -410,6 +426,9 @@ public class ProductControllerImpl implements ProductController {
 					response.setRegistered(false);
 					response.setSourceFilePaths(deleted);
 					response.setSourceStorageType(sourceFile.getFsType().toString());
+
+					StorageLogger.logInfo(logger, MSG_FILE_DELETED, MSG_ID_FILE_DELETED, pathInfo);
+
 					return new ResponseEntity<>(response, HttpStatus.OK);
 				}
 			} catch (Exception e) {

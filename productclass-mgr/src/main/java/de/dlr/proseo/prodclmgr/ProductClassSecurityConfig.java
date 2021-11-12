@@ -51,6 +51,7 @@ public class ProductClassSecurityConfig extends WebSecurityConfigurerAdapter {
 			.httpBasic()
 				.and()
 			.authorizeRequests()
+				.antMatchers("/**/actuator/health").permitAll()
 				.antMatchers(HttpMethod.GET).hasAnyRole(UserRole.PRODUCTCLASS_READER.toString())
 				.anyRequest().hasAnyRole(UserRole.PRODUCTCLASS_MGR.toString())
 				.and()

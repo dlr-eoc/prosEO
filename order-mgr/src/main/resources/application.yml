@@ -9,11 +9,10 @@ spring:
         username: <db_user>
         password: <db_pwd>
 logging:
+    file: /proseo/log/proseo-order-mgr.log
     level:
         root: INFO
-        de:
-            dlr:
-                proseo: TRACE
+        de.dlr.proseo: TRACE
 proseo:
     ingestor:
         url: http://proseo-ingestor:8080/proseo/ingestor/v0.1

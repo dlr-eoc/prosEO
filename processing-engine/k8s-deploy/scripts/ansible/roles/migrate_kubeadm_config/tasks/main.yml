@@ -1,5 +1,0 @@
----
-- name: Migrate kubeadm-client.conf
-  shell: |
-    /usr/local/bin/kubeadm config migrate --old-config /etc/kubernetes/kubeadm-client.conf --new-config /etc/kubernetes/kubeadm-client-new.conf
-    /etc/kubernetes/kubeadm-client-new.conf /etc/kubernetes/kubeadm-client.conf

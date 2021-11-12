@@ -14,7 +14,6 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import de.dlr.proseo.model.Job;
@@ -49,6 +48,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Messages suspend(Job job, Boolean force) {
+		if (logger.isTraceEnabled()) logger.trace(">>> suspend({}, {})", (null == job ? "null" : job.getId()), force);
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -106,6 +107,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Messages retry(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> retry({})", (null == job ? "null" : job.getId()));
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -177,6 +180,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Messages cancel(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == job ? "null" : job.getId()));
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -222,6 +227,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Messages resume(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> resume({})", (null == job ? "null" : job.getId()));
+
 		Messages answer = Messages.FALSE;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -267,6 +274,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Boolean startJob(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> startJob({})", (null == job ? "null" : job.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -311,6 +320,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Boolean delete(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> delete({})", (null == job ? "null" : job.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -356,6 +367,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Boolean deleteForced(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteForced({})", (null == job ? "null" : job.getId()));
+
 		Boolean answer = false;
 		// check current state for possibility to be suspended
 		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
@@ -399,6 +412,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public Boolean checkFinish(Long jobId) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkFinish({})", jobId);
+
 		Boolean answer = false;	
 		Boolean checkFurther = false;
 		Boolean hasChanged = false;
@@ -516,6 +531,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public void updateState(Job jobOrig, JobStepState jsState) {
+		if (logger.isTraceEnabled()) logger.trace(">>> updateState({}, {})", (null == jobOrig ? "null" : jobOrig.getId()), jsState);
+
 		Job job = null;
 		Optional<Job> oJob = RepositoryService.getJobRepository().findById(jobOrig.getId());
 		if (oJob.isPresent()) {
@@ -624,6 +641,11 @@ public class JobUtil {
 				if (hasFailed) {
 					job.setJobState(JobState.FAILED);
 				} else {
+					if (job.getJobState() == JobState.FAILED) {
+						job.setJobState(JobState.INITIAL);
+						job.setJobState(JobState.RELEASED);
+						job.setJobState(JobState.STARTED);
+					}
 					job.setJobState(JobState.COMPLETED);
 				}
 				job.incrementVersion();
@@ -642,6 +664,8 @@ public class JobUtil {
 	 */
 	@Transactional
 	public void setHasFailedJobSteps(Job job, Boolean failed) {
+		if (logger.isTraceEnabled()) logger.trace(">>> setHasFailedJobSteps({}, {})", (null == job ? "null" : job.getId()), failed);
+
 		if (failed && !job.getHasFailedJobSteps()) {
 			job.setHasFailedJobSteps(failed);
 			job.incrementVersion();

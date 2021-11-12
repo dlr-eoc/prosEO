@@ -1,0 +1,32 @@
+---
+- name: Ensure Docker repository is available
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    
+- name: Install Docker
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    
+- name: Have the Docker daemon listen on TCP
+  lineinfile:
+    path: /usr/lib/systemd/system/docker.service
+    regexp: '^ExecStart='
+    line: "ExecStart=/usr/bin/dockerd -H fd:// -H tcp://{{ inventory_hostname }} --containerd=/run/containerd/containerd.sock"
+    
+- name: Restart Docker service
+  systemd:
+    name: docker
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+
+- name: Download Docker Compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 0755
+    

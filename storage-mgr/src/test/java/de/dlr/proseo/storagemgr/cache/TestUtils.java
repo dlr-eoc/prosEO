@@ -52,7 +52,7 @@ public class TestUtils {
 	 */
 	public String getSourcePath() {
 
-		return cfg.getPosixMountPoint();
+		return cfg.getPosixBackendPath();
 	}
 		
 	/**
@@ -60,7 +60,7 @@ public class TestUtils {
 	 */
 	public String getCachePath() {
 
-		return cfg.getPosixWorkerMountPoint();
+		return cfg.getPosixCachePath();
 	}
 	
 	/**
@@ -68,7 +68,7 @@ public class TestUtils {
 	 */
 	public String getTestSourcePath() {
 
-		return getTestPath(cfg.getPosixMountPoint());
+		return getTestPath(cfg.getPosixBackendPath());
 	}
 	
 	/**
@@ -76,7 +76,7 @@ public class TestUtils {
 	 */
 	public String getTestCachePath() {
 
-		return getTestPath(cfg.getPosixWorkerMountPoint());
+		return getTestPath(cfg.getPosixCachePath());
 	}
 
 	/**

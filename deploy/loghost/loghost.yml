@@ -1,0 +1,10 @@
+---
+# Configure S1B Control Instance ("brain")
+
+- hosts: loghost
+  become: true
+  roles:
+  - prepare_network
+  - install_docker
+  - prepare_monitoring
+  
