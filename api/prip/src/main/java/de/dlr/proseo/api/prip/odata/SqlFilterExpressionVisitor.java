@@ -84,13 +84,13 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			{ ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
 			{ ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, "p.generation_time" }, // TODO to be updated to publication date attribute, when available
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS, "pf.checksum" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM, "pf.checksum" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, "p.production_type" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_START, "p.sensing_start_time" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CONTENT_DATE + "/" + ProductEdmProvider.CT_TIMERANGE_PROP_END, "p.sensing_stop_time" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, null },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, "pf.checksum" },
-			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUMS + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, "pf.checksum_time" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_ALGORITHM, null },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_VALUE, "pf.checksum" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM + "/" + ProductEdmProvider.CT_CHECKSUM_PROP_CHECKSUM_DATE, "pf.checksum_time" },
 			{ CscAttributeName.BEGINNING_DATE_TIME.getValue(), "p.sensing_start_time" },
 			{ CscAttributeName.ENDING_DATE_TIME.getValue(), "p.sensing_stop_time" },
 			{ CscAttributeName.PLATFORM_SHORT_NAME.getValue(), "m.name" },

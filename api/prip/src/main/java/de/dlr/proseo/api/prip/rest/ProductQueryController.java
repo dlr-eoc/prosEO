@@ -19,6 +19,8 @@ import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.debug.DebugSupport;
+import org.apache.olingo.server.api.debug.DefaultDebugSupport;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.slf4j.Logger;
@@ -94,6 +96,9 @@ public class ProductQueryController {
 		ODataHttpHandler handler = odata.createHandler(edm);
 		handler.register(entityCollectionProcessor);
 		handler.register(entityProcessor);
+		DebugSupport debugSupport = new DefaultDebugSupport();
+		debugSupport.init(odata);
+		handler.register(debugSupport);
 
 		// Analyze authentication information and make sure user is authorized for using the PRIP API
 		try {
@@ -129,7 +134,8 @@ public class ProductQueryController {
 					return URI;
 				}
 			}, response);
-		} catch (RuntimeException e) {
+			if (logger.isTraceEnabled()) logger.trace("... after processing request, response is: " + response);
+		} catch (Exception e) {
 			logger.error("Server Error occurred in ProductQueryController", e);
 			throw new ServletException(e);
 		}
