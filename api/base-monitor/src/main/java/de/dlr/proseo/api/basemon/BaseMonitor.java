@@ -411,7 +411,7 @@ public abstract class BaseMonitor extends Thread {
 	}
 	
 	/**
-	 * Download the given transfer object from the pickup point and copy them to the configured target directory
+	 * Download the given transfer object from the pickup point and copy it to the configured target directory
 	 * 
 	 * @param object the transfer object to download
 	 * @return true, if the download was successful, false otherwise

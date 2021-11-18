@@ -5,6 +5,8 @@
  */
 package de.dlr.proseo.api.auxipmon;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -23,17 +25,41 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.id}")
 	private String auxipId;
 	
-	/** The path to the AUXIP directory (mounted WebDAV volume) */
-	@Value("${proseo.auxip.directory}")
-	private String auxipDirectoryPath;
+	/** The base URI of the AUXIP (protocol, host name, port; no terminating slash) */
+	@Value("${proseo.auxip.baseuri}")
+	private String auxipBaseUri;
 	
-	/** The satellite identifier (e. g. "S1B") */
-	@Value("${proseo.auxip.satellite}")
-	private String auxipSatellite;
+	/** The AUXIP context, if any (any URI component(s) before "odata"; no starting or terminating slash) */
+	@Value("${proseo.auxip.context}")
+	private String auxipContext;
 	
-	/** The X-band station unit ID (default "00") */
-	@Value("${proseo.auxip.station.unit:00}")
-	private String auxipStationUnit;
+	/** Flag indicating whether token-based authentication shall be used */
+	@Value("${proseo.auxip.usetoken:false}")
+	private Boolean auxipUseToken;
+	
+	/** The URI for requesting a bearer token (after the base URI; no starting or terminating slash) */
+	@Value("${proseo.auxip.tokenuri}")
+	private String auxipTokenUri;
+	
+	/** The AUXIP username */
+	@Value("${proseo.auxip.user}")
+	private String auxipUser;
+	
+	/** The AUXIP password */
+	@Value("${proseo.auxip.password}")
+	private String auxipPassword;
+	
+	/** The AUXIP client ID (only for OpenID-based token requests) */
+	@Value("${proseo.auxip.client.id}")
+	private String auxipClientId;
+	
+	/** The AUXIP client secret (only for OpenID-based token requests; mandatory if client ID is set) */
+	@Value("${proseo.auxip.client.secret}")
+	private String auxipClientSecret;
+	
+	/** The product types to select */
+	@Value("${proseo.auxip.producttypes}")
+	private List<String> auxipProductTypes;
 	
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.auxip.check.interval}")
@@ -51,17 +77,29 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.history.truncate.interval}")
 	private Long auxipTruncateInterval;
 	
+	/** Maximum number of parallel transfer threads */
+	@Value("${proseo.auxip.thread.max:1}")
+	private Integer maxDownloadThreads;
+	
+	/** Interval in millliseconds to check for completed transfers */
+	@Value("${proseo.auxip.thread.wait:500}")
+	private Integer taskWaitInterval;
+	
+	/** Maximum number of wait cycles for transfer completion checks */
+	@Value("${proseo.auxip.thread.cycles:3600}")
+	private Integer maxWaitCycles;
+	
 	/** The minimum size in bytes of a file to be used for performance measurements */
 	@Value("${proseo.auxip.performance.minsize}")
 	private Long auxipPerformanceMinSize;
 	
-	/** The path to the target CADU directory (for L0 processing) */
-	@Value("${proseo.l0.directory.cadu}")
-	private String l0CaduDirectoryPath;
+	/** The path to the target AUX file directory (for ingestion) */
+	@Value("${proseo.auxip.directory}")
+	private String auxipDirectoryPath;
 	
-	/** The L0 processor command (a single command taking the CADU directory as argument) */
-	@Value("${proseo.l0.command}")
-	private String l0Command;
+	/** The Ingestor URI (protocol, host name, port, context; no terminating slash) */
+	@Value("${proseo.ingestor.url}")
+	private String ingestorUrl;
 	
 	/**
 	 * Gets the AUXIP Monitor identifier
@@ -73,30 +111,99 @@ public class AuxipMonitorConfiguration {
 	}
 
 	/**
-	 * Gets the path to the AUXIP directory
+	 * Gets the base URI of the AUXIP
 	 * 
-	 * @return the AUXIP directory path
+	 * @return the AUXIP base URI (without trailing slash)
 	 */
-	public String getAuxipDirectoryPath() {
-		return auxipDirectoryPath;
+	public String getAuxipBaseUri() {
+		while (auxipBaseUri.endsWith("/")) {
+			auxipBaseUri = auxipBaseUri.substring(0, auxipBaseUri.length() - 1);
+		}
+		return auxipBaseUri;
 	}
 
 	/**
-	 * Gets the satellite identifier
+	 * Gets the AUXIP context
 	 * 
-	 * @return the 3-character satellite identifier
+	 * @return the AUXIP context (without starting or terminating slashes)
 	 */
-	public String getAuxipSatellite() {
-		return auxipSatellite;
+	public String getAuxipContext() {
+		while (auxipContext.startsWith("/")) {
+			auxipContext = auxipContext.substring(1);
+		}
+		while (auxipContext.endsWith("/")) {
+			auxipContext = auxipContext.substring(0, auxipContext.length() - 1);
+		}
+		return auxipContext;
+	}
+	
+	/**
+	 * Indicates whether token-based authentication shall be used
+	 * 
+	 * @return true, if token-based authentication shall be used, false otherwise
+	 */
+	public Boolean getAuxipUseToken() {
+		return auxipUseToken;
 	}
 
 	/**
-	 * Gets the X-band station unit ID
+	 * Gets the URI for requesting a bearer token
 	 * 
-	 * @return the 2-digit station unit ID
+	 * @return the bearer token URI (without starting or terminating slashes)
 	 */
-	public String getAuxipStationUnit() {
-		return auxipStationUnit;
+	public String getAuxipTokenUri() {
+		while (auxipTokenUri.startsWith("/")) {
+			auxipTokenUri = auxipTokenUri.substring(1);
+		}
+		while (auxipTokenUri.endsWith("/")) {
+			auxipTokenUri = auxipTokenUri.substring(0, auxipTokenUri.length() - 1);
+		}
+		return auxipTokenUri;
+	}
+
+	/**
+	 * Gets the AUXIP username
+	 * 
+	 * @return the username
+	 */
+	public String getAuxipUser() {
+		return auxipUser;
+	}
+
+	/**
+	 * Gets the AUXIP password
+	 * 
+	 * @return the password
+	 */
+	public String getAuxipPassword() {
+		return auxipPassword;
+	}
+
+	/**
+	 * Gets the client ID for OpenID token requests
+	 * 
+	 * @return the OpenID client ID
+	 */
+	public String getAuxipClientId() {
+		return auxipClientId;
+	}
+
+	/**
+	 * Gets the client secret for OpenID token requests
+	 * 
+	 * @return the OpenID client secret
+	 */
+	public String getAuxipClientSecret() {
+		return auxipClientSecret;
+	}
+
+	/**
+	 * Gets the list of product types to retrieve from AUXIP
+	 * 
+	 * @return the a list of product types
+	 */
+	public List<String> getAuxipProductTypes() {
+		return auxipProductTypes;
 	}
 
 	/**
@@ -136,6 +243,33 @@ public class AuxipMonitorConfiguration {
 	}
 
 	/**
+	 * Gets the maximum number of parallel transfer threads
+	 * 
+	 * @return the maximum number of threads
+	 */
+	public Integer getMaxDownloadThreads() {
+		return maxDownloadThreads;
+	}
+
+	/**
+	 * Gets the interval in millliseconds to check for completed transfers
+	 * 
+	 * @return the download wait interval
+	 */
+	public Integer getTaskWaitInterval() {
+		return taskWaitInterval;
+	}
+
+	/**
+	 * Gets the maximum number of wait cycles for transfer completion checks
+	 * 
+	 * @return the number of wait cycles
+	 */
+	public Integer getMaxWaitCycles() {
+		return maxWaitCycles;
+	}
+
+	/**
 	 * Gets the minimum size for files used in performance measurements
 	 * 
 	 * @return the minimum file size in bytes
@@ -145,21 +279,21 @@ public class AuxipMonitorConfiguration {
 	}
 
 	/**
-	 * Gets the path to the target CADU directory
+	 * Gets the target path to store AUX files for ingestion
 	 * 
-	 * @return the CADU directory path
+	 * @return the path to the target directory
 	 */
-	public String getL0CaduDirectoryPath() {
-		return l0CaduDirectoryPath;
+	public String getAuxipDirectoryPath() {
+		return auxipDirectoryPath;
 	}
 
 	/**
-	 * Gets the L0 processor command
+	 * Gets the Ingestor URI
 	 * 
-	 * @return the L0 processor command
+	 * @return the Ingestor URI
 	 */
-	public String getL0Command() {
-		return l0Command;
+	public String getIngestorUri() {
+		return ingestorUrl;
 	}
 
 }

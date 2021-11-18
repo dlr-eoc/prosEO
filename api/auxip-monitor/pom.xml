@@ -18,6 +18,7 @@
 
     <properties>
         <module.version>0.8.1</module.version>
+        <olingo.version>4.7.1</olingo.version>
         <main.basedir>${basedir}/../..</main.basedir>
         <raml-path>src/main/resources/raml/auxip-monitor-api.raml</raml-path>
         <raml-base-package>de.dlr.proseo.api.auxipmon.rest</raml-base-package>
@@ -50,6 +51,11 @@
             <artifactId>reactor-spring</artifactId>
             <version>1.0.1.RELEASE</version>
         </dependency>
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>odata-client-core</artifactId>
+			<version>${olingo.version}</version>
+		</dependency>
         <dependency>
             <groupId>de.dlr.proseo</groupId>
             <artifactId>proseo-base-monitor</artifactId>
