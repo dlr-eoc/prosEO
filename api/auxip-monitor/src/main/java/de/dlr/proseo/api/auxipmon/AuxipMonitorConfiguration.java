@@ -37,7 +37,7 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.usetoken:false}")
 	private Boolean auxipUseToken;
 	
-	/** The URI for requesting a bearer token (after the base URI; no starting or terminating slash) */
+	/** The URI for requesting a bearer token (full URL) */
 	@Value("${proseo.auxip.tokenuri}")
 	private String auxipTokenUri;
 	
@@ -49,7 +49,7 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.password}")
 	private String auxipPassword;
 	
-	/** The AUXIP client ID (only for OpenID-based token requests) */
+	/** The AUXIP client ID (optional, only for OpenID-based token requests) */
 	@Value("${proseo.auxip.client.id}")
 	private String auxipClientId;
 	

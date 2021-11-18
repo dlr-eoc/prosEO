@@ -56,9 +56,9 @@ import de.dlr.proseo.api.basemon.TransferObject;
 import reactor.core.publisher.Flux;
 
 /**
- * Monitor for X-band Interface Points
+ * Monitor for Auxiliary Data Interface Points (AUXIP)
  * 
- * X-band Interface Points are WebDAV volumes, so from within the Monitor they just look like plain POSIX volumes.
+ * For specification details see "Auxiliary Data Interface Delivery Point Specification" (ESA-EOPG-EOPGC-IF-10, issue 1.3)
  * 
  * @author Dr. Thomas Bassler
  */

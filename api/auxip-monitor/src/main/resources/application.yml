@@ -6,18 +6,40 @@ logging:
  #       org.apache.http: DEBUG
  #       org.springframework.web.client: DEBUG
 proseo:
+    # The Ingestor URI (protocol, host name, port, context; no terminating slash)
+    ingestor.url: http://localhost:8081/proseo/ingestor/v1 
+
+    # AUXIP Monitor configuration
     auxip:
-        # XBIP Monitor identifier (must be unique for all XBIP monitors on the same host)
-        id: PTS-INU-01
-        # Satellite identifier (e. g. "PTS", "S5P" ...)
-        satellite: PTS
-        # X-band station unit ID (if used, default "00")
-        station.unit: "01"
-        # Path to the XBIP directory (mounted WebDAV volume)
-        directory: /Path/to/WebDAV/volume/NOMINAL
+        # AUXIP Monitor identifier (must be unique for all AUXIP monitors on the same host)
+        id: PTM-AUXIP
+        # The base URI of the AUXIP (protocol, host name, port; no terminating slash)
+        baseuri: http://localhost:8080
+        # The AUXIP context, if any ("service root", any URI component(s) before "odata"; no starting or terminating slash)
+        context: proseo/api/prip
+        
+        # Flag indicating whether token-based authentication shall be used (default false)
+        usetoken: true
+        # The URI for requesting a bearer token (full URL)
+        tokenuri: http://localhost:8080/proseo/api/prip/token
+        # The AUXIP username
+        user: myuser
+        # The AUXIP password
+        password: mypassword
+        # Credentials for OpenID-based token requests (optional)
+        client:
+            # The AUXIP client ID
+            id: my-client-id
+            # The AUXIP client secret (mandatory if client ID is set)
+            secret: mysecret
+            
+        # The product types to select
+        producttypes: [ AUX_IERSC, AUX_IERSB ]
+        
         # Interval between pickup point checks in milliseconds (e. g. every min)
         check.interval: 60000
         
+        # Handling of history file
         history:
             # Path to the file for storing transfer history (on a persistent volume)
             file: /Path/to/transfer/history/file
@@ -26,11 +48,17 @@ proseo:
             # Period to retain transfer history entries for, in milliseconds (e. g. one week)
             retention: 604800000
             
+        # Handling of parallel threads
+        threads:
+            # Maximum number of parallel transfer threads (default 1 = no parallel threads)
+            # max: 1
+            # Interval in millliseconds to check for completed transfers (default 500 ms)
+            # wait: 500
+            # Maximum number of wait cycles for transfer completion checks (default 3600)
+            # cycles: 3600
+            
         # Minimum size in bytes of a file to be used for performance measurements (e. g. 20 MiB = 20 * 1024 * 1024 Bytes)
         performance.minsize: 20971520
             
-    l0:
-        # path to the target CADU directory (for L0 processing)
-        directory.cadu: /Path/to/CADU/directory
-        # command to execute for L0 processing
-        command: /Path/to/L0/processing/script 
+        # The path to the target AUX file directory (for ingestion)
+        directory: /Path/to/transfer/directory
