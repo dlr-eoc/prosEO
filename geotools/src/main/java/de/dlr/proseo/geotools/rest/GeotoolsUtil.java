@@ -2,6 +2,7 @@ package de.dlr.proseo.geotools.rest;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,11 @@ public class GeotoolsUtil {
 	}
 	
 	private void init() {
+		if (logger.isTraceEnabled()) logger.trace(">>> init()");
+		
 		if (!initialized) {
+			if (logger.isTraceEnabled()) logger.trace("... initializing shape files");
+			
 			if (shapeMap ==  null) {
 				shapeMap = new HashMap<String, List<ShpFile>>();
 			}
@@ -54,6 +59,16 @@ public class GeotoolsUtil {
 				for (Shapefile sf : geotoolsConfig.getShapefiles()) {
 					ShpFile shpFile = new ShpFile();
 					shpFile = shpFile.openFileAndCreate(sf.getPath(), sf.getType());
+					
+					if (logger.isTraceEnabled())
+						try {
+							logger.trace("... shape file {} has bounds:\n{}",
+									shpFile.getFilename(), shpFile.getSource().getBounds());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
 					addShapeFile(shpFile, sf.getShapeType());
 					logger.info("Shape file '{}' for type '{}' initialized", sf.getPath(), sf.getShapeType());
 				}
@@ -69,7 +84,8 @@ public class GeotoolsUtil {
 
 
 	public Boolean isPointInside(Double latitude, Double longitude, String[] types) {
-		logger.trace("isPointInside({}, {}, {})", latitude, longitude, types);
+		if (logger.isTraceEnabled()) logger.trace(">>> isPointInside({}, {}, {})", latitude, longitude, types);
+		
 		init();
 		// now we have the Polygon
 		// iterate over the shape files
@@ -89,6 +105,9 @@ public class GeotoolsUtil {
 	}
 	
 	public Boolean isPointInside(Double latitude, Double longitude, ShpFile shpFile) {
+		if (logger.isTraceEnabled()) logger.trace(">>> isPointInside({}, {}, {})", latitude, longitude,
+				(null == shpFile ? "null" : shpFile.getFilename()));
+		
 		init();
 		Point point = shpFile.getGeometry().createPoint(new Coordinate(longitude, latitude));
 		Filter pointInPolygon = shpFile.getFilter().contains(shpFile.getFilter().property("the_geom"), shpFile.getFilter().literal(point));
@@ -105,7 +124,8 @@ public class GeotoolsUtil {
 	}
 
 	public Boolean isPolyInside(RestPolygon poly, String[] types) {
-		logger.trace("isPolyInside({}, {})", poly, types);
+		if (logger.isTraceEnabled()) logger.trace(">>> isPolyInside({}, {})", poly, types);
+		
 		init();
 		if (poly != null) {
 			closePolygon(poly);
@@ -113,13 +133,18 @@ public class GeotoolsUtil {
 			for (RestPoint p : poly.getPoints()) {
 				coords.add(new Coordinate(p.getLon(), p.getLat()));
 			}
+			if (logger.isTraceEnabled()) logger.trace("... polygon converted to list of coordinates: {}", coords);
 			// now we have the Polygon
 			// iterate over the shape files
 			if (types == null || types.length < 1) {
 				types = shapeMap.keySet().toArray(new String[shapeMap.keySet().size()]);
+				if (logger.isTraceEnabled()) logger.trace("... no type(s), iterating over all types: {}", Arrays.asList(types));
 			}
 			for (String type : types) {
-				if (shapeMap.get(type) != null) {
+				if (logger.isTraceEnabled()) logger.trace("... checking type: {}", type);
+				if (shapeMap.get(type) == null || shapeMap.get(type).isEmpty()) {
+					logger.error("No shape files found for type {}", type);
+				} else {
 					for (ShpFile sf : shapeMap.get(type)) {
 						if (isPolyInside(coords, sf)) {
 							return true;
@@ -132,11 +157,29 @@ public class GeotoolsUtil {
 	}
 	
 	private Boolean isPolyInside(List<Coordinate> coords, ShpFile shpFile) {
-		init();		
-		Polygon poly = shpFile.getGeometry().createPolygon(coords.toArray(new Coordinate[coords.size()]));
-		Filter pointInPolygon = shpFile.getFilter().contains(shpFile.getFilter().property("the_geom"), shpFile.getFilter().literal(poly));
+		if (logger.isTraceEnabled()) logger.trace(">>> isPolyInside({}, {})", coords, (null == shpFile ? "null" : shpFile.getFilename()));
+		
+		try {
+			logger.trace("... shape file {} has bounds:\n{}",
+					shpFile.getFilename(), shpFile.getSource().getBounds());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		// init();		// leave this out, it is certain to be executed by the calling method
+		Polygon poly = shpFile.getGeometry()
+				.createPolygon(coords.toArray(new Coordinate[coords.size()]));
+		if (logger.isTraceEnabled()) logger.trace("... created polygon {}", poly);
+		
+		// Naming: polygonInPolygon?
+		Filter pointInPolygon = shpFile.getFilter()
+				.contains(shpFile.getFilter().property("the_geom"), shpFile.getFilter().literal(poly));
+
 		try {
 			SimpleFeatureCollection features = shpFile.getSource().getFeatures(pointInPolygon);
+			if (logger.isTraceEnabled()) logger.trace("... found features {}", features.toArray());
+
 			if (features.size() > 0) {
 				return true;
 			}
