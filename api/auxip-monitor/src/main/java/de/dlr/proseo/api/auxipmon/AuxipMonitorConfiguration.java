@@ -5,6 +5,7 @@
  */
 package de.dlr.proseo.api.auxipmon;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -59,7 +60,7 @@ public class AuxipMonitorConfiguration {
 	
 	/** The product types to select */
 	@Value("${proseo.auxip.producttypes}")
-	private List<String> auxipProductTypes;
+	private String auxipProductTypes;
 	
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.auxip.check.interval}")
@@ -203,7 +204,7 @@ public class AuxipMonitorConfiguration {
 	 * @return the a list of product types
 	 */
 	public List<String> getAuxipProductTypes() {
-		return auxipProductTypes;
+		return Arrays.asList(auxipProductTypes.split(","));
 	}
 
 	/**
