@@ -57,6 +57,7 @@
 		<module>facility-mgr</module>
 		<module>common</module>
 		<module>monitor</module>
+		<module>geotools</module>
 	</modules>
 
 	<dependencyManagement>
