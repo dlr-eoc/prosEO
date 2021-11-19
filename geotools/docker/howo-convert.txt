@@ -1,0 +1,5 @@
+KML -> ESRI Shapefile
+  https://mygeodata.cloud/converter/kml-to-shp
+
+GeoJSON -> ESRI Shapefile
+  https://mapshaper.org/
