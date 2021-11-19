@@ -1,0 +1,30 @@
+
+logging:
+    level:
+        root: INFO
+        de.dlr.proseo: TRACE
+proseo:
+    geotools:
+        # source shape files
+        shapefiles:
+            -
+                type: SHP
+                path: /usr/share/proseo-geotools/GSHHS_c_L1.shp
+                shapeType: continents
+            -
+                type: SHP
+                path: /usr/share/proseo-geotools/GSHHS_c_L5.shp
+                shapeType: continents
+            -
+                type: SHP
+                path: /usr/share/proseo-geotools/GSHHS_c_L5.shp
+                shapeType: antarctica
+            -
+                type: SHP
+                path: /usr/share/proseo-geotools/EW_SLC_area_NE-Canada.shp
+                shapeType: ne-canada
+            -
+                type: SHP
+                path: /usr/share/proseo-geotools/EW_SLC_Svalbard-polygon.shp
+                shapeType: svalbard
+            
