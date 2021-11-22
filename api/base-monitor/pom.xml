@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>de.dlr.proseo</groupId>
 		<artifactId>proseo-api</artifactId>
-		<version>0.8.1</version>
+		<version>0.8.2</version>
 	</parent>
 	
 	<artifactId>proseo-base-monitor</artifactId>
@@ -19,7 +19,7 @@
     </organization>
 
     <properties>
-        <module.version>0.8.1</module.version>
+        <module.version>0.8.2</module.version>
         <main.basedir>${basedir}/../..</main.basedir>
     </properties>
     
