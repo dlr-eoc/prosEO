@@ -28,7 +28,7 @@ proseo:
     productClassManager:
         url: http://localhost:8085/proseo/productclass-mgr/v0.1
     facilityManager:
-        url: https://localhost:8087/proseo/facility-mgr/v0.1
+        url: http://localhost:8087/proseo/facility-mgr/v0.1
         
     # Connection timeout in ms
     http.timeout: 10000
