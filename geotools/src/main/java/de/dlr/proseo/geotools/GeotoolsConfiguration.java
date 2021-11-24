@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import de.dlr.proseo.geotools.rest.ShpFile;
 
 /**
- * Configuration class for the prosEO MonitorServices component
+ * Configuration class for the prosEO Geotools service component
  * 
  * @author Ernst Melchinger
  *
@@ -17,24 +17,27 @@ import de.dlr.proseo.geotools.rest.ShpFile;
 @ConfigurationProperties(prefix="proseo.geotools")
 public class GeotoolsConfiguration {
 
+	/**
+	 * 	List to store the Shapefile definitions
+	 */
 	private List<Shapefile> shapefiles;
-	
-	private String test;
-	
+		
+	/**
+	 * @return the shapefiles
+	 */
 	public List<Shapefile> getShapefiles() {
 		return shapefiles;
 	}
 
+	/**
+	 * Set the shapefiles
+	 * 
+	 * @param shapefiles
+	 */
 	public void setShapefiles(List<Shapefile> shapefiles) {
 		this.shapefiles = shapefiles;
 	}
-	public String getTest() {
-		return test;
-	}
 
-	public void setTest(String test) {
-		this.test = test;
-	}
 	public static class Shapefile {
 		/**
 		 * The file type

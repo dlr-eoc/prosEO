@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * prosEO Geotools application
+ * prosEO Geotools application for geographic operations (intersection/containment of footprints with named geographical areas)
  * 
  * @author Ernst Melchinger
  * 

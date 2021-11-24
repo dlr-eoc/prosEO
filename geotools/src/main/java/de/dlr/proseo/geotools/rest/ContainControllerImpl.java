@@ -16,6 +16,12 @@ import de.dlr.proseo.geotools.GeotoolsConfiguration;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
 
+/**
+ * Controller to handle the contains request
+ * 
+ * @author Melchinger
+ *
+ */
 @Component
 public class ContainControllerImpl implements ContainController {
 	
@@ -28,9 +34,19 @@ public class ContainControllerImpl implements ContainController {
 	@Autowired
 	private GeotoolsConfiguration geotoolsConfig;
 
+	/**
+	 * The geotools utilities 
+	 */
 	@Autowired
 	private GeotoolsUtil geotools;
 	
+	/**
+	 * Checks wheather the Polygon defined by poly array is in the region named type
+	 * 
+	 * @param poly String array containing latitude, longitude pairs 
+	 * @param type The region type
+	 * @return true if poly is contained
+	 */
 	@Override
 	public ResponseEntity<Boolean> contains(String[] poly, String[] type) {
 		if (poly.length == 2) {
@@ -50,6 +66,13 @@ public class ContainControllerImpl implements ContainController {
 		return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
 	};
 
+	/**
+	 * Checks wheather the Polygon defined py restPolygon is in the region named type
+	 * 
+	 * @param type The region type
+	 * @param restPolygon RestPolygon structure  
+	 * @return true if restPolygon is contained
+	 */
 	@Override
     public ResponseEntity<Boolean> containspoly(String[] type,
         RestPolygon restPolygon) {

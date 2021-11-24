@@ -18,8 +18,17 @@ import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.opengis.filter.FilterFactory2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Hold a shape file and initialized data like feature source, filter, geometry, ...
+ * @author Melchinger
+ *
+ */
 public class ShpFile {
+
+	private static Logger logger = LoggerFactory.getLogger(ShpFile.class);
 	
 	static public enum GeoFileType {
 		SHP, KML, GEOJSON
@@ -94,7 +103,15 @@ public class ShpFile {
 		this.geometry = geometry;
 	}
 	
+	/**
+	 * Open and initialize a shape file 
+	 * @param filename The file name
+	 * @param type The file type (perhaps for future use)
+	 * 
+	 * @return The initialized instance
+	 */
 	public ShpFile openFileAndCreate(String filename, GeoFileType type) {
+		if (logger.isTraceEnabled()) logger.trace(">>> openFileAndCreate({}, {})", filename, type);
 		this.filename = filename;
 		this.type = type;
 		File file = new File(filename);
@@ -114,11 +131,9 @@ public class ShpFile {
 			    filter = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
 			    geometry = JTSFactoryFinder.getGeometryFactory();
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return null;
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return null;
 			}
