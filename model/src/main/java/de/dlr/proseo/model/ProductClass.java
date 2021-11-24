@@ -70,6 +70,7 @@ public class ProductClass extends PersistentObject {
 	 * Template for the generation of product files, indicating variable parts using Spring Expression Language;
 	 * overrides file naming convention set in the Mission object.
 	 */
+	@org.hibernate.annotations.Type(type = "materialized_clob")
 	private String productFileTemplate;
 	
 	/** The default slice length to be applied; mandatory if the default slicing type is "TIME_SLICE" */
