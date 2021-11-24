@@ -129,7 +129,7 @@ To run the Control Instance issue the following commands from the directory, whe
 `docker-compose.yml` file resides:
 ```
 export REGISTRY_URL=<your preferred prosEO repository>
-export PROSEO_VERSION=<the prosEO version to install>
+export VERSION=<the prosEO version to install>
 export POSTGRES_PASSWORD=<password for postgres user as configured in prosEO images>
 export PGADMIN_EMAIL=<email address for pgAdmin authentication>
 export PGADMIN_PASSWORD=<some password for pgAdmin authentication>
