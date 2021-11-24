@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class BaseMonitor extends Thread {
 	
-	/** Interval in millliseconds to check for completed subtasks */
-	private static final long TASK_WAIT_INTERVAL = 500;
-
 	/** Interval between pickup point checks in milliseconds, default is one second */
 	private long checkInterval = 1000;
 	
@@ -99,6 +96,16 @@ public abstract class BaseMonitor extends Thread {
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
+	
+	/**
+	 * Structure for controlling the transfer process
+	 */
+	public static class TransferControl {
+		/** Latest reference time of all transfer objects */
+		public Instant referenceTime = null;
+		/** Objects to transfer */
+		public List<TransferObject> transferObjects = new ArrayList<>();
+	}
 	
 	/**
 	 * Gets the interval between pickup point checks
@@ -382,9 +389,9 @@ public abstract class BaseMonitor extends Thread {
 	 * Check the pickup point for available objects (unfiltered)
 	 * 
 	 * @param referenceTimeStamp the reference timestamp to apply for pickup point lookups
-	 * @return a list of available transfer objects
+	 * @return a transfer control object containing the latest reference time and a list of available transfer objects
 	 */
-	protected abstract List<TransferObject> checkAvailableDownloads(Instant referenceTimeStamp);
+	protected abstract TransferControl checkAvailableDownloads(Instant referenceTimeStamp);
 	
 	/**
 	 * Check the given list of objects against the transfer history and return a new list containing only the objects
@@ -422,10 +429,9 @@ public abstract class BaseMonitor extends Thread {
 	 * Add the given object to the transfer history
 	 * 
 	 * @param transferredObject the transferred object
-	 * @param checkTimeStamp the timestamp of the last pickup point lookup to record for the transferred object
 	 * @throws IOException if an I/O error occurs opening or writing the transfer history file
 	 */
-	synchronized private void recordTransfer(TransferObject transferredObject, Instant checkTimeStamp) throws IOException {
+	synchronized private void recordTransfer(TransferObject transferredObject) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> recordTransfer({})",
 				null == transferredObject ? "null" : transferredObject.getIdentifier());
 		
@@ -434,7 +440,7 @@ public abstract class BaseMonitor extends Thread {
 		
 		transferHistory.add(transferredObjectIdentifier);
 		
-		writeTransferHistory(transferredObjectIdentifier, checkTimeStamp);
+		writeTransferHistory(transferredObjectIdentifier, transferredObject.getReferenceTime());
 		
 	}
 
@@ -489,15 +495,13 @@ public abstract class BaseMonitor extends Thread {
 			}
 			
 			// Check data availability on pickup point
-			Instant checkTimeStamp = Instant.now();
-			List<TransferObject> transferableObjects = checkAvailableDownloads(referenceTimeStamp);
-			referenceTimeStamp = checkTimeStamp;
+			TransferControl transferControl = checkAvailableDownloads(referenceTimeStamp);
 			
 			// Filter objects not yet processed from transfer history
-			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferableObjects);
-			List<Thread> transferTasks = new ArrayList<>();
+			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferControl.transferObjects);
 			
 			// Transfer all objects not yet processed
+			List<Thread> transferTasks = new ArrayList<>();
 			Semaphore semaphore = new Semaphore(maxDownloadThreads);
 			
 			for (TransferObject objectToTransfer: objectsToTransfer) {
@@ -521,7 +525,7 @@ public abstract class BaseMonitor extends Thread {
 							
 							// Record transfer in history
 							try {
-								recordTransfer(objectToTransfer, checkTimeStamp);
+								recordTransfer(objectToTransfer);
 							} catch (IOException e) {
 								logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
 								return;
