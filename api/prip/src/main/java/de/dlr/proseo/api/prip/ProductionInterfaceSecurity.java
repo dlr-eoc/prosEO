@@ -147,6 +147,11 @@ public class ProductionInterfaceSecurity {
 		// Check authentication type
 		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		
+		if (null == authHeader) {
+			String message = logError(MSG_AUTH_MISSING_OR_INVALID, MSG_ID_AUTH_MISSING_OR_INVALID, authHeader);
+			throw new SecurityException(message);
+		}
+		
 		// Delegate Bearer token authentication to OAuth2 Token Manager
 		if (authHeader.startsWith(AUTH_TYPE_BEARER + " ")) {
 			userInfo.set(tokenManager.getUserInfoFromToken(authHeader.substring((AUTH_TYPE_BEARER + " ").length())));
