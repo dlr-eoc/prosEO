@@ -44,7 +44,7 @@ import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
  */
 @RestController
 @Validated
-@RequestMapping(value = ProductQueryController.URI, produces = "application/json")
+@RequestMapping(value = ProductQueryController.URI, produces = {"application/json", "application/octet-stream"})
 public class ProductQueryController {
 
 	/* Message ID constants */
@@ -86,7 +86,8 @@ public class ProductQueryController {
 	 */
 	@RequestMapping(value = "/**")
 	protected void service(final HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		if (logger.isTraceEnabled()) logger.trace(">>> service({}, {})", request, response);
+		if (logger.isTraceEnabled()) logger.trace(">>> service({}, {})", 
+				(null == request ? "null" : request.getRequestURL()), response);
 		
 		// Create OData handler
 		OData odata = OData.newInstance();
@@ -134,7 +135,7 @@ public class ProductQueryController {
 					return URI;
 				}
 			}, response);
-			if (logger.isTraceEnabled()) logger.trace("... after processing request, response is: " + response);
+			if (logger.isTraceEnabled()) logger.trace("... after processing request, returning response code: " + response.getStatus());
 		} catch (Exception e) {
 			logger.error("Server Error occurred in ProductQueryController", e);
 			throw new ServletException(e);
