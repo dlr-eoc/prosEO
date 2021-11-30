@@ -28,6 +28,10 @@ public class OrdermgrConfiguration {
 	
 	// Default connection timeout is 30 s
 	private static final Long DEFAULT_TIMEOUT = 30000L;
+	
+
+	/** Wait time for cleanup */
+	private Integer cleanupCycleTime;
 
 	/** The URL of the prosEO Ingestor */
 	@Value("${proseo.ingestor.url}")
@@ -49,6 +53,21 @@ public class OrdermgrConfiguration {
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(OrdermgrConfiguration.class);
 	
+	
+	/**
+	 * @return the cleanupCycleTime
+	 */
+	public Integer getCleanupCycleTime() {
+		return cleanupCycleTime;
+	}
+
+	/**
+	 * @param cleanupCycleTime the cleanupCycleTime to set
+	 */
+	public void setCleanupCycleTime(Integer cleanupCycleTime) {
+		this.cleanupCycleTime = cleanupCycleTime;
+	}
+
 	/**
 	 * Gets the URL of the prosEO Ingestor component
 	 * 
