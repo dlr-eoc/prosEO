@@ -51,11 +51,11 @@ public class AuxipMonitorConfiguration {
 	private String auxipPassword;
 	
 	/** The AUXIP client ID (optional, only for OpenID-based token requests) */
-	@Value("${proseo.auxip.client.id}")
+	@Value("${proseo.auxip.client.id:#{null}}")
 	private String auxipClientId;
 	
 	/** The AUXIP client secret (only for OpenID-based token requests; mandatory if client ID is set) */
-	@Value("${proseo.auxip.client.secret}")
+	@Value("${proseo.auxip.client.secret:#{null}}")
 	private String auxipClientSecret;
 	
 	/** The product types to select */

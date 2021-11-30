@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -17,23 +18,24 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 
 import org.apache.olingo.client.api.ODataClient;
-import org.apache.olingo.client.api.communication.request.retrieve.EdmMetadataRequest;
 import org.apache.olingo.client.api.communication.request.retrieve.ODataEntitySetRequest;
 import org.apache.olingo.client.api.communication.response.ODataRetrieveResponse;
 import org.apache.olingo.client.api.domain.ClientEntity;
 import org.apache.olingo.client.api.domain.ClientEntitySet;
 import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
-import org.apache.olingo.commons.api.edm.Edm;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
 import org.slf4j.Logger;
@@ -43,21 +45,23 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
-import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
-import de.dlr.proseo.api.basemon.BaseMonitor.TransferControl;
 import reactor.core.publisher.Flux;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * Monitor for Auxiliary Data Interface Points (AUXIP)
@@ -69,6 +73,17 @@ import reactor.core.publisher.Flux;
 @Component
 @Scope("singleton")
 public class AuxipMonitor extends BaseMonitor {
+	
+	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
+
+	/** Read timeout for HTTP connections */
+//	private static final int HTTP_READ_TIMEOUT = 30000; // ms
+
+	/** Timeout for establishing HTTP connections */
+//	private static final int HTTP_CONNECT_TIMEOUT = 10000; // ms
+
+	/** Maximum number of product entries to retrieve in one request */
+	private static final int MAX_PRODUCT_COUNT = 1000;
 	
 	/** The L0 processor command (a single command taking the CADU directory as argument) */
 //	private String l0ProcessorCommand;
@@ -91,6 +106,9 @@ public class AuxipMonitor extends BaseMonitor {
 	/** The AUXIP Monitor configuration to use */
 	@Autowired
 	private AuxipMonitorConfiguration config;
+	
+	/** Reference times per product type */
+	private Map<String, Instant> productTypeReferenceTimes = new HashMap<>();
 
 	// Message IDs
 	private static final int MSG_ID_TOKEN_REQUEST_FAILED = 5362;
@@ -109,6 +127,13 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_PRODUCT_PUBLICATION_MISSING = 5379;
 	private static final int MSG_ID_PRODUCT_EVICTION_MISSING = 5380;
 	private static final int MSG_ID_PRODUCT_EVICTED = 5381;
+	private static final int MSG_ID_WAIT_INTERRUPTED = 5382;
+	private static final int MSG_ID_ODATA_REQUEST_FAILED = 5383;
+	private static final int MSG_ID_ODATA_RESPONSE_UNREADABLE = 5384;
+	private static final int MSG_ID_ODATA_REQUEST_ABORTED = 5385;
+	private static final int MSG_ID_EXCEPTION_THROWN = 5386;
+	private static final int MSG_ID_PRODUCT_DOWNLOAD_FAILED = 5387;
+//	private static final int MSG_ID_HTTP_CONNECTION_FAILED = 5388;
 	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
@@ -135,6 +160,13 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_PRODUCT_VAL_STOP_MISSING = "(E%d) Product list entry %s does not contain product validity end ('ContentDate/End' element)";
 	private static final String MSG_PRODUCT_PUBLICATION_MISSING = "(E%d) Product list entry %s does not contain valid publication time ('PublicationDate' element)";
 	private static final String MSG_PRODUCT_EVICTION_MISSING = "(E%d) Product list entry %s does not contain valid eviction time ('EvictionDate' element)";
+	private static final String MSG_WAIT_INTERRUPTED = "(E%d) Wait for next chunk of product data interrupted";
+	private static final String MSG_ODATA_REQUEST_FAILED = "(E%d) OData request for product type %s and reference time %s failed with HTTP status code %d, message:\n%s\n";
+	private static final String MSG_ODATA_RESPONSE_UNREADABLE = "(E%d) OData response not readable";
+	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for product type %s and reference time %s aborted (cause: %s / %s)";
+	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
+	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
+//	private static final String MSG_HTTP_CONNECTION_FAILED = "(E%d) HTTP request %s failed (HTTP status code %d)";
 
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
 
@@ -143,7 +175,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 
 	/** A logger for this class */
-	private static Logger logger = LoggerFactory.getLogger(AuxipMonitorConfiguration.class);
+	private static Logger logger = LoggerFactory.getLogger(AuxipMonitor.class);
 	
 	/**
 	 * Class describing a download session
@@ -287,6 +319,8 @@ public class AuxipMonitor extends BaseMonitor {
 		
 //		l0ProcessorCommand = config.getL0Command();
 		
+		HttpURLConnection.setFollowRedirects(true);
+		
 		logger.info("------  Starting AUXIP Monitor  ------");
 		logger.info("AUXIP base URI . . . . . . : " + config.getAuxipBaseUri());
 		logger.info("AUXIP context. . . . . . . : " + config.getAuxipContext());
@@ -388,13 +422,6 @@ public class AuxipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> getBearerToken()");
 		
 		// Create a request
-//		HttpClient httpClient = HttpClient.create().wiretap(true);
-//		
-//		WebClient webClient = WebClient.builder()
-//				.clientConnector(new ReactorClientHttpConnector(httpClient))
-//				.baseUrl(config.getAuxipBaseUri())
-//				.build();
-		
 		WebClient webClient = WebClient.create(config.getAuxipBaseUri());
 		RequestBodySpec request = webClient.post()
 				.uri(config.getAuxipTokenUri())
@@ -409,8 +436,9 @@ public class AuxipMonitor extends BaseMonitor {
 		
 		// Add query parameters, if OpenID is required for login, otherwise prepare Basic Auth with username/password
 		if (null == config.getAuxipClientId()) {
-			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encode(
-					(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+			String base64Auth =  new String(Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
+			logger.trace("... Auth: '{}'", base64Auth);
 		} else {
 			queryVariables.add("scope", "openid");
 			queryVariables.add("client_id", config.getAuxipClientId());
@@ -429,7 +457,7 @@ public class AuxipMonitor extends BaseMonitor {
 					config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
+//		if (logger.isTraceEnabled()) logger.trace("... got token response '{}'", tokenResponse);
 		
 		// Analyse the result
 		ObjectMapper om = new ObjectMapper();
@@ -452,7 +480,7 @@ public class AuxipMonitor extends BaseMonitor {
 					tokenResponse, config.getAuxipBaseUri() + "/" + config.getAuxipTokenUri()));
 			return null;
 		} else {
-			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
+//			if (logger.isTraceEnabled()) logger.trace("... found access token {}", accessToken);
 			return (String) accessToken;
 		}
 	}
@@ -471,7 +499,7 @@ public class AuxipMonitor extends BaseMonitor {
 		TransferControl transferControl = new TransferControl();
 		transferControl.referenceTime = referenceTimeStamp;
 		
-		// Obtain OData metadata --> TODO Check whether this is actually needed??
+		// Prepare OData request
 		ODataClient oDataClient = ODataClientFactory.getClient();
 		oDataClient.getConfiguration().setDefaultPubFormat(ContentType.APPLICATION_JSON);
 		
@@ -483,12 +511,6 @@ public class AuxipMonitor extends BaseMonitor {
 					"Bearer " + bearerToken : 
         			"Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
 		
-		if (logger.isTraceEnabled()) logger.trace("... requesting metadata document at URL '{}'", oDataServiceRoot);
-		EdmMetadataRequest metaDataRequest = oDataClient.getRetrieveRequestFactory()
-			.getMetadataRequest(oDataServiceRoot);
-		metaDataRequest.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
-		Edm edm = metaDataRequest.execute().getBody();
-		
 		// Retrieve products
 		if (logger.isTraceEnabled()) logger.trace("... requesting product list at URL '{}'", oDataServiceRoot);
 		ODataEntitySetRequest<ClientEntitySet> request = oDataClient.getRetrieveRequestFactory()
@@ -499,31 +521,116 @@ public class AuxipMonitor extends BaseMonitor {
 		        		//			+ " and PublicationDate gt " + referenceTimeStamp   // PDGS-PRIP does not accept spaces
 		        			)
 		        		//	.count()					// --> not implemented on PDGS-PRIP
-		        		//	.top(1000)					// --> not allowed on PDGS-PRIP
+		        		//	.top(MAX_PRODUCT_COUNT)		// --> not allowed on PDGS-PRIP
 		        		//	.orderBy("PublicationDate") // --> not allowed on PDGS-PRIP
 		        			.build()
 		        );
 		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
-		ODataRetrieveResponse<ClientEntitySet> response = request.execute();
-		ClientEntitySet entitySet = response.getBody();
-
-		// Extract product metadata
-		for (ClientEntity clientEntity: entitySet.getEntities()) {
-			TransferProduct tp = extractTransferProduct(clientEntity);
-			if (null != tp && !referenceTimeStamp.isAfter(tp.getPublicationTime())) {
-				if (transferControl.referenceTime.isBefore(tp.getPublicationTime())) {
-					transferControl.referenceTime = tp.getPublicationTime();
-				}
-				if (Instant.now().isAfter(tp.getEvictionTime())) {
-					logger.warn(String.format(MSG_PRODUCT_EVICTED, MSG_ID_PRODUCT_EVICTED,
-							tp.getName(), tp.getEvictionTime().toString()));
-				} else {
-					transferControl.transferObjects.add(tp);
-				}
-			}
+		if (logger.isTraceEnabled()) logger.trace("... sending OData request '{}'", request.getURI());
+		Future<ODataRetrieveResponse<ClientEntitySet>> futureResponse = request.asyncExecute();
+		ODataRetrieveResponse<ClientEntitySet> response = null;
+		try {
+			response = futureResponse.get(30, TimeUnit.SECONDS);
+		} catch (InterruptedException | ExecutionException | TimeoutException e1) {
+			logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
+					productType, referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
+			return transferControl;
 		}
 		
+		if (HttpStatus.OK.value() != response.getStatusCode()) {
+			try {
+				logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
+					productType, referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
+			} catch (IOException e) {
+				logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
+			}
+			return transferControl;
+		}
+		
+		ClientEntitySet entitySet = response.getBody();
+		
+		// No products found, next search starts from current date and time
+		if (entitySet.getEntities().isEmpty()) {
+			transferControl.referenceTime = Instant.now();
+			return transferControl;
+		}
 
+		int cycleCount = 0;
+		do {
+			// Extract product metadata
+			for (ClientEntity clientEntity : entitySet.getEntities()) {
+				TransferProduct tp = extractTransferProduct(clientEntity);
+				if (null != tp) {
+					if (transferControl.referenceTime.isBefore(tp.getPublicationTime())) {
+						transferControl.referenceTime = tp.getPublicationTime();
+					}
+					if (!referenceTimeStamp.isAfter(tp.getPublicationTime())) {
+						if (Instant.now().isAfter(tp.getEvictionTime())) {
+							logger.warn(String.format(MSG_PRODUCT_EVICTED, MSG_ID_PRODUCT_EVICTED, tp.getName(),
+									tp.getEvictionTime().toString()));
+						} else {
+							transferControl.transferObjects.add(tp);
+						}
+					}
+				}
+			}
+			
+			// Get next chunk of data, if any
+			if (MAX_PRODUCT_COUNT > entitySet.getEntities().size()) {
+				if (logger.isTraceEnabled())
+					logger.trace("... {} product entries received, not expecting any more", entitySet.getEntities().size());
+				break;
+			}
+			
+			if (logger.isTraceEnabled())
+				logger.trace("... waiting {} s before requesting next chunk of data", this.getCheckInterval() / 1000);
+			try {
+				Thread.sleep(this.getCheckInterval());
+			} catch (InterruptedException e) {
+				logger.error(String.format(MSG_WAIT_INTERRUPTED, MSG_ID_WAIT_INTERRUPTED));
+				return transferControl;
+			}
+			
+			++cycleCount;
+			if (logger.isTraceEnabled()) logger.trace("... requesting next part product list at URL '{}', skipping {} entries",
+					oDataServiceRoot, cycleCount * MAX_PRODUCT_COUNT);
+			request = oDataClient.getRetrieveRequestFactory()
+			        .getEntitySetRequest(
+			        		oDataClient.newURIBuilder(oDataServiceRoot)
+			        			.appendEntitySetSegment("Products")
+			        			.addQueryOption(QueryOption.FILTER, "startswith(Name,'" + productType + "')"
+			        		//			+ " and PublicationDate gt " + referenceTimeStamp   // PDGS-PRIP does not accept spaces
+			        			)
+			        		//	.count()					// --> not implemented on PDGS-PRIP
+			        			.skip(cycleCount * MAX_PRODUCT_COUNT)
+			        		//	.top(MAX_PRODUCT_COUNT)		// --> not allowed on PDGS-PRIP
+			        		//	.orderBy("PublicationDate") // --> not allowed on PDGS-PRIP
+			        			.build()
+			        );
+			request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+			if (logger.isTraceEnabled()) logger.trace("... sending OData request '{}'", request.getURI());
+			try {
+				response = futureResponse.get(30, TimeUnit.SECONDS);
+			} catch (InterruptedException | ExecutionException | TimeoutException e1) {
+				logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
+						productType, referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
+				return transferControl;
+			}
+			
+			if (HttpStatus.OK.value() != response.getStatusCode()) {
+				try {
+					logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
+						productType, referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
+				} catch (IOException e) {
+					logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
+				}
+				return transferControl;
+			}
+			
+			entitySet = response.getBody();
+		} while (!entitySet.getEntities().isEmpty());
+		
+		if (logger.isTraceEnabled()) logger.trace("<<< checkAvailableProducts()");
 		return transferControl;
 	}
 
@@ -532,7 +639,8 @@ public class AuxipMonitor extends BaseMonitor {
 	 * @return
 	 */
 	private TransferProduct extractTransferProduct(ClientEntity product) {
-		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({}, <bearer token>)", product);
+		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({}, <bearer token>)", 
+				(null == product ? "null" : product.getTypeName()));
 
 		TransferProduct tp = new TransferProduct();
 		
@@ -542,7 +650,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_UUID_MISSING, MSG_ID_PRODUCT_UUID_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... uuid = {}", tp.getUuid());
+//		if (logger.isTraceEnabled()) logger.trace("... uuid = {}", tp.getUuid());
 		
 		try {
 			tp.setName(product.getProperty("Name").getPrimitiveValue().toCastValue(String.class));
@@ -550,7 +658,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_FILENAME_MISSING, MSG_ID_PRODUCT_FILENAME_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... name = {}", tp.getName());
+//		if (logger.isTraceEnabled()) logger.trace("... name = {}", tp.getName());
 		
 		try {
 			tp.setSize(product.getProperty("ContentLength").getPrimitiveValue().toCastValue(Long.class));
@@ -558,7 +666,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_SIZE_MISSING, MSG_ID_PRODUCT_SIZE_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... size = {}", tp.getSize());
+//		if (logger.isTraceEnabled()) logger.trace("... size = {}", tp.getSize());
 		
 		tp.setChecksum(null);
 		try {
@@ -579,7 +687,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... checksum = {}", tp.getChecksum());
+//		if (logger.isTraceEnabled()) logger.trace("... checksum = {}", tp.getChecksum());
 		
 		try {
 //			ClientProperty p = product.getProperty("ContentDate");
@@ -600,7 +708,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_VAL_START_MISSING, MSG_ID_PRODUCT_VAL_START_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
+//		if (logger.isTraceEnabled()) logger.trace("... start = {}", tp.getStartTime());
 		
 		try {
 			tp.setStopTime(Instant.parse(product.getProperty("ContentDate").getComplexValue()
@@ -609,7 +717,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_VAL_STOP_MISSING, MSG_ID_PRODUCT_VAL_STOP_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... stop = {}", tp.getStopTime());
+//		if (logger.isTraceEnabled()) logger.trace("... stop = {}", tp.getStopTime());
 		
 		try {
 			tp.setPublicationTime(Instant.parse(
@@ -618,7 +726,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_PUBLICATION_MISSING, MSG_ID_PRODUCT_PUBLICATION_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... publication = {}", tp.getPublicationTime());
+//		if (logger.isTraceEnabled()) logger.trace("... publication = {}", tp.getPublicationTime());
 		
 		try {
 			tp.setEvictionTime(Instant.parse(
@@ -627,61 +735,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_EVICTION_MISSING, MSG_ID_PRODUCT_EVICTION_MISSING, product.toString()));
 			return null;
 		}
-		if (logger.isTraceEnabled()) logger.trace("... eviction = {}", tp.getEvictionTime());
-		
-//		Object productUuid = product.get("Id");
-//		if (null == productUuid || ! (productUuid instanceof String)) {
-//			logger.error(String.format(MSG_PRODUCT_UUID_MISSING, MSG_ID_PRODUCT_UUID_MISSING, product));
-//			return null;
-//		}
-//		tp.setUuid((String) productUuid);
-//		
-//		Object productFileName = product.get("Name");
-//		if (null == productFileName || ! (productFileName instanceof String)) {
-//			logger.error(String.format(MSG_PRODUCT_FILENAME_MISSING, MSG_ID_PRODUCT_FILENAME_MISSING, product));
-//			return null;
-//		}
-//		tp.setName((String) productFileName);
-//		
-//		Object productSize = product.get("ContentLength");
-//		if (null == productSize || ! (productSize instanceof Number)) {
-//			logger.error(String.format(MSG_PRODUCT_SIZE_MISSING, MSG_ID_PRODUCT_SIZE_MISSING, product));
-//			return null;
-//		}
-//		tp.setSize(((Number) productSize).longValue());
-//		
-//		Object productChecksums = product.get("Checksums");
-//		if (null == productChecksums || ! (productChecksums instanceof List) || ((List<?>) productChecksums).isEmpty()) {
-//			logger.error(String.format(MSG_PRODUCT_CHECKSUMS_MISSING, MSG_ID_PRODUCT_CHECKSUMS_MISSING, product));
-//			return null;
-//		}
-//		String productHash = null;
-//		for (Object productChecksum: (List<?>) productChecksums) {
-//			if (! (productChecksum instanceof Map)) {
-//				logger.error(String.format(MSG_PRODUCT_CHECKSUM_INVALID, MSG_ID_PRODUCT_CHECKSUM_INVALID, product));
-//				continue;
-//			}
-//			if ("MD5".equals(((Map<?, ?>) productChecksum).get("Algorithm"))) {
-//				Object productHashObject = ((Map<?, ?>) productChecksum).get("Value");
-//				if (null == productHashObject || ! (productHashObject instanceof String)) {
-//					logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product));
-//					return null;
-//				}
-//				productHash = (String) productHashObject;
-//			}
-//		}
-//		if (null == productHash) {
-//			logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product));
-//			return null;
-//		}
-//		tp.setChecksum(productHash);
-//		
-//		Object productContentDate = product.get("ContentDate");
-//		if (null == productContentDate || ! (productContentDate instanceof Map) || ((Map<?, ?>) productContentDate).isEmpty()) {
-//			logger.error(String.format(MSG_PRODUCT_CONTENT_DATE_MISSING, MSG_ID_PRODUCT_CONTENT_DATE_MISSING, product));
-//			return null;
-//		}
-//		Object productValidityStart = 
+//		if (logger.isTraceEnabled()) logger.trace("... eviction = {}", tp.getEvictionTime());
 		
 		return tp;
 	}
@@ -711,30 +765,42 @@ public class AuxipMonitor extends BaseMonitor {
 		TransferControl transferControl = new TransferControl();
 		transferControl.referenceTime = referenceTimeStamp;
 		
-		// If token-based authentication is required, login to AUXIP and request token
-		String bearerToken = null;
-		if (config.getAuxipUseToken()) {
-			if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP");
-			bearerToken = getBearerToken();
-			if (null == bearerToken) {
-				// Already logged, return an empty list
-				return transferControl;
+		try {
+			// If token-based authentication is required, login to AUXIP and request token
+			String bearerToken = null;
+			if (config.getAuxipUseToken()) {
+				if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP");
+				bearerToken = getBearerToken();
+				if (null == bearerToken) {
+					// Already logged, return an empty list
+					return transferControl;
+				}
 			}
-		}
-		
-		// Loop over all configured product types
-		for (String productType: config.getAuxipProductTypes()) {
-			if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
-			TransferControl productTypeTransferControl = checkAvailableProducts(productType, referenceTimeStamp, bearerToken);
-			if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
+			
+			// Loop over all configured product types
+			for (String productType: config.getAuxipProductTypes()) {
+				if (null == productTypeReferenceTimes.get(productType)) {
+					productTypeReferenceTimes.put(productType, referenceTimeStamp);
+				}
+				Instant productTypeReferenceTime = productTypeReferenceTimes.get(productType);
+				
+				if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
+				TransferControl productTypeTransferControl = checkAvailableProducts(productType, productTypeReferenceTime, bearerToken);
+				if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
 
-			if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-				transferControl.referenceTime = productTypeTransferControl.referenceTime;
+				if (productTypeReferenceTime.isBefore(productTypeTransferControl.referenceTime)) {
+					productTypeReferenceTimes.put(productType, productTypeTransferControl.referenceTime);
+				}
+				if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
+					transferControl.referenceTime = productTypeTransferControl.referenceTime;
+				}
+				transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
 			}
-			transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
+			
+			logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
+		} catch (Exception e) {
+			logger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);;
 		}
-		
-		logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
 		
 		return transferControl;
 	}
@@ -753,58 +819,173 @@ public class AuxipMonitor extends BaseMonitor {
 		
 		if (object instanceof TransferProduct) {
 			
-			TransferProduct transferProduct = (TransferProduct) object;
-			
-			// Check target directory
-			if (!Files.isWritable(Path.of(config.getAuxipDirectoryPath()))) {
-				logger.error(String.format(MSG_TARGET_DIRECTORY_NOT_WRITABLE, MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE,
-						config.getAuxipDirectoryPath()));
-				return false;
-			}
-			
-			// Create retrieval request
-			WebClient webClient = WebClient.create(config.getAuxipBaseUri());
-			String requestUri = (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1/Products("
-					+ transferProduct.getUuid() + ")/$value";
-			RequestHeadersSpec<?> request = webClient.get()
-					.uri(requestUri)
-					.accept(MediaType.APPLICATION_OCTET_STREAM);
-			
-			// Set bearer token or Basic Auth header
-			if (config.getAuxipUseToken()) {
-				if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP for download");
-				request = request.header(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-			} else {
-				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encode(
-						(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
-			}
-			
-			// Retrieve and store product file
-			Instant copyStart = Instant.now();
-			String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
-
-			Flux<DataBuffer> productFlux = request.retrieve().bodyToFlux(DataBuffer.class);
-			productFlux.log(logger.getName());
 			try {
-				DataBufferUtils.write(productFlux, new FileOutputStream(productFileName)).share().blockLast();
-			} catch (FileNotFoundException e) {
-				logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
+				TransferProduct transferProduct = (TransferProduct) object;
+				
+				// Check target directory
+				if (!Files.isWritable(Path.of(config.getAuxipDirectoryPath()))) {
+					logger.error(String.format(MSG_TARGET_DIRECTORY_NOT_WRITABLE, MSG_ID_TARGET_DIRECTORY_NOT_WRITABLE,
+							config.getAuxipDirectoryPath()));
+					return false;
+				}
+				
+				// Create retrieval request
+				String requestUri = (config.getAuxipContext().isBlank() ? "" : config.getAuxipContext() + "/") + "odata/v1/"
+						+ "Products("	+ transferProduct.getUuid() + ")"
+						+ "/$value";
+				
+				// --- New implementation using WebClient/Flux ---
+				
+				
+				
+				
+				HttpClient httpClient = HttpClient.create()
+						.headers(httpHeaders -> {
+							if (config.getAuxipUseToken()) {
+								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+							} else {
+								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+										(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+							}
+						})
+						.followRedirect((request, response) -> {
+							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
+							switch (response.status().code()) {
+							case 301:
+							case 302:
+							case 307:
+							case 308:
+								String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
+								if (null == redirectLocation) {
+									return false;
+								}
+								// Prevent sending authorization header, if target is S3 and credentials are already given in URL
+								if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
+									if (logger.isTraceEnabled()) logger.trace(
+											"... redirect credentials given in location header, removing authorization header from request");
+									request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
+								}
+								return true;
+							default:
+								return false;
+							}
+						}, null)
+						.doAfterResponse((response, connection) -> {
+							if (logger.isTraceEnabled()) {
+								logger.trace("... response code: {}", response.status());
+								logger.trace("... response redirections: {}", Arrays.asList(response.redirectedFrom()));
+								logger.trace("... response headers: {}", response.responseHeaders());
+							}
+						})
+						.wiretap(logger.isDebugEnabled());
+
+				WebClient webClient = WebClient.builder()
+						.baseUrl(config.getAuxipBaseUri())
+						.clientConnector(new ReactorClientHttpConnector(httpClient))
+						.build();
+				
+				// Retrieve and store product file
+				Instant copyStart = Instant.now();
+				String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
+
+				logger.trace("... starting request for URL '{}'", requestUri);
+				
+				try (FileOutputStream fileOutputStream = new FileOutputStream(productFileName);) {
+					
+					Flux<DataBuffer> dataBuffer = webClient
+							.get()
+							.uri(requestUri)
+				            .accept(MediaType.APPLICATION_OCTET_STREAM)
+							.retrieve()
+							.bodyToFlux(DataBuffer.class);
+
+					DataBufferUtils.write(dataBuffer, fileOutputStream).blockLast(Duration.ofSeconds(600));
+				} catch (FileNotFoundException e) {
+					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
+					return false;
+				} catch (WebClientResponseException e) {
+					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+							transferProduct.getName(), e.getMessage() + " / " + e.getResponseBodyAsString()));
+					return false;
+				} catch (Exception e) {
+					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+							transferProduct.getName(), e.getMessage()));
+					return false;
+				}
+				
+				// --- END New implementation using WebClient/Flux ---
+				
+//				HttpURLConnection connection = (HttpURLConnection) new URL(config.getAuxipBaseUri() + "/" + requestUri).openConnection();
+//				connection.setConnectTimeout(HTTP_CONNECT_TIMEOUT);
+//				connection.setReadTimeout(HTTP_READ_TIMEOUT);
+//
+//				// Set bearer token or Basic Auth header
+//				if (config.getAuxipUseToken()) {
+//					if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP for download");
+//					connection.setRequestProperty(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+//				} else {
+//					connection.setRequestProperty(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encode(
+//							(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+//				}
+//				connection.setRequestProperty(HttpHeaders.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_VALUE);
+				
+				// Retrieve and store product file
+//				Instant copyStart = Instant.now();
+//				String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
+//
+//				logger.trace("... starting request for URL '{}'", requestUri);
+//
+//				connection.connect();
+//				if (logger.isTraceEnabled()) {
+//					logger.trace("... connection URL: {}", connection.getURL());
+//					for (Entry<String, List<String>> headerEntry : connection.getHeaderFields().entrySet()) {
+//						logger.trace("... response header: {}: {}", headerEntry.getKey(), headerEntry.getValue());
+//					}
+//					logger.trace("... redirects enabled: {}", HttpURLConnection.getFollowRedirects());
+//				}
+//				if (HttpStatus.OK.value() != connection.getResponseCode()) {
+//					logger.error(String.format(MSG_HTTP_CONNECTION_FAILED, MSG_ID_HTTP_CONNECTION_FAILED,
+//							connection.getURL().toExternalForm(), connection.getResponseCode()));
+//					return false;
+//				}
+//				
+//				ReadableByteChannel readableByteChannel = Channels.newChannel(connection.getInputStream());
+//				try (FileOutputStream fileOutputStream = new FileOutputStream(productFileName);) {
+//					long bytesReceived = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+//					if (bytesReceived != transferProduct.getSize())	{
+//						logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+//								transferProduct.getName(), 
+//								"Bytes expected: " + transferProduct.getSize() + ", received: " +	bytesReceived));
+//						return false;
+//					}
+//				} catch (FileNotFoundException e) {
+//					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
+//					return false;
+//				} catch (Exception e) {
+//					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+//							transferProduct.getName(), 
+//							e.getMessage()));
+//					return false;
+//				}
+//				readableByteChannel.close();
+
+				Duration copyDuration = Duration.between(copyStart, Instant.now());
+				Double copyPerformance = new File(productFileName).length() / // Bytes
+						(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
+						/ (1024 * 1024); // --> MiB/s
+				
+				// Record the performance for files of sufficient size
+				if (config.getAuxipPerformanceMinSize() < new File(productFileName).length()) {
+					setLastCopyPerformance(copyPerformance);
+				}
+				
+				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED, transferProduct.getIdentifier()));
+				
+				return true;
+			} catch (Exception e) {
+				logger.error(String.format(MSG_EXCEPTION_THROWN, MSG_ID_EXCEPTION_THROWN), e);
 				return false;
 			}
-
-			Duration copyDuration = Duration.between(copyStart, Instant.now());
-			Double copyPerformance = new File(productFileName).length() / // Bytes
-					(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
-					/ (1024 * 1024); // --> MiB/s
-			
-			// Record the performance for files of sufficient size
-			if (config.getAuxipPerformanceMinSize() < new File(productFileName).length()) {
-				setLastCopyPerformance(copyPerformance);
-			}
-			
-			logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED, transferProduct.getIdentifier()));
-			
-			return true;
 
 		} else {
 			logger.error(String.format(MSG_INVALID_TRANSFER_OBJECT_TYPE, MSG_ID_INVALID_TRANSFER_OBJECT_TYPE, object.getIdentifier()));

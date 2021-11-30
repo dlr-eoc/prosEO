@@ -496,6 +496,7 @@ public abstract class BaseMonitor extends Thread {
 			
 			// Check data availability on pickup point
 			TransferControl transferControl = checkAvailableDownloads(referenceTimeStamp);
+			referenceTimeStamp = transferControl.referenceTime;
 			
 			// Filter objects not yet processed from transfer history
 			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferControl.transferObjects);
