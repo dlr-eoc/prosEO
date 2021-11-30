@@ -141,7 +141,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	 * @param evictionTime the time to compare
 	 * @return a list of products satisfying the search criteria
 	 */
-	@Query("select p from Product p where p.evictionTime is not null and p.evictionTime < ?1")
+	@Query("select p from Product p where p.evictionTime is not null and p.evictionTime < ?1 and p.productFile is not empty")
 	public List<Product> findByEvictionTimeLessThan(Instant evictionTime);
 
 }
