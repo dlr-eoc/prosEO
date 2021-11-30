@@ -91,7 +91,7 @@ public class JobDispatcher {
 				String stdoutLogLevel = jobStep.getStdoutLogLevel().name(); 
 				String stderrLogLevel = jobStep.getStderrLogLevel().name(); 
 				String isTest = jobStep.getOutputProduct().getConfiguredProcessor().getProcessor().getIsTest() == true ? "true" : "false";
-				String breakpointEnable = "true";
+				String breakpointEnable = "false";
 				String processingStation = jobStep.getJob().getProcessingOrder().getMission().getName() + " " + jobStep.getJob().getProcessingFacility().getName();
 				// String acquisitionStation = ""; // unknown, not to set
 
