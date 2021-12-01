@@ -64,6 +64,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	
 	/** SQL command parts */
 	private static final String SELECT_CLAUSE = "SELECT p.* ";
+	private static final String SELECT_COUNT_CLAUSE = "SELECT count(*) ";
 	private static final String FROM_CLAUSE = "FROM product p\n" +
 			"JOIN product_file pf ON p.id = pf.product_id\n" +
 			"JOIN product_class pc ON p.product_class_id = pc.id\n" +
@@ -119,14 +120,18 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 	
 	/**
 	 * Get the applicable SQL command up to and including the 'WHERE' keyword (the remainder has been created by the
-	 * visit* methods)
+	 * visit* methods).
+	 * 
+	 * Make sure this SqlFilterExpressionVisitor was subject to an "accept" call before calling this method!
+	 * 
+	 * @param countOnly create a command, which only counts the requested products, but does not return them
 	 * 
 	 * @return a partial SQL command string
 	 */
-	public String getSqlCommand() {
+	public String getSqlCommand(boolean countOnly) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getSqlCommand()");
 		
-		StringBuilder result = new StringBuilder(SELECT_CLAUSE);
+		StringBuilder result = new StringBuilder(countOnly ? SELECT_COUNT_CLAUSE : SELECT_CLAUSE);
 		result.append(FROM_CLAUSE);
 		
 		for (int i = 1; i <= paramCount; ++i) {
