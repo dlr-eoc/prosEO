@@ -17,7 +17,11 @@ If you created the server certificates for the Nginx reverse proxy as self-signe
 setup of the bastion hosts, then you will experience security errors when trying to use the CLI. This can be avoided by
 adding the self-signed certificate to Java's trust store (certificate path is relative to this directory):
 ```
-sudo keytool -import -keystore <path to JRE>/lib/security/cacerts -storepass changeit \
-    -file ../bastion-control/roles/configure_nginx_proxy/files/servercert.pem -alias proseo
+sudo keytool -importcert -cacerts -storepass changeit \
+    -file ../bastion-control/roles/configure_nginx_proxy/files/servercert.pem -alias cpros
 ```
 
+In Windows (run command prompt as Administrator):
+```
+keytool.exe keytool -importcert -cacerts -storepass changeit  -file <path to certfile>/servercert.pem -alias cpros
+```
