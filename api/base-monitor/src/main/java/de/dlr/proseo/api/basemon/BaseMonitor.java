@@ -78,6 +78,8 @@ public abstract class BaseMonitor extends Thread {
 	private static final int MSG_ID_TASK_WAIT_INTERRUPTED = 5209;
 	private static final int MSG_ID_SUBTASK_TIMEOUT = 5210;
 	protected static final int MSG_ID_ABORTING_TASK = 5211;
+	private static final int MSG_ID_EXCEPTION_CHECKING_DOWNLOADS = 5212;
+	private static final int MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION = 5213;
 	
 	/* Message string constants */
 	private static final String MSG_INTERRUPTED = "(I%d) Interrupt received while waiting for next check of pickup point";
@@ -93,6 +95,8 @@ public abstract class BaseMonitor extends Thread {
 	private static final String MSG_TASK_WAIT_INTERRUPTED = "(E%d) Wait for task completion interrupted, monitoring loop aborted";
 	private static final String MSG_SUBTASK_TIMEOUT = "(E%d) Timeout after %s s during wait for task completion, task cancelled";
 	protected static final String MSG_ABORTING_TASK = "(E%d) Aborting download task due to exception (cause: %s)";
+	private static final String MSG_EXCEPTION_CHECKING_DOWNLOADS = "(E%d) Exception during check for available downloads (cause: %s / %s)";
+	private static final String MSG_EXCEPTION_IN_TRANSFER_OR_ACTION = "(E%d) Exception during data transfer or follow-on action (cause: %s / %s)";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
@@ -495,7 +499,14 @@ public abstract class BaseMonitor extends Thread {
 			}
 			
 			// Check data availability on pickup point
-			TransferControl transferControl = checkAvailableDownloads(referenceTimeStamp);
+			TransferControl transferControl;
+			try {
+				transferControl = checkAvailableDownloads(referenceTimeStamp);
+			} catch (Exception e) {
+				logger.error(String.format(MSG_EXCEPTION_CHECKING_DOWNLOADS, MSG_ID_EXCEPTION_CHECKING_DOWNLOADS,
+						e.getClass().getName(), e.getMessage()), e);
+				continue;
+			}
 			referenceTimeStamp = transferControl.referenceTime;
 			
 			// Filter objects not yet processed from transfer history
@@ -521,24 +532,30 @@ public abstract class BaseMonitor extends Thread {
 							return;
 						}
 						
-						// Transfer object to local target directory
-						if (transferToTargetDir(objectToTransfer)) {
-							
-							// Record transfer in history
-							try {
-								recordTransfer(objectToTransfer);
-							} catch (IOException e) {
-								logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
-								return;
+						try {
+							// Transfer object to local target directory
+							if (transferToTargetDir(objectToTransfer)) {
+								
+								// Record transfer in history
+								try {
+									recordTransfer(objectToTransfer);
+								} catch (IOException e) {
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									return;
+								}
+								
+								// Trigger follow-on action
+								if (!triggerFollowOnAction(objectToTransfer)) {
+									logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
+								}
+								
+							} else {
+								logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
 							}
-							
-							// Trigger follow-on action
-							if (!triggerFollowOnAction(objectToTransfer)) {
-								logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
-							}
-							
-						} else {
-							logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
+						} catch (Exception e) {
+							logger.error(String.format(MSG_EXCEPTION_IN_TRANSFER_OR_ACTION, MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION,
+									e.getClass().getName(), e.getMessage()), e);
+							// continue, releasing semaphore
 						}
 
 						// Release parallel thread
