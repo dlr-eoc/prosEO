@@ -76,26 +76,8 @@ public class AuxipMonitor extends BaseMonitor {
 	
 	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
 
-	/** Read timeout for HTTP connections */
-//	private static final int HTTP_READ_TIMEOUT = 30000; // ms
-
-	/** Timeout for establishing HTTP connections */
-//	private static final int HTTP_CONNECT_TIMEOUT = 10000; // ms
-
 	/** Maximum number of product entries to retrieve in one request */
 	private static final int MAX_PRODUCT_COUNT = 1000;
-	
-	/** The L0 processor command (a single command taking the CADU directory as argument) */
-//	private String l0ProcessorCommand;
-
-	/** Maximum number of parallel file download threads within a download session (default 1 = no parallel downloads) */
-//	private int maxFileDownloadThreads = 1;
-	
-	/** Interval in millliseconds to check for completed file downloads (default 500 ms) */
-//	private int fileWaitInterval = 500;
-	
-	/** Maximum number of wait cycles for file download completion checks (default 3600 = total timeout of 30 min) */
-//	private int maxFileWaitCycles = 3600;
 	
 	/** The last copy performance in MiB/s (static, because it may be read and written from different threads) */
 	private static Double lastCopyPerformance = 0.0;
@@ -133,7 +115,6 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_ODATA_REQUEST_ABORTED = 5385;
 	private static final int MSG_ID_EXCEPTION_THROWN = 5386;
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_FAILED = 5387;
-//	private static final int MSG_ID_HTTP_CONNECTION_FAILED = 5388;
 	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
@@ -166,7 +147,6 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for product type %s and reference time %s aborted (cause: %s / %s)";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
-//	private static final String MSG_HTTP_CONNECTION_FAILED = "(E%d) HTTP request %s failed (HTTP status code %d)";
 
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
 
@@ -313,11 +293,6 @@ public class AuxipMonitor extends BaseMonitor {
 		this.setMaxDownloadThreads(config.getMaxDownloadThreads());
 		this.setTaskWaitInterval(config.getTaskWaitInterval());
 		this.setMaxWaitCycles(config.getMaxWaitCycles());
-//		this.setMaxFileDownloadThreads(config.getMaxFileDownloadThreads());
-//		this.setFileWaitInterval(config.getFileWaitInterval());
-//		this.setMaxFileWaitCycles(config.getMaxFileWaitCycles());
-		
-//		l0ProcessorCommand = config.getL0Command();
 		
 		HttpURLConnection.setFollowRedirects(true);
 		
@@ -330,71 +305,12 @@ public class AuxipMonitor extends BaseMonitor {
 		logger.info("AUXIP check interval   . . : " + this.getCheckInterval());
 		logger.info("History truncation interval: " + this.getTruncateInterval());
 		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
-		logger.info("Ingestor URI . . . . . . . : " + config.getIngestorUri());
-//		logger.info("L0 processor command . . . : " + l0ProcessorCommand);
 		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
 		logger.info("Transfer session wait time : " + this.getTaskWaitInterval());
 		logger.info("Max. session wait cycles . : " + this.getMaxWaitCycles());
-//		logger.info("Max. file download threads : " + this.getMaxFileDownloadThreads());
-//		logger.info("File download wait time  . : " + this.getFileWaitInterval());
-//		logger.info("Max. file wait cycles  . . : " + this.getMaxFileWaitCycles());
 		
 	}
 	
-	/**
-	 * Gets the maximum number of parallel file download threads within a download session
-	 * 
-	 * @return the maximum number of parallel file download threads
-	 */
-//	public int getMaxFileDownloadThreads() {
-//		return maxFileDownloadThreads;
-//	}
-		
-	/**
-	 * Sets the maximum number of parallel file download threads within a download session
-	 * 
-	 * @param maxFileDownloadThreads the maximum number of parallel file download threads to set
-	 */
-//	public void setMaxFileDownloadThreads(int maxFileDownloadThreads) {
-//		this.maxFileDownloadThreads = maxFileDownloadThreads;
-//	}
-	
-	/**
-	 * Gets the interval to check for completed file downloads
-	 * 
-	 * @return the check interval in millliseconds
-	 */
-//	public int getFileWaitInterval() {
-//		return fileWaitInterval;
-//	}
-
-	/**
-	 * Sets the interval to check for completed file downloads
-	 * 
-	 * @param fileWaitInterval the check interval in millliseconds to set
-	 */
-//	public void setFileWaitInterval(int fileWaitInterval) {
-//		this.fileWaitInterval = fileWaitInterval;
-//	}
-
-	/**
-	 * Gets the maximum number of wait cycles for file download completion checks
-	 * 
-	 * @return the maximum number of wait cycles
-	 */
-//	public int getMaxFileWaitCycles() {
-//		return maxFileWaitCycles;
-//	}
-
-	/**
-	 * Sets the maximum number of wait cycles for file download completion checks
-	 * 
-	 * @param maxFileWaitCycles the maximum number of wait cycles to set
-	 */
-//	public void setMaxFileWaitCycles(int maxFileWaitCycles) {
-//		this.maxFileWaitCycles = maxFileWaitCycles;
-//	}
-
 	/**
 	 * Gets the last copy performance for monitoring purposes
 	 * 
@@ -834,11 +750,6 @@ public class AuxipMonitor extends BaseMonitor {
 						+ "Products("	+ transferProduct.getUuid() + ")"
 						+ "/$value";
 				
-				// --- New implementation using WebClient/Flux ---
-				
-				
-				
-				
 				HttpClient httpClient = HttpClient.create()
 						.headers(httpHeaders -> {
 							if (config.getAuxipUseToken()) {
@@ -877,7 +788,8 @@ public class AuxipMonitor extends BaseMonitor {
 								logger.trace("... response headers: {}", response.responseHeaders());
 							}
 						})
-						.wiretap(logger.isDebugEnabled());
+//						.wiretap(logger.isDebugEnabled())
+						;
 
 				WebClient webClient = WebClient.builder()
 						.baseUrl(config.getAuxipBaseUri())
@@ -912,62 +824,6 @@ public class AuxipMonitor extends BaseMonitor {
 							transferProduct.getName(), e.getMessage()));
 					return false;
 				}
-				
-				// --- END New implementation using WebClient/Flux ---
-				
-//				HttpURLConnection connection = (HttpURLConnection) new URL(config.getAuxipBaseUri() + "/" + requestUri).openConnection();
-//				connection.setConnectTimeout(HTTP_CONNECT_TIMEOUT);
-//				connection.setReadTimeout(HTTP_READ_TIMEOUT);
-//
-//				// Set bearer token or Basic Auth header
-//				if (config.getAuxipUseToken()) {
-//					if (logger.isTraceEnabled()) logger.trace("... requesting token from AUXIP for download");
-//					connection.setRequestProperty(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-//				} else {
-//					connection.setRequestProperty(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encode(
-//							(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
-//				}
-//				connection.setRequestProperty(HttpHeaders.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_VALUE);
-				
-				// Retrieve and store product file
-//				Instant copyStart = Instant.now();
-//				String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
-//
-//				logger.trace("... starting request for URL '{}'", requestUri);
-//
-//				connection.connect();
-//				if (logger.isTraceEnabled()) {
-//					logger.trace("... connection URL: {}", connection.getURL());
-//					for (Entry<String, List<String>> headerEntry : connection.getHeaderFields().entrySet()) {
-//						logger.trace("... response header: {}: {}", headerEntry.getKey(), headerEntry.getValue());
-//					}
-//					logger.trace("... redirects enabled: {}", HttpURLConnection.getFollowRedirects());
-//				}
-//				if (HttpStatus.OK.value() != connection.getResponseCode()) {
-//					logger.error(String.format(MSG_HTTP_CONNECTION_FAILED, MSG_ID_HTTP_CONNECTION_FAILED,
-//							connection.getURL().toExternalForm(), connection.getResponseCode()));
-//					return false;
-//				}
-//				
-//				ReadableByteChannel readableByteChannel = Channels.newChannel(connection.getInputStream());
-//				try (FileOutputStream fileOutputStream = new FileOutputStream(productFileName);) {
-//					long bytesReceived = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-//					if (bytesReceived != transferProduct.getSize())	{
-//						logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
-//								transferProduct.getName(), 
-//								"Bytes expected: " + transferProduct.getSize() + ", received: " +	bytesReceived));
-//						return false;
-//					}
-//				} catch (FileNotFoundException e) {
-//					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
-//					return false;
-//				} catch (Exception e) {
-//					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
-//							transferProduct.getName(), 
-//							e.getMessage()));
-//					return false;
-//				}
-//				readableByteChannel.close();
 
 				Duration copyDuration = Duration.between(copyStart, Instant.now());
 				Double copyPerformance = new File(productFileName).length() / // Bytes

@@ -98,10 +98,6 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.directory}")
 	private String auxipDirectoryPath;
 	
-	/** The Ingestor URI (protocol, host name, port, context; no terminating slash) */
-	@Value("${proseo.ingestor.url}")
-	private String ingestorUrl;
-	
 	/**
 	 * Gets the AUXIP Monitor identifier
 	 * 
@@ -286,15 +282,6 @@ public class AuxipMonitorConfiguration {
 	 */
 	public String getAuxipDirectoryPath() {
 		return auxipDirectoryPath;
-	}
-
-	/**
-	 * Gets the Ingestor URI
-	 * 
-	 * @return the Ingestor URI
-	 */
-	public String getIngestorUri() {
-		return ingestorUrl;
 	}
 
 }
