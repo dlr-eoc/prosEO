@@ -28,6 +28,8 @@ import de.dlr.proseo.geotools.GeotoolsConfiguration.Shapefile;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
 
+// TODO Add file and class comment, format messages according to prosEO standard
+
 @Component
 public class GeotoolsUtil {
 	
@@ -91,6 +93,9 @@ public class GeotoolsUtil {
 	
 	public String getInfo() {
 		init();
+		
+		// TODO Add info about loaded shapes
+		
 		return "info";
 	}
 

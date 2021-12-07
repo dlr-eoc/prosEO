@@ -1,5 +1,4 @@
 FROM openjdk:11
-MAINTAINER Thomas Bassler <thomas.bassler@drbassler.de>
 
 #install configuration and shapes
 COPY docker/application.yml /usr/share/proseo-geotools/application.yml

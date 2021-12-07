@@ -1,10 +1,5 @@
 package de.dlr.proseo.geotools.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +10,8 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.geotools.GeotoolsConfiguration;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
+
+// TODO Return meaningful error messages according to prosEO standard
 
 /**
  * Controller to handle the contains request

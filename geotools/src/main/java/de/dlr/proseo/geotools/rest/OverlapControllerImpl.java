@@ -14,6 +14,8 @@ import de.dlr.proseo.geotools.GeotoolsConfiguration;
 import de.dlr.proseo.geotools.rest.model.RestPoint;
 import de.dlr.proseo.geotools.rest.model.RestPolygon;
 
+//TODO Add file and class comment, return meaningful error messages according to prosEO standard
+
 @Component
 public class OverlapControllerImpl implements OverlapController {
 	

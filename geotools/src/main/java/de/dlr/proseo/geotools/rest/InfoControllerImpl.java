@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import de.dlr.proseo.geotools.GeotoolsConfiguration;
 
+// TODO Add file, class and method comments
+
 @Component
 public class InfoControllerImpl implements InfoController {
 	
