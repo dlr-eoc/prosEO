@@ -31,6 +31,7 @@ public class OrdermgrConfiguration {
 	
 
 	/** Wait time for cleanup */
+	@Value("${proseo.orderManager.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
 
 	/** The URL of the prosEO Ingestor */

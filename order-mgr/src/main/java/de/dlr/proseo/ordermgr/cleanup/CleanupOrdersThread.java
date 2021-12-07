@@ -30,7 +30,7 @@ public class CleanupOrdersThread  extends Thread {
 	 * @param orderMgr the order manager application
 	 */
 	public CleanupOrdersThread(OrderManager orderMgr) {
-		super("CleanupOrdersThread");
+		super("CleanupOrders");
 		this.setDaemon(true);
 		this.orderMgr = orderMgr;
 	}	

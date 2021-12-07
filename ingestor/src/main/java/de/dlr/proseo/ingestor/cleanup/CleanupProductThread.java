@@ -30,7 +30,7 @@ public class CleanupProductThread extends Thread {
 	 * @param ingestor the ingestor application
 	 */
 	public CleanupProductThread(IngestorApplication ingestor) {
-		super("CleanupProductThread");
+		super("CleanupProducts");
 		this.setDaemon(true);
 		this.ingestor = ingestor;
 	}
