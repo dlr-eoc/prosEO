@@ -58,6 +58,12 @@ public class IngestorConfiguration {
 	private String storageManagerValidity;
 	private Long storageManagerValidityLong = null;
 	
+
+	/** Wait time for cleanup */
+	@Value("${proseo.ingestor.cleanupCycleTime}")
+	private Integer cleanupCycleTime;
+	
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(IngestorConfiguration.class);
 	
@@ -143,6 +149,14 @@ public class IngestorConfiguration {
 			}
 		}
 		return storageManagerValidityLong.longValue();
+	}
+
+	public Integer getCleanupCycleTime() {
+		return cleanupCycleTime;
+	}
+
+	public void setCleanupCycleTime(Integer cleanupCycleTime) {
+		this.cleanupCycleTime = cleanupCycleTime;
 	}
 
 }
