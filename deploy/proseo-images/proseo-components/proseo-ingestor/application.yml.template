@@ -15,6 +15,9 @@ logging:
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
+    ingestor:
+        # Wait time for product file cleanup (in days, default 1 day)
+        cleanupCycleTime: 1
     productionPlanner:
         url: http://proseo-prodplanner:8080/proseo/planner/v0.1
         # Connection timeout in ms
