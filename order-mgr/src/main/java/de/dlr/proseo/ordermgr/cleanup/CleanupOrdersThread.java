@@ -40,7 +40,6 @@ public class CleanupOrdersThread  extends Thread {
 	 * 
 	 * @see java.lang.Thread#run()
 	 */
-	@Transactional
     public void run() {
 		if (logger.isTraceEnabled()) logger.trace(">>> run()");
 		// default wait is one day 24h * 60' * 60'' * 1000 millis

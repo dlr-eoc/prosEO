@@ -41,6 +41,7 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
+import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
@@ -550,6 +551,14 @@ public class ProductIngestor {
 							product.getId(), facility.getName(), e.getMessage()));
 				}
 			} 
+		}
+		
+		// Remove links to product file from product download history
+		for (DownloadHistory downloadHistory: product.getDownloadHistory()) {
+			if (modelProductFile.equals(downloadHistory.getProductFile())) {
+				// Link is optional, and download history shall persist even if file is deleted
+				downloadHistory.setProductFile(null);
+			}
 		}
 		
 		// Remove the product file from the product

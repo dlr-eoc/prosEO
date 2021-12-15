@@ -652,6 +652,10 @@ public class OrderUtil {
 			case COMPLETED:
 			case FAILED:
 				// job steps are completed/failed
+				Duration retPeriod = order.getMission().getOrderRetentionPeriod();
+				if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
+					order.setEvictionTime(Instant.now().plus(retPeriod));
+				}
 				order.setOrderState(OrderState.CLOSED);
 				order.incrementVersion();
 				RepositoryService.getOrderRepository().save(order);
