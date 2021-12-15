@@ -103,11 +103,11 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	// Enumeration Types
 	public static final String EN_PRODUCTIONTYPE_NAME = "ProductionType";
 	public static final FullQualifiedName EN_PRODUCTIONTYPE_FQN = new FullQualifiedName(NAMESPACE, EN_PRODUCTIONTYPE_NAME);
-	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = ProductionType.SYSTEMATIC.toString();
+	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = "systematic_production";
 	public static final int EN_PRODUCTIONTYPE_SYSTEMATIC_VAL = 0;
-	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = ProductionType.ON_DEMAND_DEFAULT.toString();
+	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = "on-demand default";
 	public static final int EN_PRODUCTIONTYPE_ONDEMDEF_VAL = 1;
-	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = ProductionType.ON_DEMAND_NON_DEFAULT.toString();
+	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = "on-demand non-default";
 	public static final int EN_PRODUCTIONTYPE_ONDEMNODEF_VAL = 2;
 
 	// Complex Types
