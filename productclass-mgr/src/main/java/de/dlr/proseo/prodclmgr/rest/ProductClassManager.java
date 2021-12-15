@@ -990,7 +990,7 @@ public class ProductClassManager {
 		}
 		
 		// Test whether there are selection rules having this class as source product class
-		jpqlQuery = "select count(s) from SimpleSelectionRule where sourceProductClass = :sourceProductClass";
+		jpqlQuery = "select count(s) from SimpleSelectionRule s where sourceProductClass = :sourceProductClass";
 		query = em.createQuery(jpqlQuery);
 		query.setParameter("sourceProductClass", modelProductClass.get());
 		Object result = query.getSingleResult();
