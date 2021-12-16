@@ -27,8 +27,22 @@ proseo:
         productCycle: 60000
         # cycle wait time for checking raw data
         rawdataCycle: 60000
+        # cycle wait time for checking KPI01 timeliness
+        kpi01TimelinessCycle: 60000
+        # cycle wait time for checking KPI02 completeness
+        kpi02CompletenessCycle: 60000
         # if no entries are in an aggregation table this date is used to begin generating the entries
         aggregationStart: "2021-10-19T00:00:00.000000Z"
+        timeliness:
+            -
+                mode: "NRT"
+                minutes: 30
+            -
+                mode: "NRT-PT"
+                minutes: 30
+            -
+                mode: "NTC"
+                minutes: 360
         services:
             # prosEO Metadata Database
             -

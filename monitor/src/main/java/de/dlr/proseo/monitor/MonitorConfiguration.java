@@ -26,6 +26,10 @@ public class MonitorConfiguration {
 	 * List of docker machines
 	 */
 	private List<Docker> dockers;
+	/**
+	 * List of docker machines
+	 */
+	private List<Timeliness> timeliness;
 
 	/**
 	 * Wait time for connection
@@ -55,6 +59,14 @@ public class MonitorConfiguration {
 	 * Cycle wait time
 	 */
 	private Long rawdataCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long kpi01TimelinessCycle;
+	/**
+	 * Cycle wait time
+	 */
+	private Long kpi02CompletenessCycle;
 	
 	/**
 	 * Start creating aggregation at this time
@@ -62,6 +74,42 @@ public class MonitorConfiguration {
 	private String aggregationStart;
 	
 	 /**
+	 * @return the timeliness
+	 */
+	public List<Timeliness> getTimeliness() {
+		return timeliness;
+	}
+	/**
+	 * @param timeliness the timeliness to set
+	 */
+	public void setTimeliness(List<Timeliness> timeliness) {
+		this.timeliness = timeliness;
+	}
+	/**
+	 * @return the kpi01TimelinessCycle
+	 */
+	public Long getKpi01TimelinessCycle() {
+		return kpi01TimelinessCycle;
+	}
+	/**
+	 * @return the kpi02CompletenessCycle
+	 */
+	public Long getKpi02CompletenessCycle() {
+		return kpi02CompletenessCycle;
+	}
+	/**
+	 * @param kpi01TimelinessCycle the kpi01TimelinessCycle to set
+	 */
+	public void setKpi01TimelinessCycle(Long kpi01TimelinessCycle) {
+		this.kpi01TimelinessCycle = kpi01TimelinessCycle;
+	}
+	/**
+	 * @param kpi02CompletenessCycle the kpi02CompletenessCycle to set
+	 */
+	public void setKpi02CompletenessCycle(Long kpi02CompletenessCycle) {
+		this.kpi02CompletenessCycle = kpi02CompletenessCycle;
+	}
+	/**
 	 * @return the rawdataCycle
 	 */
 	public Long getRawdataCycle() {
@@ -359,6 +407,41 @@ public class MonitorConfiguration {
 				this.apiVersion = apiVersion;
 			}
 		 
+	 }
+	 public static class Timeliness {
+		 /**
+		  * The timeliness mode 
+		  */
+		 private String mode;
+		 /**
+		  * The timeliness value in minutes
+		  */
+		 private Long minutes;
+		/**
+		 * @return the mode
+		 */
+		public String getMode() {
+			return mode;
+		}
+		/**
+		 * @return the minutes
+		 */
+		public Long getMinutes() {
+			return minutes;
+		}
+		/**
+		 * @param mode the mode to set
+		 */
+		public void setMode(String mode) {
+			this.mode = mode;
+		}
+		/**
+		 * @param minutes the minutes to set
+		 */
+		public void setMinutes(Long minutes) {
+			this.minutes = minutes;
+		}
+
 	 }
 
 

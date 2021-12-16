@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 public class OrdermgrConfiguration {
 
 	/** Wait time for cleanup */
+	@Value("${proseo.orderManager.cleanupCycleTime}")
 	private Integer cleanupCycleTime;
 
 	/** A logger for this class */
