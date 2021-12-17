@@ -123,11 +123,13 @@ public class GeotoolsUtil {
 			} else {
 				for (ShpFile sf : shapeMap.get(type)) {
 					if (isPointInside(latitude, longitude, sf)) {
+						logger.info("Point {}/{} is inside areas {}", latitude, longitude, Arrays.asList(types));
 						return true;
 					}
 				}
 			} 
 		}
+		logger.info("Point {}/{} is NOT inside areas {}", latitude, longitude, Arrays.asList(types));
 		return false;
 	}
 
@@ -188,12 +190,14 @@ public class GeotoolsUtil {
 				} else {
 					for (ShpFile sf : shapeMap.get(type)) {
 						if (isPolyInside(coords, sf)) {
+							logger.info("Polygon {} is inside areas {}", poly, Arrays.asList(types));
 							return true;
 						}
 					}
 				}
 			}
 		}
+		logger.info("Polygon {} is NOT inside areas {}", poly, Arrays.asList(types));
 		return false;
 	}
 
@@ -301,12 +305,14 @@ public class GeotoolsUtil {
 				} else {
 					for (ShpFile sf : shapeMap.get(type)) {
 						if (isPolyOverlap(coords, sf)) {
+							logger.info("Polygon {} overlaps areas {}", poly, Arrays.asList(types));
 							return true;
 						}
 					}
 				}
 			}
 		}
+		logger.info("Polygon {} does NOT overlap areas {}", poly, Arrays.asList(types));
 		return false;
 	}
 
