@@ -33,6 +33,7 @@ proseo:
         kpi02CompletenessCycle: 60000
         # if no entries are in an aggregation table this date is used to begin generating the entries
         aggregationStart: "2021-10-19T00:00:00.000000Z"
+        # timeliness specifications for KPI01
         timeliness:
             -
                 mode: "NRT"
