@@ -536,6 +536,7 @@ public class BaseWrapper {
 					
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
+					if (logger.isTraceEnabled()) logger.trace("... creating directory for {}, output file name type {}", fn.getFileName(), io.getFileNameType());
 					if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 						if (Files.exists(filePath)) {
 							if (!Files.isDirectory(filePath)) {
@@ -548,18 +549,23 @@ public class BaseWrapper {
 							}
 						}
 						try {
+							if (logger.isTraceEnabled()) logger.trace("... in 'Directory' branch: calling create directories for {}", filePath);
 							Files.createDirectories(filePath);
 						} 
 						catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath, e.getClass().getName(), e.getMessage());
+							e.printStackTrace();
 							throw new WrapperException();
 						}
 					} else {
 						try {
+							if (logger.isTraceEnabled()) logger.trace("... in 'Physical' branch: deleting file {}", filePath);
 							Files.deleteIfExists(filePath);
+							if (logger.isTraceEnabled()) logger.trace("... in 'Physical' branch: calling create directories for {}", filePath.getParent());
 							Files.createDirectories(filePath.getParent());
 						} catch (IOException | SecurityException e) {
 							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath.getParent(), e.getClass().getName(), e.getMessage());
+							e.printStackTrace();
 							throw new WrapperException();
 						}
 					}
