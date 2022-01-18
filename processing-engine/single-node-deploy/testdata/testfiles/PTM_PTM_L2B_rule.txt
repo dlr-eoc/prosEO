@@ -1,2 +1,0 @@
-
-    FOR L1B_PART1 SELECT LatestValCover(0, 0)

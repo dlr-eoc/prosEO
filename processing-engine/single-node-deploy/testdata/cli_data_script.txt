@@ -1,5 +1,0 @@
-
-facility create --file=testfiles/facility.json
-ingest --file=testfiles/ingest_products.json localhost
-order create --file=testfiles/order_l2.json
-order create --file=testfiles/order_l3.json

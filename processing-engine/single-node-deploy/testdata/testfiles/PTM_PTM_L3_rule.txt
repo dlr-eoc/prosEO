@@ -1,3 +1,0 @@
-
-    FOR PTM_L2A SELECT ValIntersect(0, 0) MINCOVER(90);
-    FOR PTM_L2B SELECT ValIntersect(0, 0) MINCOVER(90)
