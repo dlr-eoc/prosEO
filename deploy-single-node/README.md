@@ -151,7 +151,7 @@ is expensive (a multi-TB USB-3 disk on a laptop is not).
 This step requires configuring a "host path" file server to serve the common storage area
 to both the Storage Manager and the Processing Engine. Assuming a configuration as in the files
 given in the current (example) directory, the following commands must be issued
-(also available as part of the script `testdata/create_data_local.sh`):
+(also available as part of the script `ptm-config/create_data_local.sh`):
 ```sh
 # Define actual path to storage area
 SHARED_STORAGE_PATH=<path on Docker Desktop host>
@@ -184,7 +184,8 @@ a default user `sysadm` (password `sysadm`) is provided.
 
 To initialize the prosEO instance, run the following CLI commands:
 ```
-login -usysadm -psysadm
+login
+# at the prompt enter the username and password as given above
 user update sysadm password=<new password>
 create mission PTM 'name=prosEO Test Mission'
 ```
@@ -255,13 +256,14 @@ Create a JSON file `facility.json` describing the local processing facility:
 
 On the prosEO CLI issue the following commands:
 ```
-login -usysadm -p<your password> PTM
+login PTM
+# at the prompt enter your username and password
 facility create --file=facility.json
 ```
 
 You are now ready to configure your first mission. See <https://github.com/dlr-eoc/prosEO/tree/master/samples/testdata> for
 an example, which works with the prosEO Sample Processor. Test input data and processing orders
-can be generated with the above mentioned script `single-node-deploy/testdata/create_data_local.sh`.
+can be generated with the above mentioned script `deploy-single-node/ptm-config/create_data_local.sh`.
 Note that this script deliberately creates an order set, which does not result in a fully completed
 processing (one job will remain in `RELEASED` state due to missing input, this requires generation
 of an additional order to process from L0 to L2A/B data - this is left as an exercise to the reader ;-) ).
