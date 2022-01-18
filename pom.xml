@@ -4,7 +4,7 @@
 	
 	<groupId>de.dlr.proseo</groupId>
 	<artifactId>proseo</artifactId>
-	<version>0.8.1</version>
+	<version>0.8.2</version>
 	<name>prosEO</name>
 	<description>prosEO – A Processing System for Earth Observation Data</description>
 	<packaging>pom</packaging>
@@ -37,6 +37,7 @@
 		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
 		<maven-project-info-reports-plugin.version>3.1.1</maven-project-info-reports-plugin.version>
 		<junit.version>4.13.1</junit.version>
+		<log4j2.version>2.15.0</log4j2.version>
 		<spring-boot-starter-test.version>2.1.6.RELEASE</spring-boot-starter-test.version>
 	</properties>
 
@@ -57,6 +58,7 @@
 		<module>facility-mgr</module>
 		<module>common</module>
 		<module>monitor</module>
+		<module>geotools</module>
 	</modules>
 
 	<dependencyManagement>

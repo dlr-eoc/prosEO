@@ -124,7 +124,7 @@ public class AuxipStatusControllerImpl implements StatusController {
 		RestInterfaceStatus restInterfaceStatus = new RestInterfaceStatus();
 		restInterfaceStatus.setId(config.getAuxipId());
 		
-		Path auxipSatelliteDirectory = Paths.get(config.getAuxipDirectoryPath()).resolve(config.getAuxipSatellite());
+		Path auxipSatelliteDirectory = Paths.get(config.getAuxipBaseUri()).resolve(config.getAuxipContext());
 		if (Files.isDirectory(auxipSatelliteDirectory) && Files.isReadable(auxipSatelliteDirectory)) {
 			restInterfaceStatus.setAvailable(true);
 			restInterfaceStatus.setPerformance(monitor.getLastCopyPerformance());

@@ -1,19 +1,21 @@
 #!/bin/bash
 #
-# create_data.sh
-# --------------
+# create_data_local.sh
+# --------------------
 #
 # Create dynamic test data for the prosEO test mission:
 # - L0 input data
 # - IERSB AUX input data
-# - a processing facility on a Telekom OTC cluster
+# - a processing facility on localhost
 # - a processing order for L2 products
 # - a processing order for L3 products
+#
+# The target storage is a POSIX backend on localhost.
 #
 
  
 # Create empty subdirectory for test data
-TEST_DATA_DIR=testfiles
+TEST_DATA_DIR=testproducts
 mkdir -p $TEST_DATA_DIR
 rm $TEST_DATA_DIR/*
 
@@ -107,6 +109,8 @@ cat >$TEST_DATA_DIR/facility.json <<EOF
     "storageManagerUrl": 
     	"http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
     "localStorageManagerUrl": "http://storage-mgr-service.default.svc.cluster.local:3000/proseo/storage-mgr/v0.1",
+    "externalStorageManagerUrl": 
+        "http://host.docker.internal:8001/api/v1/namespaces/default/services/storage-mgr-service:service/proxy/proseo/storage-mgr/v1",
     "storageManagerUser": "smuser",
     "storageManagerPassword": "smpwd-but-that-would-be-way-too-short",
     "defaultStorageType": "POSIX"

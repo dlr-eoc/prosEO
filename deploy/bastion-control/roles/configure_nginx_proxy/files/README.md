@@ -4,4 +4,5 @@ openssl req -x509 -newkey rsa:4096 -keyout serverkey.pem -out servercert.pem -da
 ```
 
 (Note that for a deployment with LetsEncrypt these are only dummies, which will be replaced by the Certbot.
-For other deployments this should be valid server certificates.)
+For other deployments this should be valid server certificates, where `servercert.pem` should be a chained certificate,
+i. e. it should include the full certificate path.)

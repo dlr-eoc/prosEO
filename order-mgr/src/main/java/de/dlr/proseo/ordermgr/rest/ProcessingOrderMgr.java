@@ -24,22 +24,32 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import de.dlr.proseo.model.ConfiguredProcessor;
 import de.dlr.proseo.model.InputFilter;
+import de.dlr.proseo.model.Job;
+import de.dlr.proseo.model.JobStep;
 import de.dlr.proseo.model.Mission;
 import de.dlr.proseo.model.Orbit;
 import de.dlr.proseo.model.Parameter;
+import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.ProcessingOrder;
+import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
+import de.dlr.proseo.model.ProductQuery;
 import de.dlr.proseo.model.enums.ParameterType;
+import de.dlr.proseo.model.enums.ProductionType;
 import de.dlr.proseo.model.ClassOutputParameter;
 import de.dlr.proseo.model.enums.OrderSlicingType;
 import de.dlr.proseo.model.enums.OrderState;
@@ -61,6 +71,7 @@ import de.dlr.proseo.model.rest.model.RestParameter;
  * 
  * @author Ranjitha Vignesh
  */
+
 @Component
 @Transactional
 public class ProcessingOrderMgr {
@@ -97,6 +108,9 @@ public class ProcessingOrderMgr {
 	private static final int MSG_ID_SLICE_DURATION_MISSING = 1134;
 	private static final int MSG_ID_INVALID_SLICE_OVERLAP = 1135;
 	private static final int MSG_ID_NEGATIVE_DURATION = 1136;
+	private static final int MSG_ID_NUMBER_ORDERS_DELETED = 1137;
+	private static final int MSG_ID_JOF_DELETED = 1138;
+	private static final int MSG_ID_JOF_DELETING_ERROR = 1139;
 	
 	// Same as in other services
 	private static final int MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS = 2028;
@@ -135,7 +149,11 @@ public class ProcessingOrderMgr {
 	private static final String MSG_ORDER_MODIFIED = "(I%d) Order with id %d modified";
 	private static final String MSG_ORDER_CREATED = "(I%d) Order with identifier %s created for mission %s";
 	private static final String MSG_ORDER_DELETED = "(I%d) Order with id %d deleted";
+	private static final String MSG_NUMBER_ORDERS_DELETED = "(I%d) %d orders deleted";
 	private static final String MSG_ORDER_NOT_MODIFIED = "(I%d) Order with id %d not modified (no changes)";
+
+	private static final String MSG_JOF_DELETED = "(I%d) Job Order File '%s' deleted from processing facility '%s'";
+	private static final String MSG_JOF_DELETING_ERROR = "(E%d) Error deleting Job Order File '%s' from processing facility '%s' (cause: %s)";
 	
 	// Same as in other services
 	private static final String MSG_ILLEGAL_CROSS_MISSION_ACCESS = "(E%d) Illegal cross-mission access to mission %s (logged in to %s)";
@@ -147,7 +165,11 @@ public class ProcessingOrderMgr {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
-
+	
+	/** REST template builder */
+	@Autowired
+	RestTemplateBuilder rtb;
+	
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(ProcessingOrderMgr.class);
 	
@@ -403,16 +425,110 @@ public class ProcessingOrderMgr {
 			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
 					modelOrder.get().getMission().getCode(), securityService.getMission()));			
 		}
-		
+		deleteOrder(modelOrder.get());
+	}
+	
+	/**
+	 * Delete an order by ID
+	 * 
+	 * @param order the order to delete
+	 * @throws EntityNotFoundException if the order to delete does not exist in the database
+	 * @throws RuntimeException if the deletion was not performed as expected
+	 */
+	private void deleteOrder(ProcessingOrder order) throws EntityNotFoundException, RuntimeException {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrder({})", order.getIdentifier());
+		// prepare the order to delete
+		prepareOrderToDelete(order);
 		// Delete the order
-		RepositoryService.getOrderRepository().deleteById(id);
+		long id = order.getId();
+		RepositoryService.getOrderRepository().delete(order);
 		// Test whether the deletion was successful
-		modelOrder = RepositoryService.getOrderRepository().findById(id);
+		Optional<ProcessingOrder> modelOrder = RepositoryService.getOrderRepository().findById(id);
 		if (!modelOrder.isEmpty()) {
 			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, id));
 		}
 		
 		logInfo(MSG_ORDER_DELETED, MSG_ID_ORDER_DELETED, id);
+	}
+	
+	/**
+	 * Find all orders of state CLOSED and eviction time less than t and delete them
+	 * 
+	 * @param t the time to compare to
+	 */
+	public void deleteOrdersWithEvictionTimeLessThan(Instant t) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteOrdersWithEvictionTimeLessThan({})", t);
+		List<ProcessingOrder> orders = RepositoryService.getOrderRepository().findByOrderStateAndEvictionTimeLessThan(OrderState.CLOSED, t);
+		long ordersDeleted = 0;
+		for (ProcessingOrder po : orders) {
+			try {
+				deleteOrder(po);
+			} 
+			// ignore known exceptions cause already logged
+			catch (EntityNotFoundException e) {break;}
+			catch (ProcessingException e) {break;}
+			catch (IllegalArgumentException e) {break;}
+			catch (RuntimeException e) {break;};
+			ordersDeleted++;
+		}
+		logInfo(MSG_NUMBER_ORDERS_DELETED, MSG_ID_NUMBER_ORDERS_DELETED, ordersDeleted);
+	}
+	
+	/** 
+	 * Prepare the order for deletion: remove dependencies to products and product queries.
+	 * 
+	 * @param order the order to prepare
+	 */
+	private void prepareOrderToDelete(ProcessingOrder order) {
+		if (order != null) {
+			for (Job j : order.getJobs()) {
+				for (JobStep js : j.getJobSteps()) {
+					deleteJOF(js);
+					js.setJobOrderFilename(null);
+					if (js.getOutputProduct() != null) {
+						js.getOutputProduct().setJobStep(null);
+					}
+					for (ProductQuery pq : js.getInputProductQueries()) {
+						for (Product p : pq.getSatisfyingProducts()) {
+							p.getSatisfiedProductQueries().clear();
+						}
+						pq.getSatisfyingProducts().clear();
+						RepositoryService.getProductQueryRepository().delete(pq);
+					}
+					js.getInputProductQueries().clear();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Delete the Job Order file for the given job step from the Storage Manager
+	 * 
+	 * @param js the job step to delete the JOF from
+	 * @return true on success, false otherwise
+	 */
+	private Boolean deleteJOF(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteJOF({})", (null == js ? "null" : js.getId()));
+
+		if (js != null && js.getJobOrderFilename() != null) {
+			ProcessingFacility facility = js.getJob().getProcessingFacility();
+			String storageManagerUrl = facility.getStorageManagerUrl()
+					+ String.format("/products?pathInfo=%s", js.getJobOrderFilename()); 
+
+			RestTemplate restTemplate = rtb
+					.basicAuthentication(facility.getStorageManagerUser(), facility.getStorageManagerPassword())
+					.build();
+			try {
+				restTemplate.delete(storageManagerUrl);
+				logInfo(MSG_JOF_DELETED, MSG_ID_JOF_DELETED, js.getJobOrderFilename(), facility.getName());
+				return true;
+			} catch (RestClientException e) {
+				logError(MSG_JOF_DELETING_ERROR, MSG_ID_JOF_DELETING_ERROR, js.getJobOrderFilename(), facility.getName(), e.getMessage());
+				return false;
+			} 
+		} else {
+			return false;
+		}
 	}
 	
 	/**
@@ -522,6 +638,7 @@ public class ProcessingOrderMgr {
 			// Check whether the requested state change (if any) is allowed and the user is authorized for it
 			try {
 				modelOrder.setOrderState(changedOrder.getOrderState());
+				
 				if (OrderState.APPROVED.equals(changedOrder.getOrderState()) && !securityService.hasRole(UserRole.ORDER_APPROVER) ||
 					(OrderState.PLANNED.equals(changedOrder.getOrderState()) ||
 						OrderState.RELEASED.equals(changedOrder.getOrderState()) ||
@@ -535,6 +652,13 @@ public class ProcessingOrderMgr {
 				) {
 					throw new SecurityException(logError(MSG_STATE_TRANSITION_FORBIDDEN, MSG_ID_STATE_TRANSITION_FORBIDDEN,
 							modelOrder.getOrderState().toString(), changedOrder.getOrderState().toString(), securityService.getUser()));			
+				}
+
+				if (OrderState.CLOSED.equals(modelOrder.getOrderState())) {
+					Duration retPeriod = modelOrder.getMission().getOrderRetentionPeriod();
+					if (retPeriod != null && modelOrder.getProductionType() == ProductionType.SYSTEMATIC) {
+						modelOrder.setEvictionTime(Instant.now().plus(retPeriod));
+					} 
 				}
 			} catch (IllegalStateException e) {
 				throw new IllegalArgumentException(logError(MSG_ILLEGAL_STATE_TRANSITION, MSG_ID_ILLEGAL_STATE_TRANSITION,

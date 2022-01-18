@@ -97,7 +97,6 @@ public class TestSqlFilterExpressionVisitor {
 
 			String result = "TRUE"; // default value for no filter
 			SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
-			String sqlCommand = expressionVisitor.getSqlCommand();
 
 			// Test filter option
 			FilterOption filterOption = uriInfo.getFilterOption();
@@ -109,13 +108,13 @@ public class TestSqlFilterExpressionVisitor {
 					result = filterExpression.accept(expressionVisitor);
 					logger.trace("accept() returns [" + result + "]");
 					assertNotNull("Unexpected null result from expressionVisitor", result);
-					sqlCommand += result;
 				} catch (ODataApplicationException | ExpressionVisitException e) {
 					logger.error("Exception thrown in filter expression: ", e);
 					response.setStatusCode(HttpStatusCode.BAD_REQUEST.getStatusCode());
 					return;
 				} 
 			}
+			String sqlCommand = expressionVisitor.getSqlCommand(false) + result;
 			
 			// Test order option
 			OrderByOption orderByOption = uriInfo.getOrderByOption();

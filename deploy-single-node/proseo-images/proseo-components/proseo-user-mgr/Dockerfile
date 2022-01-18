@@ -1,3 +1,3 @@
-FROM localhost:5000/proseo-user-mgr:0.8.1
+FROM localhost:5000/proseo-user-mgr:0.8.2
 ADD application.yml /usr/share/proseo-user-mgr/application.yml
 WORKDIR /usr/share/proseo-user-mgr/

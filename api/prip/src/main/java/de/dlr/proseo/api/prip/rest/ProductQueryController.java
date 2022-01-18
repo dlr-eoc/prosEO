@@ -19,6 +19,8 @@ import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.OData;
 import org.apache.olingo.server.api.ODataHttpHandler;
 import org.apache.olingo.server.api.ServiceMetadata;
+import org.apache.olingo.server.api.debug.DebugSupport;
+import org.apache.olingo.server.api.debug.DefaultDebugSupport;
 import org.apache.olingo.server.api.serializer.ODataSerializer;
 import org.apache.olingo.server.api.serializer.SerializerException;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ import de.dlr.proseo.api.prip.odata.ProductEntityProcessor;
  */
 @RestController
 @Validated
-@RequestMapping(value = ProductQueryController.URI, produces = "application/json")
+@RequestMapping(value = ProductQueryController.URI, produces = {"application/json", "application/octet-stream"})
 public class ProductQueryController {
 
 	/* Message ID constants */
@@ -84,7 +86,8 @@ public class ProductQueryController {
 	 */
 	@RequestMapping(value = "/**")
 	protected void service(final HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		if (logger.isTraceEnabled()) logger.trace(">>> service({}, {})", request, response);
+		if (logger.isTraceEnabled()) logger.trace(">>> service({}, {})", 
+				(null == request ? "null" : request.getRequestURL()), response);
 		
 		// Create OData handler
 		OData odata = OData.newInstance();
@@ -94,6 +97,9 @@ public class ProductQueryController {
 		ODataHttpHandler handler = odata.createHandler(edm);
 		handler.register(entityCollectionProcessor);
 		handler.register(entityProcessor);
+		DebugSupport debugSupport = new DefaultDebugSupport();
+		debugSupport.init(odata);
+		handler.register(debugSupport);
 
 		// Analyze authentication information and make sure user is authorized for using the PRIP API
 		try {
@@ -129,7 +135,8 @@ public class ProductQueryController {
 					return URI;
 				}
 			}, response);
-		} catch (RuntimeException e) {
+			if (logger.isTraceEnabled()) logger.trace("... after processing request, returning response code: " + response.getStatus());
+		} catch (Exception e) {
 			logger.error("Server Error occurred in ProductQueryController", e);
 			throw new ServletException(e);
 		}

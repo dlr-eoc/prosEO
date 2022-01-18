@@ -472,21 +472,22 @@ public class ConfiguredProcessorManager {
 		// Check whether there are still products referencing this configured processor
 		// (restricted to the product classes processable by the processor class for efficiency)
 		ProcessorClass processorClass = modelConfiguredProcessor.get().getProcessor().getProcessorClass();
-		String jpqlQuery = "select count(p) from Product p where p.productClass in :productClasses and p.configuredProcessor = :configuredProcessor";
-		Query query = em.createQuery(jpqlQuery);
-		query.setParameter("productClasses", processorClass.getProductClasses());
-		query.setParameter("configuredProcessor", modelConfiguredProcessor.get());
-		Object result = query.getSingleResult();
-		if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
-			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_HAS_PRODUCTS, MSG_ID_CONFIGURED_PROCESSOR_HAS_PRODUCTS,
-					modelConfiguredProcessor.get().getIdentifier(), result));
+		if (!processorClass.getProductClasses().isEmpty()) {
+			String jpqlQuery = "select count(p) from Product p where p.productClass in :productClasses and p.configuredProcessor = :configuredProcessor";
+			Query query = em.createQuery(jpqlQuery);
+			query.setParameter("productClasses", processorClass.getProductClasses());
+			query.setParameter("configuredProcessor", modelConfiguredProcessor.get());
+			Object result = query.getSingleResult();
+			if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
+				throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_HAS_PRODUCTS,
+						MSG_ID_CONFIGURED_PROCESSOR_HAS_PRODUCTS, modelConfiguredProcessor.get().getIdentifier(), result));
+			} 
 		}
-		
 		// Check whether there are selection rules referencing this configured processor
 		String sqlQuery = "SELECT COUNT(*) FROM simple_selection_rule_applicable_configured_processors WHERE applicable_configured_processors_id = :id";
-		query = em.createNativeQuery(sqlQuery);
+		Query query = em.createNativeQuery(sqlQuery);
 		query.setParameter("id", modelConfiguredProcessor.get().getId());
-		result = query.getSingleResult();
+		Object result = query.getSingleResult();
 		if (!(result instanceof Number) || 0 != ((Number) result).intValue()) {
 			throw new IllegalArgumentException(logError(MSG_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES, MSG_ID_CONFIGURED_PROCESSOR_HAS_SELECTION_RULES,
 					modelConfiguredProcessor.get().getIdentifier(), result));

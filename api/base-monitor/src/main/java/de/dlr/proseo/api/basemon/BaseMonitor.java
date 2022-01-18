@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class BaseMonitor extends Thread {
 	
-	/** Interval in millliseconds to check for completed subtasks */
-	private static final long TASK_WAIT_INTERVAL = 500;
-
 	/** Interval between pickup point checks in milliseconds, default is one second */
 	private long checkInterval = 1000;
 	
@@ -81,6 +78,8 @@ public abstract class BaseMonitor extends Thread {
 	private static final int MSG_ID_TASK_WAIT_INTERRUPTED = 5209;
 	private static final int MSG_ID_SUBTASK_TIMEOUT = 5210;
 	protected static final int MSG_ID_ABORTING_TASK = 5211;
+	private static final int MSG_ID_EXCEPTION_CHECKING_DOWNLOADS = 5212;
+	private static final int MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION = 5213;
 	
 	/* Message string constants */
 	private static final String MSG_INTERRUPTED = "(I%d) Interrupt received while waiting for next check of pickup point";
@@ -96,9 +95,21 @@ public abstract class BaseMonitor extends Thread {
 	private static final String MSG_TASK_WAIT_INTERRUPTED = "(E%d) Wait for task completion interrupted, monitoring loop aborted";
 	private static final String MSG_SUBTASK_TIMEOUT = "(E%d) Timeout after %s s during wait for task completion, task cancelled";
 	protected static final String MSG_ABORTING_TASK = "(E%d) Aborting download task due to exception (cause: %s)";
+	private static final String MSG_EXCEPTION_CHECKING_DOWNLOADS = "(E%d) Exception during check for available downloads (cause: %s / %s)";
+	private static final String MSG_EXCEPTION_IN_TRANSFER_OR_ACTION = "(E%d) Exception during data transfer or follow-on action (cause: %s / %s)";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseMonitor.class);
+	
+	/**
+	 * Structure for controlling the transfer process
+	 */
+	public static class TransferControl {
+		/** Latest reference time of all transfer objects */
+		public Instant referenceTime = null;
+		/** Objects to transfer */
+		public List<TransferObject> transferObjects = new ArrayList<>();
+	}
 	
 	/**
 	 * Gets the interval between pickup point checks
@@ -382,9 +393,9 @@ public abstract class BaseMonitor extends Thread {
 	 * Check the pickup point for available objects (unfiltered)
 	 * 
 	 * @param referenceTimeStamp the reference timestamp to apply for pickup point lookups
-	 * @return a list of available transfer objects
+	 * @return a transfer control object containing the latest reference time and a list of available transfer objects
 	 */
-	protected abstract List<TransferObject> checkAvailableDownloads(Instant referenceTimeStamp);
+	protected abstract TransferControl checkAvailableDownloads(Instant referenceTimeStamp);
 	
 	/**
 	 * Check the given list of objects against the transfer history and return a new list containing only the objects
@@ -411,7 +422,7 @@ public abstract class BaseMonitor extends Thread {
 	}
 	
 	/**
-	 * Download the given transfer object from the pickup point and copy them to the configured target directory
+	 * Download the given transfer object from the pickup point and copy it to the configured target directory
 	 * 
 	 * @param object the transfer object to download
 	 * @return true, if the download was successful, false otherwise
@@ -422,10 +433,9 @@ public abstract class BaseMonitor extends Thread {
 	 * Add the given object to the transfer history
 	 * 
 	 * @param transferredObject the transferred object
-	 * @param checkTimeStamp the timestamp of the last pickup point lookup to record for the transferred object
 	 * @throws IOException if an I/O error occurs opening or writing the transfer history file
 	 */
-	synchronized private void recordTransfer(TransferObject transferredObject, Instant checkTimeStamp) throws IOException {
+	synchronized private void recordTransfer(TransferObject transferredObject) throws IOException {
 		if (logger.isTraceEnabled()) logger.trace(">>> recordTransfer({})",
 				null == transferredObject ? "null" : transferredObject.getIdentifier());
 		
@@ -434,7 +444,7 @@ public abstract class BaseMonitor extends Thread {
 		
 		transferHistory.add(transferredObjectIdentifier);
 		
-		writeTransferHistory(transferredObjectIdentifier, checkTimeStamp);
+		writeTransferHistory(transferredObjectIdentifier, transferredObject.getReferenceTime());
 		
 	}
 
@@ -489,15 +499,21 @@ public abstract class BaseMonitor extends Thread {
 			}
 			
 			// Check data availability on pickup point
-			Instant checkTimeStamp = Instant.now();
-			List<TransferObject> transferableObjects = checkAvailableDownloads(referenceTimeStamp);
-			referenceTimeStamp = checkTimeStamp;
+			TransferControl transferControl;
+			try {
+				transferControl = checkAvailableDownloads(referenceTimeStamp);
+			} catch (Exception e) {
+				logger.error(String.format(MSG_EXCEPTION_CHECKING_DOWNLOADS, MSG_ID_EXCEPTION_CHECKING_DOWNLOADS,
+						e.getClass().getName(), e.getMessage()), e);
+				continue;
+			}
+			referenceTimeStamp = transferControl.referenceTime;
 			
 			// Filter objects not yet processed from transfer history
-			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferableObjects);
-			List<Thread> transferTasks = new ArrayList<>();
+			List<TransferObject> objectsToTransfer = filterTransferableObjects(transferControl.transferObjects);
 			
 			// Transfer all objects not yet processed
+			List<Thread> transferTasks = new ArrayList<>();
 			Semaphore semaphore = new Semaphore(maxDownloadThreads);
 			
 			for (TransferObject objectToTransfer: objectsToTransfer) {
@@ -516,24 +532,30 @@ public abstract class BaseMonitor extends Thread {
 							return;
 						}
 						
-						// Transfer object to local target directory
-						if (transferToTargetDir(objectToTransfer)) {
-							
-							// Record transfer in history
-							try {
-								recordTransfer(objectToTransfer, checkTimeStamp);
-							} catch (IOException e) {
-								logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
-								return;
+						try {
+							// Transfer object to local target directory
+							if (transferToTargetDir(objectToTransfer)) {
+								
+								// Record transfer in history
+								try {
+									recordTransfer(objectToTransfer);
+								} catch (IOException e) {
+									logger.error(String.format(MSG_ABORTING_TASK, MSG_ID_ABORTING_TASK, e.getMessage()));
+									return;
+								}
+								
+								// Trigger follow-on action
+								if (!triggerFollowOnAction(objectToTransfer)) {
+									logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
+								}
+								
+							} else {
+								logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
 							}
-							
-							// Trigger follow-on action
-							if (!triggerFollowOnAction(objectToTransfer)) {
-								logger.error(String.format(MSG_FOLLOW_ON_ACTION_FAILED, MSG_ID_FOLLOW_ON_ACTION_FAILED, objectToTransfer.getIdentifier()));
-							}
-							
-						} else {
-							logger.error(String.format(MSG_TRANSFER_FAILED, MSG_ID_TRANSFER_FAILED, objectToTransfer.getIdentifier()));
+						} catch (Exception e) {
+							logger.error(String.format(MSG_EXCEPTION_IN_TRANSFER_OR_ACTION, MSG_ID_EXCEPTION_IN_TRANSFER_OR_ACTION,
+									e.getClass().getName(), e.getMessage()), e);
+							// continue, releasing semaphore
 						}
 
 						// Release parallel thread

@@ -49,9 +49,6 @@ import de.dlr.proseo.model.util.OrbitTimeFormatter;
  */
 public class BaseWrapper {
 
-	private static final String MSG_WRAPPER_CANNOT_BE_LAUNCHED = "Requested wrapper class {} cannot be launched (cause: {})";
-	private static final String MSG_WRAPPER_NOT_SUBCLASS_OF_BASE_WRAPPER = "Requested wrapper class {} is not a subclass of BaseWrapper";
-	private static final String MSG_WRAPPER_CLASS_NOT_FOUND = "Requested wrapper class {} not found";
 	/** Exit code for successful completion */
 	private static final int EXIT_CODE_OK = 0;
 	/** Exit code for completion with warning */
@@ -121,17 +118,22 @@ public class BaseWrapper {
 	private static final String MSG_REGISTERING_PRODUCTS = "Registering {} products with prosEO-Ingestor {}";
 	private static final String MSG_STARTING_BASE_WRAPPER = "\n\n{\"prosEO\" : \"A Processing System for Earth Observation Data\"}\nStarting base-wrapper with JobOrder file {}";
 	private static final String MSG_STARTING_PROCESSOR = "Starting Processing using command {} and local JobOrderFile: {}";
-	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {}";
-	private static final String MSG_UNABLE_TO_ACCESS_FILE = "Unable to access file {}";
+	private static final String MSG_UNABLE_TO_CREATE_DIRECTORY = "Unable to create directory path {} (cause: {} / {})";
+	private static final String MSG_UNABLE_TO_ACCESS_FILE = "Unable to access file {} (cause: {} / {})";
 	private static final String MSG_FILE_NOT_FETCHED = "Requested file {} not copied";
 	private static final String MSG_UNABLE_TO_DELETE_DIRECTORY = "Unable to delete directory/file path {} (cause: {})";
 	private static final String MSG_UPLOADING_RESULTS = "Uploading results to Storage Manager";
-	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {}";
+	private static final String MSG_CANNOT_CALCULATE_CHECKSUM = "Cannot calculate MD5 checksum for product {} (cause: {} / {})";
 	private static final String MSG_MORE_THAN_ONE_ZIP_ARCHIVE = "More than one ZIP archive given for product {}";
 	private static final String MSG_SKIPPING_INPUT_ENTRY = "Skipping input entry of type {} with filename type {}";
 	private static final String MSG_WARNING_INPUT_FILENAME_MISSING = "Skipping input entry of type {} without filename";
 	private static final String MSG_PROCESSOR_EXECUTION_INTERRUPTED = "Processor execution interrupted (cause: {})";
 	private static final String MSG_ERROR_IN_PLANNER_CALLBACK = "Error calling back Production Planner at endpoint {} (cause: {})";
+	private static final String MSG_CANNOT_DETERMINE_FILE_SIZE = "Cannot determine file size for path {} (cause: {} / {}";
+	private static final String MSG_WRAPPER_CANNOT_BE_LAUNCHED = "Requested wrapper class {} cannot be launched (cause: {})";
+	private static final String MSG_WRAPPER_NOT_SUBCLASS_OF_BASE_WRAPPER = "Requested wrapper class {} is not a subclass of BaseWrapper";
+	private static final String MSG_WRAPPER_CLASS_NOT_FOUND = "Requested wrapper class {} not found";
+	private static final String MSG_CANNOT_PARSE_FILE_INFO = "Cannot parse file info response {} (cause: {} / {})";
 
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(BaseWrapper.class);
@@ -466,7 +468,7 @@ public class BaseWrapper {
 					try {
 						 rfi = objectMapper.readValue(fileInfo, RestFileInfo.class);
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						logger.error(MSG_CANNOT_PARSE_FILE_INFO, fileInfo, ex.getClass().getName(), ex.getMessage());
 						continue;
 					}
 					String inputFileName = rfi.getFilePath();
@@ -501,7 +503,7 @@ public class BaseWrapper {
 								}
 							}
 						} catch (IOException e) {
-							logger.error(MSG_UNABLE_TO_ACCESS_FILE, inputFileName);
+							logger.error(MSG_UNABLE_TO_ACCESS_FILE, inputFileName, e.getClass().getName(), e.getMessage());
 							throw new WrapperException();
 						}
 					} else {
@@ -534,6 +536,7 @@ public class BaseWrapper {
 					
 					// Handle directories and regular files differently
 					Path filePath = Paths.get(fn.getFileName());
+					if (logger.isTraceEnabled()) logger.trace("... creating directory for {}, output file name type {}", fn.getFileName(), io.getFileNameType());
 					if (InputOutput.FN_TYPE_DIRECTORY.equals(io.getFileNameType())) {
 						if (Files.exists(filePath)) {
 							if (!Files.isDirectory(filePath)) {
@@ -546,18 +549,23 @@ public class BaseWrapper {
 							}
 						}
 						try {
+							if (logger.isTraceEnabled()) logger.trace("... in 'Directory' branch: calling create directories for {}", filePath);
 							Files.createDirectories(filePath);
 						} 
 						catch (IOException | SecurityException e) {
-							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath);
+							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath, e.getClass().getName(), e.getMessage());
+							e.printStackTrace();
 							throw new WrapperException();
 						}
 					} else {
 						try {
+							if (logger.isTraceEnabled()) logger.trace("... in 'Physical' branch: deleting file {}", filePath);
 							Files.deleteIfExists(filePath);
+							if (logger.isTraceEnabled()) logger.trace("... in 'Physical' branch: calling create directories for {}", filePath.getParent());
 							Files.createDirectories(filePath.getParent());
 						} catch (IOException | SecurityException e) {
-							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath.getParent());
+							logger.error(MSG_UNABLE_TO_CREATE_DIRECTORY, filePath.getParent(), e.getClass().getName(), e.getMessage());
+							e.printStackTrace();
 							throw new WrapperException();
 						}
 					}
@@ -703,8 +711,7 @@ public class BaseWrapper {
 					try {
 						params.put("fileSize", String.valueOf(Files.size(fp)));
 					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						logger.warn(MSG_CANNOT_DETERMINE_FILE_SIZE, fp, e1.getClass().getName(), e1.getMessage());
 						params.put("fileSize", "0");
 					}
 					HttpResponseInfo responseInfo = RestOps.restApiCall(ENV_STORAGE_USER, ENV_STORAGE_PASSWORD, ENV_STORAGE_ENDPOINT,
@@ -765,7 +772,7 @@ public class BaseWrapper {
 							productFile.setZipChecksum(MD5Util.md5Digest(primaryProductFile));
 							productFile.setZipChecksumTime(OrbitTimeFormatter.format(Instant.now()));
 						} catch (IOException e) {
-							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId(), e.getClass().getName(), e.getMessage());
 							throw new WrapperException();
 						}
 					} else if (null == productFile.getProductFileName()) {
@@ -777,7 +784,7 @@ public class BaseWrapper {
 							productFile.setChecksum(MD5Util.md5Digest(primaryProductFile));
 							productFile.setChecksumTime(OrbitTimeFormatter.format(Instant.now()));
 						} catch (IOException e) {
-							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId());
+							logger.error(MSG_CANNOT_CALCULATE_CHECKSUM, productFile.getProductId(), e.getClass().getName(), e.getMessage());
 							throw new WrapperException();
 						}
 					} else {
@@ -868,7 +875,7 @@ public class BaseWrapper {
 						if (logger.isTraceEnabled()) logger.trace("... deleting file " + file);
 						Files.delete(file);
 					} catch (IOException e) {
-						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), e.getMessage());
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, file.toString(), e.getClass().getName() + " / " + e.getMessage());
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -885,13 +892,13 @@ public class BaseWrapper {
 						if (logger.isTraceEnabled()) logger.trace("... deleting directory " + dir);
 						Files.delete(dir);
 					} catch (IOException e) {
-						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString(), e.getMessage());
+						logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, dir.toString(), e.getClass().getName() + " / " + e.getMessage());
 					}
 					return FileVisitResult.CONTINUE;
 				}});
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory, e.getMessage());
+			logger.error(MSG_UNABLE_TO_DELETE_DIRECTORY, wrapperDataDirectory, e.getClass().getName() + " / " + e.getMessage());
 		}
 	}
 

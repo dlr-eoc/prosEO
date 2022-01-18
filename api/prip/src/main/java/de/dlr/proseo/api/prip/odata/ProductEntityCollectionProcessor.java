@@ -74,7 +74,8 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final int MSG_ID_URI_GENERATION_FAILED = 5002;
 	private static final int MSG_ID_UNSUPPORTED_FORMAT = 5008;
 	private static final int MSG_ID_EXCEPTION = 5009;
-	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5009;
+	private static final int MSG_ID_INVALID_FILTER_CONDITION = 5010;
+	private static final int MSG_ID_INVALID_QUERY_RESULT = 5011;
 
 	/* Message string constants */
 	private static final String MSG_INVALID_ENTITY_TYPE = "(E%d) Invalid entity type %s referenced in service request";
@@ -82,6 +83,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	private static final String MSG_EXCEPTION = "(E%d) Request failed (cause %s: %s)";
 	private static final String MSG_INVALID_QUERY_CONDITION = "(E%d) Invalid query condition (cause: %s)";
 	private static final String MSG_UNSUPPORTED_FORMAT = "(E%d) Unsupported response format %s";
+	private static final String MSG_INVALID_QUERY_RESULT = "(E%d) Invalid result for 'count(*)' query: %s";
 
 	/* Other string constants */
 	private static final String HTTP_HEADER_WARNING = "Warning";
@@ -130,18 +132,18 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 	}
 
 	/**
-	 * Convert the given URI info object into a native SQL command to select the requested products. In addition to the URI info
-	 * the product class access rights of the logged in user will be respected.
+	 * Create an SQL command with a "WHERE" clause derived from the "$filter" query parameter in the URI
 	 * 
 	 * @param uriInfo the URI info to analyze
+	 * @param countOnly create a command, which only counts the requested products, but does not return them
 	 * @return a native SQL command
 	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
 	 */
-	private String createProductSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
-		if (logger.isTraceEnabled()) logger.trace(">>> createProductSqlQuery({})", uriInfo.getUriResourceParts());
+	private StringBuilder createProductSqlQueryFilter(UriInfo uriInfo, boolean countOnly) throws ODataApplicationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProductSqlQueryFilter({})", uriInfo.getUriResourceParts());
 
 		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
-		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand());
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly));
 
 		// Test filter option
 		FilterOption filterOption = uriInfo.getFilterOption();
@@ -155,6 +157,7 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		        if (null == result) {
 					throw new NullPointerException("Unexpected null result from expressionVisitor");
 				}
+		        sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(countOnly)); // The number of parameters requested may have changed!
 				sqlCommand.append(result);
 			} catch (ODataApplicationException | ExpressionVisitException e) {
 		        throw new ODataApplicationException("Exception thrown in filter expression: " + e.getMessage(),
@@ -176,6 +179,25 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		}
 		permissionFilter.append(")");
 		sqlCommand.append("\n").append(permissionFilter);
+		
+		return sqlCommand;
+	}
+
+	/**
+	 * Convert the given URI info object into a native SQL command to select the requested products. In addition to the URI info
+	 * the product class access rights of the logged in user will be respected.
+	 * 
+	 * @param uriInfo the URI info to analyze
+	 * @return a native SQL command
+	 * @throws ODataApplicationException if any error is encountered in the query options contained in the URI info object
+	 */
+	private String createProductSqlQuery(UriInfo uriInfo) throws ODataApplicationException {
+		if (logger.isTraceEnabled()) logger.trace(">>> createProductSqlQuery({})", uriInfo.getUriResourceParts());
+
+		SqlFilterExpressionVisitor expressionVisitor = new SqlFilterExpressionVisitor();
+		StringBuilder sqlCommand = new StringBuilder(expressionVisitor.getSqlCommand(false));
+
+		sqlCommand = createProductSqlQueryFilter(uriInfo, false);
 
 		// Test order option
 		OrderByOption orderByOption = uriInfo.getOrderByOption();
@@ -250,8 +272,19 @@ public class ProductEntityCollectionProcessor implements EntityCollectionProcess
 		// Check $count option
 		CountOption countOption = uriInfo.getCountOption();
 		if (null != countOption && countOption.getValue()) {
-		    if (logger.isTraceEnabled()) logger.trace("... returning result size {} due to $count option", productList.size());
-		    productsCollection.setCount(productList.size());
+			sqlCommand = createProductSqlQueryFilter(uriInfo, true).toString();
+			
+			query = em.createNativeQuery(sqlCommand);
+			Integer collectionSize = 0;
+			String queryResult = query.getSingleResult().toString();
+			try {
+				collectionSize = Integer.parseInt(queryResult);
+			} catch (NumberFormatException e) {
+				logError(MSG_INVALID_QUERY_RESULT, MSG_ID_INVALID_QUERY_RESULT, queryResult);
+			}
+			
+		    if (logger.isTraceEnabled()) logger.trace("... returning collection size {} due to $count option", collectionSize);
+		    productsCollection.setCount(collectionSize);
 		}
 
 		if (logger.isTraceEnabled()) logger.trace("... returning " + productsCollection.getEntities().size() + " product entries");

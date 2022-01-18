@@ -21,6 +21,7 @@ import org.apache.olingo.commons.api.edm.provider.CsdlEntityType;
 import org.apache.olingo.commons.api.edm.provider.CsdlEnumMember;
 import org.apache.olingo.commons.api.edm.provider.CsdlEnumType;
 import org.apache.olingo.commons.api.edm.provider.CsdlNavigationProperty;
+import org.apache.olingo.commons.api.edm.provider.CsdlNavigationPropertyBinding;
 import org.apache.olingo.commons.api.edm.provider.CsdlProperty;
 import org.apache.olingo.commons.api.edm.provider.CsdlPropertyRef;
 import org.apache.olingo.commons.api.edm.provider.CsdlSchema;
@@ -61,39 +62,53 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 	public static final String ET_PRODUCT_PROP_ORIGIN_DATE = "OriginDate";
 	public static final String ET_PRODUCT_PROP_PUBLICATION_DATE = "PublicationDate";
 	public static final String ET_PRODUCT_PROP_EVICTION_DATE = "EvictionDate";
-	public static final String ET_PRODUCT_PROP_CHECKSUMS = "Checksums";
+	public static final String ET_PRODUCT_PROP_CHECKSUM = "Checksum";
 	public static final String ET_PRODUCT_PROP_CONTENT_DATE = "ContentDate";
 	public static final String ET_PRODUCT_PROP_PRODUCTION_TYPE = "ProductionType";
 	public static final String ET_PRODUCT_PROP_ATTRIBUTES = "Attributes";
+	public static final String ET_PRODUCT_PROP_STRING_ATTRIBUTES = "StringAttributes";
+	public static final String ET_PRODUCT_PROP_INT_ATTRIBUTES = "IntegerAttributes";
+	public static final String ET_PRODUCT_PROP_DOUBLE_ATTRIBUTES = "DoubleAttributes";
+	public static final String ET_PRODUCT_PROP_BOOL_ATTRIBUTES = "BooleanAttributes";
+	public static final String ET_PRODUCT_PROP_DATE_ATTRIBUTES = "DateTimeOffsetAttributes";
 	
-	public static final String ET_ATTRIBUTES_NAME = ET_PRODUCT_PROP_ATTRIBUTES;
-	public static final FullQualifiedName ET_ATTRIBUTES_FQN = new FullQualifiedName(NAMESPACE, ET_ATTRIBUTES_NAME);
-	public static final String ET_ATTRIBUTES_PROP_VALUETYPE = "ValueType";
+	public static final String ET_ATTRIBUTE_NAME = "Attribute";
+	public static final FullQualifiedName ET_ATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_ATTRIBUTE_NAME);
+	public static final String ET_ATTRIBUTE_PROP_VALUETYPE = "ValueType";
 	
 	public static final String ET_STRINGATTRIBUTE_NAME = "StringAttribute";
-	public static final Object ET_STRINGATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_STRINGATTRIBUTE_NAME);
+	public static final FullQualifiedName ET_STRINGATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_STRINGATTRIBUTE_NAME);
 	
 	public static final String ET_DATEATTRIBUTE_NAME = "DateTimeOffsetAttribute";
-	public static final Object ET_DATEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DATEATTRIBUTE_NAME);
+	public static final FullQualifiedName ET_DATEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DATEATTRIBUTE_NAME);
 	
 	public static final String ET_INTEGERATTRIBUTE_NAME = "IntegerAttribute";
-	public static final Object ET_INTEGERATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_INTEGERATTRIBUTE_NAME);
+	public static final FullQualifiedName ET_INTEGERATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_INTEGERATTRIBUTE_NAME);
 
 	public static final String ET_DOUBLEATTRIBUTE_NAME = "DoubleAttribute";
-	public static final Object ET_DOUBLEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DOUBLEATTRIBUTE_NAME);
+	public static final FullQualifiedName ET_DOUBLEATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_DOUBLEATTRIBUTE_NAME);
+
+	public static final String ET_BOOLEANATTRIBUTE_NAME = "BooleanAttribute";
+	public static final FullQualifiedName ET_BOOLEANATTRIBUTE_FQN = new FullQualifiedName(NAMESPACE, ET_BOOLEANATTRIBUTE_NAME);
 
 	// Entity Sets
 	public static final String ES_PRODUCTS_NAME = "Products";
+	public static final String ES_ATTRIBUTES_NAME = "Attributes";
+	public static final String ES_STRINGATTRIBUTES_NAME = "StringAttributes";
+	public static final String ES_INTEGERATTRIBUTES_NAME = "IntegerAttributes";
+	public static final String ES_DOUBLEATTRIBUTES_NAME = "DoubleAttributes";
+	public static final String ES_BOOLEANATTRIBUTES_NAME = "BooleanAttributes";
+	public static final String ES_DATEATTRIBUTES_NAME = "DateTimeOffsetAttributes";
 
 	// Enumeration Types
-	public static final String EN_PRODUCTIONTYPE_NAME = ET_PRODUCT_PROP_PRODUCTION_TYPE;
+	public static final String EN_PRODUCTIONTYPE_NAME = "ProductionType";
 	public static final FullQualifiedName EN_PRODUCTIONTYPE_FQN = new FullQualifiedName(NAMESPACE, EN_PRODUCTIONTYPE_NAME);
-	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = ProductionType.SYSTEMATIC.toString();
-	public static final int EN_PRODUCTIONTYPE_SYSTEMATIC_VAL = 10;
-	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = ProductionType.ON_DEMAND_DEFAULT.toString();
-	public static final int EN_PRODUCTIONTYPE_ONDEMDEF_VAL = 20;
-	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = ProductionType.ON_DEMAND_NON_DEFAULT.toString();
-	public static final int EN_PRODUCTIONTYPE_ONDEMNODEF_VAL = 30;
+	public static final String EN_PRODUCTIONTYPE_SYSTEMATIC = "systematic_production";
+	public static final int EN_PRODUCTIONTYPE_SYSTEMATIC_VAL = 0;
+	public static final String EN_PRODUCTIONTYPE_ONDEMDEF = "on-demand default";
+	public static final int EN_PRODUCTIONTYPE_ONDEMDEF_VAL = 1;
+	public static final String EN_PRODUCTIONTYPE_ONDEMNODEF = "on-demand non-default";
+	public static final int EN_PRODUCTIONTYPE_ONDEMNODEF_VAL = 2;
 
 	// Complex Types
 	public static final String CT_CHECKSUM_NAME = "Checksum";
@@ -123,6 +138,7 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		entityContainer.setName(CONTAINER_NAME);
 		entityContainer.setEntitySets(entitySets);
 
+		if (logger.isTraceEnabled()) logger.trace("<<< getEntityContainer()");
 		return entityContainer;
 	}
 
@@ -134,9 +150,12 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		if (entityContainerName == null || entityContainerName.equals(CONTAINER)) {
 			CsdlEntityContainerInfo entityContainerInfo = new CsdlEntityContainerInfo();
 			entityContainerInfo.setContainerName(CONTAINER);
+
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityContainerInfo({}, {})", entityContainerName);
 			return entityContainerInfo;
 		}
 
+		if (logger.isTraceEnabled()) logger.trace("<<< getEntityContainerInfo({}, {}) --> null", entityContainerName);
 		return null;
 	}
 
@@ -149,11 +168,67 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 				CsdlEntitySet entitySet = new CsdlEntitySet();
 				entitySet.setName(ES_PRODUCTS_NAME);
 				entitySet.setType(ET_PRODUCT_FQN);
+				
+			    CsdlNavigationPropertyBinding navAttributesBinding = new CsdlNavigationPropertyBinding();
+			    navAttributesBinding.setPath(ET_ATTRIBUTE_NAME); 
+			    navAttributesBinding.setTarget(ES_ATTRIBUTES_NAME); //target entitySet, where the nav prop points to
 
+			    entitySet.setNavigationPropertyBindings(Arrays.asList(navAttributesBinding));
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_ATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_ATTRIBUTES_NAME);
+				entitySet.setType(ET_ATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_STRINGATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_STRINGATTRIBUTES_NAME);
+				entitySet.setType(ET_STRINGATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_INTEGERATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_INTEGERATTRIBUTES_NAME);
+				entitySet.setType(ET_INTEGERATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_DOUBLEATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_DOUBLEATTRIBUTES_NAME);
+				entitySet.setType(ET_DOUBLEATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_BOOLEANATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_BOOLEANATTRIBUTES_NAME);
+				entitySet.setType(ET_BOOLEANATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
+				return entitySet;
+			} else if (entitySetName.equals(ES_DATEATTRIBUTES_NAME)) {
+				CsdlEntitySet entitySet = new CsdlEntitySet();
+				entitySet.setName(ES_DATEATTRIBUTES_NAME);
+				entitySet.setType(ET_DATEATTRIBUTE_FQN);
+				entitySet.setIncludeInServiceDocument(false);
+				
+				if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {})", entityContainer, entitySetName);
 				return entitySet;
 			}
 		}
 
+		if (logger.isTraceEnabled()) logger.trace("<<< getEntitySet({}, {}) --> null", entityContainer, entitySetName);
 		return null;
 	}
 	
@@ -172,10 +247,13 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			CsdlEnumType productionTypeType = new CsdlEnumType();
 			productionTypeType.setName(EN_PRODUCTIONTYPE_NAME);
 			productionTypeType.setMembers(Arrays.asList(systematic, onDemandDefault, onDemandNonDefault));
+			productionTypeType.setUnderlyingType(EdmPrimitiveTypeKind.Int32.getFullQualifiedName());
 
+			if (logger.isTraceEnabled()) logger.trace("<<< getEnumType({})", enumTypeName);
 			return productionTypeType;
 		}
 		
+		if (logger.isTraceEnabled()) logger.trace("<<< getEnumType({}) --> null", enumTypeName);
 		return null;
 	}
 	
@@ -187,28 +265,38 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		if(complexTypeName.equals(CT_CHECKSUM_FQN)){
 			
 			// Create Checksum properties
-			CsdlProperty algorithm = new CsdlProperty().setName(CT_CHECKSUM_PROP_ALGORITHM).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty value = new CsdlProperty().setName(CT_CHECKSUM_PROP_VALUE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty checksumDate = new CsdlProperty().setName(CT_CHECKSUM_PROP_CHECKSUM_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty algorithm = new CsdlProperty().setName(CT_CHECKSUM_PROP_ALGORITHM)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()).setNullable(false);
+			CsdlProperty value = new CsdlProperty().setName(CT_CHECKSUM_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName()).setNullable(false);
+			CsdlProperty checksumDate = new CsdlProperty().setName(CT_CHECKSUM_PROP_CHECKSUM_DATE)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 			
 			// Configure Checksum complex type
 			CsdlComplexType checksumType = new CsdlComplexType();
 			checksumType.setName(CT_CHECKSUM_NAME);
 			checksumType.setProperties(Arrays.asList(algorithm, value, checksumDate));
+
+			if (logger.isTraceEnabled()) logger.trace("<<< getComplexType({})", complexTypeName);
 			return checksumType;
 		} else if(complexTypeName.equals(CT_TIMERANGE_FQN)){
 			
 			// Create TimeRange properties
-			CsdlProperty start = new CsdlProperty().setName(CT_TIMERANGE_PROP_START).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
-			CsdlProperty end = new CsdlProperty().setName(CT_TIMERANGE_PROP_END).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty start = new CsdlProperty().setName(CT_TIMERANGE_PROP_START)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(6).setNullable(false);
+			CsdlProperty end = new CsdlProperty().setName(CT_TIMERANGE_PROP_END)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(6).setNullable(false);
 			
 			// Configure TimeRange complex type
 			CsdlComplexType timeRangeType = new CsdlComplexType();
 			timeRangeType.setName(CT_TIMERANGE_NAME);
 			timeRangeType.setProperties(Arrays.asList(start, end));
+
+			if (logger.isTraceEnabled()) logger.trace("<<< getComplexType({})", complexTypeName);
 			return timeRangeType;
 		}
 		
+		if (logger.isTraceEnabled()) logger.trace("<<< getComplexType({}) --> null", complexTypeName);
 		return null;
 	}
 
@@ -220,22 +308,54 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		if(entityTypeName.equals(ET_PRODUCT_FQN)){
 
 			// Create Product properties
-			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID).setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
-			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
-			CsdlProperty originDate = new CsdlProperty().setName(ET_PRODUCT_PROP_ORIGIN_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
-			CsdlProperty publicationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_PUBLICATION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
-			CsdlProperty evictionDate = new CsdlProperty().setName(ET_PRODUCT_PROP_EVICTION_DATE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty id = new CsdlProperty().setName(GENERIC_PROP_ID)
+					.setType(EdmPrimitiveTypeKind.Guid.getFullQualifiedName());
+			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty contentType = new CsdlProperty().setName(GENERIC_PROP_CONTENT_TYPE)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty contentLength = new CsdlProperty().setName(GENERIC_PROP_CONTENT_LENGTH)
+					.setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
+			CsdlProperty originDate = new CsdlProperty().setName(ET_PRODUCT_PROP_ORIGIN_DATE)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
+			CsdlProperty publicationDate = new CsdlProperty().setName(ET_PRODUCT_PROP_PUBLICATION_DATE)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
+			CsdlProperty evictionDate = new CsdlProperty().setName(ET_PRODUCT_PROP_EVICTION_DATE)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName()).setPrecision(3);
 
 			// Add structured properties
-			CsdlProperty checksums = new CsdlProperty().setName(ET_PRODUCT_PROP_CHECKSUMS).setCollection(true).setType(CT_CHECKSUM_FQN);
-			CsdlProperty contentDate = new CsdlProperty().setName(ET_PRODUCT_PROP_CONTENT_DATE).setType(CT_TIMERANGE_FQN);
-			CsdlProperty productionType = new CsdlProperty().setName(ET_PRODUCT_PROP_PRODUCTION_TYPE).setType(EN_PRODUCTIONTYPE_FQN);
+			CsdlProperty checksum = new CsdlProperty().setName(ET_PRODUCT_PROP_CHECKSUM).setCollection(true)
+					.setType(CT_CHECKSUM_FQN);
+			CsdlProperty contentDate = new CsdlProperty().setName(ET_PRODUCT_PROP_CONTENT_DATE)
+					.setType(CT_TIMERANGE_FQN);
+			CsdlProperty productionType = new CsdlProperty().setName(ET_PRODUCT_PROP_PRODUCTION_TYPE)
+					.setType(EN_PRODUCTIONTYPE_FQN);
 			
 			// Add navigation properties
+//			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
+//					.setType(ET_ATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
+//			CsdlNavigationProperty stringAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_STRING_ATTRIBUTES)
+//					.setType(ET_STRINGATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
+//			CsdlNavigationProperty intAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_INT_ATTRIBUTES)
+//					.setType(ET_INTEGERATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
+//			CsdlNavigationProperty doubleAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DOUBLE_ATTRIBUTES)
+//					.setType(ET_DOUBLEATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
+//			CsdlNavigationProperty boolAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_BOOL_ATTRIBUTES)
+//					.setType(ET_BOOLEANATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
+//			CsdlNavigationProperty dateAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DATE_ATTRIBUTES)
+//					.setType(ET_DATEATTRIBUTE_FQN).setCollection(true).setPartner(ES_PRODUCTS_NAME);
 			CsdlNavigationProperty attributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_ATTRIBUTES)
-				.setType(ET_ATTRIBUTES_FQN).setCollection(true).setPartner(ET_PRODUCT_NAME);
+					.setType(ET_ATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty stringAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_STRING_ATTRIBUTES)
+					.setType(ET_STRINGATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty intAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_INT_ATTRIBUTES)
+					.setType(ET_INTEGERATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty doubleAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DOUBLE_ATTRIBUTES)
+					.setType(ET_DOUBLEATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty boolAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_BOOL_ATTRIBUTES)
+					.setType(ET_BOOLEANATTRIBUTE_FQN).setCollection(true);
+			CsdlNavigationProperty dateAttributes = new CsdlNavigationProperty().setName(ET_PRODUCT_PROP_DATE_ATTRIBUTES)
+					.setType(ET_DATEATTRIBUTE_FQN).setCollection(true);
 
 			// Create CsdlPropertyRef for Key element
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
@@ -244,17 +364,19 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 			// Configure Product entity type
 			CsdlEntityType productType = new CsdlEntityType();
 			productType.setName(ET_PRODUCT_NAME);
-			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, originDate, publicationDate, evictionDate, checksums,
-					contentDate, productionType));
-			productType.setNavigationProperties(Arrays.asList(attributes));
+			productType.setProperties(Arrays.asList(id, name , contentType, contentLength, originDate, publicationDate, 
+					evictionDate, checksum, contentDate, productionType));
+			productType.setNavigationProperties(Arrays.asList(attributes, stringAttributes, intAttributes, doubleAttributes, 
+					boolAttributes, dateAttributes));
 			productType.setKey(Collections.singletonList(idRef));
 			productType.setHasStream(true);
 
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return productType;
-		} else if (entityTypeName.equals(ET_ATTRIBUTES_FQN)) {
+		} else if (entityTypeName.equals(ET_ATTRIBUTE_FQN)) {
 			// Create Attribute properties
 			CsdlProperty name = new CsdlProperty().setName(GENERIC_PROP_NAME).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
-			CsdlProperty valueType = new CsdlProperty().setName(ET_ATTRIBUTES_PROP_VALUETYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty valueType = new CsdlProperty().setName(ET_ATTRIBUTE_PROP_VALUETYPE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 
 			// Create CsdlPropertyRef for Key element
 			CsdlPropertyRef idRef = new CsdlPropertyRef();
@@ -262,57 +384,80 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 
 			// Configure Attributes entity type
 			CsdlEntityType attributesType = new CsdlEntityType();
-			attributesType.setName(ET_ATTRIBUTES_NAME);
+			attributesType.setName(ET_ATTRIBUTE_NAME);
 			attributesType.setProperties(Arrays.asList(name, valueType));
 			attributesType.setKey(Collections.singletonList(idRef));
 			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return attributesType;
 		} else if (entityTypeName.equals(ET_STRINGATTRIBUTE_FQN)) {
 			// Create specific StringAttribute properties
-			CsdlProperty stringValue = new CsdlProperty().setName(GENERIC_PROP_VALUE).setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
+			CsdlProperty stringValue = new CsdlProperty().setName(GENERIC_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.String.getFullQualifiedName());
 			
 			// Configure StringAttribute entity type
 			CsdlEntityType stringAttributeType = new CsdlEntityType();
 			stringAttributeType.setName(ET_STRINGATTRIBUTE_NAME);
-			stringAttributeType.setBaseType(ET_ATTRIBUTES_FQN);
+			stringAttributeType.setBaseType(ET_ATTRIBUTE_FQN);
 			stringAttributeType.setProperties(Arrays.asList(stringValue));
 			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return stringAttributeType;
 		} else if (entityTypeName.equals(ET_DATEATTRIBUTE_FQN)) {
 			// Create specific DateAttribute properties
-			CsdlProperty dateValue = new CsdlProperty().setName(GENERIC_PROP_VALUE).setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
+			CsdlProperty dateValue = new CsdlProperty().setName(GENERIC_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName());
 			
 			// Configure DateAttribute entity type
 			CsdlEntityType dateAttributeType = new CsdlEntityType();
 			dateAttributeType.setName(ET_DATEATTRIBUTE_NAME);
-			dateAttributeType.setBaseType(ET_ATTRIBUTES_FQN);
+			dateAttributeType.setBaseType(ET_ATTRIBUTE_FQN);
 			dateAttributeType.setProperties(Arrays.asList(dateValue));
 			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return dateAttributeType;
 		} else if (entityTypeName.equals(ET_INTEGERATTRIBUTE_FQN)) {
 			// Create specific IntegerAttribute properties
-			CsdlProperty integerValue = new CsdlProperty().setName(GENERIC_PROP_VALUE).setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
+			CsdlProperty integerValue = new CsdlProperty().setName(GENERIC_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.Int64.getFullQualifiedName());
 			
 			// Configure IntegerAttribute entity type
 			CsdlEntityType integerAttributeType = new CsdlEntityType();
 			integerAttributeType.setName(ET_INTEGERATTRIBUTE_NAME);
-			integerAttributeType.setBaseType(ET_ATTRIBUTES_FQN);
+			integerAttributeType.setBaseType(ET_ATTRIBUTE_FQN);
 			integerAttributeType.setProperties(Arrays.asList(integerValue));
 			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return integerAttributeType;
 		} else if (entityTypeName.equals(ET_DOUBLEATTRIBUTE_FQN)) {
 			// Create specific DoubleAttribute properties
-			CsdlProperty doubleValue = new CsdlProperty().setName(GENERIC_PROP_VALUE).setType(EdmPrimitiveTypeKind.Double.getFullQualifiedName());
+			CsdlProperty doubleValue = new CsdlProperty().setName(GENERIC_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.Double.getFullQualifiedName());
 			
 			// Configure DoubleAttribute entity type
 			CsdlEntityType doubleAttributeType = new CsdlEntityType();
 			doubleAttributeType.setName(ET_DOUBLEATTRIBUTE_NAME);
-			doubleAttributeType.setBaseType(ET_ATTRIBUTES_FQN);
+			doubleAttributeType.setBaseType(ET_ATTRIBUTE_FQN);
 			doubleAttributeType.setProperties(Arrays.asList(doubleValue));
 			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
 			return doubleAttributeType;
+		} else if (entityTypeName.equals(ET_BOOLEANATTRIBUTE_FQN)) {
+			// Create specific DoubleAttribute properties
+			CsdlProperty booleanValue = new CsdlProperty().setName(GENERIC_PROP_VALUE)
+					.setType(EdmPrimitiveTypeKind.Boolean.getFullQualifiedName());
+			
+			// Configure BooleanAttribute entity type
+			CsdlEntityType booleanAttributeType = new CsdlEntityType();
+			booleanAttributeType.setName(ET_BOOLEANATTRIBUTE_NAME);
+			booleanAttributeType.setBaseType(ET_ATTRIBUTE_FQN);
+			booleanAttributeType.setProperties(Arrays.asList(booleanValue));
+			
+			if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({})", entityTypeName);
+			return booleanAttributeType;
 		}
 
+		if (logger.isTraceEnabled()) logger.trace("<<< getEntityType({}) --> null", entityTypeName);
 		return null;
 	}
 
@@ -327,15 +472,31 @@ public class ProductEdmProvider extends CsdlAbstractEdmProvider {
 		// add EntityTypes
 		List<CsdlEntityType> entityTypes = new ArrayList<CsdlEntityType>();
 		entityTypes.add(getEntityType(ET_PRODUCT_FQN));
+		entityTypes.add(getEntityType(ET_ATTRIBUTE_FQN));
+		entityTypes.add(getEntityType(ET_STRINGATTRIBUTE_FQN));
+		entityTypes.add(getEntityType(ET_DATEATTRIBUTE_FQN));
+		entityTypes.add(getEntityType(ET_INTEGERATTRIBUTE_FQN));
 		schema.setEntityTypes(entityTypes);
 
 		// add EntityContainer
 		schema.setEntityContainer(getEntityContainer());
+		
+		// add ComplexTypes
+		List<CsdlComplexType> complexTypes = new ArrayList<>();
+		complexTypes.add(getComplexType(CT_CHECKSUM_FQN));
+		complexTypes.add(getComplexType(CT_TIMERANGE_FQN));
+		schema.setComplexTypes(complexTypes);
+		
+		// add EnumTypes
+		List<CsdlEnumType> enumTypes = new ArrayList<>();
+		enumTypes.add(getEnumType(EN_PRODUCTIONTYPE_FQN));
+		schema.setEnumTypes(enumTypes);
 
 		// finally
 		List<CsdlSchema> schemas = new ArrayList<CsdlSchema>();
 		schemas.add(schema);
 
+		if (logger.isTraceEnabled()) logger.trace("<<< getSchemas()");
 		return schemas;
 	}
 

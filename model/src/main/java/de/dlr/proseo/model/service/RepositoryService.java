@@ -17,6 +17,10 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.MonExtServiceRepository;
 import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
+import de.dlr.proseo.model.dao.MonKpi01TimelinessMonthRepository;
+import de.dlr.proseo.model.dao.MonKpi01TimelinessQuarterRepository;
+import de.dlr.proseo.model.dao.MonKpi02CompletenessMonthRepository;
+import de.dlr.proseo.model.dao.MonKpi02CompletenessQuarterRepository;
 import de.dlr.proseo.model.dao.MonOrderStateRepository;
 import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
 import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
@@ -169,6 +173,22 @@ public class RepositoryService {
 	/** The repository for the MonRawDataDownload class */
 	@Autowired
     private MonRawDataDownloadRepository monRawDataDownloadRepository;
+	
+	/** The repository for the MonKpi01TimelinessMonthRepository class */
+	@Autowired
+    private MonKpi01TimelinessMonthRepository monKpi01TimelinessMonthRepository;
+	
+	/** The repository for the MonKpi01TimelinessQuarterRepository class */
+	@Autowired
+    private MonKpi01TimelinessQuarterRepository monKpi01TimelinessQuarterRepository;
+	
+	/** The repository for the MonKpi02CompletenessMonthRepository class */
+	@Autowired
+    private MonKpi02CompletenessMonthRepository monKpi02CompletenessMonthRepository;
+	
+	/** The repository for the MonKpi02CompletenessQuarterRepository class */
+	@Autowired
+    private MonKpi02CompletenessQuarterRepository monKpi02CompletenessQuarterRepository;
 	
 	/**
 	 * Singleton constructor
@@ -436,6 +456,34 @@ public class RepositoryService {
 	 */
 	public static MonRawDataDownloadRepository getMonRawDataDownloadRepository() {
 		return theRepositoryService.monRawDataDownloadRepository;
+	}
+
+	/**
+	 * @return the monKpi01TimelinessMonthRepository
+	 */
+	public static MonKpi01TimelinessMonthRepository getMonKpi01TimelinessMonthRepository() {
+		return theRepositoryService.monKpi01TimelinessMonthRepository;
+	}
+
+	/**
+	 * @return the monKpi01TimelinessQuarterRepository
+	 */
+	public static MonKpi01TimelinessQuarterRepository getMonKpi01TimelinessQuarterRepository() {
+		return theRepositoryService.monKpi01TimelinessQuarterRepository;
+	}
+
+	/**
+	 * @return the monKpi02CompletenessMonthRepository
+	 */
+	public static MonKpi02CompletenessMonthRepository getMonKpi02CompletenessMonthRepository() {
+		return theRepositoryService.monKpi02CompletenessMonthRepository;
+	}
+
+	/**
+	 * @return the monKpi02CompletenessQuarterRepository
+	 */
+	public static MonKpi02CompletenessQuarterRepository getMonKpi02CompletenessQuarterRepository() {
+		return theRepositoryService.monKpi02CompletenessQuarterRepository;
 	}
 
 }

@@ -41,6 +41,7 @@ import de.dlr.proseo.ingestor.rest.model.ProductUtil;
 import de.dlr.proseo.ingestor.rest.model.RestProduct;
 import de.dlr.proseo.ingestor.rest.model.RestProductFile;
 import de.dlr.proseo.interfaces.rest.model.RestProductFS;
+import de.dlr.proseo.model.DownloadHistory;
 import de.dlr.proseo.model.ProcessingFacility;
 import de.dlr.proseo.model.Product;
 import de.dlr.proseo.model.ProductClass;
@@ -81,6 +82,7 @@ public class ProductIngestor {
 	private static final int MSG_ID_DELETION_UNSUCCESSFUL = 2069;
 	private static final int MSG_ID_ERROR_DELETING_PRODUCT = 2070;
 	private static final int MSG_ID_PRODUCT_QUERY_EXISTS = 2071;
+	private static final int MSG_ID_NUMBER_PRODUCT_FILES_DELETED = 2068;
 
 	// Same as in ProductManager
 	private static final int MSG_ID_PRODUCT_CLASS_INVALID = 2012;
@@ -113,6 +115,7 @@ public class ProductIngestor {
 	private static final String MSG_PRODUCT_FILE_MODIFIED = "(I%d) Product file %s for product with id %d modified";
 	private static final String MSG_PRODUCT_FILE_NOT_MODIFIED = "(I%d) Product file %s for product with id %d not modified (no changes)";
 	private static final String MSG_PRODUCT_FILE_DELETED = "(I%d) Product file %s for product with id %d deleted";
+	private static final String MSG_NUMBER_PRODUCT_FILES_DELETED = "(I%d) %d product files deleted";
 
 	/* URLs for Storage Manager and Production Planner */
 	private static final String URL_PLANNER_NOTIFY = "/product/%d";
@@ -489,10 +492,29 @@ public class ProductIngestor {
 			throw new SecurityException(logError(MSG_ILLEGAL_CROSS_MISSION_ACCESS, MSG_ID_ILLEGAL_CROSS_MISSION_ACCESS,
 					product.get().getProductClass().getMission().getCode(), securityService.getMission()));			
 		}
-		
+		deleteProductFile(product.get(), facility, eraseFiles);
+	}
+	
+    /**
+     * Delete a product file for a product from a given processing facility (metadata and actual data file(s))
+     * 
+     * @param product the product
+     * @param facility the processing facility, from which the files shall be deleted
+     * @param eraseFiles erase the data file(s) from the storage area (default "true")
+     * @throws EntityNotFoundException if the product or the product file could not be found
+     * @throws RuntimeException if the deletion failed
+ 	 * @throws ProcessingException if the communication with the Storage Manager fails
+ 	 * @throws IllegalArgumentException if the product currently satisfies a product query for the given processing facility
+     */
+	private void deleteProductFile(Product product, ProcessingFacility facility, Boolean eraseFiles) throws 
+			EntityNotFoundException, RuntimeException, ProcessingException, IllegalArgumentException {
+		// no logging cause already logged by 
+		// deleteProductFile(Long productId, ProcessingFacility facility, Boolean eraseFiles)
+		// if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFile({}, {}, {})", product.getId(), facility.getName(), eraseFiles);
+
 		// Error, if a database product file for the given facility does not yet exist
 		ProductFile modelProductFile = null;
-		for (ProductFile aProductFile: product.get().getProductFile()) {
+		for (ProductFile aProductFile: product.getProductFile()) {
 			if (facility.equals(aProductFile.getProcessingFacility())) {
 				modelProductFile = aProductFile;
 			}
@@ -502,10 +524,10 @@ public class ProductIngestor {
 		}
 		
 		// Do not delete product file, if the product is currently satisfying some product query for the same processing facility
-		for (ProductQuery productQuery: product.get().getSatisfiedProductQueries()) {
+		for (ProductQuery productQuery: product.getSatisfiedProductQueries()) {
 			if (productQuery.getJobStep().getJob().getProcessingFacility().equals(facility)) {
 				throw new IllegalArgumentException(logError(MSG_PRODUCT_QUERY_EXISTS, MSG_ID_PRODUCT_QUERY_EXISTS,
-						productId, facility.getName()));
+						product.getId(), facility.getName()));
 			}
 		}
 		
@@ -526,25 +548,57 @@ public class ProductIngestor {
 					restTemplate.delete(storageManagerUrl);
 				} catch (RestClientException e) {
 					throw new ProcessingException(logError(MSG_ERROR_DELETING_PRODUCT, MSG_ID_ERROR_DELETING_PRODUCT,
-							product.get().getId(), facility.getName(), e.getMessage()));
+							product.getId(), facility.getName(), e.getMessage()));
 				}
 			} 
 		}
 		
+		// Remove links to product file from product download history
+		for (DownloadHistory downloadHistory: product.getDownloadHistory()) {
+			if (modelProductFile.equals(downloadHistory.getProductFile())) {
+				// Link is optional, and download history shall persist even if file is deleted
+				downloadHistory.setProductFile(null);
+			}
+		}
+		
 		// Remove the product file from the product
-		product.get().getProductFile().remove(modelProductFile);
+		product.getProductFile().remove(modelProductFile);
 		
 		// Delete the product file metadata
 		RepositoryService.getProductFileRepository().delete(modelProductFile);
 
 		// Test whether the deletion was successful
 		if (!RepositoryService.getProductFileRepository().findById(modelProductFile.getId()).isEmpty()) {
-			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, modelProductFile.getProductFileName(), productId));
+			throw new RuntimeException(logError(MSG_DELETION_UNSUCCESSFUL, MSG_ID_DELETION_UNSUCCESSFUL, modelProductFile.getProductFileName(), product.getId()));
 		}
 		
-		logInfo(MSG_PRODUCT_FILE_DELETED, MSG_ID_PRODUCT_FILE_DELETED, modelProductFile.getProductFileName(), productId);
+		logInfo(MSG_PRODUCT_FILE_DELETED, MSG_ID_PRODUCT_FILE_DELETED, modelProductFile.getProductFileName(), product.getId());
 	}
 
+	/**
+	 * Delete all product (files) with eviction time older than t.
+	 *  
+	 * @param t The Instant for eviction time
+	 */
+	public void deleteProductFilesOlderThan(Instant t) {
+		if (logger.isTraceEnabled()) logger.trace(">>> deleteProductFilesOlderThan({})", t);		
+		List<Product> products = RepositoryService.getProductRepository().findByEvictionTimeLessThan(t);
+		long productFilesDeleted = 0;
+		for (Product product : products) {
+			for (ProductFile aProductFile: product.getProductFile()) {
+				try {
+					deleteProductFile(product, aProductFile.getProcessingFacility(), true);
+				} 
+				// ignore known exceptions cause already logged
+				catch (EntityNotFoundException e) {break;}
+				catch (ProcessingException e) {break;}
+				catch (IllegalArgumentException e) {break;}
+				catch (RuntimeException e) {break;};
+				productFilesDeleted++;
+			}
+		}
+		logInfo(MSG_NUMBER_PRODUCT_FILES_DELETED, MSG_ID_NUMBER_PRODUCT_FILES_DELETED, productFilesDeleted);
+	}
     /**
      * Update the product file metadata for a product at a given processing facility
      * 

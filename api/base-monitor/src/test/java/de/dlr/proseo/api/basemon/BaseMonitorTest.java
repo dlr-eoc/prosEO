@@ -66,10 +66,16 @@ public class BaseMonitorTest {
 	private static class TestTransferObject implements TransferObject {
 		
 		String identifier;
+		Instant referenceTime = Instant.now();
 
 		@Override
 		public String getIdentifier() {
 			return identifier;
+		}
+		
+		@Override
+		public Instant getReferenceTime() {
+			return referenceTime;
 		}
 		
 		public TestTransferObject(String identifier) {
@@ -111,8 +117,11 @@ public class BaseMonitorTest {
 		}
 
 		@Override
-		protected List<TransferObject> checkAvailableDownloads(Instant referenceTimeStamp) {
-			return availableObjects;
+		protected TransferControl checkAvailableDownloads(Instant referenceTimeStamp) {
+			TransferControl tc = new TransferControl();
+			tc.referenceTime = Instant.now();
+			tc.transferObjects.addAll(availableObjects);
+			return tc;
 		}
 
 		@Override

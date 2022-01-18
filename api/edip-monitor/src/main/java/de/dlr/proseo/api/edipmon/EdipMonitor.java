@@ -33,6 +33,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
+import de.dlr.proseo.api.basemon.BaseMonitor.TransferControl;
 
 /**
  * Monitor for EDRS Interface Points
@@ -146,6 +147,9 @@ public class EdipMonitor extends BaseMonitor {
 		/** The DSIB files for the session */
 		private List<Path> dsibFilePaths = new ArrayList<>();
 
+		/** Reference time for this session */
+		private Instant referenceTime;
+
 		/**
 		 * Gets the session identifier
 		 * 
@@ -180,6 +184,25 @@ public class EdipMonitor extends BaseMonitor {
 		 */
 		public void setSessionPath(Path sessionPath) {
 			this.sessionPath = sessionPath;
+		}
+
+		/**
+		 * Gets the session reference time
+		 * 
+		 * @return the reference time
+		 */
+		@Override
+		public Instant getReferenceTime() {
+			return referenceTime;
+		}
+
+		/**
+		 * Sets the session reference time
+		 * 
+		 * @param referenceTime the reference time to set
+		 */
+		public void setReferenceTime(Instant referenceTime) {
+			this.referenceTime = referenceTime;
 		}
 
 		/**
@@ -358,10 +381,11 @@ public class EdipMonitor extends BaseMonitor {
 	 * note that the passed reference time stamp is ignored, as on the EDIP there is no reliable value to compare it against
 	 */
 	@Override
-	protected List<TransferObject> checkAvailableDownloads(Instant referenceTimeStamp) {
+	protected TransferControl checkAvailableDownloads(Instant referenceTimeStamp) {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableDownloads({})", referenceTimeStamp);
 
-		List<TransferObject> objectsToTransfer = new ArrayList<>();
+		TransferControl transferControl = new TransferControl();
+		transferControl.referenceTime = Instant.now();
 		
 		if (Files.isDirectory(edipDirectory) && Files.isReadable(edipDirectory)) {
 			
@@ -426,7 +450,8 @@ public class EdipMonitor extends BaseMonitor {
 					transferSession.sessionIdentifier = sessionEntryParts[2];
 					transferSession.sessionPath = sessionEntry;
 					transferSession.dsibFilePaths = dsibFilePaths;
-					objectsToTransfer.add(transferSession);
+					transferSession.referenceTime = Instant.now();
+					transferControl.transferObjects.add(transferSession);
 					
 				});
 			} catch (IOException e) {
@@ -436,9 +461,9 @@ public class EdipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_EDIP_NOT_READABLE, MSG_ID_EDIP_NOT_READABLE, edipDirectory.toString(), "Not a readable directory"));
 		}
 		
-		logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, objectsToTransfer.size()));
+		logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
 		
-		return objectsToTransfer;
+		return transferControl;
 	}
 
 	/**

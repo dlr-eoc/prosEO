@@ -3,7 +3,8 @@ title: prosEO Storage Manager REST Services
 version: v0.1
 protocols: [ HTTP, HTTPS ]
 baseUri: /proseo/storage-mgr/{version}
-mediaType: application/json
+# Not supported by springmvc-raml-plugin:
+#mediaType: [ application/json, application/octet-stream ]
 
 
 types:

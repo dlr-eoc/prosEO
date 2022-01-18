@@ -6,21 +6,15 @@ spring:
         properties.hibernate.jdbc.time_zone: UTC
     datasource:
         url: jdbc:postgresql://proseo-db:5432/proseo
-        username: postgres
-        password: ********
+        username: <db_user>
+        password: <db_pwd>
 logging:
     file: /proseo/log/proseo-order-mgr.log
     level:
         root: INFO
         de.dlr.proseo: TRACE
-        org.apache.http: DEBUG
-        org.springframework.web.client: DEBUG
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
-    ingestor:
-        url: http://proseo-ingestor:8080/proseo/ingestor/v0.1
-        # Connection timeout in ms
-        timeout: 1000
-        # User for Ingestor connections (must have PRODUCT_GENERATOR role)
-        user: myproductgenerator
-        password: mypassword
+    orderManager:
+        # Wait time for processing order cleanup (in days; default 1 day)
+        cleanupCycleTime: 1

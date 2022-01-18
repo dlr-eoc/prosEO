@@ -1,0 +1,104 @@
+#%RAML 1.0
+title: prosEO Geotools REST Services API
+version: v0.1
+protocols: [ HTTP, HTTPS ] 
+baseUri: /proseo/geotools/{version}
+mediaType: application/json
+
+types:
+  RestId: !include ../../../../../interfaces/src/main/resources/raml/types/id.raml
+  RestPoint: !include ../../../../../geotools/src/main/resources/raml/types/point.raml
+  RestPolygon: !include ../../../../../geotools/src/main/resources/raml/types/Polygon.raml
+
+resourceTypes:
+  standard:
+    get?:
+      responses:
+        400:
+          description: |
+            The request sent to the server contains data which is not as expected e.g. invalid location URI
+          headers:
+            Warning: !include types/error.raml
+        404:
+          description: |
+            The requested resource was not found                     
+          headers:
+            Warning: !include types/error.raml
+    put?:
+      responses:          
+        404:
+          description: |
+            The requested resource on which the modification is being attempted was not found              
+          headers:
+            Warning: !include types/error.raml
+    delete?:
+      responses:          
+        404:
+          description: | 
+            The requested resource to delete was not found 
+          headers:
+            Warning: !include types/error.raml
+/info:
+  type: standard
+  get:
+    description: Get information about geotools 
+    displayName: getInfo
+    responses:
+      200:
+        body:
+          text/plain:
+/contains:
+  type: standard
+  get:
+    description: Tests whether the polygon is completly contained in any region of type(s) 
+    displayName: contains
+    queryParameters:
+      poly: number[]
+      type?: string[] 
+    responses:
+      200:
+        body:
+          type: boolean
+          example: true 
+  post:
+    description: Tests whether the polygon is completly contained in any region of type(s) 
+    displayName: containspoly
+    queryParameters:
+      type?: string[] 
+    body:
+      application/json:
+        type: RestPolygon
+        example: !include ../../../../../geotools/src/main/resources/raml/examples/polygon.json
+    responses:
+      200:
+        body:
+          type: boolean
+          example: true 
+/overlaps:
+  type: standard
+  get:
+    description: Tests whether the polygon is overlaps any region of type(s) 
+    displayName: overlaps
+    queryParameters:
+      poly: number[]
+      type?: string[] 
+    responses:
+      200:
+        body:
+          type: boolean
+          example: true 
+  post:
+    description: Tests whether the polygon is overlaps any region of type(s) 
+    displayName: overlapspoly
+    queryParameters:
+      type?: string[] 
+    body:
+      application/json:
+        type: RestPolygon
+        example: !include ../../../../../geotools/src/main/resources/raml/examples/polygon.json
+    responses:
+      200:
+        body:
+          type: boolean
+          example: true 
+          
