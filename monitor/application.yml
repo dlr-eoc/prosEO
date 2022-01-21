@@ -95,3 +95,18 @@ proseo:
                 ip: 192.168.20.191
                 port: 2375
                 apiVersion: 1.40
+    s1monitor:
+        # timeliness specifications for KPI01
+        timeliness:
+            -
+                mode: "NRT"
+                minutes: 30
+            -
+                mode: "NRT-PT"
+                minutes: 30
+            -
+                mode: "NTC"
+                minutes: 360
+        rawdatacycle: 30000
+        kpi01timelinesscycle: 30000
+        kpi02completenesscycle: 30000

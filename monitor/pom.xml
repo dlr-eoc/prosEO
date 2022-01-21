@@ -188,7 +188,7 @@
                         <configuration>
                             <classifier>extendable</classifier>
                             <includes>
-                                <include>de/dlr/proseo/monitor/MonitorConfiguration.class</include>
+                                <include>de/dlr/proseo/monitor/MonitorConfiguration*</include>
                                 <include>de/dlr/proseo/monitor/microservice/**</include>
                                 <include>de/dlr/proseo/monitor/order/**</include>
                                 <include>de/dlr/proseo/monitor/product/**</include>
