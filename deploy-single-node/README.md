@@ -41,13 +41,14 @@ Deploy and run a Kubernetes dashboard without requiring a login:
 First build prosEO from source code as described in `<project root>/README.md`. Thereafter, create specific images for your
 environment using the Dockerfiles and `application.yml.template` files in `proseo-images/proseo-components/*`. Create files
 named `application.yml` by copying from `application.yml.template` and adapt the following items:
+
 - In all files: `spring.datasource.password` (must match the PostgreSQL password used in step 3 below)
-- In all files: Logging settings (optional)
 - In `proseo-ingestor/application.yml` and `proseo-storage-mgr/application.yml`: `proseo.storageManager.secret`
   (must be the same in both files)
 - In `proseo-planner/application.yml`: `proseo.wrapper.password` (must match the setting for the `wrapper` user in the
   mission configuration)
-Other parameters may be changed as deemed suitable for the installation at hand.
+
+Other parameters (esp. logging settings) may be changed as deemed suitable for the installation at hand.
 
 When all `application.yml` files have been created, for each component a configured image (containing the update `application.yml`
 file) must be created and pushed to the Docker registry to be used:
@@ -310,6 +311,9 @@ facility update localhost facilityState=STOPPED
 facility update localhost facilityState=STARTING
 facility update localhost facilityState=RUNNING
 ```
+
+
+# Step 8: Configure a prosEO Mission
 
 You are now ready to configure your first mission. See <https://github.com/dlr-eoc/prosEO/tree/master/samples/testdata> for
 an example, which works with the prosEO Sample Processor. Test input data and processing orders
