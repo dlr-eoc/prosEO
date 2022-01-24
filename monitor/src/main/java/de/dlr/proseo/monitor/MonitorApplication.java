@@ -24,12 +24,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import de.dlr.proseo.monitor.kpi.MonitorKpi01Timeliness;
-import de.dlr.proseo.monitor.kpi.MonitorKpi02Completeness;
 import de.dlr.proseo.monitor.microservice.MonitorServices;
 import de.dlr.proseo.monitor.order.MonitorOrders;
 import de.dlr.proseo.monitor.product.MonitorProducts;
-import de.dlr.proseo.monitor.rawdata.MonitorRawdatas;
 
 /*
  * prosEO Planner application
@@ -39,12 +36,12 @@ import de.dlr.proseo.monitor.rawdata.MonitorRawdatas;
  */
 @SpringBootApplication
 @EnableConfigurationProperties
-@ComponentScan(basePackages={"de.dlr.proseo"})
+@ComponentScan(basePackages = { "de.dlr.proseo" })
 @EnableJpaRepositories("de.dlr.proseo.model.dao")
 public class MonitorApplication implements CommandLineRunner {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(MonitorApplication.class);
-	
+
 	/**
 	 * Some constant definition for public use.
 	 */
@@ -54,23 +51,23 @@ public class MonitorApplication implements CommandLineRunner {
 	public static String hostName = "localhost";
 	public static String hostIP = "127.0.0.1";
 	public static String port = "8080";
-	
+
 	public static MonitorConfiguration config;
-	
+
 	public static RestTemplateBuilder rtb;
 
 	/** REST template builder */
 	@Autowired
 	private RestTemplateBuilder rtba;
 
-	/** 
-	 * MonitorServices configuration 
+	/**
+	 * MonitorServices configuration
 	 */
 	@Autowired
 	MonitorConfiguration monitorConfig;
-    /**
-     * Job step util
-     */
+	/**
+	 * Job step util
+	 */
 	/** Transaction manager for transaction control */
 	@Autowired
 	private PlatformTransactionManager txManager;
@@ -82,28 +79,26 @@ public class MonitorApplication implements CommandLineRunner {
 	private MonitorServices monServices = null;
 	private MonitorOrders monOrders = null;
 	private MonitorProducts monProducts = null;
-	private MonitorRawdatas monRawdatas = null;
-	private MonitorKpi01Timeliness monKpi01Timeliness = null;
-	private MonitorKpi02Completeness monKpi02Completeness = null;
-	
+
 	/**
-	 * Initialize and run application 
+	 * Initialize and run application
 	 * 
-	 * @param args command line arguments
+	 * @param args
+	 *            command line arguments
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception { 
+	public static void main(String[] args) throws Exception {
 		SpringApplication spa = new SpringApplication(MonitorApplication.class);
 		spa.run(args);
 	}
 
-
 	/**
-	 * Start the kube dispatcher thread
+	 * Start the service monitoring thread
 	 */
 	public void startMonitorServices() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorServices()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMonitorServices()");
+
 		if (monServices == null || !monServices.isAlive()) {
 			monServices = new MonitorServices(monitorConfig);
 			monServices.start();
@@ -115,11 +110,12 @@ public class MonitorApplication implements CommandLineRunner {
 	}
 
 	/**
-	 * Stop the kube dispatcher thread
+	 * Stop the service monitoring thread
 	 */
 	public void stopMonitorServices() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorServices()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMonitorServices()");
+
 		if (monServices != null && monServices.isAlive()) {
 			monServices.interrupt();
 			int i = 0;
@@ -133,13 +129,15 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 		monServices = null;
 	}
+
 	/**
-	 * Start the kube dispatcher thread
+	 * Start the order monitoring thread
 	 */
 	@Transactional
 	public void startMonitorOrders() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMonitorOrders()");
+
 		if (monOrders == null || !monOrders.isAlive()) {
 			monOrders = new MonitorOrders(monitorConfig, txManager);
 			monOrders.start();
@@ -151,11 +149,12 @@ public class MonitorApplication implements CommandLineRunner {
 	}
 
 	/**
-	 * Stop the kube dispatcher thread
+	 * Stop the order monitoring thread
 	 */
 	public void stopMonitorOrders() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMonitorOrders()");
+
 		if (monOrders != null && monOrders.isAlive()) {
 			monOrders.interrupt();
 			int i = 0;
@@ -169,13 +168,15 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 		monOrders = null;
 	}
+
 	/**
-	 * Start the kube dispatcher thread
+	 * Start the product monitoring thread
 	 */
 	@Transactional
 	public void startMonitorProducts() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> startMonitorOrders()");
+
 		if (monProducts == null || !monProducts.isAlive()) {
 			monProducts = new MonitorProducts(monitorConfig, txManager);
 			monProducts.start();
@@ -187,11 +188,12 @@ public class MonitorApplication implements CommandLineRunner {
 	}
 
 	/**
-	 * Stop the kube dispatcher thread
+	 * Stop the product monitoring thread
 	 */
 	public void stopMonitorProducts() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
-		
+		if (logger.isTraceEnabled())
+			logger.trace(">>> stopMonitorOrders()");
+
 		if (monProducts != null && monProducts.isAlive()) {
 			monProducts.interrupt();
 			int i = 0;
@@ -205,140 +207,31 @@ public class MonitorApplication implements CommandLineRunner {
 		}
 		monOrders = null;
 	}
-	/**
-	 * Start the kube dispatcher thread
-	 */
-	@Transactional
-	public void startMonitorRawdatas() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorOrders()");
-		
-		if (monRawdatas == null || !monRawdatas.isAlive()) {
-			monRawdatas = new MonitorRawdatas(monitorConfig, txManager);
-			monRawdatas.start();
-		} else {
-			if (monRawdatas.isInterrupted()) {
-				// kubeDispatcher
-			}
-		}
-	}
 
-	/**
-	 * Stop the kube dispatcher thread
-	 */
-	public void stopMonitorRawdatas() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorOrders()");
-		
-		if (monRawdatas != null && monRawdatas.isAlive()) {
-			monRawdatas.interrupt();
-			int i = 0;
-			while (monRawdatas.isAlive() && i < 100) {
-				try {
-					wait(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		monRawdatas = null;
-	}
-	/**
-	 * Start the timeliness monitor
-	 */
-	@Transactional
-	public void startMonitorKpi01Timeliness() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorKpi01Timeliness()");
-		
-		if (monKpi01Timeliness == null || !monKpi01Timeliness.isAlive()) {
-			monKpi01Timeliness = new MonitorKpi01Timeliness(monitorConfig, txManager, em);
-			monKpi01Timeliness.start();
-		} else {
-			if (monKpi01Timeliness.isInterrupted()) {
-				// kubeDispatcher
-			}
-		}
-	}
-
-	/**
-	 * Stop the timeliness monitor
-	 */
-	public void stopMonitorKpi01Timeliness() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorKpi01Timeliness()");
-		
-		if (monKpi01Timeliness != null && monKpi01Timeliness.isAlive()) {
-			monKpi01Timeliness.interrupt();
-			int i = 0;
-			while (monKpi01Timeliness.isAlive() && i < 100) {
-				try {
-					wait(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		monKpi01Timeliness = null;
-	}
-	/**
-	 * Start the timeliness monitor
-	 */
-	@Transactional
-	public void startMonitorKpi02Completeness() {
-		if (logger.isTraceEnabled()) logger.trace(">>> startMonitorKpi02Completeness()");
-		
-		if (monKpi02Completeness == null || !monKpi02Completeness.isAlive()) {
-			monKpi02Completeness = new MonitorKpi02Completeness(monitorConfig, txManager, em);
-			monKpi02Completeness.start();
-		} else {
-			if (monKpi02Completeness.isInterrupted()) {
-				// kubeDispatcher
-			}
-		}
-	}
-
-	/**
-	 * Stop the timeliness monitor
-	 */
-	public void stopMonitorKpi02Completeness() {
-		if (logger.isTraceEnabled()) logger.trace(">>> stopMonitorKpi02Completeness()");
-		
-		if (monKpi02Completeness != null && monKpi02Completeness.isAlive()) {
-			monKpi02Completeness.interrupt();
-			int i = 0;
-			while (monKpi02Completeness.isAlive() && i < 100) {
-				try {
-					wait(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		monKpi02Completeness = null;
-	}
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.springframework.boot.CommandLineRunner#run(java.lang.String[])
 	 */
 	@Override
 	public void run(String... arg0) throws Exception {
 		config = monitorConfig;
 		rtb = rtba;
-		
+
 		TransactionTemplate transactionTemplate = new TransactionTemplate(txManager);
 
 		try {
-			String dummy = transactionTemplate.execute((status) -> {
-				
+			transactionTemplate.execute((status) -> {
+
 				return null;
 			});
 		} catch (TransactionException e) {
 			e.printStackTrace();
 		}
-		
-		startMonitorKpi01Timeliness();		
-		startMonitorKpi02Completeness();
+
 		startMonitorServices();
-		startMonitorOrders();	
-		startMonitorProducts();	
-		startMonitorRawdatas();			
+		startMonitorOrders();
+		startMonitorProducts();
 	}
 
-	
 }

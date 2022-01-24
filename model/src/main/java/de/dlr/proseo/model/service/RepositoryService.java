@@ -17,17 +17,10 @@ import de.dlr.proseo.model.dao.JobStepRepository;
 import de.dlr.proseo.model.dao.MissionRepository;
 import de.dlr.proseo.model.dao.MonExtServiceRepository;
 import de.dlr.proseo.model.dao.MonExtServiceStateOperationRepository;
-import de.dlr.proseo.model.dao.MonKpi01TimelinessMonthRepository;
-import de.dlr.proseo.model.dao.MonKpi01TimelinessQuarterRepository;
-import de.dlr.proseo.model.dao.MonKpi02CompletenessMonthRepository;
-import de.dlr.proseo.model.dao.MonKpi02CompletenessQuarterRepository;
 import de.dlr.proseo.model.dao.MonOrderStateRepository;
 import de.dlr.proseo.model.dao.MonProductProductionDayRepository;
 import de.dlr.proseo.model.dao.MonProductProductionHourRepository;
 import de.dlr.proseo.model.dao.MonProductProductionMonthRepository;
-import de.dlr.proseo.model.dao.MonRawDataDownlinkDayRepository;
-import de.dlr.proseo.model.dao.MonRawDataDownlinkMonthRepository;
-import de.dlr.proseo.model.dao.MonRawDataDownloadRepository;
 import de.dlr.proseo.model.dao.MonServiceRepository;
 import de.dlr.proseo.model.dao.MonServiceStateOperationRepository;
 import de.dlr.proseo.model.dao.MonServiceStateRepository;
@@ -162,34 +155,6 @@ public class RepositoryService {
 	@Autowired
     private MonProductProductionMonthRepository monProductProductionMonthRepository;
 
-	/** The repository for the MonRawDataDownlinkDay class */
-	@Autowired
-    private MonRawDataDownlinkDayRepository monRawDataDownlinkDayRepository;
-
-	/** The repository for the MonRawDataDownlinkMonth class */
-	@Autowired
-    private MonRawDataDownlinkMonthRepository monRawDataDownlinkMonthRepository;
-
-	/** The repository for the MonRawDataDownload class */
-	@Autowired
-    private MonRawDataDownloadRepository monRawDataDownloadRepository;
-	
-	/** The repository for the MonKpi01TimelinessMonthRepository class */
-	@Autowired
-    private MonKpi01TimelinessMonthRepository monKpi01TimelinessMonthRepository;
-	
-	/** The repository for the MonKpi01TimelinessQuarterRepository class */
-	@Autowired
-    private MonKpi01TimelinessQuarterRepository monKpi01TimelinessQuarterRepository;
-	
-	/** The repository for the MonKpi02CompletenessMonthRepository class */
-	@Autowired
-    private MonKpi02CompletenessMonthRepository monKpi02CompletenessMonthRepository;
-	
-	/** The repository for the MonKpi02CompletenessQuarterRepository class */
-	@Autowired
-    private MonKpi02CompletenessQuarterRepository monKpi02CompletenessQuarterRepository;
-	
 	/**
 	 * Singleton constructor
 	 */
@@ -393,7 +358,6 @@ public class RepositoryService {
 	 * @return the monServiceStateOperationRepository
 	 */
 	public static MonServiceStateOperationRepository getMonServiceStateOperationRepository() {
-		// TODO Auto-generated method stub
 		return theRepositoryService.monServiceStateOperationRepository;
 	}
 
@@ -403,7 +367,6 @@ public class RepositoryService {
 	 * @return the monServiceStateOperationRepository
 	 */
 	public static MonExtServiceStateOperationRepository getMonExtServiceStateOperationRepository() {
-		// TODO Auto-generated method stub
 		return theRepositoryService.monExtServiceStateOperationRepository;
 	}
 
@@ -435,55 +398,6 @@ public class RepositoryService {
 	 */
 	public static MonProductProductionMonthRepository getMonProductProductionMonthRepository() {
 		return theRepositoryService.monProductProductionMonthRepository;
-	}
-
-	/**
-	 * @return the monRawDataDownlinkDayRepository
-	 */
-	public static MonRawDataDownlinkDayRepository getMonRawDataDownlinkDayRepository() {
-		return theRepositoryService.monRawDataDownlinkDayRepository;
-	}
-
-	/**
-	 * @return the monRawDataDownlinkMonthRepository
-	 */
-	public static MonRawDataDownlinkMonthRepository getMonRawDataDownlinkMonthRepository() {
-		return theRepositoryService.monRawDataDownlinkMonthRepository;
-	}
-
-	/**
-	 * @return the monRawDataDownlinkRepository
-	 */
-	public static MonRawDataDownloadRepository getMonRawDataDownloadRepository() {
-		return theRepositoryService.monRawDataDownloadRepository;
-	}
-
-	/**
-	 * @return the monKpi01TimelinessMonthRepository
-	 */
-	public static MonKpi01TimelinessMonthRepository getMonKpi01TimelinessMonthRepository() {
-		return theRepositoryService.monKpi01TimelinessMonthRepository;
-	}
-
-	/**
-	 * @return the monKpi01TimelinessQuarterRepository
-	 */
-	public static MonKpi01TimelinessQuarterRepository getMonKpi01TimelinessQuarterRepository() {
-		return theRepositoryService.monKpi01TimelinessQuarterRepository;
-	}
-
-	/**
-	 * @return the monKpi02CompletenessMonthRepository
-	 */
-	public static MonKpi02CompletenessMonthRepository getMonKpi02CompletenessMonthRepository() {
-		return theRepositoryService.monKpi02CompletenessMonthRepository;
-	}
-
-	/**
-	 * @return the monKpi02CompletenessQuarterRepository
-	 */
-	public static MonKpi02CompletenessQuarterRepository getMonKpi02CompletenessQuarterRepository() {
-		return theRepositoryService.monKpi02CompletenessQuarterRepository;
 	}
 
 }
