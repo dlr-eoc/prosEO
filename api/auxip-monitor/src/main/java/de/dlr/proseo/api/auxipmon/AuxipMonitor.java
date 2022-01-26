@@ -74,6 +74,7 @@ import reactor.netty.http.client.HttpClient;
 @Scope("singleton")
 public class AuxipMonitor extends BaseMonitor {
 	
+	/** Header marker for S3 redirects */
 	private static final String S3_CREDENTIAL_PARAM = "Amz-Credential";
 
 	/** Maximum number of product entries to retrieve in one request */
@@ -115,6 +116,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_ODATA_REQUEST_ABORTED = 5385;
 	private static final int MSG_ID_EXCEPTION_THROWN = 5386;
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_FAILED = 5387;
+	private static final int MSG_ID_RETRIEVAL_RESULT = 5388;
 	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
@@ -153,6 +155,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
 	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
+	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
 
 	/** A logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(AuxipMonitor.class);
@@ -303,6 +306,7 @@ public class AuxipMonitor extends BaseMonitor {
 		logger.info("Product types requested  . : " + config.getAuxipProductTypes());
 		logger.info("Transfer history file  . . : " + this.getTransferHistoryFile());
 		logger.info("AUXIP check interval   . . : " + this.getCheckInterval());
+		logger.info("Chunk retrieval interval . : " + config.getAuxipChunkInterval());
 		logger.info("History truncation interval: " + this.getTruncateInterval());
 		logger.info("History retention period . : " + this.getHistoryRetentionDuration());
 		logger.info("Max. transfer sessions . . : " + this.getMaxDownloadThreads());
@@ -350,15 +354,23 @@ public class AuxipMonitor extends BaseMonitor {
 		queryVariables.add("username", config.getAuxipUser());
 		queryVariables.add("password", config.getAuxipPassword());
 		
-		// Add query parameters, if OpenID is required for login, otherwise prepare Basic Auth with username/password
+		// Add client credentials, if OpenID is required for login, otherwise prepare Basic Auth with username/password
 		if (null == config.getAuxipClientId()) {
 			String base64Auth =  new String(Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 			request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
 			logger.trace("... Auth: '{}'", base64Auth);
 		} else {
 			queryVariables.add("scope", "openid");
-			queryVariables.add("client_id", config.getAuxipClientId());
-			queryVariables.add("client_secret", URLEncoder.encode(config.getAuxipClientSecret(), Charset.defaultCharset()));
+			if (config.getAuxipClientSendInBody()) {
+				queryVariables.add("client_id", config.getAuxipClientId());
+				queryVariables.add("client_secret",
+						URLEncoder.encode(config.getAuxipClientSecret(), Charset.defaultCharset()));
+			} else {
+				String base64Auth =  new String(Base64.getEncoder()
+						.encode((config.getAuxipClientId() + ":" + config.getAuxipClientSecret()).getBytes()));
+				request = request.header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
+				logger.trace("... Auth: '{}'", base64Auth);
+			}
 		}
 		if (logger.isTraceEnabled()) logger.trace("... using query variables '{}'", queryVariables);
 		
@@ -434,11 +446,10 @@ public class AuxipMonitor extends BaseMonitor {
 		        		oDataClient.newURIBuilder(oDataServiceRoot)
 		        			.appendEntitySetSegment("Products")
 		        			.addQueryOption(QueryOption.FILTER, "startswith(Name,'" + productType + "')"
-		        		//			+ " and PublicationDate gt " + referenceTimeStamp   // PDGS-PRIP does not accept spaces
-		        			)
-		        		//	.count()					// --> not implemented on PDGS-PRIP
-		        		//	.top(MAX_PRODUCT_COUNT)		// --> not allowed on PDGS-PRIP
-		        		//	.orderBy("PublicationDate") // --> not allowed on PDGS-PRIP
+		        					+ " and PublicationDate gt " + referenceTimeStamp)
+		        			.addQueryOption(QueryOption.COUNT, "true")
+		        			.top(MAX_PRODUCT_COUNT)
+		        			.orderBy("PublicationDate asc")
 		        			.build()
 		        );
 		request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
@@ -464,6 +475,7 @@ public class AuxipMonitor extends BaseMonitor {
 		}
 		
 		ClientEntitySet entitySet = response.getBody();
+		logger.info(String.format(MSG_RETRIEVAL_RESULT, MSG_ID_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount()));
 		
 		// No products found, next search starts from current date and time
 		if (entitySet.getEntities().isEmpty()) {
@@ -499,9 +511,9 @@ public class AuxipMonitor extends BaseMonitor {
 			}
 			
 			if (logger.isTraceEnabled())
-				logger.trace("... waiting {} s before requesting next chunk of data", this.getCheckInterval() / 1000);
+				logger.trace("... waiting {} s before requesting next chunk of data", config.getAuxipChunkInterval() / 1000);
 			try {
-				Thread.sleep(this.getCheckInterval());
+				Thread.sleep(config.getAuxipChunkInterval());
 			} catch (InterruptedException e) {
 				logger.error(String.format(MSG_WAIT_INTERRUPTED, MSG_ID_WAIT_INTERRUPTED));
 				return transferControl;
@@ -515,16 +527,16 @@ public class AuxipMonitor extends BaseMonitor {
 			        		oDataClient.newURIBuilder(oDataServiceRoot)
 			        			.appendEntitySetSegment("Products")
 			        			.addQueryOption(QueryOption.FILTER, "startswith(Name,'" + productType + "')"
-			        		//			+ " and PublicationDate gt " + referenceTimeStamp   // PDGS-PRIP does not accept spaces
-			        			)
-			        		//	.count()					// --> not implemented on PDGS-PRIP
+			        					+ " and PublicationDate gt " + referenceTimeStamp)
+			        			.addQueryOption(QueryOption.COUNT, "true")
 			        			.skip(cycleCount * MAX_PRODUCT_COUNT)
-			        		//	.top(MAX_PRODUCT_COUNT)		// --> not allowed on PDGS-PRIP
-			        		//	.orderBy("PublicationDate") // --> not allowed on PDGS-PRIP
+			        			.top(MAX_PRODUCT_COUNT)
+			        			.orderBy("PublicationDate asc")
 			        			.build()
 			        );
 			request.addCustomHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
 			if (logger.isTraceEnabled()) logger.trace("... sending OData request '{}'", request.getURI());
+			futureResponse = request.asyncExecute();
 			try {
 				response = futureResponse.get(30, TimeUnit.SECONDS);
 			} catch (InterruptedException | ExecutionException | TimeoutException e1) {
@@ -544,6 +556,8 @@ public class AuxipMonitor extends BaseMonitor {
 			}
 			
 			entitySet = response.getBody();
+			logger.info(String.format(MSG_RETRIEVAL_RESULT, MSG_ID_RETRIEVAL_RESULT, entitySet.getEntities().size(), entitySet.getCount()));
+			
 		} while (!entitySet.getEntities().isEmpty());
 		
 		if (logger.isTraceEnabled()) logger.trace("<<< checkAvailableProducts()");
@@ -555,8 +569,8 @@ public class AuxipMonitor extends BaseMonitor {
 	 * @return
 	 */
 	private TransferProduct extractTransferProduct(ClientEntity product) {
-		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({}, <bearer token>)", 
-				(null == product ? "null" : product.getTypeName()));
+		if (logger.isTraceEnabled()) logger.trace(">>> extractTransferProduct({})", 
+				(null == product ? "null" : product.getProperty("Name")));
 
 		TransferProduct tp = new TransferProduct();
 		
@@ -566,7 +580,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_UUID_MISSING, MSG_ID_PRODUCT_UUID_MISSING, product.toString()));
 			return null;
 		}
-//		if (logger.isTraceEnabled()) logger.trace("... uuid = {}", tp.getUuid());
+		if (logger.isTraceEnabled()) logger.trace("... uuid = {}", tp.getUuid());
 		
 		try {
 			tp.setName(product.getProperty("Name").getPrimitiveValue().toCastValue(String.class));
@@ -574,7 +588,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_FILENAME_MISSING, MSG_ID_PRODUCT_FILENAME_MISSING, product.toString()));
 			return null;
 		}
-//		if (logger.isTraceEnabled()) logger.trace("... name = {}", tp.getName());
+		if (logger.isTraceEnabled()) logger.trace("... name = {}", tp.getName());
 		
 		try {
 			tp.setSize(product.getProperty("ContentLength").getPrimitiveValue().toCastValue(Long.class));
@@ -582,7 +596,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_SIZE_MISSING, MSG_ID_PRODUCT_SIZE_MISSING, product.toString()));
 			return null;
 		}
-//		if (logger.isTraceEnabled()) logger.trace("... size = {}", tp.getSize());
+		if (logger.isTraceEnabled()) logger.trace("... size = {}", tp.getSize());
 		
 		tp.setChecksum(null);
 		try {
@@ -603,7 +617,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_HASH_MISSING, MSG_ID_PRODUCT_HASH_MISSING, product.toString()));
 			return null;
 		}
-//		if (logger.isTraceEnabled()) logger.trace("... checksum = {}", tp.getChecksum());
+		if (logger.isTraceEnabled()) logger.trace("... checksum = {}", tp.getChecksum());
 		
 		try {
 //			ClientProperty p = product.getProperty("ContentDate");
@@ -642,7 +656,7 @@ public class AuxipMonitor extends BaseMonitor {
 			logger.error(String.format(MSG_PRODUCT_PUBLICATION_MISSING, MSG_ID_PRODUCT_PUBLICATION_MISSING, product.toString()));
 			return null;
 		}
-//		if (logger.isTraceEnabled()) logger.trace("... publication = {}", tp.getPublicationTime());
+		if (logger.isTraceEnabled()) logger.trace("... publication = {}", tp.getPublicationTime());
 		
 		try {
 			tp.setEvictionTime(Instant.parse(
@@ -781,6 +795,7 @@ public class AuxipMonitor extends BaseMonitor {
 								return false;
 							}
 						}, null)
+						.secure()
 						.doAfterResponse((response, connection) -> {
 							if (logger.isTraceEnabled()) {
 								logger.trace("... response code: {}", response.status());

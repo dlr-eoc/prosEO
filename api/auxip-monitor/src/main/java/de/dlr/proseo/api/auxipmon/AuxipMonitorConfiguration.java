@@ -58,6 +58,10 @@ public class AuxipMonitorConfiguration {
 	@Value("${proseo.auxip.client.secret:#{null}}")
 	private String auxipClientSecret;
 	
+	/** Flag whether to send cliend ID and secret in body (only for OpenID-based token requests; mandatory if client ID is set) */
+	@Value("${proseo.auxip.client.sendinbody:#{null}}")
+	private Boolean auxipClientSendInBody;
+	
 	/** The product types to select */
 	@Value("${proseo.auxip.producttypes}")
 	private String auxipProductTypes;
@@ -65,6 +69,10 @@ public class AuxipMonitorConfiguration {
 	/** The interval between pickup point checks in milliseconds */
 	@Value("${proseo.auxip.check.interval}")
 	private Long auxipCheckInterval;
+	
+	/** The interval between individual chunk retrievals in milliseconds */
+	@Value("${proseo.auxip.chunk.interval}")
+	private Long auxipChunkInterval;
 	
 	/** The path to the file for storing transfer history */
 	@Value("${proseo.auxip.history.file}")
@@ -195,6 +203,15 @@ public class AuxipMonitorConfiguration {
 	}
 
 	/**
+	 * Indicates whether to send the client ID and secret in the message body for OpenID token requests
+	 * 
+	 * @return true, if client ID and secret are to be sent in the body, false otherwise
+	 */
+	public Boolean getAuxipClientSendInBody() {
+		return auxipClientSendInBody;
+	}
+
+	/**
 	 * Gets the list of product types to retrieve from AUXIP
 	 * 
 	 * @return the a list of product types
@@ -219,6 +236,15 @@ public class AuxipMonitorConfiguration {
 	 */
 	public Long getAuxipCheckInterval() {
 		return auxipCheckInterval;
+	}
+
+	/**
+	 * Gets the interval between individual chunk retrievals
+	 * 
+	 * @return the interval between chunk retrievals in ms
+	 */
+	public Long getAuxipChunkInterval() {
+		return auxipChunkInterval;
 	}
 
 	/**
