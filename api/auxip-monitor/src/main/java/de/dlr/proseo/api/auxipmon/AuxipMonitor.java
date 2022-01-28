@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -91,7 +90,7 @@ public class AuxipMonitor extends BaseMonitor {
 	private AuxipMonitorConfiguration config;
 	
 	/** Reference times per product type */
-	private Map<String, Instant> productTypeReferenceTimes = new HashMap<>();
+//	private Map<String, Instant> productTypeReferenceTimes = new HashMap<>();
 
 	// Message IDs
 	private static final int MSG_ID_TOKEN_REQUEST_FAILED = 5362;
@@ -144,9 +143,9 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_PRODUCT_PUBLICATION_MISSING = "(E%d) Product list entry %s does not contain valid publication time ('PublicationDate' element)";
 	private static final String MSG_PRODUCT_EVICTION_MISSING = "(E%d) Product list entry %s does not contain valid eviction time ('EvictionDate' element)";
 	private static final String MSG_WAIT_INTERRUPTED = "(E%d) Wait for next chunk of product data interrupted";
-	private static final String MSG_ODATA_REQUEST_FAILED = "(E%d) OData request for product type %s and reference time %s failed with HTTP status code %d, message:\n%s\n";
+	private static final String MSG_ODATA_REQUEST_FAILED = "(E%d) OData request for reference time %s failed with HTTP status code %d, message:\n%s\n";
 	private static final String MSG_ODATA_RESPONSE_UNREADABLE = "(E%d) OData response not readable";
-	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for product type %s and reference time %s aborted (cause: %s / %s)";
+	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for reference time %s aborted (cause: %s / %s)";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
 
@@ -414,15 +413,16 @@ public class AuxipMonitor extends BaseMonitor {
 	}
 
 	/**
-	 * Check for available products of the given product type published after the given reference time stamp
+	 * Check for available products published after the given reference time stamp; only a single request is made
+	 * (except for paging) with all product types OR'ed in a single list
 	 * 
-	 * @param productType the product type to check for
 	 * @param referenceTimeStamp the reference time stamp to check against
 	 * @param bearerToken bearer token for authentication, if required (if not set, Basic Auth will be used)
+	 * 
 	 * @return a list of product UUIDs available for download (may be empty)
 	 */
-	private TransferControl checkAvailableProducts(String productType, Instant referenceTimeStamp, String bearerToken) {
-		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableProducts({}, {}, <bearer token>)", productType, referenceTimeStamp);
+	private TransferControl checkAvailableProducts(Instant referenceTimeStamp, String bearerToken) {
+		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableProducts({}, <bearer token>)", referenceTimeStamp);
 		
 		TransferControl transferControl = new TransferControl();
 		transferControl.referenceTime = referenceTimeStamp;
@@ -439,14 +439,20 @@ public class AuxipMonitor extends BaseMonitor {
 					"Bearer " + bearerToken : 
         			"Basic " + Base64.getEncoder().encode((config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes());
 		
+		// Create query filter for all product types configured
+		StringBuilder queryFilter = new StringBuilder("(false");
+		for (String productType: config.getAuxipProductTypes()) {
+			queryFilter.append(" or startswith(Name,'").append(productType).append("')");
+		}
+		queryFilter.append(") and PublicationDate gt ").append(referenceTimeStamp);
+		
 		// Retrieve products
 		if (logger.isTraceEnabled()) logger.trace("... requesting product list at URL '{}'", oDataServiceRoot);
 		ODataEntitySetRequest<ClientEntitySet> request = oDataClient.getRetrieveRequestFactory()
 		        .getEntitySetRequest(
 		        		oDataClient.newURIBuilder(oDataServiceRoot)
 		        			.appendEntitySetSegment("Products")
-		        			.addQueryOption(QueryOption.FILTER, "startswith(Name,'" + productType + "')"
-		        					+ " and PublicationDate gt " + referenceTimeStamp)
+		        			.addQueryOption(QueryOption.FILTER, queryFilter.toString())
 		        			.addQueryOption(QueryOption.COUNT, "true")
 		        			.top(MAX_PRODUCT_COUNT)
 		        			.orderBy("PublicationDate asc")
@@ -460,14 +466,14 @@ public class AuxipMonitor extends BaseMonitor {
 			response = futureResponse.get(30, TimeUnit.SECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException e1) {
 			logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
-					productType, referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
+					referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
 			return transferControl;
 		}
 		
 		if (HttpStatus.OK.value() != response.getStatusCode()) {
 			try {
 				logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
-					productType, referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
+					referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
 			} catch (IOException e) {
 				logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
 			}
@@ -526,8 +532,7 @@ public class AuxipMonitor extends BaseMonitor {
 			        .getEntitySetRequest(
 			        		oDataClient.newURIBuilder(oDataServiceRoot)
 			        			.appendEntitySetSegment("Products")
-			        			.addQueryOption(QueryOption.FILTER, "startswith(Name,'" + productType + "')"
-			        					+ " and PublicationDate gt " + referenceTimeStamp)
+			        			.addQueryOption(QueryOption.FILTER, queryFilter.toString())
 			        			.addQueryOption(QueryOption.COUNT, "true")
 			        			.skip(cycleCount * MAX_PRODUCT_COUNT)
 			        			.top(MAX_PRODUCT_COUNT)
@@ -541,14 +546,14 @@ public class AuxipMonitor extends BaseMonitor {
 				response = futureResponse.get(30, TimeUnit.SECONDS);
 			} catch (InterruptedException | ExecutionException | TimeoutException e1) {
 				logger.error(String.format(MSG_ODATA_REQUEST_ABORTED, MSG_ID_ODATA_REQUEST_ABORTED, 
-						productType, referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
+						referenceTimeStamp, e1.getClass().getName(), e1.getMessage()));
 				return transferControl;
 			}
 			
 			if (HttpStatus.OK.value() != response.getStatusCode()) {
 				try {
 					logger.error(String.format(MSG_ODATA_REQUEST_FAILED, MSG_ID_ODATA_REQUEST_FAILED,
-						productType, referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
+						referenceTimeStamp, response.getStatusCode(), new String(response.getRawResponse().readAllBytes())));
 				} catch (IOException e) {
 					logger.error(String.format(MSG_ODATA_RESPONSE_UNREADABLE, MSG_ID_ODATA_RESPONSE_UNREADABLE));
 				}
@@ -693,7 +698,7 @@ public class AuxipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableDownloads({})", referenceTimeStamp);
 
 		TransferControl transferControl = new TransferControl();
-		transferControl.referenceTime = referenceTimeStamp;
+//		transferControl.referenceTime = referenceTimeStamp;
 		
 		try {
 			// If token-based authentication is required, login to AUXIP and request token
@@ -708,24 +713,29 @@ public class AuxipMonitor extends BaseMonitor {
 			}
 			
 			// Loop over all configured product types
-			for (String productType: config.getAuxipProductTypes()) {
-				if (null == productTypeReferenceTimes.get(productType)) {
-					productTypeReferenceTimes.put(productType, referenceTimeStamp);
-				}
-				Instant productTypeReferenceTime = productTypeReferenceTimes.get(productType);
-				
-				if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
-				TransferControl productTypeTransferControl = checkAvailableProducts(productType, productTypeReferenceTime, bearerToken);
-				if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
-
-				if (productTypeReferenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-					productTypeReferenceTimes.put(productType, productTypeTransferControl.referenceTime);
-				}
-				if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-					transferControl.referenceTime = productTypeTransferControl.referenceTime;
-				}
-				transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
-			}
+			
+//			for (String productType: config.getAuxipProductTypes()) {
+//				if (null == productTypeReferenceTimes.get(productType)) {
+//					productTypeReferenceTimes.put(productType, referenceTimeStamp);
+//				}
+//				Instant productTypeReferenceTime = productTypeReferenceTimes.get(productType);
+//				
+//				if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
+//				TransferControl productTypeTransferControl = checkAvailableProducts(productType, productTypeReferenceTime, bearerToken);
+//				if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
+//
+//				if (productTypeReferenceTime.isBefore(productTypeTransferControl.referenceTime)) {
+//					productTypeReferenceTimes.put(productType, productTypeTransferControl.referenceTime);
+//				}
+//				if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
+//					transferControl.referenceTime = productTypeTransferControl.referenceTime;
+//				}
+//				transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
+//			}
+			
+			// Only a single request is made (not considering paging) with all
+			// product types OR'ed in a single list
+			transferControl = checkAvailableProducts(referenceTimeStamp, bearerToken);
 			
 			logger.info(String.format(MSG_AVAILABLE_DOWNLOADS_FOUND, MSG_ID_AVAILABLE_DOWNLOADS_FOUND, transferControl.transferObjects.size()));
 		} catch (Exception e) {
@@ -849,6 +859,9 @@ public class AuxipMonitor extends BaseMonitor {
 				if (config.getAuxipPerformanceMinSize() < new File(productFileName).length()) {
 					setLastCopyPerformance(copyPerformance);
 				}
+				
+				// TODO Compute checksum and compare with value given by AUXIP
+				// TODO Log download with UUID, file name, size, checksum, publication date (request by ESA)
 				
 				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED, transferProduct.getIdentifier()));
 				
