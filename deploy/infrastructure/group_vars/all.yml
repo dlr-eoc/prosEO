@@ -5,7 +5,7 @@
 all:
     # image: centos:7
     # UUID from 'ionosctl image list' for alias 'centos:7' and location 'de/txl'
-    image: "8959c4d0-225c-11ec-a3ce-32fd0c9210a5"
+    image: "152db695-6aa8-11ec-a917-62772f9c5dc0"
     image_password: "prosEO21ionos"
     ssh_key: "{{ lookup('file', 'keys/id_rsa.pub') }}"
 
@@ -65,7 +65,7 @@ master:
 # Kubernetes Worker configuration:
 worker:
     # Number of worker nodes
-    count: 10
+    count: 39
     # Number of cores (vCPUs = 2 x cores)
     cores: 10
     # RAM in MiB
