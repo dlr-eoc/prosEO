@@ -42,7 +42,7 @@ nfs:
     # System disk size in GB
     disk: 100
     # Number of 2 TB NFS disk
-    disk_count: 3
+    disk_count: 5
     
 # Log host configuration:
 log:
@@ -56,9 +56,9 @@ log:
 # Kubernetes Master configuration:
 master:
     # Number of cores (vCPUs = 2 x cores)
-    cores: 4
+    cores: 8
     # RAM in MiB
-    ram: 8192
+    ram: 24576
     # Disk size in GB
     disk: 40
     
