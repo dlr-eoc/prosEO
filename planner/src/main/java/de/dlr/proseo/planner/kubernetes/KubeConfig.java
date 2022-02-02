@@ -526,6 +526,7 @@ public class KubeConfig {
 			if (!kJobs.containsKey(aName)) {
 				Product jsp = js.getOutputProduct();
 				Boolean wasFailed = true;
+				
 				if (jsp != null) {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
@@ -546,9 +547,10 @@ public class KubeConfig {
 					stdout = "";
 				}
 				if (wasFailed) {
-					js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator)\n\n" + stdout);
+					js.setProcessingStdOut("Job on Processing Facility was deleted/canceled by others (e.g. operator) or crashed\n\n" + stdout);
 				}
 				js = RepositoryService.getJobStepRepository().save(js);
+				UtilService.getJobUtil().updateState(js.getJob(), js.getJobStepState());
 				UtilService.getJobStepUtil().checkFinish(js);
 			}			
 		}		
