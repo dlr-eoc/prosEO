@@ -15,6 +15,7 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
+
 import com.amazonaws.services.s3.AmazonS3;
 
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
@@ -29,7 +30,13 @@ import software.amazon.awssdk.services.s3.S3Client;
  *
  */
 public class ProseoFilePosix extends ProseoFile {
+	
+	// Message IDs
+	private static final int MSG_ID_S3_REQUEST_FAILED_RETRYING = 4109; // same as in ProseoFileS3
 
+	// Message Strings
+	private static final String MSG_S3_REQUEST_FAILED_RETRYING = "(I%d) S3 request failed, retrying after %d ms (attempt %d of %d)";
+	
 	/**
 	 * Logger of this class
 	 */
@@ -219,17 +226,34 @@ public class ProseoFilePosix extends ProseoFile {
 				}
 				StorageManagerUtils.createStorageManagerInternalS3Buckets(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),cfg.getS3DefaultBucket(),cfg.getS3Region());
 				AmazonS3 s3 = S3Ops.v1S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
-				result = S3Ops.v1Upload(
-						//the client
-						s3, 
-						// the local POSIX source file or directory
-						this.getFullPath(), 
-						// the storageId -> =BucketName
-						cfg.getS3DefaultBucket(), 
-						// the final prefix of the file or directory
-						targetPath, 
-						false
-						);
+				// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
+				long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
+				while (retryCount <= maxRetry) {
+					try {
+						result = S3Ops.v1Upload(
+								//the client
+								s3, 
+								// the local POSIX source file or directory
+								this.getFullPath(), 
+								// the storageId -> =BucketName
+								cfg.getS3DefaultBucket(), 
+								// the final prefix of the file or directory
+								targetPath, 
+								false
+								);
+						if (null != result) {
+							break; // No exception and a valid result
+						}
+					} catch (Exception e) {
+						if (retryCount >= maxRetry) {
+							throw e;
+						} // else try again, see below
+					}
+					++retryCount;
+					StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
+							retryInterval, retryCount, maxRetry);
+					Thread.sleep(retryInterval);
+				}
 			}
 			break;
 		case POSIX:

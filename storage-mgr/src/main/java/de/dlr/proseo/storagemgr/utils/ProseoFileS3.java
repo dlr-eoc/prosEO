@@ -38,6 +38,7 @@ public class ProseoFileS3 extends ProseoFile {
 	private static final int MSG_ID_S3_LIST_FAILED = 4106;
 	private static final int MSG_ID_S3_GET_STREAM_FAILED = 4107;
 	private static final int MSG_ID_S3_WRITE_FAILED = 4108;
+	private static final int MSG_ID_S3_REQUEST_FAILED_RETRYING = 4109;
 
 	private static final String MSG_TARGET_PATH_MISSING = "(E%d) No target path given";
 	private static final String MSG_ALLUXIO_NOT_SUPPORTED = "(E%d) Copying S3 objects to Alluxio is not supported";
@@ -48,6 +49,7 @@ public class ProseoFileS3 extends ProseoFile {
 	private static final String MSG_S3_LIST_FAILED = "(E%d) Listing of S3 object %s failed (cause: %s)";
 	private static final String MSG_S3_GET_STREAM_FAILED = "(E%d) Retrieving S3 object %s as stream failed (cause: %s)";
 	private static final String MSG_S3_WRITE_FAILED = "(E%d) Writing content to S3 object %s failed (cause: %s)";
+	private static final String MSG_S3_REQUEST_FAILED_RETRYING = "(I%d) S3 request failed, retrying after %d ms (attempt %d of %d)";
 
 
 	private static Logger logger = LoggerFactory.getLogger(ProseoFileS3.class);
@@ -164,7 +166,25 @@ public class ProseoFileS3 extends ProseoFile {
 		S3Client s3 = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(), cfg.getS3Region());
 		InputStream inputStream = null;
 		try {
-			inputStream = S3Ops.v2FetchStream(s3, getFullPath());
+			boolean success = false;
+			// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
+			long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
+			while (retryCount <= maxRetry && !success) {
+				try {
+					inputStream = S3Ops.v2FetchStream(s3, getFullPath());
+					if (null != inputStream) {
+						break; // No exception and a valid result
+					}
+				} catch (Exception e) {
+					if (retryCount >= maxRetry) {
+						throw e;
+					} // else try again, see below
+				}
+				++retryCount;
+				StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
+						retryInterval, retryCount, maxRetry);
+				Thread.sleep(retryInterval);
+			}
 			logger.info("Successfully read from {}", getFullPath());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -280,14 +300,23 @@ public class ProseoFileS3 extends ProseoFile {
 				} else {
 					S3Client s3c = S3Ops.v2S3Client(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey(), cfg.getS3EndPoint(),
 							cfg.getS3Region());
-					if (S3Ops.v2FetchFile(
+					boolean success = false;
+					// *** HACK FOR DDS3 - TODO Replace constants by configurable values !!! ***
+					long retryCount = 0, maxRetry = 3, retryInterval = 5000 /* ms */;
+					while (retryCount <= maxRetry && !(success = S3Ops.v2FetchFile(
 							// the client
 							s3c,
 							// the source S3-Bucket
 							this.getFullPath(),
 							// the final prefix including productId pattern
 							// of the file or directory
-							proFile.getFullPath())) {
+							proFile.getFullPath()))) {
+						++retryCount;
+						StorageLogger.logInfo(logger, MSG_S3_REQUEST_FAILED_RETRYING, MSG_ID_S3_REQUEST_FAILED_RETRYING, 
+								retryInterval, retryCount, maxRetry);
+						Thread.sleep(retryInterval);
+					};
+					if (success) {
 						targetFile.setWritable(true, false);
 						FileCache.getInstance().put(proFile.getFullPath());
 						result.add(proFile.getFullPath());

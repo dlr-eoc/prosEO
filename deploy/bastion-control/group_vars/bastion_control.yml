@@ -19,3 +19,32 @@ inner_nodes:
     - { name: worker8, ip: "{{ groups['workers'][7] }}" }
     - { name: worker9, ip: "{{ groups['workers'][8] }}" }
     - { name: worker10, ip: "{{ groups['workers'][9] }}" }
+    - { name: worker11, ip: "{{ groups['workers'][10] }}" }
+    - { name: worker12, ip: "{{ groups['workers'][11] }}" }
+    - { name: worker13, ip: "{{ groups['workers'][12] }}" }
+    - { name: worker14, ip: "{{ groups['workers'][13] }}" }
+    - { name: worker15, ip: "{{ groups['workers'][14] }}" }
+    - { name: worker16, ip: "{{ groups['workers'][15] }}" }
+    - { name: worker17, ip: "{{ groups['workers'][16] }}" }
+    - { name: worker18, ip: "{{ groups['workers'][17] }}" }
+    - { name: worker19, ip: "{{ groups['workers'][18] }}" }
+    - { name: worker20, ip: "{{ groups['workers'][19] }}" }
+    - { name: worker21, ip: "{{ groups['workers'][20] }}" }
+    - { name: worker22, ip: "{{ groups['workers'][21] }}" }
+    - { name: worker23, ip: "{{ groups['workers'][22] }}" }
+    - { name: worker24, ip: "{{ groups['workers'][23] }}" }
+    - { name: worker25, ip: "{{ groups['workers'][24] }}" }
+    - { name: worker26, ip: "{{ groups['workers'][25] }}" }
+    - { name: worker27, ip: "{{ groups['workers'][26] }}" }
+    - { name: worker28, ip: "{{ groups['workers'][27] }}" }
+    - { name: worker29, ip: "{{ groups['workers'][28] }}" }
+    - { name: worker30, ip: "{{ groups['workers'][29] }}" }
+    - { name: worker31, ip: "{{ groups['workers'][30] }}" }
+    - { name: worker32, ip: "{{ groups['workers'][31] }}" }
+    - { name: worker33, ip: "{{ groups['workers'][32] }}" }
+    - { name: worker34, ip: "{{ groups['workers'][33] }}" }
+    - { name: worker35, ip: "{{ groups['workers'][34] }}" }
+    - { name: worker36, ip: "{{ groups['workers'][35] }}" }
+    - { name: worker37, ip: "{{ groups['workers'][36] }}" }
+    - { name: worker38, ip: "{{ groups['workers'][37] }}" }
+    - { name: worker39, ip: "{{ groups['workers'][38] }}" }
