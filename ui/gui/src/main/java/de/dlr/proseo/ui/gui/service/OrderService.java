@@ -151,6 +151,8 @@ public class OrderService {
 			uri += divider + "recordTo=" + to;
 			divider ="&";
 		}
+		uri += divider + "logs=false";
+		divider ="&";
 		uri += divider + "orderBy=startTime ASC";
 		logger.trace("URI " + uri);
 		Builder webclient = WebClient.builder().clientConnector(new ReactorClientHttpConnector(

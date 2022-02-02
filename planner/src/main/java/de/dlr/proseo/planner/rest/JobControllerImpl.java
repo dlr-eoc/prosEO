@@ -82,11 +82,14 @@ public class JobControllerImpl implements JobController {
 	@Transactional
 	@Override
     public ResponseEntity<List<RestJob>> getJobs(String state, Long orderId,
-			Long recordFrom, Long recordTo, String[] orderBy) {
+			Long recordFrom, Long recordTo, Boolean logs, String[] orderBy) {
 		if (logger.isTraceEnabled()) logger.trace(">>> getJobs({}, {}, {}, {}, {}, {})",
 				state, orderId, recordFrom, recordTo, (null == orderBy ? "null" : Arrays.asList(orderBy)));
 		
 		try {
+			if (logs == null) {
+				logs = true;
+			}
 			List<RestJob> resultList = new ArrayList<>();
 
 			Query query = createJobsQuery(state, orderId, recordFrom, recordTo, orderBy, false);
@@ -94,7 +97,7 @@ public class JobControllerImpl implements JobController {
 			for (Object resultObject: query.getResultList()) {
 				if (resultObject instanceof Job) {
 					Job job = (Job) resultObject;					
-					resultList.add(RestUtil.createRestJob(job));
+					resultList.add(RestUtil.createRestJob(job, logs));
 				}
 			}		
 
@@ -160,7 +163,7 @@ public class JobControllerImpl implements JobController {
 		try {
 			Job job = this.findJobById(jobId);
 			if (job != null) {
-				RestJob rj = RestUtil.createRestJob(job);
+				RestJob rj = RestUtil.createRestJob(job, true);
 
 				Messages.JOB_RETRIEVED.log(logger, jobId);
 
@@ -237,7 +240,7 @@ public class JobControllerImpl implements JobController {
 							UtilService.getJobStepUtil().checkJobToRun(kc, job);
 						}
 					}
-					RestJob rj = RestUtil.createRestJob(job);
+					RestJob rj = RestUtil.createRestJob(job, false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
@@ -272,7 +275,7 @@ public class JobControllerImpl implements JobController {
 				Messages msg = jobUtil.cancel(job);
 				if (msg.isTrue()) {
 					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					RestJob rj = RestUtil.createRestJob(job);
+					RestJob rj = RestUtil.createRestJob(job, false);
 
 					return new ResponseEntity<>(rj, HttpStatus.OK);
 				} else {
@@ -323,7 +326,7 @@ public class JobControllerImpl implements JobController {
 				
 				if (msg.isTrue()) {
 					UtilService.getOrderUtil().updateState(job.getProcessingOrder(), job.getJobState());
-					RestJob pj = RestUtil.createRestJob(job);
+					RestJob pj = RestUtil.createRestJob(job, false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {
@@ -395,7 +398,7 @@ public class JobControllerImpl implements JobController {
 				
 				if (msg.isTrue()) {
 					UtilService.getOrderUtil().updateState(j.getProcessingOrder(), j.getJobState());
-					RestJob pj = RestUtil.createRestJob(j);
+					RestJob pj = RestUtil.createRestJob(j, false);
 
 					return new ResponseEntity<>(pj, HttpStatus.OK);
 				} else {

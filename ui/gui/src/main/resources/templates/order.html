@@ -330,10 +330,6 @@
                             <th class="tr-rowspan"><span>&nbsp;</span></th>
                             <th colspan="9"><span th:text="#{joffilename}">joffilename</span></th>
                           </tr>
-                          <tr class="filtercontent th-row" th:id="'togglejsh3' + ${jobstep?.id}">
-                            <th class="tr-rowspan"><span>&nbsp;</span></th>
-                            <th colspan="9"><span th:text="#{stdout}">stdout</span></th>
-                          </tr>
                             <tr class="filtercontent" th:id="'togglejsb2' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
                               <!-- <td colspan="9"><a th:href="'http://192.168.20.191:30001/proseo/storage-mgr/v0.1/products/download?pathInfo=' + ${jobstep?.jobOrderFilename}" 
@@ -343,10 +339,10 @@
                             </tr>
                             <tr class="filtercontent" th:id="'togglejsb3' + ${jobstep?.id}">
                             <td class="tr-rowspan"><span>&nbsp;</span></td>
-                              <td colspan="9"><textarea class="code" readonly
-                                  th:style="${#strings.isEmpty(jobstep?.processingStdOut)?'height:1em':'height:10em'}"
-                                  th:rows="${#strings.isEmpty(jobstep?.processingStdOut)?'0':'10'}"
-                                  th:text="${jobstep?.processingStdOut}"></textarea></td>
+                              <td colspan="9">
+                           <a th:href="'/jobsteplog.txt?id=' + ${jobstep?.id}"
+                              type="application/text"
+                              th:download="'log_' + ${jobstep?.id} + '.txt'"><span th:text="#{stdout}">stdout</span></a></td>
                             </tr>
                           </div>
                         </tbody>

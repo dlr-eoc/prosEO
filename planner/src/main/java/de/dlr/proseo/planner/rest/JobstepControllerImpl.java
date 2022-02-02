@@ -104,7 +104,7 @@ public class JobstepControllerImpl implements JobstepController {
 				}
 			}
 			for (JobStep js : it) {
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 				list.add(pjs);			
 			}
 			
@@ -142,9 +142,9 @@ public class JobstepControllerImpl implements JobstepController {
 						}
 					}
 				}
-				RestJobStep pjs = RestUtil.createRestJobStep(js);
+				RestJobStep pjs = RestUtil.createRestJobStep(js, true);
 
-				Messages.JOBSTEPS_RETRIEVED.log(logger, name);
+				Messages.JOBSTEP_RETRIEVED.log(logger, name);
 
 				return new ResponseEntity<>(pjs, HttpStatus.OK);
 			}
@@ -191,7 +191,7 @@ public class JobstepControllerImpl implements JobstepController {
 						}
 					}
 					// resumed
-					RestJobStep pjs = RestUtil.createRestJobStep(js);
+					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
@@ -234,7 +234,7 @@ public class JobstepControllerImpl implements JobstepController {
 						}
 					}
 					// cancelled
-					RestJobStep pjs = RestUtil.createRestJobStep(js);
+					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
@@ -285,7 +285,7 @@ public class JobstepControllerImpl implements JobstepController {
 				if (msg.isTrue()) {
 					// suspended
 					UtilService.getJobUtil().updateState(job, js.getJobStepState());
-					RestJobStep pjs = RestUtil.createRestJobStep(js);
+					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
@@ -361,7 +361,7 @@ public class JobstepControllerImpl implements JobstepController {
 				
 				if (msg.isTrue()) {
 					UtilService.getJobUtil().updateState(job, js.getJobStepState());
-					RestJobStep pjs = RestUtil.createRestJobStep(js);
+					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
