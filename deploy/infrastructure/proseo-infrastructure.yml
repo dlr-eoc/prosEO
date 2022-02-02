@@ -113,10 +113,21 @@
   - name: Add NFS disk volumes of 2 TB each to NFS host
     volume:
       datacenter: "{{ datacenter.name }}"
-#      server: "nfs-server"
+#     server: "nfs-server"
       name: "nfsdisk%02d"
+      count: 3
+      size: 2048
+      disk_type: HDD
+      licence_type: OTHER
+  
+  - name: Add NFS SSD volumes of 2 TB each to NFS host
+    volume:
+      datacenter: "{{ datacenter.name }}"
+#     server: "nfs-server"
+      name: "nfsssd%02d"
       count: "{{ nfs.disk_count }}"
       size: 2048
+      disk_type: SSD
       licence_type: OTHER
   
   - name: Show NFS host

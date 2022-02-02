@@ -175,6 +175,31 @@
 				</configuration>
 			</plugin>
 
+            <!-- Create JAR file to extend specific monitors from -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extendable-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>extendable</classifier>
+                            <includes>
+                                <include>de/dlr/proseo/monitor/MonitorConfiguration*</include>
+                                <include>de/dlr/proseo/monitor/microservice/**</include>
+                                <include>de/dlr/proseo/monitor/order/**</include>
+                                <include>de/dlr/proseo/monitor/product/**</include>
+                                <include>de/dlr/proseo/monitor/rawdata/**</include>
+                                <include>de/dlr/proseo/monitor/rest/**</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
 			<!-- Build Docker image -->
 			<plugin>
 				<groupId>io.fabric8</groupId>

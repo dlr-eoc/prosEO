@@ -15,22 +15,13 @@ logging:
         de.dlr.proseo: TRACE
         org.hibernate.engine.jdbc.env.internal: WARN
 proseo:
-    log:
-        # Host and port for InfluxDB monitoring
-        host: http://localhost:8086
-        # Authentication token for InfluxDB
-        token: TheInfluxDBToken
-        # InfluxDB organization to use
-        org: proseo
-        # InfluxDB bucket to use
-        bucket: order
     wrapper:
         # User and password for wrapper callbacks
         user: wrapper
         password: somepw
     productionPlanner:
         # Callback URL for wrapper
-        url: http://brainhost:8080/proseo/planner/v0.1
+        url: http://host.docker.internal:8083/proseo/planner/v0.1
         # maximum cycles to check finish of k8s proseo job 
         maxcycles: 50
         # wait time beetwen cycle in milliseconds  
@@ -42,6 +33,6 @@ proseo:
         kubeconfig: empty
     ingestor:
         # Callback URL for wrapper
-        url: http://brainhost:8080/proseo/ingestor/v0.1
+        url: http://host.docker.internal:8081/proseo/ingestor/v0.1
     posix:
         workerMountPoint: /proseo/data
