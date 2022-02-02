@@ -35,7 +35,14 @@ ansible-playbook proseo-infrastructure.yml
 ```
 
 Note: We use the environment variables for username and password to avoid having to specify the `username` and `password`
-parameters with every single deploymente task.
+parameters with every single deploymente task. After setting up the infrastructure, these variables MUST be removed from
+the environment (username and password for security reasons, the IONOS Ansible library, because it interferes with standard
+Ansible modules, e. g. `user`):
+```
+unset ANSIBLE_LIBRARY
+unset IONOS_USERNAME
+unset IONOS_PASSWORD
+```
 
 
 # Manual configuration corrections
@@ -46,7 +53,6 @@ some manual adaptations have to be made:
   or whatever your IP block has been named –, which have not yet been assigned to the NAT Gateway),
 - Set the internal LAN address of the NAT Gateway,
 - Set the network address of `laninternal` in the NAT rule of the NAT Gateway.
-- For all hosts and all NICs, activate DHCP by checking the respective box.
 
 Apart from that, creating new volumes within a server does not work. Thus the NFS server disks need to be moved into the NFS
 server manually.
@@ -70,6 +76,8 @@ export IONOS_USERNAME=<IONOS DCD user>
 export IONOS_PASSWORD=<IONOS DCD password>
 ansible-playbook proseo-server-update.yml
 ```
+
+As above, remove the environment variables after completing the infrastructure change.
 
 Whenever the CPU and memory resources of a Kubernetes worker node are updated, the `kubelet` on the worker node needs to be
 restarted (for details see `../hands/README.md`).
