@@ -191,6 +191,7 @@ resourceTypes:
         description: The persistent id of the processing order
       recordFrom?: integer
       recordTo?: integer
+      logs?: boolean
       orderBy?:
         type: string[]
         description: an array of strings containing a column name and an optional sort direction (ASC/DESC), separated by white space
@@ -284,7 +285,6 @@ resourceTypes:
               application/json:
                 type: RestJobGraph
                 example: !include ../../../../../interfaces/src/main/resources/raml/examples/jobgraph.json
-
 /jobsteps:
   type: standard
   get:

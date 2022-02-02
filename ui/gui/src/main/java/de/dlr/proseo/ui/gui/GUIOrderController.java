@@ -33,6 +33,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +54,7 @@ import de.dlr.proseo.model.enums.OrderState;
 import de.dlr.proseo.model.rest.model.RestClassOutputParameter;
 import de.dlr.proseo.model.rest.model.RestInputFilter;
 import de.dlr.proseo.model.rest.model.RestOrder;
+import de.dlr.proseo.model.rest.model.RestJobStep;
 import de.dlr.proseo.model.rest.model.RestParameter;
 import de.dlr.proseo.model.util.OrbitTimeFormatter;
 import de.dlr.proseo.ui.backend.ServiceConfiguration;
@@ -798,6 +801,41 @@ public class GUIOrderController extends GUIBaseController {
 			@RequestParam(required = true, value = "nid") String id){
 		Boolean result = countOrders(identifier, id) > 0;
 	    return new ResponseEntity<>(result.toString(), HttpStatus.OK);
+	}
+	
+	@GetMapping("/jobsteplog.txt")
+	public ResponseEntity<String> jobsteplog(@RequestParam(required = true, value = "id") String id){
+
+		GUIAuthenticationToken auth = (GUIAuthenticationToken)SecurityContextHolder.getContext().getAuthentication();
+		String result = "";
+		RestJobStep js;
+		// String id = identifier.replace(".txt", "");
+		try {
+			js = serviceConnection.getFromService(config.getProductionPlanner(),
+					"/jobsteps/" + id, RestJobStep.class, auth.getProseoName(), auth.getPassword());
+			if (js !=  null) {
+				result = js.getProcessingStdOut();
+			}
+		} catch (RestClientResponseException e) {
+			String message = null;
+			switch (e.getRawStatusCode()) {
+			case org.apache.http.HttpStatus.SC_NOT_FOUND:
+				message = uiMsg(MSG_ID_NO_MISSIONS_FOUND);
+				break;
+			case org.apache.http.HttpStatus.SC_UNAUTHORIZED:
+			case org.apache.http.HttpStatus.SC_FORBIDDEN:
+				message = uiMsg(MSG_ID_NOT_AUTHORIZED, "null", "null", "null");
+				break;
+			default:
+				message = uiMsg(MSG_ID_EXCEPTION, e.getMessage());
+			}
+			System.err.println(message);
+		} catch (RuntimeException e) {
+			System.err.println(uiMsg(MSG_ID_EXCEPTION, e.getMessage()));
+		}
+		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+		map.add("Content-Type", "text/plain");
+	    return new ResponseEntity<>(result, map, HttpStatus.OK);
 	}
 
 	private List<RestParameter> stripNullInParameterList(List<RestParameter> list) {
