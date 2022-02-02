@@ -249,7 +249,7 @@ public class TestSqlFilterExpressionVisitor {
 	@Test
 	public final void testVisitEnum() {
 		String uriQuery = "$filter=PublicationDate gt 2020-04-30T12:00:00.000Z and ProductionType eq OData.CSC.ProductionType'systematic_production'";
-		String sqlQuery = "(p.generation_time > '2020-04-30 12:00:00.000000 +0000' AND p.production_type = 'SYSTEMATIC')"; 
+		String sqlQuery = "(p.publication_time > '2020-04-30 12:00:00.000000 +0000' AND p.production_type = 'SYSTEMATIC')"; 
 		
 		runTest(uriQuery, sqlQuery);
 	}
