@@ -463,9 +463,16 @@ public class KubeJob {
 			}
 			job = aKubeConfig.getBatchApiV1().createNamespacedJob (aKubeConfig.getNamespace(), job, null, null, null);
 			logger.info("Job {} created with status {}", job.getMetadata().getName(), job.getStatus().toString());
-			searchPod();
 			UtilService.getJobStepUtil().startJobStep(jobStep);
 			Messages.KUBEJOB_CREATED.log(logger, kubeConfig.getId(), jobName);
+			Integer cycle = ProductionPlanner.config.getProductionPlannerJobCreatedWaitTime();
+			if (cycle == null) {
+				cycle = 2000;
+			}
+			Thread.sleep(cycle);
+			searchPod();
+			updateJobLog(jobStep);
+			RepositoryService.getJobStepRepository().save(jobStep);
 		} catch (ApiException e1) {
 			logger.error("Kubernetes API exception creating job for job step {}: {}", jobStep.getId(), e1.getMessage());
 			throw e1;
@@ -526,20 +533,10 @@ public class KubeJob {
 
 			V1Job aJob = aKubeConfig.getV1Job(jobname);
 			if (aJob != null) {
-				PodKube aPlan = new PodKube(aJob);
-				String cn = this.getContainerName();
-				if (cn != null && !podNames.isEmpty()) {
-					try {
-						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
-						aPlan.setLog(log);
-					} catch (Exception e) {
-						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-						return;
-					}
-				}
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 				if (js.isPresent()) {
+					updateJobLog(js.get());
 					try {
 						if (aJob.getStatus() != null) {
 							OffsetDateTime d;
@@ -566,13 +563,11 @@ public class KubeJob {
 								}
 							}
 						}
-						if (aPlan.getLog() != null) {
-							js.get().setProcessingStdOut(aPlan.getLog());
-						}
 					} catch (Exception e) {
 						e.printStackTrace();						
 					}
 					RepositoryService.getJobStepRepository().save(js.get());
+					UtilService.getJobUtil().updateState(js.get().getJob(), js.get().getJobStepState());
 					UtilService.getOrderUtil().logOrderState(js.get().getJob().getProcessingOrder());
 				}
 			}
@@ -633,22 +628,6 @@ public class KubeJob {
 
 			if (aPod != null) {
 				String podMessages = "";
-				PodKube aPlan = new PodKube(aJob);
-				String cn = this.getContainerName();
-				if (cn != null && !podNames.isEmpty()) {
-					try {
-						String log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
-						aPlan.setLog(log);
-					} catch (ApiException e1) {
-						// ignore, normally the pod has no log
-						if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
-					} catch (Exception e) {
-						logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-						return UpdateInfoResult.FALSE;
-					}
-				} else {
-					if (logger.isTraceEnabled()) logger.trace("    updateInfo: container not found");
-				}
 				Long jobStepId = this.getJobId();
 				Optional<JobStep> js = RepositoryService.getJobStepRepository().findById(jobStepId);
 				if (js.isPresent()) {
@@ -690,7 +669,6 @@ public class KubeJob {
 										    js.get().setJobStepState(JobStepState.COMPLETED);
 											UtilService.getJobStepUtil().checkCreatedProducts(js.get());
 											
-											js.get().incrementVersion();
 											if (cd == null) {
 												cd = jc.getLastProbeTime();
 												js.get().setProcessingCompletionTime(cd.toInstant());
@@ -705,7 +683,6 @@ public class KubeJob {
 												js.get().setJobStepState(JobStepState.RUNNING);
 											}
 											js.get().setJobStepState(JobStepState.FAILED);	
-											js.get().incrementVersion();	
 											if (cd == null) {
 												cd = jc.getLastProbeTime();
 												js.get().setProcessingCompletionTime(cd.toInstant());
@@ -713,30 +690,6 @@ public class KubeJob {
 											success = UpdateInfoResult.TRUE;
 										}
 									}
-								}
-							}
-							// Check conditions
-							// if one is false, read events for more detailed info
-							if (!success.equals(UpdateInfoResult.TRUE) && aPod.getStatus().getConditions() != null) {
-								podMessages += "Job Step Conditions (Type - Status):\n";
-								List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
-								for (V1PodCondition pc : pobCondList) {
-									podMessages += "  " + pc.getType() + " - " + pc.getStatus() + "\n";
-								}
-								String fieldSelector = "involvedObject.name==" + aPod.getMetadata().getName();
-								CoreV1EventList el = null;
-								try {
-									el = kubeConfig.getApiV1().listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
-									if (el != null) {
-										podMessages += "Job Step Events (Type - Reason - Count - Message):\n";
-										for (CoreV1Event ev : el.getItems()) {
-											podMessages += "  " + ev.getType() + " - " + ev.getReason() + " - " + ev.getCount() + " - " + ev.getMessage()  + "\n";
-										}
-										podMessages += "\n\n";
-									}
-								} catch (ApiException e) {
-									logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
-									return UpdateInfoResult.FALSE;
 								}
 							}
 							// cancel pod and job, write reasons into job step log
@@ -753,16 +706,16 @@ public class KubeJob {
 					} catch (Exception e) {
 						e.printStackTrace();						
 					}
-					if (aPlan.getLog() != null) {
-						js.get().setProcessingStdOut(podMessages + aPlan.getLog());
-					} else {
-						js.get().setProcessingStdOut(podMessages);
-					}
-
+					updateJobLog(js.get());
+					RepositoryService.getJobStepRepository().save(js.get());
 					Optional<JobStep> jsn = RepositoryService.getJobStepRepository().findById(jobStepId);
 					if (jsn.isPresent()) {
 						if (oldVersion == jsn.get().getVersion()) {
-							RepositoryService.getJobStepRepository().save(js.get());
+							if (success == UpdateInfoResult.TRUE) {
+								js.get().incrementVersion();
+								RepositoryService.getJobStepRepository().save(js.get());
+								UtilService.getJobUtil().updateState(js.get().getJob(), js.get().getJobStepState());
+							}
 						} else {
 							if (logger.isTraceEnabled()) logger.trace("    updateInfo: job step changed by others");
 							success = UpdateInfoResult.CHANGED;
@@ -861,5 +814,55 @@ public class KubeJob {
 			}
 		}
 		return minMem;
+	}
+	
+	private void updateJobLog(JobStep js) {
+		if (js != null && !podNames.isEmpty()) {
+			// Check conditions
+			String podMessages = "";
+			V1Pod aPod = kubeConfig.getV1Pod(podNames.get(podNames.size()-1));
+			if (aPod != null && aPod.getStatus().getConditions() != null) {
+				podMessages += "Job Step Conditions (Type - Status):\n";
+				List<V1PodCondition> pobCondList = aPod.getStatus().getConditions();
+				for (V1PodCondition pc : pobCondList) {
+					podMessages += "  " + pc.getType() + " - " + pc.getStatus() + "\n";
+				}
+				String fieldSelector = "involvedObject.name==" + aPod.getMetadata().getName();
+				CoreV1EventList el = null;
+				try {
+					el = kubeConfig.getApiV1().listEventForAllNamespaces(false, null, fieldSelector, null, 30, null, null, null, null, null);
+					if (el != null) {
+						podMessages += "Job Step Events (Type - Reason - Count - Message):\n";
+						for (CoreV1Event ev : el.getItems()) {
+							podMessages += "  " + ev.getType() + " - " + ev.getReason() + " - " + ev.getCount() + " - " + ev.getMessage()  + "\n";
+						}
+						podMessages += "\n\n";
+					}
+				} catch (ApiException e) {
+					logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				}
+			}
+
+			String cn = this.getContainerName();
+			String log = "";
+			if (cn != null) {
+				try {
+					log = kubeConfig.getApiV1().readNamespacedPodLog(podNames.get(podNames.size()-1), kubeConfig.getNamespace(), cn, null, null, null, null, null, null, null, null);
+				} catch (ApiException e1) {
+					// ignore, normally the pod has no log
+					if (logger.isTraceEnabled()) logger.trace("    updateInfo: ApiException ignore, normally the pod has no log");
+				} catch (Exception e) {
+					logger.error(Messages.RUNTIME_EXCEPTION.format(e.getMessage()), e);
+				}
+			} else {
+				if (logger.isTraceEnabled()) logger.trace("    updateJobLog: container not found");
+			}
+
+			if (log != null && !log.isBlank()) {
+				js.setProcessingStdOut(podMessages + log);
+			} else if (js.getProcessingStdOut() == null || js.getProcessingStdOut().isBlank()) {
+				js.setProcessingStdOut(podMessages);
+			}
+		}
 	}
 }

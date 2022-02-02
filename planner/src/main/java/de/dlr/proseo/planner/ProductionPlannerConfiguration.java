@@ -41,6 +41,10 @@ public class ProductionPlannerConfiguration {
 	/** Wait time for K8s job finish cycle in milliseconds */
 	@Value("${proseo.productionPlanner.cyclewaittime}")
 	private Integer productionPlannerCycleWaitTime;
+
+	/** Wait time for K8s pod created in milliseconds */
+	@Value("${proseo.productionPlanner.jobcreatedwaittime}")
+	private Integer productionPlannerJobCreatedWaitTime;
 	
 	/** Kubernetes configuration file name */
 	@Value("${proseo.productionPlanner.kubeconfig}")
@@ -65,6 +69,20 @@ public class ProductionPlannerConfiguration {
 	/** Mount point for wrapper */
 	@Value("${proseo.posix.workerMountPoint}")
 	private String posixWorkerMountPoint;
+
+	/**
+	 * @return the productionPlannerJobCreatedWaitTime
+	 */
+	public Integer getProductionPlannerJobCreatedWaitTime() {
+		return productionPlannerJobCreatedWaitTime;
+	}
+
+	/**
+	 * @param productionPlannerJobCreatedWaitTime the productionPlannerJobCreatedWaitTime to set
+	 */
+	public void setProductionPlannerJobCreatedWaitTime(Integer productionPlannerJobCreatedWaitTime) {
+		this.productionPlannerJobCreatedWaitTime = productionPlannerJobCreatedWaitTime;
+	}
 
 	/**
 	 * @return the productionPlannerFileCheckMaxCycles
