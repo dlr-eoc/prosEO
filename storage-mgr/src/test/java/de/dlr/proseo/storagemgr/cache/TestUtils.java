@@ -26,6 +26,7 @@ public class TestUtils {
 	@Autowired
 	private StorageManagerConfiguration cfg;
 
+	
 	private static TestUtils theTestUtils;
 
 	public static TestUtils getInstance() {
@@ -38,6 +39,7 @@ public class TestUtils {
 
 		theTestUtils = this;
 	}
+	
 
 	/**
 	 * @return
@@ -115,6 +117,24 @@ public class TestUtils {
 		FileUtils fileUtils = new FileUtils(path);
 		fileUtils.createFile(content);
 	}
+	
+	/**
+	 * @param path
+	 */
+	public static boolean fileExists(String path) { 
+	
+		return new File(path).exists();
+	}
+
+	
+	/**
+	 * @param path
+	 */
+	public static boolean directoryExists(String path) { 
+	
+		return new File(path).isDirectory();
+	}
+	
 
 	/**
 	 * @param path

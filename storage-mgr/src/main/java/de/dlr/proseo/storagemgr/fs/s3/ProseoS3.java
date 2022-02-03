@@ -8,7 +8,14 @@ import java.io.File;
 import java.util.List;
 import java.util.ListIterator;
 
+import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -35,105 +42,85 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 
 /**
- * S3 Operations for Storage Manager based on Amazon S3 SDK v2  
+ * S3 Operations for Storage Manager based on Amazon S3 SDK v2
  * 
  * @author Denys Chaykovskiy
  *
  */
 
-
+@Component
 public class ProseoS3 {
 
 	// TODO: GLOBAL S3
-	// TODO: improve create bucket loop and use it for all interface operations (public methods)
-	// TODO: maybe anonymous classes and command interface for loop calls 
+	// TODO: improve create bucket loop and use it for all interface operations
+	// (public methods)
+	// TODO: maybe anonymous classes and command interface for loop calls
 	// TODO: no exceptions for public calls? - we expect it
-	// TODO: Unit-tests for all public methods 
+	// TODO: Unit-tests for all public methods
 	// TODO: later - make interface for proseo file system s3 and posix
-	// TODO: remove s3 v1 completely 
-	// TODO: link in pom.xml only used awssdk libraries, no v1 
-		
+	// TODO: remove s3 v1 completely
+	// TODO: link in pom.xml only used awssdk libraries, no v1
+
+	/** Amount of retries and time interval */
 	private static final int BUCKET_CREATION_RETRIES = 3;
 	private static final int BUCKET_CREATION_RETRY_INTERVAL = 5000;
-	
+
 	// private static final int FILE_UPLOAD_RETRIES = 3;
 	// private static final int FILE_DOWNLOAD_RETRIES = 3;
 
-	private S3Client s3Client;
+	/** S3 Client singleton */
+	private static S3Client theS3Client;
 
-	public static void start() throws IOException
-	{
-		// TODO: move to tests and split 
-		// TODO: make tests platform-independent /../
-		
-		String testBucket = "created-bucket-upload-aaaaffgkjk";
-		String testFile = "E:\\s3testfolder\\s3testfile.txt";
-		String testDownloadFile = "E:\\s3testfolder\\download\\s3testfile.txt";
-		
-		ProseoS3 s3 = new ProseoS3();
-		
-		s3.showBuckets();
-		
-		// create bucket
-		s3.getBucket(testBucket); 
-		s3.showBuckets();
-		
-		System.out.println(); 
-		
-		// upload file
-		s3.uploadFile(testFile, testBucket, testFile);
-		s3.showFiles(testBucket);
-		
-		System.out.println(); 
-		
-		// download file 
-		s3.downloadFile(testBucket, testFile, testDownloadFile);
-		
-		System.out.println(); 
-		
-		// delete file 
-		s3.deleteFile(testBucket, testFile);
-		s3.showFiles(testBucket);
-		
-		System.out.println(); 
-		
-		// delete bucket 
-		s3.deleteBucket(testBucket); 
-	
-		// show buckets 
-		s3.showBuckets();
-			
-		System.out.println("OK - SUCCESS"); 
-		
+	@Autowired
+	private StorageManagerConfiguration cfg;
+
+	/** Logger for this class */
+	private static Logger logger = LoggerFactory.getLogger(ProseoS3.class);
+
+	/**
+	 * Instance of proseo s3
+	 * 
+	 * @return file cache singleton
+	 */
+	public static S3Client getInstance() {
+
+		return theS3Client;
+	}
+
+	/**
+	 * Initializes s3 client
+	 */
+	@PostConstruct
+	private void init() {
+
+		if (logger.isTraceEnabled())
+			logger.trace(">>> init()");
+
+		initializeS3Client();
 	}
 
 	private void initializeS3Client() {
-		
-		// TODO: Read from cfg (make component) 
-	
-		String s3AccessKey = "";
-		String secretAccessKey = "";
-		
-		
-		
-		String region = "eu-north-1"; 
-		String s3EndPoint = "ec2.eu-north-1.amazonaws.com";
-		
-		AwsBasicCredentials creds = AwsBasicCredentials.create(s3AccessKey, secretAccessKey);
-		
-		System.out.println("URI: " + URI.create(s3EndPoint).toString());
-		System.out.println("Region: " + Region.of(region).toString()); 
-		
-		
-		// TODO: One builder
-		// All 
-		// s3Client = S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(s3EndPoint)).credentialsProvider(StaticCredentialsProvider.create(creds)).build();
-		
-		// Amazon only, for tests  
-		s3Client = S3Client.builder().region(Region.EU_CENTRAL_1).credentialsProvider(StaticCredentialsProvider.create(creds)).build();
 
-		
+		String s3AccessKey = ""; 
+		String s3SecretAccessKey = ""; 
+			
+		// String s3AccessKey = cfg.getS3AccessKey(); 
+		// String s3SecretAccessKey = cfg.getS3SecretAccessKey(); 
+		// String s3Region = cfg.getS3Region();
+		// String s3EndPoint = cfg.getS3EndPoint();
+
+		AwsBasicCredentials s3Creds = AwsBasicCredentials.create(s3AccessKey, s3SecretAccessKey);
+
+		// TODO: One builder for all like that
+		// theS3Client = S3Client.builder().region(Region.of(s3Region))
+		//      .endpointOverride(URI.create(s3EndPoint)).credentialsProvider(StaticCredentialsProvider.create(s3Creds)).build();
+
+		// Amazon only, for tests 
+		theS3Client = S3Client.builder().region(Region.EU_CENTRAL_1)
+				.credentialsProvider(StaticCredentialsProvider.create(s3Creds)).build();
+
 	}
+
 
 	public ProseoS3() {
 		initializeS3Client();
@@ -148,14 +135,21 @@ public class ProseoS3 {
 		return createBucketWithRetries(bucketName);
 	}
 
+	/**
+	 * List all buckets; passes all exceptions on to the caller
+	 * 
+	 * @param s3 the S3 client to use
+	 * @return a list of buckets
+	 */
 	
+	// TODO: Change try-catch behavior 
 	public List<Bucket> getBuckets() {
 
 		// if (logger.isTraceEnabled()) logger.trace(">>> listBuckets({})", s3);
 
 		ListBucketsResponse listBucketsResponse = null;
 		try {
-			listBucketsResponse = s3Client.listBuckets();
+			listBucketsResponse = theS3Client.listBuckets();
 		} catch (Exception e) {
 			// logger.error(e.getMessage());
 			throw e;
@@ -188,40 +182,43 @@ public class ProseoS3 {
 	}
 
 	public void deleteBucket(String bucketName) {
-		
+
 		// TODO: Delete all files from bucket
 		// deleteObjectsInBucket(bucketName);
 
 		deleteEmptyBucket(bucketName);
 	}
-	
-	
-	public void deleteFile(String bucketName, String filePath) 
-	{
-       DeleteObjectRequest request = DeleteObjectRequest.builder()
-                           .bucket(bucketName)
-                           .key(filePath)
-                           .build();
-        
-       s3Client.deleteObject(request);
+
+	public boolean fileExists(String bucket, String filePath) {
+
+		try {
+			theS3Client.headObject(HeadObjectRequest.builder().bucket(bucket).key(filePath).build());
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public void deleteFile(String bucketName, String filePath) {
+		DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(filePath).build();
+
+		theS3Client.deleteObject(request);
 	}
 
 	// TODO: Do we need async upload? add attempts
 	public void uploadFileAsync(String bucketName, String filePath) {
 		PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(filePath).build();
 
-		s3Client.putObject(request, RequestBody.fromFile(new File(filePath)));
+		theS3Client.putObject(request, RequestBody.fromFile(new File(filePath)));
 	}
 
-	
-	public void uploadFile(String fromFilePath, String toBucketName, String toFilePath) 
-	{
+	public void uploadFile(String fromFilePath, String toBucketName, String toFilePath) {
 
 		PutObjectRequest request = PutObjectRequest.builder().bucket(toBucketName).key(toFilePath).build();
 
-		s3Client.putObject(request, RequestBody.fromFile(new File(fromFilePath)));
+		theS3Client.putObject(request, RequestBody.fromFile(new File(fromFilePath)));
 
-		S3Waiter waiter = s3Client.waiter();
+		S3Waiter waiter = theS3Client.waiter();
 		HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(toBucketName).key(toFilePath).build();
 
 		WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
@@ -230,55 +227,45 @@ public class ProseoS3 {
 
 		System.out.println("File " + toFilePath + " was uploaded.");
 	}
-	
-	public void downloadFile(String fromBucketName, String fromFilePath, String toFilePath) throws IOException
-	{
-		GetObjectRequest request = GetObjectRequest.builder()
-		                    .bucket(fromBucketName)
-		                    .key(fromFilePath)
-		                    .build();
-		 
-		ResponseInputStream<GetObjectResponse> response = s3Client.getObject(request);
-		 
-		//	String fileName = new File(toFilePath).getName();
+
+	public void downloadFile(String fromBucketName, String fromFilePath, String toFilePath) throws IOException {
+		GetObjectRequest request = GetObjectRequest.builder().bucket(fromBucketName).key(fromFilePath).build();
+
+		ResponseInputStream<GetObjectResponse> response = theS3Client.getObject(request);
+
+		// String fileName = new File(toFilePath).getName();
 		BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(toFilePath));
-		 
+
 		byte[] buffer = new byte[4096];
 		int bytesRead = -1;
-		 
-		while ((bytesRead = response.read(buffer)) !=  -1) {
-		    outputStream.write(buffer, 0, bytesRead);
+
+		while ((bytesRead = response.read(buffer)) != -1) {
+			outputStream.write(buffer, 0, bytesRead);
 		}
-		                     
+
 		response.close();
 		outputStream.close();
 	}
-	
-	
-	
-	// TODO: Maybe make List<ProseoFile> or similar
-	public List<S3Object> getFiles(String bucketName) 
-	{
-		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucketName).build();
-        
-        ListObjectsResponse response = s3Client.listObjects(request);
-        return response.contents();        
-	}
-	
-	public void showFiles(String bucketName) 
-	{
-		ListIterator<S3Object> listIterator = getFiles(bucketName).listIterator();
-         
-        System.out.println("Objects in bucket: " + bucketName); 
-        
-        while (listIterator.hasNext()) {
-            S3Object object = listIterator.next();
-            System.out.println(object.key() + " - " + object.size());
-        }
-	}
-	
 
-	
+	// TODO: Maybe make List<ProseoFile> or similar
+	public List<S3Object> getFiles(String bucketName) {
+		ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucketName).build();
+
+		ListObjectsResponse response = theS3Client.listObjects(request);
+		return response.contents();
+	}
+
+	public void showFiles(String bucketName) {
+		ListIterator<S3Object> listIterator = getFiles(bucketName).listIterator();
+
+		System.out.println("Objects in bucket: " + bucketName);
+
+		while (listIterator.hasNext()) {
+			S3Object object = listIterator.next();
+			System.out.println(object.key() + " - " + object.size());
+		}
+	}
+
 	private Bucket findBucket(String bucketName) {
 		List<Bucket> buckets = getBuckets();
 		Bucket desiredBucket = null;
@@ -303,14 +290,14 @@ public class ProseoS3 {
 				bucketCreated = true;
 				break;
 			}
-			
+
 			// TODO: make a separate method?
 			try {
 				Thread.sleep(BUCKET_CREATION_RETRY_INTERVAL);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-	
+
 		}
 
 		// TODO: Maybe do not throw exception, we expect it
@@ -326,10 +313,10 @@ public class ProseoS3 {
 	private boolean createBucket(String bucketName) {
 
 		try {
-			S3Waiter s3Waiter = s3Client.waiter();
+			S3Waiter s3Waiter = theS3Client.waiter();
 			CreateBucketRequest bucketRequest = CreateBucketRequest.builder().bucket(bucketName).build();
 
-			s3Client.createBucket(bucketRequest);
+			theS3Client.createBucket(bucketRequest);
 			HeadBucketRequest bucketRequestWait = HeadBucketRequest.builder().bucket(bucketName).build();
 
 			// Wait until the bucket is created and print out the response
@@ -341,17 +328,14 @@ public class ProseoS3 {
 
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
-			// log somethere like logInfo 
+			// log somethere like logInfo
 			return false;
 		}
 	}
 
-	
-
 	private void deleteEmptyBucket(String bucketName) {
 		DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder().bucket(bucketName).build();
-		s3Client.deleteBucket(deleteBucketRequest);
+		theS3Client.deleteBucket(deleteBucketRequest);
 	}
 
 }
-
