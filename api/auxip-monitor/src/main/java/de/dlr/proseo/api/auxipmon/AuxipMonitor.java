@@ -59,6 +59,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
+import de.dlr.proseo.basewrap.MD5Util;
 import reactor.core.publisher.Flux;
 import reactor.netty.http.client.HttpClient;
 
@@ -116,6 +117,9 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final int MSG_ID_EXCEPTION_THROWN = 5386;
 	private static final int MSG_ID_PRODUCT_DOWNLOAD_FAILED = 5387;
 	private static final int MSG_ID_RETRIEVAL_RESULT = 5388;
+	private static final int MSG_ID_FILE_SIZE_MISMATCH = 5389;
+	private static final int MSG_ID_CHECKSUM_MISMATCH = 5390;
+	private static final int MSG_ID_CANNOT_RELEASE_BUFFER = 5391;
 	
 	/* Same as XBIP Monitor */
 	private static final int MSG_ID_AVAILABLE_DOWNLOADS_FOUND = 5302;
@@ -148,11 +152,14 @@ public class AuxipMonitor extends BaseMonitor {
 	private static final String MSG_ODATA_REQUEST_ABORTED = "(E%d) OData request for reference time %s aborted (cause: %s / %s)";
 	private static final String MSG_EXCEPTION_THROWN = "(E%d) Exception thrown in AUXIP monitor: ";
 	private static final String MSG_PRODUCT_DOWNLOAD_FAILED = "(E%d) Download of product file %s failed (cause: %s)";
+	private static final String MSG_FILE_SIZE_MISMATCH = "(E%d) File size mismatch for product file %s (expected: %d Bytes, got %d Bytes)";
+	private static final String MSG_CHECKSUM_MISMATCH = "(E%d) Checksum mismatch for product file %s (expected: %s, got %s)";
+	private static final String MSG_CANNOT_RELEASE_BUFFER = "(E%d) Cannot release data buffer %s of transfer request for product file %s";
 
 	private static final String MSG_PRODUCT_EVICTED = "(W%d) Product %s already evicted at %s – skipped";
 
 	private static final String MSG_AVAILABLE_DOWNLOADS_FOUND = "(I%d) %d session entries found for download (unfiltered)";
-	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer for session %s completed";
+	private static final String MSG_PRODUCT_TRANSFER_COMPLETED = "(I%d) Transfer completed: |%s|%s|%d|%s|%s|";
 	private static final String MSG_FOLLOW_ON_ACTION_STARTED = "(I%d) Follow-on action for session %s started with command %s";
 	private static final String MSG_RETRIEVAL_RESULT = "(I%d) Retrieval request returned %d products out of %d available";
 
@@ -698,7 +705,6 @@ public class AuxipMonitor extends BaseMonitor {
 		if (logger.isTraceEnabled()) logger.trace(">>> checkAvailableDownloads({})", referenceTimeStamp);
 
 		TransferControl transferControl = new TransferControl();
-//		transferControl.referenceTime = referenceTimeStamp;
 		
 		try {
 			// If token-based authentication is required, login to AUXIP and request token
@@ -711,27 +717,6 @@ public class AuxipMonitor extends BaseMonitor {
 					return transferControl;
 				}
 			}
-			
-			// Loop over all configured product types
-			
-//			for (String productType: config.getAuxipProductTypes()) {
-//				if (null == productTypeReferenceTimes.get(productType)) {
-//					productTypeReferenceTimes.put(productType, referenceTimeStamp);
-//				}
-//				Instant productTypeReferenceTime = productTypeReferenceTimes.get(productType);
-//				
-//				if (logger.isTraceEnabled()) logger.trace("... checking for products of type {}", productType);
-//				TransferControl productTypeTransferControl = checkAvailableProducts(productType, productTypeReferenceTime, bearerToken);
-//				if (logger.isTraceEnabled()) logger.trace("... found {} products", productTypeTransferControl.transferObjects.size());
-//
-//				if (productTypeReferenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-//					productTypeReferenceTimes.put(productType, productTypeTransferControl.referenceTime);
-//				}
-//				if (transferControl.referenceTime.isBefore(productTypeTransferControl.referenceTime)) {
-//					transferControl.referenceTime = productTypeTransferControl.referenceTime;
-//				}
-//				transferControl.transferObjects.addAll(productTypeTransferControl.transferObjects);
-//			}
 			
 			// Only a single request is made (not considering paging) with all
 			// product types OR'ed in a single list
@@ -775,6 +760,7 @@ public class AuxipMonitor extends BaseMonitor {
 						+ "/$value";
 				
 				HttpClient httpClient = HttpClient.create()
+						.secure()
 						.headers(httpHeaders -> {
 							if (config.getAuxipUseToken()) {
 								httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
@@ -783,29 +769,29 @@ public class AuxipMonitor extends BaseMonitor {
 										(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 							}
 						})
-						.followRedirect((request, response) -> {
-							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
-							switch (response.status().code()) {
-							case 301:
-							case 302:
-							case 307:
-							case 308:
-								String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-								if (null == redirectLocation) {
-									return false;
-								}
-								// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-								if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-									if (logger.isTraceEnabled()) logger.trace(
-											"... redirect credentials given in location header, removing authorization header from request");
-									request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-								}
-								return true;
-							default:
-								return false;
-							}
-						}, null)
-						.secure()
+						.followRedirect(true)
+//						.followRedirect((request, response) -> {
+//							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
+//							switch (response.status().code()) {
+//							case 301:
+//							case 302:
+//							case 307:
+//							case 308:
+//								String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
+//								if (null == redirectLocation) {
+//									return false;
+//								}
+//								// Prevent sending authorization header, if target is S3 and credentials are already given in URL
+//								if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
+//									if (logger.isTraceEnabled()) logger.trace(
+//											"... redirect credentials given in location header, removing authorization header from request");
+//									request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
+//								}
+//								return true;
+//							default:
+//								return false;
+//							}
+//						}, null)
 						.doAfterResponse((response, connection) -> {
 							if (logger.isTraceEnabled()) {
 								logger.trace("... response code: {}", response.status());
@@ -823,11 +809,11 @@ public class AuxipMonitor extends BaseMonitor {
 				
 				// Retrieve and store product file
 				Instant copyStart = Instant.now();
-				String productFileName = config.getAuxipDirectoryPath() + File.separator + transferProduct.getName();
+				File productFile = new File(config.getAuxipDirectoryPath() + File.separator + transferProduct.getName());
 
 				logger.trace("... starting request for URL '{}'", requestUri);
 				
-				try (FileOutputStream fileOutputStream = new FileOutputStream(productFileName);) {
+				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
 					
 					Flux<DataBuffer> dataBuffer = webClient
 							.get()
@@ -836,9 +822,18 @@ public class AuxipMonitor extends BaseMonitor {
 							.retrieve()
 							.bodyToFlux(DataBuffer.class);
 
-					DataBufferUtils.write(dataBuffer, fileOutputStream).blockLast(Duration.ofSeconds(600));
+					// TODO Memory leak in DataBufferUtils? DataBuffers werden nicht mehr freigegeben (auskommentierter Code
+					// erwischt nur den letzten DataBuffer)
+					// Getestet ohne Erfolg: Aktuelle Version von Spring Boot, kein Multi-Threading in BaseMonitor
+					
+					DataBuffer buf = DataBufferUtils.write(dataBuffer, fileOutputStream).blockLast(Duration.ofSeconds(600));
+//					if (!DataBufferUtils.release(buf)) {
+//						logger.error(String.format(MSG_CANNOT_RELEASE_BUFFER, MSG_ID_CANNOT_RELEASE_BUFFER,
+//								buf.toString(), transferProduct.getIdentifier()));
+//						// but continue (for the time being)
+//					}
 				} catch (FileNotFoundException e) {
-					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFileName));
+					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
 					return false;
 				} catch (WebClientResponseException e) {
 					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
@@ -850,20 +845,37 @@ public class AuxipMonitor extends BaseMonitor {
 					return false;
 				}
 
+				// Compare file size with value given by AUXIP 
+				Long productFileLength = productFile.length();
+				if (!productFileLength.equals(transferProduct.getSize())) {
+					logger.error(String.format(MSG_FILE_SIZE_MISMATCH, MSG_ID_FILE_SIZE_MISMATCH, transferProduct.getIdentifier(),
+							transferProduct.getSize(), productFileLength));
+					return false;
+				}
+
+				// Record the performance for files of sufficient size
 				Duration copyDuration = Duration.between(copyStart, Instant.now());
-				Double copyPerformance = new File(productFileName).length() / // Bytes
+				Double copyPerformance = productFileLength / // Bytes
 						(copyDuration.toNanos() / 1000000000.0) // seconds (with fraction)
 						/ (1024 * 1024); // --> MiB/s
 				
-				// Record the performance for files of sufficient size
-				if (config.getAuxipPerformanceMinSize() < new File(productFileName).length()) {
+				if (config.getAuxipPerformanceMinSize() < productFileLength) {
 					setLastCopyPerformance(copyPerformance);
 				}
 				
-				// TODO Compute checksum and compare with value given by AUXIP
-				// TODO Log download with UUID, file name, size, checksum, publication date (request by ESA)
+				// Compute checksum and compare with value given by AUXIP
+				String md5Hash = MD5Util.md5Digest(productFile);
+				if (!md5Hash.equalsIgnoreCase(transferProduct.checksum)) {
+					logger.error(String.format(MSG_CHECKSUM_MISMATCH, MSG_ID_CHECKSUM_MISMATCH, transferProduct.getIdentifier(),
+							transferProduct.getChecksum(), md5Hash));
+					return false;
+				}
 				
-				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED, transferProduct.getIdentifier()));
+				// Log download with UUID, file name, size, checksum, publication date (request by ESA)
+				logger.info(String.format(MSG_PRODUCT_TRANSFER_COMPLETED, MSG_ID_PRODUCT_TRANSFER_COMPLETED,
+						transferProduct.getIdentifier(), transferProduct.getName(),
+						transferProduct.getSize(), transferProduct.getChecksum(),
+						transferProduct.getPublicationTime().toString()));
 				
 				return true;
 			} catch (Exception e) {
