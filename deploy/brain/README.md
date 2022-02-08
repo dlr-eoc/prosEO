@@ -1,7 +1,7 @@
-CProS Control Instance ("Brain") Configuration
-==============================================
+prosEO Control Instance ("Brain") Configuration
+===============================================
 
-The configuration of the CProS Brain consists of two parts:
+The configuration of the prosEO Brain consists of two parts:
 - Prepare the VM (Ansible)
 - Deploy prosEO on the VM (Docker Compose)
 

@@ -13,5 +13,5 @@
     mode: 0755
   loop:
   - docker-compose.yml
-  - run_control_instance.sh
-  - stop_control_instance.sh
+  - run_db.sh
+  - stop_db.sh

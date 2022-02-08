@@ -37,6 +37,20 @@
     debug:
       msg: "{{ brainhost }}"
   
+  - name: Update database server
+    server:
+      datacenter: "{{ datacenter.name }}"
+      instance_ids:
+      - brain
+      cores: "{{ dbhost.cores }}"
+      ram: "{{ dbhost.ram }}"
+      state: update
+    register: dbhost
+  
+  - name: Show brain host
+    debug:
+      msg: "{{ dbhost }}"
+  
   - name: Update NFS host
     server:
       datacenter: "{{ datacenter.name }}"

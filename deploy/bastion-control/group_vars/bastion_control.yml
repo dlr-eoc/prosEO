@@ -6,6 +6,7 @@ rkhunter_email: thomas.bassler@dlr.de
 
 inner_nodes:
     - { name: brain, ip: "{{ groups['brain'][0] }}" }
+    - { name: dbhost, ip: "{{ groups['dbhost'][0] }}" }
     - { name: loghost, ip: "{{ groups['loghost'][0] }}" }
     - { name: nfsserver, ip: "{{ groups['nfsserver'][0] }}" }
     - { name: master, ip: "{{ groups['master'][0] }}" }

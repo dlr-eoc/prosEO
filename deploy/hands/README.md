@@ -1,5 +1,5 @@
-CProS Kubernetes Cluster Deployment
-===================================
+prosEO Kubernetes Cluster Deployment
+====================================
 
 
 # Prerequisites
