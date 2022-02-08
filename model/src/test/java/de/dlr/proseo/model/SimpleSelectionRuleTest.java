@@ -119,7 +119,7 @@ public class SimpleSelectionRuleTest {
 				+ "p.sensingStartTime >= (select max(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
 				+ "p2.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "') or "
 				+ "p.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStartTime < "
+				+ "p.sensingStartTime <= "
 					+ "(select min(p2.sensingStartTime) from Product p2 "
 					+ "where p2.productClass.id = 4711 and "
 					+ "p2.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "')))",
@@ -138,7 +138,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensingStartTime <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "or "
 				+ "p.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStartTime < "
+				+ "p.sensingStartTime <= "
 					+ "(select min(p2.sensingStartTime) from Product p2 where p2.productClass.id = 4711 and "
 					+ "p2.sensingStartTime > '" + EXPECTED_CENTRE_TIME + "')))",
 			"select p from Product p where (p.productClass.id = 4711 and "
@@ -148,7 +148,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensingStopTime <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "or "
 				+ "p.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "' and "
-				+ "p.sensingStopTime < "
+				+ "p.sensingStopTime <= "
 					+ "(select min(p2.sensingStopTime) from Product p2 where p2.productClass.id = 4711 and "
 					+ "p2.sensingStopTime > '" + EXPECTED_CENTRE_TIME + "')))",
 			"select p from Product p "
@@ -247,7 +247,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_start_time < "
+				+ "p.sensing_start_time <= "
 					+ "(SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
@@ -265,7 +265,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_start_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_start_time < "
+				+ "p.sensing_start_time <= "
 					+ "(SELECT MIN(p2.sensing_start_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_start_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p WHERE (p.product_class_id = 4711 AND "
@@ -275,7 +275,7 @@ public class SimpleSelectionRuleTest {
 					+ "p2.sensing_stop_time <= '" + EXPECTED_CENTRE_TIME + "') "
 				+ "OR "
 				+ "p.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "' AND "
-				+ "p.sensing_stop_time < "
+				+ "p.sensing_stop_time <= "
 					+ "(SELECT MIN(p2.sensing_stop_time) FROM product p2 WHERE p2.product_class_id = 4711 AND "
 					+ "p2.sensing_stop_time > '" + EXPECTED_CENTRE_TIME + "')))",
 			"SELECT * FROM product p "
