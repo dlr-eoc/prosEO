@@ -84,6 +84,7 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 			{ ProductEdmProvider.GENERIC_PROP_NAME, "pf.product_file_name" }, // TODO Find way to also check for ZIP files
 			{ ProductEdmProvider.GENERIC_PROP_CONTENT_TYPE, null }, // not part of data model
 			{ ProductEdmProvider.GENERIC_PROP_CONTENT_LENGTH, "pf.file_size" },
+			{ ProductEdmProvider.ET_PRODUCT_PROP_ORIGIN_DATE, "p.raw_data_availability_time" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PUBLICATION_DATE, "p.publication_time" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM, "pf.checksum" },
 			{ ProductEdmProvider.ET_PRODUCT_PROP_PRODUCTION_TYPE, "p.production_type" },

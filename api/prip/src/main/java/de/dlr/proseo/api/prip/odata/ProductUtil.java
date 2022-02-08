@@ -240,16 +240,6 @@ public class ProductUtil {
 						null == modelProduct.getMode() ? 0 : modelProduct.getMode()));
 		attributes.getEntities().add(processingMode);
 		
-		Entity productClass = new Entity();
-		productClass.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
-		productClass
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_NAME, ValueType.PRIMITIVE, PRODUCT_CLASS.getValue()))
-				.addProperty(new Property(null, ProductEdmProvider.ET_ATTRIBUTE_PROP_VALUETYPE, ValueType.PRIMITIVE,
-						ProductEdmProvider.ET_STRINGATTRIBUTE_NAME))
-				.addProperty(new Property(null, ProductEdmProvider.GENERIC_PROP_VALUE, ValueType.PRIMITIVE,
-						modelProduct.getFileClass()));
-		attributes.getEntities().add(productClass);
-		
 		Entity productType = new Entity();
 		productType.setType(ProductEdmProvider.ET_STRINGATTRIBUTE_FQN.toString());
 		productType
