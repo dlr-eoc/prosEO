@@ -1,8 +1,6 @@
 package de.dlr.proseo.storagemgr.rest;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.Test;
@@ -14,10 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+
 import de.dlr.proseo.storagemgr.StorageManager;
 
 /**
- * Mock Mvc test for Info Controller
+ * Mock Mvc test for Product Controller
  * 
  * @author Denys Chaykovskiy
  * 
@@ -25,21 +25,25 @@ import de.dlr.proseo.storagemgr.StorageManager;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class InfoControllerImplTest {
+public class ProductControllerImplTest {
 
 	@Autowired
 	private MockMvc mockMvc;
 
 	@Test
-	public void shouldReturnDefaultMessage() throws Exception {
+	public void getProducts()  throws Exception {
 		
-		String requestString =  "/proseo/storage-mgr/x/info";
-						
-		MvcResult mvcResult = mockMvc.perform(get(requestString))
+		String requestString =  "/proseo/storage-mgr/x/products";
+				
+		MockHttpServletRequestBuilder request = get(requestString)
+				.param("storageType", "POSIX")
+				.param("prefix", "");  
+		
+		MvcResult mvcResult = mockMvc.perform(request)
 				.andExpect(status().isOk())
-				.andExpect(content().string(containsString("s3Region")))
 				.andReturn(); 
 		
+		System.out.println("REQUEST: " + requestString);
 		System.out.println("Status: " + mvcResult.getResponse().getStatus() );
 		System.out.println("Content: " + mvcResult.getResponse().getContentAsString() );
 	}
