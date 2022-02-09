@@ -20,7 +20,7 @@ import de.dlr.proseo.storagemgr.StorageManager;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
-public class InfoControllerImplTest {
+public class InfoControllerImplSmokeTest {
 	
 	@Autowired 
 	InfoControllerImpl infoController; 
