@@ -23,6 +23,10 @@ import org.apache.olingo.commons.api.data.Link;
 import org.apache.olingo.commons.api.data.Property;
 import org.apache.olingo.commons.api.data.ValueType;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
+import org.apache.olingo.commons.api.edm.geo.Geospatial;
+import org.apache.olingo.commons.api.edm.geo.LineString;
+import org.apache.olingo.commons.api.edm.geo.Point;
+import org.apache.olingo.commons.api.edm.geo.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +117,29 @@ public class ProductUtil {
 				Date.from(modelProductFile.getZipChecksumTime()))));
 		checksums.add(checksum);
 		product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_CHECKSUM, ValueType.COLLECTION_COMPLEX, checksums));
+		
+		// Set footprint information from "coordinates" parameter, if available
+		Parameter footprintParameter = modelProduct.getParameters().get("coordinates");
+		if (null != footprintParameter) {
+			try {
+				// Coordinates are blank-separated lists of comma-separated latitude/longitude pairs in counter-clockwise sequence
+				String[] points = footprintParameter.getStringValue().split(" ");
+				List<Point> exteriorRing = new ArrayList<>();
+				for (int i = 0; i < points.length; ++i) {
+					Point p = new Point(Geospatial.Dimension.GEOGRAPHY, null);
+					p.setY(Double.parseDouble(points[i].split(",")[0])); // Latitude
+					p.setX(Double.parseDouble(points[i].split(",")[1])); // Longitude
+					exteriorRing.add(p);
+				}
+				Polygon footprint = new Polygon(Geospatial.Dimension.GEOGRAPHY, null, new ArrayList<LineString>(),
+						new LineString(Geospatial.Dimension.GEOGRAPHY, null, exteriorRing));
+				product.addProperty(new Property(null, ProductEdmProvider.ET_PRODUCT_PROP_FOOTPRINT, ValueType.PRIMITIVE, footprint));
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+				// Log warning, otherwise ignore
+				logger.warn("Cannot convert coordinate string '{}' to footprint",
+						footprintParameter.getStringValue());
+			}
+		}
 
 		// Create navigable collection of attributes
 		EntityCollection attributes = new EntityCollection();

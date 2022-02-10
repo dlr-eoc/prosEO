@@ -156,9 +156,15 @@ public class SqlFilterExpressionVisitor implements ExpressionVisitor<String> {
 		// Simple case: First property is primitive
 		if (UriResourceKind.primitiveProperty.equals(uriResource.getKind())) {
 			UriResourcePrimitiveProperty uriResourceProperty = (UriResourcePrimitiveProperty) uriResource;
-			if (logger.isTraceEnabled()) logger.trace("... found primitive property: " + uriResourceProperty.getProperty().getName());
-			String mappedProperty = oDataToSqlMap.get(uriResourceProperty.getProperty().getName());
+			String propertyName = uriResourceProperty.getProperty().getName();
+			if (logger.isTraceEnabled()) logger.trace("... found primitive property: " + propertyName);
+			String mappedProperty = oDataToSqlMap.get(propertyName);
 			if (logger.isTraceEnabled()) logger.trace("... mapped primitive property: " + mappedProperty);
+			
+			if (null == mappedProperty) {
+				throw new ODataApplicationException("Invalid property name '" + propertyName, 
+						HttpStatusCode.BAD_REQUEST.getStatusCode(), Locale.ENGLISH);
+			}
 
 			if (logger.isTraceEnabled()) logger.trace("<<< visitMember()");
 			return (null == mappedProperty ? "NOT FOUND" : mappedProperty);

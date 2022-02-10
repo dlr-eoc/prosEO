@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Allowed attribute names for a product (from the ESA S5P Product Attributes Mapping, issue 1.2, Jan 2021)
+ * Allowed attribute names for a product (from the ESA S1 Product Attributes Mapping, issue 1.6, Apr 2021, and
+ * S5P Product Attributes Mapping, issue 1.2, Jan 2021)
  * 
  * @author Dr. Thomas Bassler
  * 
@@ -20,6 +21,8 @@ public enum CscAttributeName {
 	
 	/** Platform short name (fixed value 'SENTINEL-5P') */
 	PLATFORM_SHORT_NAME("platformShortName"),
+	/** Platform serial identifier ('A', 'B' etc.) */
+	PLATFORM_SERIAL("platformSerialIdentifier"),
 	/** Instrument short name */
 	INSTRUMENT_SHORT_NAME("instrumentShortName"),
 	/** Processing level */
@@ -40,7 +43,7 @@ public enum CscAttributeName {
 	ORBIT_NUMBER("orbitNumber"),
 	/** Product type */
 	PRODUCT_TYPE("productType"),
-	/** Geographic coordinates (String with blank-separated list of coordinate values; L1B only) */
+	/** Geographic coordinates (String with blank-separated list of coordinate values) */
 	COORDINATES("coordinates"),
 	/** Product identifier (L1 only) */
 	PRODUCT_IDENTIFIER("identifier"),
@@ -54,12 +57,48 @@ public enum CscAttributeName {
 	PROCESSING_MODE("processingMode"),
 	/** Quality status (L2 and above only) */
 	QUALITY_STATUS("qualityStatus"),
+	/** Product (file) class */
+	PRODUCT_CLASS("productClass"),
+	
+	// Extended attributes (Copernicus Sentinel-1 only)
+	/** Start time from ascending node */
+	START_ASCENDING("startTimeFromAscendingNode"),
+	/** Completion time from ascending node */
+	STOP_ASCENDING("completionTimeFromAscendingNode"),
+	/** Operational mode ("IW", "EW" etc.) */
+	OPERATIONAL_MODE("operationalMode"),
+	/** Swath identifier (1 .. 6) */
+	SWATH_IDENTIFIER("swathIdentifier"),
+	/** Product consolidation ("SLICE", "FULL" etc.) */
+	PRODUCT_CONSOLIDATION("productConsolidation"),
+	/** Instrument configuration */
+	INSTRUMENT_CONFIGURATION("instrumentConfigurationID"),
+	/** Datatake ID */
+	DATATAKE_ID("datatakeID"),
+	/** Product composition (e. g. "slice") */
+	PRODUCT_COMPOSITION("productComposition"),
+	/** Slice product flag ("true", "false") */
+	SLICE_PRODUCT_FLAG("sliceProductFlag"),
+	/** Slice number */
+	SLICE_NUMBER("sliceNumber"),
+	/** Total number of slices in datatake */
+	SLICE_TOTAL("totalSlices"),
+	/** Segment start time */
+	SEGMENT_START("segmentStartTime"),
+	/** Production timeliness */
+	TIMELINESS("timeliness"),
+	/** Polarisation channels ("HH", "VV", "HV", "VH") */
+	POLARISATION_CHANNELS("polarisationChannels"),
+	/** Relative orbit number */
+	RELATIVE_ORBIT("relativeOrbitNumber"),
+	/** Cycle number */
+	CYCLE("cycleNumber"),
+	/** Orbit direction (e. g. "ASCENDING") */
+	ORBIT_DIRECTION("orbitDirection"),
 	
 	// Extended attributes (Copernicus Sentinel-5P only)
 	/** Copernicus collection (baseline collection; L1 and above only) */
 	BASELINE_COLLECTION("baselineCollection"),
-	/** Product (file) class (L1 and above only) */
-	PRODUCT_CLASS("productClass"),
 	/** Product revision number (L1 and above only) */
 	REVISION_NUMBER("revisionNumber")
 	;
