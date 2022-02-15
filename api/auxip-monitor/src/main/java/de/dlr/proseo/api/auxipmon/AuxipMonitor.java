@@ -9,8 +9,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,12 +43,15 @@ import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.core.ODataClientFactory;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.format.ContentType;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,6 +60,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -61,6 +71,7 @@ import de.dlr.proseo.api.basemon.BaseMonitor;
 import de.dlr.proseo.api.basemon.TransferObject;
 import de.dlr.proseo.basewrap.MD5Util;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 /**
@@ -769,29 +780,29 @@ public class AuxipMonitor extends BaseMonitor {
 										(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 							}
 						})
-						.followRedirect(true)
-//						.followRedirect((request, response) -> {
-//							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
-//							switch (response.status().code()) {
-//							case 301:
-//							case 302:
-//							case 307:
-//							case 308:
-//								String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
-//								if (null == redirectLocation) {
-//									return false;
-//								}
-//								// Prevent sending authorization header, if target is S3 and credentials are already given in URL
-//								if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
-//									if (logger.isTraceEnabled()) logger.trace(
-//											"... redirect credentials given in location header, removing authorization header from request");
-//									request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
-//								}
-//								return true;
-//							default:
-//								return false;
-//							}
-//						}, null)
+//						.followRedirect(true)
+						.followRedirect((request, response) -> {
+							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
+							switch (response.status().code()) {
+							case 301:
+							case 302:
+							case 307:
+							case 308:
+								String redirectLocation = response.responseHeaders().get(HttpHeaders.LOCATION);
+								if (null == redirectLocation) {
+									return false;
+								}
+								// Prevent sending authorization header, if target is S3 and credentials are already given in URL
+								if (redirectLocation.contains(S3_CREDENTIAL_PARAM)) {
+									if (logger.isTraceEnabled()) logger.trace(
+											"... redirect credentials given in location header, removing authorization header from request");
+									request.requestHeaders().remove(HttpHeaders.AUTHORIZATION);
+								}
+								return true;
+							default:
+								return false;
+							}
+						}, null)
 						.doAfterResponse((response, connection) -> {
 							if (logger.isTraceEnabled()) {
 								logger.trace("... response code: {}", response.status());
@@ -813,20 +824,107 @@ public class AuxipMonitor extends BaseMonitor {
 
 				logger.trace("... starting request for URL '{}'", requestUri);
 				
+				// Using simple approach with Java NIO
+//				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
+//					URLConnection auxipConnection = new URL(config.getAuxipBaseUri() + "/" + requestUri).openConnection();
+//					if (config.getAuxipUseToken()) {
+//						auxipConnection.addRequestProperty(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
+//					} else {
+//						auxipConnection.addRequestProperty(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+//								(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
+//					}
+//					auxipConnection.setConnectTimeout(10 * 1000 /* ms */);
+//					auxipConnection.setReadTimeout(600 * 1000 /* ms */);
+//					
+//					ReadableByteChannel readableByteChannel = Channels.newChannel(auxipConnection.getInputStream());
+//					fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+//				} catch (Exception e) {
+//					if (logger.isDebugEnabled()) {
+//						logger.debug("... Download exception stack trace: ", e);
+//					}
+//					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
+//							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()));
+//					return false;
+//				}
+				
 				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
 					
-					Flux<DataBuffer> dataBuffer = webClient
+					Mono<byte[]> dataBuffer = webClient
 							.get()
 							.uri(requestUri)
 				            .accept(MediaType.APPLICATION_OCTET_STREAM)
 							.retrieve()
-							.bodyToFlux(DataBuffer.class);
-
+							.bodyToMono(byte[].class);
+//							.bodyToFlux(byte[].class);
+//							.bodyToFlux(DataBuffer.class);
+					
+					if (logger.isTraceEnabled()) logger.trace("... after webClient...bodyToMono()");
+					
+					byte[] buffer = dataBuffer.block();
+					
+					if (logger.isTraceEnabled()) logger.trace("... got buffer of size {}", buffer.length);
+					
+					fileOutputStream.write(buffer);
+					
+					if (logger.isTraceEnabled()) logger.trace("... buffer written to file {}", productFile);
+					
+//					dataBuffer.log().subscribe(buf -> {
+//						if (logger.isTraceEnabled()) logger.trace("... in dataBuffer.subscribe() with buffer of size {}", buf.length);
+//						try {
+//							fileOutputStream.write(buf);
+//						} catch (IOException e) {
+//							if (logger.isTraceEnabled()) logger.trace("... exception in dataBuffer.subscribe(): ", e);
+//							throw new RuntimeException(e.toString());
+//						}
+//					});
+					
+//					dataBuffer.log().subscribe(new Subscriber<byte[]>() {
+//						
+//						private Subscription subscription;
+//						private int itemCount = 0;
+//
+//						@Override
+//						public void onComplete() {
+//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onComplete()");
+//						}
+//
+//						@Override
+//						public void onError(Throwable e) {
+//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onError({})", e);
+//							throw new RuntimeException(e.toString());
+//							
+//						}
+//
+//						@Override
+//						public void onNext(byte[] buf) {
+//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onNext(byte[{}]) - receving buffer #{}", buf.length, itemCount++);
+//							try {
+//								fileOutputStream.write(buf);
+//								subscription.request(1);
+//							} catch (IOException e) {
+//								throw new RuntimeException(e.toString());
+//							}
+//							
+//						}
+//
+//						@Override
+//						public void onSubscribe(Subscription s) {
+//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onSubscribe(Subscription)");
+//							this.subscription = s;
+//							s.request(1);
+//						}});
+//					
+//					if (logger.isTraceEnabled()) logger.trace("... after dataBuffer.subscribe()");
+				
 					// TODO Memory leak in DataBufferUtils? DataBuffers werden nicht mehr freigegeben (auskommentierter Code
 					// erwischt nur den letzten DataBuffer)
 					// Getestet ohne Erfolg: Aktuelle Version von Spring Boot, kein Multi-Threading in BaseMonitor
+					// Getestet ohne Erfolg: <flux>.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release)
 					
-					DataBuffer buf = DataBufferUtils.write(dataBuffer, fileOutputStream).blockLast(Duration.ofSeconds(600));
+//					DataBuffer buf = DataBufferUtils
+//							.write(dataBuffer, fileOutputStream)
+//							.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release)
+//							.blockLast(Duration.ofSeconds(600));
 //					if (!DataBufferUtils.release(buf)) {
 //						logger.error(String.format(MSG_CANNOT_RELEASE_BUFFER, MSG_ID_CANNOT_RELEASE_BUFFER,
 //								buf.toString(), transferProduct.getIdentifier()));
