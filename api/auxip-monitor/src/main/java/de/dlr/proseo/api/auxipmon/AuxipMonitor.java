@@ -780,7 +780,6 @@ public class AuxipMonitor extends BaseMonitor {
 										(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
 							}
 						})
-//						.followRedirect(true)
 						.followRedirect((request, response) -> {
 							if (logger.isTraceEnabled()) logger.trace("... checking redirect for response status code {}", response.status());
 							switch (response.status().code()) {
@@ -824,29 +823,6 @@ public class AuxipMonitor extends BaseMonitor {
 
 				logger.trace("... starting request for URL '{}'", requestUri);
 				
-				// Using simple approach with Java NIO
-//				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
-//					URLConnection auxipConnection = new URL(config.getAuxipBaseUri() + "/" + requestUri).openConnection();
-//					if (config.getAuxipUseToken()) {
-//						auxipConnection.addRequestProperty(HttpHeaders.AUTHORIZATION, "Bearer " + getBearerToken());
-//					} else {
-//						auxipConnection.addRequestProperty(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-//								(config.getAuxipUser() + ":" + config.getAuxipPassword()).getBytes()));
-//					}
-//					auxipConnection.setConnectTimeout(10 * 1000 /* ms */);
-//					auxipConnection.setReadTimeout(600 * 1000 /* ms */);
-//					
-//					ReadableByteChannel readableByteChannel = Channels.newChannel(auxipConnection.getInputStream());
-//					fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-//				} catch (Exception e) {
-//					if (logger.isDebugEnabled()) {
-//						logger.debug("... Download exception stack trace: ", e);
-//					}
-//					logger.error(String.format(MSG_PRODUCT_DOWNLOAD_FAILED, MSG_ID_PRODUCT_DOWNLOAD_FAILED, 
-//							transferProduct.getName(), e.getClass().getName() + " / " + e.getMessage()));
-//					return false;
-//				}
-				
 				try (FileOutputStream fileOutputStream = new FileOutputStream(productFile)) {
 					
 					Mono<byte[]> dataBuffer = webClient
@@ -855,8 +831,6 @@ public class AuxipMonitor extends BaseMonitor {
 				            .accept(MediaType.APPLICATION_OCTET_STREAM)
 							.retrieve()
 							.bodyToMono(byte[].class);
-//							.bodyToFlux(byte[].class);
-//							.bodyToFlux(DataBuffer.class);
 					
 					if (logger.isTraceEnabled()) logger.trace("... after webClient...bodyToMono()");
 					
@@ -868,68 +842,6 @@ public class AuxipMonitor extends BaseMonitor {
 					
 					if (logger.isTraceEnabled()) logger.trace("... buffer written to file {}", productFile);
 					
-//					dataBuffer.log().subscribe(buf -> {
-//						if (logger.isTraceEnabled()) logger.trace("... in dataBuffer.subscribe() with buffer of size {}", buf.length);
-//						try {
-//							fileOutputStream.write(buf);
-//						} catch (IOException e) {
-//							if (logger.isTraceEnabled()) logger.trace("... exception in dataBuffer.subscribe(): ", e);
-//							throw new RuntimeException(e.toString());
-//						}
-//					});
-					
-//					dataBuffer.log().subscribe(new Subscriber<byte[]>() {
-//						
-//						private Subscription subscription;
-//						private int itemCount = 0;
-//
-//						@Override
-//						public void onComplete() {
-//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onComplete()");
-//						}
-//
-//						@Override
-//						public void onError(Throwable e) {
-//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onError({})", e);
-//							throw new RuntimeException(e.toString());
-//							
-//						}
-//
-//						@Override
-//						public void onNext(byte[] buf) {
-//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onNext(byte[{}]) - receving buffer #{}", buf.length, itemCount++);
-//							try {
-//								fileOutputStream.write(buf);
-//								subscription.request(1);
-//							} catch (IOException e) {
-//								throw new RuntimeException(e.toString());
-//							}
-//							
-//						}
-//
-//						@Override
-//						public void onSubscribe(Subscription s) {
-//							if (logger.isTraceEnabled()) logger.trace("... in Subscriber.onSubscribe(Subscription)");
-//							this.subscription = s;
-//							s.request(1);
-//						}});
-//					
-//					if (logger.isTraceEnabled()) logger.trace("... after dataBuffer.subscribe()");
-				
-					// TODO Memory leak in DataBufferUtils? DataBuffers werden nicht mehr freigegeben (auskommentierter Code
-					// erwischt nur den letzten DataBuffer)
-					// Getestet ohne Erfolg: Aktuelle Version von Spring Boot, kein Multi-Threading in BaseMonitor
-					// Getestet ohne Erfolg: <flux>.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release)
-					
-//					DataBuffer buf = DataBufferUtils
-//							.write(dataBuffer, fileOutputStream)
-//							.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release)
-//							.blockLast(Duration.ofSeconds(600));
-//					if (!DataBufferUtils.release(buf)) {
-//						logger.error(String.format(MSG_CANNOT_RELEASE_BUFFER, MSG_ID_CANNOT_RELEASE_BUFFER,
-//								buf.toString(), transferProduct.getIdentifier()));
-//						// but continue (for the time being)
-//					}
 				} catch (FileNotFoundException e) {
 					logger.error(String.format(MSG_FILE_NOT_WRITABLE, MSG_ID_FILE_NOT_WRITABLE, productFile.toString()));
 					return false;
