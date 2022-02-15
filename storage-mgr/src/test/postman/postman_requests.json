@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "9878e9e4-f89e-466e-92dd-d6070b984c22",
+		"name": "prosEO",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Storage Manager",
+			"item": [
+				{
+					"name": "products",
+					"item": [
+						{
+							"name": "products - Get products with directory prefix",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?storageType=POSIX&prefix=\"\"",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									],
+									"query": [
+										{
+											"key": "storageType",
+											"value": "POSIX"
+										},
+										{
+											"key": "prefix",
+											"value": "\"\""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Register products/files/dirs from unstructered storage in prosEO-storage",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"address\": \"colombo\",\r\n    \"productId\": \"productId\",\r\n    \"sourceStorageType\": \"sourceStorageType\",\r\n    \"sourceFilePaths\": \"sourceFilePaths\", \r\n    \"targetStorageId\": \"targetStorageId\",\r\n    \"targetStorageType\": \"targetStorageType\",\r\n    \"registeredFilePath\": \"registeredFilePath\",\r\n    \"registered\": \"registered\",\r\n    \"registeredFilesCount\": \"registeredFilesCount\",\r\n    \"registeredFilesList\": \"registeredFilesList\",\r\n    \"deleted\": \"deleted\",\r\n    \"message\": \"message\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "products - Delete product by product path info from prosEO storage",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/products?pathInfo=/path",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"products"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/path"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "productfiles",
+					"item": [
+						{
+							"name": "productfiles - Retrieve file from Storage Manager into locally accessible file system",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/..",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"productfiles"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/.."
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "productfiles - Push file from local POSIX file system to Storage Manager",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/productfiles?pathInfo=/..&productId=123&fileSize=234",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"productfiles"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/.."
+										},
+										{
+											"key": "productId",
+											"value": "123"
+										},
+										{
+											"key": "fileSize",
+											"value": "234"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "info",
+					"item": [
+						{
+							"name": "info -  Gets info for the storage-manager",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/info",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"info"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "joborders",
+					"item": [
+						{
+							"name": "joborders - Download Job Order File as string",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/joborders?pathInfo=/..",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"joborders"
+									],
+									"query": [
+										{
+											"key": "pathInfo",
+											"value": "/.."
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "joborders - Upload Job Order File in a job",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"jobOrderStringBase64\": \"jobOrderStringBase64\", \r\n    \"uploaded\": \"uploaded\", \r\n    \"fsType\": \"fsType\", \r\n    \"pathInfo\": \"pathInfo\", \r\n    \"message\": \"message\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/proseo/storage-mgr/x/joborders",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"proseo",
+										"storage-mgr",
+										"x",
+										"joborders"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "Registry",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
