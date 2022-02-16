@@ -25,6 +25,8 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -96,6 +98,18 @@ public class ProductionPlanner implements CommandLineRunner {
 	/** JPA entity manager */
 	@PersistenceContext
 	private EntityManager em;
+	
+	/**
+	 * Semaphore to avoid concurrent kubernetes job generation. 
+	 */
+	private Semaphore releaseSemaphore = new Semaphore(1);
+
+	/**
+	 * @return the releaseSemaphore
+	 */
+	public Semaphore getReleaseSemaphore() {
+		return releaseSemaphore;
+	}
 
 	/**
 	 * Get the user/pw for processing order
@@ -106,7 +120,25 @@ public class ProductionPlanner implements CommandLineRunner {
 	public Map<String, String> getAuth(Long orderId) {
 		return orderPwCache.get(orderId);
 	}
+
+	public void acquireReleaseSemaphore() {
+		try {
+			getReleaseSemaphore().acquire();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
+	public void releaseReleaseSemaphore() {
+		if (getReleaseSemaphore().availablePermits() <= 0) {
+			getReleaseSemaphore().release();
+		}
+	}
+
+	public boolean tryAcquireReleaseSemaphore() {
+		return getReleaseSemaphore().tryAcquire();
+	}
 	/**
 	 * Set or update user/pw of a processing order
 	 * 
@@ -259,19 +291,9 @@ public class ProductionPlanner implements CommandLineRunner {
 	@Override
 	public void run(String... arg0) throws Exception {
 		if (logger.isTraceEnabled()) logger.trace(">>> run({})", arg0.toString());
-		
-		//		
-		//		List<String> pfs = new ArrayList<String>();
-		//		
-		//        for (int i = 0; i < arg0.length; i++) {
-		//        	if (arg0[i].equalsIgnoreCase("-processingfacility") && (i + 1) < arg0.length) {
-		//        		pfs.add(arg0[i+1]);
-		//        	}
-		//        } 
       
 		InetAddress ip;
 		String hostname;
-		// TimeZone.setDefault( TimeZone.getTimeZone( "UTC" ) );
 		config = plannerConfig;
 		try {
 			ip = InetAddress.getLocalHost();

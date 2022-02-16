@@ -169,6 +169,8 @@ public class JobstepControllerImpl implements JobstepController {
 		if (logger.isTraceEnabled()) logger.trace(">>> resumeJobStep({})", jobstepId);
 		
 		try {
+			// wait until finish of concurrent createJob
+			productionPlanner.acquireReleaseSemaphore();
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();
@@ -176,6 +178,7 @@ public class JobstepControllerImpl implements JobstepController {
 					String message = Messages.FACILITY_NOT_AVAILABLE.log(logger, job.getProcessingFacility().getName(),
 							job.getProcessingFacility().getFacilityState().toString());
 
+					productionPlanner.releaseReleaseSemaphore();
 			    	return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 
@@ -192,21 +195,23 @@ public class JobstepControllerImpl implements JobstepController {
 					}
 					// resumed
 					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
+					productionPlanner.releaseReleaseSemaphore();
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for resume
 					String message = msg.format(jobstepId);
+					productionPlanner.releaseReleaseSemaphore();
 
 					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
 			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-
+			productionPlanner.releaseReleaseSemaphore();
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
+			productionPlanner.releaseReleaseSemaphore();
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
@@ -221,6 +226,8 @@ public class JobstepControllerImpl implements JobstepController {
 		if (logger.isTraceEnabled()) logger.trace(">>> cancelJobStep({})", jobstepId);
 		
 		try {
+			// wait until finish of concurrent createJob
+			productionPlanner.acquireReleaseSemaphore();
 			JobStep js = this.findJobStepByNameOrId(jobstepId);
 			if (js != null) {
 				Job job = js.getJob();
@@ -235,21 +242,23 @@ public class JobstepControllerImpl implements JobstepController {
 					}
 					// cancelled
 					RestJobStep pjs = RestUtil.createRestJobStep(js, false);
+					productionPlanner.releaseReleaseSemaphore();
 
 					return new ResponseEntity<>(pjs, HttpStatus.OK);
 				} else {
 					// illegal state for cancel
 					String message = msg.format(jobstepId);
+					productionPlanner.releaseReleaseSemaphore();
 
 					return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.BAD_REQUEST);
 				}
 			}
 			String message =  Messages.JOBSTEP_NOT_EXIST.log(logger, jobstepId);
-
+			productionPlanner.releaseReleaseSemaphore();
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.NOT_FOUND);
 		} catch (Exception e) {
 			String message = Messages.RUNTIME_EXCEPTION.log(logger, e.getMessage());
-			
+			productionPlanner.releaseReleaseSemaphore();
 			return new ResponseEntity<>(Messages.errorHeaders(message), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}

@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.dlr.proseo.model.service.RepositoryService;
@@ -271,7 +272,7 @@ public class KubeJob {
 	 * @return The kube job
 	 * @throws Exception 
 	 */
-	@Transactional
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRES_NEW)
 	synchronized public KubeJob createJob(KubeConfig aKubeConfig, String stdoutLogLevel, String stderrLogLevel) throws Exception {	
 		if (logger.isTraceEnabled()) logger.trace(">>> createJob({}, {}, {})", aKubeConfig, stdoutLogLevel, stderrLogLevel);
 		
@@ -480,6 +481,7 @@ public class KubeJob {
 			logger.error("General exception creating job for job step {}: {}", jobStep.getId(), e.getMessage());
 			throw e;
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< createJob finished successful");
 		return this;
 	}	
 	
