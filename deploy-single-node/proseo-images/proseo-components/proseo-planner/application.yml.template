@@ -30,9 +30,9 @@ proseo:
         cyclewaittime: 1000
         # wait time after k8s job creation in milliseconds  
         jobcreatedwaittime: 2000
-        # wait time between test for new ready jobs
+        # wait time between test for new ready jobs in milliseconds (fallback loop, 10 min may be sufficient for test setup)
         # run once if <= 0 (at startup)
-        dispatcherwaittime: 60000
+        dispatcherwaittime: 600000
         # kubernetes configuration file, used to connect master
         kubeconfig: empty
         # Variables to control max cycles and wait time (in milliseconds) to check file size of fetched input files
