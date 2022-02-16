@@ -835,6 +835,7 @@ public class GUIOrderController extends GUIBaseController {
 		}
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
 		map.add("Content-Type", "text/plain");
+		map.add("Content-Length", String.valueOf(result.length()));
 	    return new ResponseEntity<>(result, map, HttpStatus.OK);
 	}
 

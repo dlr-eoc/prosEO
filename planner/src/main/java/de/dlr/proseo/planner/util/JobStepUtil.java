@@ -652,21 +652,27 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			if (kc != null) {
-				List<JobStepState> states = new ArrayList<JobStepState>();
-				states.add(JobStepState.READY);
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
-					if (!onlyRun) {
-						this.searchForJobStepsToRun(pfo.get(), pc);
-					}
-					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-					for (JobStep js : jobSteps) {
-						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-							if (kc.couldJobRun()) {
-								kc.createJob(String.valueOf(js.getId()), null, null);
+				if (productionPlanner.tryAcquireReleaseSemaphore()) {
+					// run this only if no concurrent createJob is running
+					List<JobStepState> states = new ArrayList<JobStepState>();
+					states.add(JobStepState.READY);
+					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (pfo.isPresent()) {
+						if (!onlyRun) {
+							this.searchForJobStepsToRun(pfo.get(), pc);
+						}
+						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+						for (JobStep js : jobSteps) {
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								}
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
+				} else {
+					if (logger.isTraceEnabled()) logger.trace("    no release semaphore available");
 				}
 			} else {
 				checkForJobStepsToRun();
@@ -731,9 +737,12 @@ public class JobStepUtil {
 			if (kc != null && job != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
+					// wait until finish of concurrent createJob
+					productionPlanner.acquireReleaseSemaphore();
 					List<JobStep> jobSteps = new ArrayList<JobStep>();
 					jobSteps.addAll(job.getJobSteps());
 					for (JobStep js : jobSteps) {
+						em.refresh(js);
 						checkJobStepQueries(js, false);
 						if (js.getJobStepState() == JobStepState.READY) {	
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
@@ -743,6 +752,7 @@ public class JobStepUtil {
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
@@ -768,12 +778,15 @@ public class JobStepUtil {
 			if (kc != null && order != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
+					// wait until finish of concurrent createJob
+					productionPlanner.acquireReleaseSemaphore();
 					List<Job> jobList = new ArrayList<Job>();
 					jobList.addAll(order.getJobs());
 					for (Job job : jobList) {
 						List<JobStep> jobStepList = new ArrayList<JobStep>();
 						jobStepList.addAll(job.getJobSteps());
 						for (JobStep js : jobStepList) {
+							em.refresh(js);
 							checkJobStepQueries(js, false);
 							if (js.getJobStepState() == JobStepState.READY) {	
 								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
@@ -784,6 +797,7 @@ public class JobStepUtil {
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
