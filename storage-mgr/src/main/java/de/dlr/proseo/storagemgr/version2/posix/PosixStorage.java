@@ -21,6 +21,16 @@ public class PosixStorage implements Storage {
 
 	private String basePath;
 	private String bucket;
+	
+	public PosixStorage() {}
+	
+
+	public PosixStorage(String basePath) {
+		this.basePath = basePath; 
+		this.bucket = StorageFile.NO_BUCKET; 
+		
+		createDirectories(basePath); 
+	}	
 
 	@Override
 	public void setBucket(String bucket) {
@@ -114,6 +124,14 @@ public class PosixStorage implements Storage {
 		File parent = targetFile.getParentFile();
 		if (parent != null && !parent.exists() && !parent.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + parent);
+		}
+	}
+	
+	public void createDirectories(String path) {
+		File file = new File(path);
+
+		if (!file.exists()) {
+			file.mkdirs();
 		}
 	}
 

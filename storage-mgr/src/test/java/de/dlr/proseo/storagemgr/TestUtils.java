@@ -1,14 +1,17 @@
-package de.dlr.proseo.storagemgr.cache;
+package de.dlr.proseo.storagemgr;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 import org.junit.rules.TestName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
+import de.dlr.proseo.storagemgr.cache.FileUtils;
 
 /**
  * @author Denys Chaykovskiy
@@ -245,13 +248,13 @@ public class TestUtils {
 	 * @param message
 	 * @param arrayList
 	 */
-	public static void printArrayList(String message, ArrayList<String> arrayList) {
+	public static void printList(String message, List<String> list) {
 
 		System.out.println();
-		System.out.println(message);
-		for (String element : arrayList) {
+		System.out.println(message + " SIZE: " + list.size());
+		for (String element : list) {
 
-			System.out.println(element);
+			System.out.println(" - " + element);
 		}
 		System.out.println();
 	}
@@ -299,5 +302,9 @@ public class TestUtils {
 			}
 		}
 	}
+
+
+
+	
 
 }

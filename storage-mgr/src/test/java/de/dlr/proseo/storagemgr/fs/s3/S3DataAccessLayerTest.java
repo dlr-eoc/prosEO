@@ -17,7 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import de.dlr.proseo.storagemgr.StorageManager;
-import de.dlr.proseo.storagemgr.cache.TestUtils;
+import de.dlr.proseo.storagemgr.TestUtils;
+import de.dlr.proseo.storagemgr.version2.s3.S3DataAccessLayer;
 
 /**
  * @author Denys Chaykovskiy
@@ -27,13 +28,11 @@ import de.dlr.proseo.storagemgr.cache.TestUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = StorageManager.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestEntityManager
-public class ProseoS3Test {
+public class S3DataAccessLayerTest {
 
 	@Autowired
 	private TestUtils testUtils;
 
-	@Autowired
-	private ProseoS3 proseoS3;
 
 	@Rule
 	public TestName testName = new TestName();
@@ -47,8 +46,6 @@ public class ProseoS3Test {
 		cachePath = testUtils.getCachePath();
 	}
 
-	// TODO: No IOException in the test 
-		
 	/**
 	 * @throws IOException
 	 * 
@@ -75,51 +72,47 @@ public class ProseoS3Test {
 
 		assertTrue("File for upload has not been created: " + uploadFilePath, TestUtils.fileExists(uploadFilePath));
 
-		////////////////// TEST BODY BEGIN 
+		////////////////// TEST BODY BEGIN
 
 		// TODO: split - create-delete-bucket, upload, download
 
-		String testBucket = "created-bucket-upload-aaaaffgkjk";
+		String testBucket = "teeest-bucket";
+		
+		String s3AccessKey = "";
+		String s3SecretAccessKey = "";
 
-		proseoS3.showBuckets();
+		S3DataAccessLayer s3DAL = new S3DataAccessLayer(s3AccessKey, s3SecretAccessKey);
 
-		// create bucket
-		proseoS3.getBucket(testBucket);
-		proseoS3.showBuckets();
+		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
 
-		System.out.println();
-
+		// create bucket in setBucket
+		s3DAL.setBucket(testBucket);
+		TestUtils.printList("Buckets before bucket creation", s3DAL.getBuckets());
+		TestUtils.printList("Files before upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
+		
 		// upload file
-		proseoS3.uploadFile(uploadFilePath, testBucket, uploadFilePath);
-		assertTrue("File was not uploaded! " + uploadFilePath, proseoS3.fileExists(testBucket, uploadFilePath));
-
-		proseoS3.showFiles(testBucket);
-
-		System.out.println();
+		s3DAL.uploadFile(uploadFilePath, uploadFilePath);
+		assertTrue("File was not uploaded! " + uploadFilePath, s3DAL.fileExists(uploadFilePath));
+		TestUtils.printList("Files after upload in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
 		// download file
-		proseoS3.downloadFile(testBucket, uploadFilePath, downloadFilePath);
+		s3DAL.downloadFile(uploadFilePath, downloadFilePath);
 		assertTrue("File has not been downloaded: " + downloadFilePath, TestUtils.fileExists(downloadFilePath));
 
-		System.out.println();
-
 		// delete file
-		proseoS3.deleteFile(testBucket, uploadFilePath);
-		proseoS3.showFiles(testBucket);
-
-		System.out.println();
+		s3DAL.deleteFile(uploadFilePath);
+		TestUtils.printList("Files after deletion in bucket: " + s3DAL.getBucket(), s3DAL.getFiles());
 
 		// delete bucket
-		proseoS3.deleteBucket(testBucket);
+		s3DAL.deleteBucket(testBucket);
 
-		// show buckets
-		proseoS3.showBuckets();
+		TestUtils.printList("Buckets before bucket deletion", s3DAL.getBuckets());
 
-		////////////////// TEST BODY END 
+		////////////////// TEST BODY END
 
 		TestUtils.deleteTestDirectories();
 
-		System.out.println("TEST s3 has no exceptions, EXCELLENT! ");
+		System.out.println("TEST s3 DAL has no exceptions, EXCELLENT! ");
 	}
 
 }
