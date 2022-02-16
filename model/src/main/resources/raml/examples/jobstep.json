@@ -11,5 +11,6 @@
     "outputProduct": 1234,
     "configuredProcessor": "confProc",
     "stdoutLogLevel": "INFO",
-    "stderrLogLevel": "INFO"
+    "stderrLogLevel": "INFO",
+    "isFailed": false
 }

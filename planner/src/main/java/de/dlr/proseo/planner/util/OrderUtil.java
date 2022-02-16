@@ -28,6 +28,7 @@ import de.dlr.proseo.model.Job.JobState;
 import de.dlr.proseo.model.service.RepositoryService;
 import de.dlr.proseo.planner.Message;
 import de.dlr.proseo.planner.Messages;
+import de.dlr.proseo.planner.ProductionPlanner;
 import de.dlr.proseo.planner.dispatcher.OrderDispatcher;
 
 /**
@@ -51,6 +52,11 @@ public class OrderUtil {
 
     @Autowired
     private OrderDispatcher orderDispatcher;
+
+    /** The Production Planner instance */
+    @Autowired
+    private ProductionPlanner productionPlanner;
+
 
 	/**
 	 * Cancel the processing order and it jobs and job steps.
@@ -311,6 +317,12 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
+				order.setOrderState(OrderState.PLANNING);
+				order.incrementVersion();
+				order = RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
+				// OrderPlanThread pt = new OrderPlanThread(productionPlanner, order, procFacility, "PlanOrder_" + order.getId());
+				// pt.start();
 				Message publishAnswer = orderDispatcher.publishOrder(order, procFacility);
 				if (publishAnswer.isTrue()) {
 					if (order.getJobs().isEmpty()) {
@@ -372,9 +384,13 @@ public class OrderUtil {
 				answer = Messages.ORDER_HASTOBE_APPROVED;
 				break;
 			case APPROVED:
+			case PLANNING:
 				answer = Messages.ORDER_HASTOBE_PLANNED;
 				break;
 			case PLANNED:
+				order.setOrderState(OrderState.RELEASING);
+				RepositoryService.getOrderRepository().save(order);
+				em.merge(order);
 				for (Job job : order.getJobs()) {
 					jobUtil.resume(job);
 				}
@@ -389,6 +405,7 @@ public class OrderUtil {
 				RepositoryService.getOrderRepository().save(order);
 				logOrderState(order);
 				break;	
+			case RELEASING:
 			case RELEASED:
 				answer = Messages.ORDER_ALREADY_RELEASED;
 				break;
@@ -655,6 +672,9 @@ public class OrderUtil {
 				Duration retPeriod = order.getMission().getOrderRetentionPeriod();
 				if (retPeriod != null && order.getProductionType() == ProductionType.SYSTEMATIC) {
 					order.setEvictionTime(Instant.now().plus(retPeriod));
+				}
+				for (Job job : order.getJobs()) {
+					jobUtil.close(job);
 				}
 				order.setOrderState(OrderState.CLOSED);
 				order.incrementVersion();

@@ -91,25 +91,32 @@ public class JobStep extends PersistentObject {
 	private StdLogLevel stderrLogLevel = StdLogLevel.INFO;
 
 	/**
+	 * The failed state of job step
+	 */
+	private Boolean isFailed = false;
+
+	/**
 	 * The possible processing states for a job step
 	 */
 	public enum JobStepState {
-		INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED;
+		INITIAL, WAITING_INPUT, READY, RUNNING, COMPLETED, FAILED, CLOSED;
 		
 		public boolean isLegalTransition(JobStepState other) {
 			switch(this) {
 			case INITIAL:
 				return other.equals(WAITING_INPUT) || other.equals(READY) || other.equals(FAILED);
 			case COMPLETED:
-				return false; // End state
+				return other.equals(CLOSED);
 			case FAILED:
-				return other.equals(INITIAL);
+				return other.equals(INITIAL) || other.equals(CLOSED);
 			case READY:
 				return other.equals(INITIAL) || other.equals(RUNNING);
 			case RUNNING:
 				return other.equals(INITIAL) || other.equals(COMPLETED) || other.equals(FAILED);
 			case WAITING_INPUT:
 				return other.equals(INITIAL) || other.equals(READY);
+			case CLOSED:
+				return false; // End state
 			default:
 				return false;
 			}
@@ -147,6 +154,20 @@ public class JobStep extends PersistentObject {
 	 */
 	public void setStderrLogLevel(StdLogLevel stderrLogLevel) {
 		this.stderrLogLevel = stderrLogLevel;
+	}
+
+	/**
+	 * @return the isFailed
+	 */
+	public Boolean getIsFailed() {
+		return isFailed;
+	}
+
+	/**
+	 * @param isFailed the isFailed to set
+	 */
+	public void setIsFailed(Boolean isFailed) {
+		this.isFailed = isFailed;
 	}
 
 	/**
@@ -358,6 +379,7 @@ public class JobStep extends PersistentObject {
 		return "JobStep [jobStepState=" + jobStepState + ", outputParameters=" + outputParameters
 				+ ", processingMode=" + processingMode + ", processingStartTime=" + processingStartTime + ", processingCompletionTime="
 				+ processingCompletionTime + ", processingStdOut=" + processingStdOut + ", processingStdErr=" + processingStdErr
+				 + ", isFailed=" + isFailed
 				+ "]";
 	}
 

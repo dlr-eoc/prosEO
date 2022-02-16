@@ -25,7 +25,7 @@ package de.dlr.proseo.model.enums;
  * 
  */
 public enum OrderState {
-	INITIAL, APPROVED, PLANNED, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED;
+	INITIAL, APPROVED, PLANNING, PLANNED, RELEASING, RELEASED, RUNNING, SUSPENDING, COMPLETED, FAILED, CLOSED;
 	
 	/**
 	 * Check whether the transition to the other state is legal
@@ -38,7 +38,9 @@ public enum OrderState {
 		case INITIAL:
 			return other.equals(APPROVED);
 		case APPROVED:
-			return other.equals(INITIAL) || other.equals(PLANNED);
+			return other.equals(INITIAL) || other.equals(PLANNING);
+		case PLANNING:
+			return other.equals(APPROVED) || other.equals(PLANNED);
 		case CLOSED:
 			return false; // End state!
 		case COMPLETED:
@@ -46,7 +48,9 @@ public enum OrderState {
 		case FAILED:
 			return other.equals(PLANNED) || other.equals(CLOSED);
 		case PLANNED:
-			return other.equals(INITIAL) || other.equals(RELEASED) || other.equals(FAILED);
+			return other.equals(INITIAL) || other.equals(RELEASING) || other.equals(FAILED);
+		case RELEASING:
+			return other.equals(PLANNED) || other.equals(RELEASED) || other.equals(COMPLETED);
 		case RELEASED:
 			return other.equals(PLANNED) || other.equals(RUNNING);
 		case RUNNING:

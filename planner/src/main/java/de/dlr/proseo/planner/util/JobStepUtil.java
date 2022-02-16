@@ -196,6 +196,9 @@ public class JobStepUtil {
 			case FAILED:
 				answer = Messages.JOBSTEP_FAILED;
 				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -252,6 +255,9 @@ public class JobStepUtil {
 			case FAILED:
 				answer = Messages.JOBSTEP_ALREADY_FAILED;
 				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -260,6 +266,45 @@ public class JobStepUtil {
 		return answer;
 	}
 
+	/**
+	 * Close job step
+	 * 
+	 * @param js Job step
+	 * @return Result message
+	 */
+	@Transactional
+	public Messages close(JobStep js) {
+		if (logger.isTraceEnabled()) logger.trace(">>> cancel({})", (null == js ? "null" : js.getId()));
+
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		if (js != null) {
+			switch (js.getJobStepState()) {
+			case INITIAL:
+			case READY:
+			case WAITING_INPUT:
+			case RUNNING:
+				answer = Messages.JOBSTEP_COULD_NOT_CLOSE;
+				break;
+			case COMPLETED:
+			case FAILED:
+				js.setJobStepState(de.dlr.proseo.model.JobStep.JobStepState.CLOSED);
+				js.incrementVersion();
+				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);
+				answer = Messages.JOBSTEP_CLOSED;
+				break;
+			case CLOSED:
+				answer = Messages.JOBSTEP_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, String.valueOf(js.getId()));
+		}
+		return answer;
+	}
+	
 	/**
 	 * Retry job step
 	 * 
@@ -278,6 +323,7 @@ public class JobStepUtil {
 			case READY:
 			case RUNNING:
 			case COMPLETED:
+			case CLOSED:
 				answer = Messages.JOBSTEP_COULD_NOT_RETRY;
 				break;
 			case WAITING_INPUT:
@@ -287,6 +333,7 @@ public class JobStepUtil {
 					// collect output products
 					List<Product> jspList = new ArrayList<Product>();
 					collectProducts(jsp, jspList);
+					js.setIsFailed(false);
 					if (checkProducts(jspList, js.getJob().getProcessingFacility())) {
 						// Product was created, due to some communication problems the wrapper process finished with errors. 
 						// Discard this problem and set job step to completed
@@ -340,6 +387,7 @@ public class JobStepUtil {
 			case INITIAL:
 			case READY:
 			case WAITING_INPUT:
+			case CLOSED:
 				break;
 			case RUNNING:
 			case COMPLETED:
@@ -348,7 +396,9 @@ public class JobStepUtil {
 				answer = true;
 				break;
 			case FAILED:
-				em.merge(js);
+				js.setIsFailed(true);
+				RepositoryService.getJobStepRepository().save(js);
+				em.merge(js);				
 				UtilService.getJobUtil().setHasFailedJobSteps(js.getJob(), true);
 				UtilService.getJobUtil().checkFinish(js.getJob().getId());
 				answer = true;
@@ -384,6 +434,7 @@ public class JobStepUtil {
 				// fall through intended
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				deleteJOF(js);
 				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
@@ -434,8 +485,8 @@ public class JobStepUtil {
 				};
 				// Fall through intended
 			case RUNNING:
-			case COMPLETED:
-			case FAILED:
+			case COMPLETED:	
+			case CLOSED:
 				deleteJOF(js);
 				js.setJobOrderFilename(null);
 				if (js.getOutputProduct() != null) {
@@ -652,21 +703,27 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			if (kc != null) {
-				List<JobStepState> states = new ArrayList<JobStepState>();
-				states.add(JobStepState.READY);
-				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-				if (pfo.isPresent()) {
-					if (!onlyRun) {
-						this.searchForJobStepsToRun(pfo.get(), pc);
-					}
-					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-					for (JobStep js : jobSteps) {
-						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-							if (kc.couldJobRun()) {
-								kc.createJob(String.valueOf(js.getId()), null, null);
+				if (productionPlanner.tryAcquireReleaseSemaphore()) {
+					// run this only if no concurrent createJob is running
+					List<JobStepState> states = new ArrayList<JobStepState>();
+					states.add(JobStepState.READY);
+					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+					if (pfo.isPresent()) {
+						if (!onlyRun) {
+							this.searchForJobStepsToRun(pfo.get(), pc);
+						}
+						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+						for (JobStep js : jobSteps) {
+							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+								if (kc.couldJobRun()) {
+									kc.createJob(String.valueOf(js.getId()), null, null);
+								}
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
+				} else {
+					if (logger.isTraceEnabled()) logger.trace("    no release semaphore available");
 				}
 			} else {
 				checkForJobStepsToRun();
@@ -731,9 +788,12 @@ public class JobStepUtil {
 			if (kc != null && job != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
+					// wait until finish of concurrent createJob
+					productionPlanner.acquireReleaseSemaphore();
 					List<JobStep> jobSteps = new ArrayList<JobStep>();
 					jobSteps.addAll(job.getJobSteps());
 					for (JobStep js : jobSteps) {
+						em.refresh(js);
 						checkJobStepQueries(js, false);
 						if (js.getJobStepState() == JobStepState.READY) {	
 							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
@@ -743,6 +803,7 @@ public class JobStepUtil {
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}
@@ -768,12 +829,15 @@ public class JobStepUtil {
 			if (kc != null && order != null) {
 				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
 				if (pfo.isPresent()) {
+					// wait until finish of concurrent createJob
+					productionPlanner.acquireReleaseSemaphore();
 					List<Job> jobList = new ArrayList<Job>();
 					jobList.addAll(order.getJobs());
 					for (Job job : jobList) {
 						List<JobStep> jobStepList = new ArrayList<JobStep>();
 						jobStepList.addAll(job.getJobSteps());
 						for (JobStep js : jobStepList) {
+							em.refresh(js);
 							checkJobStepQueries(js, false);
 							if (js.getJobStepState() == JobStepState.READY) {	
 								if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
@@ -784,6 +848,7 @@ public class JobStepUtil {
 							}
 						}
 					}
+					productionPlanner.releaseReleaseSemaphore();
 				}
 			}
 		}

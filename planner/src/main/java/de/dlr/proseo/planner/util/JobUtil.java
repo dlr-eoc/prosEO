@@ -90,6 +90,52 @@ public class JobUtil {
 				break;
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
+				break;
+			default:
+				break;
+			}
+			answer.log(logger, String.valueOf(job.getId()));
+		}
+		return answer;
+	}
+
+
+	/**
+	 * Close a job and its job steps.
+	 * 
+	 * @param job The job
+	 * @return Result message
+	 */
+	@Transactional
+	public Messages close(Job job) {
+		if (logger.isTraceEnabled()) logger.trace(">>> close({})", (null == job ? "null" : job.getId()));
+
+		Messages answer = Messages.FALSE;
+		// check current state for possibility to be suspended
+		// INITIAL, RELEASED, STARTED, ON_HOLD, COMPLETED, FAILED
+		if (job != null) {
+			switch (job.getJobState()) {
+			case INITIAL:
+			case RELEASED:
+			case STARTED:
+			case ON_HOLD:
+				answer = Messages.JOB_COULD_NOT_CLOSE;
+				break;
+			case COMPLETED:
+			case FAILED:
+				job.setJobState(JobState.CLOSED);
+				for (JobStep js : job.getJobSteps()) {
+					UtilService.getJobStepUtil().close(js);
+				}		
+				job.incrementVersion();
+				RepositoryService.getJobRepository().save(job);
+				em.merge(job);
+				answer = Messages.JOB_CLOSED;
+				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -164,6 +210,9 @@ public class JobUtil {
 					answer = Messages.JOB_COULD_NOT_RETRY;
 				}
 				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -210,6 +259,9 @@ public class JobUtil {
 				break;
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
+				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
 				break;
 			default:
 				break;
@@ -258,6 +310,9 @@ public class JobUtil {
 			case FAILED:
 				answer = Messages.JOB_ALREADY_FAILED;
 				break;
+			case CLOSED:
+				answer = Messages.JOB_ALREADY_CLOSED;
+				break;
 			default:
 				break;
 			}
@@ -305,6 +360,9 @@ public class JobUtil {
 			case FAILED:
 				Messages.JOB_ALREADY_FAILED.log(logger, String.valueOf(job.getId()));
 				break;
+			case CLOSED:
+				Messages.JOB_ALREADY_CLOSED.log(logger, String.valueOf(job.getId()));
+				break;
 			default:
 				break;
 			}
@@ -331,6 +389,7 @@ public class JobUtil {
 			case RELEASED:
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().delete(js)) {
@@ -379,6 +438,7 @@ public class JobUtil {
 			case ON_HOLD:
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				List<JobStep> toRem = new ArrayList<JobStep>();
 				for (JobStep js : job.getJobSteps()) {
 					if (UtilService.getJobStepUtil().deleteForced(js)) {
@@ -467,6 +527,7 @@ public class JobUtil {
 				break;
 			case COMPLETED:
 			case FAILED:
+			case CLOSED:
 				answer = true;
 				break;
 			default:
@@ -617,6 +678,8 @@ public class JobUtil {
 					RepositoryService.getJobRepository().save(job);
 					em.merge(job);
 				}
+				break;
+			case CLOSED:
 				break;
 			default:
 				break;

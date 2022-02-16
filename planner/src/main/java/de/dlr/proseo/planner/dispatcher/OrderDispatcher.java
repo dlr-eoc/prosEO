@@ -75,6 +75,7 @@ public class OrderDispatcher {
 		Message answer = new Message(Messages.FALSE);
 		if (order != null) {
 			switch (order.getOrderState()) {
+			case PLANNING: 
 			case APPROVED: {
 				// order is released, publish it
 				answer.setMessage(checkForValidOrder(order));
@@ -108,6 +109,7 @@ public class OrderDispatcher {
 				}
 				if (order.getJobs().isEmpty()) {
 					order.setOrderState(OrderState.PLANNED);
+					order.setOrderState(OrderState.RELEASING);
 					order.setOrderState(OrderState.RELEASED);
 					order.setOrderState(OrderState.RUNNING);
 					order.setOrderState(OrderState.COMPLETED);
@@ -199,6 +201,17 @@ public class OrderDispatcher {
 	}
 
 	/**
+	 * Calculate the number of expected jobs for order
+	 * 
+	 * @param order
+	 * @return number of jobs
+	 */
+	private int getJobsCountForOrbit(ProcessingOrder order) {
+		int answer = order.getRequestedOrbits().size();
+		return answer;
+	}
+	
+	/**
 	 * Create the needed job for an order of type day
 	 * 
 	 * @param order The processing order
@@ -244,6 +257,32 @@ public class OrderDispatcher {
 			.log(logger, ex.getMessage());
 		}
 
+		return answer;
+	}
+	
+	/**
+	 * Calculate the number of expected jobs for order
+	 * 
+	 * @param order
+	 * @return number of jobs
+	 */
+	private int getJobsCountForDay(ProcessingOrder order) {
+		int answer = 0;
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		if (order.getStartTime() == null || order.getStopTime() == null) {
+			Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
+		} else {
+			startT = order.getStartTime().truncatedTo(ChronoUnit.DAYS);
+			stopT = order.getStopTime();
+			sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+			while (startT.isBefore(stopT)) {
+				answer++;
+				startT = sliceStopT;
+				sliceStopT = startT.plus(1, ChronoUnit.DAYS);
+			} 
+		}
 		return answer;
 	}
 
@@ -307,6 +346,41 @@ public class OrderDispatcher {
 	}
 
 	/**
+	 * Calculate the number of expected jobs for order
+	 * 
+	 * @param order
+	 * @return number of jobs
+	 */
+	private int getJobsCountForMonth(ProcessingOrder order) {
+		int answer = 0;
+		Instant startT = null;
+		Instant stopT = null;
+		if (order.getStartTime() == null || order.getStopTime() == null) {
+			Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
+		} else {
+			ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
+			Calendar calStart = GregorianCalendar.from(zdt);
+			calStart.set(Calendar.DAY_OF_MONTH, 1);
+			calStart.set(Calendar.HOUR_OF_DAY, 0);
+			calStart.set(Calendar.MINUTE, 0);
+			calStart.set(Calendar.SECOND, 0);
+			calStart.set(Calendar.MILLISECOND, 0);
+			Calendar calStop = (Calendar) calStart.clone();
+			calStop.add(Calendar.MONTH, 1);				
+			stopT = order.getStopTime();		
+
+			startT = calStart.toInstant();
+			while (startT.isBefore(stopT)) {
+				answer++;
+				calStart = (Calendar) calStop.clone();
+				calStop.add(Calendar.MONTH, 1);
+				startT = calStart.toInstant();
+			} 
+		}
+		return answer;
+	}
+	
+	/**
 	 * Create the needed job for an order of type year
 	 * 
 	 * @param order The processing order
@@ -363,6 +437,41 @@ public class OrderDispatcher {
 			.log(logger, ex.getMessage());
 		}
 
+		return answer;
+	}
+
+	/**
+	 * Calculate the number of expected jobs for order
+	 * 
+	 * @param order
+	 * @return number of jobs
+	 */
+	private int getJobsCountForYear(ProcessingOrder order) {
+		int answer = 0;
+		Instant startT = null;
+		Instant stopT = null;
+		if (order.getStartTime() == null || order.getStopTime() == null) {
+			Messages.ORDER_REQ_DAY_NOT_SET.log(logger, order.getIdentifier());
+		} else {
+			ZonedDateTime zdt = ZonedDateTime.ofInstant(order.getStartTime(), ZoneId.of("UTC"));
+			Calendar calStart = GregorianCalendar.from(zdt);
+			calStart.set(Calendar.DAY_OF_MONTH, 1);
+			calStart.set(Calendar.HOUR_OF_DAY, 0);
+			calStart.set(Calendar.MINUTE, 0);
+			calStart.set(Calendar.SECOND, 0);
+			calStart.set(Calendar.MILLISECOND, 0);
+			Calendar calStop = (Calendar) calStart.clone();
+			calStop.add(Calendar.YEAR, 1);				
+			stopT = order.getStopTime();		
+
+			startT = calStart.toInstant();
+			while (startT.isBefore(stopT)) {
+				answer++;
+				calStart = (Calendar) calStop.clone();
+				calStop.add(Calendar.YEAR, 1);
+				startT = calStart.toInstant();
+			} 
+		}
 		return answer;
 	}
 
@@ -426,6 +535,45 @@ public class OrderDispatcher {
 			.log(logger, ex.getMessage());
 		}
 
+		return answer;
+	}
+
+	/**
+	 * Calculate the number of expected jobs for order
+	 * 
+	 * @param order
+	 * @return number of jobs
+	 */
+	private int getJobsCountForTimeSlices(ProcessingOrder order) {
+		int answer = 0;
+		Instant startT = null;
+		Instant stopT = null;
+		Instant sliceStopT = null;
+		if (order.getStartTime() == null || order.getStopTime() == null || order.getSliceDuration() == null) {
+			Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
+		} else {
+			startT = order.getStartTime();
+			stopT = order.getStopTime();
+			sliceStopT = startT.plus(order.getSliceDuration());
+			Duration delta = order.getSliceOverlap();
+			if (delta == null) {
+				delta = Duration.ofMillis(0);
+			}
+			delta = delta.dividedBy(2);
+			if (startT.equals(stopT)) {
+				answer = 1;
+			} else {
+				if (Duration.ZERO.equals(order.getSliceDuration())) {
+					Messages.ORDER_REQ_TIMESLICE_NOT_SET.log(logger, order.getIdentifier());
+				}
+				// create jobs for each time slice
+				while (startT.isBefore(stopT)) {
+					answer++;
+					startT = sliceStopT;
+					sliceStopT = startT.plus(order.getSliceDuration());
+				} 
+			}
+		}
 		return answer;
 	}
 	
@@ -724,6 +872,7 @@ public class OrderDispatcher {
 		// now create products and job steps to generate output files 
 		// create job step(s)
 		JobStep jobStep = new JobStep();
+		jobStep.setIsFailed(false);
 		jobStep.setJobStepState(JobStepState.INITIAL);
 		jobStep.setProcessingMode(order.getProcessingMode());
 		jobStep.setJob(job);
@@ -1025,6 +1174,50 @@ public class OrderDispatcher {
 		}
 		
 		return cpFound;
+	}
+	
+	public int getExpectedJobsCount(ProcessingOrder order) {
+		if (logger.isTraceEnabled()) logger.trace(">>> getExpectedJobsCount({})", (null == order ? "null": order.getIdentifier()));
+		int answer = 0;
+		if (order != null) {
+			switch (order.getOrderState()) {
+			case INITIAL: 
+			case PLANNING: 
+			case APPROVED: {
+				switch (order.getSlicingType()) {
+				case CALENDAR_DAY:
+					answer = getJobsCountForDay(order);
+					break;
+				case CALENDAR_MONTH:
+					answer = getJobsCountForMonth(order);
+					break;
+				case CALENDAR_YEAR:
+					answer = getJobsCountForYear(order);
+					break;
+				case ORBIT:
+					answer = getJobsCountForOrbit(order);
+					break;
+				case TIME_SLICE:
+					answer = getJobsCountForTimeSlices(order);
+					break;
+				case NONE:
+					answer = 1;
+					break;
+				default:
+					break;
+
+				}
+				break;
+			}
+			default: {
+				answer = order.getJobs().size();
+				break;
+			}
+
+			}
+		}		
+
+		return answer;
 	}
 	
 }
