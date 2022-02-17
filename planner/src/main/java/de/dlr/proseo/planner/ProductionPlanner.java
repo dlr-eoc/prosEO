@@ -122,22 +122,31 @@ public class ProductionPlanner implements CommandLineRunner {
 	}
 
 	public void acquireReleaseSemaphore() {
+		if (logger.isTraceEnabled()) logger.trace(">>> acquireReleaseSemaphore()");
 		try {
 			getReleaseSemaphore().acquire();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		if (logger.isTraceEnabled()) logger.trace("<<< acquireReleaseSemaphore()");
 	}
 	
 	public void releaseReleaseSemaphore() {
+		if (logger.isTraceEnabled()) logger.trace(">>> releaseReleaseSemaphore()");
 		if (getReleaseSemaphore().availablePermits() <= 0) {
+			if (logger.isTraceEnabled()) logger.trace("    released");
 			getReleaseSemaphore().release();
+		} else {
+			if (logger.isTraceEnabled()) logger.trace("    nothing to release");
 		}
 	}
 
 	public boolean tryAcquireReleaseSemaphore() {
-		return getReleaseSemaphore().tryAcquire();
+		if (logger.isTraceEnabled()) logger.trace(">>> tryAcquireReleaseSemaphore()");
+		boolean answer = getReleaseSemaphore().tryAcquire();
+		if (logger.isTraceEnabled()) logger.trace("    tryAcquire = {}", answer);
+		return answer;
 	}
 	/**
 	 * Set or update user/pw of a processing order

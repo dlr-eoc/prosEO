@@ -652,28 +652,24 @@ public class JobStepUtil {
 
 		if (productionPlanner != null) {
 			if (kc != null) {
-				if (productionPlanner.tryAcquireReleaseSemaphore()) {
-					// run this only if no concurrent createJob is running
-					List<JobStepState> states = new ArrayList<JobStepState>();
-					states.add(JobStepState.READY);
-					Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
-					if (pfo.isPresent()) {
-						if (!onlyRun) {
-							this.searchForJobStepsToRun(pfo.get(), pc);
-						}
-						List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
-						for (JobStep js : jobSteps) {
-							if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
-								if (kc.couldJobRun()) {
-									kc.createJob(String.valueOf(js.getId()), null, null);
-								}
+				productionPlanner.acquireReleaseSemaphore();
+				List<JobStepState> states = new ArrayList<JobStepState>();
+				states.add(JobStepState.READY);
+				Optional<ProcessingFacility> pfo = RepositoryService.getFacilityRepository().findById(kc.getLongId());
+				if (pfo.isPresent()) {
+					if (!onlyRun) {
+						this.searchForJobStepsToRun(pfo.get(), pc);
+					}
+					List<JobStep> jobSteps = RepositoryService.getJobStepRepository().findAllByProcessingFacilityAndJobStepStateIn(kc.getLongId(), states);
+					for (JobStep js : jobSteps) {
+						if (js.getJob().getJobState() == JobState.RELEASED || js.getJob().getJobState() == JobState.STARTED) {
+							if (kc.couldJobRun()) {
+								kc.createJob(String.valueOf(js.getId()), null, null);
 							}
 						}
 					}
-					productionPlanner.releaseReleaseSemaphore();
-				} else {
-					if (logger.isTraceEnabled()) logger.trace("    no release semaphore available");
 				}
+				productionPlanner.releaseReleaseSemaphore();
 			} else {
 				checkForJobStepsToRun();
 			}
