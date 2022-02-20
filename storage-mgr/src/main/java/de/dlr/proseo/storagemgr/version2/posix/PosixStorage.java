@@ -31,6 +31,12 @@ public class PosixStorage implements Storage {
 		
 		createDirectories(basePath); 
 	}	
+	
+	@Override
+	public String getBasePath() {
+		return basePath;
+	}
+	
 
 	@Override
 	public void setBucket(String bucket) {

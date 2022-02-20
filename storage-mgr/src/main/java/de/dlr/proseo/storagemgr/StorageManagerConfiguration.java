@@ -57,6 +57,9 @@ public class StorageManagerConfiguration {
 	@Value("${proseo.global.storageIdPrefix}")
 	private String storageIdPrefix;
 	
+	@Value("${proseo.global.storageManagerVersion2}")
+	private String storageManagerVersion2;
+		
 	@Value("${proseo.s3.s3DefaultBucket}")
 	private String s3DefaultBucket;
 
@@ -124,6 +127,13 @@ public class StorageManagerConfiguration {
 	 */
 	public static StorageManagerConfiguration getConfiguration() {
 		return theConfiguration;
+	}
+	
+	/**
+	 * @return the storageManagerVersion2
+	 */
+	public String getStorageManagerVersion2() {
+		return storageManagerVersion2;
 	}
 	
 	

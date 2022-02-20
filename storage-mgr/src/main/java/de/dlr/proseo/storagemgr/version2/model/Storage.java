@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface Storage {
 	
+	public String getBasePath(); 
+	
 	public void setBucket(String bucket);
 	
 	public String getBucket(); 
