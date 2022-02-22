@@ -98,14 +98,14 @@ my @users = (
         groups => [ 'operator', 'archivist', 'engineer', 'approver' ]
     },
     {
-        name => 'esaprip',
-        pwd => 'esaPrip.012',
+        name => 'sciuserprip',
+        pwd => 'sciUserPrip.012',
         authorities => [],
         groups => [ 'prippublic' ]
     },
     {
-        name => 'knmiprip',
-        pwd => 'knmiPrip.678',
+        name => 'cfidevprip',
+        pwd => 'cfiDevPrip.678',
         authorities => [],
         groups => [ 'externalprocessor' ]
     },
