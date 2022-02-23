@@ -102,8 +102,8 @@
 	<distributionManagement>
 		<site>
 			<id>prosEO</id>
-			<name>prosEO Local Site</name>
-			<url>file:target/staged-site</url>
+			<name>prosEO API Documentation</name>
+			<url>file:docs</url>
 		</site>
 	</distributionManagement>
 
