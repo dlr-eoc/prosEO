@@ -1,5 +1,6 @@
 package de.dlr.proseo.storagemgr.version2.model;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -20,10 +21,16 @@ public interface Storage {
 	public String getBucket(); 
 	
 	public boolean fileExists(StorageFile storageFile);
+	
+	public long getFileSize(StorageFile storageFile);
+	
+	public StorageFile getFile(String relativePath);
 
 	public List<StorageFile> getFiles();
 	
-	public boolean uploadFile(StorageFile sourceFile, StorageFile storageFile);
+	public void uploadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
 	
-	public boolean downloadFile(StorageFile storageFile, StorageFile targetFile);
+	public void downloadFile(StorageFile sourceFile, StorageFile targetFile) throws IOException;
+	
+	public StorageType getStorageType(); 
 }

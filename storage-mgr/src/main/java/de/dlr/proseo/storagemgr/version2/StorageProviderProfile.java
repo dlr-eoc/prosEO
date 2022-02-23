@@ -8,8 +8,10 @@ package de.dlr.proseo.storagemgr.version2;
  */
 
 public enum StorageProviderProfile {
-	/** posix-posix */
-	INTERNAL_POSIX_EXTERNAL_POSIX,
+	/** POSIX */
+	STORAGE_POSIX,
+	/** S3 */
+	STORAGE_S3,
 	/** default from application.yml */
 	DEFAULT
 }

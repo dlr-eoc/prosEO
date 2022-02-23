@@ -1,5 +1,6 @@
 package de.dlr.proseo.storagemgr.version2;
 
+import java.io.File;
 
 import javax.annotation.PostConstruct;
 
@@ -11,33 +12,35 @@ import org.springframework.stereotype.Component;
 import de.dlr.proseo.storagemgr.StorageManagerConfiguration;
 import de.dlr.proseo.storagemgr.cache.FileCache;
 import de.dlr.proseo.storagemgr.version2.model.Storage;
+import de.dlr.proseo.storagemgr.version2.model.StorageFile;
 import de.dlr.proseo.storagemgr.version2.model.StorageType;
 import de.dlr.proseo.storagemgr.version2.posix.PosixStorage;
+import de.dlr.proseo.storagemgr.version2.posix.PosixStorageFile;
 import de.dlr.proseo.storagemgr.version2.s3.S3Storage;
+import de.dlr.proseo.storagemgr.version2.s3.S3StorageFile;
+
 /**
- * Storage Provider for different storages and different profiles  
+ * Storage Provider for different storages and different profiles
  * 
  * @author Denys Chaykovskiy
  *
  */
 @Component
 public class StorageProvider {
-	
+
 	/** StorageProvider singleton */
 	private static StorageProvider theStorageProvider;
 
-	
 	private StorageProviderProfile profile;
 
-	private Storage internalStorage;
-	private Storage externalStorage;
-	
+	private Storage storage;
+
 	/** Logger for this class */
 	private static Logger logger = LoggerFactory.getLogger(StorageProvider.class);
 
 	@Autowired
 	private StorageManagerConfiguration cfg;
-	
+
 	/**
 	 * Instance of file cache
 	 * 
@@ -47,73 +50,89 @@ public class StorageProvider {
 
 		return theStorageProvider;
 	}
-	
-	
-	public StorageProvider() { 
-		
-		// loadProfile(StorageProviderProfile.INTERNAL_POSIX_EXTERNAL_POSIX);
-		
-		// loadProfile(StorageProviderProfile.DEFAULT);	
+
+	public StorageProvider() {
 	}
-	
+
 	/**
-	 * Initializes file cache with directory from Application.yml
+	 * Initializes storage(s) from Application.yml
 	 */
 	@PostConstruct
-	private void init() { 
-		
-		loadProfile(StorageProviderProfile.INTERNAL_POSIX_EXTERNAL_POSIX);
-		
-		theStorageProvider = this;
-		// loadProfile(StorageProviderProfile.DEFAULT);	
-	}
-	
+	private void init() {
 
-	public StorageProvider(StorageProviderProfile profile) { 
-		
+		loadProfile(StorageProviderProfile.DEFAULT);
+		theStorageProvider = this;
+	}
+
+	public StorageProvider(StorageProviderProfile profile) {
+
 		loadProfile(profile);
 	}
-	
+
 	public void loadProfile(StorageProviderProfile profile) {
-		
-		this.profile = profile; 
-		
+
+		// TODO: For debugging - remove later
+		if (cfg == null)
+			System.out.println("CFG in loadProfile IS NULL");
+
+		this.profile = profile;
+
 		if (profile == StorageProviderProfile.DEFAULT) {
-			
-			externalStorage = createStorage(StorageType.S3);
-			internalStorage = createStorage(cfg.getDefaultStorageType()); 
-		}		
-		else if (profile == StorageProviderProfile.INTERNAL_POSIX_EXTERNAL_POSIX) {
-			
-			if (cfg == null) System.out.println("CFG IS NULL");
-			
-			externalStorage = new PosixStorage(cfg.getPosixBackendPath() + "/exernal"); // temp. for testing
-			internalStorage = createStorage(StorageType.POSIX);  
+			storage = createStorage(cfg.getDefaultStorageType());
+		} else if (profile == StorageProviderProfile.STORAGE_POSIX) {
+			storage = createStorage(StorageType.POSIX);
+		} else if (profile == StorageProviderProfile.STORAGE_S3) {
+			storage = createStorage(StorageType.S3);
 		}
 	}
-	
-	public Storage getInternalStorage() {
-		
-		return internalStorage; 
+
+	public StorageProviderProfile getProfile() {
+		return profile;
 	}
-	
-	public Storage getExternalStorage() {
-		
-		return externalStorage; 
+
+	public Storage getStorage() {
+		return storage;
 	}
-	
-	public Storage createStorage(StorageType storageType) { 
-		if (storageType == StorageType.POSIX) { 
-			return new PosixStorage(cfg.getPosixBackendPath()); 
-		}
-		else if (storageType == StorageType.S3) { 
+
+	public Storage createStorage(StorageType storageType) {
+
+		if (storageType == StorageType.POSIX) {
+			return new PosixStorage(cfg.getPosixBackendPath());
+
+		} else if (storageType == StorageType.S3) {
 			return new S3Storage(cfg.getS3AccessKey(), cfg.getS3SecretAccessKey());
 		}
-		
+
 		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
 	}
-	
-	public Storage createStorage(String storageType) { 
-		return createStorage(StorageType.valueOf(storageType)); 
+
+	public Storage createStorage(String storageType) {
+		return createStorage(StorageType.valueOf(storageType));
 	}
+
+	public StorageFile getStorageFile(String relativePath) {
+
+		StorageType storageType = storage.getStorageType();
+
+		if (storageType == StorageType.POSIX) {
+			return new PosixStorageFile(cfg.getPosixBackendPath(), relativePath);
+		} else if (storageType == StorageType.S3) {
+			return new S3StorageFile(cfg.getS3DefaultBucket(), relativePath);
+		}
+
+		throw new IllegalArgumentException("Storage Type " + storageType.toString() + " is wrong");
+	}
+
+	public StorageFile getCacheFile(String relativePath) {
+
+		return new PosixStorageFile(cfg.getPosixCachePath(), relativePath);
+	}
+
+	/*
+	public long getSize() {
+
+		// TODO: Maybe use method from FileUtils
+		return new File(getFullPath()).length();
+	}
+	*/
 }
